@@ -333,7 +333,14 @@
 
   .whatsapp-card{background:linear-gradient(135deg, var(--cat-diag-soft), var(--bg-elevated)); border:1px solid var(--border-soft); border-radius:var(--radius); padding:18px;}
 
-  .vocab-hl{background:var(--cat-voc-soft); color:var(--cat-voc); font-weight:700; padding:1px 3px; border-radius:5px;}
+  .vocab-hl{background:var(--cat-voc-soft); color:var(--cat-voc); font-weight:700; padding:1px 3px; border-radius:5px; cursor:pointer; -webkit-tap-highlight-color:transparent;}
+  .vocab-hl:active{filter:brightness(.94); transform:scale(.97); display:inline-block;}
+  .word-tooltip{position:fixed; z-index:60; max-width:min(78vw,280px); background:var(--ink); color:var(--bg); border-radius:14px; padding:9px 13px; font-size:13px; line-height:1.4; box-shadow:var(--shadow); opacity:0; transform:translateY(4px) scale(.96); transition:opacity .15s ease, transform .15s ease; pointer-events:none;}
+  .word-tooltip.show{opacity:1; transform:translateY(0) scale(1);}
+  .word-tooltip b{display:block; font-weight:800; margin-bottom:2px; color:var(--accent-strong);}
+  .word-tooltip::after{content:''; position:absolute; left:50%; margin-left:-6px; border:6px solid transparent;}
+  .word-tooltip.tip-below::after{top:-11px; border-bottom-color:var(--ink);}
+  .word-tooltip.tip-above::after{bottom:-11px; border-top-color:var(--ink);}
   .intro-glow{position:relative; animation:intro-heartbeat 2.6s ease-in-out infinite; box-shadow:0 0 0 2px rgba(255,194,46,.65), 0 0 26px 6px rgba(255,194,46,.5);}
   .intro-glow .sparkle{color:#ffc22e;}
   @keyframes intro-heartbeat{0%,100%{transform:scale(1);} 50%{transform:scale(1.035);}}
@@ -1163,21 +1170,77 @@ function relativeDate(iso){
 
 /* ============================= HELPERS ============================= */
 function esc(s){ return String(s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
-function highlightWord(sentence, word){
+function tapMark(word, meaning){
+  return meaning ? `<mark class="vocab-hl" data-action="show-word-meaning" data-word="${esc(word)}" data-meaning="${esc(meaning)}">${esc(word)}</mark>` : esc(word);
+}
+function highlightWord(sentence, word, meaning){
   const re = new RegExp(word.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'), 'i');
   const m = sentence.match(re);
   if(!m) return esc(sentence);
   const i = m.index;
-  return esc(sentence.slice(0,i)) + '<b>' + esc(m[0]) + '</b>' + esc(sentence.slice(i+m[0].length));
+  return esc(sentence.slice(0,i)) + tapMark(m[0], meaning) + esc(sentence.slice(i+m[0].length));
+}
+let VOCAB_GLOSSARY = null;
+function buildVocabGlossary(){
+  const map = {};
+  VOCAB_SETS.forEach(set=>{
+    set.cards.forEach(c=>{
+      const key = c.word.toLowerCase();
+      if(!map[key]) map[key] = L(c.meaning.en, c.meaning.tr, c.meaning.fa, c.meaning.es);
+    });
+  });
+  return map;
+}
+function glossify(text){
+  if(!VOCAB_GLOSSARY) VOCAB_GLOSSARY = buildVocabGlossary();
+  const words = Object.keys(VOCAB_GLOSSARY).sort((a,b)=>b.length-a.length);
+  if(!words.length) return esc(text);
+  const pattern = words.map(w=>w.replace(/[.*+?^${}()|[\]\\]/g,'\\$&').replace(/\s+/g,'\\s+')).join('|');
+  const re = new RegExp('\\b(?:'+pattern+')\\b', 'gi');
+  let result = '', last = 0, m;
+  while((m = re.exec(text))){
+    result += esc(text.slice(last, m.index)) + tapMark(m[0], VOCAB_GLOSSARY[m[0].toLowerCase()]);
+    last = m.index + m[0].length;
+    if(re.lastIndex === m.index) re.lastIndex++;
+  }
+  result += esc(text.slice(last));
+  return result;
+}
+let wordTooltipTimer = null;
+function showWordTooltip(el){
+  const word = el.dataset.word, meaning = el.dataset.meaning;
+  if(!meaning) return;
+  const old = document.querySelector('.word-tooltip');
+  if(old) old.remove();
+  if(wordTooltipTimer) clearTimeout(wordTooltipTimer);
+  const tip = document.createElement('div');
+  tip.className = 'word-tooltip';
+  tip.innerHTML = `<b>${esc(word)}</b>${esc(meaning)}`;
+  document.body.appendChild(tip);
+  const rect = el.getBoundingClientRect();
+  const tipRect = tip.getBoundingClientRect();
+  let left = rect.left + rect.width/2 - tipRect.width/2;
+  left = Math.max(8, Math.min(left, window.innerWidth - tipRect.width - 8));
+  let top = rect.top - tipRect.height - 12;
+  if(top < 8){ tip.classList.add('tip-below'); top = rect.bottom + 12; }
+  else{ tip.classList.add('tip-above'); }
+  tip.style.left = left+'px';
+  tip.style.top = top+'px';
+  requestAnimationFrame(()=> tip.classList.add('show'));
+  wordTooltipTimer = setTimeout(()=>{
+    tip.classList.remove('show');
+    setTimeout(()=>{ try{ tip.remove(); }catch(e){} }, 200);
+  }, 2600);
 }
 function highlightStoryVocab(text, vocab){
   const words = (vocab||[]).map(v=>v.word).filter(Boolean).sort((a,b)=>b.length-a.length);
   if(!words.length) return esc(text);
   const pattern = words.map(w=>w.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')).join('|');
   const re = new RegExp('\\b(?:'+pattern+')\\b', 'gi');
+  const byWord = {}; vocab.forEach(v=>{ byWord[v.word.toLowerCase()] = L(v.en, v.tr, v.fa); });
   let result = '', last = 0, m;
   while((m = re.exec(text))){
-    result += esc(text.slice(last, m.index)) + '<mark class="vocab-hl">' + esc(m[0]) + '</mark>';
+    result += esc(text.slice(last, m.index)) + tapMark(m[0], byWord[m[0].toLowerCase()]);
     last = m.index + m[0].length;
   }
   result += esc(text.slice(last));
@@ -2422,7 +2485,7 @@ function renderStudioRound(){
   const speechOk = studioSpeechSupported();
   const listening = !!studioRecognition;
   const dl = STUDIO_DIFFICULTY_LABEL[round.difficulty];
-  const wordPills = round.words.map(w=>`<span class="pill" style="background:var(--cat-voc-soft); color:var(--cat-voc); margin:3px 4px 3px 0;">${esc(w.word)}</span>`).join('');
+  const wordPills = round.words.map(w=>`<span class="pill vocab-hl" data-action="show-word-meaning" data-word="${esc(w.word)}" data-meaning="${esc(w.meaning)}" style="background:var(--cat-voc-soft); color:var(--cat-voc); margin:3px 4px 3px 0;">${esc(w.word)}</span>`).join('');
   return `<div class="fade-in">
     ${sectionHead(
       mode==='writing' ? L('Writing Practice','Yazma Pratiği','تمرین نوشتن','Práctica de escritura') : L('Speaking Practice','Konuşma Pratiği','تمرین صحبت‌کردن','Práctica de conversación'),
@@ -2524,8 +2587,8 @@ function renderGrammarTrap(id){
     ${sectionHead(grammarTitle(t), L(t.exp.en,t.exp.tr,t.exp.fa,t.exp.es))}
     <div class="screen" style="padding-top:0;">
       <div class="contrast" dir="ltr">
-        <div class="contrast-line wrong"><b>✗</b><span class="txt">${esc(wrong)}</span></div>
-        <div class="contrast-line right"><b>✓</b><span class="txt">${esc(right)}</span></div>
+        <div class="contrast-line wrong"><b>✗</b><span class="txt">${glossify(wrong)}</span></div>
+        <div class="contrast-line right"><b>✓</b><span class="txt">${glossify(right)}</span></div>
       </div>
       <button class="btn btn-primary" style="margin-top:8px;" data-action="start-grammar-quiz" data-id="${t.id}">${L('Play Game!','Oyunu Oyna!','بازی کن!','¡Juega!')}</button>
     </div>
@@ -2582,7 +2645,7 @@ function renderVocabSet(id, cardIndex){
           <div class="flash-face" style="background:var(--cat-voc-soft);">
             ${state.viewParams.flipped ? `
               <div class="flash-hint">${L('Example','Örnek','مثال','Ejemplo')}</div>
-              <div class="flash-sentence" dir="ltr">${highlightWord(card.sentence, card.word)}</div>
+              <div class="flash-sentence" dir="ltr">${highlightWord(card.sentence, card.word, L(card.meaning.en, card.meaning.tr, card.meaning.fa, card.meaning.es))}</div>
               ${card.meaning ? `<div class="flash-hint" style="margin-top:10px;">${L('Meaning','Anlam','معنی','Significado')}</div><div class="flash-sentence" dir="ltr">${esc(card.meaning.en)}${(LANG==='fa'?card.meaning.fa:LANG==='es'?card.meaning.es:card.meaning.tr) ? ' — '+esc(LANG==='fa'?card.meaning.fa:LANG==='es'?card.meaning.es:card.meaning.tr) : ''}</div>` : ''}
               ${card.note ? `<div class="flash-note row" dir="ltr" style="align-items:flex-start; gap:7px;"><span style="flex:0 0 auto; margin-top:1px;">${ICONS.warn}</span><span>${esc(L(card.note.en,card.note.tr,card.note.fa,card.note.es))}</span></div>` : ''}
             ` : `
@@ -3377,6 +3440,7 @@ function bindEvents(root){
 }
 
 const HANDLERS = {
+  'show-word-meaning'(el){ showWordTooltip(el); },
   'toggle-lang'(){ LANG = LANG==='tr' ? 'fa' : LANG==='fa' ? 'en' : LANG==='en' ? 'es' : 'tr'; save(); render(); },
   'set-lang'(el){ LANG = el.dataset.lang; save(); render(); },
   'diag-start'(){ go('diagnostic-step'); },

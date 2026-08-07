@@ -1171,7 +1171,7 @@ function relativeDate(iso){
 /* ============================= HELPERS ============================= */
 function esc(s){ return String(s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 function tapMark(word, meaning){
-  return meaning ? `<mark class="vocab-hl" data-action="show-word-meaning" data-word="${esc(word)}" data-meaning="${esc(meaning)}">${esc(word)}</mark>` : esc(word);
+  return meaning ? `<mark class="vocab-hl" data-action="show-word-meaning" data-word="${esc(word)}" data-meaning="${esc(meaning)}">${esc(word)}</mark>` : '<b>'+esc(word)+'</b>';
 }
 function highlightWord(sentence, word, meaning){
   const re = new RegExp(word.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'), 'i');
@@ -1901,7 +1901,7 @@ function renderDiagReview(){
       studyCloseTag = '</button>';
     } else {
       const cat = item.type==='slang' ? 'slang' : 'vocab';
-      studyOpenTag = '<button class="roadmap-study" data-action="nav" data-view="vocab-set" data-id="'+item.refId+'" data-goal="'+(item.goal||'')+'" data-cat="'+cat+'">';
+      studyOpenTag = '<button class="roadmap-study" data-action="nav" data-view="vocab-set-intro" data-id="'+item.refId+'" data-goal="'+(item.goal||'')+'" data-cat="'+cat+'">';
       studyCloseTag = '</button>';
     }
     return `<div class="roadmap-row ${checked?'roadmap-done':''}" style="${rowBg}">
@@ -2048,7 +2048,7 @@ function renderGoalLevelDetail(goal, level){
   const slShown = slTagged.length ? slTagged : VOCAB_SETS.filter(s=>s.level===level && s.category==='slang');
   const setRow = (s, ic, tint) => {
     const done = state.progress.completedVocabSets.includes(s.id);
-    return `<button class="item-row" data-action="nav" data-view="vocab-set" data-id="${s.id}" data-goal="${goal}">
+    return `<button class="item-row" data-action="nav" data-view="vocab-set-intro" data-id="${s.id}" data-goal="${goal}">
       <span class="item-ic" style="background:var(--cat-${tint}-soft); color:var(--cat-${tint});">${ic}</span>
       <div class="item-body"><div class="item-title">${esc(setTitle(s))}</div></div>
       ${done ? `<span class="pill badge-done">${ICONS.check}</span>` : `<span class="chevron">${ICONS.chev}</span>`}
@@ -2581,16 +2581,37 @@ function renderGrammarTrap(id){
   if(!t) return renderComingSoon();
   const goal = state.viewParams.goal;
   const variant = goal && t.goalVariant && t.goalVariant[goal];
-  const wrong = variant ? variant.wrong : t.wrong;
-  const right = variant ? variant.right : t.right;
+  const wrong = (variant && variant.wrong) ? variant.wrong : t.wrong;
+  const right = (variant && variant.right) ? variant.right : t.right;
+  const wrong2 = (variant && variant.wrong2) ? variant.wrong2 : t.wrong2;
+  const right2 = (variant && variant.right2) ? variant.right2 : t.right2;
   return `<div class="fade-in">
-    ${sectionHead(grammarTitle(t), L(t.exp.en,t.exp.tr,t.exp.fa,t.exp.es))}
+    ${sectionHead(grammarTitle(t), '')}
     <div class="screen" style="padding-top:0;">
+      <div class="card-flat" style="background:var(--cat-gram-soft); border-color:var(--cat-gram-soft);">
+        <div class="row" style="gap:8px; align-items:center;">
+          <span class="item-ic" style="background:rgba(255,255,255,.55); color:var(--cat-gram); flex:0 0 auto; width:32px; height:32px;">${ICONS.book}</span>
+          <div class="eyebrow" style="color:var(--cat-gram);">${L('The rule','Kural','قاعده','La regla')}</div>
+        </div>
+        <p style="margin-top:10px; font-size:14.5px; line-height:1.65;">${esc(L(t.exp.en,t.exp.tr,t.exp.fa,t.exp.es))}</p>
+      </div>
+
+      <h3 class="display" style="font-size:13.5px; margin:20px 0 8px; color:var(--ink-faint); text-transform:uppercase; letter-spacing:.04em;">${L('Example 1','Örnek 1','مثال ۱','Ejemplo 1')}</h3>
       <div class="contrast" dir="ltr">
         <div class="contrast-line wrong"><b>✗</b><span class="txt">${glossify(wrong)}</span></div>
         <div class="contrast-line right"><b>✓</b><span class="txt">${glossify(right)}</span></div>
       </div>
-      <button class="btn btn-primary" style="margin-top:8px;" data-action="start-grammar-quiz" data-id="${t.id}">${L('Play Game!','Oyunu Oyna!','بازی کن!','¡Juega!')}</button>
+
+      ${wrong2 && right2 ? `
+      <h3 class="display" style="font-size:13.5px; margin:20px 0 8px; color:var(--ink-faint); text-transform:uppercase; letter-spacing:.04em;">${L('Example 2','Örnek 2','مثال ۲','Ejemplo 2')}</h3>
+      <div class="contrast" dir="ltr">
+        <div class="contrast-line wrong"><b>✗</b><span class="txt">${glossify(wrong2)}</span></div>
+        <div class="contrast-line right"><b>✓</b><span class="txt">${glossify(right2)}</span></div>
+      </div>` : ''}
+
+      <p style="margin-top:16px; font-size:12.5px; color:var(--ink-faint); text-align:center;">${L('Tap any word above to see what it means.','Anlamını görmek için yukarıdaki bir kelimeye dokun.','برای دیدن معنی، روی هر کلمه بالا لمس کن.','Toca cualquier palabra de arriba para ver su significado.')}</p>
+
+      <button class="btn btn-primary" style="margin-top:14px;" data-action="start-grammar-quiz" data-id="${t.id}">${L('Ready — start the round!','Hazırım — tura başla!','آماده‌ام — شروع تمرین!','¡Listo — empezar la ronda!')}</button>
     </div>
   </div>`;
 }
@@ -2615,7 +2636,7 @@ function renderVocabList(){
       ${sets.length ? `<div class="stack" style="gap:8px;">
         ${sets.map(s=>{
           const done = state.progress.completedVocabSets.includes(s.id);
-          return `<button class="item-row" data-action="nav" data-view="vocab-set" data-id="${s.id}">
+          return `<button class="item-row" data-action="nav" data-view="vocab-set-intro" data-id="${s.id}">
             <span class="item-ic" style="background:var(--cat-voc-soft); color:var(--cat-voc);">${ICONS.cards}</span>
             <div class="item-body">
               <div class="item-title">${esc(setTitle(s))}</div>
@@ -2629,6 +2650,34 @@ function renderVocabList(){
         <div class="clay-banner-title">${L('¡Muy pronto!','Çok yakında!','خیلی زود!','¡Muy pronto!')}</div>
         <div class="clay-banner-sub">${L('Level '+level+' vocabulary is still being built.','Seviye '+level+' kelime dağarcığı hâlâ hazırlanıyor.','واژگان سطح '+level+' هنوز در حال ساخته‌شدن است.','El vocabulario del nivel '+level+' todavía se está preparando.')}</div>
       </div>`}
+    </div>
+  </div>`;
+}
+function renderVocabSetIntro(id){
+  const s = VOCAB_SETS.find(x=>x.id===id);
+  if(!s) return renderComingSoon();
+  const isSlang = s.category === 'slang';
+  return `<div class="fade-in">
+    ${sectionHead(setTitle(s), '')}
+    <div class="screen" style="padding-top:0;">
+      <div class="card-flat" style="background:var(--cat-voc-soft); border-color:var(--cat-voc-soft);">
+        <div class="row" style="gap:8px; align-items:center;">
+          <span class="item-ic" style="background:rgba(255,255,255,.55); color:var(--cat-voc); flex:0 0 auto; width:32px; height:32px;">${ICONS.cards}</span>
+          <div class="eyebrow" style="color:var(--cat-voc);">${isSlang ? L('The phrases','İfadeler','عبارت‌ها','Las frases') : L('The words','Kelimeler','کلمات','Las palabras')}</div>
+        </div>
+        <p style="margin-top:10px; font-size:13.5px; line-height:1.6;">${L('Skim through all '+s.cards.length+' below, then flip through flashcards to lock them in.','Aşağıdaki tüm '+s.cards.length+' tanesine göz gezdir, sonra pekiştirmek için kartları çevir.','همه '+s.cards.length+' مورد زیر را مرور کن، بعد با ورق زدن کارت‌ها آن‌ها را در ذهنت ثبت کن.','Repasa las '+s.cards.length+' de abajo y luego practica con las tarjetas para memorizarlas.')}</p>
+      </div>
+      <div class="card-flat" dir="ltr" style="margin-top:14px; padding-top:2px; padding-bottom:2px;">
+        ${s.cards.map(c=>`
+          <div class="phrase-row">
+            <div class="phrase-term" style="color:var(--cat-voc);">${esc(c.word)}</div>
+            <div class="phrase-mean">${esc(L(c.meaning.en,c.meaning.tr,c.meaning.fa,c.meaning.es))}</div>
+            <div class="phrase-mean" style="font-style:italic; opacity:.75;">${highlightWord(c.sentence, c.word)}</div>
+            ${c.note ? `<div class="flash-note row" style="margin-top:2px; align-items:flex-start; gap:6px;"><span style="flex:0 0 auto; color:var(--ink-faint);">${ICONS.warn}</span><span style="font-size:12px; color:var(--ink-soft);">${esc(L(c.note.en,c.note.tr,c.note.fa,c.note.es))}</span></div>` : ''}
+          </div>
+        `).join('')}
+      </div>
+      <button class="btn btn-primary" style="margin-top:16px;" data-action="nav" data-view="vocab-set" data-id="${s.id}">${L('Start flashcards','Kartlara başla','شروع فلش‌کارت‌ها','Empezar las tarjetas')}</button>
     </div>
   </div>`;
 }
@@ -3078,6 +3127,7 @@ const screens = {
   'grammar-list': renderGrammarList,
   'grammar-trap': ()=>renderGrammarTrap(state.viewParams.id),
   'vocab-list': renderVocabList,
+  'vocab-set-intro': ()=>renderVocabSetIntro(state.viewParams.id),
   'vocab-set': ()=>renderVocabSet(state.viewParams.id, state.viewParams.cardIndex||0),
   'goals-list': renderGoalsList,
   'goal-levels': ()=>renderGoalLevels(state.viewParams.goal),
@@ -3520,9 +3570,9 @@ const HANDLERS = {
     const view = el.dataset.view;
     const params = {id: el.dataset.id};
     if(view==='grammar-list' || view==='grammar-trap') params.level = state.viewParams.level || state.profile.level;
-    if(view==='vocab-list' || view==='vocab-set'){ params.level = state.viewParams.level || state.profile.level; params.cat = el.dataset.cat || state.viewParams.cat || 'vocab'; }
+    if(view==='vocab-list' || view==='vocab-set' || view==='vocab-set-intro'){ params.level = state.viewParams.level || state.profile.level; params.cat = el.dataset.cat || state.viewParams.cat || 'vocab'; }
     if(view==='story-list' || view==='story-detail') params.level = state.viewParams.level || state.profile.level;
-    if(['goal-levels','goal-level-detail','grammar-trap','vocab-set'].includes(view)){
+    if(['goal-levels','goal-level-detail','grammar-trap','vocab-set','vocab-set-intro'].includes(view)){
       const goal = el.dataset.goal || state.viewParams.goal;
       if(goal) params.goal = goal;
     }

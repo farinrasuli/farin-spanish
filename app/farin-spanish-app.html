@@ -1038,6 +1038,16 @@ function freshState(){
 }
 let state = load();
 LANG = state.lang || 'tr';
+try{
+  const incomingLang = new URLSearchParams(location.search).get('lang');
+  if(incomingLang && ['tr','fa','en','es'].includes(incomingLang)){
+    LANG = incomingLang;
+    save();
+    const url = new URL(location.href);
+    url.searchParams.delete('lang');
+    history.replaceState(null, '', url);
+  }
+}catch(e){}
 function load(){
   try{
     const raw = localStorage.getItem(STORAGE_KEY);
@@ -1775,7 +1785,7 @@ function renderDashboard(){
           <span class="tile-title">${L('Story World','Hikaye Dünyası','دنیای داستان','Mundo de Historias')}</span>
           <span class="tile-sub">${p.level} · ${doneStoriesAtLevel}/${totalStoriesAtLevel}</span>
         </button>
-        <a class="tile" href="https://farinrasuli.github.io/farin-english/app/farin-english-app.html" target="_top" rel="noopener" style="background:var(--clay-sage); color:var(--clay-sage-deep); text-decoration:none;">
+        <a class="tile" href="https://farinrasuli.github.io/farin-english/app/farin-english-app.html?lang=${LANG}" target="_top" rel="noopener" style="background:var(--clay-sage); color:var(--clay-sage-deep); text-decoration:none;">
           ${claySparkles()}
           <span class="tile-illustration">${ICONS.compass}</span>
           <span class="tile-title">${L('Learn English!','İngilizce Öğren!','انگلیسی یاد بگیر!','¡Aprende inglés!')}</span>

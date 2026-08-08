@@ -2786,6 +2786,19 @@ function renderLessonText(text, accentVar){
     return `<p style="margin-top:12px; font-size:15px; line-height:1.7; color:var(--ink);">${esc(b.text)}</p>`;
   }).join('');
 }
+function structureExplanation(text){
+  const sentences = (text.match(/[^.!?]+[.!?]+(\s+|$)/g) || [text]).map(s=>s.trim()).filter(Boolean);
+  if(sentences.length <= 1) return {hook:null, rest:text, tip:null};
+  const hook = sentences[0];
+  const tipRe = /\b(trick|tip|remember|mnemonic|trap|handy)\b|ipucu|tüyo|tuzak|unutma|hatırla|ترفند|نکته|یادت|تله|فراموش|truco|consejo|trampa|recuerda/i;
+  let tip = null;
+  const restSentences = [];
+  for(let i=1;i<sentences.length;i++){
+    if(!tip && tipRe.test(sentences[i])){ tip = sentences[i]; }
+    else restSentences.push(sentences[i]);
+  }
+  return {hook, rest: restSentences.join(' '), tip};
+}
 function tapMark(word, meaning){
   return meaning ? `<mark class="vocab-hl" data-action="show-word-meaning" data-word="${esc(word)}" data-meaning="${esc(meaning)}">${esc(word)}</mark>` : '<b>'+esc(word)+'</b>';
 }
@@ -4248,7 +4261,13 @@ function renderGrammarTrap(id){
           <span class="item-ic" style="background:var(--bg-elevated); box-shadow:var(--shadow); color:var(--cat-gram); flex:0 0 auto; width:36px; height:36px;">${ICONS.book}</span>
           <div class="eyebrow" style="color:var(--cat-gram); font-size:12.5px;">${L('The rule','Kural','قاعده','La regla')}</div>
         </div>
-        ${renderLessonText(L(t.exp.en,t.exp.tr,t.exp.fa,t.exp.es), '--cat-gram')}
+        ${(() => { const st = structureExplanation(L(t.exp.en,t.exp.tr,t.exp.fa,t.exp.es)); return `
+        ${st.hook ? `<p style="margin-top:12px; font-size:16.5px; font-weight:800; line-height:1.55; color:var(--ink);">${esc(st.hook)}</p>` : ''}
+        ${renderLessonText(st.rest, '--cat-gram')}
+        ${st.tip ? `<div style="margin-top:14px; padding:11px 13px; border-radius:14px; background:var(--bg-elevated); display:flex; gap:10px; align-items:flex-start; border:1.5px solid var(--cat-gram-soft);">
+          <span style="display:inline-flex; align-items:center; justify-content:center; width:26px; height:26px; border-radius:50%; background:var(--cat-gram-soft); flex:0 0 auto; font-size:13px;">💡</span>
+          <div style="font-size:13.5px; font-weight:600; color:var(--ink); line-height:1.5; padding-top:3px;">${esc(st.tip)}</div>
+        </div>` : ''}`; })()}
       </div>
 
       <div class="row" style="gap:7px; align-items:center; margin:22px 0 10px;">

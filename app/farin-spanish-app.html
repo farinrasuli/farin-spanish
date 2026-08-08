@@ -336,6 +336,7 @@
   .whatsapp-card{background:linear-gradient(135deg, var(--cat-diag-soft), var(--bg-elevated)); border:1px solid var(--border-soft); border-radius:var(--radius); padding:18px;}
 
   .vocab-hl{background:var(--cat-voc-soft); color:var(--cat-voc); font-weight:700; padding:1px 3px; border-radius:5px; cursor:pointer; -webkit-tap-highlight-color:transparent;}
+  .vocab-hl, .contrast-line span.txt, .phrase-example, .phrase-mean, .flash-sentence, .flash-word, .card-flat[dir="ltr"] p{-webkit-touch-callout:none; -webkit-user-select:none; -moz-user-select:none; user-select:none;}
   .vocab-hl:active{filter:brightness(.85);}
   .word-tooltip{position:fixed; z-index:60; max-width:min(78vw,280px); background:var(--ink); color:var(--bg); border-radius:14px; padding:9px 13px; font-size:13px; line-height:1.4; box-shadow:var(--shadow); opacity:0; transform:translateY(4px) scale(.96); transition:opacity .15s ease, transform .15s ease; pointer-events:none;}
   .word-tooltip.show{opacity:1; transform:translateY(0) scale(1);}
@@ -2848,15 +2849,52 @@ function showWordTooltip(el){
   }, 2600);
 }
 function highlightStoryVocab(text, vocab){
-  const words = (vocab||[]).map(v=>v.word).filter(Boolean).sort((a,b)=>b.length-a.length);
-  if(!words.length) return esc(text);
-  const pattern = words.map(w=>w.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')).join('|');
-  const re = new RegExp('\\b(?:'+pattern+')\\b', 'gi');
-  const byWord = {}; vocab.forEach(v=>{ byWord[v.word.toLowerCase()] = L(v.en, v.tr, v.fa); });
+  if(!vocab || !vocab.length) return esc(text);
+  const escRe = (w) => w.replace(/[.*+?^${}()|[\]\\]/g,'\\$&').replace(/\s+/g,'\\s+');
+  const variantMap = {};
+  const allVariants = [];
+  const addVariant = (form, meaning) => {
+    const key = (form||'').toLowerCase();
+    if(key && !variantMap[key]){ variantMap[key] = meaning; allVariants.push(form); }
+  };
+  // Story vocab is often listed in dictionary form (infinitive verbs, bare nouns
+  // with a default article) but appears conjugated/inflected in the actual text —
+  // so beyond the exact word, also index a bare stem that \w* can extend to match
+  // whatever form actually shows up (aflojarse -> "afloj" matches "aflojado", etc).
+  vocab.forEach(v=>{
+    const w = (v.word||'').trim();
+    if(!w) return;
+    const meaning = L(v.en, v.tr, v.fa);
+    addVariant(w, meaning);
+    const noArticle = w.replace(/^(el|la|los|las|un|una)\s+/i, '');
+    if(noArticle !== w) addVariant(noArticle, meaning);
+    if(!/\s/.test(noArticle) && noArticle.length >= 5){
+      let base = noArticle;
+      const reflexive = /^([a-záéíóúñü]+)(ar|er|ir)se$/i.exec(base);
+      if(reflexive) base = reflexive[1] + reflexive[2];
+      const inf = /^([a-záéíóúñü]{3,})(ar|er|ir)$/i.exec(base);
+      if(inf) addVariant(inf[1], meaning);
+      else{
+        const genderStem = /^([a-záéíóúñü]{4,}?)(os|as|o|a)$/i.exec(base);
+        if(genderStem) addVariant(genderStem[1], meaning);
+      }
+    }
+  });
+  allVariants.sort((a,b)=>b.length-a.length);
+  const pattern = allVariants.map(escRe).join('|');
+  const re = new RegExp('\\b(?:'+pattern+')[\\wáéíóúñüÁÉÍÓÚÑÜ]*', 'gi');
   let result = '', last = 0, m;
   while((m = re.exec(text))){
-    result += esc(text.slice(last, m.index)) + tapMark(m[0], byWord[m[0].toLowerCase()]);
+    const lower = m[0].toLowerCase();
+    let meaning = variantMap[lower];
+    if(!meaning){
+      let best = '';
+      allVariants.forEach(v=>{ const vl=v.toLowerCase(); if(lower.indexOf(vl)===0 && vl.length>best.length) best = vl; });
+      if(best) meaning = variantMap[best];
+    }
+    result += esc(text.slice(last, m.index)) + tapMark(m[0], meaning);
     last = m.index + m[0].length;
+    if(re.lastIndex === m.index) re.lastIndex++;
   }
   result += esc(text.slice(last));
   return result;

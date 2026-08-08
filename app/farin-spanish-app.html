@@ -4522,19 +4522,28 @@ function renderStoryDetail(id){
         <button class="icon-btn" data-action="toggle-story-music" aria-label="${L('Toggle background music','Arka plan müziğini aç/kapat','روشن/خاموش کردن موسیقی پس‌زمینه','Activar/desactivar música de fondo')}">${storyMusicMuted ? ICONS.soundOff : ICONS.soundOn}</button>
       </div>
       <div class="card-flat" dir="ltr" style="line-height:1.7; font-size:15px;">${paragraphs}</div>
-      <h3 class="display" style="font-size:14px; margin:20px 0 4px;">${L('New words','Yeni kelimeler','کلمات جدید','Palabras nuevas')}</h3>
+      <div class="row" style="gap:7px; align-items:center; margin:20px 0 8px;">
+        <span class="item-ic" style="background:var(--cat-voc-soft); color:var(--cat-voc); flex:0 0 auto; width:26px; height:26px;">${ICONS.cards}</span>
+        <h3 class="display" style="font-size:14px;">${L('New words','Yeni kelimeler','کلمات جدید','Palabras nuevas')}</h3>
+      </div>
       <div class="card-flat" dir="ltr" style="background:var(--cat-voc-soft); border-color:var(--cat-voc-soft);">
-        ${s.vocab.map(v=>{ const gloss = LANG==='fa' ? v.fa : (LANG==='es' ? null : v.tr); return `<div class="phrase-row"><div class="phrase-term" style="color:var(--cat-voc);">${esc(v.word)}</div><div class="phrase-mean">${v.en?esc(v.en):''}${gloss?' — '+esc(gloss):''}</div></div>`; }).join('')}
+        ${s.vocab.map((v,idx)=>{ const gloss = LANG==='fa' ? v.fa : (LANG==='es' ? null : v.tr); return `<div class="phrase-row"><div class="row" style="gap:8px; align-items:center;"><span style="display:inline-flex; align-items:center; justify-content:center; width:20px; height:20px; border-radius:50%; background:var(--bg-elevated); color:var(--cat-voc); font-size:10.5px; font-weight:800; flex:0 0 auto;">${idx+1}</span><div class="phrase-term" style="color:var(--cat-voc);">${esc(v.word)}</div></div><div class="phrase-mean" style="margin-top:2px;">${v.en?esc(v.en):''}${gloss?' — '+esc(gloss):''}</div></div>`; }).join('')}
       </div>
       ${s.grammarFocus ? `
-      <h3 class="display" style="font-size:14px; margin:20px 0 4px;">${L('Grammar focus','Dilbilgisi odağı','نکته گرامری','Enfoque gramatical')}</h3>
+      <div class="row" style="gap:7px; align-items:center; margin:20px 0 8px;">
+        <span class="item-ic" style="background:var(--cat-gram-soft); color:var(--cat-gram); flex:0 0 auto; width:26px; height:26px;">${ICONS.dumbbell}</span>
+        <h3 class="display" style="font-size:14px;">${L('Grammar focus','Dilbilgisi odağı','نکته گرامری','Enfoque gramatical')}</h3>
+      </div>
       <div class="card-flat" dir="ltr">
-        ${s.grammarFocus.map(g=>`<div class="phrase-row"><div class="phrase-term">${esc(g.point)}</div><div class="phrase-mean" style="font-style:italic;">${esc(g.example)}</div></div>`).join('')}
+        ${s.grammarFocus.map((g,idx)=>`<div class="phrase-row"><div class="row" style="gap:8px; align-items:center;"><span style="display:inline-flex; align-items:center; justify-content:center; width:20px; height:20px; border-radius:50%; background:var(--cat-gram-soft); color:var(--cat-gram); font-size:10.5px; font-weight:800; flex:0 0 auto;">${idx+1}</span><div class="phrase-term">${esc(g.point)}</div></div><div class="phrase-mean" style="font-style:italic; margin-top:2px;">${esc(g.example)}</div></div>`).join('')}
       </div>` : ''}
       ${s.discussionQuestions ? `
-      <h3 class="display" style="font-size:14px; margin:20px 0 4px;">${L('Discussion questions','Tartışma soruları','سوالات بحث','Preguntas de discusión')}</h3>
+      <div class="row" style="gap:7px; align-items:center; margin:20px 0 8px;">
+        <span class="item-ic" style="background:var(--cat-story-soft); color:var(--cat-story); flex:0 0 auto; width:26px; height:26px;">${ICONS.chat}</span>
+        <h3 class="display" style="font-size:14px;">${L('Discussion questions','Tartışma soruları','سوالات بحث','Preguntas de discusión')}</h3>
+      </div>
       <div class="card-flat" dir="ltr">
-        ${s.discussionQuestions.map((q,i)=>`<div class="phrase-row"><div class="phrase-term">${i+1}. ${esc(q)}</div></div>`).join('')}
+        ${s.discussionQuestions.map((q,i)=>`<div class="phrase-row"><div class="row" style="gap:8px; align-items:flex-start;"><span style="display:inline-flex; align-items:center; justify-content:center; width:20px; height:20px; border-radius:50%; background:var(--cat-story-soft); color:var(--cat-story); font-size:10.5px; font-weight:800; flex:0 0 auto; margin-top:1px;">${i+1}</span><div class="phrase-term" style="font-weight:600;">${esc(q)}</div></div></div>`).join('')}
       </div>` : ''}
       ${s.writingPractice ? `
       <h3 class="display" style="font-size:14px; margin:20px 0 4px;">${L('Writing practice','Yazma alıştırması','تمرین نوشتاری','Práctica de escritura')}</h3>

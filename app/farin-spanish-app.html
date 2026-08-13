@@ -353,6 +353,10 @@
   .intro-glow{position:relative; animation:intro-heartbeat 2.6s ease-in-out infinite; box-shadow:0 0 0 2px rgba(255,194,46,.65), 0 0 26px 6px rgba(255,194,46,.5);}
   .intro-glow .sparkle{color:#ffc22e;}
   @keyframes intro-heartbeat{0%,100%{transform:scale(1);} 50%{transform:scale(1.035);}}
+  .roadmap-pin-current{animation:path-ping 1.8s ease-out infinite;}
+  @keyframes path-ping{0%{box-shadow:0 0 0 0 rgba(255,122,89,.55);} 70%{box-shadow:0 0 0 11px rgba(255,122,89,0);} 100%{box-shadow:0 0 0 0 rgba(255,122,89,0);}}
+  .roadmap-here-badge{animation:roadmap-here-bounce 1.6s ease-in-out infinite;}
+  @keyframes roadmap-here-bounce{0%,100%{transform:translateY(0);} 50%{transform:translateY(-3px);}}
 
   /* ---- bottom nav ---- */
   .bottomnav{position:fixed; bottom:0; left:50%; transform:translateX(-50%); width:100%; max-width:480px; background:var(--bg-elevated); border-top:1px solid var(--border); display:flex; padding:8px 8px calc(8px + env(safe-area-inset-bottom,0)); gap:4px; z-index:20;}
@@ -5057,14 +5061,16 @@ function renderStudentPanel(){
             <span style="font-size:11px; font-weight:800; color:var(--ink-faint); text-transform:uppercase; letter-spacing:.06em;">${L('Start','Başla','شروع','Inicio')}</span>
           </div>
           <div style="position:absolute; left:14px; top:38px; bottom:40px; width:3px; border-radius:2px; background-image:repeating-linear-gradient(to bottom, var(--border) 0 6px, transparent 6px 13px);"></div>
-          ${roadmap.map((r,i)=>{
+          ${(() => { const currentIndex = roadmap.findIndex(r=>!r.done); return roadmap.map((r,i)=>{
             const color = PALETTE_COLORS[i % PALETTE_COLORS.length];
+            const isCurrent = i === currentIndex;
             return `
           <div style="position:relative; padding-left:40px; margin-bottom:${i<roadmap.length-1?'20px':'6px'};">
-            <div style="position:absolute; left:0; top:-1px; width:30px; height:30px; border-radius:50% 50% 50% 0; transform:rotate(-45deg); background:${r.done?color:'var(--bg-elevated)'}; border:2.5px solid ${color}; display:flex; align-items:center; justify-content:center; box-shadow:0 3px 6px -1px rgba(0,0,0,.22);">
+            <div class="${isCurrent?'roadmap-pin-current':''}" style="position:absolute; left:0; top:-1px; width:30px; height:30px; border-radius:50% 50% 50% 0; transform:rotate(-45deg); background:${r.done?color:'var(--bg-elevated)'}; border:2.5px solid ${color}; display:flex; align-items:center; justify-content:center; box-shadow:0 3px 6px -1px rgba(0,0,0,.22);">
               <span style="transform:rotate(45deg); color:${r.done?'#fff':color}; font-size:11px; font-weight:800;">${r.done?ICONS.check:String(i+1).padStart(2,'0')}</span>
             </div>
-            <div style="background:var(--bg-sunken); border-radius:16px; padding:12px 14px; border:1.5px solid ${r.done?color+'66':'var(--border-soft)'};">
+            ${isCurrent ? `<span class="roadmap-here-badge pill" style="position:absolute; left:36px; top:-14px; background:var(--accent); color:var(--accent-ink); font-size:9.5px; white-space:nowrap; box-shadow:var(--shadow); z-index:1;">${L("You're here","Buradasın","اینجایی","Estás aquí")}</span>` : ''}
+            <div style="background:var(--bg-sunken); border-radius:16px; padding:12px 14px; border:1.5px solid ${isCurrent?'var(--accent)':(r.done?color+'66':'var(--border-soft)')};">
               ${r.date ? `<div style="font-size:10px; color:var(--ink-faint); font-weight:800; text-transform:uppercase; letter-spacing:.03em;">${esc(r.date)}</div>` : ''}
               <div style="font-weight:800; font-size:14.5px; margin-top:2px; color:${color}; ${r.done?'text-decoration:line-through; opacity:.6;':''}">${esc(r.title||r.label||'')}</div>
               ${r.homework ? `
@@ -5084,7 +5090,7 @@ function renderStudentPanel(){
                 </div>
               </div>` : ''}
             </div>
-          </div>`; }).join('')}
+          </div>`; }).join(''); })()}
           <div style="position:relative; padding-left:40px;">
             <div style="position:absolute; left:2px; top:-4px; font-size:24px;">${roadmapDone===roadmap.length ? '🏆' : '🏁'}</div>
             <span style="font-size:11px; font-weight:800; color:var(--ink-faint); text-transform:uppercase; letter-spacing:.06em; padding-top:5px; display:inline-block;">${roadmapDone===roadmap.length ? L("You've made it!",'Başardın!','موفق شدی!','¡Lo lograste!') : L('Goal','Hedef','هدف','Meta')}</span>

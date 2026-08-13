@@ -232,6 +232,12 @@
   .stat-box-ic svg{width:15px; height:15px;}
   .stat-num{font-size:15px; font-weight:800; line-height:1.15;}
   .stat-lab{font-size:9.5px; color:var(--ink-faint); font-weight:700; text-transform:uppercase; letter-spacing:.02em; margin-top:1px;}
+  .stat-box-club{position:relative; overflow:hidden; border:none; cursor:pointer; text-align:start; background:linear-gradient(135deg,#8a5cf7,#ff4fa3); box-shadow:0 6px 16px -8px rgba(138,92,247,.6);}
+  .stat-box-club .stat-box-ic{background:rgba(255,255,255,.28); color:#fff;}
+  .stat-box-club .stat-num, .stat-box-club .stat-lab{color:#fff;}
+  .stat-box-club .stat-lab{opacity:.9;}
+  .stat-box-club .sparkle{color:#fff;}
+  .stat-box-club:active{transform:scale(.97);}
 
   /* ---- featured tile (roadmap hero card in the dashboard grid) ---- */
   .tile-featured{width:100%; text-align:start; border:none; border-radius:26px; padding:18px 18px 16px; color:#fff; position:relative; overflow:hidden; box-shadow:var(--shadow); background-image:radial-gradient(circle at 92% 0%, rgba(255,255,255,.35), transparent 60%);}
@@ -379,6 +385,21 @@
 
 <div id="app"></div>
 
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+<script>
+try{
+  firebase.initializeApp({
+    apiKey: "AIzaSyDo0M3Hyzy1ZdEgVx7I8vkc1YHxpA-8cA4",
+    authDomain: "farinenglish.firebaseapp.com",
+    projectId: "farinenglish",
+    storageBucket: "farinenglish.firebasestorage.app",
+    messagingSenderId: "524447251671",
+    appId: "1:524447251671:web:0b7f87276f2ee65e214492"
+  });
+}catch(e){}
+</script>
 <script>
 (function(){
 "use strict";
@@ -411,7 +432,8 @@ const ICONS = {
   soundOff:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9.5v5h3.5L13 19V5L7.5 9.5Z" fill="currentColor" stroke="none"/><path d="M16 9.5 20.5 14"/><path d="M20.5 9.5 16 14"/></svg>',
   suitcase:'<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="8" width="19" height="13" rx="2.4"/><path d="M8.5 8V5.5A1.7 1.7 0 0 1 10.2 3.8h3.6A1.7 1.7 0 0 1 15.5 5.5V8"/><path d="M2.5 13.5h19"/><path d="M10.6 13.2h2.8"/></svg>',
   pen:'<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20 4.8 15.8 15.6 5a2 2 0 0 1 2.8 0l1.6 1.6a2 2 0 0 1 0 2.8L9.2 20.2 4 20Z"/><path d="M14 7.2 17.8 11"/></svg>',
-  mic:'<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="2.5" width="6" height="12" rx="3"/><path d="M5.5 11.5v1a6.5 6.5 0 0 0 13 0v-1"/><line x1="12" y1="19" x2="12" y2="22"/><line x1="8.5" y1="22" x2="15.5" y2="22"/></svg>'
+  mic:'<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="2.5" width="6" height="12" rx="3"/><path d="M5.5 11.5v1a6.5 6.5 0 0 0 13 0v-1"/><line x1="12" y1="19" x2="12" y2="22"/><line x1="8.5" y1="22" x2="15.5" y2="22"/></svg>',
+  users:'<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="8.5" cy="8" r="3.2"/><path d="M2.8 19c.6-3.4 3-5.2 5.7-5.2s5.1 1.8 5.7 5.2"/><circle cx="16.8" cy="8.6" r="2.6"/><path d="M15.3 13.9c2.2.2 4 1.7 4.5 4.4"/></svg>'
 };
 
 /* ============================= I18N ============================= */
@@ -421,6 +443,7 @@ function L(en, tr, fa, es){ if(LANG==='tr') return tr; if(LANG==='fa') return fa
 /* ============================= CONFIG ============================= */
 const WHATSAPP_NUMBER = '905467615974'; // country code (90) + number, no + or spaces
 const LEVELS = ['A1','A2','B1','B2','C1'];
+const LEVEL_STAGES = ['A1','A1.2','A2','A2.2','B1','B1.2','B2','B2.2','C1','C1.2'];
 
 /* ============================= DIAGNOSTIC OPTIONS ============================= */
 const ARCHETYPES = {
@@ -3902,7 +3925,7 @@ function freshState(){
     profile:{name:'', motivationTag:null, goals:[], archetype:null, level:null, levelStage:1, learnerType:null, priorityArea:null, completedDiagnostic:false, dashboardIntroShown:false, wantsContact:false, contactPhone:''},
     progress:{sessionsExplored:0, streak:0, lastActiveDate:null, completedTraps:[], completedVocabSets:[], completedScenes:[], completedStories:[], srs:{}, badgesEarnedAt:{}, reviewsCompleted:0, roadmapChecked:{}, dailyTasksDate:null, dailyTasksChecked:{}, writingRoundsDone:0, speakingRoundsDone:0},
     diag:{step:0, goals:[], level:null, learnerType:null, priorityArea:null},
-    quiz:null
+    quiz:null, studentPanelCache:null
   };
 }
 let state = load();
@@ -4020,16 +4043,6 @@ function progressArrForKind(kind){
        : kind==='story' ? state.progress.completedStories
        : state.progress.completedScenes;
 }
-function relativeDate(iso){
-  if(!iso) return '—';
-  const today = todayISO();
-  const yd = new Date(); yd.setDate(yd.getDate()-1);
-  const y = localDateStr(yd);
-  if(iso === today) return L('Today','Bugün','امروز','Hoy');
-  if(iso === y) return L('Yesterday','Dün','دیروز','Ayer');
-  return new Date(iso).toLocaleDateString(LANG==='tr'?'tr-TR':undefined,{month:'short', day:'numeric'});
-}
-
 /* ============================= HELPERS ============================= */
 function esc(s){ return String(s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 function renderLessonText(text, accentVar){
@@ -4204,13 +4217,30 @@ function goalLabel(p){
   const opt = MOTIVATION_OPTIONS.find(o=>o.value===p.motivationTag);
   return opt ? L(opt.label.en, opt.label.tr, opt.label.fa, opt.label.es) : L('Not set','Belirtilmemiş','تنظیم‌نشده','No definido');
 }
-function leadInfoSuffix(p){
+function leadInfoSuffixBasic(p){
   return L(
     " My name is "+p.name+", my level is "+p.level+", and my goal is: "+goalLabel(p)+".",
     " Adım "+p.name+", seviyem "+p.level+", hedefim: "+goalLabel(p)+".",
     " اسم من "+p.name+" است، سطحم "+p.level+" است و هدفم: "+goalLabel(p)+".",
     " Me llamo "+p.name+", mi nivel es "+p.level+" y mi meta es: "+goalLabel(p)+"."
   );
+}
+function roadmapSummarySuffix(p){
+  let roadmap;
+  try{ roadmap = buildRoadmap(p); }catch(e){ return ''; }
+  if(!roadmap || !roadmap.length) return '';
+  const rc = (state.progress && state.progress.roadmapChecked) || {};
+  const doneCount = roadmap.filter((_,i)=>rc[i]).length;
+  const list = roadmap.map((it,i)=>(rc[i]?'✓ ':'• ')+it.title).join(', ');
+  return L(
+    " Full roadmap ("+doneCount+"/"+roadmap.length+" done): "+list+".",
+    " Tüm yol haritası ("+doneCount+"/"+roadmap.length+" tamam): "+list+".",
+    " کل نقشه راه ("+doneCount+"/"+roadmap.length+" انجام‌شده): "+list+".",
+    " Ruta completa ("+doneCount+"/"+roadmap.length+" hecho): "+list+"."
+  );
+}
+function leadInfoSuffix(p){
+  return leadInfoSuffixBasic(p) + roadmapSummarySuffix(p);
 }
 function displayPhone(){
   const n = WHATSAPP_NUMBER;
@@ -4285,7 +4315,7 @@ function buildRoadmap(profile){
     'Merhaba! Ben '+profile.name+'. '+(topic?'"'+topic+'" konulu ':'')+'bir konuşma seansı ayırtmak istiyorum.',
     'سلام! من '+profile.name+' هستم. می‌خواهم یک جلسه مکالمه'+(topic?' درباره «'+topic+'»':'')+' رزرو کنم.',
     '¡Hola! Soy '+profile.name+'. Quiero reservar una sesión de conversación'+(topic?' sobre "'+topic+'"':'')+'.'
-  )+leadInfoSuffix(profile));
+  )+leadInfoSuffixBasic(profile));
   const pushSession = (topic) => items.push({type:'session', refId:null, goal:primaryGoal, waLink:sessionLink(topic), title:L('Live speaking session','Canlı konuşma seansı','جلسه زنده مکالمه','Sesión de conversación en vivo')});
   // Drillers repeat-to-learn, and anyone who flagged vocab as their weak spot gets a warm-up rep first.
   if(stage===1 && (profile.priorityArea==='vocab' || profile.learnerType==='driller') && vPool.length){
@@ -4325,7 +4355,7 @@ function render(){
   const root = document.getElementById('app');
   document.documentElement.dir = LANG==='fa' ? 'rtl' : 'ltr';
   root.innerHTML = screens[state.view] ? screens[state.view]() : screens['dashboard']();
-  const bottomNavViews = ['dashboard','goals-list','speaking-club','story-list'];
+  const bottomNavViews = ['dashboard','goals-list','speaking-club','story-list','student-club'];
   const nav = bottomNavViews.includes(state.view) ? bottomNav() : '';
   root.insertAdjacentHTML('beforeend', nav);
   const noHomeButtonViews = bottomNavViews.concat(['diagnostic-intro','diagnostic-step']);
@@ -4365,7 +4395,8 @@ function bottomNav(){
     {v:'dashboard', ic:ICONS.home, label:L('Home','Ana Sayfa','خانه','Inicio')},
     {v:'goals-list', ic:ICONS.compass, label:L('Goals','Hedefler','اهداف','Metas')},
     {v:'speaking-club', ic:ICONS.chat, label:L('Studio','Stüdyo','استودیو','Estudio')},
-    {v:'story-list', ic:ICONS.book, label:L('Stories','Hikayeler','داستان‌ها','Historias')}
+    {v:'story-list', ic:ICONS.book, label:L('Stories','Hikayeler','داستان‌ها','Historias')},
+    {v:'student-club', ic:ICONS.users, label:L('Club','Kulüp','باشگاه','Club')}
   ];
   return `<nav class="bottomnav">${items.map(it=>`
     <button class="nav-btn ${state.view===it.v?'active':''}" data-action="nav" data-view="${it.v}">
@@ -4581,7 +4612,12 @@ function statRow(pr){
   return `<div class="stat-row">
     <div class="stat-box"><span class="stat-box-ic" style="background:var(--cat-review-soft); color:var(--cat-review);">${ICONS.flame}</span><div><div class="stat-num">${pr.sessionsExplored}</div><div class="stat-lab">${L('Sessions','Seans','جلسات','Sesiones')}</div></div></div>
     <div class="stat-box"><span class="stat-box-ic" style="background:var(--cat-lis-soft); color:var(--cat-lis);">${ICONS.flame}</span><div><div class="stat-num">${pr.streak}</div><div class="stat-lab">${L('Day streak','Gün serisi','روزهای متوالی','Racha de días')}</div></div></div>
-    <div class="stat-box"><span class="stat-box-ic" style="background:var(--cat-voc-soft); color:var(--cat-voc);">${ICONS.compass}</span><div><div class="stat-num" style="font-size:12.5px;">${relativeDate(pr.lastActiveDate)}</div><div class="stat-lab">${L('Last active','Son aktivite','آخرین فعالیت','Última actividad')}</div></div></div>
+    <button class="stat-box stat-box-club" data-action="nav" data-view="student-club">
+      <span class="sparkle" style="top:5px; right:7px; left:auto; width:5px; height:5px;"></span>
+      <span class="sparkle" style="bottom:5px; left:9px; width:4px; height:4px; animation-delay:.7s;"></span>
+      <span class="stat-box-ic">${ICONS.users}</span>
+      <div><div class="stat-num" style="font-size:12.5px;">${L('Club','Kulüp','باشگاه','Club')}</div><div class="stat-lab">${L('Student Club','Öğrenci Kulübü','باشگاه دانش‌آموزان','Club de estudiantes')}</div></div>
+    </button>
   </div>`;
 }
 const ARCHETYPE_COLOR = {travel:'var(--cat-story)', career:'var(--clay-orange)', exam:'var(--cat-diag)', everyday:'var(--cat-lis)', immigration:'var(--cat-voc)'};
@@ -4926,6 +4962,170 @@ function renderContactOptIn(){
       <input id="contact-optin-phone" type="tel" placeholder="${L('Your WhatsApp number','WhatsApp numaran','شماره واتس‌اپت','Tu número de WhatsApp')}" value="${esc(p.contactPhone||'')}" style="width:100%; box-sizing:border-box; padding:12px 14px; border-radius:12px; border:1.5px solid var(--border); font-size:15px; background:var(--bg-elevated); color:var(--ink);">
       <button class="btn btn-primary" style="margin-top:8px; width:100%;" data-action="save-contact-optin">${L('Save & send on WhatsApp','Kaydet ve WhatsApp\'tan gönder','ذخیره و ارسال در واتس‌اپ','Guardar y enviar por WhatsApp')}</button>
       <p id="contact-optin-status" style="font-size:12px; color:var(--success); margin-top:6px; display:none;">${L('Sent!','Gönderildi!','ارسال شد!','¡Enviado!')}</p>
+    </div>
+  </div>`;
+}
+
+/* ============================= RENDER: STUDENT CLUB ============================= */
+function renderStudentClub(){
+  return `<div class="fade-in">
+    ${topbar(false)}
+    ${sectionHeadNoBack(L('Student Club','Öğrenci Kulübü','باشگاه دانش‌آموزان','Club de estudiantes'), L('Your VIP corner — check your progress or join the club.','Senin VIP köşen — ilerlemeni kontrol et ya da kulübe katıl.','گوشه ویژه تو — پیشرفتت را ببین یا به باشگاه بپیوند.','Tu rincón VIP — revisa tu progreso o únete al club.'))}
+    <div class="screen" style="padding-top:0;">
+      <button class="tile-featured" data-action="nav" data-view="student-club-login" style="background:var(--cat-diag); margin-bottom:12px;">
+        <div class="row between" style="align-items:flex-start;">
+          <div>
+            <div class="hero-eyebrow">${L("I'm a student","Ben bir öğrenciyim",'من دانش‌آموز هستم','Soy estudiante')}</div>
+            <div class="tile-featured-title">${L('See my progress','İlerlemimi gör','دیدن پیشرفتم','Ver mi progreso')}</div>
+            <p style="font-size:12px; color:rgba(255,255,255,.85); margin-top:6px;">${L('Enter your pass to open your own private panel.','Kendi özel panelini açmak için kodunu gir.','برای باز کردن پنل خصوصی‌ات رمزت را وارد کن.','Ingresa tu clave para abrir tu panel privado.')}</p>
+          </div>
+          <span class="tile-featured-ic">${ICONS.star}</span>
+        </div>
+      </button>
+      <button class="tile-featured" data-action="nav" data-view="student-club-join" style="background:var(--clay-orange);">
+        <div class="row between" style="align-items:flex-start;">
+          <div>
+            <div class="hero-eyebrow">${L('New here','Yeni misin','تازه اومدی','¿Nuevo aquí?')}</div>
+            <div class="tile-featured-title">${L('Join Student Club','Öğrenci Kulübüne Katıl','پیوستن به باشگاه دانش‌آموزان','Únete al club de estudiantes')}</div>
+            <p style="font-size:12px; color:rgba(255,255,255,.85); margin-top:6px;">${L('Share your name and number so your teacher can reach you.','Öğretmenin ulaşabilsin diye adını ve numaranı paylaş.','اسم و شماره‌ات را بگو تا معلمت بتواند بهت برسد.','Comparte tu nombre y número para que tu profesor pueda contactarte.')}</p>
+          </div>
+          <span class="tile-featured-ic">${ICONS.heart}</span>
+        </div>
+      </button>
+    </div>
+  </div>`;
+}
+function renderStudentClubLogin(){
+  const vp = state.viewParams || {};
+  return `<div class="fade-in">
+    ${sectionHead(L('Enter your pass','Kodunu gir','رمزت را وارد کن','Ingresa tu clave'), L('Your teacher gave you a special pass or username.','Öğretmenin sana özel bir kod ya da kullanıcı adı verdi.','معلمت یک رمز یا نام کاربری ویژه به تو داده.','Tu profesor te dio una clave o nombre de usuario especial.'), 'student-club')}
+    <div class="screen" style="padding-top:0;">
+      <input id="student-panel-code-input" type="text" autocapitalize="characters" placeholder="${L('Your pass / username','Kodun / kullanıcı adın','رمز / نام کاربری‌ات','Tu clave / usuario')}" style="width:100%; box-sizing:border-box; padding:14px 16px; border-radius:14px; border:1.5px solid var(--border); font-size:16px; text-align:center; letter-spacing:.05em; background:var(--bg-elevated); color:var(--ink);" value="${esc(vp.code||'')}">
+      ${vp.error ? `<p style="color:var(--error); font-size:13px; margin-top:8px; text-align:center;">${L("We couldn't find that pass. Double-check it and try again.",'Bu kodu bulamadık. Kontrol edip tekrar dene.','این رمز را پیدا نکردیم. بررسی کن و دوباره امتحان کن.','No encontramos esa clave. Revísala e inténtalo de nuevo.')}</p>` : ''}
+      <button class="btn btn-primary" style="margin-top:14px;" data-action="student-panel-submit">${L('View my progress','İlerlemimi gör','دیدن پیشرفتم','Ver mi progreso')}</button>
+    </div>
+  </div>`;
+}
+function levelStageInfo(level, sessionsInStage){
+  const idx = LEVEL_STAGES.indexOf(level);
+  const sessions = Math.max(0, Math.min(10, Number(sessionsInStage)||0));
+  const next = idx>=0 && idx<LEVEL_STAGES.length-1 ? LEVEL_STAGES[idx+1] : null;
+  return {idx, sessions, next};
+}
+let studentPanelData = state.studentPanelCache || null;
+function renderStudentPanel(){
+  const d = studentPanelData || {};
+  const roadmap = Array.isArray(d.roadmap) ? d.roadmap : [];
+  const homework = Array.isArray(d.homework) ? d.homework.slice().sort((a,b)=>(b.date||'').localeCompare(a.date||'')) : [];
+  const stage = levelStageInfo(d.level, d.sessionsInStage);
+  const roadmapDone = roadmap.filter(r=>r.done).length;
+  return `<div class="fade-in">
+    ${sectionHead(L('Your Progress','İlerlemen','پیشرفت تو','Tu progreso'), L('Curated by your teacher, just for you.','Öğretmenin tarafından, sadece senin için hazırlandı.','توسط معلمت و فقط برای تو آماده شده.','Preparado por tu profesor, solo para ti.'), 'student-club')}
+    <div class="screen" style="padding-top:0;">
+      <div class="character-card" style="background:linear-gradient(135deg,#8a5cf7,#ff4fa3);">
+        <span class="sparkle" style="top:16px; left:22px;"></span>
+        <span class="sparkle" style="top:36px; right:26px; left:auto; width:6px; height:6px; animation-delay:.5s;"></span>
+        <span class="sparkle" style="bottom:14px; right:20px; left:auto; width:5px; height:5px; animation-delay:1s;"></span>
+        <div class="eyebrow" style="color:rgba(255,255,255,.85);">${esc(d.level || L('Level not set','Seviye belirtilmemiş','سطح تنظیم‌نشده','Nivel no definido'))}</div>
+        <h1 class="display" style="font-size:22px; margin-top:4px; color:#fff;">${esc(d.name || L('Student','Öğrenci','دانش‌آموز','Estudiante'))}</h1>
+      </div>
+
+      ${stage.idx>=0 ? `
+      <div class="card-flat" style="margin-top:16px;">
+        <div class="row between" style="align-items:center;">
+          <div class="eyebrow">${L('Level progress','Seviye ilerlemesi','پیشرفت سطح','Progreso de nivel')}</div>
+          <span style="font-size:12px; font-weight:700; color:var(--ink-soft);">${stage.sessions}/10 ${L('sessions','seans','جلسه','sesiones')}</span>
+        </div>
+        <div class="progress-track" style="margin-top:10px;"><div class="progress-fill" style="width:${stage.sessions*10}%; background:var(--cat-diag);"></div></div>
+        <p style="font-size:12px; color:var(--ink-faint); margin-top:8px;">${stage.next
+          ? L('Next stop: '+stage.next, stage.next+' — bir sonraki durak', 'ایستگاه بعدی: '+stage.next, 'Próxima parada: '+stage.next)
+          : L("You've reached the top of the roadmap!",'Yol haritasının zirvesine ulaştın!','به بالای نقشه راه رسیدی!','¡Llegaste a la cima de la ruta!')}</p>
+      </div>` : ''}
+
+      ${roadmap.length ? `
+      <div class="card-flat" style="margin-top:12px;">
+        <div class="row between" style="align-items:center;">
+          <div class="eyebrow">${L('Roadmap','Yol Haritası','نقشه راه','Ruta de aprendizaje')}</div>
+          <span style="font-size:12px; font-weight:700; color:var(--ink-soft);">${roadmapDone}/${roadmap.length}</span>
+        </div>
+        <div class="stack" style="gap:12px; margin-top:14px;">
+          ${roadmap.map((r,i)=>`
+          <div style="border:1.5px solid ${r.done?'var(--success-soft)':'var(--border-soft)'}; border-radius:18px; padding:14px; background:${r.done?'var(--success-soft)':'var(--bg-sunken)'};">
+            <div style="display:flex; align-items:flex-start; gap:10px;">
+              <span style="flex:0 0 auto; width:22px; height:22px; margin-top:1px; border-radius:50%; display:flex; align-items:center; justify-content:center; background:${r.done?'var(--success)':'var(--bg-elevated)'}; border:2px solid ${r.done?'var(--success)':'var(--border)'}; color:#fff;">${r.done?ICONS.check:''}</span>
+              <div style="min-width:0;">
+                <div style="font-size:10.5px; color:var(--ink-faint); font-weight:800; text-transform:uppercase; letter-spacing:.04em;">${L('Session','Seans','جلسه','Sesión')} ${i+1}${r.date ? ' · '+esc(r.date) : ''}</div>
+                <div style="font-weight:800; font-size:15px; margin-top:3px; ${r.done?'text-decoration:line-through; opacity:.65;':''}">${esc(r.title||r.label||'')}</div>
+              </div>
+            </div>
+            ${r.homework ? `
+            <div style="margin-top:10px; background:var(--bg-elevated); border-radius:12px; padding:11px 13px; display:flex; gap:10px; align-items:flex-start;">
+              <span style="flex:0 0 auto; color:var(--cat-diag); margin-top:1px;">${ICONS.pen}</span>
+              <div style="min-width:0;">
+                <div style="font-size:10.5px; font-weight:800; color:var(--ink-faint); text-transform:uppercase; letter-spacing:.03em;">${L('Homework','Ödev','تکلیف','Tarea')}</div>
+                <div style="font-size:13.5px; color:var(--ink); margin-top:3px; line-height:1.55;">${esc(r.homework)}</div>
+              </div>
+            </div>` : ''}
+            ${r.tips ? `
+            <div style="margin-top:${r.homework?'8px':'10px'}; background:var(--cat-review-soft); border-radius:12px; padding:11px 13px; display:flex; gap:10px; align-items:flex-start;">
+              <span style="flex:0 0 auto; font-size:15px; margin-top:1px;">💡</span>
+              <div style="min-width:0;">
+                <div style="font-size:10.5px; font-weight:800; color:var(--cat-review); text-transform:uppercase; letter-spacing:.03em;">${L('Tip','İpucu','نکته','Consejo')}</div>
+                <div style="font-size:13.5px; color:var(--ink); margin-top:3px; line-height:1.55;">${esc(r.tips)}</div>
+              </div>
+            </div>` : ''}
+          </div>`).join('')}
+        </div>
+      </div>` : ''}
+
+      ${homework.length ? `
+      <div class="card-flat" style="margin-top:12px;">
+        <div class="eyebrow">${L('Homework','Ödev','تکلیف','Tarea')}</div>
+        <div class="stack" style="gap:12px; margin-top:10px;">
+          ${homework.map((h,i)=>`
+          <div style="${i<homework.length-1?'border-bottom:1px solid var(--border-soft); padding-bottom:12px;':''}">
+            <div class="row between" style="align-items:flex-start; gap:8px;">
+              <div style="font-weight:700; font-size:13.5px;">${esc(h.title||'')}</div>
+              <div style="font-size:11px; color:var(--ink-faint); flex:0 0 auto; white-space:nowrap;">${esc(h.date||'')}</div>
+            </div>
+            ${(h.links||'').split('\n').map(l=>l.trim()).filter(Boolean).map(link=>`<a class="pill" href="${esc(link)}" target="_blank" rel="noopener" style="margin-top:8px; margin-right:6px; background:var(--cat-diag-soft); color:var(--cat-diag);">${L('Extra','Ekstra','اضافی','Extra')} ↗</a>`).join('')}
+          </div>`).join('')}
+        </div>
+      </div>` : ''}
+
+      <div class="card-flat" style="margin-top:12px;">
+        <div class="eyebrow">${L('Progress','İlerleme','پیشرفت','Progreso')}</div>
+        <p style="font-size:14px; margin-top:8px; line-height:1.6; white-space:pre-wrap;">${esc(d.progressNote || L('Nothing added yet — check back soon!','Henüz bir şey eklenmedi — yakında tekrar bak!','هنوز چیزی اضافه نشده — به‌زودی دوباره سر بزن!','Nada agregado aún — ¡vuelve pronto!'))}</p>
+      </div>
+      <div class="card-flat" style="margin-top:12px;">
+        <div class="eyebrow">${L('Performance','Performans','عملکرد','Desempeño')}</div>
+        <p style="font-size:14px; margin-top:8px; line-height:1.6; white-space:pre-wrap;">${esc(d.performanceNote || L('Nothing added yet — check back soon!','Henüz bir şey eklenmedi — yakında tekrar bak!','هنوز چیزی اضافه نشده — به‌زودی دوباره سر بزن!','Nada agregado aún — ¡vuelve pronto!'))}</p>
+      </div>
+      ${d.updatedAt ? `<p style="font-size:11px; color:var(--ink-faint); margin-top:12px; text-align:center;">${L('Last updated','Son güncelleme','آخرین به‌روزرسانی','Última actualización')}: ${esc(new Date(d.updatedAt).toLocaleDateString())}</p>` : ''}
+    </div>
+  </div>`;
+}
+function renderStudentClubJoin(){
+  const vp = state.viewParams || {};
+  if(vp.joined){
+    return `<div class="fade-in">
+      ${sectionHead(L('Join Student Club','Kulübe Katıl','پیوستن به باشگاه','Únete al club'), '', 'student-club')}
+      <div class="screen" style="padding-top:0; text-align:center;">
+        <div style="display:flex; justify-content:center; color:var(--accent-strong); margin-bottom:8px;">${ICONS.heart}</div>
+        <h2 class="display" style="font-size:18px;">${L("You're in!","Aramıza katıldın!",'به جمع ما پیوستی!','¡Ya estás dentro!')}</h2>
+        <p style="color:var(--ink-soft); font-size:13.5px; margin-top:8px;">${L('Your teacher will be in touch soon.','Öğretmenin yakında seninle iletişime geçecek.','معلمت به‌زودی باهات تماس می‌گیرد.','Tu profesor se pondrá en contacto pronto.')}</p>
+      </div>
+    </div>`;
+  }
+  return `<div class="fade-in">
+    ${sectionHead(L('Join Student Club','Kulübe Katıl','پیوستن به باشگاه','Únete al club'), L('Leave your name and number, and your teacher will reach out.','Adını ve numaranı bırak, öğretmenin seninle iletişime geçsin.','اسم و شماره‌ات را بگذار تا معلمت باهات تماس بگیرد.','Deja tu nombre y número, y tu profesor te contactará.'), 'student-club')}
+    <div class="screen" style="padding-top:0;">
+      <label class="field-label">${L('Your name','Adın','اسمت','Tu nombre')}</label>
+      <input id="club-join-name" type="text" placeholder="${L('First name','Adın','نام','Nombre')}" value="${esc(vp.name || state.profile.name || '')}" style="width:100%; box-sizing:border-box; padding:12px 14px; border-radius:12px; border:1.5px solid var(--border); font-size:15px; background:var(--bg-elevated); color:var(--ink); margin-bottom:12px;">
+      <label class="field-label">${L('Your WhatsApp number','WhatsApp numaran','شماره واتس‌اپت','Tu número de WhatsApp')}</label>
+      <input id="club-join-phone" type="tel" placeholder="+90 5xx xxx xx xx" value="${esc(vp.phone || state.profile.contactPhone || '')}" style="width:100%; box-sizing:border-box; padding:12px 14px; border-radius:12px; border:1.5px solid var(--border); font-size:15px; background:var(--bg-elevated); color:var(--ink);">
+      ${vp.error ? `<p style="color:var(--error); font-size:13px; margin-top:8px;">${L('Please enter your name and number.','Lütfen adını ve numaranı gir.','لطفاً اسم و شماره‌ات را وارد کن.','Por favor ingresa tu nombre y número.')}</p>` : ''}
+      <button class="btn btn-primary" style="margin-top:14px; width:100%;" data-action="student-club-join-submit">${L('Join the club','Kulübe katıl','پیوستن به باشگاه','Unirme al club')}</button>
     </div>
   </div>`;
 }
@@ -6112,6 +6312,10 @@ const screens = {
   'review-home': renderReviewHome,
   'profile': renderProfile,
   'settings': renderSettings,
+  'student-club': renderStudentClub,
+  'student-club-login': renderStudentClubLogin,
+  'student-club-join': renderStudentClubJoin,
+  'student-panel': renderStudentPanel,
   'grammar-list': renderGrammarList,
   'grammar-trap': ()=>renderGrammarTrap(state.viewParams.id),
   'vocab-list': renderVocabList,
@@ -6725,6 +6929,50 @@ const HANDLERS = {
       setTimeout(()=>{ status.style.display = 'none'; }, 2000);
     }
   },
+  'student-panel-submit'(){
+    const input = document.getElementById('student-panel-code-input');
+    const code = (input && input.value || '').trim().toUpperCase();
+    if(!code || typeof firebase === 'undefined'){
+      state.viewParams = {code, error:true};
+      render();
+      return;
+    }
+    firebase.firestore().collection('studentPanelsEs').doc(code).get().then(doc=>{
+      if(!doc.exists){
+        state.viewParams = {code, error:true};
+        render();
+        return;
+      }
+      studentPanelData = Object.assign({code}, doc.data());
+      state.studentPanelCache = studentPanelData;
+      go('student-panel');
+    }).catch(()=>{
+      state.viewParams = {code, error:true};
+      render();
+    });
+  },
+  'student-club-join-submit'(){
+    const nameEl = document.getElementById('club-join-name');
+    const phoneEl = document.getElementById('club-join-phone');
+    const name = (nameEl && nameEl.value || '').trim();
+    const phone = (phoneEl && phoneEl.value || '').trim();
+    if(!name || !phone){
+      state.viewParams = {name, phone, error:true};
+      render();
+      return;
+    }
+    try{
+      if(typeof firebase !== 'undefined'){
+        const p = state.profile;
+        firebase.firestore().collection('contactsEs').add({
+          name, phone, level: p.level || null, goal: goalLabel(p),
+          source:'student-club', createdAt: Date.now()
+        }).catch(()=>{});
+      }
+    }catch(e){}
+    state.viewParams = {joined:true};
+    save(); render();
+  },
   'toggle-story-music'(){
     storyMusicMuted = !storyMusicMuted;
     localStorage.setItem('farinMusicMuted', storyMusicMuted ? '1' : '0');
@@ -6738,10 +6986,532 @@ const HANDLERS = {
   'back'(){ try{ history.back(); }catch(e){ goBack(); } }
 };
 
+/* ============================= ADMIN PAGE (hidden, reachable via #admin) ============================= */
+function waLinkTo(phone, message){
+  const clean = String(phone||'').replace(/[^\d]/g, '');
+  return 'https://wa.me/' + clean + '?text=' + encodeURIComponent(message);
+}
+let adminContacts = null;
+let adminError = '';
+let adminLoading = false;
+let adminTab = 'contacts';
+let adminStudents = null;
+let adminStudentsLoading = false;
+let adminEditingStudent = null;
+let adminStudentError = '';
+let adminStudentInfo = '';
+let adminSavingStudent = false;
+let adminResetStatus = '';
+function renderAdminPage(){
+  const root = document.getElementById('app');
+  const user = firebase.auth().currentUser;
+  let html;
+  if(!user){
+    html = `<div class="screen" style="padding-top:40px; max-width:360px; margin:0 auto;">
+      <h1 class="display" style="font-size:20px; margin-bottom:16px;">Admin sign in</h1>
+      ${adminError ? `<p style="color:var(--error); font-size:13px; margin-bottom:10px;">${esc(adminError)}</p>` : ''}
+      ${adminResetStatus ? `<p style="color:var(--success); font-size:13px; margin-bottom:10px;">${esc(adminResetStatus)}</p>` : ''}
+      <input id="admin-email" type="email" placeholder="Email" style="width:100%; box-sizing:border-box; padding:12px 14px; border-radius:12px; border:1.5px solid var(--border); font-size:15px; margin-bottom:10px; background:var(--bg-elevated); color:var(--ink);">
+      <input id="admin-password" type="password" placeholder="Password" style="width:100%; box-sizing:border-box; padding:12px 14px; border-radius:12px; border:1.5px solid var(--border); font-size:15px; margin-bottom:10px; background:var(--bg-elevated); color:var(--ink);">
+      <button class="btn btn-primary" style="width:100%;" data-admin-action="signin">Sign in</button>
+      <button class="btn btn-ghost" style="width:100%; margin-top:8px;" data-admin-action="forgot-password">Forgot password?</button>
+    </div>`;
+  } else {
+    const tabs = `<div class="row" style="gap:8px; margin-bottom:14px;">
+      <button class="btn btn-sm ${adminTab==='contacts'?'btn-primary':'btn-ghost'}" data-admin-action="tab-contacts">Contacts (${(adminContacts||[]).length})</button>
+      <button class="btn btn-sm ${adminTab==='students'?'btn-primary':'btn-ghost'}" data-admin-action="tab-students">Student Panels (${(adminStudents||[]).length})</button>
+    </div>`;
+    const body = adminTab === 'contacts' ? renderAdminContactsTab() : renderAdminStudentsTab();
+    html = `<div class="screen" style="padding-top:24px; max-width:480px; margin:0 auto;">
+      <div class="row between" style="margin-bottom:14px;">
+        <h1 class="display" style="font-size:20px;">Admin</h1>
+        <button class="btn btn-ghost" data-admin-action="signout">Sign out</button>
+      </div>
+      ${tabs}
+      ${body}
+    </div>`;
+  }
+  root.innerHTML = html;
+  bindAdminActions(root);
+}
+function renderAdminContactsTab(){
+  if(adminLoading) return `<p style="text-align:center; padding:20px; color:var(--ink-faint);">Loading…</p>`;
+  const rows = (adminContacts||[]).map(c=>`
+    <div class="item-row" style="align-items:flex-start;">
+      <div class="item-body">
+        <div class="item-title">${esc(c.name||'—')}${c.source==='student-club' ? ' <span class="pill" style="background:var(--cat-diag-soft); color:var(--cat-diag);">Club</span>' : ''}</div>
+        <div class="item-sub">${esc(c.level||'')} ${c.goal ? '· '+esc(c.goal) : ''}</div>
+        <div class="item-sub">${esc(c.phone||'')}</div>
+      </div>
+      <div class="stack" style="gap:6px; flex:0 0 auto;">
+        <a class="btn btn-whatsapp btn-sm" target="_blank" rel="noopener" href="${waLinkTo(c.phone, 'Hi '+c.name+'! This is your Farin English teacher.')}">${ICONS.whatsapp}</a>
+        <button class="btn btn-ghost btn-sm" style="color:var(--error); border-color:var(--error-soft);" data-admin-action="delete-contact" data-id="${esc(c.id)}">✕</button>
+      </div>
+    </div>`).join('') || '<p style="padding:20px; text-align:center; color:var(--ink-faint);">No contacts yet.</p>';
+  return `<div class="stack" style="gap:8px;">${rows}</div>`;
+}
+function studentFormField(id, label, value, tag, extra){
+  const val = esc(value||'');
+  const el = tag === 'textarea'
+    ? `<textarea id="${id}" rows="4" style="width:100%; box-sizing:border-box; padding:11px 13px; border-radius:12px; border:1.5px solid var(--border); font-size:14px; background:var(--bg-elevated); color:var(--ink); font-family:inherit;" ${extra||''}>${val}</textarea>`
+    : `<input id="${id}" type="text" value="${val}" style="width:100%; box-sizing:border-box; padding:11px 13px; border-radius:12px; border:1.5px solid var(--border); font-size:14px; background:var(--bg-elevated); color:var(--ink);" ${extra||''}>`;
+  return `<label class="field-label">${label}</label>${el}<div style="height:10px;"></div>`;
+}
+function harvestRoadmapFromDOM(){
+  return Array.from(document.querySelectorAll('#roadmap-items-list .roadmap-item-row')).map(row=>({
+    id: row.dataset.id || (Date.now()+'-'+Math.random().toString(36).slice(2)),
+    date: row.querySelector('.roadmap-item-date').value,
+    title: row.querySelector('.roadmap-item-title').value,
+    homework: row.querySelector('.roadmap-item-homework').value,
+    tips: row.querySelector('.roadmap-item-tips').value,
+    done: row.querySelector('.roadmap-item-done').checked
+  }));
+}
+function parsePastedRoadmap(text){
+  let counter = 0;
+  const nextId = ()=> 'rm'+Date.now()+'-'+(counter++)+'-'+Math.random().toString(36).slice(2);
+  const toSession = (parts)=>{
+    const id = nextId();
+    if(parts.length>=2) return {id, date:parts[0], title:parts[1], homework:parts[2]||'', tips:parts[3]||'', done:false};
+    return {id, date:'', title:parts[0]||'', homework:'', tips:'', done:false};
+  };
+  if(/[•✓]/.test(text)){
+    const afterFirstBullet = text.slice(text.search(/[•✓]/));
+    const bulletItems = afterFirstBullet.split(/[•✓]/).map(c=>c.replace(/^[\s,]+|[\s,.]+$/g,'').trim()).filter(Boolean);
+    if(bulletItems.length>1){
+      return bulletItems.map(title=>({id:nextId(), date:'', title, homework:'', tips:'', done:false}));
+    }
+  }
+  const sessions = [];
+  text.split('\n').map(l=>l.trim()).filter(Boolean).forEach(line=>{
+    const parts = line.split('|').map(p=>p.trim());
+    if(parts.length>4 && parts.length%4===0){
+      for(let i=0;i<parts.length;i+=4) sessions.push(toSession(parts.slice(i,i+4)));
+    } else {
+      sessions.push(toSession(parts));
+    }
+  });
+  return sessions;
+}
+function harvestHomeworkFromDOM(){
+  return Array.from(document.querySelectorAll('#homework-items-list .homework-item-row')).map(row=>({
+    id: row.dataset.id || (Date.now()+'-'+Math.random().toString(36).slice(2)),
+    date: row.querySelector('.homework-item-date').value,
+    title: row.querySelector('.homework-item-title').value,
+    links: row.querySelector('.homework-item-links').value
+  }));
+}
+const PROGRESS_TEMPLATES = {
+  excelling: "You're on fire this stage! Flying through everything, and it's really sticking. So proud of you!",
+  steady: "Lovely, steady progress. A little bit each time really adds up. Keep going, you're doing great!",
+  'needs-practice': "Things have slowed a little. That's okay! A bit more practice between sessions will help a lot.",
+  comeback: "What a comeback! You took a short break, and you're back stronger than before. I love to see it.",
+  'new-start': "Just getting started, and your energy is wonderful. We're building great foundations together.",
+  plateau: "We've been in the same spot for a bit. Totally normal! Let's mix things up next time to keep it fun.",
+  'almost-there': "So close to finishing this stage! Just a little more, and we're there. You can do it!",
+  inconsistent: "Let's try to practice a little more often. Even a few minutes between sessions makes a real difference. You've got this!"
+};
+const PERFORMANCE_TEMPLATES = {
+  'strong-speaking': "Your speaking is really shining! Confident, clear, and lovely to listen to.",
+  'strong-writing': "Your grammar and writing are excellent. Clean, careful, and thoughtful work.",
+  'needs-grammar': "Let's give grammar a bit more love, especially verb tenses. You'll get there, step by step!",
+  'needs-vocab': "Let's grow your vocabulary a little more. Try reading or watching something new each week.",
+  'strong-listening': "You're a wonderful listener! You pick up meaning and tone so naturally.",
+  'needs-speaking': "Let's build your speaking confidence together. The more you talk, the easier it gets. I believe in you!",
+  'needs-listening': "Let's practice listening a bit more, especially fast, natural speech. You're closer than you think!",
+  'well-rounded': "Well-rounded across all four skills — no major weak spots right now."
+};
+function quickFillPills(action, templates){
+  return `<div class="row" style="gap:6px; flex-wrap:wrap; margin-bottom:10px;">
+    ${Object.keys(templates).map(key=>`<button type="button" class="pill" data-admin-action="${action}" data-key="${key}" style="background:var(--bg-sunken); color:var(--ink-soft); cursor:pointer; border:none; font-family:inherit;">${key.replace(/-/g,' ')}</button>`).join('')}
+  </div>`;
+}
+function renderAdminStudentsTab(){
+  if(adminEditingStudent){
+    const s = adminEditingStudent;
+    const levelOpts = [''].concat(LEVEL_STAGES).map(l=>`<option value="${l}" ${s.level===l?'selected':''}>${l||'—'}</option>`).join('');
+    const roadmap = Array.isArray(s.roadmap) ? s.roadmap : [];
+    const homework = Array.isArray(s.homework) ? s.homework : [];
+    return `<div class="card-flat">
+      ${studentFormField('student-form-code', 'Pass / username', s.code, 'input', s.isNew ? 'placeholder="e.g. AYLIN23"' : 'disabled style="background:var(--bg-sunken);"')}
+      ${studentFormField('student-form-name', 'Name', s.name, 'input')}
+      <label class="field-label">Level / stage</label>
+      <select id="student-form-level" style="width:100%; box-sizing:border-box; padding:11px 13px; border-radius:12px; border:1.5px solid var(--border); font-size:14px; background:var(--bg-elevated); color:var(--ink); margin-bottom:10px;">${levelOpts}</select>
+      <label class="field-label">Sessions in this stage (0–10)</label>
+      <div class="row" style="gap:8px; margin-bottom:14px; align-items:center;">
+        <input id="student-form-sessions" type="number" min="0" max="10" value="${esc(s.sessionsInStage!==undefined?s.sessionsInStage:0)}" style="flex:1; box-sizing:border-box; padding:11px 13px; border-radius:12px; border:1.5px solid var(--border); font-size:14px; background:var(--bg-elevated); color:var(--ink);">
+        <button type="button" class="btn btn-ghost btn-sm" data-admin-action="increment-session">+1 session</button>
+      </div>
+      <p style="font-size:11px; color:var(--ink-faint); margin:-8px 0 14px;">Hitting 10 auto-advances to the next stage.</p>
+
+      <label class="field-label">Roadmap</label>
+      <div id="roadmap-items-list" style="margin-bottom:8px;">
+        ${roadmap.map((r,idx)=>`
+        <div class="roadmap-item-row" data-id="${esc(r.id)}" style="border:1.5px solid var(--border); border-radius:12px; padding:10px; margin-bottom:8px;">
+          <div style="font-size:10.5px; font-weight:800; color:var(--ink-faint); text-transform:uppercase; letter-spacing:.04em; margin-bottom:6px;">Session ${idx+1}</div>
+          <div class="row" style="gap:8px; margin-bottom:6px; align-items:center;">
+            <input type="checkbox" class="roadmap-item-done" ${r.done?'checked':''} style="flex:0 0 auto; width:18px; height:18px;">
+            <input type="date" class="roadmap-item-date" value="${esc(r.date||'')}" style="flex:0 0 auto; box-sizing:border-box; padding:9px 10px; border-radius:10px; border:1.5px solid var(--border); font-size:13px; background:var(--bg-elevated); color:var(--ink);">
+            <input type="text" class="roadmap-item-title" value="${esc(r.title||r.label||'')}" placeholder="Session title, e.g. Present perfect" style="flex:1; box-sizing:border-box; padding:9px 12px; border-radius:10px; border:1.5px solid var(--border); font-size:13.5px; background:var(--bg-elevated); color:var(--ink);">
+            <button data-admin-action="delete-roadmap-item" data-idx="${idx}" class="btn btn-ghost btn-sm" style="flex:0 0 auto; padding:8px 12px;">✕</button>
+          </div>
+          <input type="text" class="roadmap-item-homework" value="${esc(r.homework||'')}" placeholder="Homework for this session (optional)" style="width:100%; box-sizing:border-box; padding:8px 11px; border-radius:9px; border:1.5px solid var(--border); font-size:12.5px; background:var(--bg-elevated); color:var(--ink); margin-bottom:6px;">
+          <input type="text" class="roadmap-item-tips" value="${esc(r.tips||'')}" placeholder="Tip for this session (optional)" style="width:100%; box-sizing:border-box; padding:8px 11px; border-radius:9px; border:1.5px solid var(--border); font-size:12.5px; background:var(--bg-elevated); color:var(--ink);">
+        </div>`).join('')}
+      </div>
+      <div class="row" style="gap:8px; margin-bottom:10px;">
+        <button class="btn btn-ghost btn-sm" data-admin-action="add-roadmap-item">+ Add session</button>
+        <button class="btn btn-ghost btn-sm" data-admin-action="suggest-roadmap">✨ Suggest from level</button>
+      </div>
+      <label class="field-label">Paste a roadmap</label>
+      <p style="font-size:11px; color:var(--ink-faint); margin:-2px 0 6px;">One session per <b>line</b> (press Enter between sessions): <code>date | title | homework | tips</code> — homework and tips are optional.</p>
+      <textarea id="roadmap-paste-box" rows="3" placeholder="2026-08-15 | Present perfect | Exercises 1-3 | Watch out for irregular verbs
+2026-08-22 | Phrasal verbs | Review vocab list | Practice in real sentences" style="width:100%; box-sizing:border-box; padding:9px 12px; border-radius:10px; border:1.5px dashed var(--border); font-size:12.5px; background:var(--bg-sunken); color:var(--ink); font-family:inherit; margin-bottom:8px;"></textarea>
+      <div class="row" style="gap:8px; margin-bottom:14px;">
+        <button class="btn btn-ghost btn-sm" data-admin-action="parse-roadmap-paste">📋 Add pasted sessions</button>
+      </div>
+
+      <label class="field-label">Homework</label>
+      <div id="homework-items-list" style="margin-bottom:8px;">
+        ${homework.map((h,idx)=>`
+        <div class="homework-item-row" data-id="${esc(h.id)}" style="border:1.5px solid var(--border); border-radius:12px; padding:10px; margin-bottom:8px;">
+          <div class="row" style="gap:8px; margin-bottom:8px;">
+            <input type="date" class="homework-item-date" value="${esc(h.date||'')}" style="flex:0 0 auto; box-sizing:border-box; padding:9px 10px; border-radius:10px; border:1.5px solid var(--border); font-size:13px; background:var(--bg-elevated); color:var(--ink);">
+            <input type="text" class="homework-item-title" value="${esc(h.title||'')}" placeholder="Homework title" style="flex:1; box-sizing:border-box; padding:9px 12px; border-radius:10px; border:1.5px solid var(--border); font-size:13.5px; background:var(--bg-elevated); color:var(--ink);">
+          </div>
+          <textarea class="homework-item-links" rows="2" placeholder="Extra links (one per line) — video, file, etc." style="width:100%; box-sizing:border-box; padding:9px 12px; border-radius:10px; border:1.5px solid var(--border); font-size:13px; background:var(--bg-elevated); color:var(--ink); font-family:inherit; margin-bottom:8px;">${esc(h.links||'')}</textarea>
+          <button data-admin-action="delete-homework-item" data-idx="${idx}" class="btn btn-ghost btn-sm">Delete</button>
+        </div>`).join('')}
+      </div>
+      <div class="row" style="gap:8px; margin-bottom:14px;">
+        <button class="btn btn-ghost btn-sm" data-admin-action="add-homework-item">+ Add homework</button>
+        <button class="btn btn-ghost btn-sm" data-admin-action="suggest-homework">✨ Suggest from roadmap</button>
+      </div>
+
+      <button type="button" class="btn btn-ghost btn-sm" data-admin-action="auto-progress-note" style="margin-bottom:8px;">🪄 Auto-write from data</button>
+      ${quickFillPills('quick-progress', PROGRESS_TEMPLATES)}
+      ${studentFormField('student-form-progress', 'Progress notes', s.progressNote, 'textarea')}
+      ${quickFillPills('quick-performance', PERFORMANCE_TEMPLATES)}
+      ${studentFormField('student-form-performance', 'Performance notes', s.performanceNote, 'textarea')}
+      ${adminStudentError ? `<p style="color:var(--error); font-size:13px; margin-bottom:10px;">${esc(adminStudentError)}</p>` : ''}
+      ${adminStudentInfo ? `<p style="color:var(--success); font-size:13px; margin-bottom:10px;">${esc(adminStudentInfo)}</p>` : ''}
+      <div class="row" style="gap:8px;">
+        <button class="btn btn-primary" style="flex:1;" data-admin-action="save-student" ${adminSavingStudent?'disabled':''}>${adminSavingStudent?'Saving…':'Save'}</button>
+        <button class="btn btn-ghost" data-admin-action="cancel-edit-student">Cancel</button>
+      </div>
+      ${!s.isNew ? `<button class="btn btn-ghost" style="margin-top:10px; width:100%; color:var(--error); border-color:var(--error-soft);" data-admin-action="delete-student" data-code="${esc(s.code)}">Delete this student</button>` : ''}
+    </div>`;
+  }
+  if(adminStudentsLoading) return `<p style="text-align:center; padding:20px; color:var(--ink-faint);">Loading…</p>`;
+  const rows = (adminStudents||[]).map(s=>`
+    <button class="item-row" data-admin-action="edit-student" data-code="${esc(s.code)}">
+      <div class="item-body">
+        <div class="item-title">${esc(s.name||s.code)}</div>
+        <div class="item-sub">${esc(s.level||'—')} · pass: ${esc(s.code)}</div>
+      </div>
+      <span class="chevron">${ICONS.chev}</span>
+    </button>`).join('') || '<p style="padding:20px; text-align:center; color:var(--ink-faint);">No student panels yet.</p>';
+  return `<div class="stack" style="gap:8px;">
+    <button class="btn btn-primary" data-admin-action="add-student">+ Add student</button>
+    ${rows}
+  </div>`;
+}
+function bindAdminActions(root){
+  root.querySelectorAll('[data-admin-action]').forEach(el=>{
+    el.onclick = function(){
+      const action = el.dataset.adminAction;
+      if(action === 'signin'){
+        const email = document.getElementById('admin-email').value.trim();
+        const pw = document.getElementById('admin-password').value;
+        adminError = '';
+        adminResetStatus = '';
+        firebase.auth().setPersistence(firebase.auth.Auth.Persistence.SESSION).catch(()=>{}).then(()=>{
+          return firebase.auth().signInWithEmailAndPassword(email, pw);
+        }).then(()=>{
+          loadAdminContacts();
+        }).catch(err=>{
+          adminError = err.message || String(err);
+          renderAdminPage();
+        });
+      } else if(action === 'forgot-password'){
+        const email = (document.getElementById('admin-email').value || '').trim();
+        if(!email){
+          adminError = 'Enter your email above first, then tap "Forgot password?".';
+          renderAdminPage();
+          return;
+        }
+        adminError = '';
+        adminResetStatus = '';
+        firebase.auth().sendPasswordResetEmail(email).then(()=>{
+          adminResetStatus = 'Reset link sent to ' + email + ' — check your inbox.';
+          renderAdminPage();
+        }).catch(err=>{
+          adminError = err.message || String(err);
+          renderAdminPage();
+        });
+      } else if(action === 'signout'){
+        firebase.auth().signOut().then(()=>{
+          adminContacts = null; adminStudents = null; adminTab = 'contacts'; adminEditingStudent = null;
+          renderAdminPage();
+        });
+      } else if(action === 'tab-contacts'){
+        adminTab = 'contacts';
+        renderAdminPage();
+      } else if(action === 'delete-contact'){
+        deleteAdminContact(el.dataset.id);
+      } else if(action === 'tab-students'){
+        adminTab = 'students';
+        renderAdminPage();
+        if(adminStudents === null) loadAdminStudents();
+      } else if(action === 'add-student'){
+        adminStudentError = '';
+        adminStudentInfo = '';
+        adminEditingStudent = {isNew:true, code:'', name:'', level:'', sessionsInStage:0, progressNote:'', performanceNote:'', roadmap:[], homework:[]};
+        renderAdminPage();
+      } else if(action === 'edit-student'){
+        const code = el.dataset.code;
+        const s = (adminStudents||[]).find(x=>x.code===code);
+        adminStudentError = '';
+        adminStudentInfo = '';
+        adminEditingStudent = Object.assign({isNew:false, sessionsInStage:0, roadmap:[], homework:[]}, s);
+        renderAdminPage();
+      } else if(action === 'add-roadmap-item'){
+        adminEditingStudent.roadmap = harvestRoadmapFromDOM();
+        adminEditingStudent.homework = harvestHomeworkFromDOM();
+        adminEditingStudent.roadmap.push({id: Date.now()+'-'+Math.random().toString(36).slice(2), date:'', title:'', homework:'', tips:'', done:false});
+        renderAdminPage();
+      } else if(action === 'delete-roadmap-item'){
+        adminEditingStudent.roadmap = harvestRoadmapFromDOM();
+        adminEditingStudent.homework = harvestHomeworkFromDOM();
+        adminEditingStudent.roadmap.splice(Number(el.dataset.idx), 1);
+        renderAdminPage();
+      } else if(action === 'add-homework-item'){
+        adminEditingStudent.roadmap = harvestRoadmapFromDOM();
+        adminEditingStudent.homework = harvestHomeworkFromDOM();
+        adminEditingStudent.homework.push({id: Date.now()+'-'+Math.random().toString(36).slice(2), date:'', title:'', links:''});
+        renderAdminPage();
+      } else if(action === 'delete-homework-item'){
+        adminEditingStudent.roadmap = harvestRoadmapFromDOM();
+        adminEditingStudent.homework = harvestHomeworkFromDOM();
+        adminEditingStudent.homework.splice(Number(el.dataset.idx), 1);
+        renderAdminPage();
+      } else if(action === 'suggest-roadmap'){
+        const levelEl = document.getElementById('student-form-level');
+        const baseLevel = (levelEl.value || '').replace('.2','');
+        adminStudentInfo = '';
+        if(!baseLevel){
+          adminStudentError = 'Pick a level above first, then tap "Suggest from level".';
+          renderAdminPage();
+          return;
+        }
+        const existing = harvestRoadmapFromDOM();
+        const existingTitles = new Set(existing.map(r=>(r.title||'').trim().toLowerCase()));
+        const suggestions = GRAMMAR_ITEMS.filter(g=>g.level===baseLevel).map(g=>g.title)
+          .filter(t=>!existingTitles.has(t.trim().toLowerCase()))
+          .map(t=>({id: Date.now()+'-'+Math.random().toString(36).slice(2)+'-'+t, date:'', title:t, homework:'', tips:'', done:false}));
+        adminEditingStudent.roadmap = existing.concat(suggestions);
+        adminEditingStudent.homework = harvestHomeworkFromDOM();
+        adminStudentError = '';
+        adminStudentInfo = suggestions.length ? ('Added '+suggestions.length+' session(s) from the '+baseLevel+' curriculum.') : ('No new sessions to add — every '+baseLevel+' item is already in the roadmap.');
+        renderAdminPage();
+      } else if(action === 'parse-roadmap-paste'){
+        const box = document.getElementById('roadmap-paste-box');
+        const text = (box && box.value || '').trim();
+        const existing = harvestRoadmapFromDOM();
+        adminStudentError = '';
+        if(!text){
+          adminStudentInfo = '';
+          renderAdminPage();
+          return;
+        }
+        const parsed = parsePastedRoadmap(text);
+        adminEditingStudent.roadmap = existing.concat(parsed);
+        adminEditingStudent.homework = harvestHomeworkFromDOM();
+        adminStudentInfo = 'Added '+parsed.length+' session(s) from the pasted text.';
+        renderAdminPage();
+      } else if(action === 'quick-progress'){
+        const ta = document.getElementById('student-form-progress');
+        const text = PROGRESS_TEMPLATES[el.dataset.key];
+        if(ta && text) ta.value = (ta.value.trim() ? ta.value.trim()+'\n\n' : '') + text;
+      } else if(action === 'quick-performance'){
+        const ta = document.getElementById('student-form-performance');
+        const text = PERFORMANCE_TEMPLATES[el.dataset.key];
+        if(ta && text) ta.value = (ta.value.trim() ? ta.value.trim()+'\n\n' : '') + text;
+      } else if(action === 'increment-session'){
+        const levelEl = document.getElementById('student-form-level');
+        const sessEl = document.getElementById('student-form-sessions');
+        let sessions = (Number(sessEl.value)||0) + 1;
+        if(sessions >= 10){
+          const idx = LEVEL_STAGES.indexOf(levelEl.value);
+          if(idx>=0 && idx<LEVEL_STAGES.length-1){ levelEl.value = LEVEL_STAGES[idx+1]; sessions = 0; }
+          else sessions = 10;
+        }
+        sessEl.value = sessions;
+      } else if(action === 'auto-progress-note'){
+        const levelEl = document.getElementById('student-form-level');
+        const sessEl = document.getElementById('student-form-sessions');
+        const nameEl = document.getElementById('student-form-name');
+        const roadmap = harvestRoadmapFromDOM();
+        adminEditingStudent.roadmap = roadmap;
+        adminEditingStudent.homework = harvestHomeworkFromDOM();
+        const doneCount = roadmap.filter(r=>r.done).length;
+        const nextItems = roadmap.filter(r=>!r.done && r.title && r.title.trim()).slice(0,2).map(r=>r.title.trim());
+        const level = levelEl.value || 'an unset level';
+        const sessions = sessEl.value || 0;
+        const name = (nameEl.value || '').trim() || 'This student';
+        let text = name+' is currently at '+level+' with '+sessions+'/10 sessions completed in this stage.';
+        if(roadmap.length) text += ' Roadmap: '+doneCount+'/'+roadmap.length+' items done.';
+        if(nextItems.length) text += ' Next up: '+nextItems.join(', ')+'.';
+        const ta = document.getElementById('student-form-progress');
+        if(ta) ta.value = (ta.value.trim() ? ta.value.trim()+'\n\n' : '') + text;
+      } else if(action === 'suggest-homework'){
+        const roadmap = harvestRoadmapFromDOM();
+        const homework = harvestHomeworkFromDOM();
+        const next = roadmap.find(r=>!r.done && r.title && r.title.trim());
+        const today = new Date().toISOString().slice(0,10);
+        homework.push({id: Date.now()+'-'+Math.random().toString(36).slice(2), date: today, title: next ? 'Review: '+next.title.trim() : '', links:''});
+        adminEditingStudent.roadmap = roadmap;
+        adminEditingStudent.homework = homework;
+        renderAdminPage();
+      } else if(action === 'cancel-edit-student'){
+        adminEditingStudent = null;
+        adminStudentError = '';
+        adminStudentInfo = '';
+        renderAdminPage();
+      } else if(action === 'save-student'){
+        saveAdminStudent();
+      } else if(action === 'delete-student'){
+        deleteAdminStudent(el.dataset.code);
+      }
+    };
+  });
+}
+function loadAdminContacts(){
+  adminLoading = true;
+  renderAdminPage();
+  firebase.firestore().collection('contactsEs').orderBy('createdAt','desc').get().then(snap=>{
+    adminContacts = snap.docs.map(d=>Object.assign({id:d.id}, d.data()));
+    adminLoading = false;
+    renderAdminPage();
+  }).catch(err=>{
+    adminError = err.message;
+    adminLoading = false;
+    renderAdminPage();
+  });
+}
+function deleteAdminContact(id){
+  if(!confirm('Delete this contact? This cannot be undone.')) return;
+  firebase.firestore().collection('contactsEs').doc(id).delete().then(()=>{
+    loadAdminContacts();
+  }).catch(err=>{
+    adminError = err.message;
+    renderAdminPage();
+  });
+}
+function loadAdminStudents(){
+  adminStudentsLoading = true;
+  renderAdminPage();
+  firebase.firestore().collection('studentPanelsEs').get().then(snap=>{
+    adminStudents = snap.docs.map(d=>Object.assign({code:d.id}, d.data()))
+      .sort((a,b)=>(a.name||a.code).localeCompare(b.name||b.code));
+    adminStudentsLoading = false;
+    renderAdminPage();
+  }).catch(err=>{
+    adminError = err.message;
+    adminStudentsLoading = false;
+    renderAdminPage();
+  });
+}
+function saveAdminStudent(){
+  const s = adminEditingStudent;
+  const codeEl = document.getElementById('student-form-code');
+  const code = (s.isNew ? (codeEl && codeEl.value || '') : s.code).trim().toUpperCase().replace(/\s+/g,'');
+  const name = (document.getElementById('student-form-name').value || '').trim();
+  const level = document.getElementById('student-form-level').value;
+  const sessionsInStage = Math.max(0, Math.min(10, Number(document.getElementById('student-form-sessions').value)||0));
+  const progressNote = document.getElementById('student-form-progress').value;
+  const performanceNote = document.getElementById('student-form-performance').value;
+  const roadmap = harvestRoadmapFromDOM();
+  const homework = harvestHomeworkFromDOM();
+  adminEditingStudent.roadmap = roadmap;
+  adminEditingStudent.homework = homework;
+  if(!code){
+    adminStudentError = 'Please enter a pass / username.';
+    renderAdminPage();
+    return;
+  }
+  adminSavingStudent = true;
+  adminStudentError = '';
+  renderAdminPage();
+  const finish = ()=>{
+    firebase.firestore().collection('studentPanelsEs').doc(code).set({
+      name, level, sessionsInStage, progressNote, performanceNote, roadmap, homework, updatedAt: Date.now()
+    }, {merge:true}).then(()=>{
+      adminSavingStudent = false;
+      adminEditingStudent = null;
+      loadAdminStudents();
+    }).catch(err=>{
+      adminSavingStudent = false;
+      adminStudentError = err.message;
+      renderAdminPage();
+    });
+  };
+  if(s.isNew){
+    firebase.firestore().collection('studentPanelsEs').doc(code).get().then(doc=>{
+      if(doc.exists){
+        adminSavingStudent = false;
+        adminStudentError = 'That pass is already taken — pick another.';
+        renderAdminPage();
+        return;
+      }
+      finish();
+    }).catch(err=>{
+      adminSavingStudent = false;
+      adminStudentError = err.message;
+      renderAdminPage();
+    });
+  } else {
+    finish();
+  }
+}
+function deleteAdminStudent(code){
+  if(!confirm('Delete this student panel? This cannot be undone.')) return;
+  firebase.firestore().collection('studentPanelsEs').doc(code).delete().then(()=>{
+    adminEditingStudent = null;
+    loadAdminStudents();
+  }).catch(err=>{
+    adminStudentError = err.message;
+    renderAdminPage();
+  });
+}
+
+
 /* ============================= INIT ============================= */
-if(state.profile.completedDiagnostic && state.view === 'diagnostic-intro'){ state.view = 'dashboard'; }
-if(state.profile.completedDiagnostic && markDailyVisit()){ save(); }
-render();
+if(location.hash === '#admin'){
+  document.title = 'Admin';
+  let adminAuthResolved = false;
+  firebase.auth().setPersistence(firebase.auth.Auth.Persistence.SESSION).catch(()=>{});
+  firebase.auth().onAuthStateChanged(function(user){
+    adminAuthResolved = true;
+    if(user) loadAdminContacts();
+    else renderAdminPage();
+  });
+  setTimeout(()=>{ if(!adminAuthResolved) renderAdminPage(); }, 4000);
+} else {
+  if(state.profile.completedDiagnostic && state.view === 'diagnostic-intro'){ state.view = 'dashboard'; }
+  if(state.profile.completedDiagnostic && markDailyVisit()){ save(); }
+  render();
+  if(state.view === 'student-panel' && studentPanelData && studentPanelData.code && typeof firebase !== 'undefined'){
+    firebase.firestore().collection('studentPanelsEs').doc(studentPanelData.code).get().then(doc=>{
+      if(doc.exists){
+        studentPanelData = Object.assign({code: studentPanelData.code}, doc.data());
+        state.studentPanelCache = studentPanelData;
+        save();
+        if(state.view === 'student-panel') render();
+      }
+    }).catch(()=>{});
+  }
+}
 
 /* Best-effort offline caching for "Add to Home Screen" use. A browser-security rule means a service
    worker script must be a real same-origin file, not an inline blob — so this only activates when

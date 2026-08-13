@@ -6132,11 +6132,17 @@ function vocabQuizQuestions(s){
     const re = new RegExp(c.word.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'), 'i');
     return c.sentence.replace(re, '_____');
   };
+  const whyOf = (c) => L(
+    '"'+c.word+'" means: '+c.meaning.en+'. Example: '+c.sentence,
+    '"'+c.word+'" anlamı: '+c.meaning.tr+'. Örnek: '+c.sentence,
+    c.meaning.fa ? ('"'+c.word+'" یعنی: '+c.meaning.fa+'. مثال: '+c.sentence) : undefined,
+    '"'+c.word+'": '+c.meaning.es+'. Ejemplo: '+c.sentence
+  );
   const fillQ = (c) => {
     const pool = sibling.filter(x=>x.word.toLowerCase()!==c.word.toLowerCase());
     const distractors = shuffle(pool).slice(0,3).map(x=>x.word);
     const options = shuffle([c.word, ...distractors]);
-    return {prompt: blankOf(c), options, correct: options.indexOf(c.word)};
+    return {prompt: blankOf(c), options, correct: options.indexOf(c.word), why: whyOf(c)};
   };
   const reverseLabel = L('Which sentence uses this word?','Bu kelimeyi hangi cümle kullanıyor?','کدام جمله از این کلمه استفاده می‌کند؟','¿Qué oración usa esta palabra?');
   const reverseQ = (c) => {
@@ -6145,7 +6151,7 @@ function vocabQuizQuestions(s){
     const distractorCards = shuffle(pool).slice(0,2);
     const correctOpt = blankOf(c);
     const options = shuffle([correctOpt, ...distractorCards.map(blankOf)]);
-    return {prompt: reverseLabel + '\n"' + c.word + '"', options, correct: options.indexOf(correctOpt)};
+    return {prompt: reverseLabel + '\n"' + c.word + '"', options, correct: options.indexOf(correctOpt), why: whyOf(c)};
   };
   const tfLabel = L('True or false: this word fits the sentence.','Doğru mu yanlış mı: bu kelime cümleye uyuyor.','درست یا نادرست: این کلمه با جمله مطابقت دارد.','Verdadero o falso: esta palabra encaja en la oración.');
   const tfQ = (c, i) => {
@@ -6161,10 +6167,12 @@ function vocabQuizQuestions(s){
     }
     const opts = shuffle([L('True','Doğru','درست','Verdadero'), L('False','Yanlış','نادرست','Falso')]);
     const answer = isTrue ? L('True','Doğru','درست','Verdadero') : L('False','Yanlış','نادرست','Falso');
-    return {prompt: tfLabel+'\n"'+filled+'"', options: opts, correct: opts.indexOf(answer)};
+    return {prompt: tfLabel+'\n"'+filled+'"', options: opts, correct: opts.indexOf(answer), why: whyOf(c)};
   };
-  const all = [...s.cards.map(fillQ), ...s.cards.map(reverseQ), ...s.cards.map(tfQ)];
-  return shuffle(all).slice(0, Math.min(3*s.cards.length, 24));
+  const generators = [fillQ, reverseQ, tfQ];
+  const chosenCards = shuffle(s.cards).slice(0, 10);
+  const questions = chosenCards.map((c,i)=> generators[i % generators.length](c, i));
+  return shuffle(questions);
 }
 function storyQuizQuestions(s){ return s.quiz.slice(); }
 function buildReviewQuiz(){

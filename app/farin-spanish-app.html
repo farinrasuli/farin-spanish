@@ -4872,41 +4872,42 @@ function renderDiagReview(){
   const rc = state.progress.roadmapChecked;
   const doneCount = roadmap.filter((_,i)=>rc[i]).length;
 
+  const currentIndex = roadmap.findIndex((_,i)=>!rc[i]);
   function roadmapRow(item, idx){
     const m = TYPE_META[item.type];
     const checked = !!rc[idx];
     const isSession = item.type === 'session';
-    const iconBg = isSession ? 'var(--bg-elevated)' : 'var(--cat-'+m.c+'-soft)';
-    const rowBg = isSession ? 'background:var(--cat-lis-soft); border-color:var(--cat-lis-soft);' : '';
+    const isCurrent = idx === currentIndex;
+    const color = 'var(--cat-'+m.c+')';
     const subtitle = isSession
       ? L('Recommended — message on WhatsApp',"Önerilir — WhatsApp'tan mesaj at",'پیشنهادی — در واتس‌اپ پیام بده','Recomendado — escribe por WhatsApp')
       : ((item.goal && GOALS_META[item.goal]) ? goalMetaLabel(item.goal)+' · '+m.label : m.label);
     let studyOpenTag, studyCloseTag;
     if(isSession){
-      studyOpenTag = '<a class="roadmap-study" target="_top" rel="noopener" href="'+item.waLink+'">';
+      studyOpenTag = '<a class="roadmap-study" target="_top" rel="noopener" href="'+item.waLink+'" style="display:block; padding:12px 14px;">';
       studyCloseTag = '</a>';
     } else if(item.type==='grammar'){
-      studyOpenTag = '<button class="roadmap-study" data-action="nav" data-view="grammar-trap" data-id="'+item.refId+'" data-goal="'+(item.goal||'')+'">';
+      studyOpenTag = '<button class="roadmap-study" data-action="nav" data-view="grammar-trap" data-id="'+item.refId+'" data-goal="'+(item.goal||'')+'" style="display:block; width:100%; text-align:start; padding:12px 14px;">';
       studyCloseTag = '</button>';
     } else {
       const cat = item.type==='slang' ? 'slang' : 'vocab';
-      studyOpenTag = '<button class="roadmap-study" data-action="nav" data-view="vocab-set-intro" data-id="'+item.refId+'" data-goal="'+(item.goal||'')+'" data-cat="'+cat+'">';
+      studyOpenTag = '<button class="roadmap-study" data-action="nav" data-view="vocab-set-intro" data-id="'+item.refId+'" data-goal="'+(item.goal||'')+'" data-cat="'+cat+'" style="display:block; width:100%; text-align:start; padding:12px 14px;">';
       studyCloseTag = '</button>';
     }
-    return `<div class="roadmap-row ${checked?'roadmap-done':''}" style="${rowBg}">
-      ${studyOpenTag}
-        <span class="item-ic" style="background:${iconBg}; color:var(--cat-${m.c});">${m.ic}</span>
-        <div class="item-body">
-          <div class="item-sub" style="margin-top:0; ${isSession?'color:var(--cat-lis);':''}">${esc(subtitle)}</div>
-          <div class="item-title" style="${checked?'text-decoration:line-through;':''}">${esc(item.title)}</div>
-        </div>
-      ${studyCloseTag}
-      <button class="roadmap-check ${checked?'checked':''}" data-action="toggle-roadmap-item" data-idx="${idx}" aria-label="${L('Mark done','Tamamlandı say','علامت‌زدن به‌عنوان انجام‌شده','Marcar como hecho')}">${checked ? ICONS.check : '<span class="circle"></span>'}</button>
+    return `
+    <div style="position:relative; padding-left:40px; margin-bottom:${idx<roadmap.length-1?'20px':'6px'};">
+      <button class="${isCurrent?'roadmap-pin-current':''}" data-action="toggle-roadmap-item" data-idx="${idx}" aria-label="${L('Mark done','Tamamlandı say','علامت‌زدن به‌عنوان انجام‌شده','Marcar como hecho')}" style="position:absolute; left:0; top:-1px; width:30px; height:30px; border-radius:50% 50% 50% 0; transform:rotate(-45deg); background:${checked?color:'var(--bg-elevated)'}; border:2.5px solid ${color}; display:flex; align-items:center; justify-content:center; box-shadow:0 3px 6px -1px rgba(0,0,0,.22); cursor:pointer; padding:0;">
+        <span style="transform:rotate(45deg); color:${checked?'#fff':color}; width:16px; height:16px; display:flex; align-items:center; justify-content:center;">${checked?ICONS.check:m.ic}</span>
+      </button>
+      ${isCurrent ? `<span class="roadmap-here-badge pill" style="position:absolute; left:36px; top:-14px; background:var(--accent); color:var(--accent-ink); font-size:9.5px; white-space:nowrap; box-shadow:var(--shadow); z-index:1;">${L("You're here","Buradasın","اینجایی","Estás aquí")}</span>` : ''}
+      <div style="background:var(--bg-sunken); border-radius:16px; border:1.5px solid ${isCurrent?'var(--accent)':(checked?color+'55':'var(--border-soft)')}; overflow:hidden;">
+        ${studyOpenTag}
+          <div style="font-size:10.5px; font-weight:800; color:${isSession?color:'var(--ink-faint)'}; text-transform:uppercase; letter-spacing:.03em;">${esc(subtitle)}</div>
+          <div style="font-weight:800; font-size:14.5px; margin-top:3px; color:var(--ink); ${checked?'text-decoration:line-through; opacity:.6;':''}">${esc(item.title)}</div>
+        ${studyCloseTag}
+      </div>
     </div>`;
   }
-
-  const pendingRows = []; const doneRows = [];
-  roadmap.forEach((it,idx)=>{ (rc[idx] ? doneRows : pendingRows).push(roadmapRow(it, idx)); });
 
   return `<div class="fade-in">
     ${sectionHead(L('Your Plan','Planın','برنامه تو','Tu Plan'), L(arch.blurb.en,arch.blurb.tr,arch.blurb.fa,arch.blurb.es))}
@@ -4921,14 +4922,20 @@ function renderDiagReview(){
         </div>
         <div class="progress-track" style="margin-top:10px;"><div class="progress-fill" style="width:${(doneCount/roadmap.length)*100}%; background:var(--cat-lis);"></div></div>
       </div>
-      <div class="stack" style="gap:8px;">
-        ${pendingRows.join('')}
+      <div class="card-flat" style="position:relative; overflow:hidden;">
+        <div style="position:relative;">
+          <div style="display:flex; align-items:center; gap:10px; margin-bottom:18px;">
+            <div style="flex:0 0 auto; width:30px; height:30px; border-radius:50%; background:var(--ink); color:var(--bg-elevated); display:flex; align-items:center; justify-content:center; font-size:14px; box-shadow:0 3px 6px -1px rgba(0,0,0,.25);">🚩</div>
+            <span style="font-size:11px; font-weight:800; color:var(--ink-faint); text-transform:uppercase; letter-spacing:.06em;">${L('Start','Başla','شروع','Inicio')}</span>
+          </div>
+          <div style="position:absolute; left:14px; top:38px; bottom:40px; width:3px; border-radius:2px; background-image:repeating-linear-gradient(to bottom, var(--border) 0 6px, transparent 6px 13px);"></div>
+          ${roadmap.map((it,idx)=>roadmapRow(it, idx)).join('')}
+          <div style="position:relative; padding-left:40px;">
+            <div style="position:absolute; left:2px; top:-4px; font-size:24px;">${doneCount===roadmap.length ? '🏆' : '🏁'}</div>
+            <span style="font-size:11px; font-weight:800; color:var(--ink-faint); text-transform:uppercase; letter-spacing:.06em; padding-top:5px; display:inline-block;">${doneCount===roadmap.length ? L("You've made it!",'Başardın!','موفق شدی!','¡Lo lograste!') : esc(nextDisplayLevel(p))}</span>
+          </div>
+        </div>
       </div>
-      ${doneRows.length ? `
-      <h2 class="display" style="font-size:14px; margin:22px 0 10px; color:var(--ink-soft);">${L('Completed','Tamamlanan','تکمیل‌شده','Completado')} (${doneRows.length})</h2>
-      <div class="stack" style="gap:8px;">
-        ${doneRows.join('')}
-      </div>` : ''}
       <a class="btn btn-primary" style="margin-top:18px; width:100%; justify-content:center;" target="_top" rel="noopener" href="${whatsappLink(L("Hi! I'm "+p.name+". I'd like to start my course.","Merhaba! Ben "+p.name+". Kursuma başlamak istiyorum.","سلام! من "+p.name+" هستم. می‌خواهم دوره‌ام را شروع کنم.","¡Hola! Soy "+p.name+". Quiero empezar mi curso.")+leadInfoSuffix(p))}">${L('Start your course','Kursuna başla','شروع دوره‌ات','Empieza tu curso')}</a>
       <button class="btn btn-ghost" style="margin-top:10px;" data-action="retake-diagnostic">${L('Redo my diagnostic','Testimi yeniden yap','دوباره انجام‌دادن آزمون','Rehacer mi diagnóstico')}</button>
     </div>
@@ -5007,6 +5014,7 @@ function renderStudentClubLogin(){
     <div class="screen" style="padding-top:0;">
       <input id="student-panel-code-input" type="text" autocapitalize="characters" placeholder="${L('Your pass / username','Kodun / kullanıcı adın','رمز / نام کاربری‌ات','Tu clave / usuario')}" style="width:100%; box-sizing:border-box; padding:14px 16px; border-radius:14px; border:1.5px solid var(--border); font-size:16px; text-align:center; letter-spacing:.05em; background:var(--bg-elevated); color:var(--ink);" value="${esc(vp.code||'')}">
       ${vp.error ? `<p style="color:var(--error); font-size:13px; margin-top:8px; text-align:center;">${L("We couldn't find that pass. Double-check it and try again.",'Bu kodu bulamadık. Kontrol edip tekrar dene.','این رمز را پیدا نکردیم. بررسی کن و دوباره امتحان کن.','No encontramos esa clave. Revísala e inténtalo de nuevo.')}</p>` : ''}
+      ${vp.errorDetail ? `<p style="color:var(--ink-faint); font-size:11px; margin-top:4px; text-align:center;">(${esc(vp.errorDetail)})</p>` : ''}
       <button class="btn btn-primary" style="margin-top:14px;" data-action="student-panel-submit">${L('View my progress','İlerlemimi gör','دیدن پیشرفتم','Ver mi progreso')}</button>
     </div>
   </div>`;
@@ -6997,7 +7005,7 @@ const HANDLERS = {
   },
   'student-panel-submit'(){
     const input = document.getElementById('student-panel-code-input');
-    const code = (input && input.value || '').trim().toUpperCase();
+    const code = (input && input.value || '').trim().toUpperCase().replace(/\s+/g,'');
     if(!code || typeof firebase === 'undefined'){
       state.viewParams = {code, error:true};
       render();
@@ -7012,8 +7020,8 @@ const HANDLERS = {
       studentPanelData = Object.assign({code}, doc.data());
       state.studentPanelCache = studentPanelData;
       go('student-panel');
-    }).catch(()=>{
-      state.viewParams = {code, error:true};
+    }).catch(err=>{
+      state.viewParams = {code, error:true, errorDetail: err && err.message};
       render();
     });
   },

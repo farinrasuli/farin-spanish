@@ -5046,38 +5046,49 @@ function renderStudentPanel(){
       </div>` : ''}
 
       ${roadmap.length ? `
-      <div class="card-flat" style="margin-top:12px;">
+      <div class="card-flat" style="margin-top:12px; position:relative; overflow:hidden;">
         <div class="row between" style="align-items:center;">
           <div class="eyebrow">${L('Roadmap','Yol Haritası','نقشه راه','Ruta de aprendizaje')}</div>
           <span style="font-size:12px; font-weight:700; color:var(--ink-soft);">${roadmapDone}/${roadmap.length}</span>
         </div>
-        <div class="stack" style="gap:12px; margin-top:14px;">
-          ${roadmap.map((r,i)=>`
-          <div style="border:1.5px solid ${r.done?'var(--success-soft)':'var(--border-soft)'}; border-radius:18px; padding:14px; background:${r.done?'var(--success-soft)':'var(--bg-sunken)'};">
-            <div style="display:flex; align-items:flex-start; gap:10px;">
-              <span style="flex:0 0 auto; width:22px; height:22px; margin-top:1px; border-radius:50%; display:flex; align-items:center; justify-content:center; background:${r.done?'var(--success)':'var(--bg-elevated)'}; border:2px solid ${r.done?'var(--success)':'var(--border)'}; color:#fff;">${r.done?ICONS.check:''}</span>
-              <div style="min-width:0;">
-                <div style="font-size:10.5px; color:var(--ink-faint); font-weight:800; text-transform:uppercase; letter-spacing:.04em;">${L('Session','Seans','جلسه','Sesión')} ${i+1}${r.date ? ' · '+esc(r.date) : ''}</div>
-                <div style="font-weight:800; font-size:15px; margin-top:3px; ${r.done?'text-decoration:line-through; opacity:.65;':''}">${esc(r.title||r.label||'')}</div>
-              </div>
+        <div style="margin-top:20px; position:relative;">
+          <div style="display:flex; align-items:center; gap:10px; margin-bottom:18px;">
+            <div style="flex:0 0 auto; width:30px; height:30px; border-radius:50%; background:var(--ink); color:var(--bg-elevated); display:flex; align-items:center; justify-content:center; font-size:14px; box-shadow:0 3px 6px -1px rgba(0,0,0,.25);">🚩</div>
+            <span style="font-size:11px; font-weight:800; color:var(--ink-faint); text-transform:uppercase; letter-spacing:.06em;">${L('Start','Başla','شروع','Inicio')}</span>
+          </div>
+          <div style="position:absolute; left:14px; top:38px; bottom:40px; width:3px; border-radius:2px; background-image:repeating-linear-gradient(to bottom, var(--border) 0 6px, transparent 6px 13px);"></div>
+          ${roadmap.map((r,i)=>{
+            const color = PALETTE_COLORS[i % PALETTE_COLORS.length];
+            return `
+          <div style="position:relative; padding-left:40px; margin-bottom:${i<roadmap.length-1?'20px':'6px'};">
+            <div style="position:absolute; left:0; top:-1px; width:30px; height:30px; border-radius:50% 50% 50% 0; transform:rotate(-45deg); background:${r.done?color:'var(--bg-elevated)'}; border:2.5px solid ${color}; display:flex; align-items:center; justify-content:center; box-shadow:0 3px 6px -1px rgba(0,0,0,.22);">
+              <span style="transform:rotate(45deg); color:${r.done?'#fff':color}; font-size:11px; font-weight:800;">${r.done?ICONS.check:String(i+1).padStart(2,'0')}</span>
             </div>
-            ${r.homework ? `
-            <div style="margin-top:10px; background:var(--bg-elevated); border-radius:12px; padding:11px 13px; display:flex; gap:10px; align-items:flex-start;">
-              <span style="flex:0 0 auto; color:var(--cat-diag); margin-top:1px;">${ICONS.pen}</span>
-              <div style="min-width:0;">
-                <div style="font-size:10.5px; font-weight:800; color:var(--ink-faint); text-transform:uppercase; letter-spacing:.03em;">${L('Homework','Ödev','تکلیف','Tarea')}</div>
-                <div style="font-size:13.5px; color:var(--ink); margin-top:3px; line-height:1.55;">${esc(r.homework)}</div>
-              </div>
-            </div>` : ''}
-            ${r.tips ? `
-            <div style="margin-top:${r.homework?'8px':'10px'}; background:var(--cat-review-soft); border-radius:12px; padding:11px 13px; display:flex; gap:10px; align-items:flex-start;">
-              <span style="flex:0 0 auto; font-size:15px; margin-top:1px;">💡</span>
-              <div style="min-width:0;">
-                <div style="font-size:10.5px; font-weight:800; color:var(--cat-review); text-transform:uppercase; letter-spacing:.03em;">${L('Tip','İpucu','نکته','Consejo')}</div>
-                <div style="font-size:13.5px; color:var(--ink); margin-top:3px; line-height:1.55;">${esc(r.tips)}</div>
-              </div>
-            </div>` : ''}
-          </div>`).join('')}
+            <div style="background:var(--bg-sunken); border-radius:16px; padding:12px 14px; border:1.5px solid ${r.done?color+'66':'var(--border-soft)'};">
+              ${r.date ? `<div style="font-size:10px; color:var(--ink-faint); font-weight:800; text-transform:uppercase; letter-spacing:.03em;">${esc(r.date)}</div>` : ''}
+              <div style="font-weight:800; font-size:14.5px; margin-top:2px; color:${color}; ${r.done?'text-decoration:line-through; opacity:.6;':''}">${esc(r.title||r.label||'')}</div>
+              ${r.homework ? `
+              <div style="margin-top:9px; background:var(--bg-elevated); border-radius:12px; padding:10px 12px; display:flex; gap:9px; align-items:flex-start;">
+                <span style="flex:0 0 auto; color:${color}; margin-top:1px;">${ICONS.pen}</span>
+                <div style="min-width:0;">
+                  <div style="font-size:10.5px; font-weight:800; color:var(--ink-faint); text-transform:uppercase; letter-spacing:.03em;">${L('Homework','Ödev','تکلیف','Tarea')}</div>
+                  <div style="font-size:13.5px; color:var(--ink); margin-top:3px; line-height:1.55;">${esc(r.homework)}</div>
+                </div>
+              </div>` : ''}
+              ${r.tips ? `
+              <div style="margin-top:${r.homework?'7px':'9px'}; background:var(--cat-review-soft); border-radius:12px; padding:10px 12px; display:flex; gap:9px; align-items:flex-start;">
+                <span style="flex:0 0 auto; font-size:15px; margin-top:1px;">💡</span>
+                <div style="min-width:0;">
+                  <div style="font-size:10.5px; font-weight:800; color:var(--cat-review); text-transform:uppercase; letter-spacing:.03em;">${L('Tip','İpucu','نکته','Consejo')}</div>
+                  <div style="font-size:13.5px; color:var(--ink); margin-top:3px; line-height:1.55;">${esc(r.tips)}</div>
+                </div>
+              </div>` : ''}
+            </div>
+          </div>`; }).join('')}
+          <div style="position:relative; padding-left:40px;">
+            <div style="position:absolute; left:2px; top:-4px; font-size:24px;">${roadmapDone===roadmap.length ? '🏆' : '🏁'}</div>
+            <span style="font-size:11px; font-weight:800; color:var(--ink-faint); text-transform:uppercase; letter-spacing:.06em; padding-top:5px; display:inline-block;">${roadmapDone===roadmap.length ? L("You've made it!",'Başardın!','موفق شدی!','¡Lo lograste!') : L('Goal','Hedef','هدف','Meta')}</span>
+          </div>
         </div>
       </div>` : ''}
 

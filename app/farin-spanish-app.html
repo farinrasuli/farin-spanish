@@ -442,6 +442,7 @@ function L(en, tr, fa, es){ if(LANG==='tr') return tr; if(LANG==='fa') return fa
 
 /* ============================= CONFIG ============================= */
 const WHATSAPP_NUMBER = '905467615974'; // country code (90) + number, no + or spaces
+const COURSE_LABEL = 'Spanish';
 const LEVELS = ['A1','A2','B1','B2','C1'];
 const LEVEL_STAGES = ['A1','A1.2','A2','A2.2','B1','B1.2','B2','B2.2','C1','C1.2'];
 
@@ -5019,6 +5020,8 @@ function renderStudentPanel(){
   const homework = Array.isArray(d.homework) ? d.homework.slice().sort((a,b)=>(b.date||'').localeCompare(a.date||'')) : [];
   const stage = levelStageInfo(d.level, d.sessionsInStage);
   const roadmapDone = roadmap.filter(r=>r.done).length;
+  const learnedTitles = roadmap.filter(r=>r.done).map(r=>r.title||r.label).filter(Boolean);
+  const objectives = (Array.isArray(d.objectives) ? d.objectives : []).filter(o=>o && o.trim());
   return `<div class="fade-in">
     ${sectionHead(L('Your Progress','İlerlemen','پیشرفت تو','Tu progreso'), L('Curated by your teacher, just for you.','Öğretmenin tarafından, sadece senin için hazırlandı.','توسط معلمت و فقط برای تو آماده شده.','Preparado por tu profesor, solo para ti.'), 'student-club')}
     <div class="screen" style="padding-top:0;">
@@ -5026,7 +5029,7 @@ function renderStudentPanel(){
         <span class="sparkle" style="top:16px; left:22px;"></span>
         <span class="sparkle" style="top:36px; right:26px; left:auto; width:6px; height:6px; animation-delay:.5s;"></span>
         <span class="sparkle" style="bottom:14px; right:20px; left:auto; width:5px; height:5px; animation-delay:1s;"></span>
-        <div class="eyebrow" style="color:rgba(255,255,255,.85);">${esc(d.level || L('Level not set','Seviye belirtilmemiş','سطح تنظیم‌نشده','Nivel no definido'))}</div>
+        <div class="eyebrow" style="color:rgba(255,255,255,.85);">${esc(d.level || L('Level not set','Seviye belirtilmemiş','سطح تنظیم‌نشده','Nivel no definido'))} · ${COURSE_LABEL}</div>
         <h1 class="display" style="font-size:22px; margin-top:4px; color:#fff;">${esc(d.name || L('Student','Öğrenci','دانش‌آموز','Estudiante'))}</h1>
       </div>
 
@@ -5098,7 +5101,12 @@ function renderStudentPanel(){
           <span style="width:28px; height:28px; border-radius:50%; background:var(--cat-lis-soft); color:var(--cat-lis); display:flex; align-items:center; justify-content:center; flex:0 0 auto;">${ICONS.compass}</span>
           <div class="eyebrow" style="margin:0;">${L('Progress','İlerleme','پیشرفت','Progreso')}</div>
         </div>
-        <p style="font-size:14px; margin-top:10px; line-height:1.6; white-space:pre-wrap;">${esc(d.progressNote || L('Nothing added yet — check back soon!','Henüz bir şey eklenmedi — yakında tekrar bak!','هنوز چیزی اضافه نشده — به‌زودی دوباره سر بزن!','Nada agregado aún — ¡vuelve pronto!'))}</p>
+        ${learnedTitles.length ? `
+        <p style="font-size:11px; color:var(--ink-faint); font-weight:700; text-transform:uppercase; letter-spacing:.03em; margin-top:12px;">${L("What you've learned",'Neler öğrendin','چیزهایی که یاد گرفتی','Lo que has aprendido')}</p>
+        <div class="row" style="gap:6px; flex-wrap:wrap; margin-top:6px;">
+          ${learnedTitles.map(t=>`<span class="pill" style="background:var(--cat-lis-soft); color:var(--cat-lis);">✓ ${esc(t)}</span>`).join('')}
+        </div>` : ''}
+        <p style="font-size:14px; margin-top:${learnedTitles.length?'12px':'10px'}; line-height:1.6; white-space:pre-wrap;">${esc(d.progressNote || L('Nothing added yet — check back soon!','Henüz bir şey eklenmedi — yakında tekrar bak!','هنوز چیزی اضافه نشده — به‌زودی دوباره سر بزن!','Nada agregado aún — ¡vuelve pronto!'))}</p>
       </div>
       <div class="card-flat" style="margin-top:12px; border-left:4px solid var(--clay-orange);">
         <div style="display:flex; align-items:center; gap:9px;">
@@ -5107,6 +5115,20 @@ function renderStudentPanel(){
         </div>
         <p style="font-size:14px; margin-top:10px; line-height:1.6; white-space:pre-wrap;">${esc(d.performanceNote || L('Nothing added yet — check back soon!','Henüz bir şey eklenmedi — yakında tekrar bak!','هنوز چیزی اضافه نشده — به‌زودی دوباره سر بزن!','Nada agregado aún — ¡vuelve pronto!'))}</p>
       </div>
+      ${objectives.length ? `
+      <div class="card-flat" style="margin-top:12px; border-left:4px solid var(--cat-voc);">
+        <div style="display:flex; align-items:center; gap:9px;">
+          <span style="width:28px; height:28px; border-radius:50%; background:var(--cat-voc-soft); color:var(--cat-voc); display:flex; align-items:center; justify-content:center; flex:0 0 auto; font-size:14px;">🎯</span>
+          <div class="eyebrow" style="margin:0;">${L('Objectives','Hedefler','اهداف','Objetivos')}</div>
+        </div>
+        <div class="stack" style="gap:12px; margin-top:12px;">
+          ${objectives.map((o,i)=>`
+          <div style="display:flex; gap:10px; align-items:flex-start;">
+            <span style="flex:0 0 auto; width:22px; height:22px; margin-top:1px; border-radius:50%; background:var(--cat-voc-soft); color:var(--cat-voc); display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:800;">${i+1}</span>
+            <div style="font-size:13.5px; line-height:1.55; padding-top:1px;">${esc(o)}</div>
+          </div>`).join('')}
+        </div>
+      </div>` : ''}
       ${d.updatedAt ? `<p style="font-size:11px; color:var(--ink-faint); margin-top:12px; text-align:center;">${L('Last updated','Son güncelleme','آخرین به‌روزرسانی','Última actualización')}: ${esc(new Date(d.updatedAt).toLocaleDateString())}</p>` : ''}
     </div>
   </div>`;
@@ -7172,6 +7194,7 @@ function renderAdminStudentsTab(){
     const levelOpts = [''].concat(LEVEL_STAGES).map(l=>`<option value="${l}" ${s.level===l?'selected':''}>${l||'—'}</option>`).join('');
     const roadmap = Array.isArray(s.roadmap) ? s.roadmap : [];
     const homework = Array.isArray(s.homework) ? s.homework : [];
+    const objectives = Array.isArray(s.objectives) ? s.objectives : ['','',''];
     const goalOpts = [''].concat(Object.keys(GOAL_LABELS)).map(g=>`<option value="${g}" ${s.goal===g?'selected':''}>${g?GOAL_LABELS[g]:'—'}</option>`).join('');
     return `<div class="card-flat" style="background:linear-gradient(180deg, var(--cat-diag-soft) 0%, var(--bg-elevated) 90px);">
       ${adminSectionHead('👤','Basics',true)}
@@ -7179,7 +7202,7 @@ function renderAdminStudentsTab(){
       ${studentFormField('student-form-name', 'Name', s.name, 'input')}
 
       ${adminSectionHead('🧭','Level & pace')}
-      <label class="field-label">Level / stage</label>
+      <label class="field-label">Level / stage <span style="font-weight:400; color:var(--ink-faint); text-transform:none; letter-spacing:0;">(${COURSE_LABEL} course)</span></label>
       <select id="student-form-level" style="width:100%; box-sizing:border-box; padding:11px 13px; border-radius:12px; border:1.5px solid var(--border); font-size:14px; background:var(--bg-elevated); color:var(--ink); margin-bottom:10px;">${levelOpts}</select>
       <label class="field-label">Sessions in this stage (0–10)</label>
       <div class="row" style="gap:8px; margin-bottom:14px; align-items:center;">
@@ -7249,13 +7272,22 @@ function renderAdminStudentsTab(){
         <span style="font-weight:800; font-size:13.5px;">Performance</span>
       </div>
       ${quickFillPills('quick-performance', PERFORMANCE_TEMPLATES)}
-      <p style="font-size:11px; color:var(--ink-faint); margin:-4px 0 8px;">Goal-based results (pick a goal above):</p>
-      <div class="row" style="gap:6px; flex-wrap:wrap; margin-bottom:10px;">
-        <button type="button" class="pill" data-admin-action="quick-goal-result" data-idx="0" style="background:var(--cat-voc-soft); color:var(--cat-voc); cursor:pointer; border:none; font-family:inherit;">🎯 Result A</button>
-        <button type="button" class="pill" data-admin-action="quick-goal-result" data-idx="1" style="background:var(--cat-voc-soft); color:var(--cat-voc); cursor:pointer; border:none; font-family:inherit;">🎯 Result B</button>
-        <button type="button" class="pill" data-admin-action="quick-goal-result" data-idx="2" style="background:var(--cat-voc-soft); color:var(--cat-voc); cursor:pointer; border:none; font-family:inherit;">🎯 Result C</button>
-      </div>
       ${studentFormField('student-form-performance', '', s.performanceNote, 'textarea')}
+
+      <div style="display:flex; align-items:center; gap:9px; margin:6px 0 4px;">
+        <span style="width:26px; height:26px; border-radius:50%; background:var(--cat-voc-soft); color:var(--cat-voc); display:flex; align-items:center; justify-content:center; flex:0 0 auto;">🎯</span>
+        <span style="font-weight:800; font-size:13.5px;">Objectives</span>
+      </div>
+      <p style="font-size:11px; color:var(--ink-faint); margin:-2px 0 10px;">Three concrete, goal-based results — pick a goal above, then fill each one.</p>
+      ${[0,1,2].map(i=>`
+      <div style="border:1.5px solid var(--border); border-radius:12px; padding:10px; margin-bottom:8px;">
+        <div class="row between" style="align-items:center; margin-bottom:6px;">
+          <span style="font-size:10.5px; font-weight:800; color:var(--cat-voc); text-transform:uppercase; letter-spacing:.04em;">Objective ${i+1}</span>
+          <button type="button" class="btn btn-ghost btn-sm" data-admin-action="fill-objective" data-idx="${i}" style="padding:5px 10px; font-size:11.5px;">✨ Fill from goal</button>
+        </div>
+        <input type="text" id="student-form-objective-${i}" value="${esc((objectives[i]||''))}" placeholder="e.g. Ready to handle a real job interview in English." style="width:100%; box-sizing:border-box; padding:9px 12px; border-radius:9px; border:1.5px solid var(--border); font-size:13.5px; background:var(--bg-elevated); color:var(--ink);">
+      </div>`).join('')}
+
       ${adminStudentError ? `<p style="color:var(--error); font-size:13px; margin-bottom:10px;">${esc(adminStudentError)}</p>` : ''}
       ${adminStudentInfo ? `<p style="color:var(--success); font-size:13px; margin-bottom:10px;">${esc(adminStudentInfo)}</p>` : ''}
       <div class="row" style="gap:8px;">
@@ -7270,7 +7302,7 @@ function renderAdminStudentsTab(){
     <button class="item-row" data-admin-action="edit-student" data-code="${esc(s.code)}">
       <div class="item-body">
         <div class="item-title">${esc(s.name||s.code)}</div>
-        <div class="item-sub">${esc(s.level||'—')} · pass: ${esc(s.code)}</div>
+        <div class="item-sub">${esc(s.level||'—')} · ${COURSE_LABEL} · pass: ${esc(s.code)}</div>
       </div>
       <span class="chevron">${ICONS.chev}</span>
     </button>`).join('') || '<p style="padding:20px; text-align:center; color:var(--ink-faint);">No student panels yet.</p>';
@@ -7329,14 +7361,14 @@ function bindAdminActions(root){
       } else if(action === 'add-student'){
         adminStudentError = '';
         adminStudentInfo = '';
-        adminEditingStudent = {isNew:true, code:'', name:'', level:'', goal:'', sessionsInStage:0, progressNote:'', performanceNote:'', roadmap:[], homework:[]};
+        adminEditingStudent = {isNew:true, code:'', name:'', level:'', goal:'', sessionsInStage:0, progressNote:'', performanceNote:'', objectives:['','',''], roadmap:[], homework:[]};
         renderAdminPage();
       } else if(action === 'edit-student'){
         const code = el.dataset.code;
         const s = (adminStudents||[]).find(x=>x.code===code);
         adminStudentError = '';
         adminStudentInfo = '';
-        adminEditingStudent = Object.assign({isNew:false, goal:'', sessionsInStage:0, roadmap:[], homework:[]}, s);
+        adminEditingStudent = Object.assign({isNew:false, goal:'', sessionsInStage:0, objectives:['','',''], roadmap:[], homework:[]}, s);
         renderAdminPage();
       } else if(action === 'add-roadmap-item'){
         adminEditingStudent.roadmap = harvestRoadmapFromDOM();
@@ -7400,19 +7432,20 @@ function bindAdminActions(root){
         const ta = document.getElementById('student-form-performance');
         const text = PERFORMANCE_TEMPLATES[el.dataset.key];
         if(ta && text) ta.value = (ta.value.trim() ? ta.value.trim()+'\n\n' : '') + text;
-      } else if(action === 'quick-goal-result'){
+      } else if(action === 'fill-objective'){
         const goalEl = document.getElementById('student-form-goal');
         const goal = goalEl ? goalEl.value : '';
         if(!goal){
-          adminStudentError = 'Pick a goal above first to use goal-based results.';
+          adminStudentError = 'Pick a goal above first to fill objectives.';
           renderAdminPage();
           return;
         }
+        const idx = Number(el.dataset.idx);
         const results = GOAL_PERFORMANCE_RESULTS[goal];
-        const text = results && results[Number(el.dataset.idx)];
+        const text = results && results[idx];
         if(text){
-          const ta = document.getElementById('student-form-performance');
-          if(ta) ta.value = (ta.value.trim() ? ta.value.trim()+'\n\n' : '') + text;
+          const inp = document.getElementById('student-form-objective-'+idx);
+          if(inp) inp.value = text;
         }
       } else if(action === 'increment-session'){
         const levelEl = document.getElementById('student-form-level');
@@ -7509,10 +7542,15 @@ function saveAdminStudent(){
   const sessionsInStage = Math.max(0, Math.min(10, Number(document.getElementById('student-form-sessions').value)||0));
   const progressNote = document.getElementById('student-form-progress').value;
   const performanceNote = document.getElementById('student-form-performance').value;
+  const objectives = [0,1,2].map(i=>{
+    const inp = document.getElementById('student-form-objective-'+i);
+    return inp ? inp.value : '';
+  });
   const roadmap = harvestRoadmapFromDOM();
   const homework = harvestHomeworkFromDOM();
   adminEditingStudent.roadmap = roadmap;
   adminEditingStudent.homework = homework;
+  adminEditingStudent.objectives = objectives;
   if(!code){
     adminStudentError = 'Please enter a pass / username.';
     renderAdminPage();
@@ -7523,7 +7561,7 @@ function saveAdminStudent(){
   renderAdminPage();
   const finish = ()=>{
     firebase.firestore().collection('studentPanelsEs').doc(code).set({
-      name, level, goal, sessionsInStage, progressNote, performanceNote, roadmap, homework, updatedAt: Date.now()
+      name, level, goal, sessionsInStage, progressNote, performanceNote, objectives, roadmap, homework, updatedAt: Date.now()
     }, {merge:true}).then(()=>{
       adminSavingStudent = false;
       adminEditingStudent = null;

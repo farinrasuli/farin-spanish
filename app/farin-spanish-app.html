@@ -6108,7 +6108,8 @@ function renderStoryDetail(id){
 
 /* ============================= QUIZ ENGINE (shared) ============================= */
 function grammarQuizQuestions(item){
-  const why = L(item.exp.en, item.exp.tr, item.exp.fa, item.exp.es);
+  const fullExp = L(item.exp.en, item.exp.tr, item.exp.fa, item.exp.es);
+  const why = structureExplanation(fullExp).hook || fullExp;
   const pickLabel = L('Which sentence is correct?','Hangi cümle doğru?','کدام جمله درست است؟','¿Qué oración es correcta?');
   const pickQ = (right, wrong) => { const opts = shuffle([right, wrong]); return {prompt:pickLabel, options:opts, correct:opts.indexOf(right), why}; };
   const fillQ = (blank) => { const opts = shuffle([blank.word, ...blank.distractors]); return {prompt:blank.sentence, options:opts, correct:opts.indexOf(blank.word), why}; };

@@ -5031,7 +5031,7 @@ function renderStudentPanel(){
       </div>
 
       ${stage.idx>=0 ? `
-      <div class="card-flat" style="margin-top:16px;">
+      <div class="card-flat" style="margin-top:16px; border-left:4px solid var(--cat-diag);">
         <div class="row between" style="align-items:center;">
           <div class="eyebrow">${L('Level progress','Seviye ilerlemesi','پیشرفت سطح','Progreso de nivel')}</div>
           <span style="font-size:12px; font-weight:700; color:var(--ink-soft);">${stage.sessions}/10 ${L('sessions','seans','جلسه','sesiones')}</span>
@@ -5093,13 +5093,19 @@ function renderStudentPanel(){
         </div>
       </div>` : ''}
 
-      <div class="card-flat" style="margin-top:12px;">
-        <div class="eyebrow">${L('Progress','İlerleme','پیشرفت','Progreso')}</div>
-        <p style="font-size:14px; margin-top:8px; line-height:1.6; white-space:pre-wrap;">${esc(d.progressNote || L('Nothing added yet — check back soon!','Henüz bir şey eklenmedi — yakında tekrar bak!','هنوز چیزی اضافه نشده — به‌زودی دوباره سر بزن!','Nada agregado aún — ¡vuelve pronto!'))}</p>
+      <div class="card-flat" style="margin-top:12px; border-left:4px solid var(--cat-lis);">
+        <div style="display:flex; align-items:center; gap:9px;">
+          <span style="width:28px; height:28px; border-radius:50%; background:var(--cat-lis-soft); color:var(--cat-lis); display:flex; align-items:center; justify-content:center; flex:0 0 auto;">${ICONS.compass}</span>
+          <div class="eyebrow" style="margin:0;">${L('Progress','İlerleme','پیشرفت','Progreso')}</div>
+        </div>
+        <p style="font-size:14px; margin-top:10px; line-height:1.6; white-space:pre-wrap;">${esc(d.progressNote || L('Nothing added yet — check back soon!','Henüz bir şey eklenmedi — yakında tekrar bak!','هنوز چیزی اضافه نشده — به‌زودی دوباره سر بزن!','Nada agregado aún — ¡vuelve pronto!'))}</p>
       </div>
-      <div class="card-flat" style="margin-top:12px;">
-        <div class="eyebrow">${L('Performance','Performans','عملکرد','Desempeño')}</div>
-        <p style="font-size:14px; margin-top:8px; line-height:1.6; white-space:pre-wrap;">${esc(d.performanceNote || L('Nothing added yet — check back soon!','Henüz bir şey eklenmedi — yakında tekrar bak!','هنوز چیزی اضافه نشده — به‌زودی دوباره سر بزن!','Nada agregado aún — ¡vuelve pronto!'))}</p>
+      <div class="card-flat" style="margin-top:12px; border-left:4px solid var(--clay-orange);">
+        <div style="display:flex; align-items:center; gap:9px;">
+          <span style="width:28px; height:28px; border-radius:50%; background:var(--accent-soft); color:var(--clay-orange); display:flex; align-items:center; justify-content:center; flex:0 0 auto;">${ICONS.star}</span>
+          <div class="eyebrow" style="margin:0;">${L('Performance','Performans','عملکرد','Desempeño')}</div>
+        </div>
+        <p style="font-size:14px; margin-top:10px; line-height:1.6; white-space:pre-wrap;">${esc(d.performanceNote || L('Nothing added yet — check back soon!','Henüz bir şey eklenmedi — yakında tekrar bak!','هنوز چیزی اضافه نشده — به‌زودی دوباره سر بزن!','Nada agregado aún — ¡vuelve pronto!'))}</p>
       </div>
       ${d.updatedAt ? `<p style="font-size:11px; color:var(--ink-faint); margin-top:12px; text-align:center;">${L('Last updated','Son güncelleme','آخرین به‌روزرسانی','Última actualización')}: ${esc(new Date(d.updatedAt).toLocaleDateString())}</p>` : ''}
     </div>
@@ -7055,7 +7061,13 @@ function studentFormField(id, label, value, tag, extra){
   const el = tag === 'textarea'
     ? `<textarea id="${id}" rows="4" style="width:100%; box-sizing:border-box; padding:11px 13px; border-radius:12px; border:1.5px solid var(--border); font-size:14px; background:var(--bg-elevated); color:var(--ink); font-family:inherit;" ${extra||''}>${val}</textarea>`
     : `<input id="${id}" type="text" value="${val}" style="width:100%; box-sizing:border-box; padding:11px 13px; border-radius:12px; border:1.5px solid var(--border); font-size:14px; background:var(--bg-elevated); color:var(--ink);" ${extra||''}>`;
-  return `<label class="field-label">${label}</label>${el}<div style="height:10px;"></div>`;
+  return `${label ? `<label class="field-label">${label}</label>` : ''}${el}<div style="height:10px;"></div>`;
+}
+function adminSectionHead(emoji, label, first){
+  return `<div style="display:flex; align-items:center; gap:8px; margin:${first?'0':'24px'} 0 12px; ${first?'':'padding-top:16px; border-top:1px solid var(--border-soft);'}">
+    <span style="font-size:16px;">${emoji}</span>
+    <span style="font-size:11.5px; font-weight:800; color:var(--ink-soft); text-transform:uppercase; letter-spacing:.05em;">${label}</span>
+  </div>`;
 }
 function harvestRoadmapFromDOM(){
   return Array.from(document.querySelectorAll('#roadmap-items-list .roadmap-item-row')).map(row=>({
@@ -7119,8 +7131,36 @@ const PERFORMANCE_TEMPLATES = {
   'strong-listening': "You're a wonderful listener! You pick up meaning and tone so naturally.",
   'needs-speaking': "Let's build your speaking confidence together. The more you talk, the easier it gets. I believe in you!",
   'needs-listening': "Let's practice listening a bit more, especially fast, natural speech. You're closer than you think!",
-  'well-rounded': "Well-rounded across all four skills — no major weak spots right now."
+  'well-rounded': "You're doing wonderfully across the board — speaking, writing, listening, all strong. I'm so proud of you!"
 };
+const GOAL_PERFORMANCE_RESULTS = {
+  travel: [
+    "Can confidently order food, ask for directions, and handle everyday travel situations.",
+    "Understands airport, hotel, and transport announcements without trouble.",
+    "Comfortable making small talk with locals while traveling."
+  ],
+  career: [
+    "Ready to handle a real job interview in English.",
+    "Writes clear, professional emails to colleagues and clients.",
+    "Presents ideas confidently in meetings now."
+  ],
+  exam: [
+    "On track to pass the target exam at this pace.",
+    "Strong grasp of the grammar points the exam tests most.",
+    "Needs more timed practice to build exam-day confidence."
+  ],
+  everyday: [
+    "Handles daily conversations with confidence — shopping, chatting, casual calls.",
+    "Understands most everyday spoken English without needing repetition.",
+    "Comfortable sharing opinions in casual conversation now."
+  ],
+  immigration: [
+    "Ready for everyday life abroad — appointments, forms, phone calls.",
+    "Comfortable communicating with officials, doctors, and landlords.",
+    "Building the vocabulary needed to settle into a new country."
+  ]
+};
+const GOAL_LABELS = {travel:'Travel', career:'Career', exam:'Exam', everyday:'Everyday life', immigration:'Immigration'};
 function quickFillPills(action, templates){
   return `<div class="row" style="gap:6px; flex-wrap:wrap; margin-bottom:10px;">
     ${Object.keys(templates).map(key=>`<button type="button" class="pill" data-admin-action="${action}" data-key="${key}" style="background:var(--bg-sunken); color:var(--ink-soft); cursor:pointer; border:none; font-family:inherit;">${key.replace(/-/g,' ')}</button>`).join('')}
@@ -7132,9 +7172,13 @@ function renderAdminStudentsTab(){
     const levelOpts = [''].concat(LEVEL_STAGES).map(l=>`<option value="${l}" ${s.level===l?'selected':''}>${l||'—'}</option>`).join('');
     const roadmap = Array.isArray(s.roadmap) ? s.roadmap : [];
     const homework = Array.isArray(s.homework) ? s.homework : [];
-    return `<div class="card-flat">
+    const goalOpts = [''].concat(Object.keys(GOAL_LABELS)).map(g=>`<option value="${g}" ${s.goal===g?'selected':''}>${g?GOAL_LABELS[g]:'—'}</option>`).join('');
+    return `<div class="card-flat" style="background:linear-gradient(180deg, var(--cat-diag-soft) 0%, var(--bg-elevated) 90px);">
+      ${adminSectionHead('👤','Basics',true)}
       ${studentFormField('student-form-code', 'Pass / username', s.code, 'input', s.isNew ? 'placeholder="e.g. AYLIN23"' : 'disabled style="background:var(--bg-sunken);"')}
       ${studentFormField('student-form-name', 'Name', s.name, 'input')}
+
+      ${adminSectionHead('🧭','Level & pace')}
       <label class="field-label">Level / stage</label>
       <select id="student-form-level" style="width:100%; box-sizing:border-box; padding:11px 13px; border-radius:12px; border:1.5px solid var(--border); font-size:14px; background:var(--bg-elevated); color:var(--ink); margin-bottom:10px;">${levelOpts}</select>
       <label class="field-label">Sessions in this stage (0–10)</label>
@@ -7142,9 +7186,9 @@ function renderAdminStudentsTab(){
         <input id="student-form-sessions" type="number" min="0" max="10" value="${esc(s.sessionsInStage!==undefined?s.sessionsInStage:0)}" style="flex:1; box-sizing:border-box; padding:11px 13px; border-radius:12px; border:1.5px solid var(--border); font-size:14px; background:var(--bg-elevated); color:var(--ink);">
         <button type="button" class="btn btn-ghost btn-sm" data-admin-action="increment-session">+1 session</button>
       </div>
-      <p style="font-size:11px; color:var(--ink-faint); margin:-8px 0 14px;">Hitting 10 auto-advances to the next stage.</p>
+      <p style="font-size:11px; color:var(--ink-faint); margin:-8px 0 4px;">Hitting 10 auto-advances to the next stage.</p>
 
-      <label class="field-label">Roadmap</label>
+      ${adminSectionHead('🗺️','Roadmap')}
       <div id="roadmap-items-list" style="margin-bottom:8px;">
         ${roadmap.map((r,idx)=>`
         <div class="roadmap-item-row" data-id="${esc(r.id)}" style="border:1.5px solid var(--border); border-radius:12px; padding:10px; margin-bottom:8px;">
@@ -7171,7 +7215,7 @@ function renderAdminStudentsTab(){
         <button class="btn btn-ghost btn-sm" data-admin-action="parse-roadmap-paste">📋 Add pasted sessions</button>
       </div>
 
-      <label class="field-label">Homework</label>
+      ${adminSectionHead('📝','Homework')}
       <div id="homework-items-list" style="margin-bottom:8px;">
         ${homework.map((h,idx)=>`
         <div class="homework-item-row" data-id="${esc(h.id)}" style="border:1.5px solid var(--border); border-radius:12px; padding:10px; margin-bottom:8px;">
@@ -7188,11 +7232,30 @@ function renderAdminStudentsTab(){
         <button class="btn btn-ghost btn-sm" data-admin-action="suggest-homework">✨ Suggest from roadmap</button>
       </div>
 
+      ${adminSectionHead('💬','Notes for '+(s.name||'this student'))}
+      <label class="field-label">Goal <span style="font-weight:400; color:var(--ink-faint); text-transform:none; letter-spacing:0;">(unlocks result-based performance options)</span></label>
+      <select id="student-form-goal" style="width:100%; box-sizing:border-box; padding:11px 13px; border-radius:12px; border:1.5px solid var(--border); font-size:14px; background:var(--bg-elevated); color:var(--ink); margin-bottom:16px;">${goalOpts}</select>
+
+      <div style="display:flex; align-items:center; gap:9px; margin-bottom:10px;">
+        <span style="width:26px; height:26px; border-radius:50%; background:var(--cat-lis-soft); color:var(--cat-lis); display:flex; align-items:center; justify-content:center; flex:0 0 auto;">${ICONS.compass}</span>
+        <span style="font-weight:800; font-size:13.5px;">Progress</span>
+      </div>
       <button type="button" class="btn btn-ghost btn-sm" data-admin-action="auto-progress-note" style="margin-bottom:8px;">🪄 Auto-write from data</button>
       ${quickFillPills('quick-progress', PROGRESS_TEMPLATES)}
-      ${studentFormField('student-form-progress', 'Progress notes', s.progressNote, 'textarea')}
+      ${studentFormField('student-form-progress', '', s.progressNote, 'textarea')}
+
+      <div style="display:flex; align-items:center; gap:9px; margin:6px 0 10px;">
+        <span style="width:26px; height:26px; border-radius:50%; background:var(--accent-soft); color:var(--clay-orange); display:flex; align-items:center; justify-content:center; flex:0 0 auto;">${ICONS.star}</span>
+        <span style="font-weight:800; font-size:13.5px;">Performance</span>
+      </div>
       ${quickFillPills('quick-performance', PERFORMANCE_TEMPLATES)}
-      ${studentFormField('student-form-performance', 'Performance notes', s.performanceNote, 'textarea')}
+      <p style="font-size:11px; color:var(--ink-faint); margin:-4px 0 8px;">Goal-based results (pick a goal above):</p>
+      <div class="row" style="gap:6px; flex-wrap:wrap; margin-bottom:10px;">
+        <button type="button" class="pill" data-admin-action="quick-goal-result" data-idx="0" style="background:var(--cat-voc-soft); color:var(--cat-voc); cursor:pointer; border:none; font-family:inherit;">🎯 Result A</button>
+        <button type="button" class="pill" data-admin-action="quick-goal-result" data-idx="1" style="background:var(--cat-voc-soft); color:var(--cat-voc); cursor:pointer; border:none; font-family:inherit;">🎯 Result B</button>
+        <button type="button" class="pill" data-admin-action="quick-goal-result" data-idx="2" style="background:var(--cat-voc-soft); color:var(--cat-voc); cursor:pointer; border:none; font-family:inherit;">🎯 Result C</button>
+      </div>
+      ${studentFormField('student-form-performance', '', s.performanceNote, 'textarea')}
       ${adminStudentError ? `<p style="color:var(--error); font-size:13px; margin-bottom:10px;">${esc(adminStudentError)}</p>` : ''}
       ${adminStudentInfo ? `<p style="color:var(--success); font-size:13px; margin-bottom:10px;">${esc(adminStudentInfo)}</p>` : ''}
       <div class="row" style="gap:8px;">
@@ -7266,14 +7329,14 @@ function bindAdminActions(root){
       } else if(action === 'add-student'){
         adminStudentError = '';
         adminStudentInfo = '';
-        adminEditingStudent = {isNew:true, code:'', name:'', level:'', sessionsInStage:0, progressNote:'', performanceNote:'', roadmap:[], homework:[]};
+        adminEditingStudent = {isNew:true, code:'', name:'', level:'', goal:'', sessionsInStage:0, progressNote:'', performanceNote:'', roadmap:[], homework:[]};
         renderAdminPage();
       } else if(action === 'edit-student'){
         const code = el.dataset.code;
         const s = (adminStudents||[]).find(x=>x.code===code);
         adminStudentError = '';
         adminStudentInfo = '';
-        adminEditingStudent = Object.assign({isNew:false, sessionsInStage:0, roadmap:[], homework:[]}, s);
+        adminEditingStudent = Object.assign({isNew:false, goal:'', sessionsInStage:0, roadmap:[], homework:[]}, s);
         renderAdminPage();
       } else if(action === 'add-roadmap-item'){
         adminEditingStudent.roadmap = harvestRoadmapFromDOM();
@@ -7337,6 +7400,20 @@ function bindAdminActions(root){
         const ta = document.getElementById('student-form-performance');
         const text = PERFORMANCE_TEMPLATES[el.dataset.key];
         if(ta && text) ta.value = (ta.value.trim() ? ta.value.trim()+'\n\n' : '') + text;
+      } else if(action === 'quick-goal-result'){
+        const goalEl = document.getElementById('student-form-goal');
+        const goal = goalEl ? goalEl.value : '';
+        if(!goal){
+          adminStudentError = 'Pick a goal above first to use goal-based results.';
+          renderAdminPage();
+          return;
+        }
+        const results = GOAL_PERFORMANCE_RESULTS[goal];
+        const text = results && results[Number(el.dataset.idx)];
+        if(text){
+          const ta = document.getElementById('student-form-performance');
+          if(ta) ta.value = (ta.value.trim() ? ta.value.trim()+'\n\n' : '') + text;
+        }
       } else if(action === 'increment-session'){
         const levelEl = document.getElementById('student-form-level');
         const sessEl = document.getElementById('student-form-sessions');
@@ -7428,6 +7505,7 @@ function saveAdminStudent(){
   const code = (s.isNew ? (codeEl && codeEl.value || '') : s.code).trim().toUpperCase().replace(/\s+/g,'');
   const name = (document.getElementById('student-form-name').value || '').trim();
   const level = document.getElementById('student-form-level').value;
+  const goal = document.getElementById('student-form-goal').value;
   const sessionsInStage = Math.max(0, Math.min(10, Number(document.getElementById('student-form-sessions').value)||0));
   const progressNote = document.getElementById('student-form-progress').value;
   const performanceNote = document.getElementById('student-form-performance').value;
@@ -7445,7 +7523,7 @@ function saveAdminStudent(){
   renderAdminPage();
   const finish = ()=>{
     firebase.firestore().collection('studentPanelsEs').doc(code).set({
-      name, level, sessionsInStage, progressNote, performanceNote, roadmap, homework, updatedAt: Date.now()
+      name, level, goal, sessionsInStage, progressNote, performanceNote, roadmap, homework, updatedAt: Date.now()
     }, {merge:true}).then(()=>{
       adminSavingStudent = false;
       adminEditingStudent = null;

@@ -4837,14 +4837,6 @@ function pickGreeting(p, dueCount){
   return L(g.en,g.tr,g.fa,g.es).replace('{name}', '<bdi>'+esc(p.name)+'</bdi>');
 }
 
-/* ============================= DASHBOARD TILE ILLUSTRATIONS (flat, non-emoji) ============================= */
-const TILE_ILLUSTRATIONS = {
-  goals:`<img src="tile-goals-cutout.png" alt="" loading="lazy">`,
-  speaking:`<img src="studio-icon-cutout.png" alt="" loading="lazy">`,
-  story:`<img src="story-fiction-cutout.png" alt="" loading="lazy">`,
-  review:`<img src="icon-review.png" alt="" loading="lazy">`,
-  english:`<img src="tile-english-cutout.png" alt="" loading="lazy">`
-};
 function claySparkles(){
   return `<span class="sparkle" style="top:14px; left:18px; animation-delay:0s;"></span>
     <span class="sparkle" style="top:42px; left:98px; width:5px; height:5px; animation-delay:.6s;"></span>
@@ -4856,10 +4848,8 @@ function storyBannerMedia(genre){
 }
 /* ============================= RENDER: DASHBOARD ============================= */
 function renderDashboard(){
-  const p = state.profile, pr = state.progress;
+  const p = state.profile;
   const arch = ARCHETYPES[p.motivationTag];
-  const doneStoriesAtLevel = pr.completedStories.filter(id=>{ const s=STORY_LIBRARY.find(x=>x.id===id); return s && s.level===p.level; }).length;
-  const totalStoriesAtLevel = STORY_LIBRARY.filter(s=>s.level===p.level).length;
   const dueCount = dueItems().length;
   if(!p.dashboardIntroShown){ p.dashboardIntroShown = true; save(); }
   const heroCat = (p.goals && p.goals.length && GOALS_META[p.goals[0]]) ? GOALS_META[p.goals[0]].cat : 'diag';
@@ -4886,22 +4876,6 @@ function renderDashboard(){
 
       <h2 class="display" style="font-size:16px; margin:22px 0 12px;">${L("Let's keep training","Hadi antrenmana devam",'بیا تمرین را ادامه بدیم','Sigamos entrenando')}</h2>
       ${renderRoadmapCard(p)}
-
-      <div class="tiles" style="margin-top:20px;">
-        <button class="tile" data-action="nav" data-view="speaking-club" style="background:var(--clay-coral); color:var(--clay-coral-deep);">
-          ${claySparkles()}
-          <span style="position:absolute; top:34px; left:10px; background:rgba(255,255,255,.92); color:var(--clay-coral-deep); font-size:10px; font-weight:800; padding:3px 9px; border-radius:999px; letter-spacing:.04em; text-transform:uppercase; z-index:1;">${L('New','Yeni','جدید','Nuevo')}</span>
-          <span class="tile-illustration">${TILE_ILLUSTRATIONS.speaking}</span>
-          <span class="tile-title">${L('Studio','Stüdyo','استودیو','Estudio')}</span>
-          <span class="tile-sub">${L('Teacher & practice lab','Öğretmen ve pratik lab','معلم و آزمایشگاه تمرین','Profesor y laboratorio de práctica')}</span>
-        </button>
-        <button class="tile" data-action="nav" data-view="story-list" style="background:var(--clay-lavender); color:var(--clay-lavender-deep);">
-          ${claySparkles()}
-          <span class="tile-illustration">${TILE_ILLUSTRATIONS.story}</span>
-          <span class="tile-title">${L('Story World','Hikaye Dünyası','دنیای داستان','Mundo de Historias')}</span>
-          <span class="tile-sub">${p.level} · ${doneStoriesAtLevel}/${totalStoriesAtLevel}</span>
-        </button>
-      </div>
     </div>
   </div>`;
 }

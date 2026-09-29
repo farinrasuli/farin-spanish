@@ -374,6 +374,42 @@
   .roadmap-here-badge{animation:roadmap-here-bounce 1.6s ease-in-out infinite;}
   @keyframes roadmap-here-bounce{0%,100%{transform:translateY(0);} 50%{transform:translateY(-3px);}}
 
+  .roadmap-char-portrait{animation:roadmap-char-bob 3s ease-in-out infinite;}
+  @keyframes roadmap-char-bob{0%,100%{transform:translateY(0) rotate(-2deg);} 50%{transform:translateY(-5px) rotate(2deg);}}
+
+  /* ---- Roadmap 2.0 visual redesign, ported from the English app (2026-09-29, Farin:
+     "bigger filled pastel sections, current step shiny, no more curve/cards-under-cards,
+     symbols sitting between cards"). Replaces the old windingRoadmap() S-curve + small
+     tinted pills. Big pastel .rm2-node blocks stack in normal flow (no fixed-height math
+     needed, so variable content height is safe); a round type-icon badge (.rm2-seam-ic)
+     sits in a zero-height .rm2-seam between each pair of cards and is pulled up by half
+     its own height so it visually straddles the seam — half in the card above, half
+     in the card below. ---- */
+  .rm2-track{display:flex; flex-direction:column;}
+  .rm2-cap{display:flex; flex-direction:column; align-items:center; text-align:center; padding:4px 0 34px;}
+  .rm2-cap-end{padding:34px 0 4px;}
+  .rm2-cap-label{font-size:9.5px; font-weight:800; color:var(--ink-faint); text-transform:uppercase; letter-spacing:.05em; margin-top:6px;}
+  .rm2-seam{height:0; display:flex; justify-content:center; position:relative; z-index:5;}
+  .rm2-seam-ic{position:relative; top:-30px;}
+  .rm2-node{position:relative; z-index:1; overflow:hidden; display:block; width:100%; text-align:start; color:inherit; font-family:inherit;}
+  .rm2-node-current{animation:rm2-node-pulse 2.6s ease-in-out infinite;}
+  @keyframes rm2-node-pulse{0%,100%{transform:scale(1);} 50%{transform:scale(1.012);}}
+  .rm2-node-current::before{content:''; position:absolute; top:-65%; left:-45%; width:32%; height:240%; background:linear-gradient(120deg, transparent, rgba(255,255,255,.75), transparent); transform:rotate(16deg); animation:rm2-shine 2.7s ease-in-out infinite; pointer-events:none;}
+  @keyframes rm2-shine{0%{left:-45%;} 55%,100%{left:135%;}}
+  .rm2-node-done{filter:saturate(.55); opacity:.75;}
+  /* Follow-up polish (2026-09-29, Farin: "sparkly not just shiny", "colors so dull",
+     "font also dull... like the profile square but my brand colors"). Current-step
+     card now fills with the full-strength brand/category color (same recipe as
+     .character-card on Profile: solid color + white text) instead of a muted pastel,
+     and gets actual twinkling sparkle stars on top of the existing shine sweep — reuses
+     the app's existing .sparkle/@sparkle-twinkle (see profileHeaderCard/.character-card)
+     rather than inventing a new effect. */
+  .rm2-node-current .sparkle{color:#fff;}
+  .rm2-seam-enter{animation:rm2-seam-enter .45s cubic-bezier(.34,1.56,.64,1) backwards;}
+  @keyframes rm2-seam-enter{from{opacity:0; transform:scale(.5);} to{opacity:1; transform:scale(1);}}
+  .rm2-card-enter{animation:rm2-card-enter .4s ease-out backwards;}
+  @keyframes rm2-card-enter{from{opacity:0; transform:translateY(12px);} to{opacity:1; transform:translateY(0);}}
+
   /* ---- bottom nav ---- */
   .bottomnav{position:fixed; bottom:0; left:50%; transform:translateX(-50%); width:100%; max-width:480px; background:var(--bg-elevated); border-top:1px solid var(--border); display:flex; padding:8px 8px calc(8px + env(safe-area-inset-bottom,0)); gap:4px; z-index:20;}
   .nav-btn{flex:1; display:flex; flex-direction:column; align-items:center; gap:3px; background:none; border:none; color:var(--ink-faint); padding:8px 4px; border-radius:14px; font-size:10.5px; font-weight:700;}
@@ -4294,7 +4330,7 @@ const DAILY_TASK_POOL = [
   {id:'story-read', ic:'book', cat:'story', theme:'story', view:'story-list', title:{en:'Read one story in Story World', tr:"Hikaye Dünyası'nda bir hikaye oku", fa:'یک داستان در دنیای داستان بخوان', es:'Lee una historia en el Mundo de Historias'}},
   {id:'speak-aloud', ic:'chat', cat:'lis', theme:'speaking', view:'speaking-club', title:{en:'Say 5 phrases out loud today', tr:'Bugün yüksek sesle 5 ifade söyle', fa:'امروز ۵ عبارت را با صدای بلند بگو', es:'Di 5 frases en voz alta hoy'}},
   {id:'slang-pickup', ic:'cards', cat:'diag', theme:'vocab', view:'vocab-list', title:{en:'Pick up 3 new slang phrases', tr:'3 yeni argo ifade öğren', fa:'۳ اصطلاح عامیانه جدید یاد بگیر', es:'Aprende 3 frases de argot nuevas'}},
-  {id:'roadmap-progress', ic:'compass', cat:'diag', theme:'roadmap', view:'diag-intro-review', title:{en:'Check off one step in Your Roadmap', tr:"Yol Haritan'da bir adımı işaretle", fa:'یک قدم در نقشه راهت را علامت بزن', es:'Marca un paso en tu Hoja de Ruta'}}
+  {id:'roadmap-progress', ic:'compass', cat:'diag', theme:'roadmap', view:'dashboard', title:{en:'Check off one step in Your Roadmap', tr:"Yol Haritan'da bir adımı işaretle", fa:'یک قدم در نقشه راهت را علامت بزن', es:'Marca un paso en tu Hoja de Ruta'}}
 ];
 function buildDailyTasks(p){
   const priorityThemeMap = {grammar:'grammar', vocab:'vocab', listening:'speaking', speaking:'speaking'};
@@ -4401,11 +4437,16 @@ function render(){
 function langToggle(){
   return `<button class="lang-btn" data-action="toggle-lang">${LANG.toUpperCase()}</button>`;
 }
-function topbar(showGear){
+function topbar(showGear, showEnglishLink){
+  // English-app switch lives here now (small icon, header controls row) instead of as
+  // its own dashboard tile — ported from the English app's Spanish-switch button
+  // (Farin, 2026-09-29: "smaller and in a better place"). Only passed true from the
+  // dashboard, same as showGear.
   return `<div class="topbar">
     <div class="wordmark">Farin<span>Spanish</span></div>
     <div class="row" style="gap:8px;">
       <div class="streak-chip"><span style="color:var(--accent)">${ICONS.flame}</span><span class="num">${state.progress.streak}</span></div>
+      ${showEnglishLink ? `<a class="icon-btn" href="https://farinrasuli.github.io/farin-english/app/farin-english-app.html?lang=${LANG}" target="_top" rel="noopener" aria-label="${L('Learn English','İngilizce Öğren','انگلیسی یاد بگیر','Aprende inglés')}">🇬🇧</a>` : ''}
       ${langToggle()}
       ${showGear ? `<button class="icon-btn" data-action="open-settings" aria-label="Settings">${ICONS.gear}</button>` : ''}
     </div>
@@ -4736,41 +4777,35 @@ function renderProfile(){
 
 /* ============================= GREETING BANNER ============================= */
 const PALETTE_COLORS = ['#7c5cfc','#ff9500','#00bfa6','#ff3d8f','#4c6fff','#ffc22e'];
-/* Winding "our roadmap" path: a claymation-style S-curve with alternating left/right pin+card stops. */
-function windingRoadmap(count, itemHeight, currentIndex, pinFn, cardFn, startLabel, startMediaHtml, endLabel, endMediaHtml){
+/* Roadmap 2.0 visual redesign, ported from the English app (2026-09-29, Farin: "each
+   section bigger, filled with a pastel color, current step shiny, no more curve/cards
+   under cards in different colors, symbols sitting between the cards - part in the
+   upper one, part in the under one, overall eye-catching"). Replaces the old
+   windingRoadmap() S-curve/SVG-path renderer: big pastel .rm2-node cards stack in
+   normal document flow (cardFn/pinFn decide pastel fill, shiny/current treatment and
+   per-type icon; see renderRoadmapCard), with a round icon badge straddling the seam
+   between each pair via the .rm2-seam/.rm2-seam-ic CSS trick (zero-height wrapper +
+   negative offset - see the CSS comment above .rm2-track). No fixed row height
+   assumption, so cards can be any height. Pins/cards fade+pop in with a staggered
+   per-index delay. */
+function stackedRoadmap(count, pinFn, cardFn, startLabel, startMediaHtml, endLabel, endMediaHtml){
   if(!count) return '';
-  const topPad = 74, botPad = 108;
-  const H = topPad + Math.max(0,count-1)*itemHeight + botPad;
-  const leftX = 24, rightX = 76;
-  const pts = [];
-  for(let i=0;i<count;i++) pts.push({x: i%2===0?leftX:rightX, y: topPad + i*itemHeight});
-  let d = `M ${pts[0].x} ${topPad-46} L ${pts[0].x} ${pts[0].y}`;
-  for(let i=1;i<pts.length;i++){
-    const prev = pts[i-1], pt = pts[i], midY = (prev.y+pt.y)/2;
-    d += ` C ${prev.x} ${midY} ${pt.x} ${midY} ${pt.x} ${pt.y}`;
+  const rows = [];
+  for(let i=0;i<count;i++){
+    const delay = Math.min(i*55, 650);
+    rows.push(`
+    <div class="rm2-seam rm2-seam-enter" style="animation-delay:${delay}ms;">${pinFn(i)}</div>
+    <div class="rm2-card-enter" style="animation-delay:${delay+40}ms;">${cardFn(i)}</div>`);
   }
-  const last = pts[pts.length-1];
-  d += ` L ${last.x} ${last.y+62}`;
-  const rows = pts.map((pt,i)=>{
-    const isLeft = pt.x < 50;
-    const isCurrent = i === currentIndex;
-    return `
-    ${isCurrent ? `<div class="roadmap-here-badge pill" style="position:absolute; ${isLeft?`left:calc(${pt.x}% - 10px);`:`right:calc(${100-pt.x}% - 10px);`} top:${pt.y-40}px; background:var(--accent); color:var(--accent-ink); font-size:9px; white-space:nowrap; box-shadow:var(--shadow); z-index:2;">${L("You're here","Buradasın","اینجایی",'Estás aquí')}</div>` : ''}
-    <div style="position:absolute; left:${pt.x}%; top:${pt.y}px; transform:translate(-50%,-50%); z-index:1;">${pinFn(i, isCurrent)}</div>
-    <div style="position:absolute; top:${pt.y}px; ${isLeft?`left:calc(${pt.x}% + 26px); right:6%;`:`right:calc(${100-pt.x}% + 26px); left:6%;`} transform:translateY(-50%); text-align:${isLeft?'left':'right'};">${cardFn(i, isLeft)}</div>`;
-  }).join('');
-  return `<div style="position:relative; width:100%; height:${H}px;">
-    <svg viewBox="0 0 100 ${H}" preserveAspectRatio="none" style="position:absolute; inset:0; width:100%; height:100%;">
-      <path d="${d}" fill="none" stroke="var(--border)" stroke-width="3" stroke-linecap="round" stroke-dasharray="1 10" vector-effect="non-scaling-stroke"/>
-    </svg>
-    <div style="position:absolute; left:${pts[0].x}%; top:0; transform:translateX(-50%); text-align:center; width:100px; margin-left:-50px;">
+  return `<div class="rm2-track">
+    <div class="rm2-cap rm2-cap-start">
       ${startMediaHtml}
-      <div style="font-size:9.5px; font-weight:800; color:var(--ink-faint); text-transform:uppercase; letter-spacing:.05em; margin-top:2px;">${esc(startLabel)}</div>
+      <div class="rm2-cap-label">${esc(startLabel)}</div>
     </div>
-    ${rows}
-    <div style="position:absolute; left:${last.x}%; top:${H-100}px; transform:translateX(-50%); text-align:center; width:140px; margin-left:-70px;">
+    ${rows.join('')}
+    <div class="rm2-cap rm2-cap-end">
       ${endMediaHtml}
-      <div style="font-size:9.5px; font-weight:800; color:var(--ink-faint); text-transform:uppercase; letter-spacing:.05em; margin-top:2px;">${esc(endLabel)}</div>
+      <div class="rm2-cap-label">${esc(endLabel)}</div>
     </div>
   </div>`;
 }
@@ -4823,22 +4858,16 @@ function storyBannerMedia(genre){
 function renderDashboard(){
   const p = state.profile, pr = state.progress;
   const arch = ARCHETYPES[p.motivationTag];
-  const doneTrapsAtLevel = state.progress.completedTraps.filter(id=>{ const g=GRAMMAR_ITEMS.find(x=>x.id===id); return g && g.level===p.level; }).length;
-  const totalTrapsAtLevel = GRAMMAR_ITEMS.filter(g=>g.level===p.level).length;
-  const doneVocabAtLevel = state.progress.completedVocabSets.filter(id=>{ const s=VOCAB_SETS.find(x=>x.id===id); return s && s.level===p.level; }).length;
-  const totalVocabAtLevel = VOCAB_SETS.filter(s=>s.level===p.level).length;
   const doneStoriesAtLevel = pr.completedStories.filter(id=>{ const s=STORY_LIBRARY.find(x=>x.id===id); return s && s.level===p.level; }).length;
   const totalStoriesAtLevel = STORY_LIBRARY.filter(s=>s.level===p.level).length;
   const dueCount = dueItems().length;
-  const showIntro = !p.dashboardIntroShown;
-  if(showIntro){ p.dashboardIntroShown = true; save(); }
-  const introSparkles = showIntro ? '<span class="sparkle sparkle-1"></span><span class="sparkle sparkle-2"></span><span class="sparkle sparkle-3"></span>' : '';
+  if(!p.dashboardIntroShown){ p.dashboardIntroShown = true; save(); }
   const heroCat = (p.goals && p.goals.length && GOALS_META[p.goals[0]]) ? GOALS_META[p.goals[0]].cat : 'diag';
   const roadmapForRing = buildRoadmap(p);
   const roadmapDoneForRing = roadmapForRing.filter((_,i)=>state.progress.roadmapChecked[i]).length;
   const roadmapPercent = roadmapForRing.length ? Math.round(roadmapDoneForRing/roadmapForRing.length*100) : 0;
   return `<div class="fade-in">
-    ${topbar(true)}
+    ${topbar(true, true)}
     <div class="screen">
       <div class="greeting-banner"><span class="sparkle sparkle-1"></span><span class="sparkle sparkle-2"></span><span class="sparkle sparkle-3"></span><span>${pickGreeting(p, dueCount)}</span></div>
       <button class="hero-card" data-action="nav" data-view="profile" style="background:var(--cat-${heroCat});">
@@ -4855,30 +4884,10 @@ function renderDashboard(){
         </div>
       </button>
 
-      <div style="margin-top:16px;">${statRow(pr)}</div>
-
       <h2 class="display" style="font-size:16px; margin:22px 0 12px;">${L("Let's keep training","Hadi antrenmana devam",'بیا تمرین را ادامه بدیم','Sigamos entrenando')}</h2>
-      <button class="tile-featured${showIntro ? ' intro-glow' : ''}" data-action="nav" data-view="diag-intro-review" style="background:var(--cat-diag);">
-        ${introSparkles}
-        <div class="row between" style="align-items:flex-start;">
-          <div>
-            <div class="hero-eyebrow">${L('Your Roadmap','Yol Haritan','نقشه راه تو','Tu hoja de ruta')}</div>
-            <div class="tile-featured-title">${L('See what\'s next','Sırada ne var','ببین بعدش چیه','Mira qué sigue')}</div>
-          </div>
-          <span class="tile-featured-ic">${ICONS.compass}</span>
-        </div>
-        <div class="tile-featured-progress">
-          <div class="progress-track"><div class="progress-fill" style="width:${roadmapPercent}%; background:#fff;"></div></div>
-          <span>${roadmapDoneForRing}/${roadmapForRing.length}</span>
-        </div>
-      </button>
-      <div class="tiles" style="margin-top:12px;">
-        <button class="tile" data-action="nav" data-view="goals-list" style="background:var(--clay-orange); color:var(--clay-orange-deep);">
-          ${claySparkles()}
-          <span class="tile-illustration">${TILE_ILLUSTRATIONS.goals}</span>
-          <span class="tile-title">${L('Goals','Hedefler','اهداف','Metas')}</span>
-          <span class="tile-sub">${p.level} · ${doneTrapsAtLevel+doneVocabAtLevel}/${totalTrapsAtLevel+totalVocabAtLevel}</span>
-        </button>
+      ${renderRoadmapCard(p)}
+
+      <div class="tiles" style="margin-top:20px;">
         <button class="tile" data-action="nav" data-view="speaking-club" style="background:var(--clay-coral); color:var(--clay-coral-deep);">
           ${claySparkles()}
           <span style="position:absolute; top:34px; left:10px; background:rgba(255,255,255,.92); color:var(--clay-coral-deep); font-size:10px; font-weight:800; padding:3px 9px; border-radius:999px; letter-spacing:.04em; text-transform:uppercase; z-index:1;">${L('New','Yeni','جدید','Nuevo')}</span>
@@ -4892,30 +4901,24 @@ function renderDashboard(){
           <span class="tile-title">${L('Story World','Hikaye Dünyası','دنیای داستان','Mundo de Historias')}</span>
           <span class="tile-sub">${p.level} · ${doneStoriesAtLevel}/${totalStoriesAtLevel}</span>
         </button>
-        <a class="tile" href="https://farinrasuli.github.io/farin-english/app/farin-english-app.html?lang=${LANG}" target="_top" rel="noopener" style="background:var(--clay-sage); color:var(--clay-sage-deep); text-decoration:none;">
-          ${claySparkles()}
-          <span class="tile-illustration">${TILE_ILLUSTRATIONS.english}</span>
-          <span class="tile-title">${L('Learn English!','İngilizce Öğren!','انگلیسی یاد بگیر!','¡Aprende inglés!')}</span>
-          <span class="tile-sub">${L('A whole new app','Bambaşka bir uygulama','یک اپ کاملاً جدید','Una app completamente nueva')}</span>
-        </a>
-      </div>
-
-      <div class="whatsapp-card${showIntro ? ' intro-glow' : ''}" style="margin-top:20px;">
-        ${introSparkles}
-        <div class="row between">
-          <div>
-            <h3 class="display" style="font-size:14.5px;">${L('Ready for a real teacher?','Gerçek bir öğretmene hazır mısın?','آماده یک معلم واقعی هستی؟','¿Listo para un profesor de verdad?')}</h3>
-            <p style="font-size:12.5px; color:var(--ink-soft); margin-top:3px;">${L("Your teacher's just a message away.",'Öğretmenin sadece bir mesaj uzaklıkta.','معلمت فقط یک پیام باهات فاصله داره.','Tu profesor está a solo un mensaje de distancia.')}</p>
-          </div>
-          <a class="btn btn-whatsapp btn-sm" target="_top" rel="noopener" href="${whatsappLink(L("Hi! I'm "+p.name+", using the Farin Spanish app.","Merhaba! Ben "+p.name+", Farin Spanish uygulamasını kullanıyorum.","سلام! من "+p.name+" هستم و از اپ Farin Spanish استفاده می‌کنم.","¡Hola! Soy "+p.name+", uso la app Farin Spanish.")+leadInfoSuffix(p))}">${ICONS.whatsapp}</a>
-        </div>
-        ${whatsappFallback()}
       </div>
     </div>
   </div>`;
 }
-function renderDiagReview(){
-  const p = state.profile, arch = ARCHETYPES[p.motivationTag];
+// Extracted from the old standalone "Your Plan" screen (2026-09-29, Farin: "I want the
+// roadmap to appear directly on the home section" — ported from the English app) so the
+// dashboard can embed the roadmap inline instead of linking out to it via a teaser tile.
+// renderDiagReview() below now just wraps this in its own sectionHead — kept as an
+// unreachable safety net (nothing links to 'diag-intro-review' as a nav target anymore).
+function renderRoadmapCard(p){
+  // "Bring out the character based on theirs" (Farin, 2026-09-29, ported from the
+  // English app): reuse the existing named-archetype system (ARCHETYPES/
+  // ARCHETYPE_COLOR/char-*.png portraits, already used on the Profile screen) to theme
+  // the whole path in the learner's own color and put their own character at the start
+  // of it, instead of a generic clay figure.
+  const charKey = (p.motivationTag && ARCHETYPES[p.motivationTag]) ? p.motivationTag : 'everyday';
+  const arch = ARCHETYPES[charKey];
+  const archColor = ARCHETYPE_COLOR[charKey] || 'var(--cat-diag)';
   const roadmap = buildRoadmap(p);
   const TYPE_META = {
     grammar:{ic:ICONS.dumbbell, c:'gram', label:L('Grammar','Dilbilgisi','گرامر','Gramática')},
@@ -4928,16 +4931,30 @@ function renderDiagReview(){
   const allDone = doneCount === roadmap.length;
   const currentIndex = roadmap.findIndex((_,i)=>!rc[i]);
 
-  function pinFn(idx, isCurrent){
+  function pinFn(idx){
     const item = roadmap[idx], m = TYPE_META[item.type], checked = !!rc[idx];
+    const isCurrent = idx === currentIndex;
     const color = 'var(--cat-'+m.c+')';
-    return `<button class="${isCurrent?'roadmap-pin-current':''}" data-action="toggle-roadmap-item" data-idx="${idx}" aria-label="${L('Mark done','Tamamlandı say','علامت‌زدن به‌عنوان انجام‌شده','Marcar como hecho')}" style="position:relative; width:38px; height:38px; border-radius:50%; background:${checked?color:'var(--bg-elevated)'}; border:3px solid ${color}; display:flex; align-items:center; justify-content:center; box-shadow:0 4px 9px -2px rgba(0,0,0,.28); cursor:pointer; padding:0;">
-      <span style="width:16px; height:16px; display:flex; align-items:center; justify-content:center; color:${checked?'#fff':color};">${checked?ICONS.check:m.ic}</span>
-      <span style="position:absolute; top:-5px; right:-5px; width:16px; height:16px; border-radius:50%; background:var(--ink); color:var(--bg-elevated); font-size:8.5px; font-weight:800; display:flex; align-items:center; justify-content:center; box-shadow:0 2px 4px rgba(0,0,0,.25);">${idx+1}</span>
+    // Roadmap 2.0 redesign, ported from the English app (2026-09-29, Farin): this is
+    // the "symbol sitting between the cards" badge — a chunky 60px circle per section
+    // type (book/dumbbell/mic/etc, see TYPE_META), rendered by stackedRoadmap() inside
+    // a zero-height .rm2-seam wrapper so it visually straddles the seam between the
+    // card above and the card below. Current step gets the existing ping animation
+    // plus a slightly stronger ring so it reads as the "shiny" one even at a glance.
+    // NB: color here is a `var(--cat-x)` reference, not a literal hex — appending a
+    // hex alpha suffix directly to it (e.g. `${color}88`) is invalid CSS and silently
+    // drops the whole declaration. color-mix() is used instead so it still resolves
+    // the CSS variable correctly, incl. its light/dark theme value.
+    const glowRing = `color-mix(in srgb, ${color} 22%, transparent)`;
+    const glowStrong = `color-mix(in srgb, ${color} 60%, transparent)`;
+    const doneGlow = `color-mix(in srgb, ${color} 55%, transparent)`;
+    return `<button class="rm2-seam-ic ${isCurrent?'roadmap-pin-current':''}" data-action="toggle-roadmap-item" data-idx="${idx}" aria-label="${L('Mark done','Tamamlandı say','علامت‌زدن به‌عنوان انجام‌شده','Marcar como hecho')}" style="width:60px; height:60px; border-radius:50%; background:${checked?`linear-gradient(150deg, ${color}, ${color})`:'var(--bg-elevated)'}; border:${isCurrent?'5px':'4px'} solid ${color}; display:flex; align-items:center; justify-content:center; box-shadow:${isCurrent?`0 0 0 4px ${glowRing}, 0 8px 18px -4px ${glowStrong}`:(checked?`0 6px 14px -3px ${doneGlow}, inset 0 2px 3px rgba(255,255,255,.35)`:'0 5px 12px -3px rgba(0,0,0,.25)')}; cursor:pointer; padding:0;">
+      <span style="width:25px; height:25px; display:flex; align-items:center; justify-content:center; color:${checked?'#fff':color};">${checked?ICONS.check:m.ic}</span>
+      <span style="position:absolute; top:-6px; right:-6px; width:19px; height:19px; border-radius:50%; background:var(--ink); color:var(--bg-elevated); font-size:9.5px; font-weight:800; display:flex; align-items:center; justify-content:center; box-shadow:0 2px 4px rgba(0,0,0,.25);">${idx+1}</span>
     </button>`;
   }
 
-  function cardFn(idx, isLeft){
+  function cardFn(idx){
     const item = roadmap[idx], m = TYPE_META[item.type], checked = !!rc[idx];
     const isSession = item.type === 'session';
     const isCurrent = idx === currentIndex;
@@ -4946,46 +4963,97 @@ function renderDiagReview(){
       ? L('Recommended — message on WhatsApp',"Önerilir — WhatsApp'tan mesaj at",'پیشنهادی — در واتس‌اپ پیام بده','Recomendado — escribe por WhatsApp')
       : ((item.goal && GOALS_META[item.goal]) ? goalMetaLabel(item.goal)+' · '+m.label : m.label);
     let studyOpenTag, studyCloseTag;
+    const studyStyle = 'display:block; width:100%; text-align:start; padding:0; background:none; border:none; color:inherit; font:inherit; cursor:pointer;';
     if(isSession){
-      studyOpenTag = '<a class="roadmap-study" target="_top" rel="noopener" href="'+item.waLink+'" style="display:block; padding:10px 12px;">';
+      studyOpenTag = '<a class="roadmap-study" target="_top" rel="noopener" href="'+item.waLink+'" style="display:block; width:100%; text-align:start; padding:0; color:inherit; text-decoration:none;">';
       studyCloseTag = '</a>';
     } else if(item.type==='grammar'){
-      studyOpenTag = '<button class="roadmap-study" data-action="nav" data-view="grammar-trap" data-id="'+item.refId+'" data-goal="'+(item.goal||'')+'" style="display:block; width:100%; text-align:start; padding:10px 12px;">';
+      studyOpenTag = '<button class="roadmap-study" data-action="nav" data-view="grammar-trap" data-id="'+item.refId+'" data-goal="'+(item.goal||'')+'" style="'+studyStyle+'">';
       studyCloseTag = '</button>';
     } else {
       const cat = item.type==='slang' ? 'slang' : 'vocab';
-      studyOpenTag = '<button class="roadmap-study" data-action="nav" data-view="vocab-set-intro" data-id="'+item.refId+'" data-goal="'+(item.goal||'')+'" data-cat="'+cat+'" style="display:block; width:100%; text-align:start; padding:10px 12px;">';
+      studyOpenTag = '<button class="roadmap-study" data-action="nav" data-view="vocab-set-intro" data-id="'+item.refId+'" data-goal="'+(item.goal||'')+'" data-cat="'+cat+'" style="'+studyStyle+'">';
       studyCloseTag = '</button>';
     }
-    return `<div style="display:inline-block; max-width:100%; background:var(--bg-sunken); border-radius:14px; border:1.5px solid ${isCurrent?'var(--accent)':(checked?color+'55':'var(--border-soft)')}; box-shadow:0 2px 6px -2px rgba(0,0,0,.12); overflow:hidden; text-align:${isLeft?'left':'right'};">
+    // Roadmap 2.0 redesign + follow-up polish, ported from the English app (2026-09-29,
+    // Farin): "each section bigger, filled with a pastel color... if the user is in
+    // that step, that one is shiny... colors so dull... look at the profile square, I
+    // want like that but my brand colors... font also dull". Each node is one big
+    // block (done nodes go flat gray via .rm2-node-done); the current node adds
+    // .rm2-node-current, layering a stronger ring/glow + an animated diagonal shine
+    // sweep plus twinkling sparkle stars (see CSS above .rm2-track and
+    // profileHeaderCard/.character-card for the same sparkle recipe) so it's
+    // unmistakably "the one you're on". Upcoming cards get a saturated color-mix
+    // tint; the current card fills with the full-strength brand/category color (same
+    // recipe as .character-card: solid color + white text). Titles use the app's
+    // existing Fredoka "display" treatment instead of the default body font.
+    const cls = 'rm2-node' + (isCurrent ? ' rm2-node-current' : '') + (checked ? ' rm2-node-done' : '');
+    const upcomingBg = `color-mix(in srgb, ${color} 32%, var(--bg-elevated))`;
+    const currentBg = `radial-gradient(circle at 16% 8%, rgba(255,255,255,.4), transparent 55%), linear-gradient(150deg, ${color}, color-mix(in srgb, ${color} 78%, #000 18%))`;
+    const bg = checked ? 'var(--bg-sunken)' : (isCurrent ? currentBg : upcomingBg);
+    const borderW = isCurrent ? '2.5px' : '1.5px';
+    const borderColor = isCurrent ? 'rgba(255,255,255,.55)' : (checked ? 'var(--border-soft)' : `color-mix(in srgb, ${color} 45%, transparent)`);
+    const shadow = isCurrent
+      ? `0 0 0 3px color-mix(in srgb, ${color} 28%, transparent), 0 18px 34px -12px color-mix(in srgb, ${color} 55%, transparent)`
+      : '0 3px 10px -4px rgba(20,51,46,.16)';
+    const subtitleColor = isCurrent ? 'rgba(255,255,255,.92)' : color;
+    const titleColor = isCurrent ? '#fff' : 'var(--ink)';
+    const chevColor = isCurrent ? 'rgba(255,255,255,.92)' : color;
+    // NB: single quotes around 'Segoe UI' here are deliberate — this string lands
+    // inside a double-quoted HTML style="" attribute, and a literal double quote
+    // would break out of that attribute early and silently drop the rest of the
+    // style (a real bug caught and fixed on the English side, 2026-09-29).
+    const titleFont = `font-family:'Fredoka',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; font-weight:700; font-size:18.5px; letter-spacing:-.01em;`;
+    const sparkles = isCurrent && !checked ? `
+        <span class="sparkle" style="top:10px; left:16px; animation-delay:0s;"></span>
+        <span class="sparkle" style="top:22px; right:22px; left:auto; width:6px; height:6px; animation-delay:.5s;"></span>
+        <span class="sparkle" style="bottom:16px; right:44px; left:auto; width:5px; height:5px; animation-delay:1s;"></span>
+        <span class="sparkle" style="bottom:22px; left:38px; width:4px; height:4px; animation-delay:1.4s;"></span>` : '';
+    return `<div class="${cls}" style="border-radius:26px; padding:34px 20px 30px; background:${bg}; border:${borderW} solid ${borderColor}; box-shadow:${shadow};">
+      ${sparkles}
       ${studyOpenTag}
-        <div style="font-size:9.5px; font-weight:800; color:${isSession?color:'var(--ink-faint)'}; text-transform:uppercase; letter-spacing:.03em;">${esc(subtitle)}</div>
-        <div style="font-weight:800; font-size:13px; margin-top:2px; color:var(--ink); ${checked?'text-decoration:line-through; opacity:.6;':''}">${esc(item.title)}</div>
+        <div class="row between" style="align-items:flex-start; gap:10px;">
+          <div style="min-width:0;">
+            <div style="font-size:11px; font-weight:900; color:${subtitleColor}; text-transform:uppercase; letter-spacing:.05em;">${esc(subtitle)}</div>
+            <div style="${titleFont} margin-top:6px; color:${titleColor}; line-height:1.28; ${checked?'text-decoration:line-through; opacity:.62;':''}">${esc(item.title)}</div>
+          </div>
+          <span style="flex:0 0 auto; margin-top:3px; color:${chevColor}; opacity:${checked?1:.65};">${checked?ICONS.check:ICONS.chev}</span>
+        </div>
+        ${isCurrent && !checked ? `<div class="pill" style="margin-top:14px; background:#fff; color:${color}; font-weight:900; text-transform:uppercase; letter-spacing:.03em; box-shadow:0 4px 10px -3px rgba(0,0,0,.3);">${L("You're here","Buradasın","اینجایی",'Estás aquí')}</div>` : ''}
       ${studyCloseTag}
     </div>`;
   }
 
-  const startMedia = `<img src="roadmap-start-clay.png" alt="" style="width:56px; height:56px; object-fit:contain; filter:drop-shadow(0 6px 8px rgba(0,0,0,.25));">`;
+  const startMedia = `<img src="char-${charKey}.png" alt="" class="roadmap-char-portrait" style="width:64px; height:64px; object-fit:contain; filter:drop-shadow(0 6px 10px color-mix(in srgb, ${archColor} 55%, transparent));">`;
   const endMedia = `<img src="roadmap-goal-clay.png" alt="" style="width:${allDone?96:80}px; height:${allDone?96:80}px; object-fit:contain; filter:drop-shadow(0 8px 10px rgba(0,0,0,.28));">`;
 
-  return `<div class="fade-in">
-    ${sectionHead(L('Your Plan','Planın','برنامه تو','Tu Plan'), L(arch.blurb.en,arch.blurb.tr,arch.blurb.fa,arch.blurb.es))}
-    <div class="screen" style="padding-top:0;">
-      <div class="card-flat" style="margin-bottom:14px;">
+  return `
+      <div class="card-flat" style="margin-bottom:14px; background:linear-gradient(135deg, color-mix(in srgb, ${archColor} 15%, transparent), var(--bg-elevated) 65%);">
         <div class="row between" style="align-items:center;">
           <div>
             <div style="font-weight:700; font-size:14px;">${esc(displayLevel(p))} ${L('roadmap','yol haritası','نقشه راه','hoja de ruta')}</div>
             <div style="font-size:12px; color:var(--ink-soft); margin-top:2px;">${L('Check everything off to reach','Hepsini işaretle ve şuraya ulaş:','همه را علامت بزن تا برسی به','Marca todo para llegar a')} ${esc(nextDisplayLevel(p))}</div>
           </div>
-          <div class="num" style="font-weight:800; font-size:15px; color:var(--cat-lis);">${doneCount}/${roadmap.length}</div>
+          <div class="num" style="font-weight:800; font-size:15px; color:${archColor};">${doneCount}/${roadmap.length}</div>
         </div>
-        <div class="progress-track" style="margin-top:10px;"><div class="progress-fill" style="width:${(doneCount/roadmap.length)*100}%; background:var(--cat-lis);"></div></div>
+        <div class="progress-track" style="margin-top:10px;"><div class="progress-fill" style="width:${(doneCount/roadmap.length)*100}%; background:${archColor};"></div></div>
       </div>
-      <div class="card-flat" style="position:relative; overflow:hidden; padding:16px 10px;">
-        ${windingRoadmap(roadmap.length, 116, currentIndex, pinFn, cardFn, L('Start','Başla','شروع','Inicio'), startMedia, allDone ? L("You've made it!",'Başardın!','موفق شدی!','¡Lo lograste!') : nextDisplayLevel(p), endMedia)}
+      <div class="card-flat" style="position:relative; overflow:visible; padding:18px 14px;">
+        ${stackedRoadmap(roadmap.length, pinFn, cardFn, L(arch.name.en,arch.name.tr,arch.name.fa,arch.name.es), startMedia, allDone ? L("You've made it!",'Başardın!','موفق شدی!','¡Lo lograste!') : nextDisplayLevel(p), endMedia)}
       </div>
-      <a class="btn btn-primary" style="margin-top:18px; width:100%; justify-content:center;" target="_top" rel="noopener" href="${whatsappLink(L("Hi! I'm "+p.name+". I'd like to start my course.","Merhaba! Ben "+p.name+". Kursuma başlamak istiyorum.","سلام! من "+p.name+" هستم. می‌خواهم دوره‌ام را شروع کنم.","¡Hola! Soy "+p.name+". Quiero empezar mi curso.")+leadInfoSuffix(p))}">${L('Start your course','Kursuna başla','شروع دوره‌ات','Empieza tu curso')}</a>
-      <button class="btn btn-ghost" style="margin-top:10px;" data-action="retake-diagnostic">${L('Redo my diagnostic','Testimi yeniden yap','دوباره انجام‌دادن آزمون','Rehacer mi diagnóstico')}</button>
+      ${allDone ? `
+      <button class="btn" style="margin-top:18px; width:100%; justify-content:center; background:var(--clay-orange); color:#fff; border:none;" data-action="advance-roadmap-level">${L('Go to the next level','Bir sonraki seviyeye geç','برو به سطح بعدی','Ir al siguiente nivel')}</button>` : `
+      <button class="btn" disabled style="margin-top:18px; width:100%; justify-content:center; background:var(--bg-sunken); color:var(--ink-faint); border:1.5px solid var(--border-soft); cursor:default;">${L('Finish everything above to unlock the next level','Bir sonraki seviyeyi açmak için yukarıdakilerin hepsini bitir','برای باز کردن سطح بعدی، همه موارد بالا را تمام کن','Termina todo lo de arriba para desbloquear el siguiente nivel')}</button>`}
+      <button class="btn btn-ghost" style="margin-top:10px;" data-action="retake-diagnostic">${L('Redo my diagnostic','Testimi yeniden yap','دوباره انجام‌دادن آزمون','Rehacer mi diagnóstico')}</button>`;
+}
+// Unreachable safety net (see renderRoadmapCard's comment above) — kept in case a
+// dedicated "Your Plan" screen is wanted again later, but nothing links here anymore.
+function renderDiagReview(){
+  const p = state.profile, arch = ARCHETYPES[p.motivationTag];
+  return `<div class="fade-in">
+    ${sectionHead(L('Your Plan','Planın','برنامه تو','Tu Plan'), L(arch.blurb.en,arch.blurb.tr,arch.blurb.fa,arch.blurb.es))}
+    <div class="screen" style="padding-top:0;">
+      ${renderRoadmapCard(p)}
     </div>
   </div>`;
 }
@@ -5242,31 +5310,37 @@ function tabLabel(tab){
     culture: L('Culture Guide','Kültür Rehberi','راهنمای فرهنگی','Guía cultural')
   }[tab];
 }
+// Goals tap now always edits (2026-09-29, Farin, ported from the English app: "tapping
+// the goal section shouldn't launch practice/a lesson anymore — it should let the user
+// change their goal"). Previously a card only toggled selection while a separate "Edit
+// my goals" mode was on; otherwise tapping drilled into goal-levels ->
+// goal-level-detail (grammar/vocab/slang practice content) — that browse path is
+// removed here. Every tap now directly adds/removes the goal via the existing
+// toggle-profile-goal handler, so this screen is a straightforward goal picker with no
+// separate edit toggle. goal-levels/goal-level-detail (renderGoalLevels/
+// renderGoalLevelDetail below) have no other entry point in the app and are now
+// orphaned — left in place rather than deleted, since removing them wasn't asked for.
 function renderGoalsList(){
-  const editing = !!state.viewParams.editingGoals;
   const p = state.profile;
   return `<div class="fade-in">
     ${topbar(false)}
-    ${sectionHeadNoBack(L('Goals','Hedefler','اهداف','Metas'), editing
-      ? L('Pick up to 3 goals — they shape your Roadmap.','En fazla 3 hedef seç — Yol Haritanı şekillendirirler.','حداکثر ۳ هدف انتخاب کن — نقشه راهت را شکل می‌دهند.','Elige hasta 3 metas — dan forma a tu hoja de ruta.')
-      : L('Pick a goal to see grammar, vocabulary, and slang built around it.','Etrafında dilbilgisi, kelime ve argo oluşturulmuş bir hedef seç.','هدفی را انتخاب کن تا گرامر، واژگان و اصطلاحات ساخته‌شده برای آن را ببینی.','Elige una meta para ver la gramática, el vocabulario y el argot creados para ella.'))}
+    ${sectionHeadNoBack(L('Goals','Hedefler','اهداف','Metas'), L('Pick up to 3 goals — all of them shape your Roadmap, lessons and practice.','En fazla 3 hedef seç — hepsi Yol Haritanı, derslerini ve alıştırmalarını şekillendirir.','حداکثر ۳ هدف انتخاب کن — همه آن‌ها نقشه راه، درس‌ها و تمرین‌هایت را شکل می‌دهند.','Elige hasta 3 metas — todas dan forma a tu hoja de ruta, tus lecciones y tu práctica.'))}
     <div class="screen" style="padding-top:0;">
       <div class="stack" style="gap:10px;">
         ${GOAL_ORDER.map(key=>{
           const g = GOALS_META[key];
           const active = p.goals.includes(key);
-          const atCap = editing && !active && p.goals.length>=3;
-          return `<button class="item-row goal-card ${active?'goal-active':''}" data-action="${editing?'toggle-profile-goal':'nav'}" data-view="goal-levels" data-goal="${key}" ${atCap?'disabled':''} style="background:var(--cat-${g.cat}); ${atCap?'opacity:.4;':''}">
+          const atCap = !active && p.goals.length>=3;
+          return `<button class="item-row goal-card ${active?'goal-active':''}" data-action="toggle-profile-goal" data-goal="${key}" ${atCap?'disabled':''} style="background:var(--cat-${g.cat}); ${atCap?'opacity:.4;':''}">
             ${claySparkles()}
             <span class="item-ic" style="background:rgba(255,255,255,.24); color:#fff;">${ICONS[g.icon]}</span>
             <div class="item-body">
               <div class="item-title">${esc(goalMetaLabel(key))}</div>
             </div>
-            ${active ? `<span class="pill badge-gold">${ICONS.check}</span>` : (editing ? '' : `<span class="chevron" style="color:rgba(255,255,255,.85);">${ICONS.chev}</span>`)}
+            ${active ? `<span class="pill badge-gold">${ICONS.check}</span>` : ''}
           </button>`;
         }).join('')}
       </div>
-      <button class="btn btn-ghost" style="margin-top:14px; width:100%;" data-action="toggle-edit-goals">${editing ? L('Done','Bitti','تمام','Listo') : L('Edit my goals','Hedeflerimi düzenle','ویرایش هدف‌هایم','Editar mis metas')}</button>
     </div>
   </div>`;
 }
@@ -6846,12 +6920,21 @@ const HANDLERS = {
     save();
     go('diagnostic-intro');
   },
+  // Farin, 2026-09-29 (ported from the English app): advancing levels used to fire
+  // silently the moment every roadmap item got toggled done — now it's a deliberate
+  // tap. The roadmap card's button turns orange and clickable once everything is
+  // done (see renderRoadmapCard), and only 'advance-roadmap-level' below advances
+  // the level/stage; toggling an item just toggles it.
   'toggle-roadmap-item'(el){
     const idx = el.dataset.idx;
     const rc = state.progress.roadmapChecked;
     rc[idx] = !rc[idx];
+    save(); render();
+  },
+  'advance-roadmap-level'(){
     const roadmap = buildRoadmap(state.profile);
-    const allDone = roadmap.every((_,i)=>rc[i]);
+    const rc = state.progress.roadmapChecked;
+    const allDone = roadmap.length && roadmap.every((_,i)=>rc[i]);
     if(allDone){
       if(state.profile.levelStage === 2){
         const li = LEVELS.indexOf(state.profile.level);
@@ -6897,7 +6980,6 @@ const HANDLERS = {
   'set-cat'(el){ state.viewParams.cat = el.dataset.cat; save(); render(); },
   'set-goal-tab'(el){ state.viewParams.tab = el.dataset.tab; save(); render(); },
   'set-story-genre'(el){ state.viewParams.genre = el.dataset.genre; save(); render(); },
-  'toggle-edit-goals'(){ state.viewParams.editingGoals = !state.viewParams.editingGoals; render(); },
   'toggle-profile-goal'(el){
     const key = el.dataset.goal;
     const goals = state.profile.goals;

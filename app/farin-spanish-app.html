@@ -3982,6 +3982,7 @@ function freshState(){
     profile:{name:'', motivationTag:null, goals:[], archetype:null, level:null, levelStage:1, learnerType:null, priorityArea:null, completedDiagnostic:false, dashboardIntroShown:false, wantsContact:false, contactPhone:''},
     progress:{sessionsExplored:0, streak:0, lastActiveDate:null, completedTraps:[], completedVocabSets:[], completedScenes:[], completedStories:[], srs:{}, badgesEarnedAt:{}, reviewsCompleted:0, roadmapChecked:{}, dailyTasksDate:null, dailyTasksChecked:{}, writingRoundsDone:0, speakingRoundsDone:0},
     diag:{step:0, goals:[], level:null, learnerType:null, priorityArea:null},
+    roadmap:null,
     quiz:null, studentPanelCache:null
   };
 }
@@ -4284,11 +4285,10 @@ function leadInfoSuffixBasic(p){
 }
 function roadmapSummarySuffix(p){
   let roadmap;
-  try{ roadmap = buildRoadmap(p); }catch(e){ return ''; }
+  try{ roadmap = currentRoadmap(); }catch(e){ return ''; }
   if(!roadmap || !roadmap.length) return '';
-  const rc = (state.progress && state.progress.roadmapChecked) || {};
-  const doneCount = roadmap.filter((_,i)=>rc[i]).length;
-  const list = roadmap.map((it,i)=>(rc[i]?'✓ ':'• ')+it.title).join(', ');
+  const doneCount = roadmap.filter(it=>isRoadmapNodeDone(it)).length;
+  const list = roadmap.map(it=>(isRoadmapNodeDone(it)?'✓ ':'• ')+it.title).join(', ');
   return L(
     " Full roadmap ("+doneCount+"/"+roadmap.length+" done): "+list+".",
     " Tüm yol haritası ("+doneCount+"/"+roadmap.length+" tamam): "+list+".",
@@ -4367,13 +4367,13 @@ function buildRoadmap(profile){
   const gHalf = Math.ceil(gPool.length/2);
   const gSlice = stage===1 ? gPool.slice(0, gHalf) : gPool.slice(gHalf);
   const items = [];
-  const sessionLink = (topic) => whatsappLink(L(
-    "Hi! I'm "+profile.name+". I'd like to book a speaking session"+(topic?' on "'+topic+'"':'')+".",
-    'Merhaba! Ben '+profile.name+'. '+(topic?'"'+topic+'" konulu ':'')+'bir konuşma seansı ayırtmak istiyorum.',
-    'سلام! من '+profile.name+' هستم. می‌خواهم یک جلسه مکالمه'+(topic?' درباره «'+topic+'»':'')+' رزرو کنم.',
-    '¡Hola! Soy '+profile.name+'. Quiero reservar una sesión de conversación'+(topic?' sobre "'+topic+'"':'')+'.'
-  )+leadInfoSuffixBasic(profile));
-  const pushSession = (topic) => items.push({type:'session', refId:null, goal:primaryGoal, waLink:sessionLink(topic), title:L('Live speaking session','Canlı konuşma seansı','جلسه زنده مکالمه','Sesión de conversación en vivo')});
+  // Roadmap 2.0 (ported from the English app, farin-english-app.html): live
+  // teacher-booked sessions (WhatsApp) are a Club (private/in-class student)
+  // concept only, managed by the teacher on the admin side — general self-serve
+  // users' roadmap is practice/games/learning only, so this generator never
+  // produces 'session' items (mirrors the English app's fix, commit d8b8510 —
+  // was pushSession()/sessionLink(), removed here too). The teacher is still
+  // always reachable via the WhatsApp card on quiz results and the Studio hub.
   // Drillers repeat-to-learn, and anyone who flagged vocab as their weak spot gets a warm-up rep first.
   if(stage===1 && (profile.priorityArea==='vocab' || profile.learnerType==='driller') && vPool.length){
     items.push({type:'vocab', refId:vPool[0].id, goal:primaryGoal, title:L('Vocab warm-up','Kelime ısınması','گرم‌کردن با کلمات','Calentamiento de vocabulario')+': '+setTitle(vPool[0])});
@@ -4391,20 +4391,98 @@ function buildRoadmap(profile){
       const sl = slPool[sli % slPool.length]; sli++;
       items.push({type:'slang', refId:sl.id, goal:primaryGoal, title:L('Slang','Argo','اصطلاحات','Argot')+': '+setTitle(sl)});
     }
-    if(i === Math.max(Math.floor(gSlice.length/2)-1, 0)){
-      pushSession(grammarTitle(g));
-    }
   });
   if(slPool.length){
     const sl = slPool[sli % slPool.length];
     items.push({type:'slang', refId:sl.id, goal:primaryGoal, title:L('Slang','Argo','اصطلاحات','Argot')+': '+setTitle(sl)});
   }
-  // Talkers (and anyone who said listening/speaking is their weak spot) get an extra live rep.
-  if((profile.learnerType==='talker' || profile.priorityArea==='listening') && stage===1){
-    pushSession(null);
-  }
-  pushSession(null);
   return items.map((it,idx)=>Object.assign({n:idx+1}, it));
+}
+/* Roadmap 2.0 engine (ported from the English app): a stable, position-independent
+   id for a roadmap item. type+refId already uniquely identifies the underlying
+   content (a grammar item, vocab/slang set) regardless of where it lands in the
+   generated sequence, so — unlike the item's array index — this id survives goal
+   edits that insert/reorder/regenerate the roadmap (see mergeRoadmapForGoalChange
+   below). */
+function roadmapNodeId(item){ return item.type+':'+item.refId; }
+function isRoadmapNodeDone(item){ return !!(state.progress.roadmapChecked && state.progress.roadmapChecked[roadmapNodeId(item)]); }
+/* One-time migration for saves written before this id scheme existed: those keyed
+   roadmapChecked by array index (e.g. {"0":true}), which silently "unchecks" a
+   completed step whenever the roadmap sequence shifts. Rekeys any numeric-indexed
+   entries onto the stable id scheme using the roadmap as it exists right now
+   (unchanged since those entries were written), then drops the old numeric keys.
+   Safe to call anytime after profile/progress are loaded — a no-op once nothing
+   numeric-keyed remains. */
+function migrateRoadmapChecked(){
+  const rc = state.progress && state.progress.roadmapChecked;
+  if(!rc) return;
+  const numericKeys = Object.keys(rc).filter(k=>/^\d+$/.test(k));
+  if(!numericKeys.length) return;
+  if(!state.profile || !state.profile.completedDiagnostic) return;
+  try{
+    const roadmap = buildRoadmap(state.profile);
+    numericKeys.forEach(k=>{
+      const idx = Number(k);
+      if(rc[k] && roadmap[idx]) rc[roadmapNodeId(roadmap[idx])] = true;
+      delete rc[k];
+    });
+  }catch(e){ /* leave old keys in place if the roadmap can't be rebuilt right now */ }
+}
+/* Roadmap 2.0 engine: generate-once-then-mutate, not recompute-live. Persisting
+   the generated array once and reading it thereafter (currentRoadmap()) keeps
+   every node's identity — and therefore its roadmapChecked/streak history via
+   roadmapNodeId() — fixed until something deliberately regenerates it. This is
+   also the model mergeRoadmapForGoalChange() needs: it mutates state.roadmap in
+   place (insert/reorder nodes for the new goal) rather than replacing it, so
+   completed nodes are never recomputed away. */
+function currentRoadmap(){
+  if(state.roadmap && state.roadmap.length) return state.roadmap;
+  return (state.profile && state.profile.completedDiagnostic) ? buildRoadmap(state.profile) : [];
+}
+/* Regenerates state.roadmap from the current profile and clears roadmapChecked —
+   call this ONLY at genuine full-regeneration points (diagnostic completion, or a
+   level/stage advance — both mean every node is legitimately new). A goal edit is
+   NOT one of these; it uses mergeRoadmapForGoalChange() below instead, never on
+   every render. */
+function regenerateRoadmap(){
+  state.roadmap = buildRoadmap(state.profile);
+  state.progress.roadmapChecked = {};
+  return state.roadmap;
+}
+/* Migration for users who completed the diagnostic before state.roadmap existed:
+   freezes their current live-computed roadmap once, so they land on the same
+   generate-once model going forward without losing/reshuffling anything. */
+function ensureRoadmap(){
+  if(state.profile && state.profile.completedDiagnostic && (!state.roadmap || !state.roadmap.length)){
+    try{ state.roadmap = buildRoadmap(state.profile); }catch(e){}
+  }
+}
+/* Non-destructive goal-edit regeneration, ported from the English app
+   (mergeRoadmapForGoalChange). Unlike regenerateRoadmap(), this MUTATES
+   state.roadmap in place instead of replacing it wholesale:
+   - Completed nodes (per isRoadmapNodeDone/roadmapNodeId) are NEVER dropped, even
+     if the goal they were labeled with just got removed — their streak/XP/
+     roadmapChecked credit is untouched, and roadmapChecked is deliberately NOT
+     cleared here (that's the entire point of "non-destructive").
+   - Not-yet-done nodes still labeled with one of the user's current goals are
+     kept as-is, in their original order/position.
+   - Not-yet-done nodes labeled with a goal the user just removed are dropped.
+   - Fresh content for a newly added goal is appended AFTER everything already
+     kept — inserted going forward into the still-to-do portion of the roadmap,
+     never jumping ahead of content already in progress. */
+function mergeRoadmapForGoalChange(){
+  if(!state.profile || !state.profile.completedDiagnostic) return;
+  const existing = (state.roadmap && state.roadmap.length) ? state.roadmap : currentRoadmap();
+  if(!existing.length){ regenerateRoadmap(); return; }
+  const currentGoals = state.profile.goals || [];
+  const kept = existing.filter(it=>
+    isRoadmapNodeDone(it) || currentGoals.includes(it.goal) || !GOAL_ORDER.includes(it.goal)
+  );
+  let target;
+  try{ target = buildRoadmap(state.profile); }catch(e){ return; }
+  const keptIds = new Set(kept.map(roadmapNodeId));
+  const newNodes = target.filter(it=>!keptIds.has(roadmapNodeId(it)));
+  state.roadmap = kept.concat(newNodes).map((it,idx)=>Object.assign({}, it, {n:idx+1}));
 }
 
 /* ============================= RENDER: SHELL ============================= */
@@ -4853,8 +4931,8 @@ function renderDashboard(){
   const dueCount = dueItems().length;
   if(!p.dashboardIntroShown){ p.dashboardIntroShown = true; save(); }
   const heroCat = (p.goals && p.goals.length && GOALS_META[p.goals[0]]) ? GOALS_META[p.goals[0]].cat : 'diag';
-  const roadmapForRing = buildRoadmap(p);
-  const roadmapDoneForRing = roadmapForRing.filter((_,i)=>state.progress.roadmapChecked[i]).length;
+  const roadmapForRing = currentRoadmap();
+  const roadmapDoneForRing = roadmapForRing.filter(it=>isRoadmapNodeDone(it)).length;
   const roadmapPercent = roadmapForRing.length ? Math.round(roadmapDoneForRing/roadmapForRing.length*100) : 0;
   return `<div class="fade-in">
     ${topbar(true, true)}
@@ -4893,20 +4971,18 @@ function renderRoadmapCard(p){
   const charKey = (p.motivationTag && ARCHETYPES[p.motivationTag]) ? p.motivationTag : 'everyday';
   const arch = ARCHETYPES[charKey];
   const archColor = ARCHETYPE_COLOR[charKey] || 'var(--cat-diag)';
-  const roadmap = buildRoadmap(p);
+  const roadmap = currentRoadmap();
   const TYPE_META = {
     grammar:{ic:ICONS.dumbbell, c:'gram', label:L('Grammar','Dilbilgisi','گرامر','Gramática')},
     vocab:{ic:ICONS.cards, c:'voc', label:L('Vocabulary','Kelime','واژگان','Vocabulario')},
-    slang:{ic:ICONS.cards, c:'diag', label:L('Slang','Argo','اصطلاحات','Argot')},
-    session:{ic:ICONS.chat, c:'lis', label:L('Speaking session','Konuşma seansı','جلسه مکالمه','Sesión de conversación')}
+    slang:{ic:ICONS.cards, c:'diag', label:L('Slang','Argo','اصطلاحات','Argot')}
   };
-  const rc = state.progress.roadmapChecked;
-  const doneCount = roadmap.filter((_,i)=>rc[i]).length;
+  const doneCount = roadmap.filter(it=>isRoadmapNodeDone(it)).length;
   const allDone = doneCount === roadmap.length;
-  const currentIndex = roadmap.findIndex((_,i)=>!rc[i]);
+  const currentIndex = roadmap.findIndex(it=>!isRoadmapNodeDone(it));
 
   function pinFn(idx){
-    const item = roadmap[idx], m = TYPE_META[item.type], checked = !!rc[idx];
+    const item = roadmap[idx], m = TYPE_META[item.type], checked = isRoadmapNodeDone(item);
     const isCurrent = idx === currentIndex;
     const color = 'var(--cat-'+m.c+')';
     // Roadmap 2.0 redesign, ported from the English app (2026-09-29, Farin): this is
@@ -4922,26 +4998,20 @@ function renderRoadmapCard(p){
     const glowRing = `color-mix(in srgb, ${color} 22%, transparent)`;
     const glowStrong = `color-mix(in srgb, ${color} 60%, transparent)`;
     const doneGlow = `color-mix(in srgb, ${color} 55%, transparent)`;
-    return `<button class="rm2-seam-ic ${isCurrent?'roadmap-pin-current':''}" data-action="toggle-roadmap-item" data-idx="${idx}" aria-label="${L('Mark done','Tamamlandı say','علامت‌زدن به‌عنوان انجام‌شده','Marcar como hecho')}" style="width:60px; height:60px; border-radius:50%; background:${checked?`linear-gradient(150deg, ${color}, ${color})`:'var(--bg-elevated)'}; border:${isCurrent?'5px':'4px'} solid ${color}; display:flex; align-items:center; justify-content:center; box-shadow:${isCurrent?`0 0 0 4px ${glowRing}, 0 8px 18px -4px ${glowStrong}`:(checked?`0 6px 14px -3px ${doneGlow}, inset 0 2px 3px rgba(255,255,255,.35)`:'0 5px 12px -3px rgba(0,0,0,.25)')}; cursor:pointer; padding:0;">
+    return `<button class="rm2-seam-ic ${isCurrent?'roadmap-pin-current':''}" data-action="toggle-roadmap-item" data-id="${roadmapNodeId(item)}" aria-label="${L('Mark done','Tamamlandı say','علامت‌زدن به‌عنوان انجام‌شده','Marcar como hecho')}" style="width:60px; height:60px; border-radius:50%; background:${checked?`linear-gradient(150deg, ${color}, ${color})`:'var(--bg-elevated)'}; border:${isCurrent?'5px':'4px'} solid ${color}; display:flex; align-items:center; justify-content:center; box-shadow:${isCurrent?`0 0 0 4px ${glowRing}, 0 8px 18px -4px ${glowStrong}`:(checked?`0 6px 14px -3px ${doneGlow}, inset 0 2px 3px rgba(255,255,255,.35)`:'0 5px 12px -3px rgba(0,0,0,.25)')}; cursor:pointer; padding:0;">
       <span style="width:25px; height:25px; display:flex; align-items:center; justify-content:center; color:${checked?'#fff':color};">${checked?ICONS.check:m.ic}</span>
       <span style="position:absolute; top:-6px; right:-6px; width:19px; height:19px; border-radius:50%; background:var(--ink); color:var(--bg-elevated); font-size:9.5px; font-weight:800; display:flex; align-items:center; justify-content:center; box-shadow:0 2px 4px rgba(0,0,0,.25);">${idx+1}</span>
     </button>`;
   }
 
   function cardFn(idx){
-    const item = roadmap[idx], m = TYPE_META[item.type], checked = !!rc[idx];
-    const isSession = item.type === 'session';
+    const item = roadmap[idx], m = TYPE_META[item.type], checked = isRoadmapNodeDone(item);
     const isCurrent = idx === currentIndex;
     const color = 'var(--cat-'+m.c+')';
-    const subtitle = isSession
-      ? L('Recommended — message on WhatsApp',"Önerilir — WhatsApp'tan mesaj at",'پیشنهادی — در واتس‌اپ پیام بده','Recomendado — escribe por WhatsApp')
-      : ((item.goal && GOALS_META[item.goal]) ? goalMetaLabel(item.goal)+' · '+m.label : m.label);
+    const subtitle = (item.goal && GOALS_META[item.goal]) ? goalMetaLabel(item.goal)+' · '+m.label : m.label;
     let studyOpenTag, studyCloseTag;
     const studyStyle = 'display:block; width:100%; text-align:start; padding:0; background:none; border:none; color:inherit; font:inherit; cursor:pointer;';
-    if(isSession){
-      studyOpenTag = '<a class="roadmap-study" target="_top" rel="noopener" href="'+item.waLink+'" style="display:block; width:100%; text-align:start; padding:0; color:inherit; text-decoration:none;">';
-      studyCloseTag = '</a>';
-    } else if(item.type==='grammar'){
+    if(item.type==='grammar'){
       studyOpenTag = '<button class="roadmap-study" data-action="nav" data-view="grammar-trap" data-id="'+item.refId+'" data-goal="'+(item.goal||'')+'" style="'+studyStyle+'">';
       studyCloseTag = '</button>';
     } else {
@@ -6885,12 +6955,18 @@ const HANDLERS = {
       name, motivationTag:d.goals[0], goals:d.goals.slice(), archetype:ARCHETYPES[d.goals[0]].name.en,
       level:d.level, levelStage:1, learnerType:d.learnerType, priorityArea:d.priorityArea, completedDiagnostic:true, dashboardIntroShown:false
     };
+    // Roadmap 2.0: generate-once-then-mutate — this is the moment the roadmap is
+    // born, so it's the one point where a fresh buildRoadmap() call is correct;
+    // from here on, everything reads the persisted state.roadmap via
+    // currentRoadmap() instead of recomputing live (see regenerateRoadmap()).
+    regenerateRoadmap();
     save();
     go('dashboard');
   },
   'retake-diagnostic'(){
     state.diag = {step:0, goals:[], level:null, learnerType:null, priorityArea:null};
     state.profile.completedDiagnostic = false;
+    state.roadmap = null;
     save();
     go('diagnostic-intro');
   },
@@ -6900,15 +6976,14 @@ const HANDLERS = {
   // done (see renderRoadmapCard), and only 'advance-roadmap-level' below advances
   // the level/stage; toggling an item just toggles it.
   'toggle-roadmap-item'(el){
-    const idx = el.dataset.idx;
+    const id = el.dataset.id;
     const rc = state.progress.roadmapChecked;
-    rc[idx] = !rc[idx];
+    rc[id] = !rc[id];
     save(); render();
   },
   'advance-roadmap-level'(){
-    const roadmap = buildRoadmap(state.profile);
-    const rc = state.progress.roadmapChecked;
-    const allDone = roadmap.length && roadmap.every((_,i)=>rc[i]);
+    const roadmap = currentRoadmap();
+    const allDone = roadmap.length && roadmap.every(it=>isRoadmapNodeDone(it));
     if(allDone){
       if(state.profile.levelStage === 2){
         const li = LEVELS.indexOf(state.profile.level);
@@ -6917,7 +6992,9 @@ const HANDLERS = {
       } else {
         state.profile.levelStage = 2;
       }
-      state.progress.roadmapChecked = {};
+      // New level/stage means new content to pull from — this is a genuine
+      // regeneration point, not a live recompute.
+      regenerateRoadmap();
     }
     save(); render();
   },
@@ -6961,6 +7038,7 @@ const HANDLERS = {
     if(i>-1) goals.splice(i,1);
     else if(goals.length<3) goals.push(key);
     if(goals.length) state.profile.motivationTag = goals[0];
+    mergeRoadmapForGoalChange();
     save(); render();
   },
   'studio-pick-mode'(el){
@@ -7765,6 +7843,8 @@ if(location.hash === '#admin'){
   setTimeout(()=>{ if(!adminAuthResolved) renderAdminPage(); }, 4000);
 } else {
   if(state.profile.completedDiagnostic && state.view === 'diagnostic-intro'){ state.view = 'dashboard'; }
+  ensureRoadmap();
+  migrateRoadmapChecked();
   if(state.profile.completedDiagnostic && markDailyVisit()){ save(); }
   render();
   if(state.view === 'student-panel' && studentPanelData && studentPanelData.code && typeof firebase !== 'undefined'){

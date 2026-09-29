@@ -569,11 +569,15 @@ const PRIORITY_OPTIONS = [
   {value:'listening', label:{en:'Native speakers talk too fast', tr:'Anadili İspanyolca olanlar çok hızlı konuşuyor', fa:'اسپانیایی‌زبان‌های بومی خیلی سریع صحبت می‌کنند', es:'Los hablantes nativos hablan demasiado rápido'}, sub:{en:'I lose the thread in real conversation', tr:'Gerçek sohbette konuyu kaybediyorum', fa:'در مکالمه واقعی رشته کلام را گم می‌کنم', es:'Pierdo el hilo en una conversación real'}},
   {value:'speaking', label:{en:'I freeze up when I need to speak', tr:'Konuşmam gerektiğinde donup kalıyorum', fa:'وقتی باید صحبت کنم یخ می‌زنم', es:'Me quedo en blanco cuando tengo que hablar'}, sub:{en:"I know the words but can't get them out", tr:'Kelimeleri biliyorum ama ağzımdan çıkmıyor', fa:'کلمات را بلدم ولی نمی‌توانم بگویم', es:'Sé las palabras pero no me salen'}}
 ];
+// Roadmap 2.0 Phase 2 (ported from the English app): Studio/Story are retired as
+// standalone browse screens — their story/writing/speaking nodes now live only
+// inside the roadmap, so both entries point there instead of the old
+// speaking-club/story-list hubs. Grammar/vocab stay as-is.
 const PRACTICE_SECTIONS = [
   {key:'grammar', view:'grammar-list', icon:'dumbbell', cat:'gram', label:{en:'Grammar Gym', tr:'Dilbilgisi Salonu', fa:'باشگاه گرامر', es:'Gimnasio de Gramática'}},
   {key:'vocab', view:'vocab-list', icon:'cards', cat:'voc', label:{en:'Word Play', tr:'Kelime Oyunu', fa:'بازی با کلمات', es:'Juego de Palabras'}},
-  {key:'listening', view:'speaking-club', icon:'chat', cat:'lis', label:{en:'Studio', tr:'Stüdyo', fa:'استودیو', es:'Estudio'}},
-  {key:'story', view:'story-list', icon:'book', cat:'story', label:{en:'Story World', tr:'Hikaye Dünyası', fa:'دنیای داستان', es:'Mundo de Historias'}}
+  {key:'listening', view:'diag-intro-review', icon:'chat', cat:'lis', label:{en:'Studio', tr:'Stüdyo', fa:'استودیو', es:'Estudio'}},
+  {key:'story', view:'diag-intro-review', icon:'book', cat:'story', label:{en:'Story World', tr:'Hikaye Dünyası', fa:'دنیای داستان', es:'Mundo de Historias'}}
 ];
 const PRACTICE_RECOMMENDATION = {
   grammar:{emphasize:['grammar','vocab'],
@@ -4327,8 +4331,11 @@ function dateSeed(str){ let h = 0; for(let i=0;i<str.length;i++){ h = (h*31 + st
 const DAILY_TASK_POOL = [
   {id:'grammar-round', ic:'dumbbell', cat:'gram', theme:'grammar', view:'grammar-list', title:{en:'Finish one Grammar Gym round', tr:'Bir Dilbilgisi Salonu turu bitir', fa:'یک تمرین باشگاه گرامر را تمام کن', es:'Termina una ronda del Gimnasio de Gramática'}},
   {id:'vocab-set', ic:'cards', cat:'voc', theme:'vocab', view:'vocab-list', title:{en:'Learn a new set in Word Play', tr:"Kelime Oyunu'nda yeni bir set öğren", fa:'یک مجموعه جدید در بازی با کلمات یاد بگیر', es:'Aprende un set nuevo en el Juego de Palabras'}},
-  {id:'story-read', ic:'book', cat:'story', theme:'story', view:'story-list', title:{en:'Read one story in Story World', tr:"Hikaye Dünyası'nda bir hikaye oku", fa:'یک داستان در دنیای داستان بخوان', es:'Lee una historia en el Mundo de Historias'}},
-  {id:'speak-aloud', ic:'chat', cat:'lis', theme:'speaking', view:'speaking-club', title:{en:'Say 5 phrases out loud today', tr:'Bugün yüksek sesle 5 ifade söyle', fa:'امروز ۵ عبارت را با صدای بلند بگو', es:'Di 5 frases en voz alta hoy'}},
+  // Roadmap 2.0 Phase 2 (ported from the English app): story-list/speaking-club
+  // are retired standalone hubs — both daily tasks now point into the roadmap,
+  // where the story/speaking/writing nodes actually live.
+  {id:'story-read', ic:'book', cat:'story', theme:'story', view:'diag-intro-review', title:{en:'Read one story in Story World', tr:"Hikaye Dünyası'nda bir hikaye oku", fa:'یک داستان در دنیای داستان بخوان', es:'Lee una historia en el Mundo de Historias'}},
+  {id:'speak-aloud', ic:'chat', cat:'lis', theme:'speaking', view:'diag-intro-review', title:{en:'Say 5 phrases out loud today', tr:'Bugün yüksek sesle 5 ifade söyle', fa:'امروز ۵ عبارت را با صدای بلند بگو', es:'Di 5 frases en voz alta hoy'}},
   {id:'slang-pickup', ic:'cards', cat:'diag', theme:'vocab', view:'vocab-list', title:{en:'Pick up 3 new slang phrases', tr:'3 yeni argo ifade öğren', fa:'۳ اصطلاح عامیانه جدید یاد بگیر', es:'Aprende 3 frases de argot nuevas'}},
   {id:'roadmap-progress', ic:'compass', cat:'diag', theme:'roadmap', view:'dashboard', title:{en:'Check off one step in Your Roadmap', tr:"Yol Haritan'da bir adımı işaretle", fa:'یک قدم در نقشه راهت را علامت بزن', es:'Marca un paso en tu Hoja de Ruta'}}
 ];
@@ -4374,11 +4381,41 @@ function buildRoadmap(profile){
   // produces 'session' items (mirrors the English app's fix, commit d8b8510 —
   // was pushSession()/sessionLink(), removed here too). The teacher is still
   // always reachable via the WhatsApp card on quiz results and the Studio hub.
+  // Roadmap 2.0 Phase 2 (ported from the English app): story/writing/speaking
+  // practice as roadmap node types. Story: STORY_LIBRARY isn't goal-tagged, so
+  // selection is level-only — prefers a story the student hasn't read, falls
+  // back to a completed one if every story at this level is done.
+  const storyPoolAll = STORY_LIBRARY.filter(s=>s.level===profile.level);
+  const storyPick = storyPoolAll.length
+    ? (storyPoolAll.find(s=>!(state.progress && state.progress.completedStories && state.progress.completedStories.includes(s.id))) || storyPoolAll[0])
+    : null;
+  const pushStory = () => {
+    if(!storyPick) return;
+    items.push({type:'story', refId:storyPick.id, goal:primaryGoal,
+      title:L('Story','Hikaye','داستان','Historia')+': '+L(storyPick.title.en, storyPick.title.tr, storyPick.title.fa, storyPick.title.es)});
+  };
+  // Writing/speaking practice (Studio Lab self-practice rounds). These aren't
+  // catalog content with a fixed id, so refId is synthesized from goal+
+  // difficulty; tapping the node lands on the existing studio-setup screen
+  // pre-filled with both, one tap from a round.
+  const practiceDifficulty = ({A1:'easy', A2:'easy', B1:'medium', B2:'medium', C1:'difficult'})[profile.level] || 'medium';
+  const pushPractice = (mode) => {
+    const g = primaryGoal || GOAL_ORDER[0];
+    const dl = STUDIO_DIFFICULTY_LABEL[practiceDifficulty];
+    items.push({type:mode, refId:g+'-'+practiceDifficulty, goal:g, difficulty:practiceDifficulty,
+      title:(mode==='writing' ? L('Writing practice','Yazma pratiği','تمرین نوشتن','Práctica de escritura') : L('Speaking practice','Konuşma pratiği','تمرین صحبت‌کردن','Práctica de conversación'))+': '+L(dl.en,dl.tr,dl.fa,dl.es)});
+  };
   // Drillers repeat-to-learn, and anyone who flagged vocab as their weak spot gets a warm-up rep first.
-  if(stage===1 && (profile.priorityArea==='vocab' || profile.learnerType==='driller') && vPool.length){
+  const gaveVocabWarmup = stage===1 && (profile.priorityArea==='vocab' || profile.learnerType==='driller') && vPool.length;
+  if(gaveVocabWarmup){
     items.push({type:'vocab', refId:vPool[0].id, goal:primaryGoal, title:L('Vocab warm-up','Kelime ısınması','گرم‌کردن با کلمات','Calentamiento de vocabulario')+': '+setTitle(vPool[0])});
   }
-  let vi = vPool.length ? (stage===2 ? Math.ceil(vPool.length/2) : 0) : 0;
+  // When a warm-up rep is given, starting the main loop's index at the same
+  // vPool[0] it just showed would produce a same-id duplicate roadmap node —
+  // harmless under the old index-keyed progress tracking, but a real problem
+  // now that ids are stable (checking one node's box would silently "complete"
+  // the other too). Starting one past the warm-up avoids the immediate repeat.
+  let vi = vPool.length ? (stage===2 ? Math.ceil(vPool.length/2) : (gaveVocabWarmup ? 1 : 0)) : 0;
   let sli = slPool.length ? (stage===2 ? Math.ceil(slPool.length/2) : 0) : 0;
   gSlice.forEach((g, i)=>{
     items.push({type:'grammar', refId:g.id, goal:primaryGoal, title:L('Grammar','Dilbilgisi','گرامر','Gramática')+': '+grammarTitle(g)});
@@ -4386,25 +4423,58 @@ function buildRoadmap(profile){
       const v = vPool[vi % vPool.length]; vi++;
       items.push({type:'vocab', refId:v.id, goal:primaryGoal, title:L('Vocab','Kelime','کلمات','Vocabulario')+': '+setTitle(v)});
     }
-    // Immersive learners absorb best in context, so slang lands early instead of only at the end.
+    // Immersive learners absorb best in context, so slang (and now story) land early
+    // instead of only at the end — a story is the most immersive content there is.
     if(profile.learnerType==='immersive' && slPool.length && i===1){
       const sl = slPool[sli % slPool.length]; sli++;
       items.push({type:'slang', refId:sl.id, goal:primaryGoal, title:L('Slang','Argo','اصطلاحات','Argot')+': '+setTitle(sl)});
+    }
+    if(profile.learnerType==='immersive' && i===1){
+      pushStory();
+    }
+    if(i === Math.max(Math.floor(gSlice.length/2)-1, 0)){
+      pushPractice('speaking');
     }
   });
   if(slPool.length){
     const sl = slPool[sli % slPool.length];
     items.push({type:'slang', refId:sl.id, goal:primaryGoal, title:L('Slang','Argo','اصطلاحات','Argot')+': '+setTitle(sl)});
   }
+  // Non-immersive learners meet the story here instead — after the grammar/vocab
+  // legwork, as a pay-off read rather than an opener.
+  if(profile.learnerType!=='immersive'){
+    pushStory();
+  }
+  pushPractice('writing');
+  // Talkers (and anyone who said listening/speaking is their weak spot) get an
+  // extra self-practice speaking rep, now that there's no live-session version.
+  if((profile.learnerType==='talker' || profile.priorityArea==='listening') && stage===1){
+    pushPractice('speaking');
+  }
+  // Some content (vocab/slang especially, via the vi/sli modulo wraparound above,
+  // and drillers deliberately repeat vocab more) can legitimately appear twice in
+  // one roadmap — repetition is the point for a driller. That's fine for display,
+  // but two slots sharing one roadmapNodeId would make checking one silently mark
+  // the other "done" too. Tag repeats with an occurrence number (kept OFF refId,
+  // which content lookups still need untouched) so roadmapNodeId() can tell them
+  // apart while both still open the exact same underlying content.
+  const seenNodeKeys = {};
+  items.forEach(it=>{
+    const baseKey = it.type+':'+it.refId;
+    seenNodeKeys[baseKey] = (seenNodeKeys[baseKey]||0) + 1;
+    if(seenNodeKeys[baseKey] > 1) it.occ = seenNodeKeys[baseKey];
+  });
   return items.map((it,idx)=>Object.assign({n:idx+1}, it));
 }
 /* Roadmap 2.0 engine (ported from the English app): a stable, position-independent
    id for a roadmap item. type+refId already uniquely identifies the underlying
-   content (a grammar item, vocab/slang set) regardless of where it lands in the
-   generated sequence, so — unlike the item's array index — this id survives goal
-   edits that insert/reorder/regenerate the roadmap (see mergeRoadmapForGoalChange
-   below). */
-function roadmapNodeId(item){ return item.type+':'+item.refId; }
+   content (a grammar item, vocab/slang set, story, or writing/speaking-practice
+   recipe) regardless of where it lands in the generated sequence, so — unlike
+   the item's array index — this id survives goal edits that insert/reorder/
+   regenerate the roadmap (see mergeRoadmapForGoalChange below). The optional
+   .occ suffix (set by buildRoadmap's dedup pass) disambiguates the rare case
+   where the exact same content is deliberately repeated twice in one roadmap. */
+function roadmapNodeId(item){ return item.type+':'+item.refId+(item.occ?('#'+item.occ):''); }
 function isRoadmapNodeDone(item){ return !!(state.progress.roadmapChecked && state.progress.roadmapChecked[roadmapNodeId(item)]); }
 /* One-time migration for saves written before this id scheme existed: those keyed
    roadmapChecked by array index (e.g. {"0":true}), which silently "unchecks" a
@@ -4490,7 +4560,11 @@ function render(){
   const root = document.getElementById('app');
   document.documentElement.dir = LANG==='fa' ? 'rtl' : 'ltr';
   root.innerHTML = screens[state.view] ? screens[state.view]() : screens['dashboard']();
-  const bottomNavViews = ['dashboard','goals-list','speaking-club','story-list','student-club'];
+  // Roadmap 2.0 Phase 2 (ported from the English app): Studio and Stories are
+  // retired as standalone bottom-nav tabs — their content now lives only as
+  // roadmap node types, opened in context from the roadmap. Club (student-club)
+  // is explicitly untouched.
+  const bottomNavViews = ['dashboard','goals-list','student-club'];
   const nav = bottomNavViews.includes(state.view) ? bottomNav() : '';
   root.insertAdjacentHTML('beforeend', nav);
   const noHomeButtonViews = bottomNavViews.concat(['diagnostic-intro','diagnostic-step']);
@@ -4534,8 +4608,6 @@ function bottomNav(){
   const items = [
     {v:'dashboard', ic:ICONS.home, label:L('Home','Ana Sayfa','خانه','Inicio')},
     {v:'goals-list', ic:ICONS.compass, label:L('Goals','Hedefler','اهداف','Metas')},
-    {v:'speaking-club', ic:ICONS.chat, label:L('Studio','Stüdyo','استودیو','Estudio')},
-    {v:'story-list', ic:ICONS.book, label:L('Stories','Hikayeler','داستان‌ها','Historias')},
     {v:'student-club', ic:ICONS.users, label:L('Club','Kulüp','باشگاه','Club')}
   ];
   return `<nav class="bottomnav">${items.map(it=>`
@@ -4975,7 +5047,10 @@ function renderRoadmapCard(p){
   const TYPE_META = {
     grammar:{ic:ICONS.dumbbell, c:'gram', label:L('Grammar','Dilbilgisi','گرامر','Gramática')},
     vocab:{ic:ICONS.cards, c:'voc', label:L('Vocabulary','Kelime','واژگان','Vocabulario')},
-    slang:{ic:ICONS.cards, c:'diag', label:L('Slang','Argo','اصطلاحات','Argot')}
+    slang:{ic:ICONS.cards, c:'diag', label:L('Slang','Argo','اصطلاحات','Argot')},
+    story:{ic:ICONS.book, c:'story', label:L('Story','Hikaye','داستان','Historia')},
+    writing:{ic:ICONS.pen, c:'gram', label:L('Writing practice','Yazma pratiği','تمرین نوشتن','Práctica de escritura')},
+    speaking:{ic:ICONS.mic, c:'lis', label:L('Speaking practice','Konuşma pratiği','تمرین صحبت‌کردن','Práctica de conversación')}
   };
   const doneCount = roadmap.filter(it=>isRoadmapNodeDone(it)).length;
   const allDone = doneCount === roadmap.length;
@@ -5013,6 +5088,12 @@ function renderRoadmapCard(p){
     const studyStyle = 'display:block; width:100%; text-align:start; padding:0; background:none; border:none; color:inherit; font:inherit; cursor:pointer;';
     if(item.type==='grammar'){
       studyOpenTag = '<button class="roadmap-study" data-action="nav" data-view="grammar-trap" data-id="'+item.refId+'" data-goal="'+(item.goal||'')+'" style="'+studyStyle+'">';
+      studyCloseTag = '</button>';
+    } else if(item.type==='story'){
+      studyOpenTag = '<button class="roadmap-study" data-action="nav" data-view="story-detail" data-id="'+item.refId+'" style="'+studyStyle+'">';
+      studyCloseTag = '</button>';
+    } else if(item.type==='writing' || item.type==='speaking'){
+      studyOpenTag = '<button class="roadmap-study" data-action="nav" data-view="studio-setup" data-mode="'+item.type+'" data-goal="'+(item.goal||'')+'" data-difficulty="'+(item.difficulty||'')+'" style="'+studyStyle+'">';
       studyCloseTag = '</button>';
     } else {
       const cat = item.type==='slang' ? 'slang' : 'vocab';
@@ -7025,6 +7106,11 @@ const HANDLERS = {
       if(goal) params.goal = goal;
     }
     if(view==='goal-level-detail'){ params.level = el.dataset.level || state.viewParams.level || state.profile.level; params.tab = 'grammar'; }
+    if(view==='studio-setup'){
+      params.mode = el.dataset.mode || 'writing';
+      if(el.dataset.goal) params.goal = el.dataset.goal;
+      if(el.dataset.difficulty) params.difficulty = el.dataset.difficulty;
+    }
     go(view, params);
   },
   'set-level'(el){ state.viewParams.level = el.dataset.level; save(); render(); },
@@ -7102,7 +7188,9 @@ const HANDLERS = {
   },
   'start-story-quiz'(el){
     const s = STORY_LIBRARY.find(x=>x.id===el.dataset.id);
-    startQuiz('story', s.id, s.quiz, 'story-list', {level: state.viewParams.level});
+    // story-list is retired (Roadmap 2.0 Phase 2) — story-detail is only reached
+    // from the roadmap now, so that's where finishing the quiz should return to.
+    startQuiz('story', s.id, s.quiz, 'diag-intro-review', {});
   },
   'start-review'(){
     const mixed = buildReviewQuiz();

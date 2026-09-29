@@ -3984,7 +3984,7 @@ function freshState(){
   return {
     view:'diagnostic-intro', viewParams:{}, lang:'tr',
     profile:{name:'', motivationTag:null, goals:[], archetype:null, level:null, levelStage:1, learnerType:null, priorityArea:null, completedDiagnostic:false, dashboardIntroShown:false, wantsContact:false, contactPhone:''},
-    progress:{sessionsExplored:0, streak:0, lastActiveDate:null, completedTraps:[], completedVocabSets:[], completedScenes:[], completedStories:[], srs:{}, badgesEarnedAt:{}, reviewsCompleted:0, roadmapChecked:{}, dailyTasksDate:null, dailyTasksChecked:{}, writingRoundsDone:0, speakingRoundsDone:0},
+    progress:{sessionsExplored:0, streak:0, lastActiveDate:null, completedTraps:[], completedVocabSets:[], completedScenes:[], completedStories:[], completedGames:[], srs:{}, badgesEarnedAt:{}, reviewsCompleted:0, roadmapChecked:{}, dailyTasksDate:null, dailyTasksChecked:{}, writingRoundsDone:0, speakingRoundsDone:0},
     diag:{step:0, goals:[], level:null, learnerType:null, priorityArea:null},
     roadmap:null,
     quiz:null, studentPanelCache:null
@@ -4016,6 +4016,7 @@ function load(){
     if(merged.progress.writingRoundsDone===undefined) merged.progress.writingRoundsDone = 0;
     if(merged.progress.speakingRoundsDone===undefined) merged.progress.speakingRoundsDone = 0;
     if(!merged.progress.roadmapChecked) merged.progress.roadmapChecked = {};
+    if(!merged.progress.completedGames) merged.progress.completedGames = [];
     if(merged.profile.levelStage===undefined) merged.profile.levelStage = 1;
     if(!merged.progress.dailyTasksChecked) merged.progress.dailyTasksChecked = {};
     if(merged.progress.dailyTasksDate===undefined) merged.progress.dailyTasksDate = null;
@@ -4079,6 +4080,16 @@ function checkBadges(){
       newlyEarnedBadges.push(b.id);
     }
   });
+}
+/* Roadmap 2.0 Phase 3 (ported from the English app): fires when a game roadmap
+   node is genuinely finished (not a manual checkbox tap — see isRoadmapNodeDone).
+   Idempotent, mirrors the completedTraps/completedVocabSets/completedStories
+   pattern used everywhere else content completion is tracked by stable id. */
+function markGameComplete(refId){
+  if(!refId) return;
+  if(!state.progress.completedGames) state.progress.completedGames = [];
+  if(!state.progress.completedGames.includes(refId)) state.progress.completedGames.push(refId);
+  markActivity();
 }
 
 /* ============================= SPACED REPETITION (SRS) ============================= */
@@ -4405,6 +4416,23 @@ function buildRoadmap(profile){
     items.push({type:mode, refId:g+'-'+practiceDifficulty, goal:g, difficulty:practiceDifficulty,
       title:(mode==='writing' ? L('Writing practice','Yazma pratiği','تمرین نوشتن','Práctica de escritura') : L('Speaking practice','Konuşma pratiği','تمرین صحبت‌کردن','Práctica de conversación'))+': '+L(dl.en,dl.tr,dl.fa,dl.es)});
   };
+  // Roadmap 2.0 Phase 3 (ported from the English app): games as a roadmap node
+  // type. Both reuse VOCAB_SETS content — no new authoring — via the same
+  // goal-interleaved vPool already built above. refId is synthesized from the
+  // source set + which mini-game, since a "game" isn't catalog content with its
+  // own id.
+  const gamePool = vPool.length ? vPool : vPoolAll;
+  const pushGame = (kind) => {
+    if(!gamePool.length) return;
+    // Prefer a set the OTHER game type in this same roadmap hasn't already used,
+    // so match/dictation don't quiz the exact same word list back to back.
+    const usedSetIds = items.filter(it=>it.type==='game').map(it=>it.setId);
+    const setObj = gamePool.find(s=>!usedSetIds.includes(s.id)) || gamePool[0];
+    const g = primaryGoal || GOAL_ORDER[0];
+    const kindLabel = kind==='match' ? L('Word Rush','Kelime Yarışı','مسابقه کلمات','Carrera de palabras') : L('Listen & Type','Dinle ve Yaz','گوش کن و بنویس','Escucha y escribe');
+    items.push({type:'game', gameKind:kind, refId:setObj.id+'-'+kind, setId:setObj.id, goal:g,
+      title:L('Game','Oyun','بازی','Juego')+': '+kindLabel+' — '+setTitle(setObj)});
+  };
   // Drillers repeat-to-learn, and anyone who flagged vocab as their weak spot gets a warm-up rep first.
   const gaveVocabWarmup = stage===1 && (profile.priorityArea==='vocab' || profile.learnerType==='driller') && vPool.length;
   if(gaveVocabWarmup){
@@ -4446,6 +4474,9 @@ function buildRoadmap(profile){
     pushStory();
   }
   pushPractice('writing');
+  // One game per stage, alternating type by stage — across a full level (stage 1
+  // + stage 2) a student meets both Word Rush and Listen & Type at least once.
+  pushGame(stage===1 ? 'match' : 'dictation');
   // Talkers (and anyone who said listening/speaking is their weak spot) get an
   // extra self-practice speaking rep, now that there's no live-session version.
   if((profile.learnerType==='talker' || profile.priorityArea==='listening') && stage===1){
@@ -4475,7 +4506,17 @@ function buildRoadmap(profile){
    .occ suffix (set by buildRoadmap's dedup pass) disambiguates the rare case
    where the exact same content is deliberately repeated twice in one roadmap. */
 function roadmapNodeId(item){ return item.type+':'+item.refId+(item.occ?('#'+item.occ):''); }
-function isRoadmapNodeDone(item){ return !!(state.progress.roadmapChecked && state.progress.roadmapChecked[roadmapNodeId(item)]); }
+/* Every other node type is a manual "mark done" toggle. Games are the one
+   deliberate exception (Roadmap 2.0 Phase 3, ported from the English app): a
+   game has an unambiguous, unfakeable "finished" event (the board is fully
+   matched / all dictation sentences answered), so its node is auto-marked done
+   from state.progress.completedGames the moment that event fires — see
+   markGameComplete(). Manual toggling is disabled for game nodes in the UI (see
+   pinFn in renderRoadmapCard) so there's no confusing no-op checkbox. */
+function isRoadmapNodeDone(item){
+  if(item.type==='game') return !!(state.progress.completedGames && state.progress.completedGames.includes(item.refId));
+  return !!(state.progress.roadmapChecked && state.progress.roadmapChecked[roadmapNodeId(item)]);
+}
 /* One-time migration for saves written before this id scheme existed: those keyed
    roadmapChecked by array index (e.g. {"0":true}), which silently "unchecks" a
    completed step whenever the roadmap sequence shifts. Rekeys any numeric-indexed
@@ -5032,8 +5073,10 @@ function renderDashboard(){
 // Extracted from the old standalone "Your Plan" screen (2026-09-29, Farin: "I want the
 // roadmap to appear directly on the home section" — ported from the English app) so the
 // dashboard can embed the roadmap inline instead of linking out to it via a teaser tile.
-// renderDiagReview() below now just wraps this in its own sectionHead — kept as an
-// unreachable safety net (nothing links to 'diag-intro-review' as a nav target anymore).
+// renderDiagReview() below now just wraps this in its own sectionHead — kept as a
+// safety net; the retired Studio/Stories tabs' old deep links (Practice
+// recommendation card, daily tasks, story-quiz back button) now redirect to
+// 'diag-intro-review' too (Roadmap 2.0 Phase 2), so it is reachable again.
 function renderRoadmapCard(p){
   // "Bring out the character based on theirs" (Farin, 2026-09-29, ported from the
   // English app): reuse the existing named-archetype system (ARCHETYPES/
@@ -5050,7 +5093,11 @@ function renderRoadmapCard(p){
     slang:{ic:ICONS.cards, c:'diag', label:L('Slang','Argo','اصطلاحات','Argot')},
     story:{ic:ICONS.book, c:'story', label:L('Story','Hikaye','داستان','Historia')},
     writing:{ic:ICONS.pen, c:'gram', label:L('Writing practice','Yazma pratiği','تمرین نوشتن','Práctica de escritura')},
-    speaking:{ic:ICONS.mic, c:'lis', label:L('Speaking practice','Konuşma pratiği','تمرین صحبت‌کردن','Práctica de conversación')}
+    speaking:{ic:ICONS.mic, c:'lis', label:L('Speaking practice','Konuşma pratiği','تمرین صحبت‌کردن','Práctica de conversación')},
+    // Roadmap 2.0 Phase 3 (ported from the English app): bolt icon + gold
+    // "review" color are used nowhere else on the roadmap, and the "GAME" label
+    // prefix reads clearly regardless of color perception.
+    game:{ic:ICONS.bolt, c:'review', label:L('GAME','OYUN','بازی','JUEGO')}
   };
   const doneCount = roadmap.filter(it=>isRoadmapNodeDone(it)).length;
   const allDone = doneCount === roadmap.length;
@@ -5059,6 +5106,7 @@ function renderRoadmapCard(p){
   function pinFn(idx){
     const item = roadmap[idx], m = TYPE_META[item.type], checked = isRoadmapNodeDone(item);
     const isCurrent = idx === currentIndex;
+    const isGame = item.type === 'game';
     const color = 'var(--cat-'+m.c+')';
     // Roadmap 2.0 redesign, ported from the English app (2026-09-29, Farin): this is
     // the "symbol sitting between the cards" badge — a chunky 60px circle per section
@@ -5073,7 +5121,16 @@ function renderRoadmapCard(p){
     const glowRing = `color-mix(in srgb, ${color} 22%, transparent)`;
     const glowStrong = `color-mix(in srgb, ${color} 60%, transparent)`;
     const doneGlow = `color-mix(in srgb, ${color} 55%, transparent)`;
-    return `<button class="rm2-seam-ic ${isCurrent?'roadmap-pin-current':''}" data-action="toggle-roadmap-item" data-id="${roadmapNodeId(item)}" aria-label="${L('Mark done','Tamamlandı say','علامت‌زدن به‌عنوان انجام‌شده','Marcar como hecho')}" style="width:60px; height:60px; border-radius:50%; background:${checked?`linear-gradient(150deg, ${color}, ${color})`:'var(--bg-elevated)'}; border:${isCurrent?'5px':'4px'} solid ${color}; display:flex; align-items:center; justify-content:center; box-shadow:${isCurrent?`0 0 0 4px ${glowRing}, 0 8px 18px -4px ${glowStrong}`:(checked?`0 6px 14px -3px ${doneGlow}, inset 0 2px 3px rgba(255,255,255,.35)`:'0 5px 12px -3px rgba(0,0,0,.25)')}; cursor:pointer; padding:0;">
+    // Roadmap 2.0 Phase 3 (ported from the English app): game nodes auto-complete
+    // on a real "finished" event (markGameComplete) — manual toggling is
+    // meaningless for them (isRoadmapNodeDone ignores roadmapChecked for
+    // type:'game'), so the pin launches the game directly instead of offering a
+    // checkbox that would silently do nothing.
+    const action = isGame ? 'start-game' : 'toggle-roadmap-item';
+    const dataAttrs = isGame
+      ? 'data-set-id="'+(item.setId||'')+'" data-kind="'+(item.gameKind||'')+'" data-ref-id="'+item.refId+'" data-goal="'+(item.goal||'')+'"'
+      : 'data-id="'+roadmapNodeId(item)+'"';
+    return `<button class="rm2-seam-ic ${isCurrent?'roadmap-pin-current':''}" data-action="${action}" ${dataAttrs} aria-label="${isGame ? L('Play','Oyna','بازی کن','Jugar') : L('Mark done','Tamamlandı say','علامت‌زدن به‌عنوان انجام‌شده','Marcar como hecho')}" style="width:60px; height:60px; border-radius:50%; background:${checked?`linear-gradient(150deg, ${color}, ${color})`:'var(--bg-elevated)'}; border:${isCurrent?'5px':'4px'} solid ${color}; display:flex; align-items:center; justify-content:center; box-shadow:${isCurrent?`0 0 0 4px ${glowRing}, 0 8px 18px -4px ${glowStrong}`:(checked?`0 6px 14px -3px ${doneGlow}, inset 0 2px 3px rgba(255,255,255,.35)`:'0 5px 12px -3px rgba(0,0,0,.25)')}; cursor:pointer; padding:0;">
       <span style="width:25px; height:25px; display:flex; align-items:center; justify-content:center; color:${checked?'#fff':color};">${checked?ICONS.check:m.ic}</span>
       <span style="position:absolute; top:-6px; right:-6px; width:19px; height:19px; border-radius:50%; background:var(--ink); color:var(--bg-elevated); font-size:9.5px; font-weight:800; display:flex; align-items:center; justify-content:center; box-shadow:0 2px 4px rgba(0,0,0,.25);">${idx+1}</span>
     </button>`;
@@ -5082,6 +5139,7 @@ function renderRoadmapCard(p){
   function cardFn(idx){
     const item = roadmap[idx], m = TYPE_META[item.type], checked = isRoadmapNodeDone(item);
     const isCurrent = idx === currentIndex;
+    const isGame = item.type === 'game';
     const color = 'var(--cat-'+m.c+')';
     const subtitle = (item.goal && GOALS_META[item.goal]) ? goalMetaLabel(item.goal)+' · '+m.label : m.label;
     let studyOpenTag, studyCloseTag;
@@ -5094,6 +5152,9 @@ function renderRoadmapCard(p){
       studyCloseTag = '</button>';
     } else if(item.type==='writing' || item.type==='speaking'){
       studyOpenTag = '<button class="roadmap-study" data-action="nav" data-view="studio-setup" data-mode="'+item.type+'" data-goal="'+(item.goal||'')+'" data-difficulty="'+(item.difficulty||'')+'" style="'+studyStyle+'">';
+      studyCloseTag = '</button>';
+    } else if(isGame){
+      studyOpenTag = '<button class="roadmap-study" data-action="start-game" data-set-id="'+(item.setId||'')+'" data-kind="'+(item.gameKind||'')+'" data-ref-id="'+item.refId+'" data-goal="'+(item.goal||'')+'" style="'+studyStyle+'">';
       studyCloseTag = '</button>';
     } else {
       const cat = item.type==='slang' ? 'slang' : 'vocab';
@@ -5139,7 +5200,7 @@ function renderRoadmapCard(p){
       ${studyOpenTag}
         <div class="row between" style="align-items:flex-start; gap:10px;">
           <div style="min-width:0;">
-            <div style="font-size:11px; font-weight:900; color:${subtitleColor}; text-transform:uppercase; letter-spacing:.05em;">${esc(subtitle)}</div>
+            <div style="font-size:11px; font-weight:900; color:${subtitleColor}; text-transform:uppercase; letter-spacing:.05em;">${isGame?'⚡ ':''}${esc(subtitle)}</div>
             <div style="${titleFont} margin-top:6px; color:${titleColor}; line-height:1.28; ${checked?'text-decoration:line-through; opacity:.62;':''}">${esc(item.title)}</div>
           </div>
           <span style="flex:0 0 auto; margin-top:3px; color:${chevColor}; opacity:${checked?1:.65};">${checked?ICONS.check:ICONS.chev}</span>
@@ -6004,6 +6065,109 @@ function renderStudioRound(){
   </div>`;
 }
 
+/* ============================= GAMES (Roadmap 2.0 Phase 3, ported from the English app) =============================
+   Two game types — Word Rush (a timed vocab-matching grid) and Listen & Type (dictation via the
+   browser's speechSynthesis, order-tolerant scoring, with a "show sentence" fallback for no audio
+   support). Both reuse existing VOCAB_SETS content rather than needing new authoring. */
+function buildMatchRound(setObj, n){
+  n = Math.min(n || 6, setObj.cards.length);
+  const cards = shuffle(setObj.cards).slice(0, n);
+  const tiles = [];
+  cards.forEach((c,i)=>{
+    const key = 'p'+i;
+    tiles.push({key, side:'word', text:c.word});
+    tiles.push({key, side:'meaning', text:L(c.meaning.en, c.meaning.tr, c.meaning.fa, c.meaning.es)});
+  });
+  return {setId:setObj.id, pairCount:cards.length, tiles:shuffle(tiles), revealed:[], matchedKeys:[], mistakes:0, startedAt:Date.now(), finishedAt:null};
+}
+function tokenizeForDictation(s){ return (s||'').toLowerCase().replace(/[^a-záéíóúüñ0-9'\s]/g,' ').split(/\s+/).filter(Boolean); }
+/* Order-tolerant word-overlap scoring — deliberately forgiving of minor word-order
+   slips (common for A1/A2 listeners), consistent in spirit with checkPracticeAnswer's
+   tolerant matching elsewhere in the app. */
+function scoreDictationAnswer(sourceText, typedText){
+  const srcTokens = tokenizeForDictation(sourceText);
+  const typedCounts = {};
+  tokenizeForDictation(typedText).forEach(t=>{ typedCounts[t] = (typedCounts[t]||0)+1; });
+  let hits = 0;
+  const missed = [];
+  srcTokens.forEach(t=>{
+    if(typedCounts[t] > 0){ typedCounts[t]--; hits++; }
+    else missed.push(t);
+  });
+  const pct = srcTokens.length ? Math.round((hits/srcTokens.length)*100) : 0;
+  return {pct, hits, total:srcTokens.length, missed};
+}
+function buildDictationRound(setObj, n){
+  const withSentence = setObj.cards.filter(c=>c.sentence);
+  n = Math.min(n || 5, withSentence.length);
+  const cards = shuffle(withSentence).slice(0, n);
+  return {setId:setObj.id, sentences:cards.map(c=>({word:c.word, text:c.sentence})), index:0, typed:'', checked:false, revealedText:false, results:[], finished:false};
+}
+function renderGameMatch(){
+  const vp = state.viewParams;
+  const round = vp.round;
+  const done = round.matchedKeys.length === round.pairCount;
+  const elapsed = Math.floor(((round.finishedAt||Date.now()) - round.startedAt)/1000);
+  return `<div class="fade-in">
+    ${sectionHead(L('Word Rush','Kelime Yarışı','مسابقه کلمات','Carrera de palabras'), (vp.goal && GOALS_META[vp.goal] ? goalMetaLabel(vp.goal)+' · ' : '') + L('Tap two tiles to match a word with its meaning.','Bir kelimeyi anlamıyla eşleştirmek için iki karoya dokun.','برای جفت‌کردن یک کلمه با معنی‌اش، روی دو کاشی بزن.','Toca dos casillas para emparejar una palabra con su significado.'))}
+    <div class="screen" style="padding-top:0;">
+      <div class="row between" style="align-items:center; margin-bottom:10px;">
+        <span class="pill" style="background:var(--cat-review-soft); color:var(--cat-review);">${L('Time','Süre','زمان','Tiempo')}: ${elapsed}s</span>
+        <span class="pill" style="background:var(--bg-sunken);">${L('Mistakes','Hatalar','اشتباهات','Errores')}: ${round.mistakes}</span>
+      </div>
+      <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:8px;">
+        ${round.tiles.map((t,i)=>{
+          const isMatched = round.matchedKeys.includes(t.key);
+          const isRevealed = round.revealed.includes(i) || isMatched;
+          return `<button class="opt" dir="ltr" data-action="game-match-tap" data-i="${i}" ${isMatched?'disabled':''} style="min-height:64px; margin-bottom:0; padding:8px; text-align:center; display:flex; align-items:center; justify-content:center; font-size:12.5px; font-weight:700; ${isMatched?'background:var(--success-soft); border-color:var(--success); color:var(--success);':(isRevealed?'background:var(--accent-soft); border-color:var(--accent-strong);':'')}">${isRevealed ? esc(t.text) : '?'}</button>`;
+        }).join('')}
+      </div>
+      ${done ? `<div class="card-flat" style="margin-top:16px; text-align:center; background:var(--success-soft); border-color:var(--success);">
+        <div class="eyebrow" style="color:var(--success);">${L('Matched!','Eşleştirdin!','جفت شد!','¡Emparejado!')}</div>
+        <p style="margin-top:6px; font-size:14px;">${L(`Finished in ${elapsed}s with ${round.mistakes} mistake${round.mistakes===1?'':'s'}.`, `${elapsed} saniyede ${round.mistakes} hatayla bitirdin.`, `در ${elapsed} ثانیه با ${round.mistakes} اشتباه تمام کردی.`, `Terminaste en ${elapsed}s con ${round.mistakes} error${round.mistakes===1?'':'es'}.`)}</p>
+        <button class="btn btn-primary" style="margin-top:12px;" data-action="nav" data-view="diag-intro-review">${L('Back to roadmap','Yol haritasına dön','بازگشت به نقشه راه','Volver a la hoja de ruta')}</button>
+      </div>` : ''}
+    </div>
+  </div>`;
+}
+function renderGameDictation(){
+  const vp = state.viewParams;
+  const round = vp.round;
+  if(round.finished){
+    const avgPct = round.results.length ? Math.round(round.results.reduce((a,r)=>a+r.pct,0)/round.results.length) : 0;
+    return `<div class="fade-in">
+      ${sectionHead(L('Listen & Type','Dinle ve Yaz','گوش کن و بنویس','Escucha y escribe'), '')}
+      <div class="screen" style="padding-top:0;">
+        <div class="card-flat" style="text-align:center; background:var(--success-soft); border-color:var(--success);">
+          <div class="eyebrow" style="color:var(--success);">${L('Done!','Bitti!','تمام شد!','¡Listo!')}</div>
+          <p style="margin-top:6px; font-size:14px;">${L(`Average match: ${avgPct}%`,`Ortalama eşleşme: %${avgPct}`,`میانگین تطابق: ${avgPct}%`,`Coincidencia promedio: ${avgPct}%`)}</p>
+          <button class="btn btn-primary" style="margin-top:12px;" data-action="nav" data-view="diag-intro-review">${L('Back to roadmap','Yol haritasına dön','بازگشت به نقشه راه','Volver a la hoja de ruta')}</button>
+        </div>
+      </div>
+    </div>`;
+  }
+  const item = round.sentences[round.index];
+  const isLast = round.index === round.sentences.length - 1;
+  return `<div class="fade-in">
+    ${sectionHead(L('Listen & Type','Dinle ve Yaz','گوش کن و بنویس','Escucha y escribe'), (vp.goal && GOALS_META[vp.goal] ? goalMetaLabel(vp.goal)+' · ' : '') + L('Sentence','Cümle','جمله','Oración')+' '+(round.index+1)+'/'+round.sentences.length)}
+    <div class="screen" style="padding-top:0;">
+      <div class="card-flat" style="text-align:center;">
+        <button class="btn btn-primary" data-action="speak-sentence" data-text="${esc(item.text)}">${ICONS.soundOn} ${L('Play','Çal','پخش','Reproducir')}</button>
+        ${round.revealedText ? `<p style="margin-top:12px; font-size:14.5px;" dir="ltr">${esc(item.text)}</p>` : `<div><button class="btn btn-ghost" style="margin-top:10px;" data-action="game-dictation-reveal">${L("Can't hear it? Show the sentence","Duyamıyor musun? Cümleyi göster","نمی‌شنوی؟ جمله را نشان بده",'¿No lo oyes? Muestra la oración')}</button></div>`}
+      </div>
+      <textarea id="dictation-input" rows="2" ${round.checked?'disabled':''} placeholder="${esc(L('Type what you heard...','Duyduğunu yaz...','چیزی که شنیدی را بنویس...','Escribe lo que escuchaste...'))}" style="width:100%; box-sizing:border-box; margin-top:14px; padding:14px; border-radius:16px; border:1.5px solid var(--border); font-size:15px; font-family:inherit; background:var(--bg-elevated); color:var(--ink);" dir="ltr">${esc(round.typed||'')}</textarea>
+      ${!round.checked
+        ? `<button class="btn btn-primary" style="margin-top:12px;" data-action="game-dictation-check">${L('Check','Kontrol et','بررسی','Revisar')}</button>`
+        : (()=>{ const r = round.results[round.results.length-1]; return `<div class="card-flat" style="margin-top:14px;">
+            <div class="row between"><div class="eyebrow">${L('Match','Eşleşme','تطابق','Coincidencia')}</div><span class="pill" style="background:${r.pct>=70?'var(--success-soft)':'var(--error-soft)'}; color:${r.pct>=70?'var(--success)':'var(--error)'};">${r.pct}%</span></div>
+            <p style="margin-top:8px; font-size:13.5px;" dir="ltr">${esc(item.text)}</p>
+            ${r.missed.length ? `<p style="margin-top:6px; font-size:12.5px; color:var(--ink-faint);">${L('Missed:','Kaçırdığın:','از دست‌رفته:','Faltó:')} ${esc(r.missed.join(', '))}</p>` : ''}
+            <button class="btn btn-primary" style="margin-top:12px;" data-action="game-dictation-next">${isLast ? L('See results','Sonuçları gör','دیدن نتایج','Ver resultados') : L('Next sentence','Sonraki cümle','جمله بعدی','Siguiente oración')}</button>
+          </div>`; })()}
+    </div>
+  </div>`;
+}
+
 /* ============================= RENDER: GRAMMAR GYM ============================= */
 function levelChips(current){
   return `<div class="level-chip-row">${LEVELS.map(lv=>`
@@ -6638,6 +6802,8 @@ const screens = {
   'studio-lab': renderStudioLab,
   'studio-setup': renderStudioSetup,
   'studio-round': renderStudioRound,
+  'game-match': renderGameMatch,
+  'game-dictation': renderGameDictation,
   'coming-soon': renderComingSoon,
   'story-list': renderStoryList,
   'story-detail': ()=>renderStoryDetail(state.viewParams.id),
@@ -7167,6 +7333,70 @@ const HANDLERS = {
     render();
   },
   'studio-mic-toggle'(){ toggleStudioMic(); },
+  // Roadmap 2.0 Phase 3 (ported from the English app): game handlers.
+  'game-match-tap'(el){
+    const vp = state.viewParams;
+    const round = vp.round;
+    if(!round || round.matchedKeys.length === round.pairCount) return;
+    const idx = Number(el.dataset.i);
+    // Resolve a pending (already-shown) mismatched pair before accepting a new tap.
+    if(round.revealed.length===2){
+      const [a,b] = round.revealed;
+      if(round.tiles[a].key !== round.tiles[b].key) round.mistakes++;
+      round.revealed = [];
+    }
+    if(round.matchedKeys.includes(round.tiles[idx].key) || round.revealed.includes(idx)){ save(); render(); return; }
+    round.revealed.push(idx);
+    if(round.revealed.length===2){
+      const [a,b] = round.revealed;
+      if(round.tiles[a].key === round.tiles[b].key){
+        round.matchedKeys.push(round.tiles[a].key);
+        round.revealed = [];
+        if(round.matchedKeys.length === round.pairCount){
+          round.finishedAt = Date.now();
+          markGameComplete(vp.refId);
+        }
+      }
+    }
+    save(); render();
+  },
+  'game-dictation-check'(){
+    const vp = state.viewParams, round = vp.round;
+    if(!round || round.checked) return;
+    const ta = document.getElementById('dictation-input');
+    round.typed = ta ? ta.value : (round.typed||'');
+    round.results.push(scoreDictationAnswer(round.sentences[round.index].text, round.typed));
+    round.checked = true;
+    save(); render();
+  },
+  'game-dictation-next'(){
+    const vp = state.viewParams, round = vp.round;
+    if(!round) return;
+    if(round.index + 1 < round.sentences.length){
+      round.index++; round.typed=''; round.checked=false; round.revealedText=false;
+    } else {
+      round.finished = true;
+      markGameComplete(vp.refId);
+    }
+    save(); render();
+  },
+  'start-game'(el){
+    const setObj = VOCAB_SETS.find(x=>x.id===el.dataset.setId);
+    if(!setObj) return;
+    const params = {refId: el.dataset.refId, goal: el.dataset.goal};
+    if(el.dataset.kind==='match') go('game-match', Object.assign({round: buildMatchRound(setObj)}, params));
+    else go('game-dictation', Object.assign({round: buildDictationRound(setObj)}, params));
+  },
+  'game-dictation-reveal'(){
+    const vp = state.viewParams, round = vp.round;
+    if(!round) return;
+    // Sync whatever's already typed before re-rendering, so revealing the
+    // sentence doesn't wipe an in-progress (uncommitted) answer.
+    const ta = document.getElementById('dictation-input');
+    if(ta) round.typed = ta.value;
+    round.revealedText = true;
+    save(); render();
+  },
   'flip-card'(){ state.viewParams.flipped = !state.viewParams.flipped; render(); },
   'vocab-next'(el){ const i = +el.dataset.i; go('vocab-set', {id: el.dataset.id, cardIndex: i+1, flipped:false, level:state.viewParams.level, cat:state.viewParams.cat, goal:state.viewParams.goal}); },
   'vocab-prev'(el){ const i = +el.dataset.i; go('vocab-set', {id: el.dataset.id, cardIndex: i-1, flipped:false, level:state.viewParams.level, cat:state.viewParams.cat, goal:state.viewParams.goal}); },

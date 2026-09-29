@@ -3964,7 +3964,14 @@ const BADGES = [
   {id:'writer-1', icon:'pen', title:{en:'First Draft', tr:'İlk Taslak', fa:'اولین پیش‌نویس', es:'Primer borrador'}, desc:{en:'Complete your first Lab writing round.', tr:'İlk Lab yazma turunu tamamla.', fa:'اولین دور نوشتاری آزمایشگاه را کامل کن.', es:'Completa tu primera ronda de escritura del Laboratorio.'},
    check:(st)=> (st.progress.writingRoundsDone||0) >= 1},
   {id:'speaker-10', icon:'mic', title:{en:'Chatterbox', tr:'Geveze', fa:'پرحرف', es:'Parlanchín'}, desc:{en:'Complete 10 Lab speaking rounds.', tr:'10 Lab konuşma turunu tamamla.', fa:'۱۰ دور گفتاری آزمایشگاه را کامل کن.', es:'Completa 10 rondas de conversación del Laboratorio.'},
-   check:(st)=> (st.progress.speakingRoundsDone||0) >= 10}
+   check:(st)=> (st.progress.speakingRoundsDone||0) >= 10},
+  // Roadmap 2.0 Phase 4 (ported from the English app): Phase 3 added
+  // completedGames tracking but no badge ever referenced it — closing that
+  // gap here, same threshold pattern as grammar/vocab/stories.
+  {id:'game-1', icon:'bolt', title:{en:'Game On', tr:'Oyun Başladı', fa:'بازی شروع شد', es:'¡A jugar!'}, desc:{en:'Finish your first roadmap game.', tr:'İlk yol haritası oyununu bitir.', fa:'اولین بازی نقشه راهت را تمام کن.', es:'Termina tu primer juego de la hoja de ruta.'},
+   check:(st)=> (st.progress.completedGames||[]).length >= 1},
+  {id:'game-10', icon:'bolt', title:{en:'Arcade Regular', tr:'Oyun Salonu Müdavimi', fa:'مشتری همیشگی سالن بازی', es:'Cliente frecuente del arcade'}, desc:{en:'Finish 10 roadmap games.', tr:'10 yol haritası oyununu bitir.', fa:'۱۰ بازی نقشه راه را تمام کن.', es:'Termina 10 juegos de la hoja de ruta.'},
+   check:(st)=> (st.progress.completedGames||[]).length >= 10}
 ];
 function badgeColor(id){
   if(id.indexOf('grammar')===0) return {bg:'var(--cat-gram)'};
@@ -3975,7 +3982,32 @@ function badgeColor(id){
   if(id==='reviewer') return {bg:'var(--clay-sage)'};
   if(id.indexOf('writer')===0) return {bg:'var(--clay-orange)'};
   if(id.indexOf('speaker')===0) return {bg:'var(--clay-sky)'};
+  if(id.indexOf('game')===0) return {bg:'var(--cat-review)'};
   return {bg:'var(--cat-review)'};
+}
+/* Roadmap 2.0 Phase 4 (ported from the English app): the single badge-unlock
+   celebration, reused everywhere a completion can earn one — previously only
+   the grammar/vocab/story quiz-results screen showed this. Studio Lab writing/
+   speaking rounds and the Phase 3 games already called checkBadges() on
+   completion, but never surfaced what was earned — badges were unlocking
+   silently. Every completion surface now pulls-and-clears the same
+   newlyEarnedBadges queue through this. */
+function renderBadgeUnlockCard(justEarned){
+  if(!justEarned || !justEarned.length) return '';
+  return `<div class="card badge-unlock-shine" style="margin-top:16px; text-align:start; background:var(--success-soft); border-color:var(--success-soft);">
+    <div class="eyebrow" style="color:var(--success);">${L('Ta-da — new badge unlocked!','İşte bu — yeni rozet açıldı!','بفرمایید — نشان جدید باز شد!','¡Tachán — nueva insignia desbloqueada!')}</div>
+    ${justEarned.map(id=>{ const b = BADGES.find(x=>x.id===id); if(!b) return ''; return `<div class="row" style="gap:10px; margin-top:8px; align-items:center;"><span style="color:var(--success);">${ICONS[b.icon]}</span><div><div style="font-weight:700; font-size:14px;">${esc(L(b.title.en,b.title.tr,b.title.fa,b.title.es))}</div><div style="font-size:12px; color:var(--ink-soft);">${esc(L(b.desc.en,b.desc.tr,b.desc.fa,b.desc.es))}</div></div></div>`; }).join('')}
+  </div>`;
+}
+/* Pulls and clears the pending-badge queue — call exactly once per screen that's
+   currently displaying a "you just finished something" state (quiz results,
+   a passed practice round, a finished game), never on every render of a
+   still-in-progress screen, or an earned badge could be silently dropped
+   before anything shows it. */
+function pullJustEarnedBadges(){
+  const justEarned = newlyEarnedBadges.slice();
+  newlyEarnedBadges = [];
+  return justEarned;
 }
 
 /* ============================= STATE ============================= */
@@ -4506,16 +4538,32 @@ function buildRoadmap(profile){
    .occ suffix (set by buildRoadmap's dedup pass) disambiguates the rare case
    where the exact same content is deliberately repeated twice in one roadmap. */
 function roadmapNodeId(item){ return item.type+':'+item.refId+(item.occ?('#'+item.occ):''); }
-/* Every other node type is a manual "mark done" toggle. Games are the one
-   deliberate exception (Roadmap 2.0 Phase 3, ported from the English app): a
-   game has an unambiguous, unfakeable "finished" event (the board is fully
-   matched / all dictation sentences answered), so its node is auto-marked done
-   from state.progress.completedGames the moment that event fires — see
-   markGameComplete(). Manual toggling is disabled for game nodes in the UI (see
-   pinFn in renderRoadmapCard) so there's no confusing no-op checkbox. */
+/* Roadmap 2.0 Phase 4 (ported from the English app): grammar/vocab/slang/story
+   quiz completion was already tracked by stable content id (completedTraps/
+   completedVocabSets/completedStories — see the quiz-next handler) and already
+   fired markActivity()/checkBadges() on completion, same as games. What was
+   still disconnected was specifically the ROADMAP NODE's own checkmark: Phase
+   1/2 deliberately kept it a manual toggle everywhere except games, to avoid a
+   behavior change before this exact extension existed. Now these four types
+   are auto-derived too, the same way games are — but as an OR with the manual
+   toggle (never a pure replacement), so a user who already tapped a node's
+   checkbox never sees it "un-check" itself. session/writing/speaking stay
+   manual-only: neither has a reliable per-instance "done" event to auto-detect,
+   unlike a quiz result. */
+function roadmapNodeAutoDone(item){
+  switch(item.type){
+    case 'game': return !!(state.progress.completedGames && state.progress.completedGames.includes(item.refId));
+    case 'grammar': return state.progress.completedTraps.includes(item.refId);
+    case 'vocab': case 'slang': return state.progress.completedVocabSets.includes(item.refId);
+    case 'story': return state.progress.completedStories.includes(item.refId);
+    default: return null; // writing/speaking: no reliable auto-signal, manual only
+  }
+}
 function isRoadmapNodeDone(item){
-  if(item.type==='game') return !!(state.progress.completedGames && state.progress.completedGames.includes(item.refId));
-  return !!(state.progress.roadmapChecked && state.progress.roadmapChecked[roadmapNodeId(item)]);
+  const auto = roadmapNodeAutoDone(item);
+  if(item.type==='game') return !!auto; // pure auto — see pinFn, no manual toggle offered for games
+  const manual = !!(state.progress.roadmapChecked && state.progress.roadmapChecked[roadmapNodeId(item)]);
+  return auto === true || manual;
 }
 /* One-time migration for saves written before this id scheme existed: those keyed
    roadmapChecked by array index (e.g. {"0":true}), which silently "unchecks" a
@@ -4559,6 +4607,24 @@ function regenerateRoadmap(){
   state.roadmap = buildRoadmap(state.profile);
   state.progress.roadmapChecked = {};
   return state.roadmap;
+}
+/* Roadmap 2.0 (ported from the English app): advancing levels is a deliberate
+   tap, not silent/automatic — the roadmap card's button goes gray/disabled
+   until everything is done, then orange with "Go to the next level" (see
+   renderRoadmapCard), and only the 'advance-roadmap-level' handler calls this.
+   Safe/cheap to call anytime: no-ops unless the roadmap is genuinely 100% done. */
+function checkRoadmapStageAdvance(){
+  if(!state.profile || !state.profile.completedDiagnostic) return;
+  const roadmap = currentRoadmap();
+  if(!roadmap.length || !roadmap.every(it=>isRoadmapNodeDone(it))) return;
+  if(state.profile.levelStage === 2){
+    const li = LEVELS.indexOf(state.profile.level);
+    if(li < LEVELS.length-1) state.profile.level = LEVELS[li+1];
+    state.profile.levelStage = 1;
+  } else {
+    state.profile.levelStage = 2;
+  }
+  regenerateRoadmap();
 }
 /* Migration for users who completed the diagnostic before state.roadmap existed:
    freezes their current live-computed roadmap once, so they land on the same
@@ -5121,16 +5187,32 @@ function renderRoadmapCard(p){
     const glowRing = `color-mix(in srgb, ${color} 22%, transparent)`;
     const glowStrong = `color-mix(in srgb, ${color} 60%, transparent)`;
     const doneGlow = `color-mix(in srgb, ${color} 55%, transparent)`;
-    // Roadmap 2.0 Phase 3 (ported from the English app): game nodes auto-complete
-    // on a real "finished" event (markGameComplete) — manual toggling is
-    // meaningless for them (isRoadmapNodeDone ignores roadmapChecked for
-    // type:'game'), so the pin launches the game directly instead of offering a
-    // checkbox that would silently do nothing.
-    const action = isGame ? 'start-game' : 'toggle-roadmap-item';
-    const dataAttrs = isGame
-      ? 'data-set-id="'+(item.setId||'')+'" data-kind="'+(item.gameKind||'')+'" data-ref-id="'+item.refId+'" data-goal="'+(item.goal||'')+'"'
-      : 'data-id="'+roadmapNodeId(item)+'"';
-    return `<button class="rm2-seam-ic ${isCurrent?'roadmap-pin-current':''}" data-action="${action}" ${dataAttrs} aria-label="${isGame ? L('Play','Oyna','بازی کن','Jugar') : L('Mark done','Tamamlandı say','علامت‌زدن به‌عنوان انجام‌شده','Marcar como hecho')}" style="width:60px; height:60px; border-radius:50%; background:${checked?`linear-gradient(150deg, ${color}, ${color})`:'var(--bg-elevated)'}; border:${isCurrent?'5px':'4px'} solid ${color}; display:flex; align-items:center; justify-content:center; box-shadow:${isCurrent?`0 0 0 4px ${glowRing}, 0 8px 18px -4px ${glowStrong}`:(checked?`0 6px 14px -3px ${doneGlow}, inset 0 2px 3px rgba(255,255,255,.35)`:'0 5px 12px -3px rgba(0,0,0,.25)')}; cursor:pointer; padding:0;">
+    // Game nodes auto-complete on a real "finished" event (markGameComplete) —
+    // manual toggling is meaningless for them (isRoadmapNodeDone ignores
+    // roadmapChecked for type:'game'), so the pin launches the game directly
+    // instead of offering a checkbox that would silently do nothing.
+    // Roadmap 2.0 Phase 4 (ported from the English app): once something is
+    // really done (via roadmapNodeAutoDone — a quiz/story finished, or a game),
+    // its pin isn't a checkbox to fiddle with either — a tap that silently did
+    // nothing (or worse, couldn't actually "un-complete" a finished quiz) is the
+    // same confusing no-op problem games already avoided. Only offer the manual
+    // toggle for types/states with no real completion signal to fall back on.
+    const autoDone = roadmapNodeAutoDone(item) === true;
+    let action, dataAttrs, ariaLabel;
+    if(isGame){
+      action = 'start-game';
+      dataAttrs = 'data-set-id="'+(item.setId||'')+'" data-kind="'+(item.gameKind||'')+'" data-ref-id="'+item.refId+'" data-goal="'+(item.goal||'')+'"';
+      ariaLabel = L('Play','Oyna','بازی کن','Jugar');
+    } else if(autoDone){
+      action = null;
+      dataAttrs = '';
+      ariaLabel = L('Completed','Tamamlandı','تکمیل‌شده','Completado');
+    } else {
+      action = 'toggle-roadmap-item';
+      dataAttrs = 'data-id="'+roadmapNodeId(item)+'"';
+      ariaLabel = L('Mark done','Tamamlandı say','علامت‌زدن به‌عنوان انجام‌شده','Marcar como hecho');
+    }
+    return `<button class="rm2-seam-ic ${isCurrent?'roadmap-pin-current':''}" ${action?('data-action="'+action+'"'):'disabled'} ${dataAttrs} aria-label="${ariaLabel}" style="width:60px; height:60px; border-radius:50%; background:${checked?`linear-gradient(150deg, ${color}, ${color})`:'var(--bg-elevated)'}; border:${isCurrent?'5px':'4px'} solid ${color}; display:flex; align-items:center; justify-content:center; box-shadow:${isCurrent?`0 0 0 4px ${glowRing}, 0 8px 18px -4px ${glowStrong}`:(checked?`0 6px 14px -3px ${doneGlow}, inset 0 2px 3px rgba(255,255,255,.35)`:'0 5px 12px -3px rgba(0,0,0,.25)')}; cursor:${action?'pointer':'default'}; padding:0;">
       <span style="width:25px; height:25px; display:flex; align-items:center; justify-content:center; color:${checked?'#fff':color};">${checked?ICONS.check:m.ic}</span>
       <span style="position:absolute; top:-6px; right:-6px; width:19px; height:19px; border-radius:50%; background:var(--ink); color:var(--bg-elevated); font-size:9.5px; font-weight:800; display:flex; align-items:center; justify-content:center; box-shadow:0 2px 4px rgba(0,0,0,.25);">${idx+1}</span>
     </button>`;
@@ -6056,6 +6138,7 @@ function renderStudioRound(){
         </div>
       </div>`;
       })() : ''}
+      ${(result && result.passed) ? renderBadgeUnlockCard(pullJustEarnedBadges()) : ''}
 
       <div class="row" style="gap:8px; margin-top:16px;">
         <button class="btn btn-ghost" style="flex:1;" data-action="studio-new-round">${L('New round','Yeni tur','تمرین جدید','Nueva ronda')}</button>
@@ -6126,7 +6209,7 @@ function renderGameMatch(){
         <div class="eyebrow" style="color:var(--success);">${L('Matched!','Eşleştirdin!','جفت شد!','¡Emparejado!')}</div>
         <p style="margin-top:6px; font-size:14px;">${L(`Finished in ${elapsed}s with ${round.mistakes} mistake${round.mistakes===1?'':'s'}.`, `${elapsed} saniyede ${round.mistakes} hatayla bitirdin.`, `در ${elapsed} ثانیه با ${round.mistakes} اشتباه تمام کردی.`, `Terminaste en ${elapsed}s con ${round.mistakes} error${round.mistakes===1?'':'es'}.`)}</p>
         <button class="btn btn-primary" style="margin-top:12px;" data-action="nav" data-view="diag-intro-review">${L('Back to roadmap','Yol haritasına dön','بازگشت به نقشه راه','Volver a la hoja de ruta')}</button>
-      </div>` : ''}
+      </div>${renderBadgeUnlockCard(pullJustEarnedBadges())}` : ''}
     </div>
   </div>`;
 }
@@ -6143,6 +6226,7 @@ function renderGameDictation(){
           <p style="margin-top:6px; font-size:14px;">${L(`Average match: ${avgPct}%`,`Ortalama eşleşme: %${avgPct}`,`میانگین تطابق: ${avgPct}%`,`Coincidencia promedio: ${avgPct}%`)}</p>
           <button class="btn btn-primary" style="margin-top:12px;" data-action="nav" data-view="diag-intro-review">${L('Back to roadmap','Yol haritasına dön','بازگشت به نقشه راه','Volver a la hoja de ruta')}</button>
         </div>
+        ${renderBadgeUnlockCard(pullJustEarnedBadges())}
       </div>
     </div>`;
   }
@@ -6743,8 +6827,7 @@ function renderQuizResults(){
   const CAT = {grammar:'gram', vocab:'voc', story:'story', review:'review'}[q.kind];
   const p = state.profile;
   const kindLabel = {grammar:L('Grammar Gym round','Dilbilgisi Salonu turu','تمرین باشگاه گرامر','ronda del Gimnasio de Gramática'), vocab:L('Vocab quiz','Kelime testi','آزمون کلمات','cuestionario de vocabulario'), story:L('Story comprehension check','Hikaye anlama kontrolü','آزمون درک داستان','comprobación de comprensión de la historia'), review:L('Review round','Tekrar turu','تمرین مرور','ronda de repaso')}[q.kind];
-  const justEarned = newlyEarnedBadges.slice();
-  newlyEarnedBadges = [];
+  const justEarned = pullJustEarnedBadges();
   return `<div class="fade-in">
     <div class="screen" style="padding-top:32px; text-align:center;">
       <div class="result-ring" style="background:var(--cat-${CAT}-soft); color:var(--cat-${CAT});">
@@ -6753,11 +6836,7 @@ function renderQuizResults(){
       </div>
       <h2 class="display" style="font-size:19px; margin-top:6px;">${q.correct} / ${q.questions.length} ${L('correct','doğru','درست','correctas')}</h2>
       <p style="color:var(--ink-soft); font-size:13.5px; margin-top:6px;">${resultLead(pct)} ${kindLabel.toLowerCase()}.</p>
-      ${justEarned.length ? `
-      <div class="card badge-unlock-shine" style="margin-top:16px; text-align:start; background:var(--success-soft); border-color:var(--success-soft);">
-        <div class="eyebrow" style="color:var(--success);">${L('Ta-da — new badge unlocked!','İşte bu — yeni rozet açıldı!','بفرمایید — نشان جدید باز شد!','¡Tachán — nueva insignia desbloqueada!')}</div>
-        ${justEarned.map(id=>{ const b = BADGES.find(x=>x.id===id); return `<div class="row" style="gap:10px; margin-top:8px; align-items:center;"><span style="color:var(--success);">${ICONS[b.icon]}</span><div><div style="font-weight:700; font-size:14px;">${esc(L(b.title.en,b.title.tr,b.title.fa,b.title.es))}</div><div style="font-size:12px; color:var(--ink-soft);">${esc(L(b.desc.en,b.desc.tr,b.desc.fa,b.desc.es))}</div></div></div>`; }).join('')}
-      </div>` : ''}
+      ${renderBadgeUnlockCard(justEarned)}
 
       ${q.kind==='review' ? renderReviewBreakdown(q) : ''}
 
@@ -7229,20 +7308,7 @@ const HANDLERS = {
     save(); render();
   },
   'advance-roadmap-level'(){
-    const roadmap = currentRoadmap();
-    const allDone = roadmap.length && roadmap.every(it=>isRoadmapNodeDone(it));
-    if(allDone){
-      if(state.profile.levelStage === 2){
-        const li = LEVELS.indexOf(state.profile.level);
-        if(li < LEVELS.length-1) state.profile.level = LEVELS[li+1];
-        state.profile.levelStage = 1;
-      } else {
-        state.profile.levelStage = 2;
-      }
-      // New level/stage means new content to pull from — this is a genuine
-      // regeneration point, not a live recompute.
-      regenerateRoadmap();
-    }
+    checkRoadmapStageAdvance();
     save(); render();
   },
   'toggle-daily-task'(el){
@@ -7329,7 +7395,11 @@ const HANDLERS = {
       state.progress[key] = (state.progress[key]||0) + 1;
     }
     save();
-    if(result.passed) checkBadges();
+    // Roadmap 2.0 Phase 4 (ported from the English app): this only used to call
+    // checkBadges() directly, skipping markDailyVisit()/sessionsExplored — a
+    // passed Lab round didn't count toward the streak the way every other node
+    // type's completion already did. markActivity() covers checkBadges() too.
+    if(result.passed) markActivity();
     render();
   },
   'studio-mic-toggle'(){ toggleStudioMic(); },

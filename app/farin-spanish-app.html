@@ -4876,7 +4876,6 @@ function maybeCelebrate(){
     target = vp.result; kind = vp.mode;
   }
   if(!target || target._celebrated) return;
-  if(kind==='game' && target.xpGain) detail = '+'+target.xpGain+' XP';
   target._celebrated = true; save();
   setTimeout(()=>{ if(state.view===v) showCelebration(kind, detail, low); }, 900);
 }
@@ -5449,20 +5448,9 @@ function renderRoadmapCard(p){
     const isGame = item.type === 'game';
     const color = 'var(--cat-'+m.c+')';
     const subtitle = (item.goal && GOALS_META[item.goal]) ? goalMetaLabel(item.goal)+' · '+m.label : m.label;
-    // Gamification (Trello 4bDl1BS3, ported from the English app): +10 XP
-    // static chip for regular completable node types, shown inline next to
-    // the existing subtitle — static, no glow/animation (game cards get
-    // their own richer treatment below instead of this chip). Unlike the
-    // English app, this file's non-current cards are a pale tint with dark
-    // text (not a solid color with white text), so the chip's own colors
-    // adapt the same way subtitleColor/titleColor already do below —
-    // otherwise a white-on-translucent-white chip would be illegible here.
-    const REGULAR_XP_TYPES = {grammar:1, vocab:1, slang:1, story:1, writing:1, speaking:1};
-    const xpChipBg = isCurrent ? 'rgba(255,255,255,.22)' : `color-mix(in srgb, ${color} 18%, transparent)`;
-    const xpChipColor = isCurrent ? '#fff' : color;
-    const xpChipHtml = (!isGame && REGULAR_XP_TYPES[item.type])
-      ? ` <span class="pill" style="background:${xpChipBg}; color:${xpChipColor};">+10 XP</span>`
-      : '';
+    // Gamification v2 (Journey Journal, approved 2026-09-30, same as English): card
+    // faces carry no gamification labels at all — the v1 "+10 XP" chip was removed.
+    // XP still accumulates silently in state.progress.xp.
     let studyOpenTag, studyCloseTag;
     const studyStyle = 'display:block; width:100%; text-align:start; padding:0; background:none; border:none; color:inherit; font:inherit; cursor:pointer;';
     if(item.type==='grammar'){
@@ -5497,22 +5485,18 @@ function renderRoadmapCard(p){
     const cls = 'rm2-node' + (isCurrent ? ' rm2-node-current' : '') + (checked ? ' rm2-node-done' : '');
     const upcomingBg = `color-mix(in srgb, ${color} 32%, var(--bg-elevated))`;
     const currentBg = `radial-gradient(circle at 16% 8%, rgba(255,255,255,.4), transparent 55%), linear-gradient(150deg, ${color}, color-mix(in srgb, ${color} 78%, #000 18%))`;
-    // Gamification (Trello 4bDl1BS3, ported from the English app): a game
-    // card always gets the "current node" full-strength gradient treatment,
-    // regardless of roadmap position OR completion — games stay tappable for
-    // replay, so they should never flatten to the done-gray/pale-upcoming
-    // look the other node types use.
-    const bg = isGame ? currentBg : (checked ? 'var(--bg-sunken)' : (isCurrent ? currentBg : upcomingBg));
-    const borderW = (isGame || isCurrent) ? '2.5px' : '1.5px';
-    const borderColor = (isGame || isCurrent) ? 'rgba(255,255,255,.55)' : (checked ? 'var(--border-soft)' : `color-mix(in srgb, ${color} 45%, transparent)`);
-    const shadow = isGame
-      ? `0 3px 10px -4px rgba(20,51,46,.16), var(--glow-game)`
-      : (isCurrent
-          ? `0 0 0 3px color-mix(in srgb, ${color} 28%, transparent), 0 18px 34px -12px color-mix(in srgb, ${color} 55%, transparent)`
-          : '0 3px 10px -4px rgba(20,51,46,.16)');
-    const subtitleColor = (isGame || isCurrent) ? 'rgba(255,255,255,.92)' : color;
-    const titleColor = (isGame || isCurrent) ? '#fff' : 'var(--ink)';
-    const chevColor = (isGame || isCurrent) ? 'rgba(255,255,255,.92)' : color;
+    // Gamification v2 (2026-09-30, same as English): game cards follow the same
+    // rules as every card — no forced full gradient / gold --glow-game ring when
+    // not current. Game identity comes from the GAME subtitle label.
+    const bg = checked ? 'var(--bg-sunken)' : (isCurrent ? currentBg : upcomingBg);
+    const borderW = isCurrent ? '2.5px' : '1.5px';
+    const borderColor = isCurrent ? 'rgba(255,255,255,.55)' : (checked ? 'var(--border-soft)' : `color-mix(in srgb, ${color} 45%, transparent)`);
+    const shadow = isCurrent
+      ? `0 0 0 3px color-mix(in srgb, ${color} 28%, transparent), 0 18px 34px -12px color-mix(in srgb, ${color} 55%, transparent)`
+      : '0 3px 10px -4px rgba(20,51,46,.16)';
+    const subtitleColor = isCurrent ? 'rgba(255,255,255,.92)' : color;
+    const titleColor = isCurrent ? '#fff' : 'var(--ink)';
+    const chevColor = isCurrent ? 'rgba(255,255,255,.92)' : color;
     // NB: single quotes around 'Segoe UI' here are deliberate — this string lands
     // inside a double-quoted HTML style="" attribute, and a literal double quote
     // would break out of that attribute early and silently drop the rest of the
@@ -5523,18 +5507,6 @@ function renderRoadmapCard(p){
         <span class="sparkle" style="top:22px; right:22px; left:auto; width:6px; height:6px; animation-delay:.5s;"></span>
         <span class="sparkle" style="bottom:16px; right:44px; left:auto; width:5px; height:5px; animation-delay:1s;"></span>
         <span class="sparkle" style="bottom:22px; left:38px; width:4px; height:4px; animation-delay:1.4s;"></span>` : '';
-    // Gamification (4bDl1BS3): promoted "⚡" game marker — was an inline
-    // subtitle prefix, now a standalone white pill in the card's top-right
-    // corner, reusing .badge-recommended's pill styling (base .pill shape/
-    // padding, recolored gold-on-white here). Stays visible after completion
-    // since games remain tappable for replay. This file has no icon-image
-    // system on roadmap cards yet (unlike the English app's TYPE_META.img) —
-    // icon-controller.png is added here specifically for the game card's own
-    // decorative icon, copied over from the English app's asset folder,
-    // scoped only to isGame so it doesn't imply the broader icon system.
-    const gameCornerPill = isGame
-      ? `<span class="pill" style="position:absolute; top:16px; inset-inline-end:16px; background:#fff; color:var(--cat-review); font-weight:900;">${ICONS.bolt} ${esc(m.label)}</span>`
-      : '';
     // 2026-09-30, Farin: "these metal icons you used I don't like, just use studio
     // and the book icon, for speaking also use the studio icon. Others can be
     // empty" — the metal controller is gone from the game card; the clay book /
@@ -5544,26 +5516,20 @@ function renderRoadmapCard(p){
     const cardIcon = m.img
       ? `<img src="${m.img}" alt="" class="rm2-icon-float" style="position:absolute; inset-inline-end:${iconBig?'-6px':'10px'}; bottom:${iconBig?'-4px':'12px'}; width:${iconBig?140:104}px; height:${iconBig?140:104}px; object-fit:contain; pointer-events:none; filter:drop-shadow(0 6px 12px rgba(0,0,0,.28)); ${checked?'opacity:.5;':''}">`
       : '';
-    // Streak mirror chip (4bDl1BS3) — only the single current node gets this,
-    // mirroring .streak-chip's own markup/style exactly, next to the
-    // existing "You're here" pill.
-    const streakMirrorChip = (isCurrent && !checked)
-      ? `<span class="streak-chip" style="margin-top:14px; margin-inline-start:8px;"><span style="color:var(--accent)">${ICONS.flame}</span><span class="num">${state.progress.streak}</span></span>`
-      : '';
+    // Gamification v2: the v1 "⚡ GAME" corner pill and streak mirror chip are gone
+    // from card faces (the streak stays in the top bar).
     return `<div class="${cls}" style="border-radius:26px; padding:34px 20px 30px; background:${bg}; border:${borderW} solid ${borderColor}; box-shadow:${shadow};">
       ${sparkles}
       ${cardIcon}
-      ${gameCornerPill}
       ${studyOpenTag}
         <div class="row between" style="align-items:flex-start; gap:10px;">
           <div style="min-width:0;">
-            <div style="font-size:11px; font-weight:900; color:${subtitleColor}; text-transform:uppercase; letter-spacing:.05em;">${esc(subtitle)}${xpChipHtml}</div>
+            <div style="font-size:11px; font-weight:900; color:${subtitleColor}; text-transform:uppercase; letter-spacing:.05em;">${esc(subtitle)}</div>
             <div style="${titleFont} margin-top:6px; color:${titleColor}; line-height:1.28; padding-inline-end:${m.img?'100px':'0'}; ${checked?'text-decoration:line-through; opacity:.62;':''}">${esc(item.title)}</div>
-            ${isGame ? `<div style="font-size:11px; font-weight:900; color:${subtitleColor}; text-transform:uppercase; letter-spacing:.05em; margin-top:6px;">${L('⚡ 2–3 min · +20 XP','⚡ 2-3 dk · +20 XP','⚡ ۲ تا ۳ دقیقه · +۲۰ XP','⚡ 2-3 min · +20 XP')}</div>` : ''}
           </div>
           <span style="flex:0 0 auto; margin-top:3px; color:${chevColor}; opacity:${checked?1:.65};">${checked?ICONS.check:ICONS.chev}</span>
         </div>
-        ${isCurrent && !checked ? `<div class="pill" style="margin-top:14px; background:#fff; color:${color}; font-weight:900; text-transform:uppercase; letter-spacing:.03em; box-shadow:0 4px 10px -3px rgba(0,0,0,.3);">${L("You're here","Buradasın","اینجایی",'Estás aquí')}</div>${streakMirrorChip}` : ''}
+        ${isCurrent && !checked ? `<div class="pill" style="margin-top:14px; background:#fff; color:${color}; font-weight:900; text-transform:uppercase; letter-spacing:.03em; box-shadow:0 4px 10px -3px rgba(0,0,0,.3);">${L("You're here","Buradasın","اینجایی",'Estás aquí')}</div>` : ''}
       ${studyCloseTag}
     </div>`;
   }
@@ -6503,17 +6469,13 @@ function renderGameMatch(){
   const round = vp.round;
   const done = round.matchedKeys.length === round.pairCount;
   const elapsed = Math.floor(((round.finishedAt||Date.now()) - round.startedAt)/1000);
-  // Gamification (4bDl1BS3): live XP-earned counter in the existing Time/
-  // Mistakes pill row — a preview of the flat base reward (first completion
-  // vs. practice replay), scaled by pairs matched so far.
-  const liveXp = round.pairCount ? Math.round((round.matchedKeys.length/round.pairCount) * gameBaseXp(vp.refId)) : 0;
+  // Gamification v2 (2026-09-30): no live XP display in games (XP counts silently).
   return `<div class="fade-in">
     ${sectionHead(L('Word Rush','Kelime Yarışı','مسابقه کلمات','Carrera de palabras'), (vp.goal && GOALS_META[vp.goal] ? goalMetaLabel(vp.goal)+' · ' : '') + L('Tap two tiles to match a word with its meaning.','Bir kelimeyi anlamıyla eşleştirmek için iki karoya dokun.','برای جفت‌کردن یک کلمه با معنی‌اش، روی دو کاشی بزن.','Toca dos casillas para emparejar una palabra con su significado.'))}
     <div class="screen" style="padding-top:0;">
       <div class="row between" style="align-items:center; margin-bottom:10px; flex-wrap:wrap;">
         <span class="pill" style="background:var(--cat-review-soft); color:var(--cat-review);">${L('Time','Süre','زمان','Tiempo')}: ${elapsed}s</span>
         <span class="pill" style="background:var(--bg-sunken);">${L('Mistakes','Hatalar','اشتباهات','Errores')}: ${round.mistakes}</span>
-        <span class="pill" style="background:var(--success-soft); color:var(--success);">+${liveXp} XP</span>
       </div>
       <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:8px;">
         ${round.tiles.map((t,i)=>{
@@ -6525,7 +6487,6 @@ function renderGameMatch(){
       ${done ? `<div class="card-flat badge-unlock-shine" style="margin-top:16px; text-align:center; background:var(--success-soft); border-color:var(--success);">
         <div class="eyebrow" style="color:var(--success);">${L('Matched!','Eşleştirdin!','جفت شد!','¡Emparejado!')}</div>
         <p style="margin-top:6px; font-size:14px;">${L(`Finished in ${elapsed}s with ${round.mistakes} mistake${round.mistakes===1?'':'s'}.`, `${elapsed} saniyede ${round.mistakes} hatayla bitirdin.`, `در ${elapsed} ثانیه با ${round.mistakes} اشتباه تمام کردی.`, `Terminaste en ${elapsed}s con ${round.mistakes} error${round.mistakes===1?'':'es'}.`)}</p>
-        <p class="num" style="margin-top:4px; font-size:15px; color:var(--success);">+${round.xpGain||0} XP</p>
         <button class="btn btn-primary" style="margin-top:12px;" data-action="back-to-roadmap">${L('Back to roadmap','Yol haritasına dön','بازگشت به نقشه راه','Volver a la hoja de ruta')}</button>
       </div>${renderBadgeUnlockCard(pullJustEarnedBadges())}` : ''}
     </div>
@@ -6542,7 +6503,6 @@ function renderGameDictation(){
         <div class="card-flat badge-unlock-shine" style="text-align:center; background:var(--success-soft); border-color:var(--success);">
           <div class="eyebrow" style="color:var(--success);">${L('Done!','Bitti!','تمام شد!','¡Listo!')}</div>
           <p style="margin-top:6px; font-size:14px;">${L(`Average match: ${avgPct}%`,`Ortalama eşleşme: %${avgPct}`,`میانگین تطابق: ${avgPct}%`,`Coincidencia promedio: ${avgPct}%`)}</p>
-          <p class="num" style="margin-top:4px; font-size:15px; color:var(--success);">+${round.xpGain||0} XP</p>
           <button class="btn btn-primary" style="margin-top:12px;" data-action="back-to-roadmap">${L('Back to roadmap','Yol haritasına dön','بازگشت به نقشه راه','Volver a la hoja de ruta')}</button>
         </div>
         ${renderBadgeUnlockCard(pullJustEarnedBadges())}
@@ -6551,12 +6511,9 @@ function renderGameDictation(){
   }
   const item = round.sentences[round.index];
   const isLast = round.index === round.sentences.length - 1;
-  // Gamification (4bDl1BS3): live XP-earned counter folded into the existing
-  // progress header (the "Sentence i/N" subtitle), scaled by sentences
-  // checked so far.
-  const liveXp = round.sentences.length ? Math.round((round.results.length/round.sentences.length) * gameBaseXp(vp.refId)) : 0;
+  // Gamification v2 (2026-09-30): no live XP display in games (XP counts silently).
   return `<div class="fade-in">
-    ${sectionHead(L('Listen & Type','Dinle ve Yaz','گوش کن و بنویس','Escucha y escribe'), (vp.goal && GOALS_META[vp.goal] ? goalMetaLabel(vp.goal)+' · ' : '') + L('Sentence','Cümle','جمله','Oración')+' '+(round.index+1)+'/'+round.sentences.length+' · +'+liveXp+' XP')}
+    ${sectionHead(L('Listen & Type','Dinle ve Yaz','گوش کن و بنویس','Escucha y escribe'), (vp.goal && GOALS_META[vp.goal] ? goalMetaLabel(vp.goal)+' · ' : '') + L('Sentence','Cümle','جمله','Oración')+' '+(round.index+1)+'/'+round.sentences.length)}
     <div class="screen" style="padding-top:0;">
       <div class="card-flat" style="text-align:center;">
         <button class="btn btn-primary" data-action="speak-sentence" data-text="${esc(item.text)}">${ICONS.soundOn} ${L('Play','Çal','پخش','Reproducir')}</button>
@@ -6606,7 +6563,6 @@ function renderGameTrap(){
         <div class="card-flat badge-unlock-shine" style="text-align:center; background:var(--success-soft); border-color:var(--success);">
           <div class="eyebrow" style="color:var(--success);">${flawless ? L('Flawless!','Kusursuz!','بی‌نقص!','¡Perfecto!') : L('Done!','Bitti!','تمام شد!','¡Listo!')}</div>
           <p style="margin-top:6px; font-size:14px;">${L(`Score: ${round.score} · ${accuracy}% accuracy`,`Skor: ${round.score} · %${accuracy} doğruluk`,`امتیاز: ${round.score} · ${accuracy}% دقت`,`Puntuación: ${round.score} · ${accuracy}% de precisión`)}</p>
-          <p class="num" style="margin-top:4px; font-size:15px; color:var(--success);">+${round.xpGain||0} XP</p>
           <button class="btn btn-primary" style="margin-top:12px;" data-action="back-to-roadmap">${L('Back to roadmap','Yol haritasına dön','بازگشت به نقشه راه','Volver a la hoja de ruta')}</button>
         </div>
         ${renderBadgeUnlockCard(pullJustEarnedBadges())}
@@ -6615,14 +6571,12 @@ function renderGameTrap(){
   }
   const q = round.questions[round.index];
   const remaining = Math.max((round.deadline - Date.now())/1000, 0);
-  const liveXp = round.questions.length ? Math.round(((round.index + (round.answered?1:0))/round.questions.length) * gameBaseXp(vp.refId)) : 0;
   return `<div class="fade-in">
     ${sectionHead(L('Trap Dash','Tuzak Kaçışı','فرار از تله‌ها','Escape de trampas'), L('Fix 8 sentences before the timer runs out.','Zaman dolmadan 8 cümleyi düzelt.','قبل از تمام‌شدن زمان، ۸ جمله را درست کن.','Corrige 8 oraciones antes de que se acabe el tiempo.'))}
     <div class="screen" style="padding-top:0;">
       <div class="row between" style="align-items:center; margin-bottom:10px; flex-wrap:wrap;">
         <span class="pill" style="background:var(--cat-review-soft); color:var(--cat-review);">${L('Question','Soru','سوال','Pregunta')} ${round.index+1}/${round.questions.length}</span>
         ${round.streak>=3 ? `<span class="pill" style="background:var(--accent-soft); color:var(--accent-strong);">${ICONS.flame} ${round.streak}</span>` : ''}
-        <span class="pill" style="background:var(--success-soft); color:var(--success);">+${liveXp} XP</span>
         ${round.answered && round.lastPoints>0 ? `<span class="trap-point-pop" style="color:var(--success);">+${round.lastPoints}</span>` : ''}
       </div>
       <div class="row" style="justify-content:center; margin-bottom:14px;">${trapTimerRingSVG(remaining, round.timeLimit, 'var(--cat-review)')}</div>

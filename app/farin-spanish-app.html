@@ -125,6 +125,43 @@
   .sparkle-2{bottom:-4px; left:-9px; width:5px; height:5px; animation-delay:.6s;}
   .sparkle-3{top:1px; right:13px; width:5px; height:5px; animation-delay:1.2s;}
   @keyframes sparkle-twinkle{0%,100%{opacity:0; transform:scale(0) rotate(0deg);} 50%{opacity:1; transform:scale(1) rotate(25deg);}}
+  /* Splash / FE logo moment (2026-09-30, ported with the English app's
+     "no square background, slow breathe + float + sparkles" pass): a brief
+     non-blocking overlay over the already-rendered first screen. The logo is
+     logo-fe-cutout.png (icon-512.png with its white square made transparent). */
+  .splash-overlay{position:fixed; inset:0; z-index:999; display:flex; align-items:center; justify-content:center; background:var(--diorama-bg), var(--bg); opacity:1; transition:opacity .5s ease; pointer-events:none;}
+  .splash-overlay.hide{opacity:0;}
+  .splash-logo-wrap{position:relative; width:200px; height:200px; display:flex; align-items:center; justify-content:center; animation:soft-float 3.8s ease-in-out infinite;}
+  .splash-logo-wrap img{width:170px; height:170px; object-fit:contain; animation:splash-breathe 3.2s ease-in-out infinite; filter:drop-shadow(0 12px 18px rgba(124,104,214,.22));}
+  .splash-logo-wrap .sparkle{animation-duration:2.6s;}
+  @keyframes splash-breathe{0%,100%{transform:scale(.95);} 50%{transform:scale(1.06);}}
+  @keyframes soft-float{0%,100%{transform:translateY(0);} 50%{transform:translateY(-10px);}}
+  /* Roadmap card icons: bigger, slow float (2026-09-30, Farin). */
+  .rm2-icon-float{animation:rm2-icon-float 4.4s ease-in-out infinite;}
+  @keyframes rm2-icon-float{0%,100%{transform:translateY(0) rotate(-3deg);} 50%{transform:translateY(-9px) rotate(3deg);}}
+  /* Character tip bubble — replaces the greeting box on home: 30s on, 60s off.
+     Lives on <body>, outside #app; see scheduleCharTips(). */
+  .char-tip{position:fixed; left:50%; bottom:92px; transform:translateX(-50%); width:100%; max-width:480px; height:0; z-index:30; pointer-events:none;}
+  .char-tip-inner{position:absolute; bottom:0; inset-inline-start:10px; inset-inline-end:10px; display:flex; align-items:flex-end; pointer-events:none; animation:char-tip-in .6s cubic-bezier(.34,1.56,.64,1) both;}
+  .char-tip-float{display:flex; align-items:flex-end; gap:4px; pointer-events:auto; cursor:pointer; animation:soft-float 4s ease-in-out infinite;}
+  .char-tip.leaving .char-tip-inner{animation:char-tip-out .45s ease-in both;}
+  .char-tip-char{flex:0 0 auto; width:78px; height:78px; object-fit:contain; filter:drop-shadow(0 8px 12px rgba(0,0,0,.25));}
+  @keyframes char-tip-in{from{opacity:0; transform:translateY(24px) scale(.7);} to{opacity:1; transform:translateY(0) scale(1);}}
+  @keyframes char-tip-out{from{opacity:1; transform:scale(1);} to{opacity:0; transform:translateY(16px) scale(.8);}}
+  .cute-bubble{position:relative; background:#fff; color:#3b2f63; border-radius:24px; padding:12px 16px; font-family:'Fredoka',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; font-weight:600; font-size:14.5px; line-height:1.35; box-shadow:0 12px 26px -10px rgba(60,40,120,.45), 0 0 0 3px color-mix(in srgb, var(--accent) 35%, transparent);}
+  .char-tip .cute-bubble{margin-bottom:52px; max-width:250px;}
+  .char-tip .cute-bubble::after{content:''; position:absolute; bottom:-8px; inset-inline-start:16px; width:18px; height:18px; background:#fff; transform:rotate(45deg); border-radius:0 0 5px 0;}
+  .cute-bubble .sparkle{color:var(--clay-orange-deep);}
+  /* Practice-finished celebration: character + applause bubble, then back to
+     the roadmap after 10s. See showCelebration(). */
+  .celebrate-overlay{position:fixed; inset:0; z-index:60; display:flex; align-items:center; justify-content:center; padding:16px; background:rgba(28,20,58,.62); backdrop-filter:blur(4px); -webkit-backdrop-filter:blur(4px); animation:fadeIn .45s ease both; cursor:pointer;}
+  .celebrate-stack{position:relative; display:flex; flex-direction:column; align-items:center; max-width:340px; text-align:center; animation:soft-float 4.2s ease-in-out infinite;}
+  .celebrate-stack .cute-bubble{font-size:19px; padding:18px 22px; margin-bottom:18px; animation:char-tip-in .6s cubic-bezier(.34,1.56,.64,1) both;}
+  .celebrate-stack .cute-bubble small{display:block; font-size:13px; font-weight:600; color:#7a6fa0; margin-top:6px;}
+  .celebrate-stack .cute-bubble::after{content:''; position:absolute; bottom:-10px; left:50%; width:22px; height:22px; background:#fff; transform:translateX(-50%) rotate(45deg); border-radius:0 0 6px 0;}
+  .celebrate-char{width:180px; height:180px; object-fit:contain; filter:drop-shadow(0 16px 22px rgba(0,0,0,.35)); animation:char-tip-in .7s .15s cubic-bezier(.34,1.56,.64,1) both;}
+  .celebrate-stack > .sparkle{color:#ffd166;}
+  .celebrate-hint{margin-top:16px; color:rgba(255,255,255,.85); font-size:12.5px; font-weight:700;}
 
   .eyebrow{font-size:12px; font-weight:700; letter-spacing:.09em; text-transform:uppercase; color:var(--ink-faint);}
   .display{font-family:'Fredoka',-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; font-weight:700; letter-spacing:-.02em;}
@@ -4724,6 +4761,126 @@ function mergeRoadmapForGoalChange(){
   state.roadmap = kept.concat(newNodes).map((it,idx)=>Object.assign({}, it, {n:idx+1}));
 }
 
+/* ============================= SPLASH + CHARACTER BUBBLES ============================= */
+function showSplash(){
+  try{
+    const wrap = document.createElement('div');
+    wrap.className = 'splash-overlay';
+    wrap.innerHTML = `<div class="splash-logo-wrap">
+      <span class="sparkle" style="top:4px; left:6px; color:var(--clay-orange-deep); animation-delay:0s;"></span>
+      <span class="sparkle" style="bottom:10px; right:2px; left:auto; width:6px; height:6px; color:var(--clay-lavender-deep); animation-delay:.5s;"></span>
+      <span class="sparkle" style="top:22px; right:-6px; left:auto; width:5px; height:5px; color:var(--clay-orange-deep); animation-delay:1s;"></span>
+      <span class="sparkle" style="bottom:-4px; left:22px; width:5px; height:5px; color:var(--clay-lavender-deep); animation-delay:1.4s;"></span>
+      <span class="sparkle" style="top:40%; left:-10px; width:6px; height:6px; color:#ffc93c; animation-delay:.3s;"></span>
+      <span class="sparkle" style="top:-8px; right:34%; left:auto; width:5px; height:5px; color:#ffc93c; animation-delay:1.8s;"></span>
+      <img src="logo-fe-cutout.png" alt="Farin Spanish">
+    </div>`;
+    document.body.appendChild(wrap);
+    setTimeout(()=>{ wrap.classList.add('hide'); }, 2300);
+    setTimeout(()=>{ wrap.remove(); }, 2850);
+  }catch(e){}
+}
+function learnerCharKey(){
+  const p = state.profile || {};
+  return (p.motivationTag && ARCHETYPES[p.motivationTag]) ? p.motivationTag : 'everyday';
+}
+// Home tip bubble — 30s visible, then 60s of nothing, then the next sentence.
+const CHAR_TIP_SHOW_MS = 30000, CHAR_TIP_GAP_MS = 60000;
+let charTipTimer = null, charTipRot = Math.floor(Math.random()*10);
+function hideCharTip(instant){
+  const el = document.getElementById('char-tip');
+  if(!el) return;
+  if(instant){ el.remove(); return; }
+  el.classList.add('leaving');
+  setTimeout(()=>el.remove(), 450);
+}
+function showCharTip(){
+  if(state.view !== 'dashboard' || !state.profile || !state.profile.completedDiagnostic) return false;
+  if(document.getElementById('char-tip') || document.querySelector('.celebrate-overlay')) return false;
+  const text = pickGreeting(state.profile, dueItems().length, charTipRot++);
+  const el = document.createElement('div');
+  el.className = 'char-tip'; el.id = 'char-tip';
+  el.innerHTML = `<div class="char-tip-inner"><div class="char-tip-float">
+    <img class="char-tip-char" src="char-${learnerCharKey()}.png" alt="">
+    <div class="cute-bubble"><span class="sparkle" style="top:-3px; right:12px; left:auto; width:6px; height:6px;"></span><span class="sparkle" style="bottom:6px; right:-4px; left:auto; width:5px; height:5px; animation-delay:.8s;"></span>${text}</div>
+  </div></div>`;
+  el.addEventListener('click', ()=>hideCharTip());
+  document.body.appendChild(el);
+  return true;
+}
+function scheduleCharTips(delay){
+  clearTimeout(charTipTimer);
+  charTipTimer = setTimeout(()=>{
+    if(showCharTip()){
+      charTipTimer = setTimeout(()=>{ hideCharTip(); scheduleCharTips(CHAR_TIP_GAP_MS); }, CHAR_TIP_SHOW_MS);
+    } else {
+      scheduleCharTips(5000); // not on home right now — check again shortly
+    }
+  }, delay);
+}
+const CELEBRATE_MS = 10000;
+let celebrateTimer = null;
+function celebrationText(kind, low){
+  const name = '<bdi>'+esc((state.profile && state.profile.name) || '')+'</bdi>';
+  const M = {
+    grammar:[L('Grammar champion, {name}!','Dilbilgisi şampiyonu, {name}!','قهرمان گرامر، {name}!','¡Campeón de gramática, {name}!'), L('You beat that grammar trap, {name}!','O dilbilgisi tuzağını yendin, {name}!','از اون تله گرامری رد شدی، {name}!','¡Superaste esa trampa gramatical, {name}!')],
+    vocab:[L('Word power unlocked, {name}!','Kelime gücü açıldı, {name}!','قدرت کلمات باز شد، {name}!','¡Poder de palabras desbloqueado, {name}!'), L('Those words are yours now, {name}!','Bu kelimeler artık senin, {name}!','این کلمه‌ها حالا مال تو هستند، {name}!','¡Esas palabras ya son tuyas, {name}!')],
+    story:[L('What a reader, {name}! Story done!','Ne okuyucu, {name}! Hikaye bitti!','چه خواننده‌ای، {name}! داستان تمام شد!','¡Qué gran lector, {name}! ¡Historia terminada!')],
+    review:[L('Memory refreshed, {name}!','Hafıza tazelendi, {name}!','حافظه تازه شد، {name}!','¡Memoria renovada, {name}!')],
+    game:[L('Game won, {name}! You rock!','Oyunu kazandın, {name}! Harikasın!','بازی را بردی، {name}! فوق‌العاده‌ای!','¡Juego ganado, {name}! ¡Eres genial!')],
+    writing:[L('Beautiful writing, {name}!','Harika yazdın, {name}!','عالی نوشتی، {name}!','¡Qué bien escribes, {name}!')],
+    speaking:[L('You sounded great, {name}!','Harika konuştun, {name}!','عالی صحبت کردی، {name}!','¡Sonaste genial, {name}!')]
+  };
+  const LOW = [L('Nice effort, {name}! Every round makes you stronger.','Güzel çaba, {name}! Her tur seni güçlendiriyor.','تلاش خوبی بود، {name}! هر دور قوی‌ترت می‌کند.','¡Buen esfuerzo, {name}! Cada ronda te hace más fuerte.'), L('You finished it, {name}! Proud of you.','Bitirdin, {name}! Seninle gurur duyuyorum.','تمامش کردی، {name}! بهت افتخار می‌کنم.','¡Lo terminaste, {name}! Estoy orgulloso de ti.')];
+  const list = low ? LOW : (M[kind] || [L('Well done, {name}!','Aferin, {name}!','آفرین، {name}!','¡Bien hecho, {name}!')]);
+  return list[Math.floor(Math.random()*list.length)].replace('{name}', name);
+}
+function showCelebration(kind, detail, low){
+  if(document.querySelector('.celebrate-overlay')) return;
+  hideCharTip(true);
+  const el = document.createElement('div');
+  el.className = 'celebrate-overlay';
+  el.innerHTML = `<div class="celebrate-stack">
+    <span class="sparkle" style="top:4px; left:4px; width:9px; height:9px;"></span>
+    <span class="sparkle" style="top:40%; right:-6px; left:auto; width:8px; height:8px; animation-delay:.5s;"></span>
+    <span class="sparkle" style="bottom:30px; left:12px; width:7px; height:7px; animation-delay:1s;"></span>
+    <span class="sparkle" style="bottom:70px; right:24px; left:auto; width:6px; height:6px; animation-delay:1.5s;"></span>
+    <div class="cute-bubble">🎉 ${celebrationText(kind, low)}${detail ? `<small>${esc(detail)}</small>` : ''}</div>
+    <img class="celebrate-char" src="char-${learnerCharKey()}.png" alt="">
+    <div class="celebrate-hint">${L('Back to your roadmap in a moment…','Birazdan yol haritana dönüyorsun…','تا چند لحظه دیگر به نقشه راهت برمی‌گردی…','En un momento vuelves a tu hoja de ruta…')}</div>
+  </div>`;
+  el.addEventListener('click', backToRoadmap);
+  document.body.appendChild(el);
+  clearTimeout(celebrateTimer);
+  celebrateTimer = setTimeout(backToRoadmap, CELEBRATE_MS);
+}
+function backToRoadmap(){
+  clearTimeout(celebrateTimer); celebrateTimer = null;
+  document.querySelectorAll('.celebrate-overlay').forEach(n=>n.remove());
+  if(state.view !== 'dashboard') go('dashboard');
+  navHistory.length = 0;
+}
+// After every render(): fire the celebration once per finished round (flag is
+// stored on the round/quiz object itself, so re-renders/reloads don't replay it).
+function maybeCelebrate(){
+  const v = state.view, vp = state.viewParams || {};
+  let target = null, kind = null, detail = '', low = false;
+  if(v==='quiz' && state.quiz && state.quiz.index >= state.quiz.questions.length){
+    target = state.quiz; kind = state.quiz.kind; detail = state.quiz.correct+' / '+state.quiz.questions.length+' '+L('correct','doğru','درست','correctas');
+    low = state.quiz.correct/state.quiz.questions.length < .5;
+  } else if(v==='game-match' && vp.round && vp.round.matchedKeys && vp.round.matchedKeys.length === vp.round.pairCount){
+    target = vp.round; kind = 'game';
+  } else if((v==='game-dictation' || v==='game-trap') && vp.round && vp.round.finished){
+    target = vp.round; kind = 'game';
+  } else if(v==='studio-round' && vp.checked && vp.result && vp.result.passed){
+    target = vp.result; kind = vp.mode;
+  }
+  if(!target || target._celebrated) return;
+  if(kind==='game' && target.xpGain) detail = '+'+target.xpGain+' XP';
+  target._celebrated = true; save();
+  setTimeout(()=>{ if(state.view===v) showCelebration(kind, detail, low); }, 900);
+}
+
 /* ============================= RENDER: SHELL ============================= */
 function render(){
   const root = document.getElementById('app');
@@ -4754,6 +4911,8 @@ function render(){
     stopStudioMic();
   }
   bindEvents(root);
+  if(state.view !== 'dashboard') hideCharTip(true);
+  maybeCelebrate();
 }
 function langToggle(){
   return `<button class="lang-btn" data-action="toggle-lang">${LANG.toUpperCase()}</button>`;
@@ -5144,7 +5303,7 @@ const GREETINGS = [
   {theme:'story', en:'Which story world are we diving into today, {name}?', tr:'Bugün hangi hikaye dünyasına dalıyoruz, {name}?', fa:'امروز به کدام دنیای داستان شیرجه می‌زنیم، {name}؟', es:'¿A qué mundo de historias nos vamos a sumergir hoy, {name}?'},
   {theme:'review', en:'Time to jog that memory, {name}!', tr:'Hafızanı tazeleme zamanı, {name}!', fa:'وقت تازه‌کردن حافظه‌ست، {name}!', es:'¡Hora de refrescar esa memoria, {name}!'}
 ];
-function pickGreeting(p, dueCount){
+function pickGreeting(p, dueCount, rot){
   const priorityTheme = {grammar:'grammar', vocab:'vocab', listening:'speaking', speaking:'speaking'}[p.priorityArea];
   const eligible = GREETINGS.filter(g=>{
     if(g.theme==='general' || g.theme==='story') return true;
@@ -5152,7 +5311,7 @@ function pickGreeting(p, dueCount){
     return g.theme===priorityTheme;
   });
   const bucket = Math.floor(Date.now()/(10*60*1000));
-  const g = eligible[bucket % eligible.length];
+  const g = eligible[(rot!=null ? rot : bucket) % eligible.length];
   return L(g.en,g.tr,g.fa,g.es).replace('{name}', '<bdi>'+esc(p.name)+'</bdi>');
 }
 
@@ -5178,7 +5337,6 @@ function renderDashboard(){
   return `<div class="fade-in">
     ${topbar(true, true)}
     <div class="screen">
-      <div class="greeting-banner"><span class="sparkle sparkle-1"></span><span class="sparkle sparkle-2"></span><span class="sparkle sparkle-3"></span><span>${pickGreeting(p, dueCount)}</span></div>
       <button class="hero-card" data-action="nav" data-view="profile" style="background:var(--cat-${heroCat});">
         <div class="row between" style="align-items:flex-start; gap:12px;">
           <div style="min-width:0;">
@@ -5217,11 +5375,11 @@ function renderRoadmapCard(p){
   const roadmap = currentRoadmap();
   const TYPE_META = {
     grammar:{ic:ICONS.dumbbell, c:'gram', label:L('Grammar','Dilbilgisi','گرامر','Gramática')},
-    vocab:{ic:ICONS.cards, c:'voc', label:L('Vocabulary','Kelime','واژگان','Vocabulario')},
+    vocab:{ic:ICONS.cards, img:'icon-story.png', c:'voc', label:L('Vocabulary','Kelime','واژگان','Vocabulario')},
     slang:{ic:ICONS.cards, c:'diag', label:L('Slang','Argo','اصطلاحات','Argot')},
-    story:{ic:ICONS.book, c:'story', label:L('Story','Hikaye','داستان','Historia')},
-    writing:{ic:ICONS.pen, c:'gram', label:L('Writing practice','Yazma pratiği','تمرین نوشتن','Práctica de escritura')},
-    speaking:{ic:ICONS.mic, c:'lis', label:L('Speaking practice','Konuşma pratiği','تمرین صحبت‌کردن','Práctica de conversación')},
+    story:{ic:ICONS.book, img:'icon-story.png', c:'story', label:L('Story','Hikaye','داستان','Historia')},
+    writing:{ic:ICONS.pen, img:'studio-icon-cutout.png', c:'gram', label:L('Writing practice','Yazma pratiği','تمرین نوشتن','Práctica de escritura')},
+    speaking:{ic:ICONS.mic, img:'studio-icon-cutout.png', c:'lis', label:L('Speaking practice','Konuşma pratiği','تمرین صحبت‌کردن','Práctica de conversación')},
     // Roadmap 2.0 Phase 3 (ported from the English app): bolt icon + gold
     // "review" color are used nowhere else on the roadmap, and the "GAME" label
     // prefix reads clearly regardless of color perception.
@@ -5274,9 +5432,14 @@ function renderRoadmapCard(p){
       dataAttrs = 'data-id="'+roadmapNodeId(item)+'"';
       ariaLabel = L('Mark done','Tamamlandı say','علامت‌زدن به‌عنوان انجام‌شده','Marcar como hecho');
     }
-    return `<button class="rm2-seam-ic ${isCurrent?'roadmap-pin-current':''}" ${action?('data-action="'+action+'"'):'disabled'} ${dataAttrs} aria-label="${ariaLabel}" style="width:60px; height:60px; border-radius:50%; background:${checked?`linear-gradient(150deg, ${color}, ${color})`:'var(--bg-elevated)'}; border:${isCurrent?'5px':'4px'} solid ${color}; display:flex; align-items:center; justify-content:center; box-shadow:${isCurrent?`0 0 0 4px ${glowRing}, 0 8px 18px -4px ${glowStrong}`:(checked?`0 6px 14px -3px ${doneGlow}, inset 0 2px 3px rgba(255,255,255,.35)`:'0 5px 12px -3px rgba(0,0,0,.25)')}; cursor:${action?'pointer':'default'}; padding:0;">
-      <span style="width:25px; height:25px; display:flex; align-items:center; justify-content:center; color:${checked?'#fff':color};">${checked?ICONS.check:m.ic}</span>
-      <span style="position:absolute; top:-6px; right:-6px; width:19px; height:19px; border-radius:50%; background:var(--ink); color:var(--bg-elevated); font-size:9.5px; font-weight:800; display:flex; align-items:center; justify-content:center; box-shadow:0 2px 4px rgba(0,0,0,.25);">${idx+1}</span>
+    // 2026-09-30, Farin: "the circles above each card nothing in them, just each
+    // session that is done the next circle is more complete with color, so at the
+    // end of the roadmap we have a full circle". A done circle is filled (conic)
+    // to the share of the roadmap completed up to it; the last one is a full disc.
+    const doneUpTo = roadmap.slice(0, idx+1).filter(it=>isRoadmapNodeDone(it)).length;
+    const fillPct = checked ? Math.round(doneUpTo/roadmap.length*100) : 0;
+    const circleBg = fillPct>=100 ? color : (fillPct>0 ? `conic-gradient(${color} 0 ${fillPct}%, var(--bg-elevated) ${fillPct}% 100%)` : 'var(--bg-elevated)');
+    return `<button class="rm2-seam-ic ${isCurrent?'roadmap-pin-current':''}" ${action?('data-action="'+action+'"'):'disabled'} ${dataAttrs} aria-label="${ariaLabel}" style="width:60px; height:60px; border-radius:50%; background:${circleBg}; border:${isCurrent?'5px':'4px'} solid ${color}; display:flex; align-items:center; justify-content:center; box-shadow:${isCurrent?`0 0 0 4px ${glowRing}, 0 8px 18px -4px ${glowStrong}`:(checked?`0 6px 14px -3px ${doneGlow}, inset 0 2px 3px rgba(255,255,255,.35)`:'0 5px 12px -3px rgba(0,0,0,.25)')}; cursor:${action?'pointer':'default'}; padding:0;">
     </button>`;
   }
 
@@ -5372,8 +5535,14 @@ function renderRoadmapCard(p){
     const gameCornerPill = isGame
       ? `<span class="pill" style="position:absolute; top:16px; inset-inline-end:16px; background:#fff; color:var(--cat-review); font-weight:900;">${ICONS.bolt} ${esc(m.label)}</span>`
       : '';
-    const gameCardIcon = isGame
-      ? `<img src="icon-controller.png" alt="" class="game-icon-pulse" style="position:absolute; inset-inline-end:10px; bottom:10px; width:60px; height:60px; object-fit:contain; pointer-events:none; filter:drop-shadow(0 6px 12px rgba(0,0,0,.28));">`
+    // 2026-09-30, Farin: "these metal icons you used I don't like, just use studio
+    // and the book icon, for speaking also use the studio icon. Others can be
+    // empty" — the metal controller is gone from the game card; the clay book /
+    // studio art (TYPE_META.img) are shown bigger with a slow float. The studio
+    // art sits in a lot of transparent canvas, so it gets a larger box.
+    const iconBig = m.img === 'studio-icon-cutout.png';
+    const cardIcon = m.img
+      ? `<img src="${m.img}" alt="" class="rm2-icon-float" style="position:absolute; inset-inline-end:${iconBig?'-6px':'10px'}; bottom:${iconBig?'-4px':'12px'}; width:${iconBig?140:104}px; height:${iconBig?140:104}px; object-fit:contain; pointer-events:none; filter:drop-shadow(0 6px 12px rgba(0,0,0,.28)); ${checked?'opacity:.5;':''}">`
       : '';
     // Streak mirror chip (4bDl1BS3) — only the single current node gets this,
     // mirroring .streak-chip's own markup/style exactly, next to the
@@ -5383,13 +5552,13 @@ function renderRoadmapCard(p){
       : '';
     return `<div class="${cls}" style="border-radius:26px; padding:34px 20px 30px; background:${bg}; border:${borderW} solid ${borderColor}; box-shadow:${shadow};">
       ${sparkles}
-      ${gameCardIcon}
+      ${cardIcon}
       ${gameCornerPill}
       ${studyOpenTag}
         <div class="row between" style="align-items:flex-start; gap:10px;">
           <div style="min-width:0;">
             <div style="font-size:11px; font-weight:900; color:${subtitleColor}; text-transform:uppercase; letter-spacing:.05em;">${esc(subtitle)}${xpChipHtml}</div>
-            <div style="${titleFont} margin-top:6px; color:${titleColor}; line-height:1.28; padding-inline-end:${isGame?'64px':'0'}; ${checked?'text-decoration:line-through; opacity:.62;':''}">${esc(item.title)}</div>
+            <div style="${titleFont} margin-top:6px; color:${titleColor}; line-height:1.28; padding-inline-end:${m.img?'100px':'0'}; ${checked?'text-decoration:line-through; opacity:.62;':''}">${esc(item.title)}</div>
             ${isGame ? `<div style="font-size:11px; font-weight:900; color:${subtitleColor}; text-transform:uppercase; letter-spacing:.05em; margin-top:6px;">${L('⚡ 2–3 min · +20 XP','⚡ 2-3 dk · +20 XP','⚡ ۲ تا ۳ دقیقه · +۲۰ XP','⚡ 2-3 min · +20 XP')}</div>` : ''}
           </div>
           <span style="flex:0 0 auto; margin-top:3px; color:${chevColor}; opacity:${checked?1:.65};">${checked?ICONS.check:ICONS.chev}</span>
@@ -6357,7 +6526,7 @@ function renderGameMatch(){
         <div class="eyebrow" style="color:var(--success);">${L('Matched!','Eşleştirdin!','جفت شد!','¡Emparejado!')}</div>
         <p style="margin-top:6px; font-size:14px;">${L(`Finished in ${elapsed}s with ${round.mistakes} mistake${round.mistakes===1?'':'s'}.`, `${elapsed} saniyede ${round.mistakes} hatayla bitirdin.`, `در ${elapsed} ثانیه با ${round.mistakes} اشتباه تمام کردی.`, `Terminaste en ${elapsed}s con ${round.mistakes} error${round.mistakes===1?'':'es'}.`)}</p>
         <p class="num" style="margin-top:4px; font-size:15px; color:var(--success);">+${round.xpGain||0} XP</p>
-        <button class="btn btn-primary" style="margin-top:12px;" data-action="nav" data-view="diag-intro-review">${L('Back to roadmap','Yol haritasına dön','بازگشت به نقشه راه','Volver a la hoja de ruta')}</button>
+        <button class="btn btn-primary" style="margin-top:12px;" data-action="back-to-roadmap">${L('Back to roadmap','Yol haritasına dön','بازگشت به نقشه راه','Volver a la hoja de ruta')}</button>
       </div>${renderBadgeUnlockCard(pullJustEarnedBadges())}` : ''}
     </div>
   </div>`;
@@ -6374,7 +6543,7 @@ function renderGameDictation(){
           <div class="eyebrow" style="color:var(--success);">${L('Done!','Bitti!','تمام شد!','¡Listo!')}</div>
           <p style="margin-top:6px; font-size:14px;">${L(`Average match: ${avgPct}%`,`Ortalama eşleşme: %${avgPct}`,`میانگین تطابق: ${avgPct}%`,`Coincidencia promedio: ${avgPct}%`)}</p>
           <p class="num" style="margin-top:4px; font-size:15px; color:var(--success);">+${round.xpGain||0} XP</p>
-          <button class="btn btn-primary" style="margin-top:12px;" data-action="nav" data-view="diag-intro-review">${L('Back to roadmap','Yol haritasına dön','بازگشت به نقشه راه','Volver a la hoja de ruta')}</button>
+          <button class="btn btn-primary" style="margin-top:12px;" data-action="back-to-roadmap">${L('Back to roadmap','Yol haritasına dön','بازگشت به نقشه راه','Volver a la hoja de ruta')}</button>
         </div>
         ${renderBadgeUnlockCard(pullJustEarnedBadges())}
       </div>
@@ -6438,7 +6607,7 @@ function renderGameTrap(){
           <div class="eyebrow" style="color:var(--success);">${flawless ? L('Flawless!','Kusursuz!','بی‌نقص!','¡Perfecto!') : L('Done!','Bitti!','تمام شد!','¡Listo!')}</div>
           <p style="margin-top:6px; font-size:14px;">${L(`Score: ${round.score} · ${accuracy}% accuracy`,`Skor: ${round.score} · %${accuracy} doğruluk`,`امتیاز: ${round.score} · ${accuracy}% دقت`,`Puntuación: ${round.score} · ${accuracy}% de precisión`)}</p>
           <p class="num" style="margin-top:4px; font-size:15px; color:var(--success);">+${round.xpGain||0} XP</p>
-          <button class="btn btn-primary" style="margin-top:12px;" data-action="nav" data-view="diag-intro-review">${L('Back to roadmap','Yol haritasına dön','بازگشت به نقشه راه','Volver a la hoja de ruta')}</button>
+          <button class="btn btn-primary" style="margin-top:12px;" data-action="back-to-roadmap">${L('Back to roadmap','Yol haritasına dön','بازگشت به نقشه راه','Volver a la hoja de ruta')}</button>
         </div>
         ${renderBadgeUnlockCard(pullJustEarnedBadges())}
       </div>
@@ -7131,8 +7300,7 @@ function renderQuizResults(){
       </div>
 
       <div class="stack" style="margin-top:18px;">
-        <button class="btn btn-ghost" data-action="quiz-back-to-list">${L('Back to list','Listeye dön','برگشت به لیست','Volver a la lista')}</button>
-        <button class="btn btn-ghost" data-action="nav" data-view="dashboard">${L('Go to dashboard','Panele git','رفتن به داشبورد','Ir al panel')}</button>
+        <button class="btn btn-primary" data-action="back-to-roadmap">${L('Back to roadmap','Yol haritasına dön','بازگشت به نقشه راه','Volver a la hoja de ruta')}</button>
       </div>
     </div>
   </div>`;
@@ -7876,7 +8044,11 @@ const HANDLERS = {
     }
     save(); render();
   },
-  'quiz-back-to-list'(){ const q = state.quiz; go(q.backView, q.backParams || {}); },
+  // Was go(q.backView) — landed on the old grammar/vocab list instead of the
+  // roadmap (2026-09-30 bug report). Every finished practice now returns to the
+  // roadmap; old name kept in case a stale render still carries it.
+  'quiz-back-to-list'(){ backToRoadmap(); },
+  'back-to-roadmap'(){ backToRoadmap(); },
   'copy-phone'(el){
     const original = el.textContent;
     copyText(displayPhone()).then(()=>{
@@ -8571,6 +8743,8 @@ if(location.hash === '#admin'){
   migrateRoadmapChecked();
   if(state.profile.completedDiagnostic && markDailyVisit()){ save(); }
   render();
+  showSplash();
+  scheduleCharTips(6000);
   if(state.view === 'student-panel' && studentPanelData && studentPanelData.code && typeof firebase !== 'undefined'){
     firebase.firestore().collection('studentPanelsEs').doc(studentPanelData.code).get().then(doc=>{
       if(doc.exists){

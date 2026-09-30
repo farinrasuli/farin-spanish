@@ -28,6 +28,7 @@
     --error:#ff4444; --error-soft:#ffe1df;
     --shadow:0 1px 2px rgba(20,51,46,.08), 0 8px 24px -12px rgba(20,51,46,.22);
     --glow-badge:0 0 0 2px rgba(46,204,113,.55), 0 0 30px 4px rgba(46,204,113,.55);
+    --glow-game:0 0 0 2px rgba(255,209,102,.6), 0 0 28px 6px rgba(255,209,102,.5);
     --radius:28px;
     --clay-orange:#FFA53D; --clay-orange-deep:#E8790A;
     --clay-coral:#FF6F5E; --clay-coral-deep:#E44736;
@@ -56,6 +57,7 @@
       --error:#ff6b6b; --error-soft:#3d2420;
       --shadow:0 1px 2px rgba(0,0,0,.3), 0 8px 24px -12px rgba(0,0,0,.5);
       --glow-badge:0 0 0 2px rgba(74,222,128,.5), 0 0 30px 4px rgba(74,222,128,.5);
+      --glow-game:0 0 0 2px rgba(255,216,61,.55), 0 0 28px 6px rgba(255,216,61,.5);
       --clay-shadow-soft:inset 0 1.5px 2px rgba(255,255,255,.12), inset 0 -8px 14px -10px rgba(0,0,0,.35), 0 10px 22px -15px rgba(0,0,0,.5);
       --clay-inset:inset 0 3px 6px -2px rgba(0,0,0,.4), inset 0 -1px 1px rgba(255,255,255,.08);
       --diorama-bg:radial-gradient(circle at 18% -8%, rgba(255,166,72,.07), transparent 38%), radial-gradient(circle at 102% 12%, rgba(124,147,255,.07), transparent 42%), radial-gradient(circle at 12% 96%, rgba(143,174,133,.06), transparent 40%);
@@ -152,6 +154,13 @@
   .badge-unlock-shine::after{content:''; position:absolute; top:-60%; left:-60%; width:35%; height:220%; background:linear-gradient(120deg, transparent, rgba(255,255,255,.8), transparent); transform:rotate(22deg); animation:badge-shine-sweep 2.2s ease-in-out infinite; pointer-events:none;}
   @keyframes badge-pulse{0%,100%{transform:scale(1);} 50%{transform:scale(1.02);}}
   @keyframes badge-shine-sweep{0%{left:-60%;} 55%{left:130%;} 100%{left:130%;}}
+  /* Gamification (Trello 4bDl1BS3, ported from the English app): small,
+     contained pulse on the game node's own icon art — reuses @badge-pulse
+     rather than a new keyframe, deliberately NOT applied to the whole card. */
+  .game-icon-pulse{animation:badge-pulse 1.6s ease-in-out infinite;}
+  /* Trap Dash in-round "+2"/"+3" floating point popup. */
+  @keyframes trap-float-up{0%{opacity:0; transform:translateY(4px) scale(.85);} 20%{opacity:1; transform:translateY(0) scale(1);} 75%{opacity:1;} 100%{opacity:0; transform:translateY(-14px) scale(1);}}
+  .trap-point-pop{display:inline-flex; font-weight:900; animation:trap-float-up .9s ease-out both;}
   .card-name{background:radial-gradient(circle at 88% -14%, rgba(255,255,255,.6), transparent 55%), linear-gradient(135deg, var(--cat-diag-soft) 0%, var(--bg-elevated) 145%); border-color:var(--cat-diag-soft);}
   .greeting-banner{position:relative; display:flex; align-items:center; justify-content:center; text-align:center; background:var(--accent-soft); color:var(--accent-strong); border-radius:var(--radius); padding:15px 16px; font-weight:800; font-size:17px; margin-bottom:14px;}
   .greeting-banner .sparkle-1{top:6px; right:10%;}
@@ -3971,7 +3980,13 @@ const BADGES = [
   {id:'game-1', icon:'bolt', title:{en:'Game On', tr:'Oyun Başladı', fa:'بازی شروع شد', es:'¡A jugar!'}, desc:{en:'Finish your first roadmap game.', tr:'İlk yol haritası oyununu bitir.', fa:'اولین بازی نقشه راهت را تمام کن.', es:'Termina tu primer juego de la hoja de ruta.'},
    check:(st)=> (st.progress.completedGames||[]).length >= 1},
   {id:'game-10', icon:'bolt', title:{en:'Arcade Regular', tr:'Oyun Salonu Müdavimi', fa:'مشتری همیشگی سالن بازی', es:'Cliente frecuente del arcade'}, desc:{en:'Finish 10 roadmap games.', tr:'10 yol haritası oyununu bitir.', fa:'۱۰ بازی نقشه راه را تمام کن.', es:'Termina 10 juegos de la hoja de ruta.'},
-   check:(st)=> (st.progress.completedGames||[]).length >= 10}
+   check:(st)=> (st.progress.completedGames||[]).length >= 10},
+  // Gamification (Trello 4bDl1BS3, ported from the English app): any game
+  // kind counts, as long as it was a perfect round (zero mistakes / 100% avg
+  // match / 8-for-8) — see scoreGameCompletion() which increments
+  // perfectGameRounds.
+  {id:'flawless-5', icon:'bolt', title:{en:'Flawless Five', tr:'Kusursuz Beşli', fa:'پنج بی‌نقص', es:'Cinco perfectos'}, desc:{en:'Finish 5 game rounds with a perfect score.', tr:'5 oyun turunu kusursuz bitir.', fa:'۵ دور بازی را بی‌نقص تمام کن.', es:'Termina 5 rondas de juego con puntuación perfecta.'},
+   check:(st)=> (st.progress.perfectGameRounds||0) >= 5}
 ];
 function badgeColor(id){
   if(id.indexOf('grammar')===0) return {bg:'var(--cat-gram)'};
@@ -4016,7 +4031,7 @@ function freshState(){
   return {
     view:'diagnostic-intro', viewParams:{}, lang:'tr',
     profile:{name:'', motivationTag:null, goals:[], archetype:null, level:null, levelStage:1, learnerType:null, priorityArea:null, completedDiagnostic:false, dashboardIntroShown:false, wantsContact:false, contactPhone:''},
-    progress:{sessionsExplored:0, streak:0, lastActiveDate:null, completedTraps:[], completedVocabSets:[], completedScenes:[], completedStories:[], completedGames:[], srs:{}, badgesEarnedAt:{}, reviewsCompleted:0, roadmapChecked:{}, dailyTasksDate:null, dailyTasksChecked:{}, writingRoundsDone:0, speakingRoundsDone:0},
+    progress:{sessionsExplored:0, streak:0, lastActiveDate:null, completedTraps:[], completedVocabSets:[], completedScenes:[], completedStories:[], completedGames:[], srs:{}, badgesEarnedAt:{}, reviewsCompleted:0, roadmapChecked:{}, dailyTasksDate:null, dailyTasksChecked:{}, writingRoundsDone:0, speakingRoundsDone:0, xp:0, perfectGameRounds:0},
     diag:{step:0, goals:[], level:null, learnerType:null, priorityArea:null},
     roadmap:null,
     quiz:null, studentPanelCache:null
@@ -4049,6 +4064,8 @@ function load(){
     if(merged.progress.speakingRoundsDone===undefined) merged.progress.speakingRoundsDone = 0;
     if(!merged.progress.roadmapChecked) merged.progress.roadmapChecked = {};
     if(!merged.progress.completedGames) merged.progress.completedGames = [];
+    if(merged.progress.xp===undefined) merged.progress.xp = 0;
+    if(merged.progress.perfectGameRounds===undefined) merged.progress.perfectGameRounds = 0;
     if(merged.profile.levelStage===undefined) merged.profile.levelStage = 1;
     if(!merged.progress.dailyTasksChecked) merged.progress.dailyTasksChecked = {};
     if(merged.progress.dailyTasksDate===undefined) merged.progress.dailyTasksDate = null;
@@ -4122,6 +4139,27 @@ function markGameComplete(refId){
   if(!state.progress.completedGames) state.progress.completedGames = [];
   if(!state.progress.completedGames.includes(refId)) state.progress.completedGames.push(refId);
   markActivity();
+}
+/* Gamification (Trello 4bDl1BS3, ported from the English app; spec approved
+   by Farin 2026-09-30): the flat game-card XP economy. +20 XP base on a
+   game's first-ever completion (any kind — Word Rush/Listen & Type/Trap Dash
+   all share one completedGames array), +10 more if that round was perfect
+   (zero mistakes / 100% avg match / 8-for-8), for up to +30. Replays after
+   the first completion only ever earn a flat +5 "practice" reward, no
+   perfect bonus — the guard against a finished game staying tappable forever
+   (see renderRoadmapCard's isGame routing). MUST be called BEFORE
+   markGameComplete() pushes refId onto completedGames, since "is this the
+   first completion" is decided from the array's state at the moment of
+   scoring, not after. */
+function gameBaseXp(refId){
+  return (state.progress.completedGames && state.progress.completedGames.includes(refId)) ? 5 : 20;
+}
+function scoreGameCompletion(refId, isPerfect){
+  const isFirst = !(state.progress.completedGames && state.progress.completedGames.includes(refId));
+  const xpGain = isFirst ? (20 + (isPerfect ? 10 : 0)) : 5;
+  state.progress.xp = (state.progress.xp||0) + xpGain;
+  if(isPerfect) state.progress.perfectGameRounds = (state.progress.perfectGameRounds||0) + 1;
+  return xpGain;
 }
 
 /* ============================= SPACED REPETITION (SRS) ============================= */
@@ -4455,6 +4493,17 @@ function buildRoadmap(profile){
   // own id.
   const gamePool = vPool.length ? vPool : vPoolAll;
   const pushGame = (kind) => {
+    // Trap Dash draws from the level's grammar pool (blank/blank2 fill-in
+    // items), not VOCAB_SETS like Word Rush/Listen & Type — see
+    // buildTrapRound(). refId is keyed on level+stage since it isn't tied to
+    // one catalog set the way the other two games are.
+    if(kind === 'trap'){
+      if(!gPoolAll.length) return;
+      const g = primaryGoal || GOAL_ORDER[0];
+      items.push({type:'game', gameKind:'trap', refId:'trap-'+profile.level+'-s'+stage, setId:null, goal:g,
+        title:L('Game','Oyun','بازی','Juego')+': '+L('Trap Dash','Tuzak Kaçışı','فرار از تله‌ها','Escape de trampas')});
+      return;
+    }
     if(!gamePool.length) return;
     // Prefer a set the OTHER game type in this same roadmap hasn't already used,
     // so match/dictation don't quiz the exact same word list back to back.
@@ -4506,9 +4555,9 @@ function buildRoadmap(profile){
     pushStory();
   }
   pushPractice('writing');
-  // One game per stage, alternating type by stage — across a full level (stage 1
-  // + stage 2) a student meets both Word Rush and Listen & Type at least once.
-  pushGame(stage===1 ? 'match' : 'dictation');
+  // One game per stage — see gameKindForSlot() for how the 3 kinds cycle
+  // across stage 1/2/next-level instead of a straight 2-kind alternation.
+  pushGame(gameKindForSlot(profile.level, stage));
   // Talkers (and anyone who said listening/speaking is their weak spot) get an
   // extra self-practice speaking rep, now that there's no live-session version.
   if((profile.learnerType==='talker' || profile.priorityArea==='listening') && stage===1){
@@ -4538,6 +4587,19 @@ function buildRoadmap(profile){
    .occ suffix (set by buildRoadmap's dedup pass) disambiguates the rare case
    where the exact same content is deliberately repeated twice in one roadmap. */
 function roadmapNodeId(item){ return item.type+':'+item.refId+(item.occ?('#'+item.occ):''); }
+/* Gamification (Trello 4bDl1BS3, ported from the English app): sequencing
+   call for the 3rd game kind (Trap Dash). A full level only ever has 2 game
+   slots (stage 1 + stage 2 of buildRoadmap), so a straight 2-kind alternation
+   used to guarantee both Word Rush and Listen & Type once per level. With 3
+   kinds, cycling per level+stage instead (0=match,1=dictation,2=trap, then
+   wraps) means across a full course (5 levels x 2 stages = 10 slots) a
+   student meets all 3 kinds repeatedly and evenly. */
+function gameKindForSlot(level, stage){
+  const GAME_KINDS = ['match','dictation','trap'];
+  const li = LEVELS.indexOf(level);
+  const slot = (li<0?0:li)*2 + (stage===2?1:0);
+  return GAME_KINDS[slot % GAME_KINDS.length];
+}
 /* Roadmap 2.0 Phase 4 (ported from the English app): grammar/vocab/slang/story
    quiz completion was already tracked by stable content id (completedTraps/
    completedVocabSets/completedStories — see the quiz-next handler) and already
@@ -5224,6 +5286,20 @@ function renderRoadmapCard(p){
     const isGame = item.type === 'game';
     const color = 'var(--cat-'+m.c+')';
     const subtitle = (item.goal && GOALS_META[item.goal]) ? goalMetaLabel(item.goal)+' · '+m.label : m.label;
+    // Gamification (Trello 4bDl1BS3, ported from the English app): +10 XP
+    // static chip for regular completable node types, shown inline next to
+    // the existing subtitle — static, no glow/animation (game cards get
+    // their own richer treatment below instead of this chip). Unlike the
+    // English app, this file's non-current cards are a pale tint with dark
+    // text (not a solid color with white text), so the chip's own colors
+    // adapt the same way subtitleColor/titleColor already do below —
+    // otherwise a white-on-translucent-white chip would be illegible here.
+    const REGULAR_XP_TYPES = {grammar:1, vocab:1, slang:1, story:1, writing:1, speaking:1};
+    const xpChipBg = isCurrent ? 'rgba(255,255,255,.22)' : `color-mix(in srgb, ${color} 18%, transparent)`;
+    const xpChipColor = isCurrent ? '#fff' : color;
+    const xpChipHtml = (!isGame && REGULAR_XP_TYPES[item.type])
+      ? ` <span class="pill" style="background:${xpChipBg}; color:${xpChipColor};">+10 XP</span>`
+      : '';
     let studyOpenTag, studyCloseTag;
     const studyStyle = 'display:block; width:100%; text-align:start; padding:0; background:none; border:none; color:inherit; font:inherit; cursor:pointer;';
     if(item.type==='grammar'){
@@ -5258,15 +5334,22 @@ function renderRoadmapCard(p){
     const cls = 'rm2-node' + (isCurrent ? ' rm2-node-current' : '') + (checked ? ' rm2-node-done' : '');
     const upcomingBg = `color-mix(in srgb, ${color} 32%, var(--bg-elevated))`;
     const currentBg = `radial-gradient(circle at 16% 8%, rgba(255,255,255,.4), transparent 55%), linear-gradient(150deg, ${color}, color-mix(in srgb, ${color} 78%, #000 18%))`;
-    const bg = checked ? 'var(--bg-sunken)' : (isCurrent ? currentBg : upcomingBg);
-    const borderW = isCurrent ? '2.5px' : '1.5px';
-    const borderColor = isCurrent ? 'rgba(255,255,255,.55)' : (checked ? 'var(--border-soft)' : `color-mix(in srgb, ${color} 45%, transparent)`);
-    const shadow = isCurrent
-      ? `0 0 0 3px color-mix(in srgb, ${color} 28%, transparent), 0 18px 34px -12px color-mix(in srgb, ${color} 55%, transparent)`
-      : '0 3px 10px -4px rgba(20,51,46,.16)';
-    const subtitleColor = isCurrent ? 'rgba(255,255,255,.92)' : color;
-    const titleColor = isCurrent ? '#fff' : 'var(--ink)';
-    const chevColor = isCurrent ? 'rgba(255,255,255,.92)' : color;
+    // Gamification (Trello 4bDl1BS3, ported from the English app): a game
+    // card always gets the "current node" full-strength gradient treatment,
+    // regardless of roadmap position OR completion — games stay tappable for
+    // replay, so they should never flatten to the done-gray/pale-upcoming
+    // look the other node types use.
+    const bg = isGame ? currentBg : (checked ? 'var(--bg-sunken)' : (isCurrent ? currentBg : upcomingBg));
+    const borderW = (isGame || isCurrent) ? '2.5px' : '1.5px';
+    const borderColor = (isGame || isCurrent) ? 'rgba(255,255,255,.55)' : (checked ? 'var(--border-soft)' : `color-mix(in srgb, ${color} 45%, transparent)`);
+    const shadow = isGame
+      ? `0 3px 10px -4px rgba(20,51,46,.16), var(--glow-game)`
+      : (isCurrent
+          ? `0 0 0 3px color-mix(in srgb, ${color} 28%, transparent), 0 18px 34px -12px color-mix(in srgb, ${color} 55%, transparent)`
+          : '0 3px 10px -4px rgba(20,51,46,.16)');
+    const subtitleColor = (isGame || isCurrent) ? 'rgba(255,255,255,.92)' : color;
+    const titleColor = (isGame || isCurrent) ? '#fff' : 'var(--ink)';
+    const chevColor = (isGame || isCurrent) ? 'rgba(255,255,255,.92)' : color;
     // NB: single quotes around 'Segoe UI' here are deliberate — this string lands
     // inside a double-quoted HTML style="" attribute, and a literal double quote
     // would break out of that attribute early and silently drop the rest of the
@@ -5277,17 +5360,41 @@ function renderRoadmapCard(p){
         <span class="sparkle" style="top:22px; right:22px; left:auto; width:6px; height:6px; animation-delay:.5s;"></span>
         <span class="sparkle" style="bottom:16px; right:44px; left:auto; width:5px; height:5px; animation-delay:1s;"></span>
         <span class="sparkle" style="bottom:22px; left:38px; width:4px; height:4px; animation-delay:1.4s;"></span>` : '';
+    // Gamification (4bDl1BS3): promoted "⚡" game marker — was an inline
+    // subtitle prefix, now a standalone white pill in the card's top-right
+    // corner, reusing .badge-recommended's pill styling (base .pill shape/
+    // padding, recolored gold-on-white here). Stays visible after completion
+    // since games remain tappable for replay. This file has no icon-image
+    // system on roadmap cards yet (unlike the English app's TYPE_META.img) —
+    // icon-controller.png is added here specifically for the game card's own
+    // decorative icon, copied over from the English app's asset folder,
+    // scoped only to isGame so it doesn't imply the broader icon system.
+    const gameCornerPill = isGame
+      ? `<span class="pill" style="position:absolute; top:16px; inset-inline-end:16px; background:#fff; color:var(--cat-review); font-weight:900;">${ICONS.bolt} ${esc(m.label)}</span>`
+      : '';
+    const gameCardIcon = isGame
+      ? `<img src="icon-controller.png" alt="" class="game-icon-pulse" style="position:absolute; inset-inline-end:10px; bottom:10px; width:60px; height:60px; object-fit:contain; pointer-events:none; filter:drop-shadow(0 6px 12px rgba(0,0,0,.28));">`
+      : '';
+    // Streak mirror chip (4bDl1BS3) — only the single current node gets this,
+    // mirroring .streak-chip's own markup/style exactly, next to the
+    // existing "You're here" pill.
+    const streakMirrorChip = (isCurrent && !checked)
+      ? `<span class="streak-chip" style="margin-top:14px; margin-inline-start:8px;"><span style="color:var(--accent)">${ICONS.flame}</span><span class="num">${state.progress.streak}</span></span>`
+      : '';
     return `<div class="${cls}" style="border-radius:26px; padding:34px 20px 30px; background:${bg}; border:${borderW} solid ${borderColor}; box-shadow:${shadow};">
       ${sparkles}
+      ${gameCardIcon}
+      ${gameCornerPill}
       ${studyOpenTag}
         <div class="row between" style="align-items:flex-start; gap:10px;">
           <div style="min-width:0;">
-            <div style="font-size:11px; font-weight:900; color:${subtitleColor}; text-transform:uppercase; letter-spacing:.05em;">${isGame?'⚡ ':''}${esc(subtitle)}</div>
-            <div style="${titleFont} margin-top:6px; color:${titleColor}; line-height:1.28; ${checked?'text-decoration:line-through; opacity:.62;':''}">${esc(item.title)}</div>
+            <div style="font-size:11px; font-weight:900; color:${subtitleColor}; text-transform:uppercase; letter-spacing:.05em;">${esc(subtitle)}${xpChipHtml}</div>
+            <div style="${titleFont} margin-top:6px; color:${titleColor}; line-height:1.28; padding-inline-end:${isGame?'64px':'0'}; ${checked?'text-decoration:line-through; opacity:.62;':''}">${esc(item.title)}</div>
+            ${isGame ? `<div style="font-size:11px; font-weight:900; color:${subtitleColor}; text-transform:uppercase; letter-spacing:.05em; margin-top:6px;">${L('⚡ 2–3 min · +20 XP','⚡ 2-3 dk · +20 XP','⚡ ۲ تا ۳ دقیقه · +۲۰ XP','⚡ 2-3 min · +20 XP')}</div>` : ''}
           </div>
           <span style="flex:0 0 auto; margin-top:3px; color:${chevColor}; opacity:${checked?1:.65};">${checked?ICONS.check:ICONS.chev}</span>
         </div>
-        ${isCurrent && !checked ? `<div class="pill" style="margin-top:14px; background:#fff; color:${color}; font-weight:900; text-transform:uppercase; letter-spacing:.03em; box-shadow:0 4px 10px -3px rgba(0,0,0,.3);">${L("You're here","Buradasın","اینجایی",'Estás aquí')}</div>` : ''}
+        ${isCurrent && !checked ? `<div class="pill" style="margin-top:14px; background:#fff; color:${color}; font-weight:900; text-transform:uppercase; letter-spacing:.03em; box-shadow:0 4px 10px -3px rgba(0,0,0,.3);">${L("You're here","Buradasın","اینجایی",'Estás aquí')}</div>${streakMirrorChip}` : ''}
       ${studyCloseTag}
     </div>`;
   }
@@ -6148,10 +6255,15 @@ function renderStudioRound(){
   </div>`;
 }
 
-/* ============================= GAMES (Roadmap 2.0 Phase 3, ported from the English app) =============================
-   Two game types — Word Rush (a timed vocab-matching grid) and Listen & Type (dictation via the
-   browser's speechSynthesis, order-tolerant scoring, with a "show sentence" fallback for no audio
-   support). Both reuse existing VOCAB_SETS content rather than needing new authoring. */
+/* ============================= GAMES (Roadmap 2.0 Phase 3 + Gamification 4bDl1BS3, ported from the English app) =============================
+   Three game types: Word Rush (a timed vocab-matching grid), Listen & Type
+   (dictation via the browser's speechSynthesis, order-tolerant scoring, with
+   a "show sentence" fallback for no audio support), and Trap Dash (added
+   2026-09-30, approved gamification spec — reuses GRAMMAR_ITEMS' blank/
+   blank2/distractors fields instead of VOCAB_SETS, see buildTrapRound()
+   below). Word Rush/Listen & Type reuse existing VOCAB_SETS content rather
+   than needing new authoring. All three share one XP/badge economy
+   (scoreGameCompletion, gameBaseXp) and one completedGames tracking array. */
 function buildMatchRound(setObj, n){
   n = Math.min(n || 6, setObj.cards.length);
   const cards = shuffle(setObj.cards).slice(0, n);
@@ -6186,17 +6298,53 @@ function buildDictationRound(setObj, n){
   const cards = shuffle(withSentence).slice(0, n);
   return {setId:setObj.id, sentences:cards.map(c=>({word:c.word, text:c.sentence})), index:0, typed:'', checked:false, revealedText:false, results:[], finished:false};
 }
+/* Gamification (Trello 4bDl1BS3, ported from the English app): third game
+   kind, "Trap Dash" — a timed multiple-choice grammar sprint. Reuses
+   GRAMMAR_ITEMS' existing blank/blank2/distractors fields (the same fields
+   the grammar quiz engine already builds fill-in questions from) rather than
+   any new authoring. Each grammar item can contribute at most one 'blank'
+   candidate and one 'blank2' candidate, and shuffle+slice never repeats an
+   array element, so repeats within one round are avoided by construction. */
+function buildTrapRound(profile, n){
+  n = n || 8;
+  const goals = (profile.goals && profile.goals.length) ? profile.goals : (profile.motivationTag ? [profile.motivationTag] : []);
+  const pool = GRAMMAR_ITEMS.filter(g=>g.level===profile.level);
+  const resolveBlank = (item, field) => {
+    const gk = goals.find(k=>item.goalVariant && item.goalVariant[k] && item.goalVariant[k][field]);
+    const src = (gk && item.goalVariant[gk]) || item;
+    return src[field];
+  };
+  const candidates = [];
+  pool.forEach(item=>{
+    ['blank','blank2'].forEach(field=>{
+      const blank = resolveBlank(item, field);
+      if(blank) candidates.push({itemId:item.id, field, blank});
+    });
+  });
+  const picked = shuffle(candidates).slice(0, Math.min(n, candidates.length));
+  const questions = picked.map(c=>{
+    const opts = shuffle([c.blank.word].concat(c.blank.distractors));
+    return {sentence:c.blank.sentence, options:opts, correct:opts.indexOf(c.blank.word), itemId:c.itemId, field:c.field};
+  });
+  const timeLimit = 10;
+  return {questions, index:0, score:0, streak:0, correctCount:0, mistakes:0, perfect:true, answered:false, selected:null, lastPoints:0, timeLimit, deadline:Date.now()+timeLimit*1000, finished:false, xpGain:0};
+}
 function renderGameMatch(){
   const vp = state.viewParams;
   const round = vp.round;
   const done = round.matchedKeys.length === round.pairCount;
   const elapsed = Math.floor(((round.finishedAt||Date.now()) - round.startedAt)/1000);
+  // Gamification (4bDl1BS3): live XP-earned counter in the existing Time/
+  // Mistakes pill row — a preview of the flat base reward (first completion
+  // vs. practice replay), scaled by pairs matched so far.
+  const liveXp = round.pairCount ? Math.round((round.matchedKeys.length/round.pairCount) * gameBaseXp(vp.refId)) : 0;
   return `<div class="fade-in">
     ${sectionHead(L('Word Rush','Kelime Yarışı','مسابقه کلمات','Carrera de palabras'), (vp.goal && GOALS_META[vp.goal] ? goalMetaLabel(vp.goal)+' · ' : '') + L('Tap two tiles to match a word with its meaning.','Bir kelimeyi anlamıyla eşleştirmek için iki karoya dokun.','برای جفت‌کردن یک کلمه با معنی‌اش، روی دو کاشی بزن.','Toca dos casillas para emparejar una palabra con su significado.'))}
     <div class="screen" style="padding-top:0;">
-      <div class="row between" style="align-items:center; margin-bottom:10px;">
+      <div class="row between" style="align-items:center; margin-bottom:10px; flex-wrap:wrap;">
         <span class="pill" style="background:var(--cat-review-soft); color:var(--cat-review);">${L('Time','Süre','زمان','Tiempo')}: ${elapsed}s</span>
         <span class="pill" style="background:var(--bg-sunken);">${L('Mistakes','Hatalar','اشتباهات','Errores')}: ${round.mistakes}</span>
+        <span class="pill" style="background:var(--success-soft); color:var(--success);">+${liveXp} XP</span>
       </div>
       <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:8px;">
         ${round.tiles.map((t,i)=>{
@@ -6205,9 +6353,10 @@ function renderGameMatch(){
           return `<button class="opt" dir="ltr" data-action="game-match-tap" data-i="${i}" ${isMatched?'disabled':''} style="min-height:64px; margin-bottom:0; padding:8px; text-align:center; display:flex; align-items:center; justify-content:center; font-size:12.5px; font-weight:700; ${isMatched?'background:var(--success-soft); border-color:var(--success); color:var(--success);':(isRevealed?'background:var(--accent-soft); border-color:var(--accent-strong);':'')}">${isRevealed ? esc(t.text) : '?'}</button>`;
         }).join('')}
       </div>
-      ${done ? `<div class="card-flat" style="margin-top:16px; text-align:center; background:var(--success-soft); border-color:var(--success);">
+      ${done ? `<div class="card-flat badge-unlock-shine" style="margin-top:16px; text-align:center; background:var(--success-soft); border-color:var(--success);">
         <div class="eyebrow" style="color:var(--success);">${L('Matched!','Eşleştirdin!','جفت شد!','¡Emparejado!')}</div>
         <p style="margin-top:6px; font-size:14px;">${L(`Finished in ${elapsed}s with ${round.mistakes} mistake${round.mistakes===1?'':'s'}.`, `${elapsed} saniyede ${round.mistakes} hatayla bitirdin.`, `در ${elapsed} ثانیه با ${round.mistakes} اشتباه تمام کردی.`, `Terminaste en ${elapsed}s con ${round.mistakes} error${round.mistakes===1?'':'es'}.`)}</p>
+        <p class="num" style="margin-top:4px; font-size:15px; color:var(--success);">+${round.xpGain||0} XP</p>
         <button class="btn btn-primary" style="margin-top:12px;" data-action="nav" data-view="diag-intro-review">${L('Back to roadmap','Yol haritasına dön','بازگشت به نقشه راه','Volver a la hoja de ruta')}</button>
       </div>${renderBadgeUnlockCard(pullJustEarnedBadges())}` : ''}
     </div>
@@ -6221,9 +6370,10 @@ function renderGameDictation(){
     return `<div class="fade-in">
       ${sectionHead(L('Listen & Type','Dinle ve Yaz','گوش کن و بنویس','Escucha y escribe'), '')}
       <div class="screen" style="padding-top:0;">
-        <div class="card-flat" style="text-align:center; background:var(--success-soft); border-color:var(--success);">
+        <div class="card-flat badge-unlock-shine" style="text-align:center; background:var(--success-soft); border-color:var(--success);">
           <div class="eyebrow" style="color:var(--success);">${L('Done!','Bitti!','تمام شد!','¡Listo!')}</div>
           <p style="margin-top:6px; font-size:14px;">${L(`Average match: ${avgPct}%`,`Ortalama eşleşme: %${avgPct}`,`میانگین تطابق: ${avgPct}%`,`Coincidencia promedio: ${avgPct}%`)}</p>
+          <p class="num" style="margin-top:4px; font-size:15px; color:var(--success);">+${round.xpGain||0} XP</p>
           <button class="btn btn-primary" style="margin-top:12px;" data-action="nav" data-view="diag-intro-review">${L('Back to roadmap','Yol haritasına dön','بازگشت به نقشه راه','Volver a la hoja de ruta')}</button>
         </div>
         ${renderBadgeUnlockCard(pullJustEarnedBadges())}
@@ -6232,8 +6382,12 @@ function renderGameDictation(){
   }
   const item = round.sentences[round.index];
   const isLast = round.index === round.sentences.length - 1;
+  // Gamification (4bDl1BS3): live XP-earned counter folded into the existing
+  // progress header (the "Sentence i/N" subtitle), scaled by sentences
+  // checked so far.
+  const liveXp = round.sentences.length ? Math.round((round.results.length/round.sentences.length) * gameBaseXp(vp.refId)) : 0;
   return `<div class="fade-in">
-    ${sectionHead(L('Listen & Type','Dinle ve Yaz','گوش کن و بنویس','Escucha y escribe'), (vp.goal && GOALS_META[vp.goal] ? goalMetaLabel(vp.goal)+' · ' : '') + L('Sentence','Cümle','جمله','Oración')+' '+(round.index+1)+'/'+round.sentences.length)}
+    ${sectionHead(L('Listen & Type','Dinle ve Yaz','گوش کن و بنویس','Escucha y escribe'), (vp.goal && GOALS_META[vp.goal] ? goalMetaLabel(vp.goal)+' · ' : '') + L('Sentence','Cümle','جمله','Oración')+' '+(round.index+1)+'/'+round.sentences.length+' · +'+liveXp+' XP')}
     <div class="screen" style="padding-top:0;">
       <div class="card-flat" style="text-align:center;">
         <button class="btn btn-primary" data-action="speak-sentence" data-text="${esc(item.text)}">${ICONS.soundOn} ${L('Play','Çal','پخش','Reproducir')}</button>
@@ -6250,6 +6404,135 @@ function renderGameDictation(){
           </div>`; })()}
     </div>
   </div>`;
+}
+/* Gamification (Trello 4bDl1BS3, ported from the English app): Trap Dash —
+   a timed multiple-choice grammar sprint (8 questions, 10s each). No
+   separate "intro" screen the way the spec sketch describes one — Word Rush/
+   Listen & Type don't have a distinct intro step either, just a sectionHead
+   with an instructional subtitle. Mirrors that exact pattern. */
+const TRAP_RING_SIZE = 54, TRAP_RING_STROKE = 5;
+function trapTimerRingSVG(remaining, timeLimit, color){
+  const r = (TRAP_RING_SIZE - TRAP_RING_STROKE) / 2;
+  const c = 2 * Math.PI * r;
+  const pct = Math.max(0, Math.min(100, (remaining/timeLimit)*100));
+  const offset = c * (1 - pct/100);
+  return `<div style="position:relative; width:${TRAP_RING_SIZE}px; height:${TRAP_RING_SIZE}px;">
+    <svg width="${TRAP_RING_SIZE}" height="${TRAP_RING_SIZE}" viewBox="0 0 ${TRAP_RING_SIZE} ${TRAP_RING_SIZE}" style="transform:rotate(-90deg);">
+      <circle cx="${TRAP_RING_SIZE/2}" cy="${TRAP_RING_SIZE/2}" r="${r}" fill="none" stroke="var(--bg-sunken)" stroke-width="${TRAP_RING_STROKE}"/>
+      <circle id="trap-timer-circle" cx="${TRAP_RING_SIZE/2}" cy="${TRAP_RING_SIZE/2}" r="${r}" fill="none" stroke="${color}" stroke-width="${TRAP_RING_STROKE}" stroke-dasharray="${c}" stroke-dashoffset="${offset}" stroke-linecap="round"/>
+    </svg>
+    <span id="trap-timer-text" class="num" style="position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-size:15px; color:${color};">${Math.ceil(remaining)}</span>
+  </div>`;
+}
+function renderGameTrap(){
+  const vp = state.viewParams;
+  const round = vp.round;
+  if(round.finished){
+    const total = round.questions.length;
+    const accuracy = total ? Math.round((round.correctCount/total)*100) : 0;
+    const flawless = total>0 && round.correctCount === total;
+    return `<div class="fade-in">
+      ${sectionHead(L('Trap Dash','Tuzak Kaçışı','فرار از تله‌ها','Escape de trampas'), '')}
+      <div class="screen" style="padding-top:0;">
+        <div class="card-flat badge-unlock-shine" style="text-align:center; background:var(--success-soft); border-color:var(--success);">
+          <div class="eyebrow" style="color:var(--success);">${flawless ? L('Flawless!','Kusursuz!','بی‌نقص!','¡Perfecto!') : L('Done!','Bitti!','تمام شد!','¡Listo!')}</div>
+          <p style="margin-top:6px; font-size:14px;">${L(`Score: ${round.score} · ${accuracy}% accuracy`,`Skor: ${round.score} · %${accuracy} doğruluk`,`امتیاز: ${round.score} · ${accuracy}% دقت`,`Puntuación: ${round.score} · ${accuracy}% de precisión`)}</p>
+          <p class="num" style="margin-top:4px; font-size:15px; color:var(--success);">+${round.xpGain||0} XP</p>
+          <button class="btn btn-primary" style="margin-top:12px;" data-action="nav" data-view="diag-intro-review">${L('Back to roadmap','Yol haritasına dön','بازگشت به نقشه راه','Volver a la hoja de ruta')}</button>
+        </div>
+        ${renderBadgeUnlockCard(pullJustEarnedBadges())}
+      </div>
+    </div>`;
+  }
+  const q = round.questions[round.index];
+  const remaining = Math.max((round.deadline - Date.now())/1000, 0);
+  const liveXp = round.questions.length ? Math.round(((round.index + (round.answered?1:0))/round.questions.length) * gameBaseXp(vp.refId)) : 0;
+  return `<div class="fade-in">
+    ${sectionHead(L('Trap Dash','Tuzak Kaçışı','فرار از تله‌ها','Escape de trampas'), L('Fix 8 sentences before the timer runs out.','Zaman dolmadan 8 cümleyi düzelt.','قبل از تمام‌شدن زمان، ۸ جمله را درست کن.','Corrige 8 oraciones antes de que se acabe el tiempo.'))}
+    <div class="screen" style="padding-top:0;">
+      <div class="row between" style="align-items:center; margin-bottom:10px; flex-wrap:wrap;">
+        <span class="pill" style="background:var(--cat-review-soft); color:var(--cat-review);">${L('Question','Soru','سوال','Pregunta')} ${round.index+1}/${round.questions.length}</span>
+        ${round.streak>=3 ? `<span class="pill" style="background:var(--accent-soft); color:var(--accent-strong);">${ICONS.flame} ${round.streak}</span>` : ''}
+        <span class="pill" style="background:var(--success-soft); color:var(--success);">+${liveXp} XP</span>
+        ${round.answered && round.lastPoints>0 ? `<span class="trap-point-pop" style="color:var(--success);">+${round.lastPoints}</span>` : ''}
+      </div>
+      <div class="row" style="justify-content:center; margin-bottom:14px;">${trapTimerRingSVG(remaining, round.timeLimit, 'var(--cat-review)')}</div>
+      <div class="card-flat" style="text-align:center;" dir="ltr">
+        <p style="font-size:16.5px; font-weight:700; line-height:1.5;">${esc(q.sentence)}</p>
+      </div>
+      <div class="stack" style="margin-top:14px; gap:10px;">
+        ${q.options.map((opt,i)=>{
+          let style = '';
+          if(round.answered){
+            if(i===q.correct) style = 'background:var(--success-soft); border-color:var(--success); color:var(--success);';
+            else if(i===round.selected) style = 'background:var(--error-soft); border-color:var(--error); color:var(--error);';
+          }
+          return `<button class="opt" dir="ltr" data-action="game-trap-tap" data-i="${i}" ${round.answered?'disabled':''} style="justify-content:center; text-align:center; font-weight:700; ${style}">${esc(opt)}</button>`;
+        }).join('')}
+      </div>
+    </div>
+  </div>`;
+}
+/* Trap Dash timing engine — mirrors the existing quizTimerInterval pattern
+   (deadline-based, ticks a DOM element directly at 100ms rather than doing a
+   full render() every tick) rather than inventing a new mechanism. A wrong
+   tap AND a timeout both resolve through the same "answered" reveal state,
+   then auto-advance after a short pause — there's no manual "Next" button in
+   this game, pace is timer-driven. */
+function trapHandleTimeout(){
+  if(state.view !== 'game-trap') return;
+  const vp = state.viewParams, round = vp && vp.round;
+  if(!round || round.answered || round.finished) return;
+  round.answered = true;
+  round.selected = -1;
+  round.streak = 0;
+  round.perfect = false;
+  round.mistakes += 1;
+  round.lastPoints = 0;
+  save(); render();
+  const capturedVp = vp;
+  setTimeout(()=>{
+    if(state.viewParams !== capturedVp) return;
+    trapAdvance(capturedVp.refId);
+  }, 900);
+}
+let trapTimerInterval = setInterval(function(){
+  if(state.view !== 'game-trap') return;
+  const vp = state.viewParams, round = vp && vp.round;
+  if(!round || round.answered || round.finished || !round.deadline) return;
+  const remainingMs = round.deadline - Date.now();
+  const remaining = Math.max(remainingMs/1000, 0);
+  const circle = document.getElementById('trap-timer-circle');
+  const text = document.getElementById('trap-timer-text');
+  if(circle){
+    const r = (TRAP_RING_SIZE - TRAP_RING_STROKE) / 2;
+    const c = 2 * Math.PI * r;
+    const pct = Math.max(0, Math.min(100, (remaining/round.timeLimit)*100));
+    circle.setAttribute('stroke-dashoffset', c * (1 - pct/100));
+  }
+  if(text) text.textContent = Math.ceil(remaining);
+  if(remainingMs <= 0) trapHandleTimeout();
+}, 100);
+function trapAdvance(refId){
+  const vp = state.viewParams, round = vp && vp.round;
+  if(!round || state.view !== 'game-trap') return;
+  if(round.index + 1 < round.questions.length){
+    round.index += 1;
+    round.answered = false;
+    round.selected = null;
+    round.lastPoints = 0;
+    round.deadline = Date.now() + round.timeLimit*1000;
+  } else {
+    // round.perfect tracks "no wrong answer or timeout yet across the whole
+    // round" — flips false the instant one happens, so it already equals
+    // "8-for-8" by the time we get here.
+    const isPerfect = round.perfect;
+    const xpGain = scoreGameCompletion(refId, isPerfect);
+    round.xpGain = xpGain;
+    round.finished = true;
+    markGameComplete(refId);
+  }
+  save(); render();
 }
 
 /* ============================= RENDER: GRAMMAR GYM ============================= */
@@ -6883,6 +7166,7 @@ const screens = {
   'studio-round': renderStudioRound,
   'game-match': renderGameMatch,
   'game-dictation': renderGameDictation,
+  'game-trap': renderGameTrap,
   'coming-soon': renderComingSoon,
   'story-list': renderStoryList,
   'story-detail': ()=>renderStoryDetail(state.viewParams.id),
@@ -7393,6 +7677,11 @@ const HANDLERS = {
     if(result.passed){
       const key = vp.mode==='writing' ? 'writingRoundsDone' : 'speakingRoundsDone';
       state.progress[key] = (state.progress[key]||0) + 1;
+      // Gamification (4bDl1BS3, ported from the English app): +10 XP per
+      // passed Studio Lab round. Unlike games, these rounds are freshly
+      // generated each time (no catalog id to dedupe on), and "New round" is
+      // the whole point of this screen, so every pass earns it.
+      state.progress.xp = (state.progress.xp||0) + 10;
     }
     save();
     // Roadmap 2.0 Phase 4 (ported from the English app): this only used to call
@@ -7424,6 +7713,10 @@ const HANDLERS = {
         round.revealed = [];
         if(round.matchedKeys.length === round.pairCount){
           round.finishedAt = Date.now();
+          // Gamification (4bDl1BS3): score BEFORE markGameComplete pushes
+          // refId, so "is this the first completion" reads the array's state
+          // at the moment of scoring, not after.
+          round.xpGain = scoreGameCompletion(vp.refId, round.mistakes === 0);
           markGameComplete(vp.refId);
         }
       }
@@ -7446,15 +7739,54 @@ const HANDLERS = {
       round.index++; round.typed=''; round.checked=false; round.revealedText=false;
     } else {
       round.finished = true;
+      const avgPct = round.results.length ? Math.round(round.results.reduce((a,r)=>a+r.pct,0)/round.results.length) : 0;
+      round.xpGain = scoreGameCompletion(vp.refId, avgPct === 100);
       markGameComplete(vp.refId);
     }
     save(); render();
   },
+  'game-trap-tap'(el){
+    const vp = state.viewParams, round = vp.round;
+    if(!round || round.answered || round.finished) return;
+    const i = Number(el.dataset.i);
+    const q = round.questions[round.index];
+    const correct = (i === q.correct);
+    round.answered = true;
+    round.selected = i;
+    if(correct){
+      const usedMs = (round.timeLimit*1000) - Math.max(round.deadline - Date.now(), 0);
+      const fast = usedMs <= 5000;
+      // 2 base, 3 if answered within the first 5s; a 3+ consecutive streak
+      // stacks a small extra bonus, capped at +3.
+      let pts = fast ? 3 : 2;
+      if(round.streak >= 2) pts += Math.min(round.streak - 1, 3);
+      round.streak += 1;
+      round.correctCount += 1;
+      round.score += pts;
+      round.lastPoints = pts;
+    } else {
+      round.streak = 0;
+      round.perfect = false;
+      round.mistakes += 1;
+      round.lastPoints = 0;
+    }
+    save(); render();
+    const capturedVp = vp;
+    setTimeout(()=>{
+      if(state.viewParams !== capturedVp) return;
+      trapAdvance(capturedVp.refId);
+    }, 900);
+  },
   'start-game'(el){
+    const kind = el.dataset.kind;
+    const params = {refId: el.dataset.refId, goal: el.dataset.goal};
+    if(kind === 'trap'){
+      go('game-trap', Object.assign({round: buildTrapRound(state.profile)}, params));
+      return;
+    }
     const setObj = VOCAB_SETS.find(x=>x.id===el.dataset.setId);
     if(!setObj) return;
-    const params = {refId: el.dataset.refId, goal: el.dataset.goal};
-    if(el.dataset.kind==='match') go('game-match', Object.assign({round: buildMatchRound(setObj)}, params));
+    if(kind === 'match') go('game-match', Object.assign({round: buildMatchRound(setObj)}, params));
     else go('game-dictation', Object.assign({round: buildDictationRound(setObj)}, params));
   },
   'game-dictation-reveal'(){
@@ -7518,7 +7850,11 @@ const HANDLERS = {
     if(q.index >= q.questions.length){
       if(q.contextId){
         const arr = progressArrForKind(q.kind);
-        if(!arr.includes(q.contextId)) arr.push(q.contextId);
+        // Gamification (4bDl1BS3, ported from the English app): +10 XP for a
+        // regular node's first-ever completion — awarded exactly when the id
+        // newly enters this dedup'd array, so a later requeue through the
+        // review flow (same item, already completed) doesn't re-earn it.
+        if(!arr.includes(q.contextId)){ arr.push(q.contextId); state.progress.xp = (state.progress.xp||0) + 10; }
         updateSRS(q.contextId, q.kind, q.correct/q.questions.length);
       } else {
         const byItem = {};
@@ -7531,7 +7867,7 @@ const HANDLERS = {
         Object.keys(byItem).forEach(id=>{
           const {kind, correct, total} = byItem[id];
           const arr = progressArrForKind(kind);
-          if(!arr.includes(id)) arr.push(id);
+          if(!arr.includes(id)){ arr.push(id); state.progress.xp = (state.progress.xp||0) + 10; }
           updateSRS(id, kind, correct/total);
         });
         state.progress.reviewsCompleted = (state.progress.reviewsCompleted||0) + 1;

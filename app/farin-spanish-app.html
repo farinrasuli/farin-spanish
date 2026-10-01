@@ -197,6 +197,7 @@
   .sv-scale{position:absolute; left:0; top:0; width:180px; height:232px; transform-origin:0 0;}
   .sv-card{position:relative; width:180px; height:232px; border-radius:22px; overflow:hidden; color:#fff; background:linear-gradient(150deg, var(--svc), color-mix(in srgb, var(--svc) 74%, #000 26%)); box-shadow:var(--clay-shadow); text-align:left;}
   .sv-mini .sv-card{border-radius:26px;}
+  .sv-tiny .sv-card{border-radius:32px;}
   .sv-fan{box-shadow:var(--clay-shadow-soft); border-radius:6px;}
   .sv-fan .sv-card{border-radius:42px; box-shadow:none;}
   .sv-gold{background:linear-gradient(150deg, var(--cat-review), var(--clay-orange) 60%, var(--clay-orange-deep)); box-shadow:var(--clay-shadow), var(--glow-game);}
@@ -216,6 +217,8 @@
   .sv-stamp{position:absolute; bottom:12px; right:12px; width:44px; height:44px; box-sizing:border-box; border-radius:50%; border:2.5px dashed rgba(255,255,255,.7); transform:rotate(-12deg); display:flex; flex-direction:column; align-items:center; justify-content:center; line-height:1; color:#fff;}
   .sv-stamp b{font-family:'Fredoka',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; font-weight:700; font-size:13px;}
   .sv-stamp small{font-size:9px; font-weight:700; margin-top:2px; color:rgba(255,255,255,.9);}
+  .sv-meaningface .sv-body{top:48px;}
+  .sv-meaningface .sv-meaning{-webkit-line-clamp:7;}
   .sv-backface{background:var(--svc); display:flex; align-items:center; justify-content:center;}
   .sv-logo{width:64px; height:64px; object-fit:contain; opacity:.9;}
   /* Completion sequence (§3): stat stickers, the souvenir flip, the caption. */
@@ -529,6 +532,26 @@
   .rm2-goal-wrap{position:relative; display:inline-block;}
   .rm2-head-count{display:flex; align-items:center; gap:10px; flex:0 0 auto;}
   .rm2-empty-slot{display:inline-block; width:26px; height:34px; box-sizing:border-box; border-radius:6px; border:2px dashed var(--border); background:var(--bg-sunken);}
+  /* Gamification v2 (Journey Journal §5/§6): header fan, journal pages, page complete. */
+  .rm2-fan{display:flex; align-items:center; padding:0 0 0 10px; margin:0; border:none; background:none; cursor:pointer;}
+  .rm2-fan-card{display:inline-block; margin-inline-start:-10px;}
+  .jr-grid{display:grid; grid-template-columns:repeat(3, 96px); gap:10px; justify-content:center; margin-top:12px;}
+  .jr-slot{padding:0; margin:0; border:none; background:none; cursor:pointer; border-radius:14px;}
+  .jr-empty{box-sizing:border-box; border:2px dashed var(--border); background:var(--bg-sunken); display:flex; align-items:center; justify-content:center;}
+  .jr-empty span{opacity:.3; display:flex; transform:scale(1.4);}
+  .sv-modal-stack{display:flex; flex-direction:column; align-items:center; text-align:center;}
+  .pc-stack{display:flex; flex-direction:column; align-items:center; width:100%; max-width:360px;}
+  .pc-page{position:relative; width:100%; box-sizing:border-box; background:var(--bg-elevated); border-radius:24px; padding:14px; box-shadow:var(--clay-shadow);}
+  .pc-grid{display:grid; grid-template-columns:repeat(5, 56px); gap:6px; justify-content:center; margin-top:10px;}
+  .pc-slot{opacity:0;}
+  .pc-stamp{position:absolute; left:50%; top:52%; width:160px; height:160px; box-sizing:border-box; border-radius:50%; border:4px solid var(--clay-coral); box-shadow:inset 0 0 0 6px color-mix(in srgb, var(--clay-coral) 22%, transparent); background:color-mix(in srgb, var(--bg-elevated) 82%, transparent); color:var(--clay-coral); display:flex; flex-direction:column; align-items:center; justify-content:center; font-family:'Fredoka',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; font-weight:800; line-height:1; transform:translate(-50%,-50%) rotate(-12deg); opacity:0; pointer-events:none;}
+  .pc-stamp span{font-size:44px;}
+  .pc-stamp small{font-size:17px; letter-spacing:.08em; margin-top:6px;}
+  .pc-char-wrap{position:relative; width:120px; height:120px; margin-top:10px;}
+  .pc-char-wrap img{width:120px; height:120px; object-fit:contain; filter:drop-shadow(0 12px 18px rgba(0,0,0,.3));}
+  .pc-pin{position:absolute; top:4px; right:2px; width:30px; height:30px; border-radius:50%; background:var(--cat-review); box-shadow:var(--clay-shadow-soft); color:#3b2f63; font-size:10px; font-weight:900; display:flex; align-items:center; justify-content:center; opacity:0;}
+  .pc-end .pc-slot, .pc-end .pc-stamp, .pc-end .pc-pin{opacity:1 !important;}
+  .rm2-page-btn{margin-top:10px; padding:8px 16px; font-size:13px;}
   .rm2-cap{display:flex; flex-direction:column; align-items:center; text-align:center; padding:4px 0 34px;}
   .rm2-cap-end{padding:34px 0 4px;}
   .rm2-cap-label{font-size:9.5px; font-weight:800; color:var(--ink-faint); text-transform:uppercase; letter-spacing:.05em; margin-top:6px;}
@@ -5828,6 +5851,7 @@ function celebrationExtras(view, vp, kind){
       if(node) ctx = {node, stats:st, perfect:st.perfect};
       const fresh = awardSouvenirs(ctx);
       extra.souvenir = fresh[0] || null;
+      extra.fresh = !!fresh[0];
       if(!extra.souvenir){
         // A replay: a perfect round or a new best upgrades this game's record souvenir.
         const sv = (state.progress.souvenirs||[]).slice().reverse().find(s=>s.type==='game' && s.nodeId.split('#')[0]==='game:'+vp.refId);
@@ -5841,12 +5865,13 @@ function celebrationExtras(view, vp, kind){
     }
     const fresh = awardSouvenirs(ctx);
     extra.souvenir = fresh[0] || null;
+    extra.fresh = !!fresh[0];
   }catch(e){}
   return extra;
 }
 
 /* ---- Souvenir card rendering (one 180x232 design, scaled for the mini/fan sizes) ---- */
-const SV_SIZES = {big:{w:180, h:232, r:22}, mini:{w:96, h:124, r:14}, fan:{w:26, h:34, r:6}};
+const SV_SIZES = {big:{w:180, h:232, r:22}, mini:{w:96, h:124, r:14}, fan:{w:26, h:34, r:6}, tiny:{w:56, h:72, r:10}};
 function souvenirFaceHtml(sv){
   const m = svTypeMeta(sv.type);
   const color = 'var(--cat-'+m.c+')';
@@ -5934,7 +5959,7 @@ function showCelebration(kind, detail, low, extra){
   </div>`;
   document.body.appendChild(el);
   playFinishJingle(low);
-  const seq = celebrateSeq = {timers:[], done:false, revealed:false, exit: extra.onExit || backToRoadmap};
+  const seq = celebrateSeq = {timers:[], done:false, revealed:false, exit: extra.onExit || ((extra.fresh && roadmapAllDone()) ? ()=>{ backToRoadmap(); showPageComplete(); } : backToRoadmap)};
   const at = (ms, fn)=>seq.timers.push(setTimeout(()=>{ try{ fn(); }catch(e){} }, ms));
   const q = sel=>el.querySelector(sel);
   const reveal = ()=>{
@@ -6853,7 +6878,12 @@ function runRoadmapAdvance(currentIndex, fromIdx, oldFill, newFill){
 }
 // End goal warms up with progress p (0..1).
 function roadmapHeaderSlots(doneCount){
-  return doneCount === 0 ? '<span class="rm2-empty-slot" aria-hidden="true"></span>' : '';
+  // 0%: one empty dashed slot ("your first souvenir is waiting"); otherwise a fan of the last 3 souvenirs.
+  if(doneCount === 0) return '<span class="rm2-empty-slot" aria-hidden="true"></span>';
+  const last = ((state.progress && state.progress.souvenirs) || []).slice(-3);
+  if(!last.length) return '';
+  const rot = [-8,0,8].slice(3-last.length);
+  return `<button class="rm2-fan" data-action="nav" data-view="journal" aria-label="${esc(journalName())}">${last.map((sv,k)=>`<span class="rm2-fan-card" style="transform:rotate(${rot[k]}deg);">${souvenirCardHtml(sv, 'fan')}</span>`).join('')}</button>`;
 }
 function roadmapGoalHtml(p, allDone){
   const size = allDone ? 128 : 112;
@@ -6862,6 +6892,172 @@ function roadmapGoalHtml(p, allDone){
   const sparks = p >= .75 ? [0,.6,1.2].map((d,i)=>`<span class="sparkle" style="${['top:4px; left:6px;','top:30%; right:-4px; left:auto; width:6px; height:6px;','bottom:10px; left:-2px; width:5px; height:5px;'][i]} color:var(--clay-orange-deep); animation-delay:${d}s;"></span>`).join('')
     + (allDone ? `<span class="sparkle" style="bottom:2px; right:8px; left:auto; width:7px; height:7px; color:var(--clay-orange-deep); animation-delay:.9s;"></span>` : '') : '';
   return `<span class="rm2-goal-wrap"><img src="roadmap-goal-clay.png" alt="" style="width:${size}px; height:${size}px; object-fit:contain; filter:saturate(${sat}) drop-shadow(0 0 ${blur}px color-mix(in srgb, var(--cat-review) ${mix}%, transparent)) drop-shadow(0 10px 14px rgba(0,0,0,.28));">${sparks}</span>`;
+}
+/* ============================= GAMIFICATION V2: JOURNAL + PAGE COMPLETE =============================
+   Journey Journal spec §5 + §6. The journal is themed per character (Passport /
+   Portfolio / Notebook / Photo album / Home album, see JOURNAL_NAMES). One page
+   per level; slot 1 of every page is a pre-filled "Level start" stamp card
+   (endowed progress). Reached from the header fan or by tapping the companion. */
+function archShortName(){
+  const a = ARCHETYPES[learnerCharKey()];
+  if(!a) return '';
+  return String(L(a.name.en, a.name.tr, a.name.fa, a.name.es)).replace(/^(The|El|La)\s+/i, '');
+}
+function journalPageTitle(level){ return level+' · '+archShortName()+' '+journalName(); }
+function levelStartSouvenir(level, date){
+  return {type:'start', level, text:L("Here we go!",'Başlıyoruz!','بزن بریم!','¡Vamos!'), meaning:'', golden:false, date:date||todayISO()};
+}
+function journalEmptySlot(type, size){
+  const m = svTypeMeta(type);
+  const z = SV_SIZES[size||'mini'];
+  return `<div class="jr-empty" style="width:${z.w}px; height:${z.h}px; border-radius:${z.r}px; color:var(--cat-${m.c});"><span>${m.ic}</span></div>`;
+}
+// The slots of one level page: start card, then the roadmap's nodes (current level)
+// or the souvenirs collected there (earlier levels).
+function journalPageSlots(level){
+  const all = state.progress.souvenirs || [];
+  const mine = all.map((sv,i)=>({sv,i})).filter(x=>x.sv.level===level);
+  const slots = [{start:true, sv:levelStartSouvenir(level, mine.length ? mine[0].sv.date : todayISO())}];
+  if(level === roadmapLevelKey()){
+    const byId = {}; mine.forEach(x=>{ byId[x.sv.nodeId] = x; });
+    const used = new Set();
+    currentRoadmap().forEach(n=>{
+      const id = roadmapNodeId(n), x = byId[id];
+      if(x){ slots.push({sv:x.sv, i:x.i}); used.add(id); } else slots.push({empty:n.type});
+    });
+    mine.forEach(x=>{ if(!used.has(x.sv.nodeId)) slots.push({sv:x.sv, i:x.i}); });
+  } else {
+    mine.forEach(x=>slots.push({sv:x.sv, i:x.i}));
+  }
+  return slots;
+}
+function journalSlotHtml(s, size){
+  if(s.empty) return journalEmptySlot(s.empty, size);
+  if(s.start) return souvenirCardHtml(s.sv, size);
+  return `<button class="jr-slot" data-action="open-souvenir" data-i="${s.i}" aria-label="${esc(s.sv.text||'')}">${souvenirCardHtml(s.sv, size)}</button>`;
+}
+function renderJournal(){
+  const cur = roadmapLevelKey();
+  const levels = Array.from(new Set((state.progress.souvenirs||[]).map(s=>s.level).concat(cur ? [cur] : []))).filter(Boolean);
+  levels.sort((a,b)=>LEVEL_STAGES.indexOf(b) - LEVEL_STAGES.indexOf(a));
+  const count = (state.progress.souvenirs||[]).length;
+  return `<div class="fade-in">
+    ${sectionHead(journalName(), count ? L(count+' souvenirs collected — tap one to flip it', count+' hatıra toplandı — çevirmek için birine dokun', count+' یادگاری جمع شده — برای برگرداندن روی یکی بزن', count+' recuerdos reunidos — toca uno para darle la vuelta') : L('Finish a step on your roadmap to collect your first souvenir.','İlk hatıranı toplamak için yol haritanda bir adımı bitir.','برای جمع‌کردن اولین یادگاری، یک قدم از نقشه راهت را تمام کن.','Termina un paso de tu hoja de ruta para reunir tu primer recuerdo.'))}
+    <div class="screen" style="padding-top:0;">
+      ${levels.map(lv=>`<div class="card-flat" style="margin-bottom:14px;">
+        <div class="eyebrow" style="color:var(--ink-soft);">${esc(journalPageTitle(lv))}</div>
+        <div class="jr-grid">${journalPageSlots(lv).map(s=>journalSlotHtml(s, 'mini')).join('')}</div>
+      </div>`).join('')}
+    </div>
+  </div>`;
+}
+// Tap a souvenir: it grows to full size and flips to its meaning, with a speaker button.
+function openSouvenirModal(i){
+  const sv = (state.progress.souvenirs||[])[i];
+  if(!sv || document.querySelector('.celebrate-overlay')) return;
+  const speakText = (sv.type === 'game' || sv.type === 'session') ? '' : String(sv.text||'');
+  const el = document.createElement('div');
+  el.className = 'celebrate-overlay sv-modal';
+  el.innerHTML = `<div class="sv-modal-stack">
+    <div class="cel-sv" id="svm-card" style="opacity:1;"><div class="cel-flip" id="svm-flip">
+      <div class="cel-side cel-back">${souvenirCardHtml(sv, 'big')}</div>
+      <div class="cel-side cel-front">${souvenirCardHtml(sv, 'big', souvenirMeaningHtml(sv))}</div>
+    </div></div>
+    ${speakText ? `<button class="btn btn-primary" style="margin-top:16px;" data-action="speak-sentence" data-text="${esc(speakText)}">${ICONS.soundOn} ${L('Listen','Dinle','گوش کن','Escuchar')}</button>` : ''}
+    <div class="celebrate-hint">${L('Tap the card to flip it · tap outside to close','Çevirmek için karta, kapatmak için dışarıya dokun','برای برگرداندن روی کارت، برای بستن بیرون بزن','Toca la tarjeta para girarla · toca fuera para cerrar')}</div>
+  </div>`;
+  document.body.appendChild(el);
+  const flip = el.querySelector('#svm-flip');
+  let flipped = false;
+  const setFlip = (on)=>{
+    flipped = on;
+    const to = on ? 'rotateY(180deg)' : 'rotateY(0deg)';
+    const a = anim(flip, [{transform:on ? 'rotateY(0deg)' : 'rotateY(180deg)'}, {transform:to}], {duration:500, easing:'ease-in-out'});
+    flip.style.transform = to;
+    if(on) sfx('flip');
+    return a;
+  };
+  anim(el.querySelector('#svm-card'), [{transform:'scale(.53)', opacity:.4}, {transform:'scale(1)', opacity:1}], {duration:280, easing:SPRING});
+  const autoFlip = setTimeout(()=>setFlip(true), reducedMotion() ? 0 : 420);
+  el.addEventListener('click', (e)=>{
+    const sp = e.target.closest('[data-action="speak-sentence"]');
+    if(sp){ HANDLERS['speak-sentence'](sp); return; }
+    if(e.target.closest('#svm-card')){ clearTimeout(autoFlip); setFlip(!flipped); return; }
+    clearTimeout(autoFlip);
+    el.remove();
+  });
+}
+function roadmapAllDone(){
+  const r = currentRoadmap();
+  return r.length > 0 && r.every(it=>isRoadmapNodeDone(it));
+}
+/* Level complete ("page complete", §6): the journal page opens, the souvenirs drop
+   into their slots, the "{LEVEL} COMPLETE" stamp slams on (the app's only screen
+   shake), the companion celebrates and gains a level pin. Tap skips to the end. */
+function showPageComplete(){
+  if(document.querySelector('.celebrate-overlay')) return;
+  hideCharTip(true);
+  const level = roadmapLevelKey();
+  const slots = journalPageSlots(level);
+  const el = document.createElement('div');
+  el.className = 'celebrate-overlay pc-overlay';
+  el.innerHTML = `<div class="pc-stack">
+    <div class="pc-page">
+      <div class="eyebrow" style="color:var(--ink-soft); text-align:center;">${esc(journalPageTitle(level))}</div>
+      <div class="pc-grid">${slots.map(s=>`<div class="pc-slot">${journalSlotHtml(Object.assign({}, s, {i:undefined, start:true}), 'tiny')}</div>`).join('')}</div>
+      <div class="pc-stamp" id="pc-stamp"><span>${esc(level)}</span><small>${L('COMPLETE','TAMAM','کامل شد','COMPLETO')}</small></div>
+    </div>
+    <div class="pc-char-wrap" id="pc-char"><img src="char-${learnerCharKey()}.png" alt=""><span class="pc-pin" id="pc-pin">${esc(level)}</span></div>
+    <button class="btn" data-pc="advance" style="margin-top:10px; width:100%; max-width:320px; justify-content:center; background:var(--clay-orange); color:#fff; border:none;"><img src="icon-gradcap.png" alt="" style="width:22px; height:22px; object-fit:contain;">${L('Go to the next level','Bir sonraki seviyeye geç','برو به سطح بعدی','Ir al siguiente nivel')}</button>
+    <button class="btn btn-ghost" data-pc="close" style="margin-top:8px; width:100%; max-width:320px; justify-content:center; color:#fff; border-color:rgba(255,255,255,.5); background:transparent;">${L('Not now','Şimdi değil','الان نه','Ahora no')}</button>
+  </div>`;
+  document.body.appendChild(el);
+  const timers = [];
+  let done = false;
+  const q = s=>el.querySelector(s);
+  const stampHit = ()=>{
+    sfx('stamp'); buzz(20);
+    anim(document.getElementById('app'), [{transform:'translate(0,0)'}, {transform:'translate(-4px,0)'}, {transform:'translate(4px,0)'}, {transform:'translate(-4px,0)'}, {transform:'translate(4px,0)'}, {transform:'translate(0,0)'}], {duration:200, easing:'linear'});
+    anim(q('.pc-page'), [{transform:'translate(0,0)'}, {transform:'translate(-4px,0)'}, {transform:'translate(4px,0)'}, {transform:'translate(-4px,0)'}, {transform:'translate(4px,0)'}, {transform:'translate(0,0)'}], {duration:200, easing:'linear'});
+  };
+  const finish = ()=>{
+    if(done) return;
+    timers.forEach(clearTimeout);
+    el.querySelectorAll('.pc-slot, #pc-stamp, #pc-char img, #pc-pin').forEach(n=>{ try{ n.getAnimations().forEach(a=>a.cancel()); }catch(e){} });
+    el.classList.add('pc-end');
+    if(!el._stamped){ el._stamped = true; sfx('stamp'); }
+    done = true;
+  };
+  el.addEventListener('click', (e)=>{
+    const b = e.target.closest('[data-pc]');
+    if(b){
+      el.remove();
+      if(b.dataset.pc === 'advance') HANDLERS['advance-roadmap-level']();
+      return;
+    }
+    finish();
+  });
+  if(reducedMotion()){ finish(); return; }
+  const at = (ms, fn)=>timers.push(setTimeout(()=>{ try{ fn(); }catch(e){} }, ms));
+  el.querySelectorAll('.pc-slot').forEach((s,k)=>at(200 + k*60, ()=>{
+    s.style.opacity = '1';
+    anim(s, [{transform:'translateY(-20px)', opacity:0}, {transform:'translateY(0)', opacity:1}], {duration:320, easing:SPRING});
+  }));
+  const tStamp = 200 + slots.length*60 + 900;
+  at(tStamp, ()=>{
+    el._stamped = true;
+    const st = q('#pc-stamp'); st.style.opacity = '1';
+    anim(st, [{transform:'translate(-50%,-50%) scale(1.6) rotate(0deg)', opacity:0}, {transform:'translate(-50%,-50%) scale(1) rotate(-12deg)', opacity:1}], {duration:380, easing:SPRING});
+    setTimeout(stampHit, 300);
+    const img = q('#pc-char img');
+    anim(img, [{transform:'rotate(0deg) scale(1)'}, {transform:'rotate(180deg) scale(1.15)'}, {transform:'rotate(360deg) scale(1)'}], {duration:800, easing:'ease-in-out'});
+    const c = centerOf(img); sparkBurst(c.x, c.y, 10, '#ffd166', 100);
+  });
+  at(tStamp + 800, ()=>{
+    const pin = q('#pc-pin'); pin.style.opacity = '1';
+    anim(pin, [{transform:'scale(0)'}, {transform:'scale(1)'}], {duration:320, easing:SPRING});
+  });
+  at(tStamp + 1200, ()=>{ el.classList.add('pc-end'); done = true; });
 }
 function renderRoadmapCard(p){
   const roadmap = currentRoadmap();
@@ -7128,7 +7324,7 @@ function renderRoadmapCard(p){
   // start cap shows the clay start marker; the goal warms up as the page fills.
   const startMedia = `<img src="roadmap-start-clay.png" alt="" style="width:96px; height:96px; object-fit:contain; filter:drop-shadow(0 10px 14px rgba(0,0,0,.22));">`;
   const endMedia = allDone
-    ? `<div class="rm2-endcap-row">${roadmapGoalHtml(1, true)}${roadmapCompanionHtml(96, 'rm2-companion-end')}</div>`
+    ? `<div class="rm2-endcap-row">${roadmapGoalHtml(1, true)}${roadmapCompanionHtml(96, 'rm2-companion-end')}</div><button class="btn btn-primary rm2-page-btn" data-action="open-page-complete">${L('Page complete','Sayfa tamam','صفحه کامل شد','Página completa')}</button>`
     : roadmapGoalHtml(doneCount/roadmap.length, false);
 
   return `
@@ -9246,6 +9442,7 @@ const screens = {
   'diagnostic-step': renderDiagStep,
   'privacy-policy': renderPrivacyPolicy,
   'dashboard': renderDashboard,
+  'journal': renderJournal,
   'diag-intro-review': renderDiagReview,
   'session-prep': ()=>renderSessionPrep(state.viewParams.idx),
   'review-home': renderReviewHome,
@@ -10172,9 +10369,11 @@ const HANDLERS = {
     // the roadmap's return animation waits until the celebration closes
     if(willCelebrate && state.view==='dashboard') ui.holdAdvance = true;
     save(); render();
-    if(fresh.length) showCelebration(node.type, '', false, {souvenir:fresh[0]});
+    if(fresh.length) showCelebration(node.type, '', false, {souvenir:fresh[0], fresh:true});
     else if(willCelebrate) showCelebration('media');
   },
+  'open-souvenir'(el){ openSouvenirModal(Number(el.dataset.i)); },
+  'open-page-complete'(){ showPageComplete(); },
   'advance-roadmap-level'(){
     checkRoadmapStageAdvance();
     save(); render();

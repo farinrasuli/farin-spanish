@@ -191,6 +191,45 @@
   .dict-miss{text-decoration:underline dashed var(--error) 2px; text-underline-offset:4px;}
   /* Full prefers-reduced-motion support: every animation collapses to its end state. */
   @media (prefers-reduced-motion: reduce){ *, *::before, *::after{animation-duration:.001ms !important; animation-delay:0s !important; animation-iteration-count:1 !important; transition-duration:.001ms !important;} }
+  /* Gamification v2 (Journey Journal §4): souvenir cards. One 180x232 design;
+     the journal (96x124) and header fan (26x34) sizes are the same card scaled. */
+  .sv-box{position:relative; flex:0 0 auto;}
+  .sv-scale{position:absolute; left:0; top:0; width:180px; height:232px; transform-origin:0 0;}
+  .sv-card{position:relative; width:180px; height:232px; border-radius:22px; overflow:hidden; color:#fff; background:linear-gradient(150deg, var(--svc), color-mix(in srgb, var(--svc) 74%, #000 26%)); box-shadow:var(--clay-shadow); text-align:left;}
+  .sv-mini .sv-card{border-radius:26px;}
+  .sv-fan{box-shadow:var(--clay-shadow-soft); border-radius:6px;}
+  .sv-fan .sv-card{border-radius:42px; box-shadow:none;}
+  .sv-gold{background:linear-gradient(150deg, var(--cat-review), var(--clay-orange) 60%, var(--clay-orange-deep)); box-shadow:var(--clay-shadow), var(--glow-game);}
+  .sv-gold::after{content:''; position:absolute; top:-60%; left:-60%; width:35%; height:220%; background:linear-gradient(120deg, transparent, rgba(255,255,255,.8), transparent); transform:rotate(22deg); animation:badge-shine-sweep 2.2s ease-in-out infinite; pointer-events:none;}
+  .sv-rare{position:absolute; top:10px; left:50%; transform:translateX(-50%); z-index:2; background:#fff; color:var(--clay-orange-deep); font-size:10px; font-weight:900; text-transform:uppercase; letter-spacing:.05em; padding:3px 9px; border-radius:999px; white-space:nowrap; box-shadow:0 3px 8px -3px rgba(0,0,0,.3);}
+  .sv-eyebrow{position:absolute; top:16px; left:16px; max-width:100px; font-size:11px; font-weight:900; text-transform:uppercase; letter-spacing:.05em; color:rgba(255,255,255,.92); line-height:1.25;}
+  .sv-gold .sv-eyebrow{top:38px;}
+  .sv-art{position:absolute; top:10px; right:10px; object-fit:contain; filter:drop-shadow(0 6px 10px rgba(0,0,0,.25));}
+  .sv-gold .sv-art{top:32px;}
+  .sv-art-ic{width:40px; height:40px; top:14px; right:14px; border-radius:50%; background:rgba(255,255,255,.26); display:flex; align-items:center; justify-content:center; color:#fff; filter:none;}
+  .sv-body{position:absolute; left:16px; right:16px; top:78px;}
+  .sv-gold .sv-body{top:92px;}
+  .sv-label{font-size:10.5px; font-weight:800; text-transform:uppercase; letter-spacing:.05em; color:rgba(255,255,255,.85); margin-bottom:4px;}
+  .sv-phrase{font-family:'Fredoka',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; font-weight:800; font-size:20px; line-height:1.25; color:#fff; display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden; overflow-wrap:anywhere;}
+  .sv-phrase.sv-long{font-size:17px;}
+  .sv-meaning{font-size:13px; font-weight:600; color:rgba(255,255,255,.9); margin-top:6px; line-height:1.3; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;}
+  .sv-stamp{position:absolute; bottom:12px; right:12px; width:44px; height:44px; box-sizing:border-box; border-radius:50%; border:2.5px dashed rgba(255,255,255,.7); transform:rotate(-12deg); display:flex; flex-direction:column; align-items:center; justify-content:center; line-height:1; color:#fff;}
+  .sv-stamp b{font-family:'Fredoka',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; font-weight:700; font-size:13px;}
+  .sv-stamp small{font-size:9px; font-weight:700; margin-top:2px; color:rgba(255,255,255,.9);}
+  .sv-backface{background:var(--svc); display:flex; align-items:center; justify-content:center;}
+  .sv-logo{width:64px; height:64px; object-fit:contain; opacity:.9;}
+  /* Completion sequence (§3): stat stickers, the souvenir flip, the caption. */
+  .cel-stickers{display:flex; flex-wrap:wrap; justify-content:center; gap:6px; margin-top:10px;}
+  .cel-sticker{display:inline-block; background:#fff; color:var(--clay-orange-deep); font-family:'Fredoka',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; font-weight:700; font-size:16px; padding:4px 12px; border-radius:999px; box-shadow:var(--clay-shadow-soft), 0 0 0 1.5px color-mix(in srgb, var(--cat-review) 60%, transparent); opacity:0;}
+  .cel-sticker.hot{background:var(--clay-coral); color:#fff; box-shadow:var(--clay-shadow-soft);}
+  .cel-sv{width:180px; height:232px; margin-top:8px; perspective:900px; opacity:0;}
+  .cel-flip{position:relative; width:100%; height:100%; transform-style:preserve-3d;}
+  .cel-side{position:absolute; inset:0; backface-visibility:hidden; -webkit-backface-visibility:hidden;}
+  .cel-front{transform:rotateY(180deg);}
+  .cel-caption{opacity:0;}
+  .cel-end .cel-sticker, .cel-end .cel-sv, .cel-end .cel-caption{opacity:1 !important;}
+  .cel-end .cel-flip{transform:rotateY(180deg) !important;}
+  @media (max-height:760px){ .celebrate-overlay .celebrate-char{width:130px; height:130px;} .celebrate-stack .cute-bubble{font-size:17px; padding:14px 18px; margin-bottom:12px;} }
 
   .eyebrow{font-size:12px; font-weight:700; letter-spacing:.09em; text-transform:uppercase; color:var(--ink-faint);}
   .display{font-family:'Fredoka',-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; font-weight:700; letter-spacing:-.02em;}
@@ -4381,7 +4420,7 @@ function freshState(){
   return {
     view:'diagnostic-intro', viewParams:{}, lang:'tr',
     profile:{name:'', motivationTag:null, goals:[], archetype:null, level:null, levelStage:1, topics:[], learnerType:null, priorityArea:null, completedDiagnostic:false, dashboardIntroShown:false, recoveryCode:null, wantsContact:false, contactPhone:''},
-    progress:{sessionsExplored:0, streak:0, lastActiveDate:null, completedTraps:[], completedVocabSets:[], completedScenes:[], completedStories:[], completedGames:[], srs:{}, badgesEarnedAt:{}, reviewsCompleted:0, roadmapChecked:{}, dailyTasksDate:null, dailyTasksChecked:{}, writingRoundsDone:0, speakingRoundsDone:0, usedSpeakingTopics:[], xp:0, perfectGameRounds:0},
+    progress:{sessionsExplored:0, streak:0, lastActiveDate:null, completedTraps:[], completedVocabSets:[], completedScenes:[], completedStories:[], completedGames:[], srs:{}, badgesEarnedAt:{}, reviewsCompleted:0, roadmapChecked:{}, dailyTasksDate:null, dailyTasksChecked:{}, writingRoundsDone:0, speakingRoundsDone:0, usedSpeakingTopics:[], xp:0, perfectGameRounds:0, souvenirs:[], gameBests:{}, roadmapGolden:null, lastWords:{}},
     diag:{step:0, goals:[], level:null, topics:[], learnerType:null, priorityArea:null, test:null},
     roadmap:null,
     quiz:null, studentPanelCache:null
@@ -4418,6 +4457,11 @@ function load(){
     if(!merged.progress.usedSpeakingTopics) merged.progress.usedSpeakingTopics = [];
     if(merged.progress.xp===undefined) merged.progress.xp = 0;
     if(merged.progress.perfectGameRounds===undefined) merged.progress.perfectGameRounds = 0;
+    // Gamification v2 (Journey Journal §10)
+    if(!Array.isArray(merged.progress.souvenirs)) merged.progress.souvenirs = [];
+    if(!merged.progress.gameBests) merged.progress.gameBests = {};
+    if(merged.progress.roadmapGolden===undefined) merged.progress.roadmapGolden = null;
+    if(!merged.progress.lastWords) merged.progress.lastWords = {};
     if(merged.profile.levelStage===undefined) merged.profile.levelStage = 1;
     if(!merged.progress.dailyTasksChecked) merged.progress.dailyTasksChecked = {};
     if(merged.progress.dailyTasksDate===undefined) merged.progress.dailyTasksDate = null;
@@ -5489,6 +5533,7 @@ function ensureRoadmap(){
   if(state.profile && state.profile.completedDiagnostic && (!state.roadmap || !state.roadmap.length)){
     try{ state.roadmap = buildRoadmap(state.profile); }catch(e){}
   }
+  if(state.profile && state.profile.completedDiagnostic){ try{ awardSouvenirs(null); }catch(e){} }
 }
 /* Non-destructive goal-edit regeneration, ported from the English app
    (mergeRoadmapForGoalChange). Unlike regenerateRoadmap(), this MUTATES
@@ -5573,9 +5618,293 @@ function celebrationText(kind, low){
   const list = low ? LOW : (M[kind] || [L('Well done, {name}!','Aferin, {name}!','آفرین، {name}!','¡Bien hecho, {name}!')]);
   return list[Math.floor(Math.random()*list.length)].replace('{name}', name);
 }
-function showCelebration(kind, detail, low){
+/* ============================= GAMIFICATION V2: SOUVENIRS + JOURNAL DATA =============================
+   Journey Journal spec §4 + §10 (approved 2026-09-30). Every finished roadmap node
+   leaves a souvenir card made of the content the learner just worked with (the
+   sentence, the word, their own words, a game record). Data lives in
+   state.progress (so it syncs with the cloud backup like everything else):
+   - progress.souvenirs[]   {nodeId, level, type, text, meaning, art, label, golden, date, gameKind?}
+   - progress.gameBests{}   per game kind: {time, score, pct}
+   - progress.roadmapGolden {levelKey, goldenIdx, nodeId} — the spec's roadmap.goldenIdx.
+     state.roadmap is a plain array (array properties don't survive JSON), so the
+     index is kept here together with the node id, which survives goal-edit merges.
+   - progress.lastWords{}   last passed Studio round text per mode ("Your words"). */
+// Farin's decision 4: the journal is themed per character.
+const JOURNAL_NAMES = {
+  travel:     {en:'Passport',    tr:'Pasaport',        fa:'گذرنامه',    es:'Pasaporte'},
+  career:     {en:'Portfolio',   tr:'Portfolyo',       fa:'پورتفولیو',  es:'Portafolio'},
+  exam:       {en:'Notebook',    tr:'Defter',          fa:'دفترچه',     es:'Cuaderno'},
+  everyday:   {en:'Photo album', tr:'Fotoğraf albümü', fa:'آلبوم عکس',  es:'Álbum de fotos'},
+  immigration:{en:'Home album',  tr:'Ev albümü',       fa:'آلبوم خانه', es:'Álbum de casa'}
+};
+function journalName(){ const n = JOURNAL_NAMES[learnerCharKey()] || JOURNAL_NAMES.everyday; return L(n.en, n.tr, n.fa, n.es); }
+function svText(x){ return (x && typeof x === 'object') ? (L(x.en, x.tr, x.fa, x.es) || x.en || '') : (x || ''); }
+function roadmapLevelKey(){ const p = state.profile || {}; return p.level ? displayLevel(p) : ''; }
+function svTypeMeta(t){
+  const M = {
+    grammar: {c:'gram',  ic:ICONS.dumbbell, label:L('Grammar','Dilbilgisi','گرامر','Gramática')},
+    vocab:   {c:'voc',   img:'icon-story.png', ic:ICONS.cards, label:L('Words','Kelimeler','واژه‌ها','Palabras')},
+    slang:   {c:'diag',  ic:ICONS.cards, label:L('Slang','Argo','اصطلاحات','Argot')},
+    session: {c:'lis',   ic:ICONS.chat, label:L('Live session','Canlı seans','جلسه زنده','Sesión en vivo')},
+    story:   {c:'story', img:'icon-story.png', ic:ICONS.book, label:L('Story','Hikaye','داستان','Historia')},
+    writing: {c:'gram',  img:'studio-icon-cutout.png', ic:ICONS.pen, label:L('Writing','Yazma','نوشتن','Escritura')},
+    speaking:{c:'lis',   img:'studio-icon-cutout.png', ic:ICONS.mic, label:L('Speaking','Konuşma','صحبت','Conversación')},
+    game:    {c:'review',ic:ICONS.bolt, label:L('Game','Oyun','بازی','Juego')},
+    media:   {c:'story', ic:ICONS.play, label:L('Watch','İzle','تماشا','Ver')},
+    start:   {c:'diag',  ic:ICONS.star, label:L('Level start','Seviye başı','شروع سطح','Inicio de nivel')}
+  };
+  return M[t] || M.grammar;
+}
+function svDateLabel(iso){
+  try{
+    const d = new Date((iso||todayISO())+'T12:00:00');
+    const loc = LANG==='tr' ? 'tr-TR' : (LANG==='fa' ? 'fa-IR' : (LANG==='es' ? 'es-ES' : 'en-GB'));
+    return d.toLocaleDateString(loc, {day:'numeric', month:'short'});
+  }catch(e){ return iso || ''; }
+}
+// One random node per level is the guaranteed "rare find" (never shown in advance).
+function ensureGolden(roadmap){
+  roadmap = roadmap || currentRoadmap();
+  if(!roadmap.length) return null;
+  const pr = state.progress, key = roadmapLevelKey();
+  const g = pr.roadmapGolden;
+  if(g && g.levelKey === key && roadmap.some(n=>roadmapNodeId(n) === g.nodeId)) return g;
+  // Prefer a node that isn't done yet, so a save migrated mid-level still gets its rare find.
+  const all = roadmap.map((n,i)=>i);
+  const open = all.filter(i=>!isRoadmapNodeDone(roadmap[i]));
+  const pool = open.length ? open : all;
+  const idx = pool[Math.floor(Math.random()*pool.length)];
+  pr.roadmapGolden = {levelKey:key, goldenIdx:idx, nodeId:roadmapNodeId(roadmap[idx])};
+  return pr.roadmapGolden;
+}
+function gameDisplayName(kind){
+  if(kind === 'trap') return L('Trap Dash','Tuzak Kaçışı','فرار از تله‌ها','Escape de trampas');
+  if(kind === 'dictation') return L('Listen & Type','Dinle ve Yaz','گوش کن و بنویس','Escucha y escribe');
+  return L('Word Rush','Kelime Yarışı','مسابقه کلمات','Carrera de palabras');
+}
+function viewGameKind(view){ return view==='game-trap' ? 'trap' : (view==='game-dictation' ? 'dictation' : 'match'); }
+// Stats of a finished round, in one shape for all three games.
+function gameRoundStats(kind, round){
+  if(kind === 'match'){
+    return {time:Math.max(1, Math.floor(((round.finishedAt||Date.now()) - round.startedAt)/1000)), mistakes:round.mistakes||0, perfect:(round.mistakes||0)===0};
+  }
+  if(kind === 'trap'){
+    const total = round.questions.length;
+    const time = round.startedAt ? Math.max(1, Math.round(((round.finishedAt||Date.now()) - round.startedAt)/1000)) : null;
+    return {correct:round.correctCount, total, score:round.score, time, perfect:total>0 && round.correctCount===total};
+  }
+  const pct = round.results.length ? Math.round(round.results.reduce((a,r)=>a+r.pct,0)/round.results.length) : 0;
+  return {pct, perfect:pct===100};
+}
+function gameRecordText(kind, st){
+  const name = gameDisplayName(kind);
+  if(kind === 'match') return name+' · '+st.time+'s · '+st.mistakes+' '+(st.mistakes===1 ? L('miss','hata','اشتباه','fallo') : L('misses','hata','اشتباه','fallos'));
+  if(kind === 'trap') return name+' · '+st.correct+'/'+st.total+(st.time ? ' · '+st.time+'s' : '');
+  return name+' · '+st.pct+'%';
+}
+function gameStatStickers(kind, st){
+  if(kind === 'match') return [st.time+'s', st.mistakes+' '+(st.mistakes===1 ? L('miss','hata','اشتباه','fallo') : L('misses','hata','اشتباه','fallos'))];
+  if(kind === 'trap') return [st.correct+'/'+st.total, L('Score','Skor','امتیاز','Puntos')+' '+st.score];
+  return [st.pct+'% '+L('heard','duyuldu','شنیده شد','escuchado')];
+}
+// Personal bests per game kind. Returns true only when an earlier best was beaten.
+function updateGameBest(kind, st){
+  const pr = state.progress; if(!pr.gameBests) pr.gameBests = {};
+  const prev = pr.gameBests[kind];
+  const metric = kind==='match' ? (b=>-(b.time||9999)) : (kind==='trap' ? (b=>b.score||0) : (b=>b.pct||0));
+  const cur = {time:st.time||null, score:st.score!=null ? st.score : null, pct:st.pct!=null ? st.pct : null};
+  if(!prev){ pr.gameBests[kind] = cur; return false; }
+  if(metric(cur) > metric(prev)){ pr.gameBests[kind] = cur; return true; }
+  return false;
+}
+// Content per type (spec §4 defaults; farin-lxd may refine phrase selection later).
+function souvenirContent(node, ctx){
+  ctx = ctx || {};
+  const t = node.type;
+  const out = {text:'', meaning:'', art:'', label:''};
+  if(t === 'grammar'){
+    const it = GRAMMAR_ITEMS.find(g=>g.id===node.refId);
+    if(it){
+      const v = node.goal && it.goalVariant && it.goalVariant[node.goal];
+      const b = (v && v.blank) || it.blank;
+      // Spanish side: GRAMMAR_ITEMS titles are {en,tr,fa,es} objects (English has title + titleTr strings).
+      out.text = b ? String(b.sentence).replace(/_{2,}/, b.word) : (it.right || svText(it.title));
+      out.meaning = it.title || '';
+    }
+  } else if(t === 'vocab' || t === 'slang'){
+    const set = VOCAB_SETS.find(s=>s.id===node.refId);
+    if(set && set.cards.length){
+      let card = null;
+      const q = ctx.quiz;
+      if(q && q.results){
+        const okWhy = q.questions.filter((qq,i)=>q.results[i]).map(qq=>String(qq.why||''));
+        card = shuffle(set.cards).find(c=>okWhy.some(w=>w.indexOf('"'+c.word+'"')===0));
+      }
+      card = card || set.cards[Math.floor(Math.random()*set.cards.length)];
+      out.text = card.word;
+      out.meaning = card.meaning || '';
+    }
+  } else if(t === 'story'){
+    const s = STORY_LIBRARY.find(x=>x.id===node.refId);
+    if(s){
+      // Spanish side: the souvenir phrase is the story title in the language being learned.
+      out.text = (s.title && s.title.es) || svText(s.title);
+      out.meaning = s.title || '';
+      if(s.genre) out.art = 'story-'+String(s.genre).toLowerCase()+'-cutout.png';
+    }
+  } else if(t === 'writing' || t === 'speaking'){
+    const words = String(ctx.words || (state.progress.lastWords && state.progress.lastWords[t]) || '').trim();
+    if(words){ out.text = words.length > 80 ? words.slice(0,80).replace(/\s+\S*$/,'')+'…' : words; out.label = 'words'; }
+  } else if(t === 'game'){
+    const kind = node.gameKind || 'match';
+    const st = ctx.stats || null;
+    out.text = st ? gameRecordText(kind, st) : gameDisplayName(kind);
+  } else if(t === 'session'){
+    out.label = 'session';
+  }
+  if(!out.text) out.text = node.title || svTypeMeta(t).label;
+  return out;
+}
+/* Creates a souvenir for every done node of the current roadmap page that doesn't
+   have one yet. ctx.node marks the node that was just finished (its souvenir uses
+   ctx's live content: the quiz answers, the game stats, the learner's words).
+   Called with no ctx at startup, it silently backfills saves from before v2. */
+function awardSouvenirs(ctx){
+  const roadmap = currentRoadmap();
+  if(!roadmap.length || !state.progress) return [];
+  const pr = state.progress;
+  if(!pr.souvenirs) pr.souvenirs = [];
+  const key = roadmapLevelKey();
+  const g = ensureGolden(roadmap);
+  const have = new Set(pr.souvenirs.filter(s=>s.level===key).map(s=>s.nodeId));
+  const ctxId = ctx && ctx.node ? roadmapNodeId(ctx.node) : null;
+  const fresh = [];
+  roadmap.forEach(node=>{
+    const id = roadmapNodeId(node);
+    if(have.has(id) || !isRoadmapNodeDone(node)) return;
+    const isCtx = id === ctxId;
+    const c = souvenirContent(node, isCtx ? ctx : {});
+    const sv = {nodeId:id, level:key, type:node.type, text:c.text, meaning:c.meaning, art:c.art, label:c.label,
+      golden:!!((g && g.nodeId===id) || (isCtx && ctx.perfect)), date:todayISO()};
+    if(node.type === 'game') sv.gameKind = node.gameKind || 'match';
+    pr.souvenirs.push(sv); fresh.push(sv); have.add(id);
+  });
+  if(ctxId) fresh.sort((a,b)=>(b.nodeId===ctxId) - (a.nodeId===ctxId));
+  return fresh;
+}
+function findRoadmapNode(pred){
+  const roadmap = currentRoadmap();
+  const key = roadmapLevelKey();
+  const have = new Set(((state.progress && state.progress.souvenirs) || []).filter(s=>s.level===key).map(s=>s.nodeId));
+  const all = roadmap.filter(pred);
+  return all.find(n=>!have.has(roadmapNodeId(n))) || all[0] || null;
+}
+/* Works out what the completion sequence shows for a finished round: the new
+   souvenir (or an upgraded game record), game stat stickers and "New best!". */
+function celebrationExtras(view, vp, kind){
+  const extra = {souvenir:null, stickers:null, newBest:false};
+  try{
+    let ctx = null;
+    if(view === 'quiz' && state.quiz && state.quiz.contextId){
+      const q = state.quiz;
+      const types = q.kind === 'vocab' ? ['vocab','slang'] : [q.kind];
+      const node = findRoadmapNode(n=>types.includes(n.type) && n.refId===q.contextId);
+      if(node) ctx = {node, quiz:q};
+    } else if(kind === 'game' && vp.round){
+      const gk = viewGameKind(view);
+      const st = gameRoundStats(gk, vp.round);
+      extra.stickers = gameStatStickers(gk, st);
+      extra.newBest = updateGameBest(gk, st);
+      const node = findRoadmapNode(n=>n.type==='game' && n.refId===vp.refId);
+      if(node) ctx = {node, stats:st, perfect:st.perfect};
+      const fresh = awardSouvenirs(ctx);
+      extra.souvenir = fresh[0] || null;
+      if(!extra.souvenir){
+        // A replay: a perfect round or a new best upgrades this game's record souvenir.
+        const sv = (state.progress.souvenirs||[]).slice().reverse().find(s=>s.type==='game' && s.nodeId.split('#')[0]==='game:'+vp.refId);
+        if(sv && (st.perfect && !sv.golden || extra.newBest)){
+          if(st.perfect) sv.golden = true;
+          if(extra.newBest){ sv.text = gameRecordText(gk, st); sv.date = todayISO(); }
+          extra.souvenir = sv;
+        }
+      }
+      return extra;
+    }
+    const fresh = awardSouvenirs(ctx);
+    extra.souvenir = fresh[0] || null;
+  }catch(e){}
+  return extra;
+}
+
+/* ---- Souvenir card rendering (one 180x232 design, scaled for the mini/fan sizes) ---- */
+const SV_SIZES = {big:{w:180, h:232, r:22}, mini:{w:96, h:124, r:14}, fan:{w:26, h:34, r:6}};
+function souvenirFaceHtml(sv){
+  const m = svTypeMeta(sv.type);
+  const color = 'var(--cat-'+m.c+')';
+  const art = sv.art || m.img;
+  const artHtml = art
+    ? `<img src="${art}" alt="" class="sv-art" style="width:${art==='studio-icon-cutout.png'?72:56}px; height:${art==='studio-icon-cutout.png'?72:56}px;">`
+    : `<span class="sv-art sv-art-ic">${m.ic}</span>`;
+  const label = sv.label === 'words' ? L('Your words','Senin sözlerin','حرف‌های تو','Tus palabras')
+    : '';
+  const isWord = sv.type === 'vocab' || sv.type === 'slang';
+  return `<div class="sv-card ${sv.golden?'sv-gold':''}" style="--svc:${color};">
+    ${sv.golden ? `<span class="sv-rare">${L('Rare find','Nadir buluntu','یافته کمیاب','Hallazgo raro')}</span>` : ''}
+    <div class="sv-eyebrow">${esc(m.label)} · ${esc(sv.level||'')}</div>
+    ${artHtml}
+    <div class="sv-body">
+      ${label ? `<div class="sv-label">${esc(label)}</div>` : ''}
+      <div class="sv-phrase ${String(sv.text||'').length>42?'sv-long':''}" dir="ltr">${esc(sv.text||'')}</div>
+      ${isWord && sv.meaning ? `<div class="sv-meaning">${esc(svText(sv.meaning))}</div>` : ''}
+    </div>
+    <div class="sv-stamp"><b>${esc(sv.level||'')}</b><small>${esc(svDateLabel(sv.date))}</small></div>
+  </div>`;
+}
+function souvenirBackHtml(sv){
+  const m = svTypeMeta(sv.type);
+  return `<div class="sv-card sv-backface" style="--svc:var(--cat-${m.c});">
+    <img src="logo-fe-cutout.png" alt="" class="sv-logo">
+    <span class="sparkle" style="top:16px; left:18px; color:#fff;"></span>
+    <span class="sparkle" style="top:30px; right:22px; left:auto; width:6px; height:6px; animation-delay:.5s; color:#fff;"></span>
+    <span class="sparkle" style="bottom:24px; left:30px; width:5px; height:5px; animation-delay:1s; color:#fff;"></span>
+    <span class="sparkle" style="bottom:34px; right:28px; left:auto; width:6px; height:6px; animation-delay:1.4s; color:#fff;"></span>
+  </div>`;
+}
+// The meaning side used when a souvenir is flipped in the journal.
+function souvenirMeaningHtml(sv){
+  const m = svTypeMeta(sv.type);
+  const meaning = svText(sv.meaning);
+  return `<div class="sv-card sv-meaningface" style="--svc:var(--cat-${m.c});">
+    <div class="sv-eyebrow">${esc(m.label)} · ${esc(sv.level||'')}</div>
+    <div class="sv-body">
+      <div class="sv-phrase" dir="ltr" style="font-size:17px;">${esc(sv.text||'')}</div>
+      ${meaning && meaning !== sv.text ? `<div class="sv-meaning" style="font-size:14px; margin-top:8px;">${esc(meaning)}</div>` : ''}
+    </div>
+  </div>`;
+}
+function souvenirCardHtml(sv, size, inner){
+  const z = SV_SIZES[size] || SV_SIZES.big;
+  const k = z.w / 180;
+  return `<div class="sv-box sv-${size}" style="width:${z.w}px; height:${z.h}px; border-radius:${z.r}px;"><div class="sv-scale" style="transform:scale(${k});">${inner || souvenirFaceHtml(sv)}</div></div>`;
+}
+/* Node completion sequence (Journey Journal spec §3). Same overlay, scrim and
+   10s auto-return as before; the first tap skips straight to the end state, a
+   tap on the end state goes back to the roadmap. Timeline:
+   0 overlay · 150 character pops in · 300 bubble · 700 cheer + 3 sparkles ·
+   900 game stat stickers · 1300 souvenir flies in face-down · 1800 flip + reveal ·
+   2600 card shrinks and flies to the roadmap header, "Added to your {journal}". */
+let celebrateSeq = null;
+function clearCelebrateSeq(){
+  if(celebrateSeq){ celebrateSeq.timers.forEach(clearTimeout); celebrateSeq.timers = []; }
+}
+function showCelebration(kind, detail, low, extra){
+  extra = extra || {};
   if(document.querySelector('.celebrate-overlay')) return;
   hideCharTip(true);
+  clearCelebrateSeq();
+  const sv = extra.souvenir || null;
+  const stickers = (extra.stickers || []).map(t=>({t, hot:false}));
+  if(extra.newBest) stickers.push({t:L('New best!','Yeni rekor!','رکورد تازه!','¡Nuevo récord!'), hot:true});
   const el = document.createElement('div');
   el.className = 'celebrate-overlay';
   el.innerHTML = `<div class="celebrate-stack">
@@ -5583,18 +5912,81 @@ function showCelebration(kind, detail, low){
     <span class="sparkle" style="top:40%; right:-6px; left:auto; width:8px; height:8px; animation-delay:.5s;"></span>
     <span class="sparkle" style="bottom:30px; left:12px; width:7px; height:7px; animation-delay:1s;"></span>
     <span class="sparkle" style="bottom:70px; right:24px; left:auto; width:6px; height:6px; animation-delay:1.5s;"></span>
-    <div class="cute-bubble">🎉 ${celebrationText(kind, low)}${detail ? `<small>${esc(detail)}</small>` : ''}</div>
-    <img class="celebrate-char" src="char-${learnerCharKey()}.png" alt="">
+    <div class="cute-bubble">🎉 ${celebrationText(kind, low)}${stickers.length
+      ? `<div class="cel-stickers">${stickers.map(s=>`<span class="cel-sticker ${s.hot?'hot':''}">${esc(s.t)}</span>`).join('')}</div>`
+      : (detail ? `<small>${esc(detail)}</small>` : '')}</div>
+    <img class="celebrate-char" id="cel-char" src="char-${learnerCharKey()}.png" alt="">
+    ${sv ? `<div class="cel-sv" id="cel-sv"><div class="cel-flip" id="cel-flip">
+        <div class="cel-side cel-back">${souvenirCardHtml(sv, 'big', souvenirBackHtml(sv))}</div>
+        <div class="cel-side cel-front">${souvenirCardHtml(sv, 'big')}</div>
+      </div></div>
+      <div class="celebrate-hint cel-caption" id="cel-caption">${esc(L('Added to your '+journalName(), journalName()+' koleksiyonuna eklendi', 'به '+journalName()+' تو اضافه شد', 'Añadido a tu '+journalName()))}</div>` : ''}
     <div class="celebrate-hint">${L('Back to your roadmap in a moment…','Birazdan yol haritana dönüyorsun…','تا چند لحظه دیگر به نقشه راهت برمی‌گردی…', 'En un momento vuelves a tu hoja de ruta…')}</div>
   </div>`;
-  el.addEventListener('click', backToRoadmap);
   document.body.appendChild(el);
   playFinishJingle(low);
+  const seq = celebrateSeq = {timers:[], done:false, revealed:false, exit: extra.onExit || backToRoadmap};
+  const at = (ms, fn)=>seq.timers.push(setTimeout(()=>{ try{ fn(); }catch(e){} }, ms));
+  const q = sel=>el.querySelector(sel);
+  const reveal = ()=>{
+    if(seq.revealed || !sv) return;
+    seq.revealed = true;
+    const c = centerOf(q('#cel-sv'));
+    sparkBurst(c.x, c.y, 10, sv.golden ? '#ffd166' : '#fff', 110);
+    sfx('reveal'); buzz([8,40,8]);
+  };
+  // End state: everything shown, souvenir face-up, caption visible.
+  const finish = ()=>{
+    clearCelebrateSeq();
+    el.querySelectorAll('.cel-sticker, #cel-char, #cel-sv, #cel-flip, #cel-caption').forEach(n=>{ try{ n.getAnimations().forEach(a=>a.cancel()); }catch(e){} });
+    el.classList.add('cel-end');
+    reveal();
+    seq.done = true;
+  };
+  seq.finish = finish;
+  el.addEventListener('click', ()=>{ if(seq.done) seq.exit(); else finish(); });
   clearTimeout(celebrateTimer);
-  celebrateTimer = setTimeout(backToRoadmap, CELEBRATE_MS);
+  celebrateTimer = setTimeout(()=>seq.exit(), CELEBRATE_MS);
+  if(reducedMotion()){ finish(); return; }
+  at(700, ()=>{
+    const ch = q('#cel-char');
+    const a = anim(ch, [{transform:'translateY(0)'}, {transform:'translateY(-18px)', offset:.5}, {transform:'translateY(0)'}], {duration:520, easing:SPRING});
+    if(a) a.onfinish = ()=>anim(ch, [{transform:'scale(1.08,.92)'}, {transform:'scale(1,1)'}], {duration:80, easing:'ease-out'});
+    const c = centerOf(ch);
+    sparkBurst(c.x, c.y - 40, 3, '#ffd166', 90);
+  });
+  at(900, ()=>{
+    el.querySelectorAll('.cel-sticker').forEach((s,k)=>{
+      seq.timers.push(setTimeout(()=>{
+        s.style.opacity = '1';
+        anim(s, [{transform:'scale(.6)', opacity:0}, {transform:'scale(1)', opacity:1}], {duration:260, easing:SPRING});
+      }, k*120));
+    });
+  });
+  if(!sv){ at(1300, ()=>{ seq.done = true; }); return; }
+  at(1300, ()=>{
+    const box = q('#cel-sv'); box.style.opacity = '1';
+    anim(box, [{transform:'translateY(120px) rotate(-8deg)', opacity:0}, {transform:'translateY(0) rotate(0deg)', opacity:1}], {duration:400, easing:SPRING});
+  });
+  at(1800, ()=>{
+    const f = q('#cel-flip');
+    const a = anim(f, [{transform:'rotateY(0deg)'}, {transform:'rotateY(180deg)'}], {duration:500, easing:'ease-in-out', fill:'forwards'});
+    seq.timers.push(setTimeout(reveal, 250));
+    if(a) a.onfinish = ()=>{ f.style.transform = 'rotateY(180deg)'; };
+  });
+  at(2600, ()=>{
+    const box = q('#cel-sv');
+    const r = box.getBoundingClientRect();
+    const dy = -(r.top + r.height/2 - 40);
+    anim(box, [{transform:'translateY(0) scale(1)', opacity:1}, {transform:`translateY(${dy}px) scale(.3)`, opacity:0}], {duration:500, easing:'ease-in', fill:'forwards'});
+    const cap = q('#cel-caption'); cap.style.opacity = '1';
+    anim(cap, [{opacity:0, transform:'translateY(6px)'}, {opacity:1, transform:'translateY(0)'}], {duration:300, easing:'ease-out'});
+  });
+  at(3100, ()=>{ seq.done = true; });
 }
 function backToRoadmap(){
   clearTimeout(celebrateTimer); celebrateTimer = null;
+  clearCelebrateSeq(); celebrateSeq = null;
   document.querySelectorAll('.celebrate-overlay').forEach(n=>n.remove());
   if(state.view !== 'dashboard') go('dashboard');
   navHistory.length = 0;
@@ -5615,8 +6007,11 @@ function maybeCelebrate(){
     target = vp.result; kind = vp.mode;
   }
   if(!target || target._celebrated) return;
-  target._celebrated = true; save();
-  setTimeout(()=>{ if(state.view===v) showCelebration(kind, detail, low); }, 900);
+  target._celebrated = true;
+  // Gamification v2: award the souvenir now (saved with the round), reveal it in the sequence
+  const extra = celebrationExtras(v, vp, kind);
+  save();
+  setTimeout(()=>{ if(state.view===v) showCelebration(kind, detail, low, extra); }, 900);
 }
 
 /* ============================= RENDER: SHELL ============================= */
@@ -7823,7 +8218,7 @@ function buildTrapRound(profile, n){
     return {sentence:c.blank.sentence, options:opts, correct:opts.indexOf(c.blank.word), itemId:c.itemId, field:c.field};
   });
   const timeLimit = 10;
-  return {questions, index:0, score:0, streak:0, correctCount:0, mistakes:0, perfect:true, answered:false, selected:null, lastPoints:0, timeLimit, deadline:Date.now()+timeLimit*1000, finished:false, xpGain:0};
+  return {questions, index:0, score:0, streak:0, correctCount:0, mistakes:0, perfect:true, answered:false, selected:null, lastPoints:0, timeLimit, deadline:Date.now()+timeLimit*1000, finished:false, xpGain:0, startedAt:Date.now(), finishedAt:null};
 }
 function renderGameMatch(){
   const vp = state.viewParams;
@@ -8017,6 +8412,7 @@ function trapAdvance(refId){
     const isPerfect = round.perfect;
     const xpGain = scoreGameCompletion(refId, isPerfect);
     round.xpGain = xpGain;
+    round.finishedAt = Date.now();
     round.finished = true;
     markGameComplete(refId);
   }
@@ -9657,7 +10053,14 @@ const HANDLERS = {
     const rc = state.progress.roadmapChecked;
     rc[id] = !rc[id];
     save(); render();
-    if(rc[id] && state.view==='media-session') showCelebration('media');
+    // Gamification v2: checking a node off earns its souvenir (once — unchecking keeps it).
+    if(rc[id]){
+      const node = currentRoadmap().find(n=>roadmapNodeId(n)===id);
+      const fresh = node ? awardSouvenirs({node}) : [];
+      save();
+      if(fresh.length) showCelebration(node.type, '', false, {souvenir:fresh[0]});
+      else if(state.view==='media-session') showCelebration('media');
+    }
   },
   'advance-roadmap-level'(){
     checkRoadmapStageAdvance();
@@ -9745,6 +10148,8 @@ const HANDLERS = {
     if(result.passed){
       const key = vp.mode==='writing' ? 'writingRoundsDone' : 'speakingRoundsDone';
       state.progress[key] = (state.progress[key]||0) + 1;
+      if(!state.progress.lastWords) state.progress.lastWords = {};
+      state.progress.lastWords[vp.mode] = String(text||'').slice(0, 300);
       // Gamification (4bDl1BS3): +10 XP per passed Studio Lab round. Unlike
       // games, these rounds are freshly generated each time (no catalog id to
       // dedupe on — see roadmapNodeAutoDone's comment), and "New round" is the

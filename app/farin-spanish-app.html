@@ -5788,7 +5788,7 @@ function souvenirContent(node, ctx){
     const words = String(ctx.words || (state.progress.lastWords && state.progress.lastWords[t]) || '').trim();
     if(words){ out.text = words.length > 80 ? words.slice(0,80).replace(/\s+\S*$/,'')+'…' : words; out.label = 'words'; }
   } else if(t === 'game'){
-    const kind = node.gameKind || 'match';
+    const kind = ctx.kind || node.gameKind || 'match';
     const st = ctx.stats || null;
     out.text = st ? gameRecordText(kind, st) : gameDisplayName(kind);
   } else if(t === 'session'){
@@ -5818,7 +5818,7 @@ function awardSouvenirs(ctx){
     const c = souvenirContent(node, isCtx ? ctx : {});
     const sv = {nodeId:id, level:key, type:node.type, text:c.text, meaning:c.meaning, art:c.art, label:c.label,
       golden:!!((g && g.nodeId===id) || (isCtx && ctx.perfect)), date:todayISO()};
-    if(node.type === 'game') sv.gameKind = node.gameKind || 'match';
+    if(node.type === 'game') sv.gameKind = (isCtx && ctx.kind) || node.gameKind || 'match';
     pr.souvenirs.push(sv); fresh.push(sv); have.add(id);
   });
   if(ctxId) fresh.sort((a,b)=>(b.nodeId===ctxId) - (a.nodeId===ctxId));
@@ -5848,7 +5848,7 @@ function celebrationExtras(view, vp, kind){
       extra.stickers = gameStatStickers(gk, st);
       extra.newBest = updateGameBest(gk, st);
       const node = findRoadmapNode(n=>n.type==='game' && n.refId===vp.refId);
-      if(node) ctx = {node, stats:st, perfect:st.perfect};
+      if(node) ctx = {node, stats:st, perfect:st.perfect, kind:gk};
       const fresh = awardSouvenirs(ctx);
       extra.souvenir = fresh[0] || null;
       extra.fresh = !!fresh[0];

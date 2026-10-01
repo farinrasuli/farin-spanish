@@ -275,6 +275,14 @@
   .name-input:focus{border-color:var(--accent);}
   .field-label{font-size:12.5px; font-weight:700; color:var(--ink-soft); margin-bottom:6px; display:block;}
   .unlock-error{background:var(--error-soft); color:var(--error); border-radius:14px; padding:10px 13px; font-size:13px; font-weight:600;}
+  .pw-wrap{position:relative;}
+  .pw-wrap .name-input{padding-inline-end:78px;}
+  .pw-eye{position:absolute; inset-inline-end:8px; top:50%; transform:translateY(-50%); background:none; border:none; color:var(--ink-soft); font-size:12.5px; font-weight:700; padding:8px 10px; cursor:pointer;}
+  .field-hint{font-size:12px; color:var(--ink-faint); margin-top:6px; line-height:1.45;}
+  .pw-seg{display:flex; gap:6px; padding:4px; border-radius:16px; background:var(--bg-sunken); margin-bottom:16px;}
+  .pw-seg button{flex:1; border:none; background:none; padding:10px 8px; border-radius:12px; font-size:13px; font-weight:700; color:var(--ink-soft); cursor:pointer;}
+  .pw-seg button.on{background:var(--bg-elevated, #fff); color:var(--ink); box-shadow:0 1px 3px rgba(0,0,0,.10);}
+  .pw-ok{background:var(--success-soft, rgba(46,160,90,.14)); color:var(--success, #2e9e5a); border-radius:14px; padding:10px 13px; font-size:13px; font-weight:600;}
   .lead-box{width:100%; resize:none; border:1.5px dashed var(--border); border-radius:14px; background:var(--bg-sunken); color:var(--ink); font-family:inherit; font-size:13px; line-height:1.6; padding:12px 13px; -webkit-user-select:all; user-select:all; box-shadow:var(--clay-inset);}
   .lead-box:focus{border-color:var(--accent); border-style:solid;}
 
@@ -4444,7 +4452,87 @@ function syncToCloud(){
     }catch(e){}
   }, 1500);
 }
-function save(){ state.lang = LANG; localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+/* ---------- Name + password login (2026-10-01) ----------
+   Learners pick a password next to their name in onboarding, so they can get
+   back into their account with name + password instead of the recovery code
+   (which still works as a backup). Firestore rules only open the existing
+   'progress' collection, so each login is stored there as progress/pw-<hash>,
+   where <hash> = PBKDF2(lowercased name + password). That doc holds nothing but
+   a pointer to the learner's recovery code; it can only be found by someone
+   who knows both the name and the password, and the password itself is never
+   stored. Changing the password writes a new pw- doc and deletes the old one. */
+const LOGIN_APP = 'es';
+const LOGIN_SALT = 'farin-spanish-login-v1';
+const LOGIN_DOC_PREFIX = 'pw-';
+const PASSWORD_MIN = 6;
+let farinPwBusy = false;          // a login/save request is in flight
+let farinPwDraft = '';            // keeps the typed onboarding password across a re-render; never saved
+let farinPwSettingsStatus = null; // {ok:true} | {error:'short'|'mismatch'|'taken'|'network'}
+function normalizeLoginName(name){
+  // toLowerCase (not toLocaleLowerCase) so Turkish-locale phones and other
+  // phones turn "I" into the same letter.
+  return String(name||'').normalize('NFC').trim().replace(/\s+/g,' ').toLowerCase();
+}
+function loginDocId(name, password){
+  if(!(window.crypto && crypto.subtle && window.TextEncoder)) return Promise.reject(new Error('no-crypto'));
+  const enc = new TextEncoder();
+  return crypto.subtle.importKey('raw', enc.encode(normalizeLoginName(name) + '\u0000' + String(password)), 'PBKDF2', false, ['deriveBits'])
+    .then(key=>crypto.subtle.deriveBits({name:'PBKDF2', hash:'SHA-256', salt:enc.encode(LOGIN_SALT), iterations:150000}, key, 256))
+    .then(bits=>LOGIN_DOC_PREFIX + Array.from(new Uint8Array(bits)).map(b=>b.toString(16).padStart(2,'0')).join(''));
+}
+// Points name+password at this learner's recovery code.
+// Resolves {status:'ok', id} or {status:'taken'} (another learner already uses
+// exactly this name + password).
+function claimLogin(name, password, code){
+  if(typeof firebase === 'undefined') return Promise.reject(new Error('offline'));
+  return loginDocId(name, password).then(id=>{
+    const ref = firebase.firestore().collection('progress').doc(id);
+    return ref.get().then(doc=>{
+      const d = doc.exists ? (doc.data() || {}) : {};
+      if(d.loginFor && d.loginFor !== code && !d.revoked) return {status:'taken'};
+      return ref.set({kind:'login', app:LOGIN_APP, loginFor:code, revoked:false, savedAt:Date.now()}).then(()=>({status:'ok', id}));
+    });
+  });
+}
+function dropLogin(id){
+  if(!id || typeof firebase === 'undefined') return;
+  const ref = firebase.firestore().collection('progress').doc(id);
+  ref.delete().catch(()=>ref.set({kind:'login', app:LOGIN_APP, loginFor:null, revoked:true, savedAt:Date.now()}).catch(()=>{}));
+}
+// Loads a learner's cloud save by recovery code. Resolves true when restored.
+function restoreFromCode(code){
+  return firebase.firestore().collection('progress').doc(code).get().then(doc=>{
+    if(!doc.exists) return false;
+    const data = doc.data();
+    if(!data || !data.profile) return false;
+    // Spanish backups are tagged app:'es' in the shared 'progress' collection;
+    // an English-app code must not be restored into the Spanish app.
+    if(data.app !== LOGIN_APP) return false;
+    state.profile = Object.assign({}, freshState().profile, data.profile);
+    state.progress = Object.assign({}, freshState().progress, data.progress);
+    state.roadmap = data.roadmap || null;
+    ensureRoadmap();
+    migrateRoadmapChecked();
+    save();
+    go('dashboard');
+    showSplash();
+    return true;
+  });
+}
+function pwErrorText(kind){
+  if(kind==='short') return L('Your password needs at least 6 characters.', 'Şifren en az 6 karakter olmalı.', 'رمزت باید حداقل ۶ کاراکتر باشد.', 'Tu contraseña necesita al menos 6 caracteres.');
+  if(kind==='mismatch') return L("The two passwords don't match.", 'İki şifre birbirini tutmuyor.', 'دو رمز با هم یکی نیستند.', 'Las dos contraseñas no coinciden.');
+  if(kind==='taken') return L('Someone already uses this name with this password. Please choose a different password.', 'Bu ad ve şifreyi zaten başka biri kullanıyor. Lütfen farklı bir şifre seç.', 'کس دیگری همین اسم و رمز را دارد. لطفاً رمز دیگری انتخاب کن.', 'Alguien ya usa este nombre con esta contraseña. Elige otra contraseña, por favor.');
+  if(kind==='wrong') return L("We couldn't find an account with that name and password.", 'Bu ad ve şifreyle bir hesap bulamadık.', 'حسابی با این اسم و رمز پیدا نکردیم.', 'No encontramos ninguna cuenta con ese nombre y esa contraseña.');
+  return L("We couldn't reach the server. Check your connection and try again.", 'Sunucuya ulaşamadık. Bağlantını kontrol edip tekrar dene.', 'به سرور دسترسی پیدا نکردیم. اتصالت را بررسی کن و دوباره امتحان کن.', 'No pudimos conectar con el servidor. Revisa tu conexión e inténtalo de nuevo.');
+}
+function pwField(id, autocomplete, placeholder, value){
+  return `<div class="pw-wrap">
+    <input class="name-input" id="${id}" type="password" autocomplete="${autocomplete}" placeholder="${esc(placeholder||'')}" value="${esc(value||'')}" />
+    <button type="button" class="pw-eye" data-action="toggle-pw-visibility" data-target="${id}">${L('Show', 'Göster', 'نمایش', 'Mostrar')}</button>
+  </div>`;
+}
+function save(){ state.lang = LANG; localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); if(state.profile.recoveryCode) setRecoveryCookie(state.profile.recoveryCode); syncToCloud(); }
 let resetConfirmPending = false;
 let navHistory = [];
 let newlyEarnedBadges = [];
@@ -5639,15 +5727,42 @@ function renderDiagIntro(){
     </div>
     <div class="screen">
       <button class="btn btn-primary" data-action="diag-start">${L("Let's go (2 min)","Hadi başlayalım (2 dk)",'بزن بریم (۲ دقیقه)', '¡Empecemos! (2 min)')}</button>
-      <button class="btn btn-ghost" style="margin-top:10px;" data-action="nav" data-view="restore-code">${L('Used this app before? Restore your progress','Bu uygulamayı daha önce kullandın mı? İlerlemeni geri yükle','قبلاً از این اپ استفاده کرده‌ای؟ پیشرفتت را بازگردان','¿Ya usaste esta app? Recupera tu progreso')}</button>
+      <button class="btn btn-ghost" style="margin-top:10px;" data-action="nav" data-view="restore-code">${L('Already have an account? Log in', 'Zaten hesabın var mı? Giriş yap', 'قبلاً حساب ساختی؟ وارد شو', '¿Ya tienes una cuenta? Inicia sesión')}</button>
     </div>
   </div>`;
 }
 function renderRestoreCode(){
   const vp = state.viewParams || {};
+  const modeSwitch = `<div class="pw-seg">
+    <button class="${vp.mode!=='code'?'on':''}" data-action="restore-mode" data-mode="password">${L('Name & password', 'Ad ve şifre', 'اسم و رمز', 'Nombre y contraseña')}</button>
+    <button class="${vp.mode==='code'?'on':''}" data-action="restore-mode" data-mode="code">${L('Recovery code', 'Kurtarma kodu', 'کد بازیابی', 'Código de recuperación')}</button>
+  </div>`;
+  if(vp.mode === 'code') return renderRestoreByCode(vp, modeSwitch);
+  return `<div class="fade-in">
+    ${sectionHead(L('Log in', 'Giriş yap', 'ورود', 'Iniciar sesión'), L('Enter the name and password you chose when you started.', 'Başlarken seçtiğin adı ve şifreyi gir.', 'اسم و رمزی را که اول کار انتخاب کردی وارد کن.', 'Escribe el nombre y la contraseña que elegiste al empezar.'), 'diagnostic-intro')}
+    <div class="screen" style="padding-top:0;">
+      ${modeSwitch}
+      <div class="stack">
+        <div>
+          <label class="field-label" for="login-name">${L('Your name', 'Adın', 'اسمت', 'Tu nombre')}</label>
+          <input class="name-input" id="login-name" type="text" autocomplete="username" value="${esc(vp.name||'')}" />
+        </div>
+        <div>
+          <label class="field-label" for="login-password">${L('Password', 'Şifre', 'رمز', 'Contraseña')}</label>
+          ${pwField('login-password', 'current-password', '', '')}
+        </div>
+        ${vp.pwError ? `<div class="unlock-error">${pwErrorText(vp.pwError)}</div>` : ''}
+        <button class="btn btn-primary" data-action="login-submit" ${farinPwBusy?'disabled':''}>${farinPwBusy ? L('Checking…', 'Kontrol ediliyor…', 'در حال بررسی…', 'Comprobando…') : L('Log in', 'Giriş yap', 'ورود', 'Iniciar sesión')}</button>
+        <p class="field-hint" style="text-align:center;">${L('Forgot your password? Log in with your recovery code, then pick a new password in Settings.', 'Şifreni mi unuttun? Kurtarma kodunla giriş yap, sonra Ayarlar\'dan yeni bir şifre seç.', 'رمزت را فراموش کردی؟ با کد بازیابی وارد شو و بعد در تنظیمات رمز جدید بگذار.', '¿Olvidaste tu contraseña? Entra con tu código de recuperación y luego elige una nueva en Ajustes.')}</p>
+      </div>
+    </div>
+  </div>`;
+}
+function renderRestoreByCode(vp, modeSwitch){
   return `<div class="fade-in">
     ${sectionHead(L('Restore your progress','İlerlemeni geri yükle','بازگرداندن پیشرفتت','Recupera tu progreso'), L('Enter the recovery code you saved earlier.','Daha önce kaydettiğin kurtarma kodunu gir.','کد بازیابی که قبلاً ذخیره کرده بودی را وارد کن.','Escribe el código de recuperación que guardaste.'), 'diagnostic-intro')}
     <div class="screen" style="padding-top:0;">
+      ${modeSwitch}
       <input id="restore-code-input" type="text" autocapitalize="characters" placeholder="XXXXX-XXXXX" style="width:100%; box-sizing:border-box; padding:14px 16px; border-radius:14px; border:1.5px solid var(--border); font-size:16px; text-align:center; letter-spacing:.05em; background:var(--bg-elevated); color:var(--ink);" value="${esc(vp.code||'')}">
       ${vp.error ? `<p style="color:var(--error); font-size:13px; margin-top:8px; text-align:center;">${L("We couldn't find that code. Double-check it and try again.",'Bu kodu bulamadık. Kontrol edip tekrar dene.','این کد را پیدا نکردیم. دوباره بررسی کن و امتحان کن.','No encontramos ese código. Revísalo e inténtalo de nuevo.')}</p>` : ''}
       <button class="btn btn-primary" style="margin-top:14px;" data-action="restore-submit">${L('Restore','Geri yükle','بازگردانی','Recuperar')}</button>
@@ -5862,6 +5977,8 @@ function renderDiagPriority(){
 }
 function renderDiagUnlock(){
   const showErr = state.viewParams && state.viewParams.showError;
+  const pwErr = state.viewParams && state.viewParams.pwError;
+  const keepsPassword = !!state.profile.loginId; // redoing the diagnostic: the existing password stays
   return `<div class="fade-in">
     ${diagProgressBar(6, DIAG_TOTAL_STEPS)}
     <div class="screen">
@@ -5871,14 +5988,20 @@ function renderDiagUnlock(){
         ${langToggle()}
       </div>
       <h2 class="display" style="font-size:21px; margin-top:6px;">${L('One last thing and you\'re in','Son bir adım ve içeridesin','یک قدم دیگر و وارد می‌شوی', 'Un último paso y ya estás dentro')}</h2>
-      <p style="color:var(--ink-soft); font-size:13.5px; margin-top:8px;">${L('Just your name and the whole app swings open — free, right now, no catch.','Sadece adın yeter, tüm uygulama açılsın — ücretsiz, hemen, hiçbir gizli şart yok.','فقط اسمت را بگو تا کل اپ باز شود — رایگان، همین الان، بدون هیچ شرطی.', 'Solo tu nombre y toda la app se abre — gratis, ahora mismo, sin trampa.')}</p>
+      <p style="color:var(--ink-soft); font-size:13.5px; margin-top:8px;">${keepsPassword ? L('Just your name and the whole app swings open — free, right now, no catch.', 'Sadece adın yeter, tüm uygulama açılsın — ücretsiz, hemen, hiçbir gizli şart yok.', 'فقط اسمت را بگو تا کل اپ باز شود — رایگان، همین الان، بدون هیچ شرطی.', 'Solo tu nombre y toda la app se abre — gratis, ahora mismo, sin trampa.') : L('Just your name and a password, and the whole app swings open — free, right now, no catch.', 'Sadece adın ve bir şifre yeter, tüm uygulama açılsın — ücretsiz, hemen, hiçbir gizli şart yok.', 'فقط اسمت و یک رمز را بگو تا کل اپ باز شود — رایگان، همین الان، بدون هیچ شرطی.', 'Solo tu nombre y una contraseña, y toda la app se abre — gratis, ahora mismo, sin trampa.')}</p>
       <div class="stack" style="margin-top:18px;">
         <div>
           <label class="field-label">${L('What is your beautiful name?','Senin güzel adın ne?','اسم زیبای تو چیست؟', '¿Cuál es tu hermoso nombre?')}</label>
           <input class="name-input" id="unlock-name" type="text" placeholder="${L('First name','Adın','نام', 'Nombre')}" value="${esc(state.viewParams.name || state.profile.name || '')}" />
         </div>
-        ${showErr ? `<div class="unlock-error">${L("Oops — we need your name to continue.",'Hop — devam etmek için adını almamız lazım.','اوپس — برای ادامه باید اسمت را بگویی.', 'Ups — necesitamos tu nombre para continuar.')}</div>` : ''}
-        <button class="btn btn-primary" data-action="unlock-submit">${L('Go!','Hadi!','برو!', '¡Vamos!')}</button>
+        ${keepsPassword ? `<p class="field-hint" style="margin-top:0;">${L('Your password stays the same.', 'Şifren aynı kalıyor.', 'رمزت همان قبلی می‌ماند.', 'Tu contraseña sigue siendo la misma.')}</p>` : `<div>
+          <label class="field-label" for="unlock-password">${L('Choose a password', 'Bir şifre seç', 'یک رمز انتخاب کن', 'Elige una contraseña')}</label>
+          ${pwField('unlock-password', 'new-password', L('At least 6 characters', 'En az 6 karakter', 'حداقل ۶ کاراکتر', 'Al menos 6 caracteres'), farinPwDraft)}
+          <p class="field-hint">${L('With your name and this password you can get back into your account on any device.', 'Adın ve bu şifreyle hesabına istediğin cihazdan geri dönebilirsin.', 'با اسمت و این رمز می‌توانی از هر دستگاهی به حسابت برگردی.', 'Con tu nombre y esta contraseña puedes volver a tu cuenta desde cualquier dispositivo.')}</p>
+        </div>`}
+        ${showErr ? `<div class="unlock-error">${L("Oops — we need your name to continue.", 'Hop — devam etmek için adını almamız lazım.', 'اوپس — برای ادامه باید اسمت را بگویی.', 'Ups — necesitamos tu nombre para continuar.')}</div>` : ''}
+        ${pwErr ? `<div class="unlock-error">${pwErrorText(pwErr)}</div>` : ''}
+        <button class="btn btn-primary" data-action="unlock-submit" ${farinPwBusy?'disabled':''}>${farinPwBusy ? L('Saving…', 'Kaydediliyor…', 'در حال ذخیره…', 'Guardando…') : L('Go!', 'Hadi!', 'برو!', '¡Vamos!')}</button>
         <p style="font-size:11px; color:var(--ink-faint); text-align:center;">${L('By tapping Go!, you agree to our','Hadi\'ya dokunarak şunu kabul edersin:','با زدن دکمه برو، این را می‌پذیری:', 'Al tocar ¡Vamos!, aceptas nuestra')} <button data-action="nav" data-view="privacy-policy" style="background:none; border:none; padding:0; color:var(--ink-soft); text-decoration:underline; font-size:11px; cursor:pointer;">${L('Privacy Policy','Gizlilik Politikası','حریم خصوصی', 'Política de Privacidad')}</button></p>
       </div>
     </div>
@@ -6613,6 +6736,7 @@ function renderSettings(){
         <button class="btn btn-ghost" data-action="reset-all" style="color:var(--error); border-color:var(--error-soft);">${resetConfirmPending ? L("Tap again to confirm — this can't be undone",'Onaylamak için tekrar dokun — geri alınamaz','دوباره لمس کن تا تایید شود — قابل بازگشت نیست', 'Toca de nuevo para confirmar — esto no se puede deshacer') : L('Reset all progress','Tüm ilerlemeyi sıfırla','بازنشانی همه پیشرفت', 'Restablecer todo el progreso')}</button>
       </div>
       ${renderContactOptIn()}
+      ${renderPasswordSettings()}
       ${state.profile.recoveryCode ? `
       <div class="card-flat" style="margin-top:14px;">
         <div class="eyebrow">${L('Your recovery code','Kurtarma kodun','کد بازیابی‌ات','Tu código de recuperación')}</div>
@@ -6623,6 +6747,28 @@ function renderSettings(){
         </div>
       </div>` : ''}
       <p style="font-size:12px; color:var(--ink-faint); margin-top:14px;">${L('Your profile and progress are saved on this device and backed up to your account so you can pick up where you left off elsewhere.','Profilin ve ilerlemen bu cihazda saklanır ve hesabına yedeklenir; böylece başka bir yerden devam edebilirsin.','پروفایل و پیشرفتت روی این دستگاه ذخیره می‌شود و در حسابت پشتیبان‌گیری می‌شود تا بتوانی جای دیگری ادامه بدهی.','Tu perfil y tu progreso se guardan en este dispositivo y se respaldan en tu cuenta para que puedas seguir donde lo dejaste en otro lugar.')}</p>
+    </div>
+  </div>`;
+}
+function renderPasswordSettings(){
+  const p = state.profile;
+  if(!p.recoveryCode) return '';
+  const has = !!p.loginId;
+  const st = farinPwSettingsStatus;
+  const intro = has
+    ? L('Log in on any device with your name and password.', 'Herhangi bir cihazda adın ve şifrenle giriş yap.', 'در هر دستگاهی با اسم و رمزت وارد شو.', 'Inicia sesión en cualquier dispositivo con tu nombre y tu contraseña.') + ' ' + L('Your login name:', 'Giriş adın:', 'نام ورودت:', 'Tu nombre de inicio de sesión:') + ` <b><bdi>${esc(p.loginName || p.name || '')}</bdi></b>`
+    : p.passwordPending
+      ? L("Your password wasn't saved because the app couldn't reach the server. Please set it again here.", 'Uygulama sunucuya ulaşamadığı için şifren kaydedilmedi. Lütfen burada tekrar belirle.', 'چون اپ به سرور دسترسی نداشت، رمزت ذخیره نشد. لطفاً اینجا دوباره تعیینش کن.', 'Tu contraseña no se guardó porque la app no pudo conectar con el servidor. Vuelve a ponerla aquí, por favor.')
+      : L('Set a password so you can log in with your name instead of the recovery code.', 'Kurtarma kodu yerine adınla giriş yapabilmek için bir şifre belirle.', 'یک رمز بگذار تا به جای کد بازیابی با اسمت وارد شوی.', 'Pon una contraseña para entrar con tu nombre en lugar del código de recuperación.');
+  return `<div class="card-flat" style="margin-top:14px;">
+    <div class="eyebrow">${L('Password', 'Şifre', 'رمز', 'Contraseña')}</div>
+    <p style="font-size:12px; color:var(--ink-faint); margin-top:4px;">${intro}</p>
+    <div class="stack" style="margin-top:10px;">
+      ${pwField('settings-pw-new', 'new-password', has ? L('New password', 'Yeni şifre', 'رمز جدید', 'Nueva contraseña') : L('Password', 'Şifre', 'رمز', 'Contraseña'), '')}
+      ${pwField('settings-pw-confirm', 'new-password', L('Repeat the password', 'Şifreyi tekrar yaz', 'رمز را دوباره بنویس', 'Repite la contraseña'), '')}
+      ${st && st.error ? `<div class="unlock-error">${pwErrorText(st.error)}</div>` : ''}
+      ${st && st.ok ? `<div class="pw-ok">${L('Password saved!', 'Şifre kaydedildi!', 'رمز ذخیره شد!', '¡Contraseña guardada!')}</div>` : ''}
+      <button class="btn btn-primary" data-action="settings-save-password" ${farinPwBusy?'disabled':''}>${farinPwBusy ? L('Saving…', 'Kaydediliyor…', 'در حال ذخیره…', 'Guardando…') : has ? L('Change password', 'Şifreyi değiştir', 'تغییر رمز', 'Cambiar contraseña') : L('Save password', 'Şifreyi kaydet', 'ذخیره رمز', 'Guardar contraseña')}</button>
     </div>
   </div>`;
 }
@@ -9305,33 +9451,63 @@ const HANDLERS = {
   'restore-submit'(){
     const input = document.getElementById('restore-code-input');
     const code = (input && input.value || '').trim().toUpperCase();
-    if(!code || typeof firebase === 'undefined'){
-      state.viewParams = {code, error:true};
-      render();
-      return;
-    }
-    firebase.firestore().collection('progress').doc(code).get().then(doc=>{
-      if(!doc.exists){
-        state.viewParams = {code, error:true};
-        render();
-        return;
-      }
-      const data = doc.data();
-      // Spanish backups are tagged app:'es' in the shared 'progress' collection;
-      // an English-app code must not be restored into the Spanish app.
-      if(data.app !== 'es'){ state.viewParams = {code, error:true}; render(); return; }
-      state.profile = Object.assign({}, freshState().profile, data.profile);
-      state.progress = Object.assign({}, freshState().progress, data.progress);
-      state.roadmap = data.roadmap || null;
-      ensureRoadmap();
-      migrateRoadmapChecked();
+    const fail = ()=>{ state.viewParams = {mode:'code', code, error:true}; render(); };
+    if(!code || typeof firebase === 'undefined'){ fail(); return; }
+    restoreFromCode(code).then(ok=>{ if(!ok) fail(); }).catch(fail);
+  },
+  'restore-mode'(el){ state.viewParams = {mode: el.dataset.mode}; render(); },
+  'toggle-pw-visibility'(el){
+    const input = document.getElementById(el.dataset.target);
+    if(!input) return;
+    const show = input.type === 'password';
+    input.type = show ? 'text' : 'password';
+    el.textContent = show ? L('Hide', 'Gizle', 'پنهان', 'Ocultar') : L('Show', 'Göster', 'نمایش', 'Mostrar');
+  },
+  'login-submit'(){
+    if(farinPwBusy) return;
+    const nameEl = document.getElementById('login-name');
+    const pwEl = document.getElementById('login-password');
+    const name = (nameEl && nameEl.value || '').trim();
+    const password = pwEl ? pwEl.value : '';
+    if(name.length < 2 || !password){ state.viewParams = {mode:'password', name, pwError:'wrong'}; render(); return; }
+    if(typeof firebase === 'undefined'){ state.viewParams = {mode:'password', name, pwError:'network'}; render(); return; }
+    farinPwBusy = true; state.viewParams = {mode:'password', name}; render();
+    loginDocId(name, password)
+      .then(id=>firebase.firestore().collection('progress').doc(id).get())
+      .then(doc=>{
+        const d = doc.exists ? (doc.data() || {}) : {};
+        if(!d.loginFor || d.revoked || d.app !== LOGIN_APP) return false;
+        farinPwBusy = false;
+        return restoreFromCode(d.loginFor);
+      })
+      .then(ok=>{
+        farinPwBusy = false;
+        if(!ok){ state.viewParams = {mode:'password', name, pwError:'wrong'}; render(); }
+      })
+      .catch(()=>{ farinPwBusy = false; state.viewParams = {mode:'password', name, pwError:'network'}; render(); });
+  },
+  'settings-save-password'(){
+    if(farinPwBusy) return;
+    const p = state.profile;
+    const pw = (document.getElementById('settings-pw-new') || {}).value || '';
+    const pw2 = (document.getElementById('settings-pw-confirm') || {}).value || '';
+    if(pw.length < PASSWORD_MIN){ farinPwSettingsStatus = {error:'short'}; render(); return; }
+    if(pw !== pw2){ farinPwSettingsStatus = {error:'mismatch'}; render(); return; }
+    if(!p.recoveryCode){ farinPwSettingsStatus = {error:'network'}; render(); return; }
+    const oldId = p.loginId;
+    const loginName = p.name;
+    farinPwBusy = true; farinPwSettingsStatus = null; render();
+    claimLogin(loginName, pw, p.recoveryCode).then(res=>{
+      farinPwBusy = false;
+      if(res.status === 'taken'){ farinPwSettingsStatus = {error:'taken'}; render(); return; }
+      state.profile.loginId = res.id;
+      state.profile.loginName = loginName;
+      state.profile.passwordPending = false;
       save();
-      go('dashboard');
-      showSplash();
-    }).catch(()=>{
-      state.viewParams = {code, error:true};
+      if(oldId && oldId !== res.id) dropLogin(oldId);
+      farinPwSettingsStatus = {ok:true};
       render();
-    });
+    }).catch(()=>{ farinPwBusy = false; farinPwSettingsStatus = {error:'network'}; render(); });
   },
   'diag-start'(){ go('diagnostic-step'); },
   'diag-goal-toggle'(el){
@@ -9407,27 +9583,59 @@ const HANDLERS = {
   },
   'diag-priority'(el){ state.diag.priorityArea = el.dataset.value; state.diag.step = 5; save(); render(); pushHistoryEntry(); },
   'unlock-submit'(){
+    if(farinPwBusy) return;
     const nameEl = document.getElementById('unlock-name');
     const name = (nameEl && nameEl.value || '').trim();
+    const pwEl = document.getElementById('unlock-password');
+    const password = pwEl ? pwEl.value : '';
+    farinPwDraft = password;
     if(name.length < 2){
       state.viewParams = {showError:true, name};
       render();
       return;
     }
-    const d = state.diag;
-    state.profile = {
-      name, motivationTag:d.goals[0], goals:d.goals.slice(), archetype:ARCHETYPES[d.goals[0]].name.en,
-      level:d.level, levelStage:1, topics:(d.topics||[]).slice(), learnerType:d.learnerType, priorityArea:d.priorityArea, completedDiagnostic:true, dashboardIntroShown:false,
-      recoveryCode: generateRecoveryCode()
+    const prev = state.profile;
+    const keepLogin = !!prev.loginId;
+    if(!keepLogin && password.length < PASSWORD_MIN){
+      state.viewParams = {pwError:'short', name};
+      render();
+      return;
+    }
+    // Redoing the diagnostic keeps the same recovery code, so an existing
+    // name + password login still points at this learner's cloud save.
+    const recoveryCode = prev.recoveryCode || generateRecoveryCode();
+    const finish = (login)=>{
+      farinPwBusy = false; farinPwDraft = '';
+      const d = state.diag;
+      state.profile = {
+        name, motivationTag:d.goals[0], goals:d.goals.slice(), archetype:ARCHETYPES[d.goals[0]].name.en,
+        level:d.level, levelStage:1, topics:(d.topics||[]).slice(), learnerType:d.learnerType, priorityArea:d.priorityArea, completedDiagnostic:true, dashboardIntroShown:false,
+        recoveryCode,
+        loginId: keepLogin ? prev.loginId : (login ? login.id : null),
+        loginName: keepLogin ? (prev.loginName || prev.name) : (login ? name : null),
+        // true when the password couldn't be saved (offline); Settings asks for it again
+        passwordPending: !keepLogin && !login
+      };
+      // Generate-once-then-mutate: this is the moment the roadmap is born, so it's
+      // the one point where a fresh buildRoadmap() call is correct — from here on,
+      // everything reads the persisted state.roadmap via currentRoadmap() instead
+      // of recomputing live (see regenerateRoadmap() comment above).
+      regenerateRoadmap();
+      save();
+      go('dashboard');
+      showSplash();
     };
-    // Generate-once-then-mutate: this is the moment the roadmap is born, so it's
-    // the one point where a fresh buildRoadmap() call is correct — from here on,
-    // everything reads the persisted state.roadmap via currentRoadmap() instead
-    // of recomputing live (see regenerateRoadmap() comment above).
-    regenerateRoadmap();
-    save();
-    go('dashboard');
-    showSplash();
+    if(keepLogin){ finish(null); return; }
+    farinPwBusy = true; state.viewParams = {name}; render();
+    claimLogin(name, password, recoveryCode).then(res=>{
+      if(res.status === 'taken'){
+        farinPwBusy = false; farinPwDraft = '';
+        state.viewParams = {pwError:'taken', name};
+        render();
+        return;
+      }
+      finish(res);
+    }).catch(()=>finish(null)); // offline: let them in; Settings shows the password wasn't saved
   },
   'retake-diagnostic'(){
     state.diag = {step:0, goals:[], level:null, topics:[], learnerType:null, priorityArea:null, test:null};
@@ -9470,7 +9678,7 @@ const HANDLERS = {
     save();
     render();
   },
-  'open-settings'(){ go('settings'); },
+  'open-settings'(){ farinPwSettingsStatus = null; go('settings'); },
   'nav'(el){
     const view = el.dataset.view;
     const params = {id: el.dataset.id};

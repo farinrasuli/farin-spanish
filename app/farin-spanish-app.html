@@ -520,6 +520,15 @@
      its own height so it visually straddles the seam — half in the card above, half
      in the card below. ---- */
   .rm2-track{display:flex; flex-direction:column;}
+  /* Gamification v2 (Journey Journal §2/§7): companion on the roadmap + header count. */
+  @property --rm2-fill{syntax:'<percentage>'; inherits:false; initial-value:0%;}
+  .rm2-companion{position:absolute; top:-58px; inset-inline-start:calc(50% + 40px); padding:0; margin:0; border:none; background:none; cursor:pointer; z-index:6; filter:drop-shadow(0 8px 12px rgba(0,0,0,.25));}
+  .rm2-companion img{display:block; object-fit:contain;}
+  .rm2-companion.rm2-companion-end{position:relative; top:auto; inset-inline-start:auto;}
+  .rm2-endcap-row{display:flex; align-items:flex-end; justify-content:center; gap:2px;}
+  .rm2-goal-wrap{position:relative; display:inline-block;}
+  .rm2-head-count{display:flex; align-items:center; gap:10px; flex:0 0 auto;}
+  .rm2-empty-slot{display:inline-block; width:26px; height:34px; box-sizing:border-box; border-radius:6px; border:2px dashed var(--border); background:var(--bg-sunken);}
   .rm2-cap{display:flex; flex-direction:column; align-items:center; text-align:center; padding:4px 0 34px;}
   .rm2-cap-end{padding:34px 0 4px;}
   .rm2-cap-label{font-size:9.5px; font-weight:800; color:var(--ink-faint); text-transform:uppercase; letter-spacing:.05em; margin-top:6px;}
@@ -5988,7 +5997,9 @@ function backToRoadmap(){
   clearTimeout(celebrateTimer); celebrateTimer = null;
   clearCelebrateSeq(); celebrateSeq = null;
   document.querySelectorAll('.celebrate-overlay').forEach(n=>n.remove());
+  const held = ui.holdAdvance; ui.holdAdvance = false;
   if(state.view !== 'dashboard') go('dashboard');
+  else if(held) render();
   navHistory.length = 0;
 }
 // After every render(): fire the celebration once per finished round (flag is
@@ -6763,6 +6774,95 @@ function renderDashboard(){
 // just wraps this in its own sectionHead - kept as an unreachable safety net (deep links
 // into it are all redirected to 'dashboard' now), same pattern Phase 2 used retiring the
 // old Stories/Studio tabs.
+/* ============================= GAMIFICATION V2: ROADMAP COMPANION + RETURN =============================
+   Journey Journal spec §2 + §7. The learner's own character stands beside the
+   current node's seam circle; when they come back after finishing a node, the
+   finished circle fills, then the companion hops to the new current seam.
+   ui.advanceFrom is transient (never saved): it is worked out by comparing the
+   current index with the one this roadmap showed last time it was drawn. */
+const ui = {advanceFrom:null, rmLast:null, holdAdvance:false};
+function roadmapCompanionHtml(size, extraCls){
+  return `<button class="rm2-companion ${extraCls||''}" data-action="nav" data-view="journal" aria-label="${esc(journalName())}" style="width:${size}px; height:${size}px;"><img src="char-${learnerCharKey()}.png" alt="" class="roadmap-char-portrait" style="width:${size}px; height:${size}px;"></button>`;
+}
+// Called from renderRoadmapCard: decides whether this draw is a "return after a node".
+function roadmapAdvanceFrom(currentIndex){
+  const key = roadmapLevelKey();
+  const last = ui.rmLast;
+  ui.advanceFrom = (last && last.key === key && last.idx >= 0 && (currentIndex === -1 || currentIndex > last.idx)) ? last.idx : null;
+  return ui.advanceFrom;
+}
+function runRoadmapAdvance(currentIndex, fromIdx, oldFill, newFill){
+  const key = roadmapLevelKey();
+  // A celebration overlay is about to cover the roadmap (a check-off on the
+  // roadmap itself): keep the old position so the animation plays once it closes.
+  if(ui.holdAdvance || document.querySelector('.celebrate-overlay')) return;
+  ui.rmLast = {key, idx:currentIndex};
+  if(fromIdx == null) return;
+  ui.advanceFrom = null;
+  const pins = document.querySelectorAll('.rm2-seam-ic');
+  const finished = pins[fromIdx];
+  const comp = document.querySelector('.rm2-companion');
+  if(reducedMotion()){
+    const cur = document.querySelector('.rm2-node-current');
+    if(cur && cur.scrollIntoView) cur.scrollIntoView({block:'center'});
+    return;
+  }
+  // Start the scene where the learner left off: the finished node, centred.
+  if(finished && finished.scrollIntoView) finished.scrollIntoView({block:'center', behavior:'auto'});
+  // FLIP: the companion is already drawn at its new seam; offset it back to the old one.
+  let dx = 0, dy = 0;
+  if(comp && finished){
+    const a = finished.getBoundingClientRect();
+    const target = currentIndex >= 0 ? pins[currentIndex] : document.querySelector('.rm2-cap-end img');
+    if(target){
+      const b = target.getBoundingClientRect();
+      dx = (a.left + a.width/2) - (b.left + b.width/2);
+      dy = (a.top + a.height/2) - (b.top + b.height/2);
+    }
+    comp.style.transform = `translate(${dx}px, ${dy}px)`;
+  }
+  setTimeout(()=>{
+    if(!finished) return;
+    const fill = anim(finished, [{'--rm2-fill':oldFill+'%'}, {'--rm2-fill':newFill+'%'}], {duration:600, easing:'ease-out'});
+    const pop = ()=>{
+      anim(finished, [{transform:'scale(1)'}, {transform:'scale(1.15)'}, {transform:'scale(1)'}], {duration:240, easing:'ease-out'});
+      const c = centerOf(finished);
+      sparkBurst(c.x, c.y, 6, 'var(--clay-orange-deep)', 54);
+    };
+    if(fill) fill.onfinish = pop; else pop();
+  }, 250);
+  setTimeout(()=>{
+    if(!comp) return;
+    comp.style.transform = '';
+    const frames = [];
+    for(let k=0;k<3;k++){
+      const x0 = dx*(1-k/3), y0 = dy*(1-k/3), x1 = dx*(1-(k+1)/3), y1 = dy*(1-(k+1)/3);
+      frames.push({offset:k/3, transform:`translate(${x0}px, ${y0}px) scale(1,1)`});
+      frames.push({offset:(k+.5)/3, transform:`translate(${(x0+x1)/2}px, ${(y0+y1)/2 - 16}px) scale(1,1)`});
+      frames.push({offset:(k+.9)/3, transform:`translate(${x1}px, ${y1}px) scale(1.08,.92)`});
+    }
+    frames.push({offset:1, transform:'translate(0px, 0px) scale(1,1)'});
+    anim(comp, frames, {duration:900, easing:'linear'});
+    [0,300,600].forEach(t=>setTimeout(()=>sfx('hop'), t));
+  }, 500);
+  setTimeout(()=>{
+    const cur = document.querySelector('.rm2-node-current') || document.querySelector('.rm2-cap-end');
+    if(cur && cur.scrollIntoView) cur.scrollIntoView({block:'center', behavior:'smooth'});
+    if(comp) anim(comp, [{transform:'translateY(0)'}, {transform:'translateY(-10px)', offset:.45}, {transform:'translateY(0) scale(1.08,.92)', offset:.8}, {transform:'translateY(0)'}], {duration:360, easing:'ease-out'});
+  }, 1400);
+}
+// End goal warms up with progress p (0..1).
+function roadmapHeaderSlots(doneCount){
+  return doneCount === 0 ? '<span class="rm2-empty-slot" aria-hidden="true"></span>' : '';
+}
+function roadmapGoalHtml(p, allDone){
+  const size = allDone ? 128 : 112;
+  const sat = (.35 + .65*p).toFixed(3);
+  const blur = Math.round(8 + 24*p), mix = Math.round(20 + 60*p);
+  const sparks = p >= .75 ? [0,.6,1.2].map((d,i)=>`<span class="sparkle" style="${['top:4px; left:6px;','top:30%; right:-4px; left:auto; width:6px; height:6px;','bottom:10px; left:-2px; width:5px; height:5px;'][i]} color:var(--clay-orange-deep); animation-delay:${d}s;"></span>`).join('')
+    + (allDone ? `<span class="sparkle" style="bottom:2px; right:8px; left:auto; width:7px; height:7px; color:var(--clay-orange-deep); animation-delay:.9s;"></span>` : '') : '';
+  return `<span class="rm2-goal-wrap"><img src="roadmap-goal-clay.png" alt="" style="width:${size}px; height:${size}px; object-fit:contain; filter:saturate(${sat}) drop-shadow(0 0 ${blur}px color-mix(in srgb, var(--cat-review) ${mix}%, transparent)) drop-shadow(0 10px 14px rgba(0,0,0,.28));">${sparks}</span>`;
+}
 function renderRoadmapCard(p){
   const roadmap = currentRoadmap();
   // "Bring out the character based on theirs" (Farin, 2026-09-29): reuse the existing
@@ -6824,6 +6924,10 @@ function renderRoadmapCard(p){
   const doneCount = roadmap.filter(it=>isRoadmapNodeDone(it)).length;
   const allDone = doneCount === roadmap.length;
   const currentIndex = roadmap.findIndex(it=>!isRoadmapNodeDone(it));
+  // Gamification v2 §7: returning after a node — fill the finished circle, hop the companion.
+  const advFrom = roadmapAdvanceFrom(currentIndex);
+  const advFill = advFrom != null ? Math.round(roadmap.slice(0, advFrom+1).filter(it=>isRoadmapNodeDone(it)).length/roadmap.length*100) : 0;
+  queueFx(()=>runRoadmapAdvance(currentIndex, advFrom, 0, advFill));
 
   function pinFn(idx){
     const item = roadmap[idx], m = TYPE_META[item.type], checked = isRoadmapNodeDone(item);
@@ -6875,8 +6979,10 @@ function renderRoadmapCard(p){
     const doneUpTo = roadmap.slice(0, idx+1).filter(it=>isRoadmapNodeDone(it)).length;
     const fillPct = checked ? Math.round(doneUpTo/roadmap.length*100) : 0;
     const circleBg = fillPct>=100 ? color : (fillPct>0 ? `conic-gradient(${color} 0 ${fillPct}%, var(--bg-elevated) ${fillPct}% 100%)` : 'var(--bg-elevated)');
-    return `<button class="rm2-seam-ic ${isCurrent?'roadmap-pin-current':''}" ${action?('data-action="'+action+'"'):'disabled'} ${dataAttrs} aria-label="${ariaLabel}" style="width:60px; height:60px; border-radius:50%; background:${circleBg}; border:${isCurrent?'5px':'4px'} solid ${color}; display:flex; align-items:center; justify-content:center; box-shadow:${isCurrent?`0 0 0 4px ${glowRing}, 0 8px 18px -4px ${glowStrong}`:(checked?`0 6px 14px -3px ${doneGlow}, inset 0 2px 3px rgba(255,255,255,.35)`:'0 5px 12px -3px rgba(0,0,0,.25)')}; cursor:${action?'pointer':'default'}; padding:0;">
-    </button>`;
+    const fillVar = (idx === advFrom && fillPct>0) ? `--rm2-fill:${fillPct}%;` : '';
+    const circleBgFinal = fillVar ? `conic-gradient(${color} 0 var(--rm2-fill), var(--bg-elevated) var(--rm2-fill) 100%)` : circleBg;
+    return `<button class="rm2-seam-ic ${isCurrent?'roadmap-pin-current':''}" ${action?('data-action="'+action+'"'):'disabled'} ${dataAttrs} aria-label="${ariaLabel}" style="width:60px; height:60px; border-radius:50%; ${fillVar}background:${circleBgFinal}; border:${isCurrent?'5px':'4px'} solid ${color}; display:flex; align-items:center; justify-content:center; box-shadow:${isCurrent?`0 0 0 4px ${glowRing}, 0 8px 18px -4px ${glowStrong}`:(checked?`0 6px 14px -3px ${doneGlow}, inset 0 2px 3px rgba(255,255,255,.35)`:'0 5px 12px -3px rgba(0,0,0,.25)')}; cursor:${action?'pointer':'default'}; padding:0;">
+    </button>${isCurrent ? roadmapCompanionHtml(72) : ''}`;
   }
 
   function cardFn(idx){
@@ -7018,17 +7124,21 @@ function renderRoadmapCard(p){
 
   // Character scaled up (2026-09-30, Farin: "make the character bigger"); the goal
   // marker at the far end grows with it so the two bookends stay in proportion.
-  const startMedia = `<img src="char-${charKey}.png" alt="" class="roadmap-char-portrait" style="width:118px; height:118px; object-fit:contain; filter:drop-shadow(0 10px 16px ${archColor}55);">`;
-  const endMedia = `<img src="roadmap-goal-clay.png" alt="" style="width:${allDone?128:112}px; height:${allDone?128:112}px; object-fit:contain; filter:drop-shadow(0 10px 14px rgba(0,0,0,.28));">`;
+  // Gamification v2 §2: the character now walks the path as the companion, so the
+  // start cap shows the clay start marker; the goal warms up as the page fills.
+  const startMedia = `<img src="roadmap-start-clay.png" alt="" style="width:96px; height:96px; object-fit:contain; filter:drop-shadow(0 10px 14px rgba(0,0,0,.22));">`;
+  const endMedia = allDone
+    ? `<div class="rm2-endcap-row">${roadmapGoalHtml(1, true)}${roadmapCompanionHtml(96, 'rm2-companion-end')}</div>`
+    : roadmapGoalHtml(doneCount/roadmap.length, false);
 
   return `
       <div class="card-flat" style="margin-bottom:14px; background:linear-gradient(135deg, ${archColor}18, var(--bg-elevated) 65%);">
         <div class="row between" style="align-items:center;">
           <div>
             <div style="font-weight:700; font-size:14px;">${esc(displayLevel(p))} ${L('roadmap','yol haritası','نقشه راه', 'hoja de ruta')}</div>
-            <div style="font-size:12px; color:var(--ink-soft); margin-top:2px;">${L('Check everything off to reach','Hepsini işaretle ve şuraya ulaş:','همه را علامت بزن تا برسی به', 'Marca todo para llegar a')} ${esc(nextDisplayLevel(p))}</div>
+            <div style="font-size:12px; color:var(--ink-soft); margin-top:2px;">${doneCount===0 ? L('Your first souvenir is waiting','İlk hatıran seni bekliyor','اولین یادگاری‌ات منتظرت است','Tu primer recuerdo te espera') : L('Check everything off to reach','Hepsini işaretle ve şuraya ulaş:','همه را علامت بزن تا برسی به','Marca todo para llegar a')+' '+esc(nextDisplayLevel(p))}</div>
           </div>
-          <div class="num" style="font-weight:800; font-size:15px; color:${archColor};">${doneCount}/${roadmap.length}</div>
+          <div class="rm2-head-count">${roadmapHeaderSlots(doneCount)}<div class="num" style="font-weight:800; font-size:15px; color:${archColor}; white-space:nowrap;">${allDone ? L('Page complete','Sayfa tamam','صفحه کامل شد','Página completa') : (doneCount/roadmap.length <= .5 ? doneCount+' '+L('done','tamam','انجام شد','hechos') : (roadmap.length-doneCount)+' '+L('to go','kaldı','مانده','por hacer'))}</div></div>
         </div>
         <div class="progress-track" style="margin-top:10px;"><div class="progress-fill" style="width:${(doneCount/roadmap.length)*100}%; background:${archColor};"></div></div>
       </div>
@@ -10052,15 +10162,18 @@ const HANDLERS = {
     const id = el.dataset.id;
     const rc = state.progress.roadmapChecked;
     rc[id] = !rc[id];
-    save(); render();
     // Gamification v2: checking a node off earns its souvenir (once — unchecking keeps it).
+    let fresh = [], node = null;
     if(rc[id]){
-      const node = currentRoadmap().find(n=>roadmapNodeId(n)===id);
-      const fresh = node ? awardSouvenirs({node}) : [];
-      save();
-      if(fresh.length) showCelebration(node.type, '', false, {souvenir:fresh[0]});
-      else if(state.view==='media-session') showCelebration('media');
+      node = currentRoadmap().find(n=>roadmapNodeId(n)===id);
+      fresh = node ? awardSouvenirs({node}) : [];
     }
+    const willCelebrate = fresh.length > 0 || (rc[id] && state.view==='media-session');
+    // the roadmap's return animation waits until the celebration closes
+    if(willCelebrate && state.view==='dashboard') ui.holdAdvance = true;
+    save(); render();
+    if(fresh.length) showCelebration(node.type, '', false, {souvenir:fresh[0]});
+    else if(willCelebrate) showCelebration('media');
   },
   'advance-roadmap-level'(){
     checkRoadmapStageAdvance();

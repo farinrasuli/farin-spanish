@@ -227,6 +227,22 @@
   .game-cta{width:100%; min-height:56px; font-family:'Fredoka',-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; font-weight:700; font-size:18px;}
   .game-result-title{font-family:'Fredoka',-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; font-weight:700; font-size:28px; line-height:1.2; color:color-mix(in srgb, var(--success) 62%, var(--ink));}
   .game-result-line{margin:8px 0 18px; font-size:15px; font-weight:700; color:var(--ink-soft);}
+  /* Practice screens v3 (2026-10-03): grammar / vocab / slang / story / review
+     quiz and the flashcards use the same game-screen layout as the games. */
+  .game-mark{flex:0 0 auto; width:44px; height:44px; box-sizing:border-box; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:900; font-size:18px; border:2px solid var(--success); background:var(--success-soft); color:color-mix(in srgb, var(--success) 62%, var(--ink));}
+  .game-mark.no{border-color:var(--error); background:var(--error-soft); color:var(--error);}
+  .game-sentence.xlong{font-size:18px; line-height:1.45;}
+  .game-opt.long{font-family:inherit; font-size:15.5px; line-height:1.4; padding:12px 16px;}
+  .game-why{display:flex; gap:12px; align-items:center; background:var(--cat-review-soft); border-radius:20px; padding:14px 16px; font-size:13.5px; font-weight:700; line-height:1.5; color:var(--ink);}
+  .game-why img{flex:0 0 auto; width:40px; height:40px; object-fit:contain; transform:rotate(-8deg);}
+  .game-screen .flash-wrap{margin:0;}
+  .game-screen .flashcard{min-height:280px; border-radius:26px;}
+  .game-screen .flash-face{min-height:280px; border-radius:26px; border:0; padding:30px 22px; box-shadow:var(--clay-shadow-soft);}
+  .game-screen .flash-word{font-family:'Fredoka',-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; font-weight:700; font-size:34px; line-height:1.2; color:var(--ink);}
+  .game-screen .flash-sentence{font-size:17px; font-weight:600; line-height:1.5; color:var(--ink);}
+  .game-screen .flash-dots{margin:0;}
+  .game-screen .flash-nav{margin:0;}
+  .game-screen .flash-nav .btn{min-height:56px; font-family:'Fredoka',-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; font-weight:700; font-size:18px;}
   .fx-spark{position:fixed; z-index:90; pointer-events:none;}
   .dict-word{display:inline-block;}
   .dict-got{color:var(--success); font-weight:800;}
@@ -8999,35 +9015,40 @@ function renderVocabSetIntro(id){
 }
 function renderVocabSet(id, cardIndex){
   const s = VOCAB_SETS.find(x=>x.id===id);
-  if(!s) return renderComingSoon();
+  if(!s) return (typeof renderComingSoon === 'function' ? renderComingSoon() : renderNotFound());
   const i = cardIndex || 0;
   const card = s.cards[i];
-  return `<div class="fade-in">
-    ${sectionHead(setTitle(s), L('Tap the card to flip.','Kartı çevirmek için dokun.','برای چرخاندن، کارت را لمس کن.','Toca la tarjeta para voltearla.') + ' ' + (i+1) + ' / ' + s.cards.length, 'vocab-list')}
-    <div class="screen" style="padding-top:0;">
-      <div class="flash-wrap">
-        <div class="flashcard" data-action="flip-card">
-          <div class="flash-face" style="background:var(--cat-voc-soft);">
-            ${state.viewParams.flipped ? `
-              <div class="flash-hint">${L('Example','Örnek','مثال','Ejemplo')}</div>
-              <div class="flash-sentence" dir="ltr">${highlightWord(card.sentence, card.word, L(card.meaning.en, card.meaning.tr, card.meaning.fa, card.meaning.es))}</div>
-              ${card.meaning ? `<div class="flash-hint" style="margin-top:10px;">${L('Meaning','Anlam','معنی','Significado')}</div><div class="flash-sentence" dir="ltr">${esc(card.meaning.en)}${(LANG==='fa'?card.meaning.fa:LANG==='es'?card.meaning.es:card.meaning.tr) ? ' — '+esc(LANG==='fa'?card.meaning.fa:LANG==='es'?card.meaning.es:card.meaning.tr) : ''}</div>` : ''}
-              ${card.note ? `<div class="flash-note row" dir="ltr" style="align-items:flex-start; gap:7px;"><span style="flex:0 0 auto; margin-top:1px;">${ICONS.warn}</span><span>${esc(L(card.note.en,card.note.tr,card.note.fa,card.note.es))}</span></div>` : ''}
-            ` : `
-              <div class="flash-hint">${L('Word','Kelime','کلمه','Palabra')}</div>
-              <div class="flash-word" dir="ltr">${esc(card.word)}</div>
-              <div class="flash-hint" style="font-weight:600; text-transform:none; letter-spacing:0;">${L('tap to reveal','görmek için dokun','برای دیدن لمس کن','toca para revelar')}</div>
-            `}
-          </div>
+  const soft = s.category === 'slang' ? 'var(--cat-diag-soft)' : 'var(--cat-voc-soft)';
+  const local = LANG==='fa' ? card.meaning.fa : (LANG==='es' ? card.meaning.es : card.meaning.tr);
+  // Practice screens v3 (2026-10-03): same layout as the game screens.
+  return `<div class="fade-in game-screen">
+    ${gameTopHtml(setTitle(s))}
+    <div class="game-status">
+      <span class="game-status-text">${L(`Card ${i+1} of ${s.cards.length}`, `Kart ${i+1}/${s.cards.length}`, `کارت ${i+1} از ${s.cards.length}`, `Tarjeta ${i+1} de ${s.cards.length}`)}</span>
+      <span class="game-status-end"><span class="game-chip">${L('Tap the card to flip','Çevirmek için karta dokun','برای چرخاندن لمس کن','Toca para voltear')}</span></span>
+    </div>
+    <div class="flash-wrap">
+      <div class="flashcard" data-action="flip-card">
+        <div class="flash-face" style="background:${soft};">
+          ${state.viewParams.flipped ? `
+            <div class="flash-hint">${L('Example','Örnek','مثال','Ejemplo')}</div>
+            <div class="flash-sentence" dir="ltr">${highlightWord(card.sentence, card.word, L(card.meaning.en, card.meaning.tr, card.meaning.fa, card.meaning.es))}</div>
+            ${card.meaning ? `<div class="flash-hint" style="margin-top:10px;">${L('Meaning','Anlam','معنی','Significado')}</div><div class="flash-sentence" dir="ltr">${esc(card.meaning.en)}${local ? ' — '+esc(local) : ''}</div>` : ''}
+            ${card.note ? `<div class="flash-note row" dir="ltr" style="align-items:flex-start; gap:7px;"><span style="flex:0 0 auto; margin-top:1px;">${ICONS.warn}</span><span>${esc(L(card.note.en,card.note.tr,card.note.fa,card.note.es))}</span></div>` : ''}
+          ` : `
+            <div class="flash-hint">${L('Word','Kelime','کلمه','Palabra')}</div>
+            <div class="flash-word" dir="ltr">${esc(card.word)}</div>
+            <div class="flash-hint" style="font-weight:600; text-transform:none; letter-spacing:0;">${L('tap to reveal','görmek için dokun','برای دیدن لمس کن','toca para revelar')}</div>
+          `}
         </div>
       </div>
-      <div class="flash-dots">${s.cards.map((_,idx)=>`<i class="${idx===i?'active':''}"></i>`).join('')}</div>
-      <div class="flash-nav">
-        <button class="btn btn-ghost" data-action="vocab-prev" data-id="${s.id}" data-i="${i}" ${i===0?'disabled':''}>${L('Previous','Önceki','قبلی','Anterior')}</button>
-        ${i===s.cards.length-1
-          ? `<button class="btn btn-primary" data-action="start-vocab-quiz" data-id="${s.id}">${L('Play Game!','Oyunu Oyna!','بازی کن!','¡Juega!')}</button>`
-          : `<button class="btn btn-primary" data-action="vocab-next" data-id="${s.id}" data-i="${i}">${L('Next','Sonraki','بعدی','Siguiente')}</button>`}
-      </div>
+    </div>
+    <div class="flash-dots">${s.cards.map((_,idx)=>`<i class="${idx===i?'active':''}"></i>`).join('')}</div>
+    <div class="flash-nav">
+      <button class="btn btn-ghost" data-action="vocab-prev" data-id="${s.id}" data-i="${i}" ${i===0?'disabled':''}>${L('Previous','Önceki','قبلی','Anterior')}</button>
+      ${i===s.cards.length-1
+        ? `<button class="btn btn-primary" data-action="start-vocab-quiz" data-id="${s.id}">${L('Play Game!','Oyunu Oyna!','بازی کن!','¡Juega!')}</button>`
+        : `<button class="btn btn-primary" data-action="vocab-next" data-id="${s.id}" data-i="${i}">${L('Next','Sonraki','بعدی','Siguiente')}</button>`}
     </div>
   </div>`;
 }
@@ -9383,7 +9404,8 @@ function questionTimeLimit(item){ return item.options.length <= 2 ? 15 : 20; }
 function startQuiz(kind, contextId, questions, backView, backParams){
   questions.forEach(qq=>{ if(qq.itemId===undefined){ qq.itemId = contextId; qq.kind = kind; } });
   const timeLimit = questionTimeLimit(questions[0]);
-  state.quiz = {kind, contextId, questions, index:0, correct:0, answered:false, selected:null, results:[], backView, backParams: backParams || {}, timeLimit, deadline: Date.now()+timeLimit*1000, lastTickSecond:null};
+  gcBubble = null;
+  state.quiz = {kind, contextId, questions, index:0, correct:0, streak:0, answered:false, selected:null, results:[], backView, backParams: backParams || {}, timeLimit, deadline: Date.now()+timeLimit*1000, lastTickSecond:null};
   go('quiz');
 }
 function handleQuizTimeout(){
@@ -9392,6 +9414,8 @@ function handleQuizTimeout(){
   if(!q.results) q.results = [];
   q.answered = true; q.selected = -1;
   q.results[q.index] = false;
+  q.streak = 0;
+  { const it = q.questions[q.index]; const word = it.options[it.correct]; queueFx(()=>fxQuizAnswer(-1, null, false, 0, word)); }
   save(); render();
 }
 let quizTimerInterval = setInterval(function(){
@@ -9402,6 +9426,12 @@ let quizTimerInterval = setInterval(function(){
   const fillEl = document.getElementById('quiz-timer-fill');
   const textEl = document.getElementById('quiz-timer-text');
   if(fillEl) fillEl.style.width = Math.max((remaining/q.timeLimit)*100, 0)+'%';
+  const ringEl = document.getElementById('quiz-timer-circle');
+  if(ringEl){
+    const c = 2 * Math.PI * ((TRAP_RING_SIZE - TRAP_RING_STROKE) / 2);
+    ringEl.setAttribute('stroke-dashoffset', c * (1 - Math.max(Math.min(remaining/q.timeLimit, 1), 0)));
+    if(remaining <= 3){ ringEl.setAttribute('stroke', 'var(--error)'); if(textEl) textEl.style.color = 'var(--error)'; }
+  }
   if(textEl) textEl.textContent = Math.ceil(remaining);
   const wholeSecond = Math.ceil(remaining);
   if(wholeSecond !== q.lastTickSecond && wholeSecond > 0){
@@ -9412,38 +9442,84 @@ let quizTimerInterval = setInterval(function(){
     handleQuizTimeout();
   }
 }, 100);
+function quizKindTitle(q){
+  if(q.kind === 'vocab'){
+    const set = VOCAB_SETS.find(x=>x.id===q.contextId);
+    if(set && set.category === 'slang') return L('Slang','Argo','اصطلاحات','Jerga');
+    return L('Words','Kelimeler','کلمات','Palabras');
+  }
+  if(q.kind === 'story') return L('Story','Hikaye','داستان','Historia');
+  if(q.kind === 'review') return L('Review','Tekrar','مرور','Repaso');
+  return L('Grammar','Dilbilgisi','گرامر','Gramática');
+}
+// The question: an optional instruction line, then the sentence. A blank is a
+// dashed gap until the learner answers, then the right word sits in it.
+function quizPromptHtml(item, q){
+  const raw = String(item.prompt||'');
+  const nl = raw.indexOf('\n');
+  const label = nl >= 0 ? raw.slice(0, nl) : '';
+  const body = nl >= 0 ? raw.slice(nl+1) : raw;
+  const cls = 'game-sentence' + (body.length > 110 ? ' xlong' : (body.length > 52 ? ' long' : ''));
+  const m = body.match(/_{3,}/);
+  let inner = esc(body);
+  if(m){
+    const before = esc(body.slice(0, m.index)), after = esc(body.slice(m.index + m[0].length));
+    inner = q.answered
+      ? `${before}<span class="trap-fill"${q.selected===item.correct ? ' id="trap-fill"' : ''}>${esc(item.options[item.correct])}</span>${after}`
+      : `${before}<span class="trap-gap"></span>${after}`;
+  }
+  return `${label ? `<p class="game-hint" style="margin:0 0 10px;">${esc(label)}</p>` : ''}<p class="${cls}" dir="ltr">${inner}</p>`;
+}
+// Left of the status row: the countdown ring while the question is open, then
+// a tick or a cross once it is answered. No ring when the round has no timer.
+function quizTimerRingHtml(q, item, CAT){
+  if(q.answered){
+    const ok = q.selected === item.correct;
+    return `<div class="game-mark${ok ? '' : ' no'}">${ok ? ICONS.check : '✕'}</div>`;
+  }
+  if(!q.deadline) return '';
+  const remaining = Math.max((q.deadline - Date.now())/1000, 0);
+  return trapTimerRingSVG(remaining, q.timeLimit, remaining <= 3 ? 'var(--error)' : `var(--cat-${CAT})`)
+    .replace('id="trap-ring"', 'id="quiz-ring"').replace('trap-timer-circle', 'quiz-timer-circle').replace('trap-timer-text', 'quiz-timer-text');
+}
+function quizStreakChip(q){
+  const n = q.streak || 0;
+  if(n < 3) return `<span class="game-chip">${ICONS.check} ${q.correct}</span>`;
+  const hot = n >= 5;
+  return `<span id="trap-streak" class="game-streak${hot ? ' hot' : ''}">${ICONS.bolt} ${L(`${n} in a row`, `${n} üst üste`, `${n} پشت سر هم`, `${n} seguidas`)}</span>`;
+}
 function renderQuiz(){
   const q = state.quiz;
   const item = q.questions[q.index];
   const CAT = {grammar:'gram', vocab:'voc', story:'story', review:'review'}[q.kind];
-  return `<div class="fade-in">
-    <div class="section-head" style="padding-top:6px;">
-      <button class="back" data-action="back">${ICONS.back} ${L('Exit round','Turdan çık','خروج از تمرین', 'Salir de la ronda')}</button>
-      <div class="row between" style="margin-top:6px;">
-        <span class="eyebrow">${L('Question','Soru','سوال', 'Pregunta')} ${q.index+1} / ${q.questions.length}</span>
-        <span class="pill" style="background:var(--cat-${CAT}-soft); color:var(--cat-${CAT});">${q.correct} ${L('correct','doğru','درست', 'correctas')}</span>
-      </div>
-      <div class="progress-track" style="margin-top:10px;"><div class="progress-fill" style="width:${(q.index/q.questions.length)*100}%; background:var(--cat-${CAT});"></div></div>
+  const a = q.index+1, b = q.questions.length;
+  const longOpts = item.options.some(o=>String(o).length > 26);
+  // Practice screens v3 (2026-10-03): same layout as the game screens.
+  return `<div class="fade-in game-screen">
+    ${gameTopHtml(quizKindTitle(q))}
+    <div class="game-status">
+      ${quizTimerRingHtml(q, item, CAT)}
+      <span class="game-status-text">${L(`Question ${a} of ${b}`, `Soru ${a}/${b}`, `سوال ${a} از ${b}`, `Pregunta ${a} de ${b}`)}</span>
+      <span class="game-status-end">${quizStreakChip(q)}</span>
     </div>
-    <div class="screen" style="padding-top:0;">
-      ${!q.answered ? `<div style="display:flex; align-items:center; gap:8px; margin-bottom:14px;">
-        <div class="progress-track" style="flex:1; height:10px;"><div id="quiz-timer-fill" class="progress-fill" style="width:${Math.max(((q.deadline-Date.now())/1000/q.timeLimit)*100,0)}%; background:var(--cat-${CAT}); transition:width .1s linear;"></div></div>
-        <span id="quiz-timer-text" class="num" style="font-weight:800; font-size:13px; color:var(--cat-${CAT}); min-width:14px; text-align:right;">${Math.ceil(Math.max((q.deadline-Date.now())/1000,0))}</span>
-      </div>` : ''}
-      <div class="quiz-prompt" dir="ltr">${esc(item.prompt)}</div>
+    <div class="game-card${longOpts ? ' tight' : ''}">
+      ${quizPromptHtml(item, q)}
+    </div>
+    <div class="game-opts">
       ${item.options.map((opt,i)=>{
-        let cls = 'quiz-opt';
+        let cls = 'game-opt' + (longOpts ? ' long' : '');
         if(q.answered){
-          if(i===item.correct) cls += ' correct';
-          else if(i===q.selected) cls += ' wrong';
+          if(i===item.correct) cls += ' ok';
+          else if(i===q.selected) cls += ' no';
+          else cls += ' dim';
         }
         return `<button class="${cls}" dir="ltr" ${q.answered?'disabled':''} data-action="quiz-answer" data-i="${i}">${esc(opt)}</button>`;
       }).join('')}
-      ${q.answered ? `
-        ${item.why ? `<div class="why-box" dir="ltr">${esc(item.why)}</div>` : ''}
-        <button class="btn btn-primary" style="margin-top:16px;" data-action="quiz-next">${q.index+1 < q.questions.length ? L('Next question','Sonraki soru','سوال بعدی', 'Siguiente pregunta') : L('See results','Sonuçları gör','دیدن نتایج', 'Ver resultados')}</button>
-      ` : ''}
     </div>
+    ${q.answered ? `
+      ${item.why ? `<div class="game-why"><img src="char-${learnerCharKey()}.png" alt=""><div dir="ltr">${esc(item.why)}</div></div>` : ''}
+      <button class="btn btn-primary game-cta" data-action="quiz-next">${q.index+1 < q.questions.length ? L('Next question','Sonraki soru','سوال بعدی','Siguiente pregunta') : L('See results','Sonuçları gör','دیدن نتایج','Ver resultados')}</button>
+    ` : ''}
   </div>`;
 }
 function resultLead(pct){
@@ -9494,14 +9570,15 @@ function renderQuizResults(){
   const p = state.profile;
   const kindLabel = {grammar:L('Grammar Gym round','Dilbilgisi Salonu turu','تمرین باشگاه گرامر','ronda del Gimnasio de Gramática'), vocab:L('Vocab quiz','Kelime testi','آزمون کلمات','cuestionario de vocabulario'), story:L('Story comprehension check','Hikaye anlama kontrolü','آزمون درک داستان','comprobación de comprensión de la historia'), review:L('Review round','Tekrar turu','تمرین مرور','ronda de repaso')}[q.kind];
   const justEarned = pullJustEarnedBadges();
-  return `<div class="fade-in">
-    <div class="screen" style="padding-top:32px; text-align:center;">
+  return `<div class="fade-in game-screen" style="gap:0;">
+    ${gameTopHtml(quizKindTitle(q))}
+    <div style="text-align:center;">
       <div class="result-ring" style="background:var(--cat-${CAT}-soft); color:var(--cat-${CAT});">
         <div class="big num">${pct}%</div>
         <div class="small">${L('Score','Skor','امتیاز','Puntuación')}</div>
       </div>
-      <h2 class="display" style="font-size:19px; margin-top:6px;">${q.correct} / ${q.questions.length} ${L('correct','doğru','درست','correctas')}</h2>
-      <p style="color:var(--ink-soft); font-size:13.5px; margin-top:6px;">${resultLead(pct)} ${kindLabel.toLowerCase()}.</p>
+      <h2 class="game-result-title" style="margin-top:10px;">${q.correct} / ${q.questions.length} ${L('correct','doğru','درست','correctas')}</h2>
+      <p class="game-result-line" style="margin-bottom:6px;">${resultLead(pct)} ${kindLabel.toLowerCase()}.</p>
       ${renderBadgeUnlockCard(justEarned)}
 
       ${q.kind==='review' ? renderReviewBreakdown(q) : ''}
@@ -10075,6 +10152,23 @@ function companionOops(){
     {transform:'rotate(0deg) translateX(0)'}
   ], {duration:280, easing:'ease-in-out'});
 }
+// Practice quiz feedback (2026-10-03): the same physical feedback as the games.
+function fxQuizAnswer(i, pt, isCorrect, streak, word){
+  const btn = i != null && i >= 0 ? document.querySelector('[data-action="quiz-answer"][data-i="'+i+'"]') : null;
+  if(isCorrect){
+    fxCorrectButton(btn, pt);
+    anim(document.getElementById('trap-streak'), [{transform:'scale(1)'}, {transform:'scale(1.25)'}, {transform:'scale(1)'}], {duration:220, easing:SPRING});
+    anim(document.getElementById('trap-fill'), [{transform:'translateY(-8px)', opacity:0}, {transform:'translateY(0)', opacity:1}], {duration:200, easing:SPRING});
+    comboCheck(streak);
+    return;
+  }
+  if(btn) fxWrongButton(btn); else sfx('wrong');
+  companionOops();
+  // a redirect, never "Wrong!"
+  companionSay(String(word).length <= 10
+    ? L("It's '"+word+"'", "Doğrusu: '"+word+"'", "درستش: «"+word+"»", "Es '"+word+"'")
+    : L("It's the green one",'Doğrusu yeşil olan','درستش سبزه','Es la verde'), 1600);
+}
 function comboCheck(n){
   if(n === 3){ companionSay(L('Nice!','Güzel!','عالی!','¡Bien!'), 1400); sfx('combo'); }
   else if(n === 5){ companionSay(L('Unstoppable!','Durdurulamazsın!','توقف‌ناپذیری!','¡Imparable!'), 1400); sfx('combo'); }
@@ -10183,7 +10277,9 @@ function fxTrapMiss(i, word){
   else sfx('wrong');
   companionOops();
   // a redirect, never "Wrong!"
-  companionSay(L("It's '"+word+"'", "Doğrusu: '"+word+"'", "درستش: «"+word+"»", "Es '"+word+"'"), 1400);
+  companionSay(String(word).length <= 10
+    ? L("It's '"+word+"'", "Doğrusu: '"+word+"'", "درستش: «"+word+"»", "Es '"+word+"'")
+    : L("It's the green one",'Doğrusu yeşil olan','درستش سبزه','Es la verde'), 1400);
 }
 // Last 3 seconds: ring turns red and pulses once per second with a soft tick.
 // Driven from the existing Trap Dash interval — no new timer.
@@ -10732,7 +10828,7 @@ const HANDLERS = {
     save(); render();
   },
   'show-word-meaning'(el){ showWordTooltip(el); },
-  'flip-card'(){ state.viewParams.flipped = !state.viewParams.flipped; render(); },
+  'flip-card'(){ state.viewParams.flipped = !state.viewParams.flipped; sfx('flip'); render(); },
   'vocab-next'(el){ const i = +el.dataset.i; go('vocab-set', {id: el.dataset.id, cardIndex: i+1, flipped:false, level:state.viewParams.level, cat:state.viewParams.cat, goal:state.viewParams.goal}); },
   'vocab-prev'(el){ const i = +el.dataset.i; go('vocab-set', {id: el.dataset.id, cardIndex: i-1, flipped:false, level:state.viewParams.level, cat:state.viewParams.cat, goal:state.viewParams.goal}); },
   'start-grammar-quiz'(el){
@@ -10762,7 +10858,7 @@ const HANDLERS = {
     if(!mixed.length) return;
     startQuiz('review', null, mixed, 'dashboard', {});
   },
-  'quiz-answer'(el){
+  'quiz-answer'(el, e){
     const q = state.quiz, i = +el.dataset.i;
     if(q.answered) return;
     if(!q.results) q.results = [];
@@ -10770,6 +10866,8 @@ const HANDLERS = {
     const isCorrect = i === q.questions[q.index].correct;
     if(isCorrect) q.correct++;
     q.results[q.index] = isCorrect;
+    q.streak = isCorrect ? (q.streak||0) + 1 : 0;
+    { const it = q.questions[q.index]; const word = it.options[it.correct]; const pt = tapPoint(e); const streak = q.streak; queueFx(()=>fxQuizAnswer(i, pt, isCorrect, streak, word)); }
     save(); render();
   },
   'quiz-next'(){

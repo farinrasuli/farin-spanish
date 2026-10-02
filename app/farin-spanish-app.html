@@ -180,12 +180,54 @@
   .celebrate-hint{margin-top:16px; color:rgba(255,255,255,.85); font-size:12.5px; font-weight:700;}
   /* Gamification v2 (Journey Journal, 2026-09-30): game-feel layer — companion on
      game screens, tap sparkles, Trap Dash fill pill, Listen & Type word marks. */
-  .game-screen{position:relative;}
-  .game-companion{position:absolute; top:12px; inset-inline-end:14px; width:56px; height:56px; z-index:6; pointer-events:none;}
-  .game-companion img{width:56px; height:56px; object-fit:contain; filter:drop-shadow(0 6px 10px rgba(0,0,0,.22)); animation:soft-float 4s ease-in-out infinite; transform-origin:50% 100%;}
-  .game-companion .gc-bubble{position:absolute; top:4px; inset-inline-end:62px; white-space:nowrap; font-size:13px; padding:8px 12px; border-radius:16px;}
+  /* Game screens v3 (2026-10-02): layout rebuilt to the approved Journey Journal
+     mockup, panel 5 "Games feel physical" (title row with the companion, inline
+     timer + "N in a row", big sentence card, tall Fredoka answer buttons). */
+  .game-screen{position:relative; min-height:100vh; min-height:100dvh; box-sizing:border-box; padding:18px 20px 110px; display:flex; flex-direction:column; gap:18px; background:radial-gradient(circle at 80% 0%, color-mix(in srgb, var(--cat-review) 25%, transparent), transparent 45%);}
+  .game-top{display:flex; align-items:center; gap:10px; min-height:70px;}
+  .game-back{flex:0 0 auto; width:40px; height:40px; border-radius:50%; border:1px solid var(--border); background:var(--bg-elevated); color:var(--ink); display:flex; align-items:center; justify-content:center; box-shadow:var(--clay-shadow-soft); padding:0; cursor:pointer;}
+  [dir="rtl"] .game-back svg{transform:scaleX(-1);}
+  .game-title{flex:1 1 auto; min-width:0; margin:0; font-family:'Fredoka',-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; font-weight:700; font-size:24px; letter-spacing:-.02em; line-height:1.15; color:var(--ink);}
+  .game-companion{position:relative; flex:0 0 auto; width:70px; height:70px; z-index:6; pointer-events:none;}
+  .game-companion img{width:62px; height:62px; object-fit:contain; filter:drop-shadow(0 6px 10px rgba(0,0,0,.22)); animation:soft-float 4s ease-in-out infinite; transform-origin:50% 100%;}
+  .game-companion .gc-bubble{position:absolute; top:8px; inset-inline-end:60px; white-space:nowrap; background:var(--ink); color:var(--bg-elevated); font-size:13px; font-weight:800; line-height:1.3; padding:7px 12px; border-radius:14px; box-shadow:0 8px 16px -10px rgba(0,0,0,.45);}
+  .game-status{display:flex; align-items:center; gap:10px; min-height:44px;}
+  .game-status-text{font-size:14px; font-weight:800; color:var(--ink-soft);}
+  .game-status-end{margin-inline-start:auto; display:inline-flex; align-items:center; gap:8px;}
+  .game-chip{display:inline-flex; align-items:center; gap:6px; font-weight:800; font-size:14px; padding:7px 13px; border-radius:999px; background:var(--bg-sunken); color:var(--ink-soft);}
+  .game-streak{position:relative; overflow:visible; display:inline-flex; align-items:center; gap:6px; font-weight:800; font-size:14px; padding:7px 13px; border-radius:999px; background:var(--accent-soft); color:var(--accent-strong);}
+  .game-streak svg{width:14px; height:14px;}
+  .game-streak.hot{background:var(--clay-coral); color:#fff; box-shadow:0 0 16px 2px color-mix(in srgb, var(--clay-coral) 45%, transparent);}
+  .game-hint{font-size:13.5px; font-weight:600; color:var(--ink-soft); margin-top:-8px;}
+  .game-card{background:var(--bg-elevated); border-radius:26px; padding:34px 22px; box-shadow:var(--clay-shadow-soft); text-align:center;}
+  .game-card.tight{padding:22px 20px;}
+  .game-sentence{margin:0; font-family:'Fredoka',-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; font-weight:700; font-size:27px; line-height:1.4; color:var(--ink);}
+  .game-sentence.long{font-size:22px;}
+  .trap-fill{display:inline-block; background:var(--success-soft); color:color-mix(in srgb, var(--success) 62%, var(--ink)); border:2px solid var(--success); border-radius:12px; padding:0 12px; margin:0 2px;}
+  .trap-gap{display:inline-block; min-width:64px; height:1.05em; vertical-align:-.12em; margin:0 4px; border-bottom:3px dashed var(--ink-faint);}
+  .game-opts{display:flex; flex-direction:column; gap:12px;}
+  .game-opt{width:100%; min-height:58px; box-sizing:border-box; border-radius:18px; border:2px solid var(--border); background:var(--bg-elevated); color:var(--ink); font-family:'Fredoka',-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; font-weight:700; font-size:19px; line-height:1.25; padding:8px 14px; text-align:center; box-shadow:var(--clay-shadow-soft); cursor:pointer; transition:transform .08s ease, opacity .2s ease;}
+  .game-opt:active{transform:scale(.98);}
+  .game-opt.ok{border-color:var(--success); background:var(--success-soft); color:color-mix(in srgb, var(--success) 62%, var(--ink));}
+  .game-opt.no{border-color:var(--error); background:var(--error-soft); color:var(--error);}
+  .game-opt.dim{opacity:.55;}
+  .game-tiles{display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); gap:10px;}
+  .game-tile{min-height:88px; box-sizing:border-box; border-radius:18px; border:2px solid var(--border); background:var(--bg-elevated); color:var(--ink); box-shadow:var(--clay-shadow-soft); padding:8px; display:flex; align-items:center; justify-content:center; text-align:center; font-family:'Fredoka',-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; font-weight:700; font-size:16px; line-height:1.2; overflow-wrap:anywhere; cursor:pointer;}
+  .game-tile.small{font-family:inherit; font-size:12px; line-height:1.3;}
+  .game-tile.hidden-face{font-family:'Fredoka',-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; font-size:28px; background:var(--cat-review-soft); border-color:color-mix(in srgb, var(--cat-review) 70%, transparent); color:color-mix(in srgb, var(--cat-review) 55%, var(--ink));}
+  .game-tile.shown{background:var(--cat-story-soft); border-color:var(--cat-story);}
+  .game-tile.no{background:var(--error-soft); border-color:var(--error); color:var(--error);}
+  .game-tile.ok{background:var(--success-soft); border-color:var(--success); color:color-mix(in srgb, var(--success) 62%, var(--ink)); opacity:.35;}
+  .game-play{width:88px; height:88px; border-radius:50%; border:0; margin:0 auto; display:flex; align-items:center; justify-content:center; color:#fff; background:linear-gradient(150deg, var(--accent), var(--accent-strong)); box-shadow:var(--clay-shadow); cursor:pointer;}
+  .game-play svg{width:36px; height:36px;}
+  .game-play:active{transform:scale(.96);}
+  .game-play-label{margin-top:10px; font-family:'Fredoka',-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; font-weight:700; font-size:17px; color:var(--ink);}
+  .game-input{width:100%; box-sizing:border-box; padding:16px; border-radius:18px; border:2px solid var(--border); font-size:17px; font-weight:600; font-family:inherit; background:var(--bg-elevated); color:var(--ink); box-shadow:var(--clay-shadow-soft);}
+  .game-input:focus{outline:none; border-color:var(--accent);}
+  .game-cta{width:100%; min-height:56px; font-family:'Fredoka',-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; font-weight:700; font-size:18px;}
+  .game-result-title{font-family:'Fredoka',-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; font-weight:700; font-size:28px; line-height:1.2; color:color-mix(in srgb, var(--success) 62%, var(--ink));}
+  .game-result-line{margin:8px 0 18px; font-size:15px; font-weight:700; color:var(--ink-soft);}
   .fx-spark{position:fixed; z-index:90; pointer-events:none;}
-  .trap-fill{display:inline-block; background:var(--success); color:#fff; border-radius:999px; padding:0 10px; margin:0 2px; box-shadow:var(--clay-shadow-soft);}
   .dict-word{display:inline-block;}
   .dict-got{color:var(--success); font-weight:800;}
   .dict-miss{text-decoration:underline dashed var(--error) 2px; text-underline-offset:4px;}
@@ -8562,66 +8604,75 @@ function renderGameMatch(){
   const round = vp.round;
   const done = round.matchedKeys.length === round.pairCount;
   const elapsed = Math.floor(((round.finishedAt||Date.now()) - round.startedAt)/1000);
+  const left = round.pairCount - round.matchedKeys.length;
   // Gamification v2 (2026-09-30): no live XP display in games (XP counts silently).
-  return `<div class="fade-in game-screen">${gameCompanionHtml()}
-    ${sectionHead(L('Word Rush','Kelime Yarışı','مسابقه کلمات', 'Carrera de palabras'), (vp.goal && GOALS_META[vp.goal] ? goalMetaLabel(vp.goal)+' · ' : '') + L('Tap two tiles to match a word with its meaning.','Bir kelimeyi anlamıyla eşleştirmek için iki karoya dokun.','برای جفت‌کردن یک کلمه با معنی‌اش، روی دو کاشی بزن.', 'Toca dos casillas para emparejar una palabra con su significado.'))}
-    <div class="screen" style="padding-top:0;">
-      <div class="row between" style="align-items:center; margin-bottom:10px; flex-wrap:wrap;">
-        <span class="pill" style="background:var(--cat-review-soft); color:var(--cat-review);">${L('Time','Süre','زمان', 'Tiempo')}: ${elapsed}s</span>
-        <span class="pill" style="background:var(--bg-sunken);">${L('Mistakes','Hatalar','اشتباهات', 'Errores')}: ${round.mistakes}</span>
-      </div>
-      <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:8px;">
-        ${round.tiles.map((t,i)=>{
-          const isMatched = round.matchedKeys.includes(t.key);
-          const isRevealed = round.revealed.includes(i) || isMatched;
-          return `<button class="opt" dir="ltr" data-action="game-match-tap" data-i="${i}" ${isMatched?'disabled':''} style="min-height:64px; margin-bottom:0; padding:8px; text-align:center; display:flex; align-items:center; justify-content:center; font-size:12.5px; font-weight:700; ${isMatched?'background:var(--success-soft); border-color:var(--success); color:var(--success); opacity:.35;':(isRevealed?(round.revealed.length===2?'background:var(--error-soft); border-color:var(--error); color:var(--error);':'background:var(--accent-soft); border-color:var(--accent-strong);'):'')}">${isRevealed ? esc(t.text) : '?'}</button>`;
-        }).join('')}
-      </div>
-      ${done ? `<div class="card-flat badge-unlock-shine" style="margin-top:16px; text-align:center; background:var(--success-soft); border-color:var(--success);">
-        <div class="eyebrow" style="color:var(--success);">${L('Matched!','Eşleştirdin!','جفت شد!', '¡Emparejado!')}</div>
-        <p style="margin-top:6px; font-size:14px;">${L(`Finished in ${elapsed}s with ${round.mistakes} mistake${round.mistakes===1?'':'s'}.`, `${elapsed} saniyede ${round.mistakes} hatayla bitirdin.`, `در ${elapsed} ثانیه با ${round.mistakes} اشتباه تمام کردی.`, `Terminaste en ${elapsed}s con ${round.mistakes} error${round.mistakes===1?'':'es'}.`)}</p>
-        <button class="btn btn-primary" style="margin-top:12px;" data-action="back-to-roadmap">${L('Back to roadmap','Yol haritasına dön','بازگشت به نقشه راه', 'Volver a la hoja de ruta')}</button>
-      </div>${renderBadgeUnlockCard(pullJustEarnedBadges())}` : ''}
+  // Game screens v3 (2026-10-02): layout per the approved mockup, panel 5.
+  return `<div class="fade-in game-screen">
+    ${gameTopHtml(L('Word Rush','Kelime Yarışı','مسابقه کلمات','Carrera de palabras'))}
+    <div class="game-status">
+      <span class="game-status-text">${L(`${left} pair${left===1?'':'s'} to go`, `${left} çift kaldı`, `${left} جفت مانده`, left===1 ? 'Falta 1 pareja' : `Faltan ${left} parejas`)}</span>
+      <span class="game-status-end">
+        <span class="game-chip">${L('Time','Süre','زمان','Tiempo')}: ${elapsed}s</span>
+        <span class="game-chip">${L('Mistakes','Hatalar','اشتباهات','Errores')}: ${round.mistakes}</span>
+      </span>
     </div>
+    ${done ? '' : `<p class="game-hint">${L('Tap two tiles to match a word with its meaning.','Bir kelimeyi anlamıyla eşleştirmek için iki karoya dokun.','برای جفت‌کردن یک کلمه با معنی‌اش، روی دو کاشی بزن.','Toca dos fichas para unir una palabra con su significado.')}</p>`}
+    <div class="game-tiles">
+      ${round.tiles.map((t,i)=>{
+        const isMatched = round.matchedKeys.includes(t.key);
+        const isRevealed = round.revealed.includes(i) || isMatched;
+        const cls = isMatched ? 'ok' : (isRevealed ? (round.revealed.length===2 ? 'no' : 'shown') : 'hidden-face');
+        const small = isRevealed && String(t.text).length > 16 ? ' small' : '';
+        return `<button class="game-tile ${cls}${small}" dir="ltr" data-action="game-match-tap" data-i="${i}" ${isMatched?'disabled':''}>${isRevealed ? esc(t.text) : '?'}</button>`;
+      }).join('')}
+    </div>
+    ${done ? `<div class="game-card tight badge-unlock-shine">
+      <div class="game-result-title">${L('Matched!','Eşleştirdin!','جفت شد!','¡Emparejado!')}</div>
+      <p class="game-result-line">${L(`Finished in ${elapsed}s with ${round.mistakes} mistake${round.mistakes===1?'':'s'}.`, `${elapsed} saniyede ${round.mistakes} hatayla bitirdin.`, `در ${elapsed} ثانیه با ${round.mistakes} اشتباه تمام کردی.`, `Terminaste en ${elapsed}s con ${round.mistakes} error${round.mistakes===1?'':'es'}.`)}</p>
+      <button class="btn btn-primary game-cta" data-action="back-to-roadmap">${L('Back to roadmap','Yol haritasına dön','بازگشت به نقشه راه','Volver a la hoja de ruta')}</button>
+    </div>${renderBadgeUnlockCard(pullJustEarnedBadges())}` : ''}
   </div>`;
 }
 function renderGameDictation(){
   const vp = state.viewParams;
   const round = vp.round;
+  const title = L('Listen & Type','Dinle ve Yaz','گوش کن و بنویس','Escucha y escribe');
   if(round.finished){
     const avgPct = round.results.length ? Math.round(round.results.reduce((a,r)=>a+r.pct,0)/round.results.length) : 0;
-    return `<div class="fade-in game-screen">${gameCompanionHtml()}
-      ${sectionHead(L('Listen & Type','Dinle ve Yaz','گوش کن و بنویس', 'Escucha y escribe'), '')}
-      <div class="screen" style="padding-top:0;">
-        <div class="card-flat badge-unlock-shine" style="text-align:center; background:var(--success-soft); border-color:var(--success);">
-          <div class="eyebrow" style="color:var(--success);">${L('Done!','Bitti!','تمام شد!', '¡Listo!')}</div>
-          <p style="margin-top:6px; font-size:14px;">${L(`Average match: ${avgPct}%`,`Ortalama eşleşme: %${avgPct}`,`میانگین تطابق: ${avgPct}%`, `Coincidencia promedio: ${avgPct}%`)}</p>
-          <button class="btn btn-primary" style="margin-top:12px;" data-action="back-to-roadmap">${L('Back to roadmap','Yol haritasına dön','بازگشت به نقشه راه', 'Volver a la hoja de ruta')}</button>
-        </div>
-        ${renderBadgeUnlockCard(pullJustEarnedBadges())}
+    return `<div class="fade-in game-screen">
+      ${gameTopHtml(title)}
+      <div class="game-card tight badge-unlock-shine">
+        <div class="game-result-title">${L('Done!','Bitti!','تمام شد!','¡Listo!')}</div>
+        <p class="game-result-line">${L(`Average match: ${avgPct}%`,`Ortalama eşleşme: %${avgPct}`,`میانگین تطابق: ${avgPct}%`,`Coincidencia promedio: ${avgPct}%`)}</p>
+        <button class="btn btn-primary game-cta" data-action="back-to-roadmap">${L('Back to roadmap','Yol haritasına dön','بازگشت به نقشه راه','Volver a la hoja de ruta')}</button>
       </div>
+      ${renderBadgeUnlockCard(pullJustEarnedBadges())}
     </div>`;
   }
   const item = round.sentences[round.index];
   const isLast = round.index === round.sentences.length - 1;
+  const a = round.index+1, b = round.sentences.length;
   // Gamification v2 (2026-09-30): no live XP display in games (XP counts silently).
-  return `<div class="fade-in game-screen">${gameCompanionHtml()}
-    ${sectionHead(L('Listen & Type','Dinle ve Yaz','گوش کن و بنویس', 'Escucha y escribe'), (vp.goal && GOALS_META[vp.goal] ? goalMetaLabel(vp.goal)+' · ' : '') + L('Sentence','Cümle','جمله', 'Oración')+' '+(round.index+1)+'/'+round.sentences.length)}
-    <div class="screen" style="padding-top:0;">
-      <div class="card-flat" style="text-align:center;">
-        <button class="btn btn-primary" data-action="speak-sentence" data-text="${esc(item.text)}">${ICONS.soundOn} ${L('Play','Çal','پخش', 'Reproducir')}</button>
-        ${round.revealedText ? `<p style="margin-top:12px; font-size:14.5px;" dir="ltr">${esc(item.text)}</p>` : `<div><button class="btn btn-ghost" style="margin-top:10px;" data-action="game-dictation-reveal">${L("Can't hear it? Show the sentence","Duyamıyor musun? Cümleyi göster","نمی‌شنوی؟ جمله را نشان بده", '¿No lo oyes? Muestra la oración')}</button></div>`}
-      </div>
-      <textarea id="dictation-input" rows="2" ${round.checked?'disabled':''} placeholder="${esc(L('Type what you heard...','Duyduğunu yaz...','چیزی که شنیدی را بنویس...', 'Escribe lo que escuchaste...'))}" style="width:100%; box-sizing:border-box; margin-top:14px; padding:14px; border-radius:16px; border:1.5px solid var(--border); font-size:15px; font-family:inherit; background:var(--bg-elevated); color:var(--ink);" dir="ltr">${esc(round.typed||'')}</textarea>
-      ${!round.checked
-        ? `<button class="btn btn-primary" style="margin-top:12px;" data-action="game-dictation-check">${L('Check','Kontrol et','بررسی', 'Revisar')}</button>`
-        : (()=>{ const r = round.results[round.results.length-1]; return `<div class="card-flat" style="margin-top:14px;">
-            <div class="row between"><div class="eyebrow">${L('Match','Eşleşme','تطابق', 'Coincidencia')}</div><span class="pill" style="background:${r.pct>=70?'var(--success-soft)':'var(--error-soft)'}; color:${r.pct>=70?'var(--success)':'var(--error)'};" id="dict-pct">${r.pct}%</span></div>
-            <p style="margin-top:8px; font-size:14.5px; line-height:1.6;" dir="ltr">${dictationWordsHtml(item.text, round.typed)}</p>
-            ${r.missed.length ? `<p style="margin-top:6px; font-size:12.5px; color:var(--ink-faint);">${L('Missed:','Kaçırdığın:','از دست‌رفته:', 'Faltó:')} ${esc(r.missed.join(', '))}</p>` : ''}
-            <button class="btn btn-primary" style="margin-top:12px;" data-action="game-dictation-next">${isLast ? L('See results','Sonuçları gör','دیدن نتایج', 'Ver resultados') : L('Next sentence','Sonraki cümle','جمله بعدی', 'Siguiente oración')}</button>
-          </div>`; })()}
+  // Game screens v3 (2026-10-02): layout per the approved mockup, panel 5.
+  return `<div class="fade-in game-screen">
+    ${gameTopHtml(title)}
+    <div class="game-status">
+      <span class="game-status-text">${L(`Sentence ${a} of ${b}`, `Cümle ${a}/${b}`, `جمله ${a} از ${b}`, `Oración ${a} de ${b}`)}</span>
     </div>
+    <div class="game-card tight">
+      <button class="game-play" data-action="speak-sentence" data-text="${esc(item.text)}" aria-label="${esc(L('Play','Çal','پخش','Reproducir'))}">${ICONS.soundOn}</button>
+      <div class="game-play-label">${L('Tap to listen','Dinlemek için dokun','برای شنیدن بزن','Toca para escuchar')}</div>
+      ${round.revealedText ? `<p class="game-sentence long" style="margin-top:14px;" dir="ltr">${esc(item.text)}</p>` : `<div><button class="btn btn-ghost" style="margin-top:8px;" data-action="game-dictation-reveal">${L("Can't hear it? Show the sentence","Duyamıyor musun? Cümleyi göster","نمی‌شنوی؟ جمله را نشان بده","¿No lo oyes? Muestra la oración")}</button></div>`}
+    </div>
+    <textarea id="dictation-input" class="game-input" rows="2" ${round.checked?'disabled':''} placeholder="${esc(L('Type what you heard...','Duyduğunu yaz...','چیزی که شنیدی را بنویس...','Escribe lo que escuchaste...'))}" dir="ltr">${esc(round.typed||'')}</textarea>
+    ${!round.checked
+      ? `<button class="btn btn-primary game-cta" data-action="game-dictation-check">${L('Check','Kontrol et','بررسی','Revisar')}</button>`
+      : (()=>{ const r = round.results[round.results.length-1]; const good = r.pct>=70; return `<div class="game-card tight" style="text-align:start;">
+          <div class="row between" style="align-items:center;"><div class="game-status-text">${L('Match','Eşleşme','تطابق','Coincidencia')}</div><span class="game-chip" style="background:${good?'var(--success-soft)':'var(--error-soft)'}; color:${good?'color-mix(in srgb, var(--success) 62%, var(--ink))':'var(--error)'};" id="dict-pct">${r.pct}%</span></div>
+          <p class="game-sentence long" style="margin-top:10px; font-weight:600;" dir="ltr">${dictationWordsHtml(item.text, round.typed)}</p>
+          ${r.missed.length ? `<p style="margin-top:8px; font-size:12.5px; color:var(--ink-faint);">${L('Missed:','Kaçırdığın:','از دست‌رفته:','Faltó:')} ${esc(r.missed.join(', '))}</p>` : ''}
+          <button class="btn btn-primary game-cta" style="margin-top:16px;" data-action="game-dictation-next">${isLast ? L('See results','Sonuçları gör','دیدن نتایج','Ver resultados') : L('Next sentence','Sonraki cümle','جمله بعدی','Siguiente oración')}</button>
+        </div>`; })()}
   </div>`;
 }
 /* Gamification (Trello 4bDl1BS3, ported from the English app): Trap Dash —
@@ -8629,63 +8680,66 @@ function renderGameDictation(){
    separate "intro" screen the way the spec sketch describes one — Word Rush/
    Listen & Type don't have a distinct intro step either, just a sectionHead
    with an instructional subtitle. Mirrors that exact pattern. */
-const TRAP_RING_SIZE = 54, TRAP_RING_STROKE = 5;
+const TRAP_RING_SIZE = 44, TRAP_RING_STROKE = 4;
 function trapTimerRingSVG(remaining, timeLimit, color){
   const r = (TRAP_RING_SIZE - TRAP_RING_STROKE) / 2;
   const c = 2 * Math.PI * r;
   const pct = Math.max(0, Math.min(100, (remaining/timeLimit)*100));
   const offset = c * (1 - pct/100);
-  return `<div id="trap-ring" style="position:relative; width:${TRAP_RING_SIZE}px; height:${TRAP_RING_SIZE}px;">
+  const warn = color === 'var(--error)';
+  return `<div id="trap-ring" style="position:relative; flex:0 0 auto; width:${TRAP_RING_SIZE}px; height:${TRAP_RING_SIZE}px;">
     <svg width="${TRAP_RING_SIZE}" height="${TRAP_RING_SIZE}" viewBox="0 0 ${TRAP_RING_SIZE} ${TRAP_RING_SIZE}" style="transform:rotate(-90deg);">
       <circle cx="${TRAP_RING_SIZE/2}" cy="${TRAP_RING_SIZE/2}" r="${r}" fill="none" stroke="var(--bg-sunken)" stroke-width="${TRAP_RING_STROKE}"/>
       <circle id="trap-timer-circle" cx="${TRAP_RING_SIZE/2}" cy="${TRAP_RING_SIZE/2}" r="${r}" fill="none" stroke="${color}" stroke-width="${TRAP_RING_STROKE}" stroke-dasharray="${c}" stroke-dashoffset="${offset}" stroke-linecap="round"/>
     </svg>
-    <span id="trap-timer-text" class="num" style="position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-size:15px; color:${color};">${Math.ceil(remaining)}</span>
+    <span id="trap-timer-text" class="display" style="position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-size:15px; letter-spacing:0; color:${warn ? 'var(--error)' : 'var(--ink)'};">${Math.ceil(remaining)}</span>
   </div>`;
 }
 function renderGameTrap(){
   const vp = state.viewParams;
   const round = vp.round;
+  const title = L('Trap Dash','Tuzak Kaçışı','فرار از تله‌ها','Escape de trampas');
   if(round.finished){
     const total = round.questions.length;
     const accuracy = total ? Math.round((round.correctCount/total)*100) : 0;
     const flawless = total>0 && round.correctCount === total;
-    return `<div class="fade-in game-screen">${gameCompanionHtml()}
-      ${sectionHead(L('Trap Dash','Tuzak Kaçışı','فرار از تله‌ها', 'Escape de trampas'), '')}
-      <div class="screen" style="padding-top:0;">
-        <div class="card-flat badge-unlock-shine" style="text-align:center; background:var(--success-soft); border-color:var(--success);">
-          <div class="eyebrow" style="color:var(--success);">${flawless ? L('Flawless!','Kusursuz!','بی‌نقص!', '¡Perfecto!') : L('Done!','Bitti!','تمام شد!', '¡Listo!')}</div>
-          <p style="margin-top:6px; font-size:14px;">${L(`Score: ${round.score} · ${accuracy}% accuracy`,`Skor: ${round.score} · %${accuracy} doğruluk`,`امتیاز: ${round.score} · ${accuracy}% دقت`, `Puntuación: ${round.score} · ${accuracy}% de precisión`)}</p>
-          <button class="btn btn-primary" style="margin-top:12px;" data-action="back-to-roadmap">${L('Back to roadmap','Yol haritasına dön','بازگشت به نقشه راه', 'Volver a la hoja de ruta')}</button>
-        </div>
-        ${renderBadgeUnlockCard(pullJustEarnedBadges())}
+    return `<div class="fade-in game-screen">
+      ${gameTopHtml(title)}
+      <div class="game-card tight badge-unlock-shine">
+        <div class="game-result-title">${flawless ? L('Flawless!','Kusursuz!','بی‌نقص!','¡Perfecto!') : L('Done!','Bitti!','تمام شد!','¡Listo!')}</div>
+        <p class="game-result-line">${L(`Score: ${round.score} · ${accuracy}% accuracy`,`Skor: ${round.score} · %${accuracy} doğruluk`,`امتیاز: ${round.score} · ${accuracy}% دقت`,`Puntuación: ${round.score} · ${accuracy}% de precisión`)}</p>
+        <button class="btn btn-primary game-cta" data-action="back-to-roadmap">${L('Back to roadmap','Yol haritasına dön','بازگشت به نقشه راه','Volver a la hoja de ruta')}</button>
       </div>
+      ${renderBadgeUnlockCard(pullJustEarnedBadges())}
     </div>`;
   }
   const q = round.questions[round.index];
   const remaining = Math.max((round.deadline - Date.now())/1000, 0);
-  return `<div class="fade-in game-screen">${gameCompanionHtml()}
-    ${sectionHead(L('Trap Dash','Tuzak Kaçışı','فرار از تله‌ها', 'Escape de trampas'), L('Fix 8 sentences before the timer runs out.','Zaman dolmadan 8 cümleyi düzelt.','قبل از تمام‌شدن زمان، ۸ جمله را درست کن.', 'Corrige 8 oraciones antes de que se acabe el tiempo.'))}
-    <div class="screen" style="padding-top:0;">
-      <div class="row between" style="align-items:center; margin-bottom:10px; flex-wrap:wrap;">
-        <span class="pill" style="background:var(--cat-review-soft); color:var(--cat-review);">${L('Question','Soru','سوال', 'Pregunta')} ${round.index+1}/${round.questions.length}</span>
-        ${trapStreakChip(round)}
+  const a = round.index+1, b = round.questions.length;
+  // Game screens v3 (2026-10-02): layout per the approved mockup, panel 5.
+  return `<div class="fade-in game-screen">
+    ${gameTopHtml(title)}
+    <div class="game-status">
+      ${trapTimerRingSVG(remaining, round.timeLimit, (!round.answered && remaining>0 && remaining<=3) ? 'var(--error)' : 'var(--cat-gram)')}
+      <span class="game-status-text">${L(`Question ${a} of ${b}`, `Soru ${a}/${b}`, `سوال ${a} از ${b}`, `Pregunta ${a} de ${b}`)}</span>
+      <span class="game-status-end">
         ${round.answered && round.lastPoints>0 ? `<span class="trap-point-pop" style="color:var(--success);">+${round.lastPoints}</span>` : ''}
-      </div>
-      <div class="row" style="justify-content:center; margin-bottom:14px;">${trapTimerRingSVG(remaining, round.timeLimit, (!round.answered && remaining>0 && remaining<=3) ? 'var(--error)' : 'var(--cat-review)')}</div>
-      <div class="card-flat" style="text-align:center;" dir="ltr">
-        ${trapSentenceHtml(q, round)}
-      </div>
-      <div class="stack" style="margin-top:14px; gap:10px;">
-        ${q.options.map((opt,i)=>{
-          let style = '';
-          if(round.answered){
-            if(i===q.correct) style = 'background:var(--success-soft); border-color:var(--success); color:var(--success);';
-            else if(i===round.selected) style = 'background:var(--error-soft); border-color:var(--error); color:var(--error);';
-          }
-          return `<button class="opt" dir="ltr" data-action="game-trap-tap" data-i="${i}" ${round.answered?'disabled':''} style="justify-content:center; text-align:center; font-weight:700; ${style}">${esc(opt)}</button>`;
-        }).join('')}
-      </div>
+        ${trapStreakChip(round)}
+      </span>
+    </div>
+    <div class="game-card" dir="ltr">
+      ${trapSentenceHtml(q, round)}
+    </div>
+    <div class="game-opts">
+      ${q.options.map((opt,i)=>{
+        let cls = '';
+        if(round.answered){
+          if(i===q.correct) cls = ' ok';
+          else if(i===round.selected) cls = ' no';
+          else cls = ' dim';
+        }
+        return `<button class="game-opt${cls}" dir="ltr" data-action="game-trap-tap" data-i="${i}" ${round.answered?'disabled':''}>${esc(opt)}</button>`;
+      }).join('')}
     </div>
   </div>`;
 }
@@ -9977,9 +10031,16 @@ function sparkBurst(x, y, n, color, spread){
 
 /* ---- Companion on game screens (56px, top inline-end corner) ---- */
 let gcBubble = null, gcBubbleTimer = null;
+function gameTopHtml(title){
+  return `<div class="game-top">
+    <button class="game-back" data-action="back" aria-label="${esc(L('Back','Geri','برگشت','Atrás'))}">${ICONS.back}</button>
+    <h1 class="game-title">${esc(title)}</h1>
+    ${gameCompanionHtml()}
+  </div>`;
+}
 function gameCompanionHtml(){
   const b = (gcBubble && gcBubble.until > Date.now()) ? gcBubble : null;
-  return `<div class="game-companion" aria-hidden="true"><img id="gc-char" src="char-${learnerCharKey()}.png" alt="">${b ? `<div class="cute-bubble gc-bubble" id="gc-bubble">${esc(b.text)}</div>` : ''}</div>`;
+  return `<div class="game-companion" aria-hidden="true"><img id="gc-char" src="char-${learnerCharKey()}.png" alt="">${b ? `<div class="gc-bubble" id="gc-bubble">${esc(b.text)}</div>` : ''}</div>`;
 }
 // One bubble at a time: a new line replaces whatever is showing.
 function companionSay(text, ms){
@@ -9989,7 +10050,7 @@ function companionSay(text, ms){
   if(wrap){
     const old = document.getElementById('gc-bubble'); if(old) old.remove();
     const el = document.createElement('div');
-    el.className = 'cute-bubble gc-bubble'; el.id = 'gc-bubble'; el.textContent = text;
+    el.className = 'gc-bubble'; el.id = 'gc-bubble'; el.textContent = text;
     wrap.appendChild(el);
     anim(el, [{opacity:0, transform:'scale(.6)'}, {opacity:1, transform:'scale(1)'}], {duration:260, easing:SPRING});
   }
@@ -10040,11 +10101,12 @@ function matchTileEl(i){ return document.querySelector('[data-action="game-match
 function fxFlipIn(el, done){
   sfx('flip');
   if(!el || reducedMotion() || !el.animate){ if(done) done(); return; }
-  const html = el.innerHTML, css = el.style.cssText;
+  const html = el.innerHTML, css = el.style.cssText, cls = el.className;
+  if(/game-tile/.test(cls)) el.className = 'game-tile hidden-face';
   el.innerHTML = '?'; el.style.background = ''; el.style.borderColor = ''; el.style.color = ''; el.style.opacity = '1';
   const a = el.animate([{transform:'rotateY(0deg)'}, {transform:'rotateY(90deg)'}], {duration:90, easing:'ease-in'});
   a.onfinish = ()=>{
-    el.innerHTML = html; el.style.cssText = css;
+    el.innerHTML = html; el.style.cssText = css; el.className = cls;
     const b = el.animate([{transform:'rotateY(90deg)'}, {transform:'rotateY(0deg)'}], {duration:90, easing:'ease-out'});
     b.onfinish = ()=>{ if(done) done(); };
   };
@@ -10093,15 +10155,22 @@ function fxMatchTap(fx, pt){
 function trapStreakChip(round){
   if(round.streak < 3) return '';
   const hot = round.streak >= 5;
+  const n = round.streak;
   const sparks = hot ? `<span class="sparkle" style="top:-5px; right:-4px; left:auto; width:7px; height:7px; color:var(--clay-coral);"></span><span class="sparkle" style="bottom:-4px; left:-4px; width:5px; height:5px; animation-delay:.6s; color:var(--clay-coral);"></span>` : '';
-  return `<span id="trap-streak" class="pill" style="position:relative; overflow:visible; ${hot ? 'background:var(--clay-coral); color:#fff;' : 'background:var(--accent-soft); color:var(--accent-strong);'}">${sparks}${ICONS.flame} ${round.streak}</span>`;
+  return `<span id="trap-streak" class="game-streak${hot ? ' hot' : ''}">${sparks}${ICONS.bolt} ${L(`${n} in a row`, `${n} üst üste`, `${n} پشت سر هم`, `${n} seguidas`)}</span>`;
 }
 // On a correct answer the chosen word drops into the blank as a green pill.
 function trapSentenceHtml(q, round){
-  const pStyle = 'font-size:16.5px; font-weight:700; line-height:1.5;';
-  const parts = String(q.sentence).split('___');
-  if(!(round.answered && round.selected === q.correct) || parts.length < 2) return `<p style="${pStyle}">${esc(q.sentence)}</p>`;
-  return `<p style="${pStyle}">${esc(parts[0])}<span class="trap-fill" id="trap-fill">${esc(q.options[q.correct])}</span>${esc(parts.slice(1).join('___'))}</p>`;
+  const s = String(q.sentence);
+  const cls = 'game-sentence' + (s.length > 52 ? ' long' : '');
+  const parts = s.split('___');
+  if(parts.length < 2) return `<p class="${cls}">${esc(s)}</p>`;
+  const rest = esc(parts.slice(1).join('___'));
+  // Before an answer: a dashed gap. After: the right word sits in the gap as a
+  // green pill (dropped in with a spring when the learner chose it).
+  if(!round.answered) return `<p class="${cls}">${esc(parts[0])}<span class="trap-gap"></span>${rest}</p>`;
+  const hit = round.selected === q.correct;
+  return `<p class="${cls}">${esc(parts[0])}<span class="trap-fill"${hit ? ' id="trap-fill"' : ''}>${esc(q.options[q.correct])}</span>${rest}</p>`;
 }
 function fxTrapCorrect(i, pt, streak){
   fxCorrectButton(document.querySelector('[data-action="game-trap-tap"][data-i="'+i+'"]'), pt);

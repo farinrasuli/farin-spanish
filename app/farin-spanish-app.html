@@ -4522,6 +4522,10 @@ function syncToCloud(){
     try{
       const code = state.profile.recoveryCode;
       if(!code || typeof firebase === 'undefined') return;
+      // Never back up a half-finished "Redo my diagnostic" (roadmap cleared,
+      // completedDiagnostic false): it used to overwrite the cloud copy, so
+      // the next login came back with no roadmap.
+      if(!state.profile.completedDiagnostic) return;
       firebase.firestore().collection('progress').doc(code).set({
         app: 'es', profile: state.profile, progress: state.progress, roadmap: state.roadmap || null, savedAt: Date.now()
       }).catch(()=>{});
@@ -4587,6 +4591,7 @@ function restoreFromCode(code){
     state.profile = Object.assign({}, freshState().profile, data.profile);
     state.progress = Object.assign({}, freshState().progress, data.progress);
     state.roadmap = data.roadmap || null;
+    repairRestoredProfile();
     ensureRoadmap();
     migrateRoadmapChecked();
     save();
@@ -4594,6 +4599,29 @@ function restoreFromCode(code){
     showSplash();
     return true;
   });
+}
+let farinLogoutPending = false;  // first tap on "Log out" arms it, second tap logs out
+let farinLogoutError = false;    // the final backup before logging out failed
+function clearRecoveryCookie(){
+  try{ document.cookie = RECOVERY_COOKIE + '=; max-age=0; path=/; SameSite=Lax'; }catch(e){}
+}
+// Backs the account up right now (no debounce). Rejects if it can't be saved.
+function syncNow(){
+  if(cloudSyncTimer){ clearTimeout(cloudSyncTimer); cloudSyncTimer = null; }
+  const code = state.profile.recoveryCode;
+  if(!code || !state.profile.completedDiagnostic) return Promise.resolve();
+  if(typeof firebase === 'undefined') return Promise.reject(new Error('offline'));
+  const body = {profile: state.profile, progress: state.progress, roadmap: state.roadmap || null, savedAt: Date.now()};
+  if(LOGIN_APP !== 'en') body.app = LOGIN_APP;
+  return firebase.firestore().collection('progress').doc(code).set(body);
+}
+// A cloud copy written in the middle of "Redo my diagnostic" (before the fix
+// in syncToCloud) says completedDiagnostic:false and has no roadmap. A login
+// must still bring the whole account back, so treat it as a finished profile
+// and let ensureRoadmap() rebuild the roadmap.
+function repairRestoredProfile(){
+  const p = state.profile;
+  if(p && !p.completedDiagnostic && p.name && p.level) p.completedDiagnostic = true;
 }
 function pwErrorText(kind){
   if(kind==='short') return L('Your password needs at least 6 characters.', 'Şifren en az 6 karakter olmalı.', 'رمزت باید حداقل ۶ کاراکتر باشد.', 'Tu contraseña necesita al menos 6 caracteres.');
@@ -7434,6 +7462,9 @@ function renderSettings(){
         <button class="btn btn-ghost" data-action="retake-diagnostic">${L('Redo my diagnostic','Testimi yeniden yap','دوباره انجام‌دادن آزمون', 'Rehacer mi diagnóstico')}</button>
         <button class="btn btn-ghost" data-action="toggle-sfx" aria-pressed="${sfxMuted?'false':'true'}">${sfxMuted ? ICONS.soundOff : ICONS.soundOn} ${sfxMuted ? L('Sound effects: off','Ses efektleri: kapalı','جلوه‌های صوتی: خاموش','Efectos de sonido: apagados') : L('Sound effects: on','Ses efektleri: açık','جلوه‌های صوتی: روشن','Efectos de sonido: encendidos')}</button>
         <button class="btn btn-ghost" data-action="nav" data-view="privacy-policy">${L('Privacy Policy','Gizlilik Politikası','حریم خصوصی', 'Política de Privacidad')}</button>
+        ${state.profile.recoveryCode ? `<button class="btn btn-ghost" data-action="logout" ${farinPwBusy?'disabled':''}>${farinPwBusy && farinLogoutPending ? L('Logging out…', 'Çıkış yapılıyor…', 'در حال خروج…', 'Cerrando sesión…') : farinLogoutPending ? L('Tap again to log out', 'Çıkış yapmak için tekrar dokun', 'برای خروج دوباره لمس کن', 'Toca otra vez para cerrar sesión') : L('Log out', 'Çıkış yap', 'خروج', 'Cerrar sesión')}</button>
+        ${farinLogoutPending && !state.profile.loginId ? `<p class="field-hint" style="margin-top:0; text-align:center;">${L("You haven't set a password. Write down your recovery code first, then tap again to log out.", 'Henüz şifre belirlemedin. Önce kurtarma kodunu not et, sonra çıkış yapmak için tekrar dokun.', 'هنوز رمز نگذاشته‌ای. اول کد بازیابی‌ات را یادداشت کن، بعد برای خروج دوباره لمس کن.', 'Aún no tienes contraseña. Anota primero tu código de recuperación y luego toca otra vez para cerrar sesión.')}</p>` : ''}
+        ${farinLogoutError ? `<div class="unlock-error">${L("We couldn't save your latest progress, so you're still logged in. Check your connection and try again.", 'Son ilerlemeni kaydedemedik, bu yüzden hâlâ giriş yapmış durumdasın. Bağlantını kontrol edip tekrar dene.', 'نتوانستیم آخرین پیشرفتت را ذخیره کنیم، برای همین هنوز وارد حسابت هستی. اتصالت را بررسی کن و دوباره امتحان کن.', 'No pudimos guardar tu último progreso, así que sigues con la sesión iniciada. Revisa tu conexión e inténtalo de nuevo.')}</div>` : ''}` : ''}
         <button class="btn btn-ghost" data-action="reset-all" style="color:var(--error); border-color:var(--error-soft);">${resetConfirmPending ? L("Tap again to confirm — this can't be undone",'Onaylamak için tekrar dokun — geri alınamaz','دوباره لمس کن تا تایید شود — قابل بازگشت نیست', 'Toca de nuevo para confirmar — esto no se puede deshacer') : L('Reset all progress','Tüm ilerlemeyi sıfırla','بازنشانی همه پیشرفت', 'Restablecer todo el progreso')}</button>
       </div>
       ${renderContactOptIn()}
@@ -10393,7 +10424,29 @@ const HANDLERS = {
     save();
     render();
   },
-  'open-settings'(){ farinPwSettingsStatus = null; go('settings'); },
+  'open-settings'(){ farinPwSettingsStatus = null; farinLogoutPending = false; farinLogoutError = false; go('settings'); },
+  // Log out: back the account up one last time, then clear this device (and
+  // the recovery cookie, which would otherwise silently log them back in).
+  // Until this is tapped the learner stays logged in on this device.
+  'logout'(){
+    if(farinPwBusy) return;
+    if(!farinLogoutPending){ farinLogoutPending = true; farinLogoutError = false; render(); return; }
+    farinPwBusy = true; farinLogoutError = false; render();
+    syncNow().then(()=>{
+      farinPwBusy = false; farinLogoutPending = false;
+      const lang = LANG;
+      clearRecoveryCookie();
+      state = freshState();
+      LANG = lang;
+      navHistory = [];
+      save();
+      render();
+      window.scrollTo(0,0);
+    }).catch(()=>{
+      farinPwBusy = false; farinLogoutPending = false; farinLogoutError = true;
+      render();
+    });
+  },
   'nav'(el){
     const view = el.dataset.view;
     const params = {id: el.dataset.id};
@@ -12117,6 +12170,7 @@ if(location.hash === '#admin'){
       state.profile = Object.assign({}, freshState().profile, data.profile);
       state.progress = Object.assign({}, freshState().progress, data.progress);
       state.roadmap = data.roadmap || null;
+      repairRestoredProfile();
       ensureRoadmap();
       migrateRoadmapChecked();
       state.view = state.profile.completedDiagnostic ? 'dashboard' : 'diagnostic-intro';

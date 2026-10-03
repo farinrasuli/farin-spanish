@@ -4770,18 +4770,19 @@ function markGameComplete(refId){
 function gameBaseXp(refId){
   return (state.progress.completedGames && state.progress.completedGames.includes(refId)) ? 5 : 20;
 }
+/* Gamification v3 (M7, approved 2026-10-03): XP is retired. Nothing adds to
+   progress.xp any more and it is never shown; the field stays so old saves load.
+   This still counts perfect rounds (badges read perfectGameRounds). */
 function scoreGameCompletion(refId, isPerfect){
-  const isFirst = !(state.progress.completedGames && state.progress.completedGames.includes(refId));
-  const xpGain = isFirst ? (20 + (isPerfect ? 10 : 0)) : 5;
-  state.progress.xp = (state.progress.xp||0) + xpGain;
   if(isPerfect) state.progress.perfectGameRounds = (state.progress.perfectGameRounds||0) + 1;
-  return xpGain;
+  return 0;
 }
 
 /* ============================= SPACED REPETITION (SRS) ============================= */
 const LEITNER_INTERVALS = [1,2,4,7,14]; // days per box 1-5
 function localDateStr(d){ return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
 function todayISO(){ return localDateStr(new Date()); }
+function srsDueIn(days){ const d = new Date(); d.setDate(d.getDate() + days); return localDateStr(d); }
 function updateSRS(itemId, kind, pct){
   const srs = state.progress.srs;
   const entry = srs[itemId] || {kind, box:0};
@@ -4789,7 +4790,9 @@ function updateSRS(itemId, kind, pct){
   else if(pct < 0.5) entry.box = 0;
   const days = LEITNER_INTERVALS[entry.box];
   entry.kind = kind;
-  entry.due = new Date(Date.now() + days*86400000).toISOString().slice(0,10);
+  // Local calendar date, like todayISO(). toISOString() is UTC: in Turkey an item
+  // reviewed between midnight and 03:00 used to come due a day early.
+  entry.due = srsDueIn(days);
   srs[itemId] = entry;
 }
 function dueItems(){
@@ -8591,22 +8594,59 @@ function buildDictationRound(setObj, n){
    any new authoring. Each grammar item can contribute at most one 'blank'
    candidate and one 'blank2' candidate, and shuffle+slice never repeats an
    array element, so repeats within one round are avoided by construction. */
-function buildTrapRound(profile, n){
-  n = n || 8;
-  const goals = (profile.goals && profile.goals.length) ? profile.goals : (profile.motivationTag ? [profile.motivationTag] : []);
-  const pool = GRAMMAR_ITEMS.filter(g=>g.level===profile.level);
-  const resolveBlank = (item, field) => {
-    const gk = goals.find(k=>item.goalVariant && item.goalVariant[k] && item.goalVariant[k][field]);
-    const src = (gk && item.goalVariant[gk]) || item;
-    return src[field];
-  };
-  const candidates = [];
-  pool.forEach(item=>{
+/* Gamification v3 build 1 ("stop the harm", LXD review 2026-10-02).
+   TRAP_EXCLUDE_BLANKS: blanks where a "wrong" option is also correct. They are
+   kept out of Trap Dash (it was marking right answers wrong, under a timer) and
+   get no decoy tile in Build It. Entry format: 'itemId|field|variant', where
+   field is blank / blank2 / * and variant is base / a goal key / *.
+   One list on purpose: remove an entry once that blank's options are rewritten. */
+const TRAP_EXCLUDE_BLANKS = [
+  // LXD review list (19 blanks) — rewritten options arrive in a later pass
+  'g-A2-3|blank2|*', 'g-A2-8|blank2|*', 'g-A2-9|*|*',
+  'g-B1-1|*|*', 'g-B1-5|blank2|*', 'g-B1-8|*|*', 'g-B1-9|*|*',
+  'g-B2-1|blank|*', 'g-B2-6|blank2|*', 'g-B2-10|*|*',
+  'g-C1-7|blank|*', 'g-C1-8|blank2|*', 'g-C1-10|*|*',
+  // the keyed answer is the non-standard form ("Acababa" is a distractor)
+  'g-C1-2|blank|*',
+  // spotted by farin-lxd, not rewritten yet — keep out until reviewed
+  'g-C1-7|blank2|*', 'g-C1-8|blank|*', 'g-B2-5|blank|*'
+];
+function blankListed(list, itemId, field, variant){
+  variant = variant || 'base';
+  return list.some(e=>{
+    const p = e.split('|');
+    return p[0]===itemId && (p[1]==='*' || p[1]===field) && (p[2]==='*' || p[2]===variant);
+  });
+}
+// Grammar items the learner has finished (all levels when level is null).
+function completedGrammarItems(level){
+  const done = (state.progress && state.progress.completedTraps) || [];
+  return GRAMMAR_ITEMS.filter(g=>done.includes(g.id) && (!level || g.level===level));
+}
+// Every fill-in blank of the given items, in the learner's goal variant where one exists.
+function grammarBlankCandidates(profile, items){
+  const goals = profileGoalKeys(profile);
+  const out = [];
+  items.forEach(item=>{
     ['blank','blank2'].forEach(field=>{
-      const blank = resolveBlank(item, field);
-      if(blank) candidates.push({itemId:item.id, field, blank});
+      const gk = goals.find(k=>item.goalVariant && item.goalVariant[k] && item.goalVariant[k][field]);
+      const blank = ((gk && item.goalVariant[gk]) || item)[field];
+      if(blank) out.push({itemId:item.id, item, field, variant:gk || 'base', blank});
     });
   });
+  return out;
+}
+const TRAP_MIN_QUESTIONS = 4;
+/* Pool = grammar items the learner has completed at this level (it used to be the
+   whole level, so stage 1 was tested on untaught stage-2 items). With too few of
+   those it widens to completed items of any level; still under 4 questions it
+   returns null and the caller opens a vocabulary game instead. */
+function buildTrapRound(profile, n){
+  n = n || 8;
+  const usable = items => grammarBlankCandidates(profile, items).filter(c=>!blankListed(TRAP_EXCLUDE_BLANKS, c.itemId, c.field, c.variant));
+  let candidates = usable(completedGrammarItems(profile.level));
+  if(candidates.length < TRAP_MIN_QUESTIONS) candidates = usable(completedGrammarItems(null));
+  if(candidates.length < TRAP_MIN_QUESTIONS) return null;
   const picked = shuffle(candidates).slice(0, Math.min(n, candidates.length));
   const questions = picked.map(c=>{
     const opts = shuffle([c.blank.word].concat(c.blank.distractors));
@@ -8614,6 +8654,20 @@ function buildTrapRound(profile, n){
   });
   const timeLimit = 10;
   return {questions, index:0, score:0, streak:0, correctCount:0, mistakes:0, perfect:true, answered:false, selected:null, lastPoints:0, timeLimit, deadline:Date.now()+timeLimit*1000, finished:false, xpGain:0, startedAt:Date.now(), finishedAt:null};
+}
+// A vocabulary set for a game that can't run on its own content yet: a finished
+// set of this level first, then one from the roadmap, then any set of the level.
+function fallbackGameSet(minCards){
+  const lvl = state.profile.level, done = state.progress.completedVocabSets || [];
+  const ok = s => s && s.cards.length >= (minCards || 2);
+  const pool = VOCAB_SETS.filter(s=>s.level===lvl && s.category==='vocab' && ok(s));
+  const fromRoadmap = currentRoadmap().filter(n=>n.type==='vocab').map(n=>VOCAB_SETS.find(s=>s.id===n.refId)).filter(ok);
+  return pool.find(s=>done.includes(s.id)) || fromRoadmap[0] || pool[0] || VOCAB_SETS.find(ok) || null;
+}
+function gameFallbackNote(vp){
+  if(!vp || !vp.fallbackFrom) return '';
+  const name = gameDisplayName(vp.fallbackFrom);
+  return L(`${name} opens after a few more grammar steps. `, `${name} birkaç dilbilgisi adımından sonra açılır. `, `${name} بعد از چند قدم گرامر دیگر باز می‌شود. `, `${name} se abre tras unos pasos más de gramática. `);
 }
 function renderGameMatch(){
   const vp = state.viewParams;
@@ -8632,7 +8686,7 @@ function renderGameMatch(){
         <span class="game-chip">${L('Mistakes','Hatalar','اشتباهات','Errores')}: ${round.mistakes}</span>
       </span>
     </div>
-    ${done ? '' : `<p class="game-hint">${L('Tap two tiles to match a word with its meaning.','Bir kelimeyi anlamıyla eşleştirmek için iki karoya dokun.','برای جفت‌کردن یک کلمه با معنی‌اش، روی دو کاشی بزن.','Toca dos fichas para unir una palabra con su significado.')}</p>`}
+    ${done ? '' : `<p class="game-hint">${gameFallbackNote(vp)}${L('Tap two tiles to match a word with its meaning.','Bir kelimeyi anlamıyla eşleştirmek için iki karoya dokun.','برای جفت‌کردن یک کلمه با معنی‌اش، روی دو کاشی بزن.','Toca dos fichas para unir una palabra con su significado.')}</p>`}
     <div class="game-tiles">
       ${round.tiles.map((t,i)=>{
         const isMatched = round.matchedKeys.includes(t.key);
@@ -10680,11 +10734,7 @@ const HANDLERS = {
       state.progress[key] = (state.progress[key]||0) + 1;
       if(!state.progress.lastWords) state.progress.lastWords = {};
       state.progress.lastWords[vp.mode] = String(text||'').slice(0, 300);
-      // Gamification (4bDl1BS3): +10 XP per passed Studio Lab round. Unlike
-      // games, these rounds are freshly generated each time (no catalog id to
-      // dedupe on — see roadmapNodeAutoDone's comment), and "New round" is the
-      // whole point of this screen, so every pass earns it, not just the first.
-      state.progress.xp = (state.progress.xp||0) + 10;
+      // Gamification v3 (M7): no XP is added here any more.
     }
     save();
     // Roadmap 2.0 Phase 4: this only used to call checkBadges() directly, skipping
@@ -10809,7 +10859,12 @@ const HANDLERS = {
     gcBubble = null; trapWarnKey = null;
     const params = {refId: el.dataset.refId, goal: el.dataset.goal};
     if(kind === 'trap'){
-      go('game-trap', Object.assign({round: buildTrapRound(state.profile)}, params));
+      const trapRound = buildTrapRound(state.profile);
+      if(trapRound){ go('game-trap', Object.assign({round: trapRound}, params)); return; }
+      // Not enough finished grammar yet for a fair round: a vocabulary game instead.
+      const fb = fallbackGameSet();
+      if(!fb) return;
+      go('game-match', Object.assign({round: buildMatchRound(fb), fallbackFrom:'trap'}, params));
       return;
     }
     const setObj = VOCAB_SETS.find(x=>x.id===el.dataset.setId);
@@ -10885,7 +10940,8 @@ const HANDLERS = {
         // regular node's first-ever completion — awarded exactly when the id
         // newly enters this dedup'd array, so a later requeue through the
         // review flow (same item, already completed) doesn't re-earn it.
-        if(!arr.includes(q.contextId)){ arr.push(q.contextId); state.progress.xp = (state.progress.xp||0) + 10; }
+        // Gamification v3 (M7): XP is retired — the +10 described above is no longer added.
+        if(!arr.includes(q.contextId)) arr.push(q.contextId);
         updateSRS(q.contextId, q.kind, q.correct/q.questions.length);
       } else {
         const byItem = {};
@@ -10898,7 +10954,7 @@ const HANDLERS = {
         Object.keys(byItem).forEach(id=>{
           const {kind, correct, total} = byItem[id];
           const arr = progressArrForKind(kind);
-          if(!arr.includes(id)){ arr.push(id); state.progress.xp = (state.progress.xp||0) + 10; }
+          if(!arr.includes(id)) arr.push(id);
           updateSRS(id, kind, correct/total);
         });
         state.progress.reviewsCompleted = (state.progress.reviewsCompleted||0) + 1;

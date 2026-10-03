@@ -319,6 +319,34 @@
   .wordmark{font-weight:800; font-size:19px; letter-spacing:-.01em;}
   .wordmark span{color:var(--accent);}
   .streak-chip{display:flex; align-items:center; gap:5px; background:var(--bg-elevated); border:1px solid var(--border); padding:6px 10px 6px 8px; border-radius:999px; font-weight:700; font-size:13px;}
+  /* Gamification v3 (M3): the chip shows this week's dots; tapping it opens the rhythm sheet. */
+  .wk-chip{cursor:pointer; color:var(--ink); font:inherit; font-weight:700; font-size:13px;}
+  .wk-dots{display:inline-flex; gap:4px; align-items:center;}
+  .wk-dot{width:9px; height:9px; border-radius:50%; box-sizing:border-box; border:2px solid color-mix(in srgb, var(--accent) 55%, var(--border)); background:transparent;}
+  .wk-dot.on{border-color:var(--accent); background:var(--accent); box-shadow:0 0 6px color-mix(in srgb, var(--accent) 55%, transparent);}
+  .wk-chip.met{border-color:color-mix(in srgb, var(--cat-review) 70%, transparent); box-shadow:0 0 0 3px color-mix(in srgb, var(--cat-review) 30%, transparent);}
+  .rh-sheet{position:relative; width:100%; max-width:360px; box-sizing:border-box; background:var(--bg-elevated); color:var(--ink); border-radius:28px; padding:22px 20px 18px; box-shadow:var(--clay-shadow); text-align:center; cursor:default;}
+  .rh-sheet .rh-char{width:76px; height:76px; object-fit:contain; margin-top:-58px; filter:drop-shadow(0 8px 12px rgba(0,0,0,.25));}
+  .rh-title{font-family:'Fredoka',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; font-weight:700; font-size:22px; margin:4px 0 2px;}
+  .rh-big-dots{display:flex; justify-content:center; gap:8px; margin:10px 0 4px;}
+  .rh-big-dots .wk-dot{width:18px; height:18px; border-width:3px;}
+  .rh-line{font-size:13.5px; font-weight:700; color:var(--ink-soft);}
+  .rh-label{margin-top:16px; font-size:12px; font-weight:900; text-transform:uppercase; letter-spacing:.05em; color:var(--ink-soft);}
+  .rh-goals{display:flex; gap:8px; margin-top:8px;}
+  .rh-goal{flex:1; min-height:52px; border-radius:16px; border:2px solid var(--border); background:var(--bg-elevated); color:var(--ink); font-family:'Fredoka',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; font-weight:700; font-size:17px; cursor:pointer;}
+  .rh-goal.on{border-color:var(--accent); background:var(--accent-soft); color:var(--accent-strong);}
+  .rh-stats{display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:14px;}
+  .rh-stat{background:var(--bg-sunken); border-radius:16px; padding:10px 8px;}
+  .rh-stat b{display:block; font-family:'Fredoka',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; font-size:22px; font-weight:700;}
+  .rh-stat span{font-size:11.5px; font-weight:800; color:var(--ink-soft);}
+  .rh-rest{margin-top:10px; font-size:12.5px; font-weight:700; color:var(--ink-soft);}
+  .rh-rest.on{color:color-mix(in srgb, var(--success) 62%, var(--ink));}
+  /* companion bubble with buttons (comeback greeting, today's plan) */
+  .char-tip .cute-bubble.cb-plan{max-width:270px;}
+  .cb-btns{display:flex; flex-wrap:wrap; gap:6px; margin-top:9px;}
+  .cb-btn{border:none; border-radius:999px; padding:8px 13px; font-family:inherit; font-weight:700; font-size:13.5px; cursor:pointer; background:var(--accent); color:#fff; box-shadow:0 4px 10px -4px color-mix(in srgb, var(--accent) 70%, transparent);}
+  .cb-btn.alt{background:var(--accent-soft); color:var(--accent-strong); box-shadow:none;}
+  .cb-small{display:block; font-size:12px; font-weight:600; color:#7a6fa0; margin-top:4px;}
   .icon-btn{background:var(--bg-elevated); border:1px solid var(--border-soft); width:34px; height:34px; border-radius:50%; display:flex; align-items:center; justify-content:center; color:var(--ink-soft); flex:0 0 auto; box-shadow:var(--clay-shadow-soft); transition:box-shadow .08s ease, transform .08s ease;}
   .icon-btn:hover{color:var(--ink); border-color:var(--ink-faint);}
   .icon-btn:active{box-shadow:var(--clay-inset); transform:translateY(1px);}
@@ -4758,13 +4786,13 @@ function goBack(){
   save(); render(); window.scrollTo(0,0);
 }
 
+// Gamification v3 (M3): the day streak survives up to 2 missed days.
 function markDailyVisit(){
   const today = todayISO();
   const p = state.progress;
   if(p.lastActiveDate !== today){
-    const yd = new Date(); yd.setDate(yd.getDate()-1);
-    const y = localDateStr(yd);
-    p.streak = (p.lastActiveDate === y) ? p.streak + 1 : 1;
+    const gap = p.lastActiveDate ? daysBetweenISO(p.lastActiveDate, today) : 99;
+    p.streak = (gap >= 1 && gap <= 3) ? (p.streak||0) + 1 : 1;
     p.lastActiveDate = today;
     return true;
   }
@@ -4772,8 +4800,137 @@ function markDailyVisit(){
 }
 function markActivity(){
   markDailyVisit();
+  recordActiveDay();
   state.progress.sessionsExplored += 1;
   checkBadges();
+}
+/* ============================= GAMIFICATION V3: WEEKLY RHYTHM (M3) =============================
+   The learner picks 2, 3 or 5 days a week (default 3). A day counts when anything
+   is completed (a review-only day too). Weeks start on Monday. A met week adds
+   one to "weeks in rhythm"; a missed week only pauses it — the count never goes
+   down. After every 4 met weeks one rest week is banked (max 1); it is used
+   automatically and the missed week then counts as met. Fields live in
+   state.progress: weeklyGoal, goalChosen, weekStart, weekActiveDays[],
+   rhythmWeeks, bestRhythm, restWeekBanked, metSinceBank, lastWeek,
+   comebackOn, comebackDone. */
+function isoToDate(iso){ const p = String(iso).split('-').map(Number); return new Date(p[0], (p[1]||1)-1, p[2]||1, 12); }
+function daysBetweenISO(a, b){ return Math.round((isoToDate(b) - isoToDate(a))/86400000); }
+function weekStartISO(d){
+  const x = d ? new Date(d.getTime()) : new Date();
+  x.setDate(x.getDate() - ((x.getDay() + 6) % 7));
+  return localDateStr(x);
+}
+function ensureRhythm(pr){
+  if(![2,3,5].includes(pr.weeklyGoal)) pr.weeklyGoal = 3;
+  if(!Array.isArray(pr.weekActiveDays)) pr.weekActiveDays = [];
+  ['rhythmWeeks','bestRhythm','metSinceBank'].forEach(k=>{ if(typeof pr[k] !== 'number') pr[k] = 0; });
+  pr.restWeekBanked = !!pr.restWeekBanked;
+}
+function rollWeeks(){
+  const pr = state.progress;
+  if(!pr) return;
+  ensureRhythm(pr);
+  const cur = weekStartISO();
+  if(!pr.weekStart){ pr.weekStart = cur; return; }
+  if(pr.weekStart >= cur) return;
+  let ws = pr.weekStart, first = true, guard = 0;
+  while(ws < cur && guard++ < 530){
+    const met = first && pr.weekActiveDays.length >= pr.weeklyGoal;
+    if(met){
+      pr.rhythmWeeks++; pr.lastWeek = 'met';
+      if(!pr.restWeekBanked && ++pr.metSinceBank >= 4){ pr.restWeekBanked = true; pr.metSinceBank = 0; }
+    } else if(pr.restWeekBanked){
+      pr.restWeekBanked = false; pr.rhythmWeeks++; pr.lastWeek = 'rest';
+    } else {
+      pr.lastWeek = 'paused';
+    }
+    pr.bestRhythm = Math.max(pr.bestRhythm, pr.rhythmWeeks);
+    const d = isoToDate(ws); d.setDate(d.getDate() + 7); ws = localDateStr(d);
+    first = false;
+  }
+  pr.weekStart = cur;
+  pr.weekActiveDays = [];
+}
+function recordActiveDay(){
+  const pr = state.progress;
+  rollWeeks();
+  const t = todayISO();
+  if(!pr.weekActiveDays.includes(t)) pr.weekActiveDays.push(t);
+  pr.comebackDone = true;
+}
+function weekDaysDone(){
+  const pr = state.progress || {};
+  return (pr.weekStart === weekStartISO() && Array.isArray(pr.weekActiveDays)) ? pr.weekActiveDays.length : 0;
+}
+function weekGoal(){ const g = state.progress && state.progress.weeklyGoal; return [2,3,5].includes(g) ? g : 3; }
+function weekDotsHtml(){
+  const goal = weekGoal(), n = Math.min(weekDaysDone(), goal);
+  return Array.from({length:goal}, (_,i)=>`<span class="wk-dot${i < n ? ' on' : ''}"></span>`).join('');
+}
+function weekChipHtml(){
+  const goal = weekGoal(), n = weekDaysDone();
+  const label = L(`This week: ${Math.min(n, goal)} of ${goal} days`, `Bu hafta: ${Math.min(n, goal)}/${goal} gün`, `این هفته: ${Math.min(n, goal)} از ${goal} روز`, `Esta semana: ${Math.min(n, goal)} de ${goal} días`);
+  return `<button class="streak-chip wk-chip${n >= goal ? ' met' : ''}" data-action="open-rhythm" aria-label="${esc(label)}"><span style="color:var(--accent)">${ICONS.flame}</span><span class="wk-dots">${weekDotsHtml()}</span></button>`;
+}
+// 7+ days away: the companion greets them and offers a 3-card warm-up.
+function detectComeback(){
+  const pr = state.progress;
+  if(!pr || !pr.lastActiveDate || !state.profile || !state.profile.completedDiagnostic) return;
+  const t = todayISO();
+  if(pr.lastActiveDate !== t && daysBetweenISO(pr.lastActiveDate, t) >= 7){ pr.comebackOn = t; pr.comebackDone = false; }
+}
+function isComeback(){
+  const pr = state.progress || {};
+  return pr.comebackOn === todayISO() && !pr.comebackDone;
+}
+function openRhythmSheet(){
+  if(document.querySelector('.celebrate-overlay')) return;
+  hideCharTip(true);
+  rollWeeks();
+  const el = document.createElement('div');
+  el.className = 'celebrate-overlay rh-overlay';
+  const draw = ()=>{
+    const pr = state.progress, goal = weekGoal(), n = Math.min(weekDaysDone(), goal);
+    el.innerHTML = `<div class="rh-sheet" role="dialog" aria-label="${esc(L('Your week','Haftan','هفته تو','Tu semana'))}">
+      <img class="rh-char" src="char-${learnerCharKey()}.png" alt="">
+      <div class="rh-title">${L('Your week','Haftan','هفته تو','Tu semana')}</div>
+      <div class="rh-big-dots">${weekDotsHtml()}</div>
+      <div class="rh-line">${n >= goal ? L('Week goal reached — lovely rhythm!','Haftalık hedef tamam — harika bir ritim!','هدف این هفته کامل شد — ریتم قشنگی است!','¡Meta semanal cumplida — qué buen ritmo!') : L(`${n} of ${goal} days this week`, `Bu hafta ${n}/${goal} gün`, `${n} از ${goal} روز این هفته`, `${n} de ${goal} días esta semana`)}</div>
+      <div class="rh-label">${L('How many days a week?','Haftada kaç gün?','هفته‌ای چند روز؟','¿Cuántos días por semana?')}</div>
+      <div class="rh-goals">${[2,3,5].map(g=>`<button class="rh-goal${g===goal?' on':''}" data-rh-goal="${g}">${L(`${g} days`, `${g} gün`, `${g} روز`, `${g} días`)}</button>`).join('')}</div>
+      <div class="rh-stats">
+        <div class="rh-stat"><b>${pr.rhythmWeeks||0}</b><span>${L('weeks in rhythm','ritimde geçen hafta','هفته در ریتم','semanas con ritmo')}</span></div>
+        <div class="rh-stat"><b>${pr.streak||0}</b><span>${L('day streak','gün serisi','روز پشت سر هم','días seguidos')}</span></div>
+      </div>
+      <div class="rh-rest${pr.restWeekBanked ? ' on' : ''}">${pr.restWeekBanked ? L('✓ A rest week is saved for you','✓ Senin için bir dinlenme haftası ayrıldı','✓ یک هفته استراحت برایت کنار گذاشته شده','✓ Tienes una semana de descanso guardada') : L('Every 4 good weeks save you a rest week','Her 4 iyi hafta sana bir dinlenme haftası kazandırır','هر ۴ هفته خوب، یک هفته استراحت برایت ذخیره می‌کند','Cada 4 buenas semanas te guardan una de descanso')}</div>
+      <button class="btn btn-primary" data-rh-close="1" style="margin-top:14px; width:100%; justify-content:center;">${L('Done','Tamam','باشه','Listo')}</button>
+    </div>`;
+  };
+  draw();
+  el.addEventListener('click', (e)=>{
+    const g = e.target.closest('[data-rh-goal]');
+    if(g){
+      state.progress.weeklyGoal = Number(g.dataset.rhGoal);
+      state.progress.goalChosen = true;
+      save(); draw(); render(); sfx('flip');
+      return;
+    }
+    if(e.target.closest('[data-rh-close]') || !e.target.closest('.rh-sheet')) el.remove();
+  });
+  document.body.appendChild(el);
+}
+// What the companion bubble on Home says when it has something to offer (with
+// buttons); null = one of the usual greetings.
+function companionBubbleContent(){
+  if(isComeback()){
+    const name = '<bdi>'+esc(state.profile.name||'')+'</bdi>';
+    const hasCards = Object.keys(state.progress.srs || {}).some(id=>srsSource(id, state.progress.srs[id].kind));
+    return L(`Good to see you, ${name}! `, `Seni görmek çok güzel, ${name}! `, `چه خوب که دوباره می‌بینمت، ${name}! `, `¡Qué alegría verte, ${name}! `)
+      + (hasCards ? L('Shall we warm up with 3 of your souvenirs?','3 hatıranla ısınalım mı?','با ۳ تا از یادگاری‌هایت گرم کنیم؟','¿Calentamos con 3 de tus recuerdos?')
+          + `<div class="cb-btns"><button class="cb-btn" data-action="start-shuffle" data-mode="warm">${L('Warm up','Isın','گرم کنیم','Calentar')}</button></div>`
+        : L('Your roadmap is right where you left it.','Yol haritan bıraktığın yerde.','نقشه راهت همان‌جایی است که رهایش کردی.','Tu hoja de ruta está donde la dejaste.'));
+  }
+  return null;
 }
 function checkBadges(){
   BADGES.forEach(b=>{
@@ -5909,14 +6066,26 @@ function hideCharTip(instant){
 function showCharTip(){
   if(state.view !== 'dashboard' || !state.profile || !state.profile.completedDiagnostic) return false;
   if(document.getElementById('char-tip') || document.querySelector('.celebrate-overlay')) return false;
-  const text = pickGreeting(state.profile, dueItems().length, charTipRot++);
+  // Gamification v3: the bubble also carries the comeback greeting and today's plan (with buttons).
+  const offer = companionBubbleContent();
+  const text = offer || pickGreeting(state.profile, dueItems().length, charTipRot++);
   const el = document.createElement('div');
   el.className = 'char-tip'; el.id = 'char-tip';
   el.innerHTML = `<div class="char-tip-inner"><div class="char-tip-float">
     <img class="char-tip-char" src="char-${learnerCharKey()}.png" alt="">
-    <div class="cute-bubble"><span class="sparkle" style="top:-3px; right:12px; left:auto; width:6px; height:6px;"></span><span class="sparkle" style="bottom:6px; right:-4px; left:auto; width:5px; height:5px; animation-delay:.8s;"></span>${text}</div>
+    <div class="cute-bubble${offer ? ' cb-plan' : ''}"><span class="sparkle" style="top:-3px; right:12px; left:auto; width:6px; height:6px;"></span><span class="sparkle" style="bottom:6px; right:-4px; left:auto; width:5px; height:5px; animation-delay:.8s;"></span>${text}</div>
   </div></div>`;
-  el.addEventListener('click', ()=>hideCharTip());
+  el.addEventListener('click', (e)=>{
+    const b = e.target.closest('[data-action]');
+    if(b && HANDLERS[b.dataset.action]){
+      e.stopPropagation();
+      hideCharTip(true);
+      playClickSound();
+      HANDLERS[b.dataset.action](b, e);
+      return;
+    }
+    hideCharTip();
+  });
   document.body.appendChild(el);
   return true;
 }
@@ -6392,7 +6561,7 @@ function topbar(showGear, showEnglishLink){
   return `<div class="topbar">
     <div class="wordmark">Farin<span>Spanish</span></div>
     <div class="row" style="gap:8px;">
-      <div class="streak-chip"><span style="color:var(--accent)">${ICONS.flame}</span><span class="num">${state.progress.streak}</span></div>
+      ${weekChipHtml()}
       ${showEnglishLink ? `<a class="icon-btn" href="https://farinrasuli.github.io/farin-english/app/farin-english-app.html?lang=${LANG}" target="_top" rel="noopener" aria-label="${L('Learn English','İngilizce Öğren','انگلیسی یاد بگیر', 'Aprende inglés')}">🇬🇧</a>` : ''}
       ${langToggle()}
       ${showGear ? `<button class="icon-btn" data-action="open-settings" aria-label="Settings">${ICONS.gear}</button>` : ''}
@@ -10977,6 +11146,7 @@ const HANDLERS = {
     else if(willCelebrate) showCelebration('media');
   },
   'open-souvenir'(el){ openSouvenirModal(Number(el.dataset.i)); },
+  'open-rhythm'(){ openRhythmSheet(); },
   'open-page-complete'(){ showPageComplete(); },
   'advance-roadmap-level'(){
     checkRoadmapStageAdvance();
@@ -12773,6 +12943,8 @@ if(location.hash === '#admin'){
   if(state.profile.completedDiagnostic && state.view === 'diagnostic-intro'){ state.view = 'dashboard'; }
   ensureRoadmap();
   migrateRoadmapChecked();
+  detectComeback();
+  if(state.profile.completedDiagnostic){ rollWeeks(); }
   if(state.profile.completedDiagnostic && markDailyVisit()){ save(); }
   const fallbackRecoveryCode = (!loadedFromStorage && !state.profile.completedDiagnostic) ? getRecoveryCookie() : null;
   if(fallbackRecoveryCode && typeof firebase !== 'undefined'){

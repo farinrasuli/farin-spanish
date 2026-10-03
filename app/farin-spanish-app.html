@@ -279,6 +279,24 @@
   .sv-meaningface .sv-meaning{-webkit-line-clamp:7;}
   .sv-backface{background:var(--svc); display:flex; align-items:center; justify-content:center;}
   .sv-logo{width:64px; height:64px; object-fit:contain; opacity:.9;}
+  /* Gamification v3 build 1: shine marks, "Kept" foil, Souvenir Shuffle */
+  .sv-shine{position:absolute; left:14px; bottom:14px; z-index:2; font-size:17px; line-height:1; letter-spacing:2px; color:#fff; text-shadow:0 0 8px rgba(255,255,255,.95), 0 0 2px rgba(255,255,255,.9);}
+  .sv-kept{position:absolute; left:0; bottom:0; width:96px; height:96px; z-index:1; clip-path:polygon(0 0, 0 100%, 100% 100%); background:linear-gradient(135deg, #ffd6f5, #c9f7ff 35%, #fff6c2 62%, #d9c9ff); opacity:.95;}
+  .sv-kept::after{content:''; position:absolute; inset:0; background:linear-gradient(120deg, transparent 30%, rgba(255,255,255,.85) 45%, transparent 60%); background-size:220% 100%; animation:sv-foil 3.2s ease-in-out infinite;}
+  @keyframes sv-foil{0%{background-position:120% 0;} 100%{background-position:-120% 0;}}
+  .sv-shine-kept{left:10px; bottom:12px; font-family:'Fredoka',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; font-weight:800; font-size:13px; letter-spacing:.04em; text-transform:uppercase; color:#5b3fa6; text-shadow:0 1px 0 rgba(255,255,255,.8);}
+  .sv-ready-wrap{position:relative; display:inline-block;}
+  .sv-ready-wrap .sparkle{z-index:3; color:var(--clay-orange-deep);}
+  .sh-banner{display:flex; align-items:center; gap:12px; width:100%; box-sizing:border-box; padding:16px 18px; border-radius:24px; margin-bottom:14px; text-align:start; border:none; cursor:pointer; font:inherit; background:linear-gradient(150deg, var(--cat-review), var(--clay-orange) 75%); color:#fff; box-shadow:var(--clay-shadow); position:relative; overflow:hidden;}
+  .sh-banner b{font-family:'Fredoka',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; font-weight:700; font-size:16px; display:block;}
+  .sh-banner small{font-size:12.5px; font-weight:700; opacity:.9;}
+  .sh-banner .pill{margin-inline-start:auto; background:#fff; color:var(--clay-orange-deep); font-weight:900;}
+  .sh-stage{display:flex; justify-content:center; margin:-4px 0 -6px;}
+  .sh-reveal{display:flex; flex-direction:column; align-items:center; gap:14px; text-align:center;}
+  .sh-reveal .cel-sv{opacity:1; margin-top:0;}
+  .sh-caption{font-family:'Fredoka',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; font-weight:700; font-size:20px; color:var(--ink);}
+  .sh-sub{font-size:13.5px; font-weight:700; color:var(--ink-soft); margin-top:-8px;}
+  .sh-grid{display:flex; flex-wrap:wrap; justify-content:center; gap:10px; margin:6px 0 4px;}
   /* Completion sequence (§3): stat stickers, the souvenir flip, the caption. */
   .cel-stickers{display:flex; flex-wrap:wrap; justify-content:center; gap:6px; margin-top:10px;}
   .cel-sticker{display:inline-block; background:#fff; color:var(--clay-orange-deep); font-family:'Fredoka',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; font-weight:700; font-size:16px; padding:4px 12px; border-radius:999px; box-shadow:var(--clay-shadow-soft), 0 0 0 1.5px color-mix(in srgb, var(--cat-review) 60%, transparent); opacity:0;}
@@ -4555,6 +4573,8 @@ function load(){
     if(merged.profile.levelStage===undefined) merged.profile.levelStage = 1;
     if(!merged.progress.dailyTasksChecked) merged.progress.dailyTasksChecked = {};
     if(merged.progress.dailyTasksDate===undefined) merged.progress.dailyTasksDate = null;
+    // Gamification v3: the old review quiz is untimed now (one review experience).
+    if(merged.quiz && merged.quiz.kind === 'review') merged.quiz.deadline = null;
     if(merged.profile.dashboardIntroShown===undefined) merged.profile.dashboardIntroShown = true;
     if(merged.profile.wantsContact===undefined) merged.profile.wantsContact = false;
     if(merged.profile.contactPhone===undefined) merged.profile.contactPhone = '';
@@ -6169,6 +6189,7 @@ function souvenirFaceHtml(sv){
       ${isWord && sv.meaning ? `<div class="sv-meaning">${esc(svText(sv.meaning))}</div>` : ''}
     </div>
     <div class="sv-stamp"><b>${esc(sv.level||'')}</b><small>${esc(svDateLabel(sv.date))}</small></div>
+    ${svShineHtml(sv)}
   </div>`;
 }
 function souvenirBackHtml(sv){
@@ -7211,16 +7232,25 @@ function journalPageSlots(level){
 function journalSlotHtml(s, size){
   if(s.empty) return journalEmptySlot(s.empty, size);
   if(s.start) return souvenirCardHtml(s.sv, size);
-  return `<button class="jr-slot" data-action="open-souvenir" data-i="${s.i}" aria-label="${esc(s.sv.text||'')}">${souvenirCardHtml(s.sv, size)}</button>`;
+  // Gamification v3: a sparkle on cards that are ready to shine (due for review).
+  const ready = souvenirDue(s.sv) ? `<span class="sparkle" style="top:-4px; left:-4px; width:9px; height:9px;"></span><span class="sparkle" style="top:10px; right:-5px; left:auto; width:6px; height:6px; animation-delay:.6s;"></span>` : '';
+  return `<button class="jr-slot sv-ready-wrap" data-action="open-souvenir" data-i="${s.i}" aria-label="${esc(s.sv.text||'')}">${souvenirCardHtml(s.sv, size)}${ready}</button>`;
 }
 function renderJournal(){
   const cur = roadmapLevelKey();
   const levels = Array.from(new Set((state.progress.souvenirs||[]).map(s=>s.level).concat(cur ? [cur] : []))).filter(Boolean);
   levels.sort((a,b)=>LEVEL_STAGES.indexOf(b) - LEVEL_STAGES.indexOf(a));
   const count = (state.progress.souvenirs||[]).length;
+  const ready = readyToShineCount();
+  const readyBanner = ready ? `<button class="sh-banner" data-action="start-shuffle">
+        <span class="sparkle" style="top:8px; left:12px; color:#fff;"></span><span class="sparkle" style="bottom:10px; right:90px; left:auto; width:6px; height:6px; color:#fff; animation-delay:.7s;"></span>
+        <div><b>${L(`${ready} souvenir${ready===1?' is':'s are'} ready to shine`, `${ready} hatıra parlamaya hazır`, `${ready} یادگاری آماده درخشیدن است`, `${ready} recuerdo${ready===1?' está listo':'s están listos'} para brillar`)}</b><small>${L('A 2-minute Souvenir Shuffle','2 dakikalık bir hatıra turu','یک مرور ۲ دقیقه‌ای یادگاری‌ها','Un repaso de recuerdos de 2 minutos')}</small></div>
+        <span class="pill">${L('Start','Başla','شروع','Empezar')}</span>
+      </button>` : '';
   return `<div class="fade-in">
     ${sectionHead(journalName(), count ? L(count+' souvenirs collected — tap one to flip it', count+' hatıra toplandı — çevirmek için birine dokun', count+' یادگاری جمع شده — برای برگرداندن روی یکی بزن', count+' recuerdos reunidos — toca uno para darle la vuelta') : L('Finish a step on your roadmap to collect your first souvenir.','İlk hatıranı toplamak için yol haritanda bir adımı bitir.','برای جمع‌کردن اولین یادگاری، یک قدم از نقشه راهت را تمام کن.','Termina un paso de tu hoja de ruta para reunir tu primer recuerdo.'))}
     <div class="screen" style="padding-top:0;">
+      ${readyBanner}
       ${levels.map(lv=>`<div class="card-flat" style="margin-bottom:14px;">
         <div class="eyebrow" style="color:var(--ink-soft);">${esc(journalPageTitle(lv))}</div>
         <div class="jr-grid">${journalPageSlots(lv).map(s=>journalSlotHtml(s, 'mini')).join('')}</div>
@@ -9626,28 +9656,163 @@ function vocabQuizQuestions(s){
   return shuffle(questions);
 }
 function storyQuizQuestions(s){ return s.quiz.slice(); }
-function buildReviewQuiz(){
-  const due = dueItems().slice(0, 5);
-  const mixed = [];
-  due.forEach(id=>{
-    const entry = state.progress.srs[id];
-    let source, generator;
-    if(entry.kind==='grammar'){ source = GRAMMAR_ITEMS.find(x=>x.id===id); generator = grammarQuizQuestions; }
-    else if(entry.kind==='vocab'){ source = VOCAB_SETS.find(x=>x.id===id); generator = vocabQuizQuestions; }
-    else if(entry.kind==='story'){ source = STORY_LIBRARY.find(x=>x.id===id); generator = storyQuizQuestions; }
-    if(!source) return;
-    const qs = generator(source).slice(0, 3);
-    qs.forEach(q=>{ q.itemId = id; q.kind = entry.kind; });
-    mixed.push(...qs);
+/* ============================= GAMIFICATION V3: SOUVENIR SHUFFLE (M1) =============================
+   Replaces the old timed mixed review quiz (buildReviewQuiz, removed): one review
+   experience. Up to 5 due souvenirs, 2 questions each (srsQuestions), untimed.
+   Each card starts face-down; once its two questions are answered the box is
+   decided on those first attempts (srsReview), the card flips face-up and shows
+   its shine mark. A missed question shows its explanation and comes back once at
+   the end. mode 'warm' = the comeback warm-up: the 3 strongest souvenirs (their
+   boxes only change if they happen to be due). */
+function svRefId(sv){
+  if(!sv) return '';
+  if(sv.refId) return sv.refId;
+  const id = String(sv.nodeId||''), i = id.indexOf(':');
+  return i >= 0 ? id.slice(i+1).split('#')[0] : '';
+}
+const SV_REVIEWABLE = ['grammar','vocab','slang','story'];
+function souvenirShine(sv){
+  if(!sv || !SV_REVIEWABLE.includes(sv.type)) return -1;
+  const e = state.progress && state.progress.srs && state.progress.srs[svRefId(sv)];
+  return e ? (e.hi || 0) : 0;
+}
+function souvenirDue(sv){
+  if(!sv || !SV_REVIEWABLE.includes(sv.type)) return false;
+  const e = state.progress && state.progress.srs && state.progress.srs[svRefId(sv)];
+  return srsIsDue(e);
+}
+// Box 0-1: no mark · 2: one mark · 3: two marks · 4+: "Kept" (foil corner). Never drops.
+function svShineHtml(sv){
+  const h = souvenirShine(sv);
+  if(h < 2) return '';
+  if(h >= SRS_KEPT_BOX) return `<div class="sv-kept"></div><div class="sv-shine sv-shine-kept">✦ ${esc(L('Kept','Kalıcı','ماندگار','Guardado'))}</div>`;
+  return `<div class="sv-shine">${h >= 3 ? '✦✦' : '✦'}</div>`;
+}
+// The souvenir a due item belongs to; items learned outside the roadmap get a
+// card made on the spot (not stored).
+function souvenirForItem(id, kind){
+  const types = kind === 'vocab' ? ['vocab','slang'] : [kind];
+  const list = (state.progress.souvenirs || []).filter(s=>types.includes(s.type) && svRefId(s) === id);
+  if(list.length) return list[list.length-1];
+  const src = srsSource(id, kind);
+  const type = kind === 'vocab' ? ((src && src.category === 'slang') ? 'slang' : 'vocab') : kind;
+  const node = {type, refId:id, goal:(kind === 'grammar' && src) ? srsGoalFor(src) : null, title:''};
+  const c = souvenirContent(node, {});
+  return {nodeId:type+':'+id, refId:id, level:(src && src.level) || roadmapLevelKey(), type, text:c.text, meaning:c.meaning, art:c.art, label:c.label, golden:false, date:todayISO()};
+}
+function readyToShineCount(){ return Math.min(5, dueItems().length); }
+function shuffleIds(mode){
+  const srs = state.progress.srs || {};
+  if(mode === 'warm'){
+    return Object.keys(srs).filter(id=>srs[id] && srsSource(id, srs[id].kind))
+      .sort((a,b)=>((srs[b].hi||0) - (srs[a].hi||0)) || (srs[b].box - srs[a].box)).slice(0, 3);
+  }
+  return srsPick(dueItems(), 5);
+}
+function buildShuffle(mode){
+  const cards = [];
+  shuffleIds(mode).forEach(id=>{
+    const kind = state.progress.srs[id].kind;
+    const sv = souvenirForItem(id, kind);
+    const r = srsQuestions(id, sv);
+    if(r) cards.push({id, sv, qs:r.qs, nextVi:r.nextVi, first:[null,null], done:false, revealed:false, good:0, counted:false});
   });
-  return shuffle(mixed);
+  if(!cards.length) return null;
+  const queue = [];
+  cards.forEach((c,ci)=>{ queue.push({c:ci, k:0}); queue.push({c:ci, k:1}); });
+  return {mode:mode || 'due', cards, queue, pos:0, answered:false, selected:null, reveal:null, streak:0, finished:false, startedAt:Date.now()};
+}
+function shuffleRevealCaption(card){
+  const e = state.progress.srs[card.id];
+  if(!card.counted) return [L('Warmed up!','Isındın!','گرم شدی!','¡Calentamiento hecho!'), L('This one is still fresh.','Bu hâlâ taze.','این یکی هنوز تازه است.','Este sigue fresco.')];
+  if(card.good >= 2){
+    if(e && e.box === SRS_KEPT_BOX) return [L('Kept!','Kalıcı oldu!','ماندگار شد!','¡Guardado!'), L('This one is yours for good.','Bu artık hep senin.','این یکی دیگر برای همیشه مال توست.','Este ya es tuyo para siempre.')];
+    return [L('Shining brighter!','Daha da parlıyor!','درخشان‌تر شد!','¡Brilla más!'), L('It rests longer before it comes back.','Geri gelmeden önce daha uzun dinlenecek.','قبل از برگشتن بیشتر استراحت می‌کند.','Descansará más antes de volver.')];
+  }
+  if(card.good === 1) return [L('Nearly there!','Az kaldı!','تقریباً رسیدی!','¡Casi!'), L('It comes back in 2 days.','2 gün sonra geri gelecek.','۲ روز دیگر برمی‌گردد.','Vuelve en 2 días.')];
+  return [L('Good to look again!','Tekrar bakmak iyi geldi!','دوباره دیدنش خوب بود!','¡Bien por repasarlo!'), L("It comes back tomorrow — you'll have it.",'Yarın geri gelecek — kapacaksın.','فردا برمی‌گردد — یادش می‌گیری.','Vuelve mañana — lo tendrás.')];
+}
+function renderShuffle(){
+  const sh = state.viewParams.sh;
+  const title = L('Shuffle','Tekrar','مرور','Repaso');
+  if(!sh || !sh.cards || !sh.cards.length) return `<div class="fade-in game-screen">${gameTopHtml(title)}<button class="btn btn-primary game-cta" data-action="back-to-roadmap">${L('Back to roadmap','Yol haritasına dön','بازگشت به نقشه راه','Volver a la hoja de ruta')}</button></div>`;
+  if(sh.finished){
+    const n = sh.cards.length;
+    return `<div class="fade-in game-screen">
+      ${gameTopHtml(title)}
+      <div class="game-card tight badge-unlock-shine">
+        <div class="game-result-title">${sh.mode === 'warm' ? L('Warmed up!','Isındın!','گرم شدی!','¡Calentamiento hecho!') : L('All shined up!','Hepsi parlıyor!','همه درخشیدند!','¡Todo brilla!')}</div>
+        <p class="game-result-line">${L(`${n} souvenir${n===1?'':'s'} reviewed`, `${n} hatıra tekrar edildi`, `${n} یادگاری مرور شد`, `${n} recuerdo${n===1?'':'s'} repasado${n===1?'':'s'}`)}</p>
+        <div class="sh-grid">${sh.cards.map(c=>souvenirCardHtml(c.sv, 'mini')).join('')}</div>
+        <button class="btn btn-primary game-cta" style="margin-top:14px;" data-action="back-to-roadmap">${L('Back to roadmap','Yol haritasına dön','بازگشت به نقشه راه','Volver a la hoja de ruta')}</button>
+      </div>
+    </div>`;
+  }
+  if(sh.reveal != null){
+    const c = sh.cards[sh.reveal];
+    const cap = shuffleRevealCaption(c);
+    return `<div class="fade-in game-screen">
+      ${gameTopHtml(title)}
+      <div class="sh-reveal" data-action="shuffle-next">
+        <div class="cel-sv" id="sh-sv"><div class="cel-flip" id="sh-flip" style="transform:rotateY(180deg);">
+          <div class="cel-side cel-back">${souvenirCardHtml(c.sv, 'big', souvenirBackHtml(c.sv))}</div>
+          <div class="cel-side cel-front">${souvenirCardHtml(c.sv, 'big')}</div>
+        </div></div>
+        <div class="sh-caption">${esc(cap[0])}</div>
+        <div class="sh-sub">${esc(cap[1])}</div>
+      </div>
+      <button class="btn btn-primary game-cta" data-action="shuffle-next">${sh.pos+1 < sh.queue.length ? L('Next','Devam','بعدی','Siguiente') : L('Finish','Bitir','پایان','Terminar')}</button>
+    </div>`;
+  }
+  const step = sh.queue[sh.pos], card = sh.cards[step.c], item = card.qs[step.k];
+  const qv = {answered:sh.answered, selected:sh.selected};
+  const a = step.c + 1, b = sh.cards.length;
+  const longOpts = item.options.some(o=>String(o).length > 26);
+  const missed = sh.answered && sh.selected !== item.correct;
+  return `<div class="fade-in game-screen">
+    ${gameTopHtml(title)}
+    <div class="game-status">
+      <span class="game-status-text">${step.retry ? L('One more look','Bir kez daha','یک نگاه دیگر','Una mirada más') : L(`Souvenir ${a} of ${b}`, `Hatıra ${a}/${b}`, `یادگاری ${a} از ${b}`, `Recuerdo ${a} de ${b}`)}</span>
+      <span class="game-status-end">${quizStreakChip({streak:sh.streak, correct:sh.cards.reduce((n,c)=>n + c.first.filter(x=>x===true).length, 0)})}</span>
+    </div>
+    <div class="sh-stage">${souvenirCardHtml(card.sv, 'tiny', souvenirBackHtml(card.sv))}</div>
+    <div class="game-card${longOpts ? ' tight' : ''}">${quizPromptHtml(item, qv)}</div>
+    <div class="game-opts">
+      ${item.options.map((opt,i)=>{
+        let cls = 'game-opt' + (longOpts ? ' long' : '');
+        if(sh.answered){ if(i===item.correct) cls += ' ok'; else if(i===sh.selected) cls += ' no'; else cls += ' dim'; }
+        return `<button class="${cls}" dir="ltr" ${sh.answered?'disabled':''} data-action="shuffle-answer" data-i="${i}">${esc(opt)}</button>`;
+      }).join('')}
+    </div>
+    ${sh.answered ? `
+      ${missed && item.why ? `<div class="game-why"><img src="char-${learnerCharKey()}.png" alt=""><div>${esc(item.why)}</div></div>` : ''}
+      <button class="btn btn-primary game-cta" data-action="shuffle-next">${L('Next','Devam','بعدی','Siguiente')}</button>
+    ` : ''}
+  </div>`;
+}
+function fxShuffleReveal(){
+  const f = document.getElementById('sh-flip');
+  if(f) anim(f, [{transform:'rotateY(0deg)'}, {transform:'rotateY(180deg)'}], {duration:520, easing:'ease-in-out'});
+  setTimeout(()=>{
+    const box = document.getElementById('sh-sv');
+    if(!box) return;
+    const c = centerOf(box);
+    sparkBurst(c.x, c.y, 10, '#ffd166', 110);
+    sfx('reveal'); buzz([8,40,8]);
+  }, reducedMotion() ? 0 : 260);
+}
+function finishShuffle(sh){
+  sh.finished = true;
+  state.progress.reviewsCompleted = (state.progress.reviewsCompleted||0) + 1;
+  state.progress.lastShuffleDate = todayISO();
+  markActivity();
 }
 function questionTimeLimit(item){ return item.options.length <= 2 ? 15 : 20; }
 function startQuiz(kind, contextId, questions, backView, backParams){
   questions.forEach(qq=>{ if(qq.itemId===undefined){ qq.itemId = contextId; qq.kind = kind; } });
   const timeLimit = questionTimeLimit(questions[0]);
   gcBubble = null;
-  state.quiz = {kind, contextId, questions, index:0, correct:0, streak:0, answered:false, selected:null, results:[], backView, backParams: backParams || {}, timeLimit, deadline: Date.now()+timeLimit*1000, lastTickSecond:null};
+  state.quiz = {kind, contextId, questions, index:0, correct:0, streak:0, answered:false, selected:null, results:[], backView, backParams: backParams || {}, timeLimit, deadline: kind === 'review' ? null : Date.now()+timeLimit*1000, lastTickSecond:null};
   go('quiz');
 }
 function handleQuizTimeout(){
@@ -9872,6 +10037,7 @@ const screens = {
   'game-match': renderGameMatch,
   'game-dictation': renderGameDictation,
   'game-trap': renderGameTrap,
+  'souvenir-shuffle': renderShuffle,
   'coming-soon': renderNotFound,
   'not-found': renderNotFound,
   'story-list': renderStoryList,
@@ -10395,8 +10561,8 @@ function companionOops(){
   ], {duration:280, easing:'ease-in-out'});
 }
 // Practice quiz feedback (2026-10-03): the same physical feedback as the games.
-function fxQuizAnswer(i, pt, isCorrect, streak, word){
-  const btn = i != null && i >= 0 ? document.querySelector('[data-action="quiz-answer"][data-i="'+i+'"]') : null;
+function fxQuizAnswer(i, pt, isCorrect, streak, word, action){
+  const btn = i != null && i >= 0 ? document.querySelector('[data-action="'+(action || 'quiz-answer')+'"][data-i="'+i+'"]') : null;
   if(isCorrect){
     fxCorrectButton(btn, pt);
     anim(document.getElementById('trap-streak'), [{transform:'scale(1)'}, {transform:'scale(1.25)'}, {transform:'scale(1)'}], {duration:220, easing:SPRING});
@@ -11100,10 +11266,57 @@ const HANDLERS = {
     // itself (2026-09-29) — that's where finishing the quiz should return to.
     startQuiz('story', s.id, s.quiz, 'dashboard', {});
   },
-  'start-review'(){
-    const mixed = buildReviewQuiz();
-    if(!mixed.length) return;
-    startQuiz('review', null, mixed, 'dashboard', {});
+  // The old "Review" button now opens the Souvenir Shuffle (one review experience).
+  'start-review'(){ HANDLERS['start-shuffle']({dataset:{}}); },
+  'start-shuffle'(el){
+    const mode = (el && el.dataset && el.dataset.mode) || 'due';
+    const sh = buildShuffle(mode);
+    if(!sh) return;
+    gcBubble = null;
+    hideCharTip(true);
+    go('souvenir-shuffle', {sh});
+  },
+  'shuffle-answer'(el, e){
+    const sh = state.viewParams && state.viewParams.sh;
+    if(!sh || sh.answered || sh.finished || sh.reveal != null) return;
+    const step = sh.queue[sh.pos], card = sh.cards[step.c], q = card.qs[step.k];
+    const i = +el.dataset.i, ok = i === q.correct;
+    sh.answered = true; sh.selected = i;
+    if(!step.retry){
+      card.first[step.k] = ok;
+      if(!ok) sh.queue.push({c:step.c, k:step.k, retry:true});
+      if(card.first[0] !== null && card.first[1] !== null && !card.done){
+        // the box is decided on the first attempts
+        card.done = true;
+        card.good = card.first.filter(Boolean).length;
+        card.counted = srsReview(card.id, card.good);
+        const entry = state.progress.srs[card.id];
+        if(entry) entry.vi = card.nextVi;
+      }
+    }
+    sh.streak = ok ? (sh.streak||0) + 1 : 0;
+    { const word = q.options[q.correct]; const pt = tapPoint(e); const streak = sh.streak; queueFx(()=>fxQuizAnswer(i, pt, ok, streak, word, 'shuffle-answer')); }
+    save(); render();
+  },
+  'shuffle-next'(){
+    const sh = state.viewParams && state.viewParams.sh;
+    if(!sh || sh.finished) return;
+    if(sh.reveal != null){
+      sh.reveal = null; sh.pos++;
+    } else {
+      if(!sh.answered) return;
+      const step = sh.queue[sh.pos], card = sh.cards[step.c];
+      if(!step.retry && step.k === 1 && card.done && !card.revealed){
+        card.revealed = true; sh.reveal = step.c; sh.answered = false; sh.selected = null;
+        queueFx(fxShuffleReveal);
+        save(); render(); return;
+      }
+      sh.pos++;
+    }
+    sh.answered = false; sh.selected = null;
+    if(sh.pos >= sh.queue.length) finishShuffle(sh);
+    save(); render();
+    window.scrollTo(0,0);
   },
   'quiz-answer'(el, e){
     const q = state.quiz, i = +el.dataset.i;
@@ -11122,7 +11335,7 @@ const HANDLERS = {
     q.index++; q.answered = false; q.selected = null;
     if(q.index < q.questions.length){
       q.timeLimit = questionTimeLimit(q.questions[q.index]);
-      q.deadline = Date.now() + q.timeLimit*1000;
+      q.deadline = q.kind === 'review' ? null : Date.now() + q.timeLimit*1000;
       q.lastTickSecond = null;
     }
     if(q.index >= q.questions.length){

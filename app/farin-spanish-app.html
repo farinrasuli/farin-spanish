@@ -247,6 +247,24 @@
   .dict-word{display:inline-block;}
   .dict-got{color:var(--success); font-weight:800;}
   .dict-miss{text-decoration:underline dashed var(--error) 2px; text-underline-offset:4px;}
+  /* Gamification v3 build 1: Build It */
+  .build-line{display:flex; flex-wrap:wrap; justify-content:center; align-items:center; gap:10px 6px; min-height:56px;}
+  .build-group{display:inline-flex; align-items:center; gap:2px;}
+  .build-mark, .build-word{font-family:'Fredoka',-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; font-weight:700; font-size:20px; color:var(--ink);}
+  .build-mark{color:var(--ink-soft);}
+  .build-word.ok{background:var(--success-soft); border:2px solid var(--success); color:color-mix(in srgb, var(--success) 62%, var(--ink)); border-radius:12px; padding:3px 10px;}
+  .build-slot{min-width:58px; min-height:44px; box-sizing:border-box; border-radius:12px; border:2px dashed var(--border); background:var(--bg-sunken); color:var(--ink); font-family:'Fredoka',-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; font-weight:700; font-size:19px; padding:3px 10px; cursor:pointer;}
+  .build-slot.filled{border-style:solid; border-color:var(--cat-gram); background:var(--bg-elevated); box-shadow:var(--clay-shadow-soft);}
+  .build-slot:disabled{cursor:default;}
+  .build-tray{display:flex; flex-wrap:wrap; justify-content:center; gap:10px;}
+  .build-tile{min-height:50px; box-sizing:border-box; padding:6px 18px; border-radius:16px; border:2px solid var(--border); background:var(--bg-elevated); color:var(--ink); box-shadow:var(--clay-shadow-soft); font-family:'Fredoka',-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; font-weight:700; font-size:19px; cursor:pointer;}
+  .build-tile:active{transform:scale(.97);}
+  .build-tile.used{visibility:hidden;}
+  .build-solved{display:inline-block; background:var(--success-soft); border:2px solid var(--success); color:color-mix(in srgb, var(--success) 62%, var(--ink)); border-radius:18px; padding:10px 16px; font-family:'Fredoka',-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; font-weight:700; font-size:22px; line-height:1.35; cursor:pointer;}
+  .build-ear{border:none; cursor:pointer; align-self:center;}
+  .build-ear svg{width:16px; height:16px;}
+  .build-ear.pulse{animation:build-ear-pulse 1s ease-in-out infinite; background:var(--accent-soft); color:var(--accent-strong);}
+  @keyframes build-ear-pulse{0%,100%{transform:scale(1);} 50%{transform:scale(1.08);}}
   /* Full prefers-reduced-motion support: every animation collapses to its end state. */
   @media (prefers-reduced-motion: reduce){ *, *::before, *::after{animation-duration:.001ms !important; animation-delay:0s !important; animation-iteration-count:1 !important; transition-duration:.001ms !important;} }
   /* Gamification v2 (Journey Journal §4): souvenir cards. One 180x232 design;
@@ -4665,6 +4683,7 @@ function syncToCloud(){
    who knows both the name and the password, and the password itself is never
    stored. Changing the password writes a new pw- doc and deletes the old one. */
 const LOGIN_APP = 'es';
+const TTS_LANG = 'es-ES'; // voice used by the games (Build It, Word Bingo)
 const LOGIN_SALT = 'farin-spanish-login-v1';
 const LOGIN_DOC_PREFIX = 'pw-';
 const PASSWORD_MIN = 6;
@@ -6294,13 +6313,21 @@ function ensureGolden(roadmap){
   return pr.roadmapGolden;
 }
 function gameDisplayName(kind){
+  if(kind === 'build') return L('Build It','Cümle Kur','جمله بساز','Constrúyelo');
   if(kind === 'trap') return L('Trap Dash','Tuzak Kaçışı','فرار از تله‌ها','Escape de trampas');
   if(kind === 'dictation') return L('Listen & Type','Dinle ve Yaz','گوش کن و بنویس','Escucha y escribe');
   return L('Word Rush','Kelime Yarışı','مسابقه کلمات','Carrera de palabras');
 }
-function viewGameKind(view){ return view==='game-trap' ? 'trap' : (view==='game-dictation' ? 'dictation' : 'match'); }
+function viewGameKind(view){
+  if(view === 'game-build') return 'build';
+  return view==='game-trap' ? 'trap' : (view==='game-dictation' ? 'dictation' : 'match');
+}
 // Stats of a finished round, in one shape for all three games.
 function gameRoundStats(kind, round){
+  if(kind === 'build'){
+    const total = round.items.length;
+    return {firstTry:round.firstTry||0, total, hints:round.hints||0, perfect:total>0 && round.firstTry===total};
+  }
   if(kind === 'match'){
     return {time:Math.max(1, Math.floor(((round.finishedAt||Date.now()) - round.startedAt)/1000)), mistakes:round.mistakes||0, perfect:(round.mistakes||0)===0};
   }
@@ -6314,11 +6341,13 @@ function gameRoundStats(kind, round){
 }
 function gameRecordText(kind, st){
   const name = gameDisplayName(kind);
+  if(kind === 'build') return name+' · '+st.firstTry+'/'+st.total+' '+L('first try','ilk denemede','در اولین تلاش','a la primera');
   if(kind === 'match') return name+' · '+st.time+'s · '+st.mistakes+' '+(st.mistakes===1 ? L('miss','hata','اشتباه','fallo') : L('misses','hata','اشتباه','fallos'));
   if(kind === 'trap') return name+' · '+st.correct+'/'+st.total+(st.time ? ' · '+st.time+'s' : '');
   return name+' · '+st.pct+'%';
 }
 function gameStatStickers(kind, st){
+  if(kind === 'build') return [st.firstTry+'/'+st.total+' '+L('first try','ilk denemede','در اولین تلاش','a la primera')].concat(st.hints ? [st.hints+' '+(st.hints===1 ? L('hint','ipucu','راهنما','pista') : L('hints','ipucu','راهنما','pistas'))] : []);
   if(kind === 'match') return [st.time+'s', st.mistakes+' '+(st.mistakes===1 ? L('miss','hata','اشتباه','fallo') : L('misses','hata','اشتباه','fallos'))];
   if(kind === 'trap') return [st.correct+'/'+st.total, L('Score','Skor','امتیاز','Puntos')+' '+st.score];
   return [st.pct+'% '+L('heard','duyuldu','شنیده شد','escuchado')];
@@ -6327,8 +6356,9 @@ function gameStatStickers(kind, st){
 function updateGameBest(kind, st){
   const pr = state.progress; if(!pr.gameBests) pr.gameBests = {};
   const prev = pr.gameBests[kind];
-  const metric = kind==='match' ? (b=>-(b.time||9999)) : (kind==='trap' ? (b=>b.score||0) : (b=>b.pct||0));
-  const cur = {time:st.time||null, score:st.score!=null ? st.score : null, pct:st.pct!=null ? st.pct : null};
+  const metric = kind==='match' ? (b=>-(b.time||9999)) : (kind==='trap' ? (b=>b.score||0) : ((kind==='build' || kind==='bingo') ? (b=>b.first||0) : (b=>b.pct||0)));
+  const cur = {time:st.time||null, score:st.score!=null ? st.score : null, pct:st.pct!=null ? st.pct : null,
+    first:st.firstTry!=null ? st.firstTry : (st.first!=null ? st.first : null)};
   if(!prev){ pr.gameBests[kind] = cur; return false; }
   if(metric(cur) > metric(prev)){ pr.gameBests[kind] = cur; return true; }
   return false;
@@ -6375,6 +6405,9 @@ function souvenirContent(node, ctx){
     const kind = ctx.kind || node.gameKind || 'match';
     const st = ctx.stats || null;
     out.text = st ? gameRecordText(kind, st) : gameDisplayName(kind);
+    // LXD answer 9: the card's flip side keeps one piece of the round's language.
+    const keep = ctx.round ? gameKeep(kind, ctx.round) : null;
+    if(keep) out.keep = keep;
   } else if(t === 'session'){
     out.label = 'session';
   }
@@ -6403,6 +6436,7 @@ function awardSouvenirs(ctx){
     const sv = {nodeId:id, level:key, type:node.type, text:c.text, meaning:c.meaning, art:c.art, label:c.label,
       golden:!!((g && g.nodeId===id) || (isCtx && ctx.perfect)), date:todayISO()};
     if(node.type === 'game') sv.gameKind = (isCtx && ctx.kind) || node.gameKind || 'match';
+    if(c.keep) sv.keep = c.keep;
     pr.souvenirs.push(sv); fresh.push(sv); have.add(id);
   });
   if(ctxId) fresh.sort((a,b)=>(b.nodeId===ctxId) - (a.nodeId===ctxId));
@@ -6432,7 +6466,7 @@ function celebrationExtras(view, vp, kind){
       extra.stickers = gameStatStickers(gk, st);
       extra.newBest = updateGameBest(gk, st);
       const node = findRoadmapNode(n=>n.type==='game' && n.refId===vp.refId);
-      if(node) ctx = {node, stats:st, perfect:st.perfect, kind:gk};
+      if(node) ctx = {node, stats:st, perfect:st.perfect, kind:gk, round:vp.round};
       const fresh = awardSouvenirs(ctx);
       extra.souvenir = fresh[0] || null;
       extra.fresh = !!fresh[0];
@@ -6492,6 +6526,16 @@ function souvenirBackHtml(sv){
 // The meaning side used when a souvenir is flipped in the journal.
 function souvenirMeaningHtml(sv){
   const m = svTypeMeta(sv.type);
+  if(sv.keep){
+    const note = svText(sv.keep.note);
+    return `<div class="sv-card sv-meaningface" style="--svc:var(--cat-${m.c});">
+      <div class="sv-eyebrow">${esc(sv.text||'')}</div>
+      <div class="sv-body">
+        <div class="sv-phrase" dir="ltr" style="font-size:17px;">${esc(sv.keep.text||'')}</div>
+        ${note ? `<div class="sv-meaning" style="font-size:13px; margin-top:8px;">${esc(note)}</div>` : ''}
+      </div>
+    </div>`;
+  }
   const meaning = svText(sv.meaning);
   return `<div class="sv-card sv-meaningface" style="--svc:var(--cat-${m.c});">
     <div class="sv-eyebrow">${esc(m.label)} · ${esc(sv.level||'')}</div>
@@ -6624,7 +6668,7 @@ function maybeCelebrate(){
     low = state.quiz.correct/state.quiz.questions.length < .5;
   } else if(v==='game-match' && vp.round && vp.round.matchedKeys && vp.round.matchedKeys.length === vp.round.pairCount){
     target = vp.round; kind = 'game';
-  } else if((v==='game-dictation' || v==='game-trap') && vp.round && vp.round.finished){
+  } else if((v==='game-dictation' || v==='game-trap' || v==='game-build' || v==='game-bingo') && vp.round && vp.round.finished){
     target = vp.round; kind = 'game';
   } else if(v==='studio-round' && vp.checked && vp.result && vp.result.passed){
     target = vp.result; kind = vp.mode;
@@ -7531,7 +7575,7 @@ function renderJournal(){
 function openSouvenirModal(i){
   const sv = (state.progress.souvenirs||[])[i];
   if(!sv || document.querySelector('.celebrate-overlay')) return;
-  const speakText = (sv.type === 'game' || sv.type === 'session') ? '' : String(sv.text||'');
+  const speakText = sv.keep ? String(sv.keep.say || sv.keep.text || '') : ((sv.type === 'game' || sv.type === 'session') ? '' : String(sv.text||''));
   const el = document.createElement('div');
   el.className = 'celebrate-overlay sv-modal';
   el.innerHTML = `<div class="sv-modal-stack">
@@ -9098,6 +9142,17 @@ const TRAP_EXCLUDE_BLANKS = [
   // spotted by farin-lxd, not rewritten yet — keep out until reviewed
   'g-C1-7|blank2|*', 'g-C1-8|blank|*', 'g-B2-5|blank|*'
 ];
+// Build It: blanks where more than one word order is correct (LXD review) — never used.
+const BUILD_EXCLUDE_BLANKS = [
+  'g-A1-4|blank|*', 'g-A1-5|blank|*', 'g-A1-6|blank2|*',
+  'g-A2-1|blank2|*', 'g-A2-2|blank|*', 'g-A2-4|*|*', 'g-A2-5|*|*', 'g-A2-7|*|*', 'g-A2-8|blank2|*',
+  'g-B1-1|*|*', 'g-B1-3|blank2|*',
+  'g-B2-3|blank2|*', 'g-B2-4|blank|*', 'g-B2-7|*|*',
+  'g-C1-2|*|*', 'g-C1-3|blank2|*', 'g-C1-7|blank2|*'
+];
+// Build It: blanks that get no decoy tile (their wrong options, split into
+// single words, could build another valid sentence). TRAP_EXCLUDE_BLANKS also get none.
+const BUILD_NO_DECOY_BLANKS = [];
 function blankListed(list, itemId, field, variant){
   variant = variant || 'base';
   return list.some(e=>{
@@ -9155,6 +9210,192 @@ function gameFallbackNote(vp){
   if(!vp || !vp.fallbackFrom) return '';
   const name = gameDisplayName(vp.fallbackFrom);
   return L(`${name} opens after a few more grammar steps. `, `${name} birkaç dilbilgisi adımından sonra açılır. `, `${name} بعد از چند قدم گرامر دیگر باز می‌شود. `, `${name} se abre tras unos pasos más de gramática. `);
+}
+/* ============================= GAMIFICATION V3: BUILD IT =============================
+   Games catalogue 4.1 + the LXD rules: tap word tiles to build a sentence from a
+   grammar item the learner has completed. The built sentence is compared by
+   text (duplicate words are interchangeable); the first word is pre-placed with
+   its capital unless it is the answer; punctuation is fixed between the slots; a
+   multi-word answer becomes single-word tiles; decoys come from the item's
+   distractors (max 1 at A1-A2, 2 at B1+, none for listed blanks). Tile cap 8 at
+   A1-A2, 12 at B1+; round = min(6, candidates); under 4 the caller falls back.
+   On a second miss the item's rule is shown. Untimed, no lives. */
+const BUILD_MIN = 4;
+function speakTarget(text, rate){
+  try{
+    if(!text || typeof speechSynthesis === 'undefined') return;
+    speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = TTS_LANG; u.rate = rate || 0.92;
+    speechSynthesis.speak(u);
+  }catch(e){}
+}
+// Splits a fill-in sentence into slots {pre, w, post, target}. null = not buildable.
+function buildSlots(blank){
+  const toks = String(blank.sentence||'').trim().split(/\s+/);
+  const PRE = /^[¿¡"“‘(\[«]+/, POST = /[,.;:?!"”’)\]»…]+$/;
+  const slots = [];
+  let pendingPre = '';
+  for(const tok of toks){
+    if(/_{3,}/.test(tok)){
+      const parts = tok.split(/_{3,}/);
+      const a = parts[0] || '', b = parts.slice(1).join('') || '';
+      if(/[\p{L}\p{N}]/u.test(a) || /[\p{L}\p{N}]/u.test(b)) return null; // blank glued to a word
+      const words = String(blank.word||'').trim().split(/\s+/).filter(Boolean);
+      if(!words.length) return null;
+      words.forEach((w,k)=>slots.push({pre:(k===0 ? pendingPre + a : ''), w, post:(k===words.length-1 ? b : ''), target:true}));
+      pendingPre = '';
+      continue;
+    }
+    const pm = tok.match(PRE), pre = pm ? pm[0] : '';
+    const rest = tok.slice(pre.length);
+    const qm = rest.match(POST), post = qm ? qm[0] : '';
+    const w = rest.slice(0, rest.length - post.length);
+    if(!w){
+      if(slots.length) slots[slots.length-1].post += (/^[,.;:?!…]/.test(tok) ? '' : ' ') + tok; else pendingPre += tok + ' ';
+      continue;
+    }
+    slots.push({pre:pendingPre + pre, w, post, target:false});
+    pendingPre = '';
+  }
+  return slots;
+}
+function buildCandidates(profile){
+  const low = profile.level === 'A1' || profile.level === 'A2';
+  const cap = low ? 8 : 12, maxDecoy = low ? 1 : 2;
+  const out = [];
+  grammarBlankCandidates(profile, completedGrammarItems(profile.level)).forEach(c=>{
+    if(blankListed(BUILD_EXCLUDE_BLANKS, c.itemId, c.field, c.variant)) return;
+    const slots = buildSlots(c.blank);
+    if(!slots || slots.length < 3 || slots.length > 10) return;
+    if(slots.some(s=>!/^[\p{L}\p{N}][\p{L}\p{N}'’\-]*$/u.test(s.w))) return;
+    const lockFirst = !slots[0].target;
+    const tileWords = slots.filter((s,i)=>!(i===0 && lockFirst)).map(s=>s.w);
+    if(tileWords.length > cap) return;
+    let decoys = [];
+    if(!blankListed(TRAP_EXCLUDE_BLANKS, c.itemId, c.field, c.variant) && !blankListed(BUILD_NO_DECOY_BLANKS, c.itemId, c.field, c.variant)){
+      const have = new Set(slots.map(s=>s.w.toLowerCase()));
+      (c.blank.distractors || []).forEach(d=>String(d).split(/\s+/).forEach(raw=>{
+        const w = raw.replace(/^[^\p{L}\p{N}]+|[^\p{L}\p{N}'’]+$/gu, '');
+        if(w && !have.has(w.toLowerCase())){ have.add(w.toLowerCase()); decoys.push(w); }
+      }));
+      decoys = decoys.slice(0, Math.max(0, Math.min(maxDecoy, cap - tileWords.length)));
+    }
+    out.push({itemId:c.itemId, field:c.field, variant:c.variant, slots, lockFirst, tileWords, decoys,
+      sentence:slots.map(s=>s.pre + s.w + s.post).join(' ')});
+  });
+  return out;
+}
+function buildBuildRound(profile){
+  const cands = buildCandidates(profile);
+  if(cands.length < BUILD_MIN) return null;
+  const items = shuffle(cands).slice(0, Math.min(6, cands.length)).map(c=>({
+    itemId:c.itemId, field:c.field, variant:c.variant, sentence:c.sentence,
+    slots:c.slots.map((s,i)=>({pre:s.pre, w:s.w, post:s.post, fixed:(i===0 && c.lockFirst), ok:false})),
+    tiles:shuffle(c.tileWords.concat(c.decoys)).map(t=>({t, used:false})),
+    placed:c.slots.map(()=>null), misses:0, hinted:false, solved:false, showRule:false
+  }));
+  return {items, index:0, firstTry:0, hints:0, combo:0, finished:false, startedAt:Date.now(), finishedAt:null};
+}
+// Souvenir flip side (LXD answer 9): Build It keeps the sentence that took the
+// most attempts (the longest on a perfect round) with the item's rule.
+function gameKeep(kind, round){
+  try{
+    if(kind === 'build' && round.items && round.items.length){
+      const pick = round.items.slice().sort((a,b)=>(b.misses + (b.hinted?1:0)) - (a.misses + (a.hinted?1:0)) || b.sentence.length - a.sentence.length)[0];
+      const item = GRAMMAR_ITEMS.find(g=>g.id===pick.itemId);
+      return {text:pick.sentence, say:pick.sentence, note:item ? grammarRuleLine(item) : ''};
+    }
+  }catch(e){}
+  return null;
+}
+function buildSlotHtml(it, s, i){
+  const pre = s.pre ? `<span class="build-mark">${esc(s.pre)}</span>` : '';
+  const post = s.post ? `<span class="build-mark">${esc(s.post)}</span>` : '';
+  let mid;
+  if(s.fixed) mid = `<span class="build-word">${esc(s.w)}</span>`;
+  else if(s.ok) mid = `<span class="build-word ok">${esc(it.tiles[it.placed[i]].t)}</span>`;
+  else if(it.placed[i] != null) mid = `<button class="build-slot filled" data-action="build-slot" data-s="${i}">${esc(it.tiles[it.placed[i]].t)}</button>`;
+  else mid = `<button class="build-slot" data-action="build-slot" data-s="${i}" aria-label="${esc(L('Empty slot','Boş yer','جای خالی','Hueco vacío'))}" disabled></button>`;
+  return `<span class="build-group">${pre}${mid}${post}</span>`;
+}
+function renderGameBuild(){
+  const vp = state.viewParams, round = vp.round;
+  const title = gameDisplayName('build');
+  if(round.finished){
+    const total = round.items.length, flawless = round.firstTry === total;
+    return `<div class="fade-in game-screen">
+      ${gameTopHtml(title)}
+      <div class="game-card tight badge-unlock-shine">
+        <div class="game-result-title">${flawless ? L('Flawless!','Kusursuz!','بی‌نقص!','¡Perfecto!') : L('All built!','Hepsi kuruldu!','همه ساخته شد!','¡Todo construido!')}</div>
+        <p class="game-result-line">${L(`${round.firstTry} of ${total} built on the first try`, `${total} cümleden ${round.firstTry} tanesi ilk denemede`, `${round.firstTry} از ${total} در اولین تلاش`, `${round.firstTry} de ${total} a la primera`)}</p>
+        <button class="btn btn-primary game-cta" data-action="back-to-roadmap">${L('Back to roadmap','Yol haritasına dön','بازگشت به نقشه راه','Volver a la hoja de ruta')}</button>
+      </div>
+      ${renderBadgeUnlockCard(pullJustEarnedBadges())}
+    </div>`;
+  }
+  const it = round.items[round.index];
+  const a = round.index + 1, b = round.items.length;
+  const item = GRAMMAR_ITEMS.find(g=>g.id===it.itemId);
+  return `<div class="fade-in game-screen">
+    ${gameTopHtml(title)}
+    <div class="game-status">
+      <span class="game-status-text">${L(`Sentence ${a} of ${b}`, `Cümle ${a}/${b}`, `جمله ${a} از ${b}`, `Oración ${a} de ${b}`)}</span>
+      <span class="game-status-end">${trapStreakChip({streak:round.combo||0})}</span>
+    </div>
+    <p class="game-hint">${gameFallbackNote(vp)}${L('Tap the words in the right order.','Kelimelere doğru sırayla dokun.','کلمه‌ها را به ترتیب درست بزن.','Toca las palabras en el orden correcto.')}</p>
+    <div class="game-card tight" dir="ltr">
+      ${it.solved
+        ? `<div class="build-solved" id="build-solved" data-action="build-next">${esc(it.sentence)}</div>`
+        : `<div class="build-line">${it.slots.map((s,i)=>buildSlotHtml(it, s, i)).join('')}</div>`}
+    </div>
+    ${it.solved ? '' : `<div class="build-tray" dir="ltr">${it.tiles.map((t,i)=>`<button class="build-tile${t.used ? ' used' : ''}" data-action="build-tile" data-i="${i}" ${t.used ? 'disabled' : ''}>${esc(t.t)}</button>`).join('')}</div>`}
+    <button class="game-chip build-ear${it.showRule && !it.solved ? ' pulse' : ''}" data-action="build-hear">${ICONS.soundOn} ${L('Hear it','Dinle','بشنو','Escúchalo')}</button>
+    ${it.showRule && item ? `<div class="game-why"><img src="char-${learnerCharKey()}.png" alt=""><div>${esc(grammarRuleLine(item))}</div></div>` : ''}
+    ${it.solved ? `<button class="btn btn-primary game-cta" data-action="build-next">${round.index + 1 < b ? L('Next sentence','Sonraki cümle','جمله بعدی','Siguiente oración') : L('See results','Sonuçları gör','دیدن نتایج','Ver resultados')}</button>` : ''}
+  </div>`;
+}
+function buildCheck(vp){
+  const round = vp.round, it = round.items[round.index];
+  const word = i => it.slots[i].fixed ? it.slots[i].w : (it.placed[i] != null ? it.tiles[it.placed[i]].t : null);
+  let k = it.slots.findIndex((s,i)=>word(i) !== s.w);
+  if(k < 0){
+    it.solved = true;
+    if(!it.misses && !it.hinted){ round.firstTry++; round.combo = (round.combo||0) + 1; } else round.combo = 0;
+    const combo = round.combo, sentence = it.sentence, idx = round.index;
+    queueFx(()=>fxBuildSolved(combo, sentence));
+    setTimeout(()=>{ if(state.viewParams === vp && vp.round.index === idx && !vp.round.finished) HANDLERS['build-next'](); }, 1100);
+    return;
+  }
+  it.misses++;
+  round.combo = 0;
+  // the correct run from the start stays locked; everything after it goes back
+  const back = [];
+  it.slots.forEach((s,i)=>{
+    if(s.fixed || s.ok) return;
+    if(i < k){ s.ok = true; return; }
+    if(it.placed[i] != null){ back.push(it.placed[i]); it.tiles[it.placed[i]].used = false; it.placed[i] = null; }
+  });
+  if(it.misses >= 2) it.showRule = true;
+  const next = it.slots[k].w, rule = it.showRule;
+  queueFx(()=>fxBuildMiss(back, rule ? next : null));
+}
+function fxBuildSolved(combo, sentence){
+  const el = document.getElementById('build-solved');
+  anim(el, [{transform:'scale(.92)', opacity:.4}, {transform:'scale(1.04)', opacity:1, offset:.6}, {transform:'scale(1)', opacity:1}], {duration:380, easing:SPRING});
+  const c = centerOf(el);
+  sparkBurst(c.x, c.y, 6, 'var(--success)');
+  sfx('correct'); buzz(12); companionCheer();
+  comboCheck(combo);
+  if(!sfxMuted) speakTarget(sentence);
+}
+function fxBuildMiss(back, nextWord){
+  back.forEach(i=>anim(document.querySelector('[data-action="build-tile"][data-i="'+i+'"]'), [
+    {transform:'translateX(0)'}, {transform:'translateX(-6px)'}, {transform:'translateX(6px)'}, {transform:'translateX(-6px)'}, {transform:'translateX(6px)'}, {transform:'translateX(0)'}
+  ], {duration:240, easing:'linear'}));
+  sfx('wrong');
+  companionOops();
+  if(nextWord) companionSay(L('Next: ','Sıradaki: ','بعدی: ','Sigue: ') + "'" + nextWord + "'", 1800);
 }
 function renderGameMatch(){
   const vp = state.viewParams;
@@ -10306,6 +10547,7 @@ const screens = {
   'game-match': renderGameMatch,
   'game-dictation': renderGameDictation,
   'game-trap': renderGameTrap,
+  'game-build': renderGameBuild,
   'souvenir-shuffle': renderShuffle,
   'coming-soon': renderNotFound,
   'not-found': renderNotFound,
@@ -11495,6 +11737,18 @@ const HANDLERS = {
     const kind = el.dataset.kind;
     gcBubble = null; trapWarnKey = null;
     const params = {refId: el.dataset.refId, goal: el.dataset.goal};
+    if(kind === 'build'){
+      const buildRound = buildBuildRound(state.profile);
+      if(buildRound){ go('game-build', Object.assign({round: buildRound}, params)); return; }
+      // Too few finished grammar items for Build It: Trap Dash from B1, else Word Rush.
+      const lvl = state.profile.level;
+      const tr = (lvl === 'A1' || lvl === 'A2') ? null : buildTrapRound(state.profile);
+      if(tr){ go('game-trap', Object.assign({round: tr, fallbackFrom:'build'}, params)); return; }
+      const fbb = fallbackGameSet();
+      if(!fbb) return;
+      go('game-match', Object.assign({round: buildMatchRound(fbb), fallbackFrom:'build'}, params));
+      return;
+    }
     if(kind === 'trap'){
       const trapRound = buildTrapRound(state.profile);
       if(trapRound){ go('game-trap', Object.assign({round: trapRound}, params)); return; }
@@ -11508,6 +11762,45 @@ const HANDLERS = {
     if(!setObj) return;
     if(kind === 'match') go('game-match', Object.assign({round: buildMatchRound(setObj)}, params));
     else go('game-dictation', Object.assign({round: buildDictationRound(setObj)}, params));
+  },
+  'build-tile'(el){
+    const vp = state.viewParams, round = vp && vp.round;
+    if(!round || round.finished) return;
+    const it = round.items[round.index], i = Number(el.dataset.i);
+    if(it.solved || !it.tiles[i] || it.tiles[i].used) return;
+    const s = it.slots.findIndex((sl,k)=>!sl.fixed && !sl.ok && it.placed[k] == null);
+    if(s < 0) return;
+    it.placed[s] = i; it.tiles[i].used = true;
+    sfx('flip');
+    if(it.slots.every((sl,k)=>sl.fixed || sl.ok || it.placed[k] != null)) buildCheck(vp);
+    save(); render();
+  },
+  'build-slot'(el){
+    const vp = state.viewParams, round = vp && vp.round;
+    if(!round || round.finished) return;
+    const it = round.items[round.index], s = Number(el.dataset.s);
+    if(it.solved || !it.slots[s] || it.slots[s].fixed || it.slots[s].ok || it.placed[s] == null) return;
+    it.tiles[it.placed[s]].used = false; it.placed[s] = null;
+    sfx('flip');
+    save(); render();
+  },
+  'build-hear'(){
+    const vp = state.viewParams, round = vp && vp.round;
+    if(!round || round.finished) return;
+    const it = round.items[round.index];
+    if(!it.solved && !it.hinted){ it.hinted = true; round.hints = (round.hints||0) + 1; save(); }
+    speakTarget(it.sentence);
+  },
+  'build-next'(){
+    const vp = state.viewParams, round = vp && vp.round;
+    if(!round || round.finished || !round.items[round.index].solved) return;
+    if(round.index + 1 < round.items.length){ round.index++; }
+    else {
+      round.finished = true; round.finishedAt = Date.now();
+      round.xpGain = scoreGameCompletion(vp.refId, round.firstTry === round.items.length);
+      markGameComplete(vp.refId);
+    }
+    save(); render(); window.scrollTo(0,0);
   },
   'game-dictation-reveal'(){
     const vp = state.viewParams, round = vp.round;

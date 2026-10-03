@@ -4564,8 +4564,25 @@ function load(){
     }
     if(merged.profile.completedDiagnostic && !merged.profile.recoveryCode) { merged.profile.recoveryCode = generateRecoveryCode(); setTimeout(()=>{ try{ save(); }catch(e){} }, 0); }
     if(merged.profile.recoveryCode) setRecoveryCookie(merged.profile.recoveryCode);
+    migrateProgressV3(merged.progress);
     return merged;
   }catch(e){ return freshState(); }
+}
+/* Gamification v3 build 1: brings any saved progress (local or cloud-restored)
+   up to the v3 shape. Hoisted and free of const lookups, because load() runs
+   before the rest of the script has initialised. Never resets a box. */
+function migrateProgressV3(pr){
+  if(!pr || typeof pr !== 'object') return;
+  if(!pr.srs || typeof pr.srs !== 'object') pr.srs = {};
+  Object.keys(pr.srs).forEach(id=>{
+    const e = pr.srs[id];
+    if(!e || typeof e !== 'object'){ delete pr.srs[id]; return; }
+    let b = Number(e.box); if(!isFinite(b)) b = 0;
+    e.box = Math.max(0, Math.min(7, Math.round(b)));   // 8 boxes now (0-7)
+    if(typeof e.hi !== 'number') e.hi = e.box;          // highest box reached: shine never drops
+    if(typeof e.vi !== 'number') e.vi = 0;              // which word of a set/story is asked next
+    if(!e.due) e.due = localDateStr(new Date());
+  });
 }
 function generateRecoveryCode(){
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
@@ -4649,6 +4666,7 @@ function restoreFromCode(code){
     state.profile = Object.assign({}, freshState().profile, data.profile);
     state.progress = Object.assign({}, freshState().progress, data.progress);
     state.roadmap = data.roadmap || null;
+    migrateProgressV3(state.progress);
     repairRestoredProfile();
     ensureRoadmap();
     migrateRoadmapChecked();
@@ -4779,25 +4797,195 @@ function scoreGameCompletion(refId, isPerfect){
 }
 
 /* ============================= SPACED REPETITION (SRS) ============================= */
-const LEITNER_INTERVALS = [1,2,4,7,14]; // days per box 1-5
+/* Gamification v3 build 1 — scheduler rules from the LXD review (2026-10-02):
+   - a box changes only when the item is due (cramming no longer counts);
+   - two questions per review: 2/2 up a box, 1/2 stays and is due in 2 days,
+     0/2 down one box (never straight to zero) and due tomorrow;
+   - intervals [1,2,4,7,14,30,60,120] days. Box 4 is "Kept"; boxes 5-7 look the
+     same as Kept, they just come back less often;
+   - entry.hi = highest box ever reached (shine marks never drop on screen),
+     entry.vi = rotation index through a vocab set's / story's words. */
+const LEITNER_INTERVALS = [1,2,4,7,14,30,60,120]; // days per box 0-7
+const SRS_KEPT_BOX = 4;
 function localDateStr(d){ return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
 function todayISO(){ return localDateStr(new Date()); }
 function srsDueIn(days){ const d = new Date(); d.setDate(d.getDate() + days); return localDateStr(d); }
+function srsIsDue(e){ return !!(e && e.due && e.due <= todayISO()); }
+// Puts an entry in a box. Due dates are local calendar dates (srsDueIn): the old
+// toISOString() was UTC, so in Turkey an item reviewed between midnight and
+// 03:00 came due a day early.
+function srsSetBox(e, box, dueDays){
+  e.box = Math.max(0, Math.min(LEITNER_INTERVALS.length - 1, box));
+  e.hi = Math.max(typeof e.hi === 'number' ? e.hi : 0, e.box);
+  e.due = srsDueIn(dueDays === undefined ? LEITNER_INTERVALS[e.box] : dueDays);
+  e.last = todayISO();
+}
+// good = first-attempt score out of 2.
+function srsOutcome(e, good){
+  if(good >= 2) srsSetBox(e, e.box + 1);
+  else if(good === 1) srsSetBox(e, e.box, 2);
+  else srsSetBox(e, e.box - 1, 1);
+}
+// A lesson quiz finished: the first pass creates the entry; a later pass only
+// counts when the item is due (then 80%+ = up, under 50% = down, else stays).
 function updateSRS(itemId, kind, pct){
   const srs = state.progress.srs;
-  const entry = srs[itemId] || {kind, box:0};
-  if(pct >= 0.8) entry.box = Math.min(entry.box + 1, LEITNER_INTERVALS.length - 1);
-  else if(pct < 0.5) entry.box = 0;
-  const days = LEITNER_INTERVALS[entry.box];
+  let entry = srs[itemId];
+  if(!entry){
+    entry = srs[itemId] = {kind, box:0, hi:0, vi:0};
+    srsSetBox(entry, pct >= 0.8 ? 1 : 0);
+    return;
+  }
   entry.kind = kind;
-  // Local calendar date, like todayISO(). toISOString() is UTC: in Turkey an item
-  // reviewed between midnight and 03:00 used to come due a day early.
-  entry.due = srsDueIn(days);
-  srs[itemId] = entry;
+  if(!srsIsDue(entry)) return;
+  srsOutcome(entry, pct >= 0.8 ? 2 : (pct < 0.5 ? 0 : 1));
 }
+// A Souvenir Shuffle card. Returns true when it counted (the item was due).
+function srsReview(id, good){
+  const e = state.progress.srs[id];
+  if(!e || !srsIsDue(e)) return false;
+  srsOutcome(e, good);
+  return true;
+}
+// A game played on one vocab set (Word Rush, Listen & Type, Word Bingo) counts as
+// that set's review when it is due. Build It and Trap Dash never do.
+function srsGameReview(setId, good){
+  const e = setId && state.progress.srs[setId];
+  if(!e || e.kind !== 'vocab' || !srsIsDue(e)) return false;
+  srsOutcome(e, good);
+  return true;
+}
+function srsSource(id, kind){
+  if(kind === 'grammar') return GRAMMAR_ITEMS.find(x=>x.id===id) || null;
+  if(kind === 'vocab') return VOCAB_SETS.find(x=>x.id===id) || null;
+  if(kind === 'story') return STORY_LIBRARY.find(x=>x.id===id) || null;
+  return null;
+}
+// Due items whose content still exists, earliest due date first.
 function dueItems(){
-  const today = todayISO();
-  return Object.keys(state.progress.srs).filter(id => state.progress.srs[id].due <= today);
+  const today = todayISO(), srs = state.progress.srs || {};
+  return Object.keys(srs)
+    .filter(id=>srs[id] && srs[id].due && srs[id].due <= today && srsSource(id, srs[id].kind))
+    .sort((a,b)=>srs[a].due < srs[b].due ? -1 : (srs[a].due > srs[b].due ? 1 : 0));
+}
+// The n earliest-due items, then grammar / vocab / story interleaved.
+function srsPick(ids, n){
+  const srs = state.progress.srs, chosen = ids.slice(0, n), buckets = {grammar:[], vocab:[], story:[]};
+  chosen.forEach(id=>{ (buckets[srs[id].kind] || buckets.grammar).push(id); });
+  const out = [];
+  for(let i=0; out.length < chosen.length; i++) ['grammar','vocab','story'].forEach(k=>{ if(buckets[k][i]) out.push(buckets[k][i]); });
+  return out;
+}
+/* ---- Review questions (Souvenir Shuffle) — LXD rules: only 3-4 option fill-ins,
+   question 1 is the souvenir's own phrase, question 2 a different part of the
+   same item; vocab and story rotate through their words (entry.vi); story
+   souvenirs are reviewed on the story's vocab, never on plot questions. ---- */
+function reEsc(s){ return String(s).replace(/[.*+?^${}()|[\]\\]/g,'\\$&'); }
+// Splits a text into sentences. A ! ? or . only ends a sentence when the next
+// word doesn't start with a lowercase letter or a dash, so quoted questions
+// ("'¿Has comido?' — not …") and abbreviations stay inside their sentence.
+function splitSentences(text){
+  const s = String(text||'').replace(/\s+/g,' ').trim();
+  if(!s) return [];
+  const out = [];
+  const re = /[.!?…]+["'”’»)\]]*(?=\s|$)/g;
+  let start = 0, m;
+  while((m = re.exec(s))){
+    const end = m.index + m[0].length;
+    const rest = s.slice(end);
+    if(rest && /^\s*[\p{Ll}—–\-,;:]/u.test(rest)) continue;
+    out.push(s.slice(start, end).trim());
+    start = end;
+  }
+  if(start < s.length && s.slice(start).trim()) out.push(s.slice(start).trim());
+  return out;
+}
+// One line that states an item's rule, in the UI language (Build It and the
+// Shuffle show it after a miss).
+function grammarRuleLine(item){
+  if(!item || !item.exp) return '';
+  const text = L(item.exp.en, item.exp.tr, item.exp.fa, item.exp.es) || item.exp.en || '';
+  const ss = splitSentences(text);
+  if(!ss.length) return '';
+  const notQ = x => !/[?؟]["'”’»)]*$/.test(x);
+  const pick = ss.find(x=>notQ(x) && /\b(rule|kural|regla)\b|قاعده/i.test(x))
+    || ss.find(x=>notQ(x) && /^(remember|tip|trick|unutma|ipucu|recuerda|truco|consejo)\b|^یادت|^ترفند|^نکته/i.test(x))
+    || ss.find((x,i)=>i>0 && notQ(x) && x.indexOf(':') > 0)
+    || ss.find(notQ) || ss[0];
+  return pick.length > 240 ? pick.slice(0, 237).replace(/\s+\S*$/,'') + '…' : pick;
+}
+function srsGoalFor(item){
+  const node = currentRoadmap().find(n=>n.type==='grammar' && n.refId===item.id);
+  if(node && node.goal && item.goalVariant && item.goalVariant[node.goal]) return node.goal;
+  return profileGoalKeys(state.profile).find(k=>item.goalVariant && item.goalVariant[k]) || 'base';
+}
+function srsGrammarQ(item, field, goal){
+  const why = grammarRuleLine(item);
+  const variants = [goal, 'base'].concat(Object.keys(item.goalVariant || {})).filter((v,i,a)=>v && a.indexOf(v)===i);
+  for(const v of variants){
+    const src = v === 'base' ? item : (item.goalVariant && item.goalVariant[v]);
+    const b = src && src[field];
+    if(b && b.distractors && b.distractors.length >= 2 && !blankListed(TRAP_EXCLUDE_BLANKS, item.id, field, v)){
+      const opts = shuffle([b.word].concat(b.distractors.slice(0, 3)));
+      return {prompt:b.sentence, options:opts, correct:opts.indexOf(b.word), why};
+    }
+  }
+  // Every version of this blank has a distractor that is also correct: ask a
+  // three-way "which sentence is correct" instead (one right, two wrong).
+  const src = (goal !== 'base' && item.goalVariant && item.goalVariant[goal]) || item;
+  const right = field === 'blank' ? (src.right || item.right) : (src.right2 || item.right2);
+  const wrongs = [src.wrong || item.wrong, src.wrong2 || item.wrong2].filter((w,i,a)=>w && w !== right && a.indexOf(w)===i);
+  const opts = shuffle([right].concat(wrongs));
+  return {prompt:L('Which sentence is correct?','Hangi cümle doğru?','کدام جمله درست است؟','¿Qué oración es correcta?'), options:opts, correct:opts.indexOf(right), why};
+}
+function srsVocabQ(set, card){
+  const meaning = L(card.meaning.en, card.meaning.tr, card.meaning.fa, card.meaning.es) || card.meaning.en || '';
+  const re = new RegExp(reEsc(card.word), 'i');
+  const others = shuffle(set.cards.filter(c=>c.word.toLowerCase() !== card.word.toLowerCase())).slice(0, 3).map(c=>c.word);
+  const opts = shuffle([card.word].concat(others));
+  const inSentence = card.sentence && re.test(card.sentence);
+  const prompt = inSentence ? meaning + '\n' + card.sentence.replace(re, '___')
+    : L('Which word means this?','Hangi kelime bu anlama geliyor?','کدام کلمه این معنی را دارد؟','¿Qué palabra significa esto?') + '\n' + meaning;
+  return {prompt, options:opts, correct:opts.indexOf(card.word), why:'"'+card.word+'" — '+meaning+(card.sentence ? ' · '+card.sentence : '')};
+}
+function srsStoryQ(story, v){
+  const meaning = L(v.en, v.tr, v.fa, v.es) || v.en || '';
+  const others = shuffle(story.vocab.filter(x=>x.word.toLowerCase() !== v.word.toLowerCase())).slice(0, 3).map(x=>x.word);
+  const opts = shuffle([v.word].concat(others));
+  return {prompt:L('Which word from the story means this?','Hikayedeki hangi kelime bu anlama geliyor?','کدام کلمه داستان این معنی را دارد؟','¿Qué palabra de la historia significa esto?') + '\n' + meaning,
+    options:opts, correct:opts.indexOf(v.word), why:'"'+v.word+'" — '+meaning};
+}
+// The two questions for one due item. sv = its souvenir (may be null).
+// Returns {qs:[q1,q2], nextVi} — nextVi is saved when the Shuffle ends.
+function srsQuestions(id, sv){
+  const e = state.progress.srs[id];
+  const src = e && srsSource(id, e.kind);
+  if(!src) return null;
+  const vi = (e.vi || 0);
+  let qs = [], nextVi = vi;
+  if(e.kind === 'grammar'){
+    const g = srsGoalFor(src);
+    qs = [srsGrammarQ(src, 'blank', g), srsGrammarQ(src, src.blank2 ? 'blank2' : 'blank', g)];
+  } else if(e.kind === 'vocab'){
+    const cards = src.cards || [];
+    if(cards.length < 2) return null;
+    const own = sv && cards.find(c=>c.word === sv.text);
+    let k = vi % cards.length;
+    if(own && cards[k] === own) k = (k + 1) % cards.length;
+    const first = own || cards[k];
+    if(!own) k = (k + 1) % cards.length;
+    const second = cards[k] === first ? cards[(k + 1) % cards.length] : cards[k];
+    qs = [srsVocabQ(src, first), srsVocabQ(src, second)];
+    nextVi = k + 1;
+  } else if(e.kind === 'story'){
+    const vocab = src.vocab || [];
+    if(vocab.length < 2) return null;
+    const k = vi % vocab.length;
+    qs = [srsStoryQ(src, vocab[k]), srsStoryQ(src, vocab[(k + 1) % vocab.length])];
+    nextVi = k + 2;
+  }
+  qs.forEach(q=>{ q.itemId = id; q.kind = e.kind; });
+  return {qs, nextVi};
 }
 function progressArrForKind(kind){
   return kind==='grammar' ? state.progress.completedTraps
@@ -10782,6 +10970,9 @@ const HANDLERS = {
           // at the moment of scoring, not after.
           round.xpGain = scoreGameCompletion(vp.refId, round.mistakes === 0);
           markGameComplete(vp.refId);
+          // Counts as the set's review when it is due. Word Rush misses are mostly
+          // about tile positions, so it can move an item up or leave it, never down.
+          srsGameReview(round.setId, round.mistakes <= round.pairCount ? 2 : 1);
         }
       } else {
         round.combo = 0;
@@ -10814,6 +11005,7 @@ const HANDLERS = {
       const avgPct = round.results.length ? Math.round(round.results.reduce((a,r)=>a+r.pct,0)/round.results.length) : 0;
       round.xpGain = scoreGameCompletion(vp.refId, avgPct === 100);
       markGameComplete(vp.refId);
+      srsGameReview(round.setId, avgPct >= 80 ? 2 : (avgPct >= 50 ? 1 : 0));
     }
     save(); render();
   },
@@ -12393,6 +12585,7 @@ if(location.hash === '#admin'){
       state.profile = Object.assign({}, freshState().profile, data.profile);
       state.progress = Object.assign({}, freshState().progress, data.progress);
       state.roadmap = data.roadmap || null;
+      migrateProgressV3(state.progress);
       repairRestoredProfile();
       ensureRoadmap();
       migrateRoadmapChecked();

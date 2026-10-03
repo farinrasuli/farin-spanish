@@ -4921,6 +4921,122 @@ function openRhythmSheet(){
 }
 // What the companion bubble on Home says when it has something to offer (with
 // buttons); null = one of the usual greetings.
+/* ============================= GAMIFICATION V3: TODAY'S PLAN (M4) =============================
+   Replaces the hand-ticked "Today's 3 tasks". The companion bubble on Home offers
+   Quick stop (~5 min) or Full stop (~20 min); steps are detected automatically.
+   Order: Souvenir Shuffle -> the next roadmap node -> a game. Quick stop with
+   nothing due is one game replay on the least recently practised finished set.
+   Done: "Good stop for today" with tomorrow's preview.
+   progress.todayPlan = {date, choice, chosenAt, steps:[{t, id?, optional?}]}
+   progress.setPlayed{setId: date} — last practice of a vocab set. */
+function notePlayed(setId){
+  if(!setId) return;
+  if(!state.progress.setPlayed) state.progress.setPlayed = {};
+  state.progress.setPlayed[setId] = todayISO();
+}
+function currentRoadmapNode(){ return currentRoadmap().find(n=>!isRoadmapNodeDone(n)) || null; }
+// Least recently practised finished vocab set (never-replayed ones first).
+function replaySet(){
+  const pr = state.progress, played = pr.setPlayed || {};
+  const sets = (pr.completedVocabSets || []).map(id=>VOCAB_SETS.find(s=>s.id===id)).filter(s=>s && s.cards.length >= 4);
+  sets.sort((a,b)=>String(played[a.id]||'').localeCompare(String(played[b.id]||'')));
+  return sets[0] || null;
+}
+function replayKind(set){ return 'match'; }
+function buildTodayPlan(choice){
+  const steps = [], due = readyToShineCount() > 0;
+  if(choice === 'quick'){
+    steps.push(due ? {t:'shuffle'} : {t:'replay'});
+  } else {
+    if(due) steps.push({t:'shuffle'});
+    const rm = currentRoadmap(), idx = rm.findIndex(n=>!isRoadmapNodeDone(n));
+    if(idx >= 0){
+      steps.push({t:'node', id:roadmapNodeId(rm[idx])});
+      const next = rm[idx+1];
+      if(next && next.type === 'game' && rm[idx].type !== 'game') steps.push({t:'node', id:roadmapNodeId(next)});
+      else steps.push({t:'replay', optional:true});
+    } else steps.push({t:'replay', optional:true});
+  }
+  return {date:todayISO(), choice, chosenAt:Date.now(), steps};
+}
+function todayPlan(){ const p = state.progress.todayPlan; return (p && p.date === todayISO()) ? p : null; }
+function planStepDone(plan, s){
+  const pr = state.progress;
+  if(s.t === 'shuffle') return pr.lastShuffleDate === todayISO() || readyToShineCount() === 0;
+  if(s.t === 'node'){ const n = currentRoadmap().find(x=>roadmapNodeId(x)===s.id); return !n || isRoadmapNodeDone(n); }
+  if(s.t === 'replay') return (pr.lastGameAt || 0) > plan.chosenAt;
+  return true;
+}
+function planNextStep(includeOptional){
+  const plan = todayPlan();
+  if(!plan) return null;
+  return plan.steps.find(s=>!planStepDone(plan, s) && (includeOptional || !s.optional)) || null;
+}
+function openRoadmapNode(n){
+  const nav = (d)=>HANDLERS.nav({dataset:d});
+  if(n.type === 'game') return HANDLERS['start-game']({dataset:{kind:n.gameKind||'', setId:n.setId||'', refId:n.refId, goal:n.goal||''}});
+  if(n.type === 'grammar') return nav({view:'grammar-trap', id:n.refId, goal:n.goal||''});
+  if(n.type === 'story') return nav({view:'story-detail', id:n.refId});
+  if(n.type === 'writing' || n.type === 'speaking') return nav({view:'studio-setup', mode:n.type, goal:n.goal||'', difficulty:n.difficulty||''});
+  if(n.type === 'media') return nav({view:'media-session', id:n.refId});
+  if(n.type === 'session') return nav({view:'session-prep', idx:String(currentRoadmap().indexOf(n))});
+  return nav({view:'vocab-set-intro', id:n.refId, goal:n.goal||'', cat:n.type === 'slang' ? 'slang' : 'vocab'});
+}
+function startReplayGame(){
+  const set = replaySet() || fallbackGameSet(4);
+  if(!set) return;
+  const kind = replayKind(set);
+  HANDLERS['start-game']({dataset:{kind, setId:set.id, refId:set.id+'-'+kind, goal:''}});
+}
+function runPlanStep(s){
+  hideCharTip(true);
+  if(s.t === 'shuffle') return HANDLERS['start-shuffle']({dataset:{}});
+  if(s.t === 'replay') return startReplayGame();
+  const n = currentRoadmap().find(x=>roadmapNodeId(x)===s.id);
+  if(n) openRoadmapNode(n);
+}
+function planStepLabel(s){
+  if(s.t === 'shuffle'){ const n = readyToShineCount(); return [L(`Next: shine ${n} souvenir${n===1?'':'s'}`, `Sırada: ${n} hatırayı parlat`, `بعدی: ${n} یادگاری را بدرخشان`, `Ahora: haz brillar ${n} recuerdo${n===1?'':'s'}`), L('Start','Başla','شروع','Empezar')]; }
+  if(s.t === 'replay'){ const set = replaySet(); return [L('One quick game','Kısa bir oyun','یک بازی کوتاه','Un juego rápido') + (set ? ': ' + setTitle(set) : ''), L('Play','Oyna','بازی کن','Jugar')]; }
+  const n = currentRoadmap().find(x=>roadmapNodeId(x)===s.id);
+  return [L('Next','Sırada','بعدی','Ahora') + ': ' + (n ? n.title : ''), n && n.type === 'game' ? L('Play','Oyna','بازی کن','Jugar') : L('Go','Git','برو','Ir')];
+}
+function tomorrowPreview(){
+  const n = currentRoadmapNode();
+  const t = srsDueIn(1), srs = state.progress.srs || {};
+  const k = Math.min(5, Object.keys(srs).filter(id=>srs[id] && srs[id].due && srs[id].due <= t && srsSource(id, srs[id].kind)).length);
+  const parts = [];
+  if(n) parts.push(L('Tomorrow: ','Yarın: ','فردا: ','Mañana: ') + n.title + '.');
+  if(k) parts.push(L(`${k} souvenir${k===1?'':'s'} will be ready to shine.`, `${k} hatıra parlamaya hazır olacak.`, `${k} یادگاری آماده درخشیدن می‌شود.`, `${k} recuerdo${k===1?' estará listo':'s estarán listos'} para brillar.`));
+  return parts.join(' ');
+}
+// The plan part of the companion bubble (also used on the old Review screen).
+function companionPlanHtml(){
+  if(!state.profile || !state.profile.completedDiagnostic) return '';
+  const pr = state.progress;
+  const name = '<bdi>'+esc(state.profile.name||'')+'</bdi>';
+  if(!pr.goalChosen){
+    return L(`How many days a week shall we meet, ${name}?`, `Haftada kaç gün buluşalım, ${name}?`, `هفته‌ای چند روز همدیگر را ببینیم، ${name}؟`, `¿Cuántos días por semana nos vemos, ${name}?`)
+      + `<div class="cb-btns">${[2,3,5].map(g=>`<button class="cb-btn${g===3?'':' alt'}" data-action="set-week-goal" data-goal="${g}">${L(`${g} days`, `${g} gün`, `${g} روز`, `${g} días`)}</button>`).join('')}</div>`
+      + `<span class="cb-small">${L('You can change it any time.','İstediğin zaman değiştirebilirsin.','هر وقت خواستی می‌توانی عوضش کنی.','Puedes cambiarlo cuando quieras.')}</span>`;
+  }
+  const plan = todayPlan();
+  if(!plan){
+    const n = readyToShineCount();
+    return (n ? L(`${n} souvenir${n===1?' is':'s are'} ready to shine. `, `${n} hatıra parlamaya hazır. `, `${n} یادگاری آماده درخشیدن است. `, `${n} recuerdo${n===1?' está listo':'s están listos'} para brillar. `) : '')
+      + L('Quick stop or full stop today?','Bugün kısa mı uzun mu?','امروز توقف کوتاه یا کامل؟','¿Parada corta o completa hoy?')
+      + `<div class="cb-btns"><button class="cb-btn alt" data-action="plan-choose" data-choice="quick">${L('Quick stop · 5 min','Kısa · 5 dk','کوتاه · ۵ دقیقه','Corta · 5 min')}</button><button class="cb-btn" data-action="plan-choose" data-choice="full">${L('Full stop · 20 min','Tam · 20 dk','کامل · ۲۰ دقیقه','Completa · 20 min')}</button></div>`;
+  }
+  const step = planNextStep();
+  if(step){
+    const lab = planStepLabel(step);
+    return esc(lab[0]) + `<div class="cb-btns"><button class="cb-btn" data-action="plan-step">${esc(lab[1])}</button></div>`;
+  }
+  const extra = planNextStep(true);
+  return L(`Good stop for today, ${name}! `, `Bugünlük güzel bir durak, ${name}! `, `برای امروز توقف خوبی بود، ${name}! `, `¡Buena parada por hoy, ${name}! `)
+    + `<span class="cb-small">${esc(tomorrowPreview())}</span>`
+    + (extra ? `<div class="cb-btns"><button class="cb-btn alt" data-action="plan-replay">${L('One more game?','Bir oyun daha?','یک بازی دیگر؟','¿Un juego más?')}</button></div>` : '');
+}
 function companionBubbleContent(){
   if(isComeback()){
     const name = '<bdi>'+esc(state.profile.name||'')+'</bdi>';
@@ -4930,7 +5046,7 @@ function companionBubbleContent(){
           + `<div class="cb-btns"><button class="cb-btn" data-action="start-shuffle" data-mode="warm">${L('Warm up','Isın','گرم کنیم','Calentar')}</button></div>`
         : L('Your roadmap is right where you left it.','Yol haritan bıraktığın yerde.','نقشه راهت همان‌جایی است که رهایش کردی.','Tu hoja de ruta está donde la dejaste.'));
   }
-  return null;
+  return companionPlanHtml() || null;
 }
 function checkBadges(){
   BADGES.forEach(b=>{
@@ -4947,6 +5063,7 @@ function checkBadges(){
    pattern used everywhere else content completion is tracked by stable id. */
 function markGameComplete(refId){
   if(!refId) return;
+  state.progress.lastGameAt = Date.now();
   if(!state.progress.completedGames) state.progress.completedGames = [];
   if(!state.progress.completedGames.includes(refId)) state.progress.completedGames.push(refId);
   markActivity();
@@ -5027,6 +5144,7 @@ function srsReview(id, good){
 // A game played on one vocab set (Word Rush, Listen & Type, Word Bingo) counts as
 // that set's review when it is due. Build It and Trap Dash never do.
 function srsGameReview(setId, good){
+  notePlayed(setId);
   const e = setId && state.progress.srs[setId];
   if(!e || e.kind !== 'vocab' || !srsIsDue(e)) return false;
   srsOutcome(e, good);
@@ -6492,6 +6610,8 @@ function backToRoadmap(){
   const held = ui.holdAdvance; ui.holdAdvance = false;
   if(state.view !== 'dashboard') go('dashboard');
   else if(held) render();
+  // Gamification v3 (M4): the companion comes back with the next step of today's plan.
+  if(todayPlan()){ hideCharTip(true); scheduleCharTips(2600); }
   navHistory.length = 0;
 }
 // After every render(): fire the celebration once per finished round (flag is
@@ -7002,42 +7122,22 @@ function profileHeaderCard(p){
     <p style="margin-top:10px; color:rgba(255,255,255,.92); font-size:14px; line-height:1.5;">${esc(L(blurb.en,blurb.tr,blurb.fa, blurb.es))}</p>
   </div>`;
 }
+// Gamification v3: the hand-ticked "Today's 3 tasks" list is gone; today's plan
+// lives in the companion bubble on Home (companionPlanHtml), shown here as well.
+// Nothing links to this screen any more; kept as a safety net for old deep links.
 function renderReviewHome(){
-  const p = state.profile, pr = state.progress;
-  const dueCount = dueItems().length;
-  const today = todayISO();
-  if(pr.dailyTasksDate !== today){ pr.dailyTasksDate = today; pr.dailyTasksChecked = {}; save(); }
-  const tasks = buildDailyTasks(p);
-  const doneCount = tasks.filter(t=>pr.dailyTasksChecked[t.id]).length;
+  const ready = readyToShineCount();
   return `<div class="fade-in">
-    ${sectionHead(L('Review','Tekrar','مرور', 'Repaso'), L('Your spaced-repetition queue and daily practice.','Aralıklı tekrar kuyruğun ve günlük pratiğin.','صف مرور فاصله‌دار و تمرین روزانه‌ات.', 'Tu cola de repetición espaciada y tu práctica diaria.'), 'dashboard')}
+    ${sectionHead(L('Review','Tekrar','مرور','Repaso'), L('Your souvenirs and today’s plan.','Hatıraların ve bugünün planı.','یادگاری‌هایت و برنامه امروز.','Tus recuerdos y el plan de hoy.'), 'dashboard')}
     <div class="screen" style="padding-top:0;">
       <div class="card-flat" style="display:flex; justify-content:space-between; align-items:center; gap:10px;">
         <div>
-          <div style="font-weight:700; font-size:14px;">${L('Spaced repetition','Aralıklı tekrar','مرور فاصله‌دار', 'Repetición espaciada')}</div>
-          <div style="font-size:12px; color:var(--ink-soft);">${dueCount>0 ? dueCount+' '+L('items ready to review','öğe tekrar için hazır','مورد آماده مرور', 'elementos listos para repasar') : L('All caught up — nice!','Hepsi tamam — harikasın!','همه چیز تمام شد — عالیه!', '¡Todo al día — genial!')}</div>
+          <div style="font-weight:700; font-size:14px;">${L('Souvenir Shuffle','Hatıra turu','مرور یادگاری‌ها','Repaso de recuerdos')}</div>
+          <div style="font-size:12px; color:var(--ink-soft);">${ready ? L(`${ready} ready to shine`, `${ready} parlamaya hazır`, `${ready} آماده درخشیدن`, `${ready} listos para brillar`) : L('Nothing to review right now.','Şu an tekrar edecek bir şey yok.','الان چیزی برای مرور نیست.','Nada que repasar ahora.')}</div>
         </div>
-        ${dueCount>0 ? `<button class="btn btn-primary btn-sm" data-action="start-review">${L('Start','Başla','شروع', 'Empezar')}</button>` : `<span style="color:var(--success);">${ICONS.check}</span>`}
+        ${ready ? `<button class="btn btn-primary btn-sm" data-action="start-shuffle">${L('Start','Başla','شروع','Empezar')}</button>` : `<span style="color:var(--success);">${ICONS.check}</span>`}
       </div>
-
-      <h3 class="display" style="font-size:14px; margin:22px 0 4px;">${L("Today's 3 tasks","Bugünün 3 görevi",'۳ کار امروزت', 'Tus 3 tareas de hoy')}</h3>
-      <p style="font-size:12.5px; color:var(--ink-soft); margin-bottom:14px;">${L('Picked for your goals — a little bit every day adds up.','Hedeflerine göre seçildi — her gün biraz, uzun vadede çok işe yarar.','بر اساس هدف‌هایت انتخاب شده — کمی هر روز، در درازمدت خیلی به کار می‌آید.', 'Elegidas para tus metas — un poquito cada día suma mucho.')}</p>
-      <div class="stack" style="gap:8px;">
-        ${tasks.map(t=>{
-          const checked = !!pr.dailyTasksChecked[t.id];
-          const icon = `<span class="item-ic" style="background:var(--cat-${t.cat}-soft); color:var(--cat-${t.cat});">${checked?ICONS.check:ICONS[t.ic]}</span>`;
-          const label = `<div class="item-body"><div class="item-title" style="${checked?'text-decoration:line-through; opacity:.6;':''}">${esc(L(t.title.en,t.title.tr,t.title.fa, t.title.es))}</div></div>`;
-          const toggleBtn = `<button data-action="toggle-daily-task" data-id="${t.id}" class="pill" style="flex:0 0 auto; background:${checked?'var(--success-soft)':'var(--bg-sunken)'}; color:${checked?'var(--success)':'var(--ink-faint)'};">${checked?L('Done','Bitti','انجام‌شد', 'Hecho'):L('Mark done','Bitti işaretle','علامت انجام', 'Marcar hecho')}</button>`;
-          if(t.view){
-            return `<div class="item-row" style="cursor:default; ${checked?'opacity:.7;':''}">
-              <button data-action="nav" data-view="${t.view}" style="background:none; border:none; padding:0; display:flex; align-items:center; gap:13px; flex:1; cursor:pointer; text-align:start;">${icon}${label}</button>
-              ${toggleBtn}
-            </div>`;
-          }
-          return `<div class="item-row" style="cursor:default; ${checked?'opacity:.7;':''}">${icon}${label}${toggleBtn}</div>`;
-        }).join('')}
-      </div>
-      ${doneCount===tasks.length ? `<p style="text-align:center; margin-top:14px; font-size:13px; color:var(--success); font-weight:700;">${L('All 3 done for today!','Bugünkü 3 görev tamam!','هر ۳ کار امروز تمام شد!', '¡Las 3 tareas de hoy completas!')}</p>` : ''}
+      <div class="card-flat" style="margin-top:12px; font-size:14px; line-height:1.45;">${companionPlanHtml() || pickGreeting(state.profile, dueItems().length)}</div>
     </div>
   </div>`;
 }
@@ -11152,11 +11252,20 @@ const HANDLERS = {
     checkRoadmapStageAdvance();
     save(); render();
   },
-  'toggle-daily-task'(el){
-    const id = el.dataset.id;
-    const dc = state.progress.dailyTasksChecked;
-    dc[id] = !dc[id];
-    save(); render();
+  // Gamification v3 (M4): today's plan, chosen in the companion bubble.
+  'plan-choose'(el){
+    const choice = el.dataset.choice === 'full' ? 'full' : 'quick';
+    state.progress.todayPlan = buildTodayPlan(choice);
+    save();
+    const step = planNextStep();
+    if(step) runPlanStep(step); else { render(); scheduleCharTips(400); }
+  },
+  'plan-step'(){ const step = planNextStep(); if(step) runPlanStep(step); },
+  'plan-replay'(){ startReplayGame(); },
+  'set-week-goal'(el){
+    state.progress.weeklyGoal = [2,3,5].includes(Number(el.dataset.goal)) ? Number(el.dataset.goal) : 3;
+    state.progress.goalChosen = true;
+    save(); render(); scheduleCharTips(700);
   },
   'reset-all'(){
     if(!resetConfirmPending){ resetConfirmPending = true; render(); return; }
@@ -11518,6 +11627,7 @@ const HANDLERS = {
         // Gamification v3 (M7): XP is retired — the +10 described above is no longer added.
         if(!arr.includes(q.contextId)) arr.push(q.contextId);
         updateSRS(q.contextId, q.kind, q.correct/q.questions.length);
+        if(q.kind === 'vocab') notePlayed(q.contextId);
       } else {
         const byItem = {};
         q.questions.forEach((qq,idx)=>{

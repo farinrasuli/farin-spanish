@@ -4580,7 +4580,7 @@ function freshState(){
   return {
     view:'diagnostic-intro', viewParams:{}, lang:'tr',
     profile:{name:'', motivationTag:null, goals:[], archetype:null, level:null, levelStage:1, topics:[], learnerType:null, priorityArea:null, completedDiagnostic:false, dashboardIntroShown:false, recoveryCode:null, wantsContact:false, contactPhone:''},
-    progress:{sessionsExplored:0, streak:0, lastActiveDate:null, completedTraps:[], completedVocabSets:[], completedScenes:[], completedStories:[], completedGames:[], srs:{}, badgesEarnedAt:{}, reviewsCompleted:0, roadmapChecked:{}, dailyTasksDate:null, dailyTasksChecked:{}, writingRoundsDone:0, speakingRoundsDone:0, usedSpeakingTopics:[], xp:0, perfectGameRounds:0, souvenirs:[], gameBests:{}, roadmapGolden:null, lastWords:{}},
+    progress:{sessionsExplored:0, streak:0, lastActiveDate:null, completedTraps:[], completedVocabSets:[], completedScenes:[], completedStories:[], completedGames:[], srs:{}, badgesEarnedAt:{}, reviewsCompleted:0, roadmapChecked:{}, dailyTasksDate:null, dailyTasksChecked:{}, writingRoundsDone:0, speakingRoundsDone:0, usedSpeakingTopics:[], xp:0, perfectGameRounds:0, souvenirs:[], gameBests:{}, roadmapGolden:null, lastWords:{}, mediaWatched:[]},
     diag:{step:0, goals:[], level:null, topics:[], learnerType:null, priorityArea:null, test:null},
     roadmap:null,
     quiz:null, studentPanelCache:null
@@ -4622,6 +4622,7 @@ function load(){
     if(!merged.progress.gameBests) merged.progress.gameBests = {};
     if(merged.progress.roadmapGolden===undefined) merged.progress.roadmapGolden = null;
     if(!merged.progress.lastWords) merged.progress.lastWords = {};
+    if(!Array.isArray(merged.progress.mediaWatched)) merged.progress.mediaWatched = [];
     if(merged.profile.levelStage===undefined) merged.profile.levelStage = 1;
     if(!merged.progress.dailyTasksChecked) merged.progress.dailyTasksChecked = {};
     if(merged.progress.dailyTasksDate===undefined) merged.progress.dailyTasksDate = null;
@@ -5839,10 +5840,223 @@ function markSpeakingTopicUsed(topicId){
   }
   save();
 }
-// Spanish-learning videos/podcasts go here (same schema as the English app's
-// MEDIA_LIBRARY). Empty on purpose until rights-cleared Spanish content is
-// picked, so buildRoadmap() produces no 'media' nodes yet.
-const MEDIA_LIBRARY = [];
+/* Spanish-learning videos/podcasts for the roadmap's "Watch or listen" node
+   (2026-10-04, Trello 96gUMgAB; same schema as the English app's MEDIA_LIBRARY,
+   picked by pickRoadmapMedia()). 40 entries from official channels only (Easy
+   Spanish, Instituto Cervantes DELE samples, Spanish with Vicente, Hola Spanish,
+   Coffee Break Spanish, Notes in Spanish, Españolistos, Duolingo, BBC News Mundo,
+   Sé Curioso). Every videoId was checked (oEmbed via noembed + watch-page
+   playableInEmbed); Dreaming Spanish was dropped because its embeds are disabled.
+   See Claude/specs/media/README.md. Per entry: title has es; discussionQuestions[].es
+   is the question in Spanish (shown first, translation as a gloss, like stories);
+   vocab[].word is the Spanish term and vocab[].es a short Spanish definition. */
+const MEDIA_LIBRARY = [
+  // ================= A1 =================
+  {id:'media-es-a1-travel-restaurant', level:'A1', goal:'travel', topic:'food', kind:'youtube', videoId:'uHOEHOoQCWA', durationMin:7, channel:'Easy Spanish (Super Easy Spanish)',
+   title:{en:'Useful Spanish Phrases for Restaurants',tr:'Restoranlar İçin Faydalı İspanyolca İfadeler',fa:'عبارت‌های کاربردی اسپانیایی برای رستوران',es:'Frases útiles para el restaurante'},
+   discussionQuestions:[{es:'¿Qué pides en un restaurante? Usa "Quiero..." o "Para mí...".',en:'What do you order in a restaurant? Use "Quiero..." or "Para mí...".',tr:'Restoranda ne sipariş edersin? "Quiero..." ya da "Para mí..." kullan.',fa:'در رستوران چه سفارش می‌دهی؟ از «Quiero...» یا «Para mí...» استفاده کن.'},
+     {es:'¿Cómo pides la cuenta?',en:'How do you ask for the bill?',tr:'Hesabı nasıl istersin?',fa:'صورت‌حساب را چطور درخواست می‌کنی؟'}],
+   vocab:[{word:'la cuenta',en:'the bill',tr:'hesap',fa:'صورت‌حساب',es:'el papel con lo que tienes que pagar'},{word:'el menú del día',en:'set lunch menu',tr:'günün menüsü',fa:'منوی روز',es:'comida completa a precio fijo'},{word:'para mí...',en:'for me... (when ordering)',tr:'benim için...',fa:'برای من...',es:'se usa para pedir comida'}]},
+  {id:'media-es-a1-travel-orderfood', level:'A1', goal:'travel', topic:'food', kind:'podcast', videoId:'Q_GlPCg01NQ', sourceUrl:'https://www.youtube.com/watch?v=Q_GlPCg01NQ', durationMin:10, channel:'Hola Spanish Podcast',
+   title:{en:'Order Food in Spanish: Restaurant Role Play',tr:'İspanyolca Yemek Siparişi: Restoran Canlandırması',fa:'سفارش غذا به اسپانیایی: نقش‌آفرینی در رستوران',es:'Pedir comida en español: juego de rol en el restaurante'},
+   discussionQuestions:[{es:'Imagina que eres el camarero. ¿Qué preguntas al cliente?',en:'Imagine you are the waiter. What do you ask the customer?',tr:'Garson olduğunu düşün. Müşteriye ne sorarsın?',fa:'تصور کن پیشخدمت هستی. از مشتری چه می‌پرسی؟'},
+     {es:'¿Cuál es tu comida favorita? ¿Dónde la comes?',en:'What is your favourite food? Where do you eat it?',tr:'En sevdiğin yemek ne? Nerede yersin?',fa:'غذای مورد علاقه‌ات چیست؟ کجا آن را می‌خوری؟'}],
+   vocab:[{word:'el camarero / la camarera',en:'waiter / waitress',tr:'garson',fa:'پیشخدمت',es:'persona que sirve en un restaurante'},{word:'de primero',en:'as a starter',tr:'başlangıç olarak',fa:'به‌عنوان پیش‌غذا',es:'el primer plato'},{word:'¿Algo más?',en:'Anything else?',tr:'Başka bir şey?',fa:'چیز دیگری؟',es:'pregunta si quieres más cosas'}]},
+  {id:'media-es-a1-career-professions', level:'A1', goal:'career', topic:'business', kind:'youtube', videoId:'L_-KQ90IiF0', durationMin:5, channel:'Easy Languages (Easy Spanish 1)',
+   title:{en:'Professions (Easy Spanish 1)',tr:'Meslekler (Easy Spanish 1)',fa:'شغل‌ها (Easy Spanish 1)',es:'Profesiones (Easy Spanish 1)'},
+   discussionQuestions:[{es:'¿A qué te dedicas? Responde con "Soy..." o "Trabajo en...".',en:'What do you do for a living? Answer with "Soy..." or "Trabajo en...".',tr:'Ne iş yapıyorsun? "Soy..." ya da "Trabajo en..." ile cevapla.',fa:'شغلت چیست؟ با «Soy...» یا «Trabajo en...» جواب بده.'},
+     {es:'¿Qué profesión del video te gusta más? ¿Por qué?',en:'Which profession from the video do you like most? Why?',tr:'Videodaki hangi mesleği en çok seviyorsun? Neden?',fa:'کدام شغل در ویدیو را بیشتر دوست داری؟ چرا؟'}],
+   vocab:[{word:'¿A qué te dedicas?',en:'What do you do (for work)?',tr:'Ne iş yapıyorsun?',fa:'شغلت چیست؟',es:'pregunta por el trabajo de alguien'},{word:'el trabajo',en:'job, work',tr:'iş',fa:'کار، شغل',es:'la actividad por la que te pagan'},{word:'el médico / la médica',en:'doctor',tr:'doktor',fa:'پزشک',es:'persona que cura a los enfermos'}]},
+  {id:'media-es-a1-exam-dele-a1', level:'A1', goal:'exam', kind:'youtube', videoId:'W-9-QcipdnU', durationMin:8, channel:'Instituto Cervantes',
+   title:{en:'DELE A1 Exam Sample (Speaking): Johanna',tr:'DELE A1 Sınav Örneği (Konuşma): Johanna',fa:'نمونهٔ آزمون DELE A1 (مکالمه): یوهانا',es:'Examen DELE nivel A1 (escolar): Johanna'},
+   discussionQuestions:[{es:'Preséntate como en el examen: nombre, edad, ciudad y una afición.',en:'Introduce yourself like in the exam: name, age, city and one hobby.',tr:'Sınavdaki gibi kendini tanıt: adın, yaşın, şehrin ve bir hobin.',fa:'مثل آزمون خودت را معرفی کن: اسم، سن، شهر و یک سرگرمی.'},
+     {es:'¿Qué hace bien Johanna en la prueba oral?',en:'What does Johanna do well in the speaking test?',tr:'Johanna sözlü sınavda neyi iyi yapıyor?',fa:'یوهانا در آزمون شفاهی چه کاری را خوب انجام می‌دهد؟'}],
+   vocab:[{word:'la prueba oral',en:'speaking test',tr:'sözlü sınav',fa:'آزمون شفاهی',es:'la parte del examen en la que hablas'},{word:'el examinador',en:'examiner',tr:'sınav görevlisi',fa:'ممتحن',es:'la persona que hace las preguntas y evalúa'},{word:'la afición',en:'hobby',tr:'hobi',fa:'سرگرمی',es:'algo que te gusta hacer en tu tiempo libre'}]},
+  {id:'media-es-a1-everyday-introduce', level:'A1', goal:'everyday', kind:'youtube', videoId:'kqJqukSrpFE', durationMin:3, channel:'Easy Spanish (Super Easy Spanish)',
+   title:{en:'Introduce Yourself (Spanish for Absolute Beginners)',tr:'Kendini Tanıt (Yeni Başlayanlar İçin İspanyolca)',fa:'خودت را معرفی کن (اسپانیایی برای مبتدی‌ها)',es:'Preséntate (español para principiantes)'},
+   discussionQuestions:[{es:'¿Cómo te llamas, de dónde eres y dónde vives?',en:'What is your name, where are you from and where do you live?',tr:'Adın ne, nerelisin ve nerede yaşıyorsun?',fa:'اسمت چیست، اهل کجایی و کجا زندگی می‌کنی؟'},
+     {es:'Presenta a un amigo o a una amiga en dos frases.',en:'Introduce a friend in two sentences.',tr:'Bir arkadaşını iki cümleyle tanıt.',fa:'یک دوستت را در دو جمله معرفی کن.'}],
+   vocab:[{word:'Me llamo...',en:'My name is...',tr:'Benim adım...',fa:'اسم من ... است',es:'se usa para decir tu nombre'},{word:'Soy de...',en:'I am from...',tr:'...lıyım',fa:'من اهل ... هستم',es:'se usa para decir tu país o ciudad'},{word:'Encantado / Encantada',en:'Nice to meet you',tr:'Memnun oldum',fa:'خوشوقتم',es:'se dice al conocer a alguien'}]},
+  {id:'media-es-a1-everyday-howareyou', level:'A1', goal:'everyday', kind:'podcast', videoId:'GoeCgKsKA1k', sourceUrl:'https://www.youtube.com/watch?v=GoeCgKsKA1k', durationMin:12, channel:'Coffee Break Spanish',
+   title:{en:'Asking and Answering "How Are You?" (Coffee Break Spanish S1E01)',tr:'"Nasılsın?" Diye Sormak ve Cevaplamak (Coffee Break Spanish 1. Bölüm)',fa:'پرسیدن و جواب‌دادن «حالت چطوره؟» (Coffee Break Spanish قسمت ۱)',es:'Preguntar y responder "¿Qué tal?" (Coffee Break Spanish T1E01)'},
+   discussionQuestions:[{es:'¿Qué tal estás hoy? Responde con una frase completa.',en:'How are you today? Answer with a full sentence.',tr:'Bugün nasılsın? Tam bir cümleyle cevapla.',fa:'امروز حالت چطور است؟ با یک جملهٔ کامل جواب بده.'},
+     {es:'¿Cuál es la diferencia entre "¿Cómo estás?" y "¿Cómo está usted?"?',en:'What is the difference between "¿Cómo estás?" and "¿Cómo está usted?"?',tr:'"¿Cómo estás?" ile "¿Cómo está usted?" arasındaki fark nedir?',fa:'تفاوت «¿Cómo estás?» و «¿Cómo está usted?» چیست؟'}],
+   vocab:[{word:'¿Qué tal?',en:'How are things? (informal)',tr:'Nasılsın? / Ne var ne yok?',fa:'چطوری؟ (غیررسمی)',es:'saludo informal para preguntar cómo estás'},{word:'usted',en:'formal "you"',tr:'siz (resmi)',fa:'شما (رسمی)',es:'forma formal de hablar con alguien'},{word:'regular',en:'so-so',tr:'idare eder',fa:'معمولی، بد نیستم',es:'ni bien ni mal'}]},
+  {id:'media-es-a1-everyday-cbs-introduce', level:'A1', goal:'everyday', kind:'podcast', videoId:'Rvw1f-c8ka0', sourceUrl:'https://www.youtube.com/watch?v=Rvw1f-c8ka0', durationMin:15, channel:'Coffee Break Spanish',
+   title:{en:'Introducing Yourself in Spanish (Coffee Break Spanish S1E03)',tr:'İspanyolca Kendini Tanıtmak (Coffee Break Spanish 3. Bölüm)',fa:'معرفی خود به اسپانیایی (Coffee Break Spanish قسمت ۳)',es:'Presentarse en español (Coffee Break Spanish T1E03)'},
+   discussionQuestions:[{es:'Graba un audio de 20 segundos presentándote en español.',en:'Record a 20-second audio introducing yourself in Spanish.',tr:'İspanyolca kendini tanıttığın 20 saniyelik bir ses kaydı yap.',fa:'یک صدای ۲۰ ثانیه‌ای ضبط کن و خودت را به اسپانیایی معرفی کن.'},
+     {es:'¿Qué frase nueva del episodio vas a usar esta semana?',en:'Which new phrase from the episode will you use this week?',tr:'Bölümdeki hangi yeni ifadeyi bu hafta kullanacaksın?',fa:'کدام عبارت جدید این قسمت را این هفته به کار می‌بری؟'}],
+   vocab:[{word:'¿Cómo te llamas?',en:'What is your name?',tr:'Adın ne?',fa:'اسمت چیست؟',es:'pregunta por el nombre'},{word:'¿De dónde eres?',en:'Where are you from?',tr:'Nerelisin?',fa:'اهل کجایی؟',es:'pregunta por el origen'},{word:'vivo en...',en:'I live in...',tr:'...de yaşıyorum',fa:'در ... زندگی می‌کنم',es:'se usa para decir tu ciudad actual'}]},
+  {id:'media-es-a1-immigration-foodshop', level:'A1', goal:'immigration', topic:'food', kind:'youtube', videoId:'4p4L31m8LXQ', durationMin:14, channel:'Easy Spanish (Super Easy Spanish)',
+   title:{en:'The Food Shop in Slow Spanish',tr:'Yavaş İspanyolca ile Bakkal Alışverişi',fa:'مغازهٔ مواد غذایی به اسپانیایی آهسته',es:'La tienda de comida en español lento'},
+   discussionQuestions:[{es:'¿Qué compras normalmente en la tienda? Di cinco cosas.',en:'What do you usually buy at the shop? Say five things.',tr:'Markette genelde ne alırsın? Beş şey söyle.',fa:'معمولاً از مغازه چه می‌خری؟ پنج چیز بگو.'},
+     {es:'¿Cómo preguntas el precio de algo?',en:'How do you ask the price of something?',tr:'Bir şeyin fiyatını nasıl sorarsın?',fa:'قیمت چیزی را چطور می‌پرسی؟'}],
+   vocab:[{word:'¿Cuánto cuesta?',en:'How much is it?',tr:'Ne kadar?',fa:'قیمتش چند است؟',es:'pregunta por el precio'},{word:'un kilo de...',en:'a kilo of...',tr:'bir kilo...',fa:'یک کیلو...',es:'mil gramos de algo'},{word:'la bolsa',en:'bag',tr:'poşet, çanta',fa:'کیسه',es:'donde pones las cosas que compras'}]},
+  // ================= A2 =================
+  {id:'media-es-a2-travel-airport', level:'A2', goal:'travel', kind:'youtube', videoId:'ZdluAW5AjJM', durationMin:11, channel:'Easy Spanish',
+   title:{en:'10-Minute Conversation at an Airport (Slow Spanish)',tr:'Havalimanında 10 Dakikalık Sohbet (Yavaş İspanyolca)',fa:'گفت‌وگوی ۱۰ دقیقه‌ای در فرودگاه (اسپانیایی آهسته)',es:'Conversación de 10 minutos en un aeropuerto (español lento)'},
+   discussionQuestions:[{es:'¿Qué haces primero cuando llegas al aeropuerto?',en:'What do you do first when you arrive at the airport?',tr:'Havalimanına vardığında ilk ne yaparsın?',fa:'وقتی به فرودگاه می‌رسی اول چه کار می‌کنی؟'},
+     {es:'Cuenta tu último viaje en avión: ¿adónde fuiste y qué pasó?',en:'Tell us about your last flight: where did you go and what happened?',tr:'Son uçak yolculuğunu anlat: nereye gittin ve ne oldu?',fa:'از آخرین سفر هوایی‌ات بگو: کجا رفتی و چه اتفاقی افتاد؟'}],
+   vocab:[{word:'facturar la maleta',en:'check in your suitcase',tr:'bavulu teslim etmek',fa:'تحویل‌دادن چمدان',es:'dar tu maleta a la aerolínea'},{word:'la tarjeta de embarque',en:'boarding pass',tr:'biniş kartı',fa:'کارت پرواز',es:'el documento para subir al avión'},{word:'la puerta de embarque',en:'boarding gate',tr:'biniş kapısı',fa:'گیت پرواز',es:'el lugar donde subes al avión'}]},
+  {id:'media-es-a2-career-profession', level:'A2', goal:'career', topic:'business', kind:'youtube', videoId:'F1D_L94WDJk', durationMin:8, channel:'Easy Spanish',
+   title:{en:'What\'s Your Profession? (Street Interviews)',tr:'Mesleğin Ne? (Sokak Röportajları)',fa:'شغلت چیست؟ (مصاحبه‌های خیابانی)',es:'¿Cuál es tu profesión? (entrevistas en la calle)'},
+   discussionQuestions:[{es:'¿Te gusta tu trabajo o tus estudios? ¿Por qué sí o por qué no?',en:'Do you like your job or your studies? Why or why not?',tr:'İşini ya da okulunu seviyor musun? Neden?',fa:'کار یا درست را دوست داری؟ چرا؟'},
+     {es:'¿Qué profesión de las entrevistas te parece más interesante?',en:'Which profession from the interviews seems most interesting to you?',tr:'Röportajlardaki hangi meslek sana en ilginç geliyor?',fa:'کدام شغل در مصاحبه‌ها به نظرت جالب‌تر است؟'}],
+   vocab:[{word:'la profesión',en:'profession',tr:'meslek',fa:'حرفه',es:'el trabajo que sabes hacer'},{word:'el horario',en:'working hours, schedule',tr:'çalışma saatleri',fa:'ساعت کاری',es:'las horas en que trabajas'},{word:'ganar dinero',en:'to earn money',tr:'para kazanmak',fa:'پول درآوردن',es:'recibir dinero por tu trabajo'}]},
+  {id:'media-es-a2-exam-dele-a2', level:'A2', goal:'exam', kind:'youtube', videoId:'bDOWgaHiAvE', durationMin:11, channel:'Instituto Cervantes',
+   title:{en:'DELE A2 Exam Sample (Speaking): Adriana',tr:'DELE A2 Sınav Örneği (Konuşma): Adriana',fa:'نمونهٔ آزمون DELE A2 (مکالمه): آدریانا',es:'Examen DELE nivel A2: Adriana'},
+   discussionQuestions:[{es:'Describe tu casa o tu barrio durante un minuto, como en el examen.',en:'Describe your home or neighbourhood for one minute, like in the exam.',tr:'Sınavdaki gibi evini ya da mahalleni bir dakika boyunca anlat.',fa:'مثل آزمون، یک دقیقه خانه یا محله‌ات را توصیف کن.'},
+     {es:'¿Qué parte de la prueba oral te parece más difícil? ¿Por qué?',en:'Which part of the speaking test seems hardest to you? Why?',tr:'Sözlü sınavın hangi bölümü sana en zor geliyor? Neden?',fa:'کدام بخش آزمون شفاهی به نظرت سخت‌تر است؟ چرا؟'}],
+   vocab:[{word:'el monólogo',en:'monologue (speaking alone)',tr:'monolog',fa:'تک‌گویی',es:'hablar tú solo sobre un tema'},{word:'la lámina',en:'picture card (exam photo)',tr:'resim kartı',fa:'کارت تصویر',es:'la foto que describes en el examen'},{word:'aprobar',en:'to pass (an exam)',tr:'geçmek (sınavı)',fa:'قبول شدن',es:'tener buena nota en un examen'}]},
+  {id:'media-es-a2-everyday-today', level:'A2', goal:'everyday', kind:'youtube', videoId:'SCS1dJ35lig', durationMin:8, channel:'Easy Spanish',
+   title:{en:'What Are You Doing Today? (Street Interviews)',tr:'Bugün Ne Yapıyorsun? (Sokak Röportajları)',fa:'امروز چه کار می‌کنی؟ (مصاحبه‌های خیابانی)',es:'¿Qué haces hoy? (entrevistas en la calle)'},
+   discussionQuestions:[{es:'¿Qué vas a hacer hoy? Usa "voy a + infinitivo".',en:'What are you going to do today? Use "voy a + infinitive".',tr:'Bugün ne yapacaksın? "voy a + mastar" kullan.',fa:'امروز چه کار می‌خواهی بکنی؟ از «voy a + مصدر» استفاده کن.'},
+     {es:'¿Qué respuesta del video se parece más a tu día?',en:'Which answer in the video is most like your day?',tr:'Videodaki hangi cevap senin gününe en çok benziyor?',fa:'کدام جواب در ویدیو بیشتر شبیه روز توست؟'}],
+   vocab:[{word:'voy a...',en:'I am going to...',tr:'...yapacağım',fa:'می‌خواهم ... (آیندهٔ نزدیک)',es:'se usa para planes del futuro'},{word:'quedar con',en:'to meet up with',tr:'biriyle buluşmak',fa:'قرار گذاشتن با',es:'verse con alguien'},{word:'hacer la compra',en:'to do the grocery shopping',tr:'alışveriş yapmak (market)',fa:'خرید خانه کردن',es:'comprar comida para la casa'}]},
+  {id:'media-es-a2-everyday-weekend', level:'A2', goal:'everyday', kind:'podcast', videoId:'nEyCtWYO7OI', sourceUrl:'https://www.youtube.com/watch?v=nEyCtWYO7OI', durationMin:16, channel:'Notes in Spanish (Ben and Marina)',
+   title:{en:'The Weekend (Notes in Spanish: Inspired Beginners 5)',tr:'Hafta Sonu (Notes in Spanish: Inspired Beginners 5)',fa:'آخر هفته (Notes in Spanish: Inspired Beginners 5)',es:'El fin de semana (Notes in Spanish: Inspired Beginners 5)'},
+   discussionQuestions:[{es:'¿Qué hiciste el fin de semana pasado?',en:'What did you do last weekend?',tr:'Geçen hafta sonu ne yaptın?',fa:'آخر هفتهٔ گذشته چه کار کردی؟'},
+     {es:'¿Cómo es un fin de semana perfecto para ti?',en:'What is a perfect weekend for you?',tr:'Senin için mükemmel bir hafta sonu nasıldır?',fa:'یک آخر هفتهٔ عالی برای تو چطور است؟'}],
+   vocab:[{word:'el fin de semana',en:'weekend',tr:'hafta sonu',fa:'آخر هفته',es:'sábado y domingo'},{word:'descansar',en:'to rest',tr:'dinlenmek',fa:'استراحت کردن',es:'no trabajar y relajarse'},{word:'salir',en:'to go out',tr:'dışarı çıkmak',fa:'بیرون رفتن',es:'ir fuera de casa para divertirse'}]},
+  {id:'media-es-a2-immigration-apartment', level:'A2', goal:'immigration', kind:'youtube', videoId:'Tf0VsnEzRKo', durationMin:16, channel:'Easy Spanish (Super Easy Spanish)',
+   title:{en:'Slow Spanish Conversation About Finding an Apartment',tr:'Ev Bulmak Üzerine Yavaş İspanyolca Sohbet',fa:'گفت‌وگوی آهسته به اسپانیایی دربارهٔ پیدا کردن آپارتمان',es:'Conversación en español lento sobre buscar piso'},
+   discussionQuestions:[{es:'Describe tu casa ideal: ¿cuántas habitaciones tiene y dónde está?',en:'Describe your ideal home: how many rooms does it have and where is it?',tr:'İdeal evini anlat: kaç odası var ve nerede?',fa:'خانهٔ ایده‌آلت را توصیف کن: چند اتاق دارد و کجاست؟'},
+     {es:'¿Qué preguntas haces antes de alquilar un piso?',en:'What questions do you ask before renting a flat?',tr:'Bir daire kiralamadan önce hangi soruları sorarsın?',fa:'قبل از اجاره کردن آپارتمان چه سؤال‌هایی می‌پرسی؟'}],
+   vocab:[{word:'alquilar',en:'to rent',tr:'kiralamak',fa:'اجاره کردن',es:'pagar para vivir en una casa que no es tuya'},{word:'el piso',en:'flat / apartment (Spain)',tr:'daire',fa:'آپارتمان',es:'vivienda en un edificio'},{word:'la fianza',en:'deposit',tr:'depozito',fa:'ودیعه',es:'dinero que dejas como garantía'}]},
+  // ================= B1 =================
+  {id:'media-es-b1-travel-vocab', level:'B1', goal:'travel', kind:'youtube', videoId:'ZnLOTzMb34I', durationMin:7, channel:'Spanish with Vicente',
+   title:{en:'Spanish for Travellers: Intermediate Travel Vocabulary',tr:'Gezginler İçin İspanyolca: Orta Seviye Seyahat Kelimeleri',fa:'اسپانیایی برای مسافران: واژگان سفر سطح متوسط',es:'Español para viajeros: vocabulario intermedio para viajar'},
+   discussionQuestions:[{es:'¿Qué problemas pueden pasar en un viaje? ¿Cómo los solucionas en español?',en:'What problems can happen on a trip? How do you solve them in Spanish?',tr:'Bir seyahatte ne gibi sorunlar olabilir? Bunları İspanyolca nasıl çözersin?',fa:'در سفر چه مشکلاتی ممکن است پیش بیاید؟ چطور آن‌ها را به اسپانیایی حل می‌کنی؟'},
+     {es:'¿Prefieres viajar con equipaje de mano o con maleta grande? ¿Por qué?',en:'Do you prefer travelling with hand luggage or a big suitcase? Why?',tr:'Kabin bagajıyla mı büyük bavulla mı seyahat etmeyi tercih edersin? Neden?',fa:'سفر با چمدان دستی را ترجیح می‌دهی یا چمدان بزرگ؟ چرا؟'}],
+   vocab:[{word:'el equipaje de mano',en:'hand luggage',tr:'kabin bagajı',fa:'بار دستی',es:'la maleta pequeña que llevas en el avión'},{word:'perder el vuelo',en:'to miss the flight',tr:'uçağı kaçırmak',fa:'از پرواز جا ماندن',es:'llegar tarde y no subir al avión'},{word:'el retraso',en:'delay',tr:'gecikme',fa:'تأخیر',es:'cuando algo llega más tarde de lo previsto'}]},
+  {id:'media-es-b1-travel-nextyear', level:'B1', goal:'travel', kind:'youtube', videoId:'ebR3yPqTODk', durationMin:12, channel:'Easy Spanish',
+   title:{en:'Where Are You Travelling Next Year? (Street Interviews)',tr:'Gelecek Yıl Nereye Seyahat Ediyorsun? (Sokak Röportajları)',fa:'سال بعد کجا سفر می‌کنی؟ (مصاحبه‌های خیابانی)',es:'¿Adónde vas a viajar el año que viene?'},
+   discussionQuestions:[{es:'¿Adónde te gustaría viajar el año que viene? ¿Por qué?',en:'Where would you like to travel next year? Why?',tr:'Gelecek yıl nereye seyahat etmek isterdin? Neden?',fa:'سال آینده دوست داری کجا سفر کنی؟ چرا؟'},
+     {es:'¿Qué destino de las entrevistas te sorprendió?',en:'Which destination from the interviews surprised you?',tr:'Röportajlardaki hangi yer seni şaşırttı?',fa:'کدام مقصد در مصاحبه‌ها تو را غافلگیر کرد؟'}],
+   vocab:[{word:'el destino',en:'destination',tr:'varış yeri',fa:'مقصد',es:'el lugar adonde viajas'},{word:'me gustaría',en:'I would like',tr:'isterdim',fa:'دوست دارم، مایلم',es:'forma educada de decir lo que quieres'},{word:'el año que viene',en:'next year',tr:'gelecek yıl',fa:'سال آینده',es:'el próximo año'}]},
+  {id:'media-es-b1-travel-podcast', level:'B1', goal:'travel', kind:'podcast', videoId:'GvRwLeME7sI', sourceUrl:'https://www.youtube.com/watch?v=GvRwLeME7sI', durationMin:14, channel:'Easy Spanish Podcast',
+   title:{en:'Talking About Traveling (Easy Spanish Podcast)',tr:'Seyahat Hakkında Konuşmak (Easy Spanish Podcast)',fa:'صحبت دربارهٔ سفر (پادکست Easy Spanish)',es:'Hablando de viajes (Easy Spanish Podcast)'},
+   discussionQuestions:[{es:'¿Qué tipo de viajero eres: organizado o espontáneo?',en:'What kind of traveller are you: organised or spontaneous?',tr:'Nasıl bir gezginsin: planlı mı, spontane mi?',fa:'چه جور مسافری هستی: برنامه‌ریز یا خودجوش؟'},
+     {es:'Cuenta una anécdota divertida o difícil de un viaje.',en:'Tell a funny or difficult story from a trip.',tr:'Bir seyahatten komik ya da zor bir anını anlat.',fa:'یک خاطرهٔ خنده‌دار یا سخت از یک سفر تعریف کن.'}],
+   vocab:[{word:'la anécdota',en:'short personal story',tr:'anı, anekdot',fa:'خاطره، حکایت',es:'una historia corta y curiosa'},{word:'el alojamiento',en:'accommodation',tr:'konaklama',fa:'محل اقامت',es:'el lugar donde duermes en un viaje'},{word:'espontáneo',en:'spontaneous',tr:'spontane',fa:'خودجوش',es:'que hace las cosas sin planear'}]},
+  {id:'media-es-b1-career-howgotjob', level:'B1', goal:'career', topic:'business', kind:'youtube', videoId:'J_U3D_QAw7c', durationMin:11, channel:'Easy Spanish',
+   title:{en:'How Did You Get Your Job? (Street Interviews)',tr:'İşini Nasıl Buldun? (Sokak Röportajları)',fa:'چطور کارت را پیدا کردی؟ (مصاحبه‌های خیابانی)',es:'¿Cómo conseguiste tu trabajo?'},
+   discussionQuestions:[{es:'¿Cómo conseguiste tu trabajo actual o tu último trabajo?',en:'How did you get your current or last job?',tr:'Şu anki ya da son işini nasıl buldun?',fa:'کار فعلی یا آخرین کارت را چطور پیدا کردی؟'},
+     {es:'¿Qué es más importante para encontrar trabajo: los contactos o el currículum?',en:'What matters more to find a job: contacts or your CV?',tr:'İş bulmak için ne daha önemli: tanıdıklar mı özgeçmiş mi?',fa:'برای پیدا کردن کار کدام مهم‌تر است: آشنا یا رزومه؟'}],
+   vocab:[{word:'conseguir',en:'to get, to obtain',tr:'elde etmek, bulmak',fa:'به دست آوردن',es:'lograr tener algo'},{word:'el currículum',en:'CV, résumé',tr:'özgeçmiş',fa:'رزومه',es:'documento con tu experiencia y estudios'},{word:'la entrevista',en:'interview',tr:'mülakat',fa:'مصاحبه',es:'reunión para conseguir un trabajo'}]},
+  {id:'media-es-b1-exam-dele-b1', level:'B1', goal:'exam', kind:'youtube', videoId:'1BK837Vpl10', durationMin:15, channel:'Instituto Cervantes',
+   title:{en:'DELE B1 Exam Sample (Speaking): Lucas',tr:'DELE B1 Sınav Örneği (Konuşma): Lucas',fa:'نمونهٔ آزمون DELE B1 (مکالمه): لوکاس',es:'Examen DELE nivel B1: Lucas'},
+   discussionQuestions:[{es:'Habla dos minutos sobre un tema: "Una persona importante en mi vida".',en:'Speak for two minutes on: "An important person in my life".',tr:'Şu konuda iki dakika konuş: "Hayatımdaki önemli bir kişi".',fa:'دو دقیقه دربارهٔ این موضوع صحبت کن: «یک فرد مهم در زندگی‌ام».'},
+     {es:'¿Qué estrategias usa Lucas cuando no sabe una palabra?',en:'What strategies does Lucas use when he does not know a word?',tr:'Lucas bir kelimeyi bilmediğinde hangi stratejileri kullanıyor?',fa:'لوکاس وقتی کلمه‌ای را نمی‌داند از چه راهبردهایی استفاده می‌کند؟'}],
+   vocab:[{word:'la expresión e interacción orales',en:'oral expression and interaction (exam paper name)',tr:'sözlü anlatım ve etkileşim',fa:'بیان و تعامل شفاهی',es:'la parte oral del examen DELE'},{word:'en mi opinión',en:'in my opinion',tr:'bence',fa:'به نظر من',es:'se usa para dar tu opinión'},{word:'o sea',en:'I mean, that is',tr:'yani',fa:'یعنی',es:'se usa para explicar otra vez'}]},
+  {id:'media-es-b1-everyday-weekends', level:'B1', goal:'everyday', kind:'youtube', videoId:'b5Y1GXIhuNY', durationMin:11, channel:'Easy Spanish',
+   title:{en:'How Do Barcelona Locals Spend Their Weekends?',tr:'Barselonalılar Hafta Sonlarını Nasıl Geçirir?',fa:'مردم بارسلونا آخر هفته‌هایشان را چطور می‌گذرانند؟',es:'¿Cómo pasan el fin de semana en Barcelona?'},
+   discussionQuestions:[{es:'Compara un fin de semana en Barcelona con uno en tu ciudad.',en:'Compare a weekend in Barcelona with one in your city.',tr:'Barselona\'daki bir hafta sonunu kendi şehrindekiyle karşılaştır.',fa:'یک آخر هفته در بارسلونا را با آخر هفته در شهر خودت مقایسه کن.'},
+     {es:'¿Qué plan del video te gustaría probar?',en:'Which plan from the video would you like to try?',tr:'Videodaki hangi planı denemek isterdin?',fa:'کدام برنامهٔ ویدیو را دوست داری امتحان کنی؟'}],
+   vocab:[{word:'el plan',en:'plan, outing',tr:'plan',fa:'برنامه',es:'algo que decides hacer en tu tiempo libre'},{word:'tomar algo',en:'to have a drink / snack out',tr:'bir şeyler içmek',fa:'چیزی نوشیدن بیرون',es:'ir a un bar a beber o comer algo'},{word:'el vermut',en:'vermouth (weekend aperitif tradition in Spain)',tr:'vermut',fa:'ورموت (رسم پیش‌غذای آخر هفته در اسپانیا)',es:'bebida típica antes de comer el fin de semana'}]},
+  {id:'media-es-b1-everyday-smalltalk', level:'B1', goal:'everyday', kind:'youtube', videoId:'xSw72FaO4QM', durationMin:15, channel:'Hola Spanish',
+   title:{en:'How to Make Great Small Talk in Spanish',tr:'İspanyolca Nasıl İyi Sohbet Başlatılır',fa:'چطور به اسپانیایی گپ کوتاه خوبی شروع کنیم',es:'¿Cómo iniciar una conversación en español?'},
+   discussionQuestions:[{es:'Empieza una conversación con un vecino nuevo. ¿Qué le dices?',en:'Start a conversation with a new neighbour. What do you say?',tr:'Yeni bir komşuyla sohbet başlat. Ne dersin?',fa:'با یک همسایهٔ جدید گفت‌وگو را شروع کن. چه می‌گویی؟'},
+     {es:'¿De qué temas es mejor no hablar con alguien que acabas de conocer?',en:'Which topics are better avoided with someone you have just met?',tr:'Yeni tanıştığın biriyle hangi konulardan kaçınmak daha iyi?',fa:'با کسی که تازه آشنا شده‌ای بهتر است دربارهٔ چه موضوع‌هایی حرف نزنی؟'}],
+   vocab:[{word:'charlar',en:'to chat',tr:'sohbet etmek',fa:'گپ زدن',es:'hablar de forma relajada'},{word:'romper el hielo',en:'to break the ice',tr:'buzları kırmak',fa:'یخ را شکستن',es:'empezar a hablar con alguien nuevo'},{word:'¿Y tú qué tal?',en:'And how about you?',tr:'Peki sen nasılsın?',fa:'تو چطوری؟',es:'devolver la pregunta'}]},
+  {id:'media-es-b1-everyday-duolingo', level:'B1', goal:'everyday', kind:'podcast', videoId:'guadxMv8RI8', sourceUrl:'https://www.youtube.com/watch?v=guadxMv8RI8', durationMin:15, channel:'Duolingo (Duolingo Spanish Podcast)',
+   title:{en:'"Mi héroe, mi amigo" (Duolingo Spanish Podcast, Episode 1)',tr:'"Mi héroe, mi amigo" (Duolingo İspanyolca Podcast, 1. Bölüm)',fa:'«Mi héroe, mi amigo» (پادکست اسپانیایی دولینگو، قسمت ۱)',es:'"Mi héroe, mi amigo" (Duolingo Spanish Podcast, episodio 1)'},
+   discussionQuestions:[{es:'Resume la historia del episodio en tres frases.',en:'Summarise the episode\'s story in three sentences.',tr:'Bölümün hikayesini üç cümleyle özetle.',fa:'داستان این قسمت را در سه جمله خلاصه کن.'},
+     {es:'¿Quién es un héroe para ti? ¿Por qué?',en:'Who is a hero for you? Why?',tr:'Senin için kahraman kim? Neden?',fa:'چه کسی برای تو قهرمان است؟ چرا؟'}],
+   vocab:[{word:'el héroe',en:'hero',tr:'kahraman',fa:'قهرمان',es:'persona admirada por lo que hace'},{word:'resumir',en:'to summarise',tr:'özetlemek',fa:'خلاصه کردن',es:'decir lo más importante en pocas palabras'},{word:'la amistad',en:'friendship',tr:'arkadaşlık',fa:'دوستی',es:'la relación entre amigos'}]},
+  {id:'media-es-b1-immigration-friends', level:'B1', goal:'immigration', kind:'youtube', videoId:'UngvTazM-dM', durationMin:10, channel:'Easy Spanish',
+   title:{en:'Is It Easy to Make Friends in Spain?',tr:'İspanya\'da Arkadaş Edinmek Kolay mı?',fa:'آیا در اسپانیا دوست پیدا کردن آسان است؟',es:'¿Es fácil hacer amigos en España?'},
+   discussionQuestions:[{es:'Si te mudas a otro país, ¿cómo haces amigos nuevos?',en:'If you move to another country, how do you make new friends?',tr:'Başka bir ülkeye taşınırsan nasıl yeni arkadaşlar edinirsin?',fa:'اگر به کشور دیگری مهاجرت کنی، چطور دوست جدید پیدا می‌کنی؟'},
+     {es:'¿Es fácil hacer amigos en tu país? ¿Por qué?',en:'Is it easy to make friends in your country? Why?',tr:'Senin ülkende arkadaş edinmek kolay mı? Neden?',fa:'در کشور تو دوست پیدا کردن آسان است؟ چرا؟'}],
+   vocab:[{word:'hacer amigos',en:'to make friends',tr:'arkadaş edinmek',fa:'دوست پیدا کردن',es:'conocer gente y crear amistad'},{word:'mudarse',en:'to move (house/country)',tr:'taşınmak',fa:'اسباب‌کشی کردن، نقل مکان',es:'cambiar de casa o de ciudad'},{word:'abierto',en:'open, outgoing',tr:'açık, dışa dönük',fa:'خون‌گرم، اجتماعی',es:'que habla fácilmente con otros'}]},
+  {id:'media-es-b1-immigration-movebarcelona', level:'B1', goal:'immigration', kind:'youtube', videoId:'dcdBqR1XoCA', durationMin:11, channel:'Easy Spanish',
+   title:{en:'What\'s Your Advice for Moving to Barcelona?',tr:'Barselona\'ya Taşınmak İçin Tavsiyen Ne?',fa:'برای مهاجرت به بارسلونا چه توصیه‌ای داری؟',es:'¿Qué consejo das para mudarse a Barcelona?'},
+   discussionQuestions:[{es:'¿Qué consejo del video te parece más útil?',en:'Which piece of advice from the video seems most useful to you?',tr:'Videodaki hangi tavsiye sana en faydalı geliyor?',fa:'کدام توصیهٔ ویدیو به نظرت مفیدتر است؟'},
+     {es:'¿Qué consejo darías tú a alguien que se muda a tu ciudad?',en:'What advice would you give someone moving to your city?',tr:'Şehrine taşınan birine sen ne tavsiye ederdin?',fa:'به کسی که به شهر تو مهاجرت می‌کند چه توصیه‌ای می‌کنی؟'}],
+   vocab:[{word:'el consejo',en:'advice',tr:'tavsiye',fa:'توصیه',es:'una idea para ayudar a alguien'},{word:'el barrio',en:'neighbourhood',tr:'mahalle',fa:'محله',es:'una zona de la ciudad'},{word:'acostumbrarse',en:'to get used to',tr:'alışmak',fa:'عادت کردن',es:'adaptarse a algo nuevo'}]},
+  // ================= B2 =================
+  {id:'media-es-b2-travel-tourism', level:'B2', goal:'travel', kind:'youtube', videoId:'-_TYh6J75x4', durationMin:11, channel:'Easy Spanish',
+   title:{en:'How Do Barcelona Locals Feel About Tourism?',tr:'Barselonalılar Turizm Hakkında Ne Düşünüyor?',fa:'مردم بارسلونا دربارهٔ گردشگری چه حسی دارند؟',es:'¿Qué opinan los barceloneses del turismo?'},
+   discussionQuestions:[{es:'¿El turismo masivo beneficia o perjudica a una ciudad? Da argumentos a favor y en contra.',en:'Does mass tourism help or harm a city? Give arguments for and against.',tr:'Kitlesel turizm bir şehre fayda mı sağlar zarar mı verir? Lehte ve aleyhte argümanlar ver.',fa:'گردشگری انبوه به شهر سود می‌رساند یا آسیب؟ دلیل‌های موافق و مخالف بیاور.'},
+     {es:'¿Cómo puede un turista respetar más a los vecinos de un lugar?',en:'How can a tourist show more respect to local residents?',tr:'Bir turist yerel halka nasıl daha saygılı olabilir?',fa:'یک گردشگر چطور می‌تواند به ساکنان محلی احترام بیشتری بگذارد؟'}],
+   vocab:[{word:'el turismo masivo',en:'mass tourism',tr:'kitlesel turizm',fa:'گردشگری انبوه',es:'llegada de muchísimos turistas a un lugar'},{word:'el piso turístico',en:'holiday rental flat',tr:'turistik kiralık daire',fa:'آپارتمان اجاره‌ای گردشگری',es:'vivienda que se alquila a turistas por días'},{word:'perjudicar',en:'to harm',tr:'zarar vermek',fa:'آسیب رساندن',es:'causar un daño'}]},
+  {id:'media-es-b2-career-interview', level:'B2', goal:'career', topic:'business', kind:'youtube', videoId:'l6-GzTE6dbI', durationMin:15, channel:'Spanish with Vicente',
+   title:{en:'How to Do a Job Interview in Spanish',tr:'İspanyolca İş Görüşmesi Nasıl Yapılır',fa:'چطور به اسپانیایی مصاحبهٔ کاری انجام دهیم',es:'Cómo hacer una entrevista de trabajo en español'},
+   discussionQuestions:[{es:'Responde: "¿Cuáles son sus puntos fuertes y débiles?"',en:'Answer: "What are your strengths and weaknesses?"',tr:'Cevapla: "Güçlü ve zayıf yönleriniz nelerdir?"',fa:'جواب بده: «نقاط قوت و ضعف شما چیست؟»'},
+     {es:'¿Tuteas o hablas de usted en una entrevista? ¿Depende del país?',en:'Do you use "tú" or "usted" in an interview? Does it depend on the country?',tr:'Mülakatta "tú" mu "usted" mi kullanırsın? Ülkeye göre değişir mi?',fa:'در مصاحبه از «tú» استفاده می‌کنی یا «usted»؟ به کشور بستگی دارد؟'}],
+   vocab:[{word:'el puesto',en:'position, post',tr:'pozisyon',fa:'سمت، جایگاه شغلی',es:'el trabajo concreto que ofrecen'},{word:'los puntos fuertes',en:'strengths',tr:'güçlü yönler',fa:'نقاط قوت',es:'lo que haces muy bien'},{word:'la incorporación',en:'start date / joining',tr:'işe başlama',fa:'شروع به کار',es:'el momento en que empiezas en una empresa'}]},
+  {id:'media-es-b2-career-futurejobs', level:'B2', goal:'career', topic:'business', kind:'youtube', videoId:'9X9l6bLGLXk', durationMin:6, channel:'BBC News Mundo',
+   title:{en:'5 Job Sectors That Will Be in High Demand (World Economic Forum)',tr:'Yüksek Talep Görecek 5 İş Sektörü (Dünya Ekonomik Forumu)',fa:'۵ بخش شغلی که در آینده تقاضای زیادی خواهند داشت (مجمع جهانی اقتصاد)',es:'5 sectores laborales que tendrán una elevada demanda en el futuro'},
+   discussionQuestions:[{es:'¿Tu profesión aparece en la lista? ¿Crees que tiene futuro?',en:'Is your profession on the list? Do you think it has a future?',tr:'Mesleğin listede var mı? Sence geleceği var mı?',fa:'آیا حرفهٔ تو در فهرست هست؟ فکر می‌کنی آینده دارد؟'},
+     {es:'¿Qué habilidades vas a necesitar en los próximos diez años?',en:'What skills will you need in the next ten years?',tr:'Önümüzdeki on yılda hangi becerilere ihtiyacın olacak?',fa:'در ده سال آینده به چه مهارت‌هایی نیاز خواهی داشت؟'}],
+   vocab:[{word:'la demanda',en:'demand',tr:'talep',fa:'تقاضا',es:'cuánto se necesita algo'},{word:'el sector',en:'sector, industry',tr:'sektör',fa:'بخش، صنعت',es:'un área de la economía'},{word:'la habilidad',en:'skill',tr:'beceri',fa:'مهارت',es:'algo que sabes hacer bien'}]},
+  {id:'media-es-b2-exam-dele-b2', level:'B2', goal:'exam', kind:'youtube', videoId:'TPLTyKFBP60', durationMin:10, channel:'Spanish with Vicente',
+   title:{en:'Tips to Pass DELE B2 Speaking, Task 1',tr:'DELE B2 Konuşma 1. Görevi Geçmek İçin İpuçları',fa:'نکته‌هایی برای قبولی در تکلیف ۱ مکالمهٔ DELE B2',es:'Consejos para aprobar la tarea 1 de la expresión oral del DELE B2'},
+   discussionQuestions:[{es:'Practica: valora tres propuestas para reducir el tráfico en tu ciudad y di cuál prefieres.',en:'Practise: evaluate three proposals to reduce traffic in your city and say which you prefer.',tr:'Pratik yap: şehrindeki trafiği azaltmak için üç öneriyi değerlendir ve hangisini tercih ettiğini söyle.',fa:'تمرین کن: سه پیشنهاد برای کم کردن ترافیک شهرت را ارزیابی کن و بگو کدام را ترجیح می‌دهی.'},
+     {es:'¿Qué conectores usas para dar tu opinión y matizarla?',en:'Which connectors do you use to give and nuance your opinion?',tr:'Fikrini belirtmek ve yumuşatmak için hangi bağlaçları kullanırsın?',fa:'برای بیان و تعدیل نظرت از چه کلمات ربطی استفاده می‌کنی؟'}],
+   vocab:[{word:'la propuesta',en:'proposal',tr:'öneri',fa:'پیشنهاد',es:'una idea para solucionar algo'},{word:'estar de acuerdo',en:'to agree',tr:'katılmak',fa:'موافق بودن',es:'pensar lo mismo que otra persona'},{word:'sin embargo',en:'however',tr:'ancak',fa:'با این حال',es:'conector para contrastar ideas'}]},
+  {id:'media-es-b2-everyday-expressions', level:'B2', goal:'everyday', kind:'podcast', videoId:'qTCmd23omdE', sourceUrl:'https://www.youtube.com/watch?v=qTCmd23omdE', durationMin:30, channel:'Españolistos',
+   title:{en:'Sound More Natural in Spanish With These 25 Expressions (Españolistos)',tr:'Bu 25 İfadeyle İspanyolcada Daha Doğal Konuş (Españolistos)',fa:'با این ۲۵ عبارت طبیعی‌تر اسپانیایی صحبت کن (Españolistos)',es:'Suena más natural en español con estas 25 expresiones (Españolistos)'},
+   discussionQuestions:[{es:'Elige tres expresiones del episodio y usa cada una en una frase sobre tu vida.',en:'Pick three expressions from the episode and use each in a sentence about your life.',tr:'Bölümden üç ifade seç ve her birini hayatınla ilgili bir cümlede kullan.',fa:'سه عبارت از این قسمت انتخاب کن و هرکدام را در جمله‌ای دربارهٔ زندگی خودت به کار ببر.'},
+     {es:'¿Hay una expresión parecida en tu idioma? ¿Cuál?',en:'Is there a similar expression in your language? Which one?',tr:'Senin dilinde benzer bir ifade var mı? Hangisi?',fa:'در زبان تو عبارت مشابهی وجود دارد؟ کدام؟'}],
+   vocab:[{word:'la expresión',en:'expression, idiom',tr:'deyim, ifade',fa:'اصطلاح',es:'grupo de palabras con un significado especial'},{word:'sonar natural',en:'to sound natural',tr:'doğal duyulmak',fa:'طبیعی به نظر رسیدن',es:'hablar como un nativo'},{word:'¡Qué va!',en:'No way! / Not at all!',tr:'Ne münasebet! / Hiç de değil!',fa:'اصلاً! / نه بابا!',es:'expresión para negar con fuerza'}]},
+  {id:'media-es-b2-immigration-livingabroad', level:'B2', goal:'immigration', kind:'podcast', videoId:'itxT05dTrUE', sourceUrl:'https://www.youtube.com/watch?v=itxT05dTrUE', durationMin:24, channel:'Easy Spanish (Easy Spanish Podcast)',
+   title:{en:'5 Things We Learned Living Abroad (Easy Spanish Podcast)',tr:'Yurt Dışında Yaşarken Öğrendiğimiz 5 Şey (Easy Spanish Podcast)',fa:'۵ چیزی که با زندگی در خارج یاد گرفتیم (پادکست Easy Spanish)',es:'5 cosas que aprendimos viviendo en el extranjero'},
+   discussionQuestions:[{es:'¿Qué crees que aprenderías tú viviendo en el extranjero?',en:'What do you think you would learn by living abroad?',tr:'Yurt dışında yaşasan ne öğrenirdin sence?',fa:'فکر می‌کنی با زندگی در خارج چه چیزی یاد می‌گرفتی؟'},
+     {es:'¿Cuál de las cinco lecciones te parece más verdadera? ¿Por qué?',en:'Which of the five lessons seems most true to you? Why?',tr:'Beş dersten hangisi sana en doğru geliyor? Neden?',fa:'کدام یک از پنج درس به نظرت درست‌تر است؟ چرا؟'}],
+   vocab:[{word:'el extranjero',en:'abroad; foreigner',tr:'yurt dışı; yabancı',fa:'خارج از کشور؛ خارجی',es:'otro país / persona de otro país'},{word:'echar de menos',en:'to miss (someone/something)',tr:'özlemek',fa:'دلتنگ شدن',es:'sentir tristeza porque algo no está'},{word:'el choque cultural',en:'culture shock',tr:'kültür şoku',fa:'شوک فرهنگی',es:'sorpresa al vivir en otra cultura'}]},
+  {id:'media-es-b2-immigration-rent', level:'B2', goal:'immigration', kind:'youtube', videoId:'iAYncYr-gUQ', durationMin:14, channel:'Spanish with Vicente',
+   title:{en:'"I Can\'t Afford the Rent" (Culture of Spain)',tr:'"Kirayı Karşılayamıyorum" (İspanya Kültürü)',fa:'«نمی‌توانم از پس اجاره بربیایم» (فرهنگ اسپانیا)',es:'No puedo permitirme un alquiler (cultura de España)'},
+   discussionQuestions:[{es:'¿Es caro alquilar una vivienda en tu ciudad? Compáralo con lo que explica el video.',en:'Is renting expensive in your city? Compare it with what the video explains.',tr:'Şehrinde ev kiralamak pahalı mı? Videoda anlatılanla karşılaştır.',fa:'آیا اجاره خانه در شهر تو گران است؟ آن را با توضیحات ویدیو مقایسه کن.'},
+     {es:'¿Compartirías piso con desconocidos para ahorrar? ¿Por qué?',en:'Would you share a flat with strangers to save money? Why?',tr:'Para biriktirmek için yabancılarla ev paylaşır mıydın? Neden?',fa:'حاضری برای صرفه‌جویی با غریبه‌ها هم‌خانه شوی؟ چرا؟'}],
+   vocab:[{word:'permitirse',en:'to afford',tr:'gücü yetmek',fa:'از عهدهٔ هزینه برآمدن',es:'tener dinero suficiente para algo'},{word:'compartir piso',en:'to share a flat',tr:'ev paylaşmak',fa:'هم‌خانه شدن',es:'vivir con otras personas para pagar menos'},{word:'el casero / la casera',en:'landlord / landlady',tr:'ev sahibi',fa:'صاحب‌خانه',es:'el dueño de la casa que alquilas'}]},
+  {id:'media-es-b2-science-speech', level:'B2', topic:'science', kind:'youtube', videoId:'pXHZC5kIAss', durationMin:5, channel:'BBC News Mundo',
+   title:{en:'Why Are Humans the Only Species That Can Speak?',tr:'Neden Konuşabilen Tek Tür İnsan?',fa:'چرا انسان تنها گونه‌ای است که می‌تواند حرف بزند؟',es:'¿Por qué los seres humanos somos la única especie que puede hablar?'},
+   discussionQuestions:[{es:'Explica con tus palabras una razón del video.',en:'Explain one reason from the video in your own words.',tr:'Videodaki bir nedeni kendi sözlerinle açıkla.',fa:'یکی از دلیل‌های ویدیو را با کلمات خودت توضیح بده.'},
+     {es:'¿Crees que algún animal se comunica de forma parecida a un idioma?',en:'Do you think any animal communicates in a language-like way?',tr:'Sence herhangi bir hayvan dile benzer şekilde iletişim kuruyor mu?',fa:'فکر می‌کنی حیوانی هست که به شکلی شبیه زبان ارتباط برقرار کند؟'}],
+   vocab:[{word:'la especie',en:'species',tr:'tür',fa:'گونه',es:'grupo de seres vivos parecidos'},{word:'las cuerdas vocales',en:'vocal cords',tr:'ses telleri',fa:'تارهای صوتی',es:'parte de la garganta que produce la voz'},{word:'la evolución',en:'evolution',tr:'evrim',fa:'تکامل',es:'cambio de las especies con el tiempo'}]},
+  {id:'media-es-b2-science-language', level:'B2', topic:'science', kind:'youtube', videoId:'gWgU-83bx9c', durationMin:5, channel:'Sé Curioso (TED-Ed en español)',
+   title:{en:'What Makes a Language... a Language? (TED-Ed)',tr:'Bir Dili... Dil Yapan Nedir? (TED-Ed)',fa:'چه چیزی یک زبان را... زبان می‌کند؟ (TED-Ed)',es:'¿Qué hace que un idioma... sea un idioma?'},
+   discussionQuestions:[{es:'¿Cuál es la diferencia entre un idioma y un dialecto, según el video?',en:'What is the difference between a language and a dialect, according to the video?',tr:'Videoya göre dil ile lehçe arasındaki fark nedir?',fa:'طبق ویدیو تفاوت زبان و گویش چیست؟'},
+     {es:'¿Qué dialectos o acentos hay en tu país?',en:'What dialects or accents are there in your country?',tr:'Ülkende hangi lehçeler ya da aksanlar var?',fa:'در کشور تو چه گویش‌ها یا لهجه‌هایی هست؟'}],
+   vocab:[{word:'el dialecto',en:'dialect',tr:'lehçe',fa:'گویش',es:'forma regional de hablar un idioma'},{word:'el acento',en:'accent',tr:'aksan',fa:'لهجه',es:'manera de pronunciar de una zona'},{word:'entenderse',en:'to understand each other',tr:'anlaşmak',fa:'حرف همدیگر را فهمیدن',es:'comprenderse mutuamente'}]},
+  // ================= C1 =================
+  {id:'media-es-c1-travel-vocab', level:'C1', goal:'travel', kind:'youtube', videoId:'PEojxf9IvKk', durationMin:14, channel:'Spanish with Vicente',
+   title:{en:'Advanced Travel Vocabulary in Spanish (C1)',tr:'İspanyolca İleri Seviye Seyahat Kelimeleri (C1)',fa:'واژگان پیشرفتهٔ سفر به اسپانیایی (C1)',es:'Vocabulario avanzado de los viajes en español (nivel C1)'},
+   discussionQuestions:[{es:'Describe el viaje más memorable de tu vida usando al menos cinco palabras del video.',en:'Describe the most memorable trip of your life using at least five words from the video.',tr:'Hayatındaki en unutulmaz seyahati videodan en az beş kelime kullanarak anlat.',fa:'به‌یادماندنی‌ترین سفر زندگی‌ات را با دست‌کم پنج کلمه از ویدیو توصیف کن.'},
+     {es:'¿Viajar es un lujo o una necesidad hoy en día? Argumenta tu postura.',en:'Is travel a luxury or a necessity nowadays? Argue your position.',tr:'Günümüzde seyahat bir lüks mü ihtiyaç mı? Görüşünü savun.',fa:'امروزه سفر یک تجمل است یا یک نیاز؟ از موضعت دفاع کن.'}],
+   vocab:[{word:'la escapada',en:'short getaway',tr:'kısa kaçamak',fa:'سفر کوتاه، گریز',es:'viaje corto para desconectar'},{word:'el mochilero / la mochilera',en:'backpacker',tr:'sırt çantalı gezgin',fa:'کوله‌گرد',es:'persona que viaja barato con mochila'},{word:'hacer escala',en:'to have a layover',tr:'aktarma yapmak',fa:'توقف بین‌راهی داشتن',es:'parar en un aeropuerto antes del destino'}]},
+  {id:'media-es-c1-career-news', level:'C1', goal:'career', topic:'business', kind:'youtube', videoId:'VLt7h9pAI0A', durationMin:16, channel:'Spanish with Vicente',
+   title:{en:'Learn Spanish With News: Work Vocabulary (C1)',tr:'Haberlerle İspanyolca: İş Dünyası Kelimeleri (C1)',fa:'یادگیری اسپانیایی با اخبار: واژگان کار (C1)',es:'Aprender español con noticias: vocabulario del trabajo (nivel C1)'},
+   discussionQuestions:[{es:'¿Qué cambios en el mundo laboral de tu país te preocupan o te ilusionan?',en:'Which changes in your country\'s job market worry or excite you?',tr:'Ülkendeki iş dünyasında hangi değişiklikler seni endişelendiriyor ya da heyecanlandırıyor?',fa:'کدام تغییرات بازار کار کشورت تو را نگران یا امیدوار می‌کند؟'},
+     {es:'¿Debería reducirse la jornada laboral a cuatro días? Argumenta.',en:'Should the working week be cut to four days? Argue your case.',tr:'Çalışma haftası dört güne indirilmeli mi? Gerekçelendir.',fa:'آیا هفتهٔ کاری باید به چهار روز کاهش پیدا کند؟ استدلال کن.'}],
+   vocab:[{word:'la jornada laboral',en:'working day / hours',tr:'mesai süresi',fa:'ساعات کاری',es:'el tiempo que trabajas cada día o semana'},{word:'la plantilla',en:'staff, workforce',tr:'kadro, personel',fa:'کارکنان',es:'todos los trabajadores de una empresa'},{word:'el despido',en:'dismissal, layoff',tr:'işten çıkarma',fa:'اخراج',es:'cuando una empresa echa a un trabajador'}]},
+  {id:'media-es-c1-exam-dele-c1', level:'C1', goal:'exam', kind:'youtube', videoId:'xmVZmdT_yhQ', durationMin:7, channel:'Spanish with Vicente',
+   title:{en:'DELE C1 Exam: Passing the Speaking Paper',tr:'DELE C1 Sınavı: Sözlü Bölümü Geçmek',fa:'آزمون DELE C1: قبولی در بخش شفاهی',es:'Examen DELE C1: aprobar la expresión oral'},
+   discussionQuestions:[{es:'Practica: presenta durante tres minutos las ventajas y desventajas del teletrabajo.',en:'Practise: present the pros and cons of remote work for three minutes.',tr:'Pratik yap: uzaktan çalışmanın artılarını ve eksilerini üç dakika boyunca sun.',fa:'تمرین کن: سه دقیقه مزایا و معایب دورکاری را ارائه بده.'},
+     {es:'¿Qué recursos lingüísticos distinguen a un candidato de C1 de uno de B2?',en:'What language resources separate a C1 candidate from a B2 one?',tr:'Bir C1 adayını B2 adayından ayıran dil kaynakları nelerdir?',fa:'چه ابزارهای زبانی یک داوطلب C1 را از B2 متمایز می‌کند؟'}],
+   vocab:[{word:'matizar',en:'to nuance, qualify',tr:'incelikle ifade etmek',fa:'تعدیل کردن، ظرافت بخشیدن',es:'precisar una idea con detalles'},{word:'no obstante',en:'nevertheless',tr:'yine de',fa:'با این وجود',es:'conector formal de contraste'},{word:'la postura',en:'position, stance',tr:'tutum',fa:'موضع',es:'tu opinión sobre un tema'}]},
+  {id:'media-es-c1-everyday-native', level:'C1', goal:'everyday', kind:'youtube', videoId:'j_mvR_5gvBs', durationMin:10, channel:'Spanish with Vicente',
+   title:{en:'Speak Like a Native With These Advanced Expressions',tr:'Bu İleri Seviye İfadelerle Ana Dili Gibi Konuş',fa:'با این اصطلاحات پیشرفته مثل یک بومی حرف بزن',es:'Habla como un nativo con estas expresiones de nivel C2'},
+   discussionQuestions:[{es:'Cuenta una anécdota reciente usando tres de las expresiones del video.',en:'Tell a recent anecdote using three expressions from the video.',tr:'Videodaki üç ifadeyi kullanarak yakın zamanda başına gelen bir olayı anlat.',fa:'یک خاطرهٔ اخیر را با سه اصطلاح از ویدیو تعریف کن.'},
+     {es:'¿Cuándo puede sonar raro usar demasiadas expresiones coloquiales?',en:'When can using too many colloquial expressions sound strange?',tr:'Çok fazla günlük deyim kullanmak ne zaman tuhaf durabilir?',fa:'کی استفادهٔ زیاد از اصطلاحات محاوره‌ای ممکن است عجیب به نظر برسد؟'}],
+   vocab:[{word:'coloquial',en:'colloquial, informal',tr:'konuşma diline ait',fa:'محاوره‌ای',es:'propio del habla informal'},{word:'el registro',en:'register (formal/informal level)',tr:'dil düzeyi',fa:'سطح زبان (رسمی/غیررسمی)',es:'nivel de formalidad al hablar'},{word:'meter la pata',en:'to put your foot in it',tr:'pot kırmak',fa:'گند زدن، سوتی دادن',es:'equivocarse en una situación'}]},
+  {id:'media-es-c1-immigration-europeans', level:'C1', goal:'immigration', topic:'history', kind:'youtube', videoId:'jkStlfHNUAs', durationMin:9, channel:'BBC News Mundo',
+   title:{en:'Why Millions of Europeans Migrated to Latin America After Independence',tr:'Bağımsızlıklardan Sonra Milyonlarca Avrupalı Neden Latin Amerika\'ya Göç Etti',fa:'چرا میلیون‌ها اروپایی پس از استقلال‌ها به آمریکای لاتین مهاجرت کردند',es:'Por qué millones de europeos migraron a América Latina tras las independencias'},
+   discussionQuestions:[{es:'¿Qué factores empujaron a esos europeos a emigrar? ¿Se parecen a los motivos de hoy?',en:'What factors pushed those Europeans to emigrate? Are they similar to today\'s reasons?',tr:'O Avrupalıları göçe iten faktörler nelerdi? Bugünkü nedenlere benziyor mu?',fa:'چه عواملی آن اروپایی‌ها را به مهاجرت واداشت؟ شبیه دلیل‌های امروز است؟'},
+     {es:'¿Cómo ha influido la inmigración en la cultura de tu país?',en:'How has immigration influenced your country\'s culture?',tr:'Göç ülkenin kültürünü nasıl etkiledi?',fa:'مهاجرت چه تأثیری بر فرهنگ کشورت گذاشته است؟'}],
+   vocab:[{word:'emigrar',en:'to emigrate (leave your country)',tr:'göç etmek (ülkeden)',fa:'مهاجرت کردن (از کشور)',es:'irse de tu país para vivir en otro'},{word:'la oleada',en:'wave (of people)',tr:'dalga',fa:'موج',es:'llegada de mucha gente a la vez'},{word:'el descendiente',en:'descendant',tr:'torun, soyundan gelen',fa:'نواده',es:'hijo, nieto, etc. de alguien'}]},
+  {id:'media-es-c1-immigration-housing', level:'C1', goal:'immigration', topic:'business', kind:'youtube', videoId:'wNJ0RT7enm4', durationMin:6, channel:'BBC News Mundo',
+   title:{en:'How Spain Went From a Property Boom to a Housing Crisis',tr:'İspanya Emlak Patlamasından Konut Krizine Nasıl Geldi',fa:'اسپانیا چگونه از رونق مسکن به بحران مسکن رسید',es:'Cómo pasó España del boom inmobiliario a una crisis de vivienda'},
+   discussionQuestions:[{es:'Resume las causas de la crisis de vivienda que explica el video.',en:'Summarise the causes of the housing crisis explained in the video.',tr:'Videoda anlatılan konut krizinin nedenlerini özetle.',fa:'دلیل‌های بحران مسکن که ویدیو توضیح می‌دهد را خلاصه کن.'},
+     {es:'Si te mudaras a España, ¿cómo afectaría esta situación a tus planes?',en:'If you moved to Spain, how would this situation affect your plans?',tr:'İspanya\'ya taşınsan bu durum planlarını nasıl etkilerdi?',fa:'اگر به اسپانیا مهاجرت می‌کردی، این وضعیت چه تأثیری بر برنامه‌هایت می‌گذاشت؟'}],
+   vocab:[{word:'la burbuja inmobiliaria',en:'housing bubble',tr:'emlak balonu',fa:'حباب مسکن',es:'subida artificial del precio de las casas'},{word:'la vivienda',en:'housing, dwelling',tr:'konut',fa:'مسکن',es:'el lugar donde vive la gente'},{word:'el desahucio',en:'eviction',tr:'tahliye',fa:'تخلیهٔ اجباری',es:'cuando te obligan a dejar tu casa'}]},
+  {id:'media-es-c1-science-multilingual', level:'C1', topic:'science', kind:'youtube', videoId:'JwghZEmvmb8', durationMin:7, channel:'BBC News Mundo',
+   title:{en:'How Your Brain Changes When You Speak Several Languages',tr:'Birden Fazla Dil Konuştuğunda Beynin Nasıl Değişir',fa:'وقتی به چند زبان صحبت می‌کنی مغزت چطور تغییر می‌کند',es:'Cómo cambia tu cerebro al hablar varios idiomas'},
+   discussionQuestions:[{es:'¿Qué beneficio del bilingüismo te parece más sorprendente?',en:'Which benefit of bilingualism seems most surprising to you?',tr:'İki dilliliğin hangi faydası sana en şaşırtıcı geliyor?',fa:'کدام فایدهٔ دوزبانگی به نظرت شگفت‌انگیزتر است؟'},
+     {es:'¿Sientes que tu personalidad cambia cuando hablas español?',en:'Do you feel your personality changes when you speak Spanish?',tr:'İspanyolca konuşurken kişiliğinin değiştiğini hissediyor musun?',fa:'حس می‌کنی وقتی اسپانیایی حرف می‌زنی شخصیتت تغییر می‌کند؟'}],
+   vocab:[{word:'el bilingüismo',en:'bilingualism',tr:'iki dillilik',fa:'دوزبانگی',es:'hablar dos idiomas'},{word:'la plasticidad cerebral',en:'brain plasticity',tr:'beyin esnekliği',fa:'انعطاف‌پذیری مغز',es:'capacidad del cerebro de cambiar'},{word:'retrasar',en:'to delay',tr:'geciktirmek',fa:'به تأخیر انداختن',es:'hacer que algo pase más tarde'}]}
+];
 function renderMediaSession(id){
   const m = MEDIA_LIBRARY.find(x=>x.id===id);
   if(!m) return renderNotFound();
@@ -5851,18 +6065,29 @@ function renderMediaSession(id){
   // no separate progress array, consistent with those other manual-only types.
   const roadmapId = roadmapNodeId({type:'media', refId:m.id});
   const done = !!(state.progress.roadmapChecked && state.progress.roadmapChecked[roadmapId]);
-  const embed = m.kind==='youtube' && m.videoId
+  // 2026-10-04 (96gUMgAB): any entry with a videoId is embedded, podcasts included
+  // (their official YouTube uploads); a podcast without one keeps the link button.
+  const isPodcast = m.kind === 'podcast';
+  const embed = m.videoId
     ? `<div style="position:relative; width:100%; padding-top:56.25%; border-radius:20px; overflow:hidden; background:#000;"><iframe src="https://www.youtube-nocookie.com/embed/${esc(m.videoId)}" title="${esc(L(m.title.en,m.title.tr,m.title.fa, m.title.es))}" style="position:absolute; inset:0; width:100%; height:100%; border:0;" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe></div>`
     : `<a class="btn btn-primary" href="${esc(m.sourceUrl)}" target="_blank" rel="noopener">${L('Listen to the podcast','Podcasti dinle','گوش‌دادن به پادکست','Escucha el pódcast')} ↗</a>`;
+  const credit = m.channel ? `<div style="margin-top:8px; font-size:12px; color:var(--ink-faint);">${L('Source','Kaynak','منبع','Fuente')}: ${esc(m.channel)}</div>` : '';
   return `<div class="fade-in">
     ${sectionHead(L(m.title.en,m.title.tr,m.title.fa, m.title.es), (m.goal && GOALS_META[m.goal] ? goalMetaLabel(m.goal)+' · ' : '')+(m.durationMin?m.durationMin+' '+L('min','dk','دقیقه','min'):''))}
     <div class="screen" style="padding-top:0;">
       ${embed}
+      ${credit}
       ${m.discussionQuestions && m.discussionQuestions.length ? `
       <div class="card-flat" style="margin-top:16px;">
         <div class="eyebrow" style="color:var(--cat-story);">${L('Discussion questions','Tartışma soruları','سؤالات بحث', 'Preguntas de discusión')}</div>
         <ol style="margin:8px 0 0; padding-inline-start:18px;">
-          ${m.discussionQuestions.map(q=>`<li style="font-size:14px; line-height:1.6; margin-top:6px;">${esc(L(q.en,q.tr,q.fa, q.es))}</li>`).join('')}
+          ${m.discussionQuestions.map(q=>{
+            // the question in Spanish (the language being learned) first, like stories;
+            // the learner's own language as a small gloss under it
+            const main = q.es || L(q.en,q.tr,q.fa);
+            const gloss = (q.es && LANG !== 'es') ? L(q.en,q.tr,q.fa) : '';
+            return `<li style="font-size:14px; line-height:1.6; margin-top:6px;">${esc(main)}${gloss ? `<div style="font-size:12px; color:var(--ink-faint); line-height:1.4;">${esc(gloss)}</div>` : ''}</li>`;
+          }).join('')}
         </ol>
       </div>` : ''}
       ${m.vocab && m.vocab.length ? `
@@ -5870,9 +6095,86 @@ function renderMediaSession(id){
         <div class="eyebrow" style="color:var(--cat-voc);">${L('New words','Yeni kelimeler','کلمات جدید', 'Palabras nuevas')}</div>
         ${m.vocab.map(v=>`<div class="phrase-row"><div class="phrase-term" style="color:var(--cat-voc);">${esc(v.word)}</div><div class="phrase-mean">${esc(L(v.en,v.tr,v.fa, v.es))}</div></div>`).join('')}
       </div>` : ''}
-      <button class="btn ${done?'btn-ghost':'btn-primary'}" style="margin-top:16px;" data-action="toggle-roadmap-item" data-id="${roadmapId}">${done ? L('Marked as watched ✓','İzlendi olarak işaretlendi ✓','علامت‌زده به‌عنوان دیده‌شده ✓','Marcado como visto ✓') : L('Mark as watched','İzlendi olarak işaretle','علامت‌زدن به‌عنوان دیده‌شده','Marcar como visto')}</button>
+      <button class="btn ${done?'btn-ghost':'btn-primary'}" style="margin-top:16px;" data-action="toggle-roadmap-item" data-id="${roadmapId}">${isPodcast
+        ? (done ? L('Marked as listened ✓','Dinlendi olarak işaretlendi ✓','علامت‌زده به‌عنوان شنیده‌شده ✓','Marcado como escuchado ✓') : L('Mark as listened','Dinlendi olarak işaretle','علامت‌زدن به‌عنوان شنیده‌شده','Marcar como escuchado'))
+        : (done ? L('Marked as watched ✓','İzlendi olarak işaretlendi ✓','علامت‌زده به‌عنوان دیده‌شده ✓','Marcado como visto ✓') : L('Mark as watched','İzlendi olarak işaretle','علامت‌زدن به‌عنوان دیده‌شده','Marcar como visto'))}</button>
     </div>
   </div>`;
+}
+/* Roadmap "Watch or listen" node (2026-10-04, Trello 96gUMgAB; rule from
+   Claude/specs/media/README.md). One media node per stage, right after the story
+   node (stage midpoint if there is no story). Ranking inside the learner's level:
+   their goals (+100 for goal 1, -10 for each later goal), favourite topics (+20),
+   already watched (-1000). Stage 1 takes the top item; stage 2 takes the best item
+   other than stage 1's (a tie prefers the other kind: a podcast after a video and
+   the other way round), so the two stages never repeat. When the level has nothing,
+   it falls back one level down; otherwise there is no media node.
+   "Watched" = progress.mediaWatched (kept by toggle-roadmap-item; it survives the
+   roadmapChecked reset at a stage advance) plus any media node checked right now. */
+function mediaWatchedIds(){
+  const pr = state.progress || {}, rc = pr.roadmapChecked || {};
+  const s = new Set(Array.isArray(pr.mediaWatched) ? pr.mediaWatched : []);
+  Object.keys(rc).forEach(k=>{ if(rc[k] && k.indexOf('media:') === 0) s.add(k.slice(6).split('#')[0]); });
+  return s;
+}
+function pickRoadmapMedia(profile, stage){
+  if(!MEDIA_LIBRARY.length || !profile || !profile.level) return null;
+  const goals = profileGoalKeys(profile);
+  const topics = profile.topics || [];
+  const watched = mediaWatchedIds();
+  const li = LEVELS.indexOf(profile.level);
+  const levels = [profile.level].concat(li > 0 ? [LEVELS[li-1]] : []);
+  const score = (m, useWatched) =>
+    (m.goal && goals.includes(m.goal) ? 100 - 10*goals.indexOf(m.goal) : 0)
+    + (m.topic && topics.includes(m.topic) ? 20 : 0)
+    - (useWatched && watched.has(m.id) ? 1000 : 0);
+  const pick = (exclude, useWatched, preferKind) => {
+    for(const lv of levels){
+      const pool = MEDIA_LIBRARY.filter(m=>m.level===lv && !exclude.includes(m.id));
+      if(!pool.length) continue;
+      const sc = pool.map(m=>score(m, useWatched));
+      const top = Math.max.apply(null, sc);
+      const ties = pool.filter((m,i)=>sc[i]===top);
+      return (preferKind && ties.find(m=>m.kind===preferKind)) || ties[0];
+    }
+    return null;
+  };
+  if(stage !== 2) return pick([], true, null);
+  // what stage 1 of this level offered (its watched mark ignored: by stage 2 it usually is)
+  const s1 = pick([], false, null);
+  return pick(s1 ? [s1.id] : [], true, s1 ? (s1.kind === 'podcast' ? 'youtube' : 'podcast') : null);
+}
+// The node's goal label is the item's goal only when it is one of the learner's
+// goals (a topic pick tagged with another goal would show a goal they never chose).
+function mediaRoadmapNode(profile, m, primaryGoal){
+  const goals = profileGoalKeys(profile);
+  return {type:'media', refId:m.id, goal:(m.goal && goals.includes(m.goal)) ? m.goal : (primaryGoal || goals[0] || null),
+    title:L('Watch or listen','İzle veya dinle','تماشا یا گوش‌کن','Mira o escucha')+': '+L(m.title.en, m.title.tr, m.title.fa, m.title.es)};
+}
+/* Saved roadmaps from before media nodes existed (and goal-edit merges): adds the
+   stage's media node right after the story node, but only where it can't disturb
+   anything. It is skipped when the roadmap already has a media node, when every
+   node is done (the learner is on "Go to the next level"), or when any node at or
+   after the insertion point is already done (the learner is past that point; the
+   next stage brings its own media node). Nothing is removed or re-keyed: node ids
+   are type:refId, so roadmapChecked, souvenirs and the golden node (matched by
+   nodeId; its goldenIdx is moved along) all stay attached to the same nodes. */
+function ensureRoadmapMedia(){
+  const rm = state.roadmap;
+  if(!rm || !rm.length || !state.profile || !state.profile.completedDiagnostic) return false;
+  if(rm.some(n=>n.type==='media')) return false;
+  if(rm.every(n=>isRoadmapNodeDone(n))) return false;
+  const pick = pickRoadmapMedia(state.profile, state.profile.levelStage===2 ? 2 : 1);
+  if(!pick) return false;
+  const si = rm.findIndex(n=>n.type==='story');
+  const sp = rm.findIndex(n=>n.type==='speaking');
+  const at = si >= 0 ? si+1 : (sp >= 0 ? sp+1 : Math.floor(rm.length/2));
+  if(rm.slice(at).some(n=>isRoadmapNodeDone(n))) return false;
+  rm.splice(at, 0, mediaRoadmapNode(state.profile, pick, si >= 0 ? rm[si].goal : null));
+  rm.forEach((n,i)=>{ n.n = i+1; });
+  const g = state.progress && state.progress.roadmapGolden;
+  if(g && g.nodeId){ const gi = rm.findIndex(n=>roadmapNodeId(n)===g.nodeId); if(gi > -1) g.goldenIdx = gi; }
+  return true;
 }
 function buildRoadmap(profile){
   const goals = profileGoalKeys(profile);
@@ -5938,10 +6240,16 @@ function buildRoadmap(profile){
   const storyPick = storyPoolAll.length
     ? (storyPoolAll.find(s=>!(state.progress && state.progress.completedStories && state.progress.completedStories.includes(s.id))) || storyPoolAll[0])
     : null;
+  // "Watch or listen" goes right after the story (see pickRoadmapMedia()).
+  const mediaPick = pickRoadmapMedia(profile, stage);
+  const pushMedia = () => {
+    if(mediaPick && !items.some(it=>it.type==='media')) items.push(mediaRoadmapNode(profile, mediaPick, primaryGoal));
+  };
   const pushStory = () => {
     if(!storyPick) return;
     items.push({type:'story', refId:storyPick.id, goal:primaryGoal,
       title:L('Story','Hikaye','داستان', 'Historia')+': '+L(storyPick.title.en, storyPick.title.tr, storyPick.title.fa, storyPick.title.es)});
+    pushMedia();
   };
   // Writing/speaking practice (Studio Lab self-practice rounds — distinct from the
   // live teacher 'session' type above). These aren't catalog content with a fixed
@@ -6065,6 +6373,12 @@ function buildRoadmap(profile){
   // the other "done" too. Tag repeats with an occurrence number (kept OFF refId,
   // which content lookups still need untouched) so roadmapNodeId() can tell them
   // apart while both still open the exact same underlying content.
+  // No story at this level: the media node sits at the stage midpoint, after the
+  // speaking practice (which lands mid-stage), away from both game slots.
+  if(mediaPick && !items.some(it=>it.type==='media')){
+    const sp = items.findIndex(it=>it.type==='speaking');
+    items.splice(sp >= 0 ? sp+1 : Math.floor(items.length/2), 0, mediaRoadmapNode(profile, mediaPick, primaryGoal));
+  }
   const seenNodeKeys = {};
   items.forEach(it=>{
     const baseKey = it.type+':'+it.refId;
@@ -6148,7 +6462,8 @@ function migrateRoadmapChecked(){
   if(!numericKeys.length) return;
   if(!state.profile || !state.profile.completedDiagnostic) return;
   try{
-    const roadmap = buildRoadmap(state.profile);
+    // media nodes (2026-10-04) didn't exist when index keys were written
+    const roadmap = buildRoadmap(state.profile).filter(n=>n.type!=='media');
     numericKeys.forEach(k=>{
       const idx = Number(k);
       if(rc[k] && roadmap[idx]) rc[roadmapNodeId(roadmap[idx])] = true;
@@ -6202,7 +6517,11 @@ function ensureRoadmap(){
   if(state.profile && state.profile.completedDiagnostic && (!state.roadmap || !state.roadmap.length)){
     try{ state.roadmap = buildRoadmap(state.profile); }catch(e){}
   }
+  // roadmaps saved before media nodes existed get theirs (see ensureRoadmapMedia)
+  let mediaAdded = false;
+  if(state.profile && state.profile.completedDiagnostic){ try{ mediaAdded = ensureRoadmapMedia(); }catch(e){} }
   if(state.profile && state.profile.completedDiagnostic){ try{ awardSouvenirs(null); }catch(e){} }
+  return mediaAdded;
 }
 /* Non-destructive goal-edit regeneration, ported from the English app
    (mergeRoadmapForGoalChange). Unlike regenerateRoadmap(), this MUTATES
@@ -6231,8 +6550,10 @@ function mergeRoadmapForGoalChange(){
   let target;
   try{ target = buildRoadmap(state.profile); }catch(e){ return; }
   const keptIds = new Set(kept.map(roadmapNodeId));
-  const newNodes = target.filter(it=>!keptIds.has(roadmapNodeId(it)) && !(legacyGames && it.type==='game'));
+  // media: never appended at the end; ensureRoadmapMedia() puts it after the story
+  const newNodes = target.filter(it=>!keptIds.has(roadmapNodeId(it)) && !(legacyGames && it.type==='game') && it.type!=='media');
   state.roadmap = kept.concat(newNodes).map((it,idx)=>Object.assign({}, it, {n:idx+1}));
+  try{ ensureRoadmapMedia(); }catch(e){}
 }
 
 function learnerCharKey(){
@@ -6462,6 +6783,13 @@ function souvenirContent(node, ctx){
     // LXD answer 9: the card's flip side keeps one piece of the round's language.
     const keep = ctx.round ? gameKeep(kind, ctx.round) : null;
     if(keep) out.keep = keep;
+  } else if(t === 'media'){
+    const m = MEDIA_LIBRARY.find(x=>x.id===node.refId);
+    if(m && m.vocab && m.vocab.length){
+      const v = m.vocab[Math.floor(Math.random()*m.vocab.length)];
+      out.text = v.word;
+      out.meaning = {en:v.en, tr:v.tr, fa:v.fa, es:v.es};
+    }
   } else if(t === 'session'){
     out.label = 'session';
   }
@@ -7785,10 +8113,9 @@ function renderRoadmapCard(p){
     // uses the real icon-controller.png (Farin's ask) but keeps the same
     // gold "review" color/border so it's still the most distinct node.
     game:{ic:ICONS.bolt, c:'review', label:L('GAME','OYUN','بازی', 'JUEGO')},
-    // Linked YouTube/podcast session type (Trello yEgfxsWL) — MEDIA_LIBRARY is
-    // currently empty (see its own comment), so buildRoadmap() never actually
-    // produces a 'media' node yet; this entry just means the seam badge/card
-    // render correctly the moment real, rights-cleared content is added.
+    // Linked YouTube/podcast session type (Trello yEgfxsWL). Since 2026-10-04
+    // (96gUMgAB) buildRoadmap() adds one per stage, right after the story node,
+    // picked from MEDIA_LIBRARY by pickRoadmapMedia().
     media:{ic:ICONS.play, c:'story', label:L('Watch or listen','İzle veya dinle','تماشا یا گوش‌کن','Mira o escucha')}
   };
   const doneCount = roadmap.filter(it=>isRoadmapNodeDone(it)).length;
@@ -11631,6 +11958,15 @@ const HANDLERS = {
     const id = el.dataset.id;
     const rc = state.progress.roadmapChecked;
     rc[id] = !rc[id];
+    // watched videos/podcasts are remembered past the stage reset of roadmapChecked,
+    // so pickRoadmapMedia() never offers them again (96gUMgAB)
+    if(id.indexOf('media:') === 0){
+      const mid = id.slice(6).split('#')[0];
+      const mw = Array.isArray(state.progress.mediaWatched) ? state.progress.mediaWatched : (state.progress.mediaWatched = []);
+      const at = mw.indexOf(mid);
+      if(rc[id] && at < 0) mw.push(mid);
+      else if(!rc[id] && at > -1) mw.splice(at, 1);
+    }
     // Gamification v2: checking a node off earns its souvenir (once — unchecking keeps it).
     let fresh = [], node = null;
     if(rc[id]){
@@ -13556,8 +13892,9 @@ if(location.hash === '#admin'){
   setTimeout(()=>{ if(!adminAuthResolved) renderAdminPage(); }, 4000);
 } else {
   if(state.profile.completedDiagnostic && state.view === 'diagnostic-intro'){ state.view = 'dashboard'; }
-  ensureRoadmap();
+  const roadmapMediaAdded = ensureRoadmap();
   migrateRoadmapChecked();
+  if(roadmapMediaAdded) save();
   detectComeback();
   if(state.profile.completedDiagnostic){ rollWeeks(); }
   if(state.profile.completedDiagnostic && markDailyVisit()){ save(); }

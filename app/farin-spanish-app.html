@@ -4627,7 +4627,7 @@ function load(){
     if(!merged.progress.dailyTasksChecked) merged.progress.dailyTasksChecked = {};
     if(merged.progress.dailyTasksDate===undefined) merged.progress.dailyTasksDate = null;
     // Gamification v3: the old review quiz is untimed now (one review experience).
-    if(merged.quiz && merged.quiz.kind === 'review') merged.quiz.deadline = null;
+    if(merged.quiz && ['grammar','vocab','story','review'].includes(merged.quiz.kind)) merged.quiz.deadline = null;
     if(merged.profile.dashboardIntroShown===undefined) merged.profile.dashboardIntroShown = true;
     if(merged.profile.wantsContact===undefined) merged.profile.wantsContact = false;
     if(merged.profile.contactPhone===undefined) merged.profile.contactPhone = '';
@@ -10681,7 +10681,14 @@ function vocabQuizQuestions(s){
   const questions = chosenCards.map((c,i)=> generators[i % generators.length](c, i));
   return shuffle(questions);
 }
-function storyQuizQuestions(s){ return s.quiz.slice(); }
+// Teaching redesign phase 1 (B1): the story data keeps the right answer at index 0
+// (simple to author), so the options are shuffled here and `correct` recomputed.
+function storyQuizQuestions(s){
+  return (s.quiz || []).map(q=>{
+    const order = shuffle(q.options.map((_, i)=>i));
+    return Object.assign({}, q, {options:order.map(i=>q.options[i]), correct:order.indexOf(q.correct)});
+  });
+}
 /* ============================= GAMIFICATION V3: SOUVENIR SHUFFLE (M1) =============================
    Replaces the old timed mixed review quiz (buildReviewQuiz, removed): one review
    experience. Up to 5 due souvenirs, 2 questions each (srsQuestions), untimed.
@@ -10834,11 +10841,15 @@ function finishShuffle(sh){
   markActivity();
 }
 function questionTimeLimit(item){ return item.options.length <= 2 ? 15 : 20; }
+// Teaching redesign phase 1 (B3): first exposure is untimed. Lesson quizzes
+// (grammar, vocab, story) and review have no countdown; only games keep a timer.
+const QUIZ_UNTIMED_KINDS = ['grammar','vocab','story','review'];
+function quizTimed(kind){ return !QUIZ_UNTIMED_KINDS.includes(kind); }
 function startQuiz(kind, contextId, questions, backView, backParams){
   questions.forEach(qq=>{ if(qq.itemId===undefined){ qq.itemId = contextId; qq.kind = kind; } });
   const timeLimit = questionTimeLimit(questions[0]);
   gcBubble = null;
-  state.quiz = {kind, contextId, questions, index:0, correct:0, streak:0, answered:false, selected:null, results:[], backView, backParams: backParams || {}, timeLimit, deadline: kind === 'review' ? null : Date.now()+timeLimit*1000, lastTickSecond:null};
+  state.quiz = {kind, contextId, questions, index:0, correct:0, streak:0, answered:false, selected:null, results:[], backView, backParams: backParams || {}, timeLimit, deadline: quizTimed(kind) ? Date.now()+timeLimit*1000 : null, lastTickSecond:null};
   go('quiz');
 }
 function handleQuizTimeout(){
@@ -12417,7 +12428,7 @@ const HANDLERS = {
     const s = STORY_LIBRARY.find(x=>x.id===el.dataset.id);
     // story-list is retired (IBz4oLGr) and the roadmap now lives on the dashboard
     // itself (2026-09-29) — that's where finishing the quiz should return to.
-    startQuiz('story', s.id, s.quiz, 'dashboard', {});
+    startQuiz('story', s.id, storyQuizQuestions(s), 'dashboard', {});
   },
   // The old "Review" button now opens the Souvenir Shuffle (one review experience).
   'start-review'(){ HANDLERS['start-shuffle']({dataset:{}}); },
@@ -12488,7 +12499,7 @@ const HANDLERS = {
     q.index++; q.answered = false; q.selected = null;
     if(q.index < q.questions.length){
       q.timeLimit = questionTimeLimit(q.questions[q.index]);
-      q.deadline = q.kind === 'review' ? null : Date.now() + q.timeLimit*1000;
+      q.deadline = quizTimed(q.kind) ? Date.now() + q.timeLimit*1000 : null;
       q.lastTickSecond = null;
     }
     if(q.index >= q.questions.length){

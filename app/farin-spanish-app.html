@@ -5956,27 +5956,52 @@ function buildRoadmap(profile){
   // refId is synthesized from the source set + which mini-game, since a "game"
   // isn't catalog content with its own id.
   const gamePool = vPool.length ? vPool : vPoolAll;
-  const pushGame = (kind) => {
-    // Trap Dash draws from the level's grammar pool (blank/blank2 fill-in
-    // items), not VOCAB_SETS like Word Rush/Listen & Type — see
-    // buildTrapRound(). refId is keyed on level+stage since it isn't tied to
-    // one catalog set the way the other two games are.
-    if(kind === 'trap'){
-      if(!gPoolAll.length) return;
-      const g = primaryGoal || 'everyday';
-      items.push({type:'game', gameKind:'trap', refId:'trap-'+profile.level+'-s'+stage, setId:null, goal:g,
-        title:L('Game','Oyun','بازی', 'Juego')+': '+L('Trap Dash','Tuzak Kaçışı','فرار از تله‌ها', 'Escape de trampas')});
+  /* Gamification v3 build 1: four game slots per level — slot 0 = stage 1 mid
+     (after the 4th grammar item), 1 = stage 1 end, 2 = stage 2 mid, 3 = stage 2
+     end — kinds from GAME_ROTATION. Game nodes carry .slot (legacy ones don't).
+     A vocab game uses a set from this stage's own vocab nodes (most recent
+     first) that no other game in this roadmap uses and no earlier game has
+     played, so the stage-2 game never reuses a stage-1 set. Build It falls back
+     when the grammar taught so far gives fewer than 4 sentences: Trap Dash from
+     B1, Word Rush below; Bingo needs 9 words, Listen & Type 3 sentences. */
+  const playedSetIds = new Set(((state.progress && state.progress.completedGames) || []).map(r=>String(r).replace(/-(match|dictation|bingo)$/, '')));
+  // the sets the stage-1 games of this level use (stage-1 roadmap rebuilt to find them)
+  let stage1Sets = new Set();
+  if(stage === 2){
+    try{ stage1Sets = new Set(buildRoadmap(Object.assign({}, profile, {levelStage:1})).filter(n=>n.type==='game' && n.setId).map(n=>n.setId)); }catch(e){}
+  }
+  const pickGameSet = (kind) => {
+    const usedByGames = items.filter(it=>it.type==='game' && it.setId).map(it=>it.setId);
+    const fits = s => !!s && (kind !== 'bingo' || s.cards.length >= 9) && (kind !== 'dictation' || s.cards.filter(c=>c.sentence).length >= 3);
+    const recent = items.filter(it=>it.type==='vocab').map(it=>VOCAB_SETS.find(s=>s.id===it.refId)).reverse();
+    const half = Math.ceil(gamePool.length/2);
+    const stagePool = stage===2 ? gamePool.slice(half) : gamePool.slice(0, half);
+    const tiers = [recent, stagePool, gamePool, vPoolAll];
+    for(const tier of tiers){ const s = tier.find(x=>fits(x) && !usedByGames.includes(x.id) && !stage1Sets.has(x.id) && !playedSetIds.has(x.id)); if(s) return s; }
+    for(const tier of tiers){ const s = tier.find(x=>fits(x) && !usedByGames.includes(x.id) && !stage1Sets.has(x.id)); if(s) return s; }
+    for(const tier of tiers){ const s = tier.find(x=>fits(x) && !stage1Sets.has(x.id)); if(s) return s; }
+    return null;
+  };
+  const pushGame = (kind, slot) => {
+    const g = primaryGoal || 'everyday';
+    const low = profile.level === 'A1' || profile.level === 'A2';
+    const mid = slot % 2 === 0;
+    if(kind === 'build'){
+      const taught = (stage===2 ? gPool.slice(0, gHalf) : []).concat(items.filter(it=>it.type==='grammar').map(it=>GRAMMAR_ITEMS.find(x=>x.id===it.refId)).filter(Boolean));
+      if(buildCandidates(profile, taught).length < BUILD_MIN) kind = low ? 'match' : 'trap';
+    }
+    if(kind === 'trap' && low) kind = 'match';
+    if((kind === 'build' || kind === 'trap') && gPoolAll.length){
+      items.push({type:'game', gameKind:kind, slot, refId:kind+'-'+profile.level+'-s'+stage+(mid ? '-mid' : ''), setId:null, goal:g,
+        title:L('Game','Oyun','بازی','Juego')+': '+gameDisplayName(kind)});
       return;
     }
-    if(!gamePool.length) return;
-    // Prefer a set the OTHER game type in this same roadmap hasn't already used,
-    // so match/dictation don't quiz the exact same word list back to back.
-    const usedSetIds = items.filter(it=>it.type==='game').map(it=>it.setId);
-    const setObj = gamePool.find(s=>!usedSetIds.includes(s.id)) || gamePool[0];
-    const g = primaryGoal || 'everyday';
-    const kindLabel = kind==='match' ? L('Word Rush','Kelime Yarışı','مسابقه کلمات', 'Carrera de palabras') : L('Listen & Type','Dinle ve Yaz','گوش کن و بنویس', 'Escucha y escribe');
-    items.push({type:'game', gameKind:kind, refId:setObj.id+'-'+kind, setId:setObj.id, goal:g,
-      title:L('Game','Oyun','بازی', 'Juego')+': '+kindLabel+' — '+setTitle(setObj)});
+    if(kind === 'build' || kind === 'trap') kind = 'match';
+    let setObj = pickGameSet(kind);
+    if(!setObj && kind !== 'match'){ kind = 'match'; setObj = pickGameSet('match'); }
+    if(!setObj) return;
+    items.push({type:'game', gameKind:kind, slot, refId:setObj.id+'-'+kind, setId:setObj.id, goal:g,
+      title:L('Game','Oyun','بازی','Juego')+': '+gameDisplayName(kind)+' — '+setTitle(setObj)});
   };
   // Drillers repeat-to-learn, and anyone who flagged vocab as their weak spot gets a warm-up rep first.
   const gaveVocabWarmup = stage===1 && (profile.priorityArea==='vocab' || profile.learnerType==='driller') && vPool.length;
@@ -6009,6 +6034,8 @@ function buildRoadmap(profile){
     if(i === Math.max(Math.floor(gSlice.length/2)-1, 0)){
       pushPractice('speaking');
     }
+    // Gamification v3: the mid-stage game, after the 4th grammar item (and its vocab node).
+    if(i === Math.min(3, gSlice.length-1)) pushGame(gameKindForSlot(profile.level, stage, true), (stage===2 ? 2 : 0));
   });
   if(slPool.length){
     const sl = slPool[sli % slPool.length];
@@ -6020,9 +6047,8 @@ function buildRoadmap(profile){
     pushStory();
   }
   pushPractice('writing');
-  // One game per stage — see gameKindForSlot() for how the 3 kinds cycle
-  // across stage 1/2/next-level instead of a straight 2-kind alternation.
-  pushGame(gameKindForSlot(profile.level, stage));
+  // Gamification v3: the end-of-stage game (slots 1 and 3 — see gameKindForSlot()).
+  pushGame(gameKindForSlot(profile.level, stage, false), (stage===2 ? 3 : 1));
   // Talkers (and anyone who said listening/speaking is their weak spot) get an extra
   // self-practice speaking rep, now that the live-session version of this is gone.
   if((profile.learnerType==='talker' || profile.priorityArea==='listening') && stage===1){
@@ -6061,11 +6087,21 @@ function roadmapNodeId(item){ return item.type+':'+item.refId+(item.occ?('#'+ite
    kinds, cycling per level+stage instead (0=match,1=dictation,2=trap, then
    wraps) means across a full course (5 levels x 2 stages = 10 slots) a
    student meets all 3 kinds repeatedly and evenly. */
-function gameKindForSlot(level, stage){
-  const GAME_KINDS = ['match','dictation','trap'];
-  const li = LEVELS.indexOf(level);
-  const slot = (li<0?0:li)*2 + (stage===2?1:0);
-  return GAME_KINDS[slot % GAME_KINDS.length];
+/* Gamification v3 build 1 (approved 2026-10-03): four game slots per level,
+   [stage 1 mid, stage 1 end, stage 2 mid, stage 2 end]. Interim table — Story
+   Hunt and Say It Back replace it with the LXD table in build 2. Trap Dash only
+   from B1 (timed), Listen & Type from A2. New roadmaps only: existing game nodes
+   keep their kind and refId. */
+const GAME_ROTATION = {
+  A1:['match','bingo','build','match'],
+  A2:['build','bingo','dictation','match'],
+  B1:['trap','bingo','build','dictation'],
+  B2:['build','dictation','bingo','trap'],
+  C1:['trap','bingo','build','dictation']
+};
+function gameKindForSlot(level, stage, mid){
+  const r = GAME_ROTATION[level] || GAME_ROTATION.A1;
+  return r[(stage===2 ? 2 : 0) + (mid ? 0 : 1)];
 }
 /* Roadmap 2.0 Phase 4 (ported from the English app): grammar/vocab/slang/story
    quiz completion was already tracked by stable content id (completedTraps/
@@ -6182,13 +6218,16 @@ function mergeRoadmapForGoalChange(){
   const existing = (state.roadmap && state.roadmap.length) ? state.roadmap : currentRoadmap();
   if(!existing.length){ regenerateRoadmap(); return; }
   const currentGoals = state.profile.goals || [];
+  // Gamification v3: a roadmap built before the four game slots (game nodes
+  // without .slot) keeps its own game nodes and gets no new ones.
+  const legacyGames = existing.some(it=>it.type==='game' && it.slot === undefined);
   const kept = existing.filter(it=>
-    isRoadmapNodeDone(it) || currentGoals.includes(it.goal) || !GOAL_ORDER.includes(it.goal)
+    isRoadmapNodeDone(it) || currentGoals.includes(it.goal) || !GOAL_ORDER.includes(it.goal) || (legacyGames && it.type==='game')
   );
   let target;
   try{ target = buildRoadmap(state.profile); }catch(e){ return; }
   const keptIds = new Set(kept.map(roadmapNodeId));
-  const newNodes = target.filter(it=>!keptIds.has(roadmapNodeId(it)));
+  const newNodes = target.filter(it=>!keptIds.has(roadmapNodeId(it)) && !(legacyGames && it.type==='game'));
   state.roadmap = kept.concat(newNodes).map((it,idx)=>Object.assign({}, it, {n:idx+1}));
 }
 
@@ -9271,11 +9310,11 @@ function buildSlots(blank){
   }
   return slots;
 }
-function buildCandidates(profile){
+function buildCandidates(profile, itemsOverride){
   const low = profile.level === 'A1' || profile.level === 'A2';
   const cap = low ? 8 : 12, maxDecoy = low ? 1 : 2;
   const out = [];
-  grammarBlankCandidates(profile, completedGrammarItems(profile.level)).forEach(c=>{
+  grammarBlankCandidates(profile, itemsOverride || completedGrammarItems(profile.level)).forEach(c=>{
     if(blankListed(BUILD_EXCLUDE_BLANKS, c.itemId, c.field, c.variant)) return;
     const slots = buildSlots(c.blank);
     if(!slots || slots.length < 3 || slots.length > 10) return;

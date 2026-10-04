@@ -265,6 +265,12 @@
   .build-ear svg{width:16px; height:16px;}
   .build-ear.pulse{animation:build-ear-pulse 1s ease-in-out infinite; background:var(--accent-soft); color:var(--accent-strong);}
   @keyframes build-ear-pulse{0%,100%{transform:scale(1);} 50%{transform:scale(1.08);}}
+  /* Gamification v3 build 1: Word Bingo */
+  .game-tile.stamp{position:relative; overflow:hidden; border-color:transparent; color:#fff; background:linear-gradient(150deg, var(--cat-voc), color-mix(in srgb, var(--cat-voc) 74%, #000 26%)); box-shadow:var(--clay-shadow-soft);}
+  .game-tile.stamp::before{content:'✓'; position:absolute; top:5px; inset-inline-end:8px; font-size:13px; font-weight:900; opacity:.9;}
+  .game-tile.stamp.line::after{content:''; position:absolute; top:-60%; left:-60%; width:35%; height:220%; background:linear-gradient(120deg, transparent, rgba(255,255,255,.75), transparent); transform:rotate(22deg); animation:badge-shine-sweep 2.2s ease-in-out infinite; pointer-events:none;}
+  .game-tile.pulse{animation:build-ear-pulse 1s ease-in-out infinite; border-color:var(--cat-voc);}
+  .bingo-clue{margin-top:12px;}
   /* Full prefers-reduced-motion support: every animation collapses to its end state. */
   @media (prefers-reduced-motion: reduce){ *, *::before, *::after{animation-duration:.001ms !important; animation-delay:0s !important; animation-iteration-count:1 !important; transition-duration:.001ms !important;} }
   /* Gamification v2 (Journey Journal §4): souvenir cards. One 180x232 design;
@@ -4961,7 +4967,7 @@ function replaySet(){
   sets.sort((a,b)=>String(played[a.id]||'').localeCompare(String(played[b.id]||'')));
   return sets[0] || null;
 }
-function replayKind(set){ return 'match'; }
+function replayKind(set){ return (set.cards.length >= 9 && Math.random() < .5) ? 'bingo' : 'match'; }
 function buildTodayPlan(choice){
   const steps = [], due = readyToShineCount() > 0;
   if(choice === 'quick'){
@@ -6314,16 +6320,19 @@ function ensureGolden(roadmap){
 }
 function gameDisplayName(kind){
   if(kind === 'build') return L('Build It','Cümle Kur','جمله بساز','Constrúyelo');
+  if(kind === 'bingo') return L('Word Bingo','Kelime Tombalası','بینگوی کلمات','Bingo de palabras');
   if(kind === 'trap') return L('Trap Dash','Tuzak Kaçışı','فرار از تله‌ها','Escape de trampas');
   if(kind === 'dictation') return L('Listen & Type','Dinle ve Yaz','گوش کن و بنویس','Escucha y escribe');
   return L('Word Rush','Kelime Yarışı','مسابقه کلمات','Carrera de palabras');
 }
 function viewGameKind(view){
   if(view === 'game-build') return 'build';
+  if(view === 'game-bingo') return 'bingo';
   return view==='game-trap' ? 'trap' : (view==='game-dictation' ? 'dictation' : 'match');
 }
 // Stats of a finished round, in one shape for all three games.
 function gameRoundStats(kind, round){
+  if(kind === 'bingo') return {first:round.first||0, total:BINGO_SCORED_CALLS, perfect:(round.first||0) === BINGO_SCORED_CALLS};
   if(kind === 'build'){
     const total = round.items.length;
     return {firstTry:round.firstTry||0, total, hints:round.hints||0, perfect:total>0 && round.firstTry===total};
@@ -6342,11 +6351,13 @@ function gameRoundStats(kind, round){
 function gameRecordText(kind, st){
   const name = gameDisplayName(kind);
   if(kind === 'build') return name+' · '+st.firstTry+'/'+st.total+' '+L('first try','ilk denemede','در اولین تلاش','a la primera');
+  if(kind === 'bingo') return name+' · '+st.first+'/'+st.total+' '+L('first tap','ilk dokunuşta','با اولین لمس','al primer toque');
   if(kind === 'match') return name+' · '+st.time+'s · '+st.mistakes+' '+(st.mistakes===1 ? L('miss','hata','اشتباه','fallo') : L('misses','hata','اشتباه','fallos'));
   if(kind === 'trap') return name+' · '+st.correct+'/'+st.total+(st.time ? ' · '+st.time+'s' : '');
   return name+' · '+st.pct+'%';
 }
 function gameStatStickers(kind, st){
+  if(kind === 'bingo') return [st.first+'/'+st.total+' '+L('first tap','ilk dokunuşta','با اولین لمس','al primer toque'), L('Full card','Tam kart','کارت کامل','Cartón lleno')];
   if(kind === 'build') return [st.firstTry+'/'+st.total+' '+L('first try','ilk denemede','در اولین تلاش','a la primera')].concat(st.hints ? [st.hints+' '+(st.hints===1 ? L('hint','ipucu','راهنما','pista') : L('hints','ipucu','راهنما','pistas'))] : []);
   if(kind === 'match') return [st.time+'s', st.mistakes+' '+(st.mistakes===1 ? L('miss','hata','اشتباه','fallo') : L('misses','hata','اشتباه','fallos'))];
   if(kind === 'trap') return [st.correct+'/'+st.total, L('Score','Skor','امتیاز','Puntos')+' '+st.score];
@@ -9306,6 +9317,13 @@ function gameKeep(kind, round){
       const item = GRAMMAR_ITEMS.find(g=>g.id===pick.itemId);
       return {text:pick.sentence, say:pick.sentence, note:item ? grammarRuleLine(item) : ''};
     }
+    if(kind === 'bingo' && round.tiles){
+      // a word missed on first tap, else the word that completed a line
+      const ti = (round.missed && round.missed.length) ? round.missed[0] : (round.lineTile != null ? round.lineTile : round.calls[round.calls.length-1]);
+      const t = round.tiles[ti], set = VOCAB_SETS.find(s=>s.id===round.setId);
+      const card = set && set.cards.find(c=>c.word === t.word);
+      return {text:t.word, say:t.word, note:card ? (card.meaning || '') : ''};
+    }
   }catch(e){}
   return null;
 }
@@ -9396,6 +9414,103 @@ function fxBuildMiss(back, nextWord){
   sfx('wrong');
   companionOops();
   if(nextWord) companionSay(L('Next: ','Sıradaki: ','بعدی: ','Sigue: ') + "'" + nextWord + "'", 1800);
+}
+/* ============================= GAMIFICATION V3: WORD BINGO =============================
+   Games catalogue 4.4 + LXD: 9 words of the node's vocab set on a 3x3 card, 9
+   calls in shuffled order. A1-A2 hear the card's example sentence; B1+ hear the
+   meaning in the language being learned (the sentence when the meaning contains
+   the word). "First tap" is scored on the first 7 calls only (the last ones are
+   easy by elimination). Spanish tiles drop the article and "/" alternatives.
+   No device voice: the clue is shown from the start and doesn't cost the score.
+   Untimed, no lives. Counts as the set's review when it is due. */
+const BINGO_SCORED_CALLS = 7;
+const BINGO_LINES = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
+function bingoTileText(word){
+  let t = String(word||'').split('/')[0].trim();
+  if(TTS_LANG.indexOf('es') === 0) t = t.replace(/^(el|la|los|las|un|una|unos|unas)\s+/i, '');
+  return t;
+}
+function ttsVoiceMissing(){
+  try{
+    if(typeof speechSynthesis === 'undefined') return true;
+    const vs = speechSynthesis.getVoices() || [];
+    const p = TTS_LANG.slice(0, 2).toLowerCase();
+    return vs.length > 0 && !vs.some(v=>String(v.lang||'').toLowerCase().indexOf(p) === 0);
+  }catch(e){ return true; }
+}
+function bingoClue(card, level){
+  const tm = card.meaning && card.meaning[TTS_LANG.slice(0, 2)];
+  const low = level === 'A1' || level === 'A2';
+  const contains = s => String(s||'').toLowerCase().indexOf(bingoTileText(card.word).toLowerCase()) >= 0;
+  if(low) return card.sentence || tm || '';
+  if(tm && !contains(tm)) return tm;
+  return card.sentence || tm || '';
+}
+function buildBingoRound(setObj){
+  const level = state.profile.level;
+  const seen = new Set(), tiles = [];
+  shuffle(setObj.cards).forEach(c=>{
+    if(tiles.length >= 9) return;
+    const text = bingoTileText(c.word), key = text.toLowerCase();
+    const clue = bingoClue(c, level);
+    if(!text || !clue || seen.has(key)) return;
+    seen.add(key);
+    tiles.push({word:c.word, text, clue, stamped:false});
+  });
+  if(tiles.length < 9) return null;
+  const noVoice = ttsVoiceMissing();
+  return {setId:setObj.id, tiles, calls:shuffle([0,1,2,3,4,5,6,7,8]), call:0, first:0, wrong:0, clueShown:noVoice, noVoice,
+    lines:[], missed:[], lineTile:null, finished:false, startedAt:Date.now(), finishedAt:null};
+}
+function bingoSpeak(round){
+  if(!round || round.finished) return;
+  const t = round.tiles[round.calls[round.call]];
+  if(t) speakTarget(t.clue);
+}
+function renderGameBingo(){
+  const vp = state.viewParams, round = vp.round;
+  const title = gameDisplayName('bingo');
+  const cur = round.finished ? null : round.tiles[round.calls[round.call]];
+  const a = Math.min(round.call + 1, 9);
+  return `<div class="fade-in game-screen">
+    ${gameTopHtml(title)}
+    <div class="game-status">
+      <span class="game-status-text">${round.finished ? L('Full card!','Tam kart!','کارت کامل!','¡Cartón lleno!') : L(`Call ${a} of 9`, `Çağrı ${a}/9`, `صدا ${a} از ۹`, `Llamada ${a} de 9`)}</span>
+      <span class="game-status-end"><span class="game-chip">${ICONS.check} ${round.first}</span></span>
+    </div>
+    ${cur ? `<div class="game-card tight">
+      <button class="game-play" data-action="bingo-replay" aria-label="${esc(L('Play the clue','İpucunu çal','پخش سرنخ','Reproducir la pista'))}">${ICONS.soundOn}</button>
+      <div class="game-play-label">${L('Listen, then tap the word','Dinle, sonra kelimeye dokun','گوش کن، بعد روی کلمه بزن','Escucha y toca la palabra')}</div>
+      ${round.clueShown ? `<p class="game-sentence long bingo-clue" dir="ltr">${esc(cur.clue)}</p>` : `<div><button class="btn btn-ghost" style="margin-top:8px;" data-action="bingo-show">${L('Show the clue','İpucunu göster','سرنخ را نشان بده','Muestra la pista')}</button></div>`}
+    </div>` : ''}
+    <div class="game-tiles" dir="ltr">
+      ${round.tiles.map((t,i)=>{
+        const inLine = round.lines.some(l=>BINGO_LINES[l].includes(i));
+        const cls = t.stamped ? (' stamp' + (inLine ? ' line' : '')) : ((cur && round.wrong >= 2 && cur === t) ? ' pulse' : '');
+        return `<button class="game-tile${cls}${t.text.length > 14 ? ' small' : ''}" data-action="bingo-tap" data-i="${i}" ${t.stamped || round.finished ? 'disabled' : ''}>${esc(t.text)}</button>`;
+      }).join('')}
+    </div>
+    ${round.finished ? `<div class="game-card tight badge-unlock-shine">
+      <div class="game-result-title">${round.first === BINGO_SCORED_CALLS ? L('Flawless!','Kusursuz!','بی‌نقص!','¡Perfecto!') : L('Bingo!','Tombala!','بینگو!','¡Bingo!')}</div>
+      <p class="game-result-line">${L(`${round.first} of ${BINGO_SCORED_CALLS} on the first tap`, `${BINGO_SCORED_CALLS} çağrıdan ${round.first} tanesi ilk dokunuşta`, `${round.first} از ${BINGO_SCORED_CALLS} با اولین لمس`, `${round.first} de ${BINGO_SCORED_CALLS} al primer toque`)}</p>
+      <button class="btn btn-primary game-cta" data-action="back-to-roadmap">${L('Back to roadmap','Yol haritasına dön','بازگشت به نقشه راه','Volver a la hoja de ruta')}</button>
+    </div>${renderBadgeUnlockCard(pullJustEarnedBadges())}` : ''}
+  </div>`;
+}
+function bingoTileEl(i){ return document.querySelector('[data-action="bingo-tap"][data-i="'+i+'"]'); }
+function fxBingoStamp(i, pt, newLines, full){
+  const el = bingoTileEl(i);
+  anim(el, [{transform:'scale(1)'}, {transform:'scale(1.1)'}, {transform:'scale(1)'}], {duration:240, easing:SPRING});
+  const c = pt || centerOf(el);
+  sparkBurst(c.x, c.y, 6, 'var(--cat-voc)');
+  sfx('correct'); buzz(12); companionCheer();
+  if(newLines.length){ setTimeout(()=>{ sfx('combo'); companionSay(L('Bingo!','Tombala!','بینگو!','¡Bingo!'), 1400); }, 180); }
+  if(full){
+    setTimeout(()=>{
+      sfx('reveal');
+      document.querySelectorAll('[data-action="bingo-tap"]').forEach((t,k)=>anim(t, [{transform:'scale(1)'}, {transform:'scale(.9)', offset:.3}, {transform:'scale(1.06)', offset:.6}, {transform:'scale(1)'}], {duration:420, delay:k*40, easing:'ease-out'}));
+    }, 360);
+  }
 }
 function renderGameMatch(){
   const vp = state.viewParams;
@@ -10548,6 +10663,7 @@ const screens = {
   'game-dictation': renderGameDictation,
   'game-trap': renderGameTrap,
   'game-build': renderGameBuild,
+  'game-bingo': renderGameBingo,
   'souvenir-shuffle': renderShuffle,
   'coming-soon': renderNotFound,
   'not-found': renderNotFound,
@@ -11760,8 +11876,63 @@ const HANDLERS = {
     }
     const setObj = VOCAB_SETS.find(x=>x.id===el.dataset.setId);
     if(!setObj) return;
+    if(kind === 'bingo'){
+      const bingoRound = buildBingoRound(setObj);
+      if(bingoRound){ queueFx(()=>bingoSpeak(bingoRound)); go('game-bingo', Object.assign({round: bingoRound}, params)); return; }
+      // fewer than 9 distinct words in this set: Word Rush instead
+      go('game-match', Object.assign({round: buildMatchRound(setObj)}, params));
+      return;
+    }
     if(kind === 'match') go('game-match', Object.assign({round: buildMatchRound(setObj)}, params));
     else go('game-dictation', Object.assign({round: buildDictationRound(setObj)}, params));
+  },
+  'bingo-tap'(el, e){
+    const vp = state.viewParams, round = vp && vp.round;
+    if(!round || round.finished) return;
+    if(round.busy && Date.now() - (round.busyAt||0) < 1500) return;
+    round.busy = false;
+    const i = Number(el.dataset.i), target = round.calls[round.call];
+    if(round.tiles[i].stamped) return;
+    const pt = tapPoint(e);
+    if(i !== target){
+      round.wrong++;
+      if(round.call < BINGO_SCORED_CALLS && !round.missed.includes(target)) round.missed.push(target);
+      queueFx(()=>{ fxWrongButton(bingoTileEl(i)); companionOops(); if(round.wrong === 1) setTimeout(()=>bingoSpeak(round), 350); });
+      save(); render();
+      return;
+    }
+    round.tiles[i].stamped = true;
+    if(round.call < BINGO_SCORED_CALLS && round.wrong === 0 && (!round.clueShown || round.noVoice)) round.first++;
+    else if(round.call < BINGO_SCORED_CALLS && !round.missed.includes(i)) round.missed.push(i);
+    const newLines = [];
+    BINGO_LINES.forEach((l,k)=>{ if(!round.lines.includes(k) && l.every(x=>round.tiles[x].stamped)){ round.lines.push(k); newLines.push(k); } });
+    if(newLines.length && round.lineTile == null) round.lineTile = i;
+    const full = round.tiles.every(t=>t.stamped);
+    if(full){
+      round.finished = true; round.finishedAt = Date.now();
+      round.xpGain = scoreGameCompletion(vp.refId, round.first === BINGO_SCORED_CALLS);
+      markGameComplete(vp.refId);
+      srsGameReview(round.setId, round.first >= 6 ? 2 : (round.first >= 4 ? 1 : 0));
+    }
+    queueFx(()=>fxBingoStamp(i, pt, newLines, full));
+    save(); render();
+    if(!full){
+      round.busy = true; round.busyAt = Date.now();
+      const idx = round.call;
+      setTimeout(()=>{
+        if(state.viewParams !== vp || round.call !== idx) return;
+        round.busy = false; round.call++; round.wrong = 0; round.clueShown = round.noVoice;
+        queueFx(()=>bingoSpeak(round));
+        save(); render();
+      }, 700);
+    }
+  },
+  'bingo-replay'(){ const vp = state.viewParams; if(vp && vp.round) bingoSpeak(vp.round); },
+  'bingo-show'(){
+    const vp = state.viewParams, round = vp && vp.round;
+    if(!round || round.finished) return;
+    round.clueShown = true;
+    save(); render();
   },
   'build-tile'(el){
     const vp = state.viewParams, round = vp && vp.round;

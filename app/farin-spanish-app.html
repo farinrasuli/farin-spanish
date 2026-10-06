@@ -5528,7 +5528,7 @@ const STORY_LIBRARY = [
    Course content will reuse the free arrays' shapes with `course` + `unit`; every free pool reads the
    *_FREE arrays below so paid items never leak into the free path. Spanish has no authored course
    units yet: Travel Spanish is a SHELL (syllabus outline, every unit "Soon"). */
-const COURSE_EXTRA = {speaking:[], judge:[], writing:[], perspective:[], exit:[], checkpoint:[]};
+const COURSE_EXTRA = {speaking:[], judge:[], branch:[], writing:[], perspective:[], exit:[], checkpoint:[], project:[]};
 const GRAMMAR_ITEMS_FREE = GRAMMAR_ITEMS.filter(x=>!x.course);
 const VOCAB_SETS_FREE = VOCAB_SETS.filter(x=>!x.course);
 const STORY_LIBRARY_FREE = STORY_LIBRARY.filter(x=>!x.course);
@@ -15251,7 +15251,8 @@ const HANDLERS = {
 /* ============================= PAID COURSES: ENGINE + SCREENS (Trello B5O9MOM8) =============================
    Views: courses-home, course-detail, course-unit, course-step, course-gate.
    Node types here: review, story, grammar, vocab, game (reuse the free viewers), plus the new
-   speaking, judge, writing, perspective, exit. `mock` and `branch` are reserved stubs.
+   speaking, judge, branch, writing, perspective, exit, plus render-time b2 / trap steps and
+   the final project screen. `mock` is a reserved stub.
    Premium gate is a PLACEHOLDER: there is no billing. Only course.freeUnits open today. */
 const COURSE_TYPE_META = {
   review:{en:'Spaced review', tr:'Aralıklı tekrar', es:'Repaso espaciado', cat:'review', ic:'repeat'},
@@ -15265,11 +15266,14 @@ const COURSE_TYPE_META = {
   perspective:{en:'Step into their shoes', tr:'Onun yerine geç', es:'Ponte en su lugar', cat:'lis', ic:'heart'},
   exit:{en:'Exit check', tr:'Çıkış kontrolü', es:'Control de salida', cat:'story', ic:'check'},
   mock:{en:'Mock test', tr:'Deneme sınavı', es:'Simulacro', cat:'diag', ic:'pen'},
-  branch:{en:'Branching scene', tr:'Dallanan sahne', es:'Escena con ramas', cat:'lis', ic:'chat'}
+  branch:{en:'Branching scene', tr:'Dallanan sahne', fa:'صحنه‌ی چندمسیره', es:'Escena con ramas', cat:'lis', ic:'chat'},
+  b2:{en:'B2 grammar', tr:'B2 dilbilgisi', fa:'گرامر B2', es:'Gramática B2', cat:'gram', ic:'dumbbell'},
+  trap:{en:'Trap Dash', tr:'Tuzak Kaçışı', fa:'فرار از تله‌ها', es:'Escape de trampas', cat:'gram', ic:'bolt'},
+  project:{en:'Final project', tr:'Final projesi', fa:'پروژه‌ی پایانی', es:'Proyecto final', cat:'diag', ic:'star'}
 };
 const COURSE_SESSION_NAMES = [{en:'Learn', tr:'Öğren', fa:'یاد بگیر', es:'Aprende'}, {en:'Practise', tr:'Alıştır', fa:'تمرین کن', es:'Practica'}, {en:'Do', tr:'Yap', fa:'انجام بده', es:'Hazlo'}];
 const COURSE_CP_SESSION_NAMES = [{en:'Check', tr:'Kontrol et', fa:'بررسی کن', es:'Comprueba'}, {en:'Show it', tr:'Göster', fa:'نشان بده', es:'Demuéstralo'}];
-const courseUi = {judge:null, exit:null, wres:null};
+const courseUi = {judge:null, exit:null, wres:null, review:null, branch:null, fres:null, star:null};
 function cl(o){ return o ? L(o.en, o.tr, o.fa, o.es) : ''; }
 const CES = {"Courses":"Cursos","HR & Business English, Travel, IELTS":"Español para viajar, DELE","Free sample unit":"Unidad de muestra gratis","Coming soon":"Próximamente","units":"unidades","Focused courses for one real-life goal. Your free Roadmap is never touched.":"Cursos centrados en un objetivo de la vida real. Tu Ruta gratuita no se toca.","Soon":"Pronto","Free":"Gratis","Entry level":"Nivel de entrada","weeks":"semanas","What you will do":"Lo que vas a hacer","track":"ruta","B1 track: more frames and model texts.":"Ruta B1: más plantillas y textos modelo.","B2 track: frames removed after the model.":"Ruta B2: sin plantillas después del modelo.","Module":"Módulo","Full course":"Curso completo","The sample unit is free. The full course is on its way.":"La unidad de muestra es gratis. El curso completo está en camino.","Tell me when it opens":"Avísame cuando abra","Premium course":"Curso premium","This course is being built":"Este curso se está construyendo","This unit is part of the full course":"Esta unidad es parte del curso completo","Leave a message and Farin will tell you when it opens.":"Deja un mensaje y Farin te avisará cuando abra.","Purchases are not open yet. Try the free sample unit meanwhile.":"Las compras aún no están abiertas. Mientras tanto, prueba la unidad de muestra gratis.","Back to courses":"Volver a los cursos","By the end of this unit":"Al final de esta unidad","Unit complete!":"¡Unidad completada!","Session":"Sesión","Warm-up":"Calentamiento","You are the interviewer. Ask:":"Tú eres quien entrevista. Pregunta:","Follow-up":"Pregunta de seguimiento","Useful phrases":"Frases útiles","Culture note":"Nota cultural","Say your answers out loud: 90 seconds, then 60, then 45. Recorded answers and teacher feedback come with the full course.":"Di tus respuestas en voz alta: 90 segundos, luego 60 y luego 45. Las respuestas grabadas y los comentarios del profesor llegan con el curso completo.","I've practised it":"Ya lo practiqué","This part of the course is not built yet.":"Esta parte del curso aún no está lista.","Nicely spotted!":"¡Bien visto!","judged correctly":"bien valoradas","Done":"Listo","Tap each part you can find in this answer.":"Toca cada parte que encuentres en esta respuesta.","Missing":"Falta","A complete answer. All four parts are there.":"Una respuesta completa. Están las cuatro partes.","Nothing to fix in this line.":"Nada que corregir en esta línea.","Next":"Siguiente","Check":"Comprobar","Model":"Modelo","Frame":"Plantilla","Write here":"Escribe aquí","Use":"Usa","words":"palabras","sentences":"frases","Not used yet":"Aún sin usar","Check it yourself":"Compruébalo tú mismo","Check and save":"Comprobar y guardar","Not scored":"Sin puntuación","Save to my journal":"Guardar en mi diario","Complete":"Completa","Something is missing":"Falta algo","Is this answer STAR-complete?":"¿Esta respuesta está completa según STAR?","Nothing to check yet.":"Aún no hay nada que comprobar.","Secure!":"¡Seguro!","Almost there":"Casi","Questions that slipped come back in the next units.":"Las preguntas que fallaste vuelven en las próximas unidades."};
 function CL(en, tr, fa, es){ return L(en, tr, fa, es !== undefined ? es : CES[en]); }
@@ -15284,19 +15288,23 @@ function courseFindUnit(cid, uid){
 }
 function courseUnitItems(uid){
   const ofUnit = x=>x.course && x.unit===uid;
+  // `b2` = the unit's extra grammar item for the B2 track (track:'B2'); `grammar` is always the B1 item.
   return {
-    grammar:GRAMMAR_ITEMS.find(ofUnit), vocab:VOCAB_SETS.find(ofUnit), story:STORY_LIBRARY.find(ofUnit),
-    speaking:COURSE_EXTRA.speaking.find(ofUnit), judge:COURSE_EXTRA.judge.find(ofUnit),
+    grammar:GRAMMAR_ITEMS.find(x=>ofUnit(x) && !x.track), b2:GRAMMAR_ITEMS.find(x=>ofUnit(x) && x.track==='B2'),
+    vocab:VOCAB_SETS.find(ofUnit), story:STORY_LIBRARY.find(ofUnit),
+    speaking:COURSE_EXTRA.speaking.find(ofUnit), judge:COURSE_EXTRA.judge.find(ofUnit), branch:COURSE_EXTRA.branch.find(ofUnit),
     writing:COURSE_EXTRA.writing.find(ofUnit), perspective:COURSE_EXTRA.perspective.find(ofUnit), exit:COURSE_EXTRA.exit.find(ofUnit)
   };
 }
+// The B2 extra grammar item, only for learners on the B2 track.
+function courseB2(cid, uid){ return courseTrack(cid)==='B2' ? (courseUnitItems(uid).b2 || null) : null; }
 function courseUnitReady(uid){ const it = courseUnitItems(uid); return Object.keys(it).some(k=>!!it[k]); }
 function courseProg(cid){
   const pr = state.progress;
   if(!pr.courses) pr.courses = {};
   if(!pr.courses[cid]) pr.courses[cid] = {done:{}, answers:{}, scores:{}};
   const cp = pr.courses[cid];
-  if(!cp.done) cp.done = {}; if(!cp.answers) cp.answers = {}; if(!cp.scores) cp.scores = {};
+  if(!cp.done) cp.done = {}; if(!cp.answers) cp.answers = {}; if(!cp.scores) cp.scores = {}; if(!cp.srs) cp.srs = {};
   return cp;
 }
 // courseTrack: one per-learner field per course ('B1'/'B2' for HR). Default from the placement level.
@@ -15312,12 +15320,14 @@ function courseTrack(cid){
 function coursePreviewOn(){ try{ if(/[?&]coursePreview=1/.test(location.search)) localStorage.setItem('farinCoursePreview','1'); if(/[?&]coursePreview=0/.test(location.search)) localStorage.removeItem('farinCoursePreview'); return localStorage.getItem('farinCoursePreview')==='1'; }catch(e){ return false; } }
 function courseUnitAccess(c, uid){ return (c.freeUnits || []).includes(uid) || !!(state.progress && state.progress.premium === true) || coursePreviewOn(); }
 function courseGameRef(uid){ return 'c-'+uid+'-match'; }
+function courseTrapRef(uid){ return 'c-'+uid+'-trap'; }
 // Steps of one unit that actually have content today (a step with no item is skipped, never an empty screen).
 function courseStepsAvailable(uid, type){
   const it = courseUnitItems(uid);
-  if(type==='review') return true;
+  if(type==='review'){ const c = courseUnitCourse(uid); return !!c && courseReviewPicks(c.id, uid).length > 0; }
   if(type==='exit') return !!(it.exit || it.grammar || it.judge);
   if(type==='game') return !!it.vocab;
+  if(type==='trap') return !!(it.grammar && (it.grammar.blank || it.grammar.blank2));
   return !!it[type];
 }
 function courseUnitCourse(uid){ return COURSES.find(c=>c.modules.some(m=>m.units.some(u=>u.id===uid) || (m.checkpoint && m.checkpoint.id===uid))) || null; }
@@ -15325,16 +15335,26 @@ function courseStepDone(uid, type){
   const pr = state.progress, it = courseUnitItems(uid);
   if(type==='story') return !!(it.story && (pr.completedStories||[]).includes(it.story.id));
   if(type==='grammar') return !!(it.grammar && (pr.completedTraps||[]).includes(it.grammar.id));
+  if(type==='b2') return !!(it.b2 && (pr.completedTraps||[]).includes(it.b2.id));
   if(type==='vocab') return !!(it.vocab && (pr.completedVocabSets||[]).includes(it.vocab.id));
   if(type==='game') return (pr.completedGames||[]).includes(courseGameRef(uid));
+  if(type==='trap') return (pr.completedGames||[]).includes(courseTrapRef(uid));
   const cid = (courseUnitCourse(uid) || {}).id;
   return !!(cid && courseProg(cid).done[uid+':'+type]);
 }
 function courseMarkDone(cid, uid, type){ courseProg(cid).done[uid+':'+type] = Date.now(); markActivity(); save(); }
 function courseUnitSteps(cid, uid){
   const f = courseFindUnit(cid, uid); if(!f || !f.u.sessions) return [];
-  const out = [];
-  f.u.sessions.forEach((sess,si)=>sess.forEach(t=>{ if(courseStepsAvailable(uid,t)) out.push({si, type:t, done:courseStepDone(uid,t)}); }));
+  // Added at render time, no change to the sessions arrays: B2 learners get the unit's
+  // b2 grammar item straight after `grammar`; every unit with a game gets Trap Dash on
+  // its grammar item(s) after it (spec 3.5 Practise; B2 adds the b2 blanks).
+  const out = [], b2 = !!courseB2(cid, uid);
+  const add = (si, t)=>{ if(courseStepsAvailable(uid,t)) out.push({si, type:t, done:courseStepDone(uid,t)}); };
+  f.u.sessions.forEach((sess,si)=>sess.forEach(t=>{
+    add(si, t);
+    if(t==='grammar' && b2) add(si, 'b2');
+    if(t==='game') add(si, 'trap');
+  }));
   return out;
 }
 function courseUnitProgress(cid, uid){ const s = courseUnitSteps(cid, uid); return {done:s.filter(x=>x.done).length, total:s.length}; }
@@ -15346,11 +15366,69 @@ function courseOpenStep(cid, uid, type){
   if(type==='grammar' && it.grammar) return go('grammar-trap', {id:it.grammar.id, level:it.grammar.level});
   if(type==='vocab' && it.vocab) return go('vocab-set-intro', {id:it.vocab.id, level:it.vocab.level, cat:'vocab'});
   if(type==='game' && it.vocab) return HANDLERS['start-game']({dataset:{kind:'match', setId:it.vocab.id, refId:courseGameRef(uid), goal:''}});
-  if(type==='review'){ courseMarkDone(cid, uid, 'review'); return go('review-home', {}); }
+  if(type==='b2' && it.b2) return go('grammar-trap', {id:it.b2.id, level:it.b2.level});
+  if(type==='trap'){
+    const round = courseTrapRound(cid, uid); if(!round) return;
+    gcBubble = null; trapWarnKey = null;
+    return go('game-trap', {round, refId:courseTrapRef(uid), goal:''});
+  }
+  if(type==='review') courseUi.review = null;
+  if(type==='branch') courseUi.branch = null;
   if(type==='judge') courseUi.judge = {uid, i:0, sel:[], checked:false, right:0, total:0};
   if(type==='exit') courseUi.exit = null;
   courseUi.wres = null;
   go('course-step', {cid, uid, type});
+}
+// Trap Dash inside a course: the unit's own grammar blanks (blank, blank2), plus the
+// b2 item's blanks on the B2 track. Same round shape as buildTrapRound().
+function courseTrapRound(cid, uid){
+  const it = courseUnitItems(uid), b2 = courseB2(cid, uid), qs = [];
+  [it.grammar, b2].forEach(g=>{ if(g) ['blank','blank2'].forEach(f=>{
+    const b = g[f]; if(!b || !b.word || !(b.distractors||[]).length) return;
+    const opts = shuffle([b.word].concat(b.distractors));
+    qs.push({sentence:b.sentence, options:opts, correct:opts.indexOf(b.word), itemId:g.id, field:f});
+  }); });
+  if(!qs.length) return null;
+  const timeLimit = 10;
+  return {questions:shuffle(qs), index:0, score:0, streak:0, correctCount:0, mistakes:0, perfect:true, answered:false, selected:null, lastPoints:0, timeLimit, deadline:Date.now()+timeLimit*1000, finished:false, xpGain:0, startedAt:Date.now(), finishedAt:null};
+}
+/* Spaced review (README rule, no new data): course exit items run on the same Leitner
+   scheduler as the free souvenirs (srsSetBox / srsOutcome: only a due item changes box),
+   but live in progress.courses[cid].srs so they never enter the free Souvenir Shuffle.
+   Keys: '<exit id>#<index>' and '<b2 id>#x' for a b2.exitItem. */
+function courseItemSeen(cid, key, right){
+  const cp = courseProg(cid);
+  let e = cp.srs[key];
+  if(!e){ e = cp.srs[key] = {box:0, hi:0}; srsSetBox(e, right ? 1 : 0); }
+  else if(srsIsDue(e)) srsOutcome(e, right ? 2 : 0);
+  e.wrong = !right; if(right) e.lastRight = todayISO();
+}
+function courseUnitOrder(cid){ const c = courseGet(cid); return c ? [].concat(...c.modules.map(m=>m.units.map(u=>u.id))) : []; }
+// An earlier unit's own exit items (index 0-2), plus its b2.exitItem on the B2 track.
+function courseOwnExitItems(uid, withB2){
+  const it = courseUnitItems(uid), out = [];
+  if(it.exit && it.exit.items) it.exit.items.slice(0, 3).forEach((x,i)=>out.push({key:it.exit.id+'#'+i, item:x, uid}));
+  if(withB2 && it.b2 && it.b2.exitItem) out.push({key:it.b2.id+'#x', item:it.b2.exitItem, uid});
+  return out;
+}
+// Up to 3 items: one each from units n-1, n-3 and n-7 or more back (early units use what
+// exists). Wrong items first (oldest due first), otherwise the oldest last-correct answer.
+// Never an item that is also in this unit's own exit. Unit 1 has no review.
+function courseReviewPicks(cid, uid){
+  const order = courseUnitOrder(cid), n = order.indexOf(uid);
+  if(n < 1) return [];
+  const withB2 = courseTrack(cid)==='B2', srs = courseProg(cid).srs, own = courseUnitItems(uid);
+  const skip = new Set(((own.exit && own.exit.items) || []).map(x=>x.prompt));
+  if(withB2 && own.b2 && own.b2.exitItem) skip.add(own.b2.exitItem.prompt);
+  const rank = c=>{ const e = srs[c.key]; return e && e.wrong ? '0'+(e.due||'') : '1'+((e && e.lastRight) || ''); };
+  const buckets = [[order[n-1]], n >= 3 ? [order[n-3]] : (n >= 2 ? [order[n-2]] : []), n >= 7 ? order.slice(0, n-6) : (n >= 4 ? order.slice(0, n-3) : [])];
+  const picks = [];
+  buckets.forEach(uids=>{
+    const cs = [].concat(...uids.map(u=>courseOwnExitItems(u, withB2))).filter(c=>!skip.has(c.item.prompt) && !picks.some(p=>p.key===c.key));
+    cs.sort((a,b)=>{ const ra = rank(a), rb = rank(b); return ra < rb ? -1 : (ra > rb ? 1 : 0); });
+    if(cs[0]) picks.push(cs[0]);
+  });
+  return picks;
 }
 const COURSE_LOCK_SVG = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="9" rx="2.5"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>';
 const COURSE_HERO_BG = 'background-color:var(--clay-lavender-deep); background-image:radial-gradient(circle at 88% -18%, rgba(255,255,255,.5), transparent 55%), linear-gradient(135deg, var(--clay-lavender), var(--clay-lavender-deep));';
@@ -15432,13 +15510,14 @@ function renderCourseDetail(cid){
         ${c.story ? `<p style="margin:10px 0 0; font-size:12.5px; opacity:.92;">${esc(c.story.character)} · ${esc(c.story.company)}</p>` : ''}
       </div>
       ${(c.tracks||[]).length ? `<div class="tab-row" style="margin-bottom:6px;">${c.tracks.map(t=>`<button class="tab-btn ${track===t?'active':''}" data-action="course-track" data-cid="${c.id}" data-track="${t}">${t} ${CL('track','parkuru','مسیر')}</button>`).join('')}</div>
-      ${(c.tracks||[]).includes('B1') ? `<p style="font-size:12px; color:var(--ink-faint); margin:0 0 6px;">${track==='B1' ? CL('B1 track: more frames and model texts.','B1 parkuru: daha fazla kalıp ve örnek metin.','مسیر B1: الگو و متن نمونه بیشتر.') : CL('B2 track: frames removed after the model.','B2 parkuru: örnekten sonra kalıplar kalkar.','مسیر B2: بعد از نمونه، الگوها حذف می‌شوند.')}</p>` : ''}` : ''}
+      ${(c.tracks||[]).includes('B1') ? `<p style="font-size:12px; color:var(--ink-faint); margin:0 0 6px;">${track==='B1' ? CL('B1 track: more frames and model texts.','B1 parkuru: daha fazla kalıp ve örnek metin.','مسیر B1: الگو و متن نمونه بیشتر.') : CL('B2 track: one extra grammar point per unit, one extra requirement in each task, and no frames after the model.','B2 parkuru: her ünitede bir ek dilbilgisi konusu, her görevde bir ek şart ve örnekten sonra kalıp yok.','مسیر B2: در هر واحد یک نکته‌ی گرامری بیشتر، در هر کار یک شرط اضافه و بعد از نمونه، بدون الگو.','Ruta B2: un punto de gramática extra por unidad, un requisito extra en cada tarea y sin plantillas después del modelo.')}</p>` : ''}` : ''}
       ${c.modules.map((m,mi)=>`
         <div class="eyebrow" style="margin:16px 0 8px;">${CL('Module','Modül','ماژول')} ${mi+1} · ${esc(cl(m.title))}</div>
         <div class="stack" style="gap:8px;">
           ${m.units.map(u=>courseUnitRowHtml(c, u, false)).join('')}
           ${m.checkpoint ? courseUnitRowHtml(c, m.checkpoint, true) : ''}
         </div>`).join('')}
+      ${courseFinalRowHtml(c)}
       ${coursePremiumNote(c)}
     </div>
   </div>`;
@@ -15490,8 +15569,10 @@ function renderCourseUnit(cid, uid){
     let tail = '';
     if(s.type==='story' && it.story) tail = cl(it.story.title);
     else if(s.type==='grammar' && it.grammar) tail = grammarTitle(it.grammar);
+    else if(s.type==='b2' && it.b2) tail = grammarTitle(it.b2);
     else if(s.type==='vocab' && it.vocab) tail = setTitle(it.vocab);
     else if(s.type==='speaking' && it.speaking) tail = cl(it.speaking.topic);
+    else if(s.type==='branch' && it.branch) tail = cl(it.branch.title);
     return `<button class="item-row" data-action="course-step" data-cid="${cid}" data-uid="${uid}" data-type="${s.type}">
       <span class="item-ic" style="background:var(--cat-${m.cat}-soft); color:var(--cat-${m.cat});">${(ICONS[m.ic] || ICONS.star)}</span>
       <div class="item-body"><div class="item-title">${esc(L(m.en, m.tr, m.fa, m.es))}</div>${tail ? `<div style="font-size:12px; color:var(--ink-soft); margin-top:2px;">${esc(tail)}</div>` : ''}</div>
@@ -15521,6 +15602,20 @@ function courseStepShell(cid, uid, type, inner){
     <div class="screen" style="padding-top:0;">${inner}</div>
   </div>`;
 }
+// Speaking heading per item: an authored `heading` wins; otherwise it follows the
+// item's own prompts (questions to answer vs. tasks to do), never one fixed role.
+function courseSpeakingHeading(sp){
+  if(sp.heading) return cl(sp.heading);
+  const qs = sp.questions || [];
+  if(qs.length && qs.every(q=>/\?["'”’)]*\s*$/.test(String(q.en||'')))) return CL('Answer out loud:','Yüksek sesle cevap ver:','بلند جواب بده:','Responde en voz alta:');
+  return CL('Your tasks:','Görevlerin:','کارهای تو:','Tus tareas:');
+}
+// B2 track: the b2 item's extra requirement under the writing and speaking prompts.
+function courseUseInHtml(cid, uid){
+  const b2 = courseB2(cid, uid);
+  if(!b2 || !b2.useIn) return '';
+  return `<div class="card-flat" style="margin-top:10px; background:var(--cat-gram-soft); border-color:var(--cat-gram-soft);"><div class="eyebrow" style="color:var(--cat-gram);">${CL('B2 extra','B2 ek şartı','شرط اضافه‌ی B2','Extra B2')} · ${esc(grammarTitle(b2))}</div><p style="margin:4px 0 0; font-size:13.5px;">${esc(cl(b2.useIn))}</p></div>`;
+}
 function renderCourseStep(){
   const vp = state.viewParams || {}, cid = vp.cid, uid = vp.uid, type = vp.type;
   const it = courseUnitItems(uid);
@@ -15530,9 +15625,10 @@ function renderCourseStep(){
     return courseStepShell(cid, uid, type, `
       <h2 class="display" style="font-size:18px; margin:0 0 10px;">${esc(cl(sp.topic))}</h2>
       <div class="card-flat"><div class="eyebrow">${CL('Warm-up','Isınma','گرم کردن')}</div><p style="margin:4px 0 0;">${esc(cl(sp.warmup))}</p></div>
-      <div class="eyebrow" style="margin:14px 0 8px;">${COURSE_EXTRA.checkpoint.some(x=>x.id===uid) ? CL('Your tasks:','Görevlerin:','کارهای تو:','Tus tareas:') : CL('You are the interviewer. Ask:','Mülakatçı sensin. Sor:','تو مصاحبه‌گر هستی. بپرس:')}</div>
+      <div class="eyebrow" style="margin:14px 0 8px;">${esc(courseSpeakingHeading(sp))}</div>
       <div class="stack" style="gap:8px;">${sp.questions.map((q,i)=>`<div class="card-flat"><b>${i+1}.</b> ${esc(cl(q))}</div>`).join('')}
         ${(sp.followups||[]).map(q=>`<div class="card-flat" style="background:var(--cat-lis-soft); border-color:var(--cat-lis-soft);"><div class="eyebrow" style="color:var(--cat-lis);">${CL('Follow-up','Takip sorusu','سؤال تکمیلی')}</div>${esc(cl(q))}</div>`).join('')}</div>
+      ${courseUseInHtml(cid, uid)}
       <div class="eyebrow" style="margin:14px 0 8px;">${CL('Useful phrases','Faydalı kalıplar','عبارت‌های مفید')}</div>
       <div class="stack" style="gap:8px;">${(sp.expressions||[]).map(e=>`<div class="card-flat"><div class="row between" style="align-items:center;"><b dir="ltr">${esc(e.phrase)}</b>${ttsButton(e.phrase)}</div><div style="font-size:12.5px; color:var(--ink-soft); margin-top:2px;">${esc(cl(e.meaning))}</div></div>`).join('')}</div>
       ${sp.culture ? `<div class="card-flat" style="margin-top:14px; background:var(--cat-review-soft); border-color:var(--cat-review-soft);"><div class="eyebrow">${CL('Culture note','Kültür notu','نکته فرهنگی')}</div><p style="margin:4px 0 0; font-size:13.5px;">${esc(cl(sp.culture))}</p></div>` : ''}
@@ -15540,6 +15636,8 @@ function renderCourseStep(){
       ${doneBtn(CL("I've practised it","Pratik yaptım",'تمرین کردم'))}`);
   }
   if(type==='judge' && it.judge) return courseStepShell(cid, uid, type, renderCourseJudge(cid, uid, it.judge));
+  if(type==='branch' && it.branch) return courseStepShell(cid, uid, type, renderCourseBranch(cid, uid, it.branch));
+  if(type==='review') return courseStepShell(cid, uid, type, renderCourseReview(cid, uid));
   if(type==='writing' && it.writing) return courseStepShell(cid, uid, type, renderCourseWriting(cid, uid, it.writing));
   if(type==='perspective' && it.perspective) return courseStepShell(cid, uid, type, renderCoursePerspective(cid, uid, it.perspective));
   if(type==='exit') return courseStepShell(cid, uid, type, renderCourseExit(cid, uid, it));
@@ -15572,13 +15670,74 @@ function renderCourseJudge(cid, uid, j){
     <button class="btn btn-primary" style="margin-top:14px;" data-action="${st.checked?'course-judge-next':'course-judge-check'}">${st.checked ? CL('Next','Sonraki','بعدی') : CL('Check','Kontrol et','بررسی')}</button>`;
 }
 
+/* branch: a scene with choices. The other person's line, three choices (shown in a
+   shuffled order); the reply and feedback follow the tap. A choice whose `next` is the
+   same node (every poor one, some ok ones) shows its consequence and the learner tries
+   again; otherwise they move on. `end` shows the outcome. Unscored; retries per node
+   are saved for the teacher. */
+const COURSE_TONE = {
+  good:{bg:'var(--cat-voc-soft)', fg:'var(--cat-voc)', en:'Good move', tr:'İyi hamle', fa:'حرکت خوب', es:'Buena jugada'},
+  ok:{bg:'var(--cat-review-soft)', fg:'var(--cat-review)', en:'It works, but...', tr:'Olur, ama...', fa:'جواب می‌دهد، اما...', es:'Funciona, pero...'},
+  poor:{bg:'var(--cat-gram-soft)', fg:'var(--cat-gram)', en:'That did not land', tr:'Bu iyi gitmedi', fa:'این خوب پیش نرفت', es:'Eso no salió bien'}
+};
+function renderCourseBranch(cid, uid, b){
+  let st = courseUi.branch;
+  if(!st || st.uid !== uid) st = courseUi.branch = {uid, node:b.start, picked:null, order:{}, retries:{}};
+  const node = b.nodes[st.node] || {end:true};
+  const head = `<div class="card-flat" style="background:var(--cat-lis-soft); border-color:var(--cat-lis-soft);"><div class="eyebrow" style="color:var(--cat-lis);">${esc(cl(b.title))}</div><p style="margin:4px 0 0; font-size:13.5px;">${esc(cl(b.setting))}</p></div>`;
+  if(node.end){
+    const tries = Object.keys(st.retries).reduce((n,k)=>n+st.retries[k], 0);
+    return `${head}<div class="card-flat badge-unlock-shine" style="margin-top:12px; text-align:center;"><h2 class="display" style="font-size:19px;">${CL('Scene complete','Sahne tamamlandı','صحنه تمام شد', 'Escena completada')}</h2>
+      <p style="margin:6px 0 0; font-size:14px;">${esc(cl(node.outcome))}</p>
+      ${tries ? `<p style="font-size:12.5px; color:var(--ink-faint); margin:8px 0 0;">${CL('Second tries: ','İkinci denemeler: ','تلاش دوباره: ', 'Segundos intentos: ')}${tries}</p>` : ''}
+      <button class="btn btn-primary" style="margin-top:12px;" data-action="course-branch-finish" data-cid="${cid}" data-uid="${uid}">${CL('Done','Bitti','تمام', 'Listo')}</button></div>`;
+  }
+  if(!st.order[st.node]) st.order[st.node] = shuffle(node.choices.map((_,i)=>i));
+  const line = `<div class="card-flat" dir="ltr" style="margin-top:12px;"><div class="eyebrow">${esc(node.speaker || '')}</div><p style="margin:4px 0 0; font-size:15.5px; line-height:1.5;">${esc(node.line || '')}</p></div>`;
+  if(st.picked === null){
+    return `${head}${line}
+      <p style="font-size:13px; color:var(--ink-soft); margin:12px 0 8px;">${CL('What do you say?','Ne dersin?','چه می‌گویی؟', '¿Qué dices?')}</p>
+      <div class="stack" style="gap:8px;">${st.order[st.node].map(i=>`<button class="cj-part wide" dir="ltr" data-action="course-branch-pick" data-i="${i}">${esc(node.choices[i].text)}</button>`).join('')}</div>`;
+  }
+  const ch = node.choices[st.picked], tone = COURSE_TONE[ch.tone] || COURSE_TONE.ok, again = ch.next === st.node;
+  return `${head}${line}
+    <div class="card-flat" dir="ltr" style="margin-top:10px;"><div class="eyebrow">${CL('You','Sen','تو', 'Tú')}</div><p style="margin:4px 0 0; font-size:14.5px;">${esc(ch.text)}</p></div>
+    <div class="card-flat" dir="ltr" style="margin-top:10px;"><div class="eyebrow">${esc(node.speaker || '')}</div><p style="margin:4px 0 0; font-size:14.5px;">${esc(ch.reply || '')}</p></div>
+    <div class="card-flat" style="margin-top:10px; background:${tone.bg}; border-color:transparent;"><div class="eyebrow" style="color:${tone.fg};">${L(tone.en, tone.tr, tone.fa, tone.es)}</div><p style="margin:4px 0 0; font-size:13.5px;">${esc(cl(ch.feedback))}</p></div>
+    <button class="btn btn-primary" style="margin-top:14px;" data-action="course-branch-next">${again ? CL('Try again','Tekrar dene','دوباره امتحان کن', 'Inténtalo de nuevo') : CL('Continue','Devam','ادامه', 'Continuar')}</button>`;
+}
+
+/* review: up to 3 earlier exit items (courseReviewPicks), same look as the exit check. */
+function renderCourseReview(cid, uid){
+  let st = courseUi.review;
+  if(!st || st.uid !== uid) st = courseUi.review = {uid, cid, qs:courseReviewPicks(cid, uid).map(p=>courseQ(p.item, p.key)), i:0, picked:null, right:0};
+  if(!st.qs.length) return `<div class="card-flat">${CL('Nothing to review yet.','Henüz tekrar edilecek bir şey yok.','هنوز چیزی برای مرور نیست.', 'Aún no hay nada que repasar.')}</div>`;
+  if(st.i >= st.qs.length){
+    return `<div class="card-flat badge-unlock-shine" style="text-align:center;"><h2 class="display" style="font-size:19px;">${CL('Warmed up!','Isındın!','گرم شدی!', '¡Ya has calentado!')}</h2>
+      <p>${st.right}/${st.qs.length}</p>
+      <p style="font-size:12.5px; color:var(--ink-faint);">${CL('Missed items come back sooner; the ones you know wait longer.','Kaçırdıkların daha erken, bildiklerin daha geç geri gelir.','موردهایی که اشتباه شد زودتر برمی‌گردند و آن‌هایی که بلدی دیرتر.', 'Lo que fallas vuelve antes; lo que sabes espera más.')}</p>
+      <button class="btn btn-primary" data-action="course-review-finish" data-cid="${cid}" data-uid="${uid}">${CL('Done','Bitti','تمام', 'Listo')}</button></div>`;
+  }
+  const q = st.qs[st.i], fu = q.from ? courseFindUnit(cid, q.from) : null;
+  return `<div class="eyebrow">${st.i+1} / ${st.qs.length}${fu ? ' · '+esc(cl(fu.u.title)) : ''}</div>
+    <p style="font-size:13px; color:var(--ink-soft); margin:6px 0 0;">${CL('From an earlier unit.','Önceki bir üniteden.','از یک واحد قبلی.', 'De una unidad anterior.')}</p>
+    <div class="card-flat" dir="ltr" style="margin:8px 0 12px; font-size:16px; line-height:1.5;">${esc(q.prompt)}</div>
+    <div class="stack" style="gap:8px;">${q.options.map((o,i)=>{
+      const cls = st.picked===null ? '' : (i===q.correct ? ' ok' : (i===st.picked ? ' bad' : ''));
+      return `<button class="cj-part wide${cls}" dir="ltr" data-action="course-review-pick" data-i="${i}" ${st.picked!==null?'disabled':''}>${esc(o)}</button>`;
+    }).join('')}</div>
+    ${st.picked!==null ? `<button class="btn btn-primary" style="margin-top:14px;" data-action="course-review-next">${CL('Next','Sonraki','بعدی', 'Siguiente')}</button>` : ''}`;
+}
+
 /* writing: model, frame (B1 only), textarea, check */
 function renderCourseWriting(cid, uid, w){
   const track = courseTrack(cid), cp = courseProg(cid), key = uid+':writing';
   const saved = (cp.answers[key] && cp.answers[key].text) || '';
   const res = courseUi.wres;
   const showModelFirst = track==='B1' || !!res;
+  const b2 = courseB2(cid, uid);
   return `<div class="card-flat"><p style="margin:0; font-size:14.5px; font-weight:700;">${esc(cl(w.prompt))}</p></div>
+    ${courseUseInHtml(cid, uid)}
     ${showModelFirst ? `<div class="card-flat" dir="ltr" style="margin-top:10px; background:var(--cat-story-soft); border-color:var(--cat-story-soft);"><div class="eyebrow" style="color:var(--cat-story);">${CL('Model','Örnek','نمونه')}</div><p style="margin:4px 0 0; font-size:13.5px;">${esc(w.model)}</p></div>` : ''}
     ${track==='B1' && w.frame ? `<div class="card-flat" dir="ltr" style="margin-top:10px;"><div class="eyebrow">${CL('Frame','Kalıp','الگو')}</div><p style="margin:4px 0 0; font-size:13.5px;">${esc(w.frame)}</p></div>` : ''}
     <textarea id="cw-text" class="game-input" dir="ltr" rows="7" style="margin-top:12px; font-weight:500; min-height:150px;" placeholder="${esc(CL('Write here','Buraya yaz','اینجا بنویس'))}">${esc(saved)}</textarea>
@@ -15587,7 +15746,7 @@ function renderCourseWriting(cid, uid, w){
       <p style="margin:0; font-size:13.5px;">${res.wc} ${CL('words','kelime','کلمه')} · ${res.sc} ${CL('sentences','cümle','جمله')}${res.wordsMissed.length ? ' · '+CL('Not used yet','Henüz kullanılmadı','هنوز استفاده نشده')+': '+esc(res.wordsMissed.join(', ')) : ''}</p>
       ${!res.lengthOk ? `<p style="margin:6px 0 0; font-size:13px;">${L('A little longer, please: at least '+w.minWords+' words and '+w.minSentences+' sentences.','Biraz daha uzun yaz: en az '+w.minWords+' kelime ve '+w.minSentences+' cümle.','کمی بلندتر بنویس: دست‌کم '+w.minWords+' کلمه و '+w.minSentences+' جمله.', 'Un poco más largo, por favor: al menos '+w.minWords+' palabras y '+w.minSentences+' frases.')}</p>` : ''}</div>` : ''}
     <div class="card-flat" style="margin-top:12px;"><div class="eyebrow">${CL('Check it yourself','Kendin kontrol et','خودت بررسی کن')}</div>
-      <ul style="margin:6px 0 0; padding-inline-start:18px; font-size:13px; color:var(--ink-soft);">${w.rubric.map(r=>`<li style="margin-bottom:4px;" dir="ltr">${esc(r)}</li>`).join('')}</ul></div>
+      <ul style="margin:6px 0 0; padding-inline-start:18px; font-size:13px; color:var(--ink-soft);">${w.rubric.map(r=>`<li style="margin-bottom:4px;" dir="ltr">${esc(r)}${b2 && b2.useIn && /^Language/i.test(r) ? ` <b>+ ${CL('B2 extra (above)','B2 ek şartı (yukarıda)','شرط اضافه‌ی B2 (بالا)','extra B2 (arriba)')}</b>` : ''}</li>`).join('')}</ul></div>
     <button class="btn btn-primary" style="margin-top:14px;" data-action="course-write-check" data-cid="${cid}" data-uid="${uid}">${CL('Check and save','Kontrol et ve kaydet','بررسی و ذخیره')}</button>`;
 }
 function renderCoursePerspective(cid, uid, p){
@@ -15600,10 +15759,13 @@ function renderCoursePerspective(cid, uid, p){
 }
 
 /* exit check: 2 grammar blanks + 1 STAR item. The 3 spaced items from earlier units join once those units are published (stub). */
-function courseExitQuestions(it){
+// One display question from an exit-shaped item: options shuffled, `correct` follows the right one.
+function courseQ(x, key){ const right = x.options[x.correct], opts = shuffle(x.options); return {prompt:x.prompt, options:opts, correct:opts.indexOf(right), note:'', key, from:x.from}; }
+function courseExitQuestions(it, b2){
   const qs = [];
   if(it.exit && it.exit.items && it.exit.items.length){
-    return it.exit.items.map(x=>{ const right = x.options[x.correct], opts = shuffle(x.options); return {prompt:x.prompt, options:opts, correct:opts.indexOf(right), note:x.kind==='mcq'?'':''}; });
+    // B2 track: item index 2 (always the unit's own) becomes b2.exitItem.
+    return it.exit.items.map((x,i)=>(i===2 && b2 && b2.exitItem) ? courseQ(b2.exitItem, b2.id+'#x') : courseQ(x, it.exit.id+'#'+i));
   }
   const mk = (sentence, word, distractors)=>{ const opts = shuffle([word].concat(distractors)); return {prompt:sentence, options:opts, correct:opts.indexOf(word)}; };
   if(it.grammar){
@@ -15619,7 +15781,7 @@ function courseExitQuestions(it){
 }
 function renderCourseExit(cid, uid, it){
   let st = courseUi.exit;
-  if(!st || st.uid !== uid) st = courseUi.exit = {uid, qs:courseExitQuestions(it), i:0, picked:null, right:0};
+  if(!st || st.uid !== uid) st = courseUi.exit = {uid, cid, qs:courseExitQuestions(it, courseB2(cid, uid)), i:0, picked:null, right:0};
   if(!st.qs.length) return `<div class="card-flat">${CL('Nothing to check yet.','Henüz kontrol edilecek bir şey yok.','هنوز چیزی برای بررسی نیست.')}</div>`;
   if(st.i >= st.qs.length){
     const secure = st.right >= st.qs.length - 1;
@@ -15639,9 +15801,172 @@ function renderCourseExit(cid, uid, it){
     ${st.picked!==null ? `<button class="btn btn-primary" style="margin-top:14px;" data-action="course-exit-next">${CL('Next','Sonraki','بعدی')}</button>` : ''}`;
 }
 
+/* ---------- final project (spec 3.3): 7 parts, self-check against the 4-line rubric ----------
+   The learner scores every criterion 0-3 themselves; a part passes when it is long enough
+   and every criterion is 2 or more. All 7 passed = the certificate (with the "not an
+   official CEFR or Cambridge certificate" disclaimer). No teacher marking backend. */
+function courseFinalData(c){ return (c && c.final) ? (COURSE_EXTRA.project.find(p=>p.id===c.final.id) || null) : null; }
+function courseFinalUnlocked(c){
+  if(coursePreviewOn() || !c.final.unlockAfter) return true;
+  const p = courseUnitProgress(c.id, c.final.unlockAfter);
+  return !!(p.total && p.done===p.total);
+}
+function courseWordCount(t){ return String(t||'').trim().split(/\s+/).filter(Boolean).length; }
+function courseFinalPart(cid, partId){ return courseProg(cid).answers[partId] || {text:'', scores:[]}; }
+function courseFinalPassed(cid, pd){ return pd.parts.filter(p=>courseFinalPart(cid, p.id).passed).length; }
+function courseFinalRowHtml(c){
+  const pd = courseFinalData(c); if(!pd) return '';
+  const unlocked = courseFinalUnlocked(c), access = courseUnitAccess(c, pd.id), passed = courseFinalPassed(c.id, pd), all = passed===pd.parts.length;
+  const tail = all ? `<span class="pill badge-done">${ICONS.check}</span>`
+    : !access || !unlocked ? `<span style="color:var(--ink-faint); display:inline-flex;">${COURSE_LOCK_SVG}</span>`
+    : `<span class="chevron">${ICONS.chev}</span>`;
+  const act = access && unlocked ? `data-action="course-open" data-view="course-final" data-cid="${c.id}"` : (unlocked ? `data-action="course-open" data-view="course-gate" data-cid="${c.id}"` : 'disabled');
+  const after = c.final.unlockAfter ? courseFindUnit(c.id, c.final.unlockAfter) : null;
+  return `<div class="eyebrow" style="margin:16px 0 8px;">${CL('Final project','Final projesi','پروژه‌ی پایانی', 'Proyecto final')}</div>
+    <button class="item-row" ${act} style="${unlocked ? '' : 'opacity:.7;'}">
+      <span class="item-ic" style="background:var(--cat-diag-soft); color:var(--cat-diag);">${ICONS.star}</span>
+      <div class="item-body"><div class="item-title">${esc(cl(pd.title))}</div>
+        <div style="font-size:12px; color:var(--ink-soft); margin-top:2px;">${unlocked ? passed+'/'+pd.parts.length+' '+CL('parts passed','bölüm geçildi','بخش قبول شده', 'partes aprobadas') : CL('Opens after ','Şundan sonra açılır: ','باز می‌شود بعد از ', 'Se abre después de ')+esc(after ? cl(after.u.title) : c.final.unlockAfter)}</div></div>
+      ${tail}
+    </button>`;
+}
+const COURSE_SCORE_HINT = {en:'0 not there · 1 partly · 2 mostly · 3 fully', tr:'0 yok · 1 kısmen · 2 büyük ölçüde · 3 tamamen', fa:'۰ نیست · ۱ تا حدی · ۲ بیشترش · ۳ کامل', es:'0 no está · 1 en parte · 2 casi todo · 3 completo'};
+function renderCourseFinal(){
+  const vp = state.viewParams || {}, c = courseGet(vp.cid), pd = courseFinalData(c);
+  if(!c || !pd) return renderNotFound();
+  if(!courseUnitAccess(c, pd.id) || !courseFinalUnlocked(c)) return renderCourseGate();
+  const part = vp.part ? pd.parts.find(p=>p.id===vp.part) : null;
+  return `<div class="fade-in">
+    ${sectionHead(part ? CL('Part','Bölüm','بخش', 'Parte')+' '+part.step+' · '+cl(part.title) : cl(pd.title), cl(c.title))}
+    <div class="screen" style="padding-top:0;">${part ? courseFinalPartHtml(c, pd, part) : courseFinalHomeHtml(c, pd)}</div>
+  </div>`;
+}
+function courseFinalHomeHtml(c, pd){
+  const v = pd.defaultVacancy || {}, passed = courseFinalPassed(c.id, pd), all = passed===pd.parts.length;
+  const list = (label, arr)=>arr && arr.length ? `<div style="font-size:13px; margin-top:6px;"><b>${label}:</b> ${esc(arr.join('; '))}</div>` : '';
+  return `<div class="hero-card" style="${COURSE_HERO_BG} cursor:default;">${claySparkles()}
+      <div class="hero-eyebrow">${CL('Your brief','Görevin','شرح کار تو', 'Tu encargo')}</div>
+      <p style="margin:6px 0 0; font-size:14px; line-height:1.45;">${esc(cl(pd.brief))}</p></div>
+    ${v.title ? `<div class="card-flat" dir="ltr" style="margin-top:12px;"><div class="eyebrow">${CL('Default vacancy','Varsayılan pozisyon','موقعیت پیش‌فرض', 'Puesto por defecto')}</div>
+      <div style="font-weight:800; margin-top:4px;">${esc(v.title)}</div>
+      ${list('Duties', v.duties)}${list('Essential', v.essential)}${list('Desirable', v.desirable)}${list('Finalists', v.finalists)}</div>` : ''}
+    <div class="card-flat" style="margin-top:12px; background:var(--cat-diag-soft); border-color:var(--cat-diag-soft);">
+      <div class="eyebrow" style="color:var(--cat-diag);">${CL('Self-check','Kendini değerlendir','خودارزیابی', 'Autoevaluación')}</div>
+      <p style="margin:4px 0 0; font-size:13px;">${CL('You score each part yourself against the rubric. There is no teacher marking in the app.','Her bölümü rubriğe göre kendin puanlarsın. Uygulamada öğretmen değerlendirmesi yok.','هر بخش را خودت با جدول معیارها نمره می‌دهی. در اپ نمره‌دهی معلم وجود ندارد.', 'Puntúas cada parte tú mismo con la rúbrica. En la app no hay corrección del profesor.')}</p>
+      <p style="margin:6px 0 0; font-size:13px; font-weight:700;">${esc(cl(pd.passRule))}</p>
+      <ul dir="ltr" style="margin:6px 0 0; padding-inline-start:18px; font-size:12.5px; color:var(--ink-soft);">${pd.rubric.map(r=>`<li>${esc(r)}</li>`).join('')}</ul></div>
+    <div class="eyebrow" style="margin:16px 0 8px;">${passed}/${pd.parts.length} ${CL('parts passed','bölüm geçildi','بخش قبول شده', 'partes aprobadas')}</div>
+    <div class="stack" style="gap:8px;">${pd.parts.map(p=>{
+      const a = courseFinalPart(c.id, p.id), m = COURSE_TYPE_META[p.mode] || COURSE_TYPE_META.writing;
+      const tail = a.passed ? `<span class="pill badge-done">${ICONS.check}</span>` : (a.date ? `<span class="pill" style="background:var(--cat-gram-soft); color:var(--cat-gram);">${CL('Revise','Gözden geçir','بازبینی', 'Revisar')}</span>` : `<span class="chevron">${ICONS.chev}</span>`);
+      return `<button class="item-row" data-action="course-final-part" data-cid="${c.id}" data-part="${p.id}">
+        <span class="item-ic" style="background:var(--cat-${m.cat}-soft); color:var(--cat-${m.cat});">${(ICONS[m.ic] || ICONS.star)}</span>
+        <div class="item-body"><div class="item-title">${p.step}. ${esc(cl(p.title))}</div><div style="font-size:12px; color:var(--ink-soft); margin-top:2px;">${esc(L(m.en, m.tr, m.fa, m.es))}</div></div>${tail}</button>`;
+    }).join('')}</div>
+    ${courseCertificateHtml(c, pd, all)}`;
+}
+function courseCertificateHtml(c, pd, all){
+  const cert = pd.certificate || {};
+  if(!all) return `<div class="card-flat" style="margin-top:16px; text-align:center; color:var(--ink-soft);">${COURSE_LOCK_SVG} ${CL('Pass all '+pd.parts.length+' parts to get your certificate.','Sertifikanı almak için '+pd.parts.length+' bölümün hepsini geç.','برای گرفتن گواهی، هر '+pd.parts.length+' بخش را قبول شو.', 'Aprueba las '+pd.parts.length+' partes para conseguir tu certificado.')}</div>`;
+  const when = courseProg(c.id).done[pd.id+':project'];
+  return `<div class="card-flat badge-unlock-shine" style="margin-top:16px; text-align:center; border:2px solid var(--cat-diag);">
+    <div class="eyebrow" style="color:var(--cat-diag);">${CL('Certificate','Sertifika','گواهی', 'Certificado')}</div>
+    <h2 class="display" style="font-size:20px; margin:8px 0 4px;">${esc(cl(cert.title))}</h2>
+    ${state.profile && state.profile.name ? `<div style="font-weight:800; font-size:16px;">${esc(state.profile.name)}</div>` : ''}
+    ${when ? `<div style="font-size:12px; color:var(--ink-faint);">${esc(localDateStr(new Date(when)))}</div>` : ''}
+    <ul style="text-align:start; margin:12px 0 0; padding-inline-start:18px; font-size:13px;">${(cert.canDo||[]).map(x=>`<li style="margin-bottom:4px;">${esc(cl(x))}</li>`).join('')}</ul>
+    <p style="margin:12px 0 0; font-size:12px; color:var(--ink-soft); font-weight:700;">${esc(cl(cert.disclaimer))}</p></div>`;
+}
+function courseFinalPartHtml(c, pd, p){
+  const a = courseFinalPart(c.id, p.id), res = courseUi.fres && courseUi.fres.part===p.id ? courseUi.fres : null;
+  const scores = a.scores || [];
+  const ss = pd.selfStudy && pd.selfStudy.part===p.id ? pd.selfStudy : null;
+  const review = (p.from||[]).map(id=>{ const f = courseFindUnit(c.id, id); return f ? `<button class="pill" style="border:none; background:var(--cat-story-soft); color:var(--cat-story); cursor:pointer;" data-action="course-open" data-view="course-unit" data-cid="${c.id}" data-uid="${id}">${esc(cl(f.u.title))}</button>` : ''; }).join(' ');
+  let star = '';
+  if(ss){
+    const st = courseUi.star && courseUi.star.part===p.id ? courseUi.star : (courseUi.star = {part:p.id, sel:ss.answers.map(()=>[]), checked:ss.answers.map(()=>false)});
+    star = `<div class="card-flat" style="margin-top:12px; background:var(--cat-lis-soft); border-color:var(--cat-lis-soft);"><div class="eyebrow" style="color:var(--cat-lis);">${CL('Self-study: evidence check','Kendi kendine: kanıt kontrolü','خودآموزی: بررسی شواهد', 'Estudio por tu cuenta: revisa las pruebas')}</div><p style="margin:4px 0 0; font-size:13px;">${esc(cl(ss.instruction))}</p></div>
+      ${ss.answers.map((ans,ai)=>`<div class="card-flat" style="margin-top:10px;"><div class="eyebrow">${esc(ans.who)}</div><p dir="ltr" style="margin:4px 0 8px; font-size:14px; line-height:1.5;">${esc(ans.text)}</p>
+        <div class="row" style="gap:8px; flex-wrap:wrap;">${ss.parts.map(x=>{ const on = st.sel[ai].includes(x), pres = ans.present.includes(x); let cls = on ? ' on' : ''; if(st.checked[ai]) cls = pres ? (on ? ' ok' : ' miss') : (on ? ' bad' : '');
+          return `<button class="cj-part${cls}" data-action="course-final-star" data-a="${ai}" data-x="${esc(x)}" ${st.checked[ai]?'disabled':''}>${esc(x)}</button>`; }).join('')}</div>
+        ${st.checked[ai] ? `<p style="margin:8px 0 0; font-size:13px;">${ans.present.length===ss.parts.length ? CL('A complete answer. All four parts are there.','Eksiksiz bir cevap. Dört parça da var.','پاسخ کامل. هر چهار بخش هست.', 'Una respuesta completa. Están las cuatro partes.') : CL('Missing','Eksik','کم است', 'Falta')+': '+esc(ss.parts.filter(x=>!ans.present.includes(x)).join(', '))}</p>`
+          : `<button class="btn btn-ghost" style="margin-top:8px;" data-action="course-final-star-check" data-a="${ai}">${CL('Check','Kontrol et','بررسی', 'Comprobar')}</button>`}</div>`).join('')}`;
+  }
+  return `<div class="card-flat"><p style="margin:0; font-size:14.5px; font-weight:700;">${esc(cl(p.prompt))}</p></div>
+    ${review ? `<div style="margin-top:10px; font-size:12.5px; color:var(--ink-soft);">${CL('Review first:','Önce tekrar et:','اول مرور کن:', 'Repasa primero:')} ${review}</div>` : ''}
+    ${p.model ? `<details class="card-flat" style="margin-top:10px; background:var(--cat-story-soft); border-color:var(--cat-story-soft);"><summary style="cursor:pointer; font-weight:800; color:var(--cat-story);">${CL('Show an example','Bir örnek göster','یک نمونه نشان بده', 'Ver un ejemplo')}</summary><p dir="ltr" style="margin:6px 0 0; font-size:13.5px;">${esc(p.model)}</p></details>` : ''}
+    ${star}
+    ${p.mode==='speaking' ? `<p style="font-size:12.5px; color:var(--ink-soft); margin:12px 0 0;">${CL('Write your questions here, then say them out loud and record yourself on your phone.','Sorularını buraya yaz, sonra yüksek sesle söyle ve telefonunla kaydet.','سؤال‌هایت را اینجا بنویس، بعد بلند بگو و با گوشی‌ات ضبط کن.', 'Escribe aquí tus preguntas, luego dilas en voz alta y grábate con el móvil.')}</p>` : ''}
+    <textarea id="cw-text" class="game-input" dir="ltr" rows="8" style="margin-top:12px; font-weight:500; min-height:170px;" placeholder="${esc(CL('Write here','Buraya yaz','اینجا بنویس', 'Escribe aquí'))}">${esc(a.text || '')}</textarea>
+    <p style="font-size:12px; color:var(--ink-faint); margin:6px 0 0;">${p.minWords}+ ${CL('words','kelime','کلمه', 'palabras')}</p>
+    <div class="card-flat" style="margin-top:12px;"><div class="eyebrow">${CL('Score yourself','Kendini puanla','به خودت نمره بده', 'Puntúate')}</div>
+      <p style="margin:4px 0 8px; font-size:12px; color:var(--ink-faint);">${esc(cl(COURSE_SCORE_HINT))}</p>
+      ${pd.rubric.map((r,ri)=>`<div style="margin-bottom:10px;"><div dir="ltr" style="font-size:13px; margin-bottom:5px;">${esc(r)}</div><div class="row" style="gap:6px;">${[0,1,2,3].map(v=>`<button class="cj-part${scores[ri]===v ? (v>=2 ? ' ok' : ' bad') : ''}" data-action="course-final-score" data-c="${ri}" data-v="${v}">${v}</button>`).join('')}</div></div>`).join('')}</div>
+    ${res ? `<div class="card-flat" style="margin-top:12px; background:${res.passed ? 'var(--cat-voc-soft)' : 'var(--cat-gram-soft)'}; border-color:transparent;"><p style="margin:0; font-size:13.5px;">${res.wc} ${CL('words','kelime','کلمه', 'palabras')} · ${res.passed ? CL('Part passed. Well done!','Bölüm geçildi. Tebrikler!','این بخش قبول شد. آفرین!', 'Parte aprobada. ¡Bien hecho!') : res.missing ? CL('Score every line of the rubric first.','Önce rubriğin her satırını puanla.','اول به هر خط جدول نمره بده.', 'Primero puntúa cada línea de la rúbrica.') : res.short ? CL('A little longer, please: at least '+p.minWords+' words.','Biraz daha uzun yaz: en az '+p.minWords+' kelime.','کمی بلندتر بنویس: دست‌کم '+p.minWords+' کلمه.', 'Un poco más largo, por favor: al menos '+p.minWords+' palabras.') : CL('Not yet: every line needs 2 or more. Revise, then score again.','Henüz değil: her satır 2 veya üstü olmalı. Düzelt ve yeniden puanla.','هنوز نه: هر خط باید ۲ یا بیشتر باشد. بازبینی کن و دوباره نمره بده.', 'Todavía no: cada línea necesita 2 o más. Revisa y puntúa otra vez.')}</p></div>` : ''}
+    <button class="btn btn-primary" style="margin-top:14px;" data-action="course-final-save" data-cid="${c.id}" data-part="${p.id}">${CL('Check and save','Kontrol et ve kaydet','بررسی و ذخیره', 'Comprobar y guardar')}</button>`;
+}
+
 /* ---------- handlers ---------- */
 Object.assign(HANDLERS, {
   'course-open'(el){ go(el.dataset.view, {cid:el.dataset.cid, uid:el.dataset.uid}); },
+  'course-final-part'(el){ courseUi.fres = null; go('course-final', {cid:el.dataset.cid, part:el.dataset.part}); },
+  'course-final-score'(el){
+    const vp = state.viewParams || {}, cp = courseProg(vp.cid), ta = document.getElementById('cw-text');
+    const a = cp.answers[vp.part] = Object.assign({text:'', scores:[]}, cp.answers[vp.part]);
+    if(ta) a.text = ta.value;
+    a.scores = (a.scores || []).slice(); a.scores[Number(el.dataset.c)] = Number(el.dataset.v);
+    save(); render();
+  },
+  'course-final-save'(el){
+    const cid = el.dataset.cid, c = courseGet(cid), pd = courseFinalData(c), p = pd && pd.parts.find(x=>x.id===el.dataset.part); if(!p) return;
+    const cp = courseProg(cid), ta = document.getElementById('cw-text');
+    const a = cp.answers[p.id] = Object.assign({text:'', scores:[]}, cp.answers[p.id]);
+    if(ta) a.text = ta.value;
+    const wc = courseWordCount(a.text), missing = pd.rubric.some((_,i)=>typeof (a.scores||[])[i] !== 'number'), short = wc < (p.minWords || 0);
+    a.passed = !missing && !short && pd.rubric.every((_,i)=>a.scores[i] >= 2);
+    a.date = todayISO();
+    if(a.passed) cp.done[pd.id+':'+p.id] = Date.now(); else delete cp.done[pd.id+':'+p.id];
+    if(courseFinalPassed(cid, pd)===pd.parts.length){ if(!cp.done[pd.id+':project']) cp.done[pd.id+':project'] = Date.now(); markActivity(); }
+    courseUi.fres = {part:p.id, wc, missing, short, passed:a.passed};
+    save(); render();
+  },
+  'course-final-star'(el){
+    const st = courseUi.star, ai = Number(el.dataset.a); if(!st || st.checked[ai]) return;
+    const s = st.sel[ai], i = s.indexOf(el.dataset.x); if(i>=0) s.splice(i,1); else s.push(el.dataset.x);
+    render();
+  },
+  'course-final-star-check'(el){ const st = courseUi.star; if(!st) return; st.checked[Number(el.dataset.a)] = true; render(); },
+  'course-branch-pick'(el){
+    const st = courseUi.branch; if(!st || st.picked!==null) return;
+    st.picked = Number(el.dataset.i);
+    const b = courseUnitItems(st.uid).branch, ch = b.nodes[st.node].choices[st.picked];
+    if(ch.next === st.node) st.retries[st.node] = (st.retries[st.node]||0) + 1;
+    render();
+  },
+  'course-branch-next'(){
+    const st = courseUi.branch; if(!st || st.picked===null) return;
+    const b = courseUnitItems(st.uid).branch, ch = b.nodes[st.node].choices[st.picked];
+    st.node = ch.next; st.picked = null; render(); window.scrollTo(0,0);
+  },
+  'course-branch-finish'(el){
+    const st = courseUi.branch;
+    if(st) courseProg(el.dataset.cid).scores[el.dataset.uid+':branch'] = {retries:Object.assign({}, st.retries), date:todayISO()};
+    courseMarkDone(el.dataset.cid, el.dataset.uid, 'branch'); goBack();
+  },
+  'course-review-pick'(el){
+    const st = courseUi.review; if(!st || st.picked!==null) return;
+    st.picked = parseInt(el.dataset.i, 10);
+    const q = st.qs[st.i], right = st.picked === q.correct;
+    if(right) st.right++;
+    courseItemSeen(st.cid, q.key, right); save();
+    render();
+  },
+  'course-review-next'(){ const st = courseUi.review; if(!st) return; st.i++; st.picked = null; render(); },
+  'course-review-finish'(el){
+    const st = courseUi.review;
+    if(st) courseProg(el.dataset.cid).scores[el.dataset.uid+':review'] = {right:st.right, total:st.qs.length};
+    courseMarkDone(el.dataset.cid, el.dataset.uid, 'review'); goBack();
+  },
   'course-track'(el){
     const pr = state.progress; if(!pr.courseTrack) pr.courseTrack = {};
     pr.courseTrack[el.dataset.cid] = el.dataset.track; save(); render();
@@ -15684,7 +16009,9 @@ Object.assign(HANDLERS, {
   'course-exit-pick'(el){
     const st = courseUi.exit; if(!st || st.picked!==null) return;
     st.picked = parseInt(el.dataset.i, 10);
-    if(st.picked === st.qs[st.i].correct) st.right++;
+    const q = st.qs[st.i], right = st.picked === q.correct;
+    if(right) st.right++;
+    if(q.key && st.cid){ courseItemSeen(st.cid, q.key, right); save(); }
     render();
   },
   'course-exit-next'(){ const st = courseUi.exit; if(!st) return; st.i++; st.picked = null; render(); },
@@ -15699,7 +16026,8 @@ Object.assign(screens, {
   'course-detail': ()=>renderCourseDetail(state.viewParams.cid),
   'course-unit': ()=>renderCourseUnit(state.viewParams.cid, state.viewParams.uid),
   'course-step': renderCourseStep,
-  'course-gate': renderCourseGate
+  'course-gate': renderCourseGate,
+  'course-final': renderCourseFinal
 });
 /* ============================= ADMIN PAGE (hidden, reachable via #admin) ============================= */
 function waLinkTo(phone, message){

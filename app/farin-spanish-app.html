@@ -10613,26 +10613,83 @@ function renderStoryDetail(id){
 }
 
 /* ============================= QUIZ ENGINE (shared) ============================= */
+/* Teaching redesign phase 1, item 4 (B4). Interim grammar practice, until an item has practice[]:
+   no 50/50 questions (every question has 3 or more options), at most 6 questions built from
+   the item's own sentences (3-option "which is correct" x2, the same blanks as a sentence
+   pick x2, the two blanks as fill-ins), and the same sentence is never shown twice in a row.
+   If the item has practice[] (LXD content, S3) that order is used instead: fill, fill, meaning,
+   fix, then the rest; build and type items wait for the phase 2 question types.
+   Each question carries key (its correct sentence) and, when LXD wrote distractorWhy, hints[]
+   (one hint per option, used by the hint + second try step). */
+function effectiveGrammarItem(t, variant){
+  if(!variant) return t;
+  const e = Object.assign({}, t, variant);
+  if(variant.practice && t.practice) e.practice = variant.practice.concat(t.practice);
+  return e;
+}
 function grammarQuizQuestions(item){
   const fullExp = L(item.exp.en, item.exp.tr, item.exp.fa, item.exp.es);
   const why = structureExplanation(fullExp).hook || fullExp;
   const pickLabel = L('Which sentence is correct?','Hangi cümle doğru?','کدام جمله درست است؟','¿Qué oración es correcta?');
-  const pickQ = (right, wrong) => { const opts = shuffle([right, wrong]); return {prompt:pickLabel, options:opts, correct:opts.indexOf(right), why}; };
-  const fillQ = (blank) => { const opts = shuffle([blank.word, ...blank.distractors]); return {prompt:blank.sentence, options:opts, correct:opts.indexOf(blank.word), why}; };
-  const tfLabel = L('True or false: this sentence is correct.','Doğru mu yanlış mı: bu cümle doğru.','درست یا نادرست: این جمله درست است.','Verdadero o falso: esta oración es correcta.');
-  const tfQ = (sentence, isCorrect) => { const opts = shuffle([L('True','Doğru','درست','Verdadero'), L('False','Yanlış','نادرست','Falso')]); const answer = isCorrect ? L('True','Doğru','درست','Verdadero') : L('False','Yanlış','نادرست','Falso'); return {prompt:tfLabel+'\n"'+sentence+'"', options:opts, correct:opts.indexOf(answer), why}; };
-  return shuffle([
-    pickQ(item.right, item.wrong),
-    pickQ(item.right2, item.wrong2),
-    pickQ(item.right, item.wrong2),
-    pickQ(item.right2, item.wrong),
-    fillQ(item.blank),
-    fillQ(item.blank2),
-    tfQ(item.right, true),
-    tfQ(item.wrong2, false),
-    tfQ(item.right2, true),
-    tfQ(item.wrong, false)
-  ]).slice(0, 8);
+  const fixLabel = L('Fix the mistake. Which sentence is right?','Hatayı düzelt. Hangi cümle doğru?','اشتباه را درست کن. کدام جمله درست است؟','Corrige el error. ¿Qué oración es correcta?');
+  const norm = s => String(s||'').toLowerCase().replace(/\s+/g,' ').trim();
+  const dwText = (map, k) => { const d = map && map[k]; if(!d) return undefined; return typeof d === 'string' ? d : L(d.en, d.tr, d.fa, d.es); };
+  const mk = (prompt, right, wrongs, key, hintFor) => {
+    const opts = shuffle([right].concat(wrongs));
+    const q = {prompt, options:opts, correct:opts.indexOf(right), why, key:norm(key)};
+    if(hintFor){ const h = opts.map(o=>hintFor(o)); if(h.some(Boolean)) q.hints = h; }
+    return q;
+  };
+  const uniq = arr => arr.filter((w,i)=>w && arr.indexOf(w)===i);
+  const goodBlank = b => b && b.sentence && b.word && b.distractors && b.distractors.length >= 2;
+  const fillIn = (s, w) => String(s).replace(/_{2,}/, w);
+  const interim = () => {
+    const qs = [];
+    const wrongs = uniq([item.wrong, item.wrong2]).filter(w=>w !== item.right && w !== item.right2);
+    if(item.right && wrongs.length >= 2) qs.push(mk(pickLabel, item.right, wrongs, item.right));
+    if(item.right2 && item.right2 !== item.right && wrongs.length >= 2) qs.push(mk(pickLabel, item.right2, wrongs, item.right2));
+    [item.blank, item.blank2].forEach(b=>{
+      if(!goodBlank(b)) return;
+      const dists = uniq(b.distractors);
+      const byFilled = {}; dists.slice(0, 2).forEach(d=>{ byFilled[fillIn(b.sentence, d)] = d; });
+      qs.push(mk(pickLabel, fillIn(b.sentence, b.word), dists.slice(0, 2).map(d=>fillIn(b.sentence, d)), fillIn(b.sentence, b.word), o=>dwText(b.distractorWhy, byFilled[o])));
+      qs.push(mk(b.sentence, b.word, dists, fillIn(b.sentence, b.word), o=>dwText(b.distractorWhy, o)));
+    });
+    return qs;
+  };
+  const fromPractice = () => {
+    const out = {fill:[], meaning:[], fix:[]};
+    (item.practice || []).forEach(p=>{
+      if(!p) return;
+      if(p.type === 'fill' && goodBlank(p)) out.fill.push(mk(p.sentence, p.word, uniq(p.distractors), fillIn(p.sentence, p.word), o=>dwText(p.distractorWhy, o)));
+      else if(p.type === 'meaning' && p.options && p.options.length >= 3){
+        const right = p.options[p.correct || 0];
+        out.meaning.push(mk(p.prompt, right, p.options.filter((o,i)=>i !== (p.correct || 0)), p.prompt));
+      }
+      else if(p.type === 'fix' && p.right && p.distractors && p.distractors.length >= 2) out.fix.push(mk(fixLabel + '\n"' + p.wrong + '"', p.right, uniq(p.distractors), p.right));
+    });
+    return [].concat(out.fill.slice(0, 2), out.meaning.slice(0, 1), out.fix.slice(0, 1), out.fill.slice(2), out.meaning.slice(1), out.fix.slice(1));
+  };
+  // Never the same sentence twice in a row.
+  const spread = qs => {
+    const out = [], pool = qs.slice();
+    while(pool.length){
+      const last = out.length ? out[out.length-1].key : null;
+      let i = pool.findIndex(q=>q.key !== last);
+      if(i < 0) i = 0;
+      out.push(pool.splice(i, 1)[0]);
+    }
+    const clash = a => a.some((q, i)=>i > 0 && q.key === a[i-1].key);
+    for(let t = 0; clash(out) && t < 60; t++){ const alt = shuffle(qs); if(!clash(alt)) return alt; }
+    return out;
+  };
+  let qs = fromPractice();
+  if(qs.length < 6){
+    const have = new Set(qs.map(q=>q.key + '|' + q.prompt));
+    qs = qs.concat(shuffle(interim()).filter(q=>!have.has(q.key + '|' + q.prompt)));
+    qs = spread(qs);
+  } else qs = spread(qs);
+  return qs.slice(0, 8);
 }
 function vocabQuizQuestions(s){
   const sibling = VOCAB_SETS.filter(x=>x.level===s.level && x.category===s.category).flatMap(x=>x.cards);
@@ -10857,7 +10914,7 @@ function lessonQuizQuestions(kind, id, goal){
   if(kind === 'grammar'){
     const t = GRAMMAR_ITEMS.find(x=>x.id===id); if(!t) return [];
     const variant = goal && t.goalVariant && t.goalVariant[goal];
-    return grammarQuizQuestions(variant ? Object.assign({}, t, variant) : t);
+    return grammarQuizQuestions(effectiveGrammarItem(t, variant));
   }
   if(kind === 'vocab'){ const v = VOCAB_SETS.find(x=>x.id===id); return v ? vocabQuizQuestions(v) : []; }
   if(kind === 'story'){ const st = STORY_LIBRARY.find(x=>x.id===id); return st ? storyQuizQuestions(st) : []; }
@@ -12459,7 +12516,7 @@ const HANDLERS = {
     const t = GRAMMAR_ITEMS.find(x=>x.id===el.dataset.id);
     const goal = state.viewParams.goal;
     const variant = goal && t.goalVariant && t.goalVariant[goal];
-    const effective = variant ? Object.assign({}, t, variant) : t;
+    const effective = effectiveGrammarItem(t, variant);
     const backView = goal ? 'goal-level-detail' : 'grammar-list';
     const backParams = goal ? {goal, level: state.viewParams.level, tab:'grammar'} : {level: state.viewParams.level};
     startQuiz('grammar', t.id, grammarQuizQuestions(effective), backView, backParams, {goal: variant ? goal : null});
@@ -12547,10 +12604,11 @@ const HANDLERS = {
     if(!q || !q.retryOffered || !q.contextId) return;
     const misses = q.questions.filter((_,i)=>!q.results[i]).map(m=>{
       const order = shuffle(m.options.map((_, i)=>i));
-      return Object.assign({}, m, {options:order.map(i=>m.options[i]), correct:order.indexOf(m.correct)});
+      return Object.assign({}, m, {options:order.map(i=>m.options[i]), correct:order.indexOf(m.correct)}, m.hints ? {hints:order.map(i=>m.hints[i])} : {});
     });
-    const seen = new Set(misses.map(m=>m.prompt));
-    const fresh = shuffle(lessonQuizQuestions(q.kind, q.contextId, q.goal).filter(x=>!seen.has(x.prompt)));
+    const qid = m=>(m.key||'') + '|' + m.prompt;
+    const seen = new Set(misses.map(qid));
+    const fresh = shuffle(lessonQuizQuestions(q.kind, q.contextId, q.goal).filter(x=>!seen.has(qid(x))));
     const qs = misses.concat(fresh).slice(0, q.questions.length);
     startQuiz(q.kind, q.contextId, qs, q.backView, q.backParams, {round:2, firstPct:q.firstPct, goal:q.goal});
     window.scrollTo(0,0);

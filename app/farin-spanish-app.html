@@ -282,6 +282,9 @@
   .catch-tiles.four{grid-template-columns:repeat(2, minmax(0, 1fr));}
   .game-tile.catch{min-height:62px; font-size:15px;}
   .game-tile.catch.small{font-size:12.5px;}
+  /* Sort the deck: ghost stack behind the flashcard */
+  .deck-wrap{position:relative;}
+  .deck-ghost{position:absolute; inset:0; border-radius:20px; border:1px solid var(--border-soft); box-shadow:var(--clay-shadow-soft); pointer-events:none;}
   /* Gamification v3 build 2: Story Hunt */
   .hunt-card{text-align:start;}
   .hunt-text{font-size:16px; line-height:1.75; color:var(--ink);}
@@ -6284,6 +6287,8 @@ function updateSRS(itemId, kind, pct){
   let entry = srs[itemId];
   if(!entry){
     entry = srs[itemId] = {kind, box:0, hi:0, vi:0};
+    // Sort the deck (tobT7nwI): the learner's first "again" word opens the Shuffle rotation (ordering only).
+    if(kind === 'vocab' && typeof deckSeedVi === 'function') entry.vi = deckSeedVi(itemId);
     srsSetBox(entry, pct >= 0.8 ? 1 : 0);
     return;
   }
@@ -8213,7 +8218,11 @@ function souvenirContent(node, ctx){
       const q = ctx.quiz;
       if(q && q.results){
         const okWhy = q.questions.filter((qq,i)=>q.results[i]).map(qq=>String(qq.why||''));
-        card = shuffle(set.cards).find(c=>okWhy.some(w=>w.indexOf('"'+c.word+'"')===0));
+        const gotRight = c=>okWhy.some(w=>w.indexOf('"'+c.word+'"')===0);
+        // Sort the deck (tobT7nwI): an "again" word the learner then got right comes first (twice-again first).
+        const ds = deckSortFor(set.id);
+        if(ds) card = shuffle(set.cards).find(c=>(ds.twice||[]).includes(c.word) && gotRight(c)) || shuffle(set.cards).find(c=>(ds.again||[]).includes(c.word) && gotRight(c)) || null;
+        card = card || shuffle(set.cards).find(gotRight);
       }
       card = card || set.cards[Math.floor(Math.random()*set.cards.length)];
       out.text = card.word;
@@ -12574,22 +12583,96 @@ function renderVocabSetIntro(id){
     </div>
   </div>`;
 }
+/* "Sort the deck" (tobT7nwI; spec §4.2 + LXD §B Q3). Every flipped card is sorted
+   "I knew it" / "Show me again"; the "again" cards come back once in a second, shorter
+   lap (two laps max). The rest of the deck is drawn as a ghost stack behind the card
+   that visibly shrinks. Sorting never drops a card from the quiz or the SRS (Kornell &
+   Bjork 2008): progress.deckSort[setId] = {again:[words], twice:[words], date} only
+   seeds the Shuffle's rotation (first "again" word first, see updateSRS) and steers the
+   souvenir to an "again" word the learner then got right. Deck state lives in
+   viewParams.deck (saved with state, so a reload resumes). cardIndex is kept for the
+   screens map but the deck decides which card is up. */
+function deckState(s){
+  const vp = state.viewParams;
+  let d = vp.deck;
+  if(!d || d.setId !== s.id || !Array.isArray(d.queue)){
+    d = vp.deck = {setId:s.id, lap:1, queue:s.cards.map((_,i)=>i), pos:0, kept:0, again:[], twice:[], done:false};
+    vp.flipped = false;
+  }
+  return d;
+}
+function deckAdvance(s, d){
+  d.pos += 1;
+  if(d.pos < d.queue.length) return;
+  if(d.lap === 1 && d.again.length){ d.lap = 2; d.queue = d.again.slice(); d.pos = 0; return; }
+  d.done = true;
+  if(!state.progress.deckSort) state.progress.deckSort = {};
+  state.progress.deckSort[s.id] = {again:d.again.map(i=>s.cards[i].word), twice:d.twice.map(i=>s.cards[i].word), date:todayISO()};
+}
+function deckSortFor(setId){ const ds = state.progress && state.progress.deckSort; return (ds && ds[setId]) || null; }
+// Shuffle rotation seed: the index of the learner's first "again" word (twice-again first).
+function deckSeedVi(setId){
+  const ds = deckSortFor(setId), set = VOCAB_SETS.find(x=>x.id===setId);
+  if(!ds || !set) return 0;
+  const w = (ds.twice || [])[0] || (ds.again || [])[0];
+  const k = w ? set.cards.findIndex(c=>c.word === w) : -1;
+  return k > 0 ? k : 0;
+}
+function deckGhostsHtml(n, soft){
+  let h = '';
+  for(let k = Math.min(4, n); k >= 1; k--) h += `<i class="deck-ghost" style="background:${soft}; transform:translate(${k*6}px, ${k*6}px) rotate(${k*2}deg);"></i>`;
+  return h;
+}
+let deckBusy = false;
+// The card leaves (right = kept, drops behind = again), then the next one renders. No
+// timer: the next render waits on the leave animation's finish (immediate without one).
+function deckSortTap(setId, keep){
+  const s = VOCAB_SETS.find(x=>x.id===setId);
+  const d = state.viewParams.deck;
+  if(!s || !d || d.done || deckBusy || d.setId !== setId) return;
+  const i = d.queue[d.pos];
+  if(keep){ if(d.lap === 1) d.kept += 1; sfx('hop'); }
+  else { (d.lap === 1 ? d.again : d.twice).push(i); sfx('flip'); }
+  deckAdvance(s, d);
+  state.viewParams.flipped = false;
+  save();
+  const card = document.getElementById('deck-card');
+  const a = anim(card, keep
+    ? [{transform:'translateX(0) rotate(0deg)', opacity:1}, {transform:'translateX(130%) rotate(10deg)', opacity:0}]
+    : [{transform:'translateY(0) scale(1)', opacity:1}, {transform:'translateY(14px) scale(.92)', opacity:0}], {duration:260, easing:'ease-in', fill:'forwards'});
+  if(!a){ render(); return; }
+  deckBusy = true;
+  let fired = false;
+  const done = ()=>{ if(fired) return; fired = true; deckBusy = false; if(state.view === 'vocab-set') render(); };
+  a.onfinish = done; a.oncancel = done;
+}
 function renderVocabSet(id, cardIndex){
   const s = VOCAB_SETS.find(x=>x.id===id);
   if(!s) return (typeof renderComingSoon === 'function' ? renderComingSoon() : renderNotFound());
-  const i = cardIndex || 0;
-  const card = s.cards[i];
+  const d = deckState(s);
   const soft = s.category === 'slang' ? 'var(--cat-diag-soft)' : 'var(--cat-voc-soft)';
+  if(d.done) return `<div class="fade-in game-screen">
+    ${gameTopHtml(setTitle(s))}
+    <div class="game-card">
+      <div class="game-result-title">${L('Deck sorted','Deste sıralandı','دسته مرتب شد','Baraja ordenada')}</div>
+      <div class="game-result-line">${L(`You kept ${d.kept} straight away.`, `${d.kept} kartı hemen tuttun.`, `${d.kept} کارت را همان اول بلد بودی.`, `Sabías ${d.kept} a la primera.`)}${d.again.length ? ' ' + L(`${d.again.length} took a second look.`, `${d.again.length} karta ikinci kez baktın.`, `${d.again.length} کارت را دوباره دیدی.`, `${d.again.length} necesitaron un segundo vistazo.`) : ''}</div>
+      <button class="btn btn-primary game-cta" data-action="start-vocab-quiz" data-id="${s.id}">${L('Play Game!','Oyunu Oyna!','بازی کن!','¡Juega!')}</button>
+    </div>
+  </div>`;
+  const i = d.queue[d.pos];
+  const card = s.cards[i];
   const local = LANG==='fa' ? card.meaning.fa : (LANG==='es' ? card.meaning.es : card.meaning.tr);
+  const left = d.queue.length - d.pos - 1;
   // Practice screens v3 (2026-10-03): same layout as the game screens.
   return `<div class="fade-in game-screen">
     ${gameTopHtml(setTitle(s))}
     <div class="game-status">
-      <span class="game-status-text">${L(`Card ${i+1} of ${s.cards.length}`, `Kart ${i+1}/${s.cards.length}`, `کارت ${i+1} از ${s.cards.length}`, `Tarjeta ${i+1} de ${s.cards.length}`)}</span>
-      <span class="game-status-end"><span class="game-chip">${L('Tap the card to flip','Çevirmek için karta dokun','برای چرخاندن لمس کن','Toca para voltear')}</span></span>
+      <span class="game-status-text">${L(`Card ${d.pos+1} of ${d.queue.length} · lap ${d.lap}`, `Kart ${d.pos+1}/${d.queue.length} · ${d.lap}. tur`, `کارت ${d.pos+1} از ${d.queue.length} · دور ${d.lap}`, `Tarjeta ${d.pos+1} de ${d.queue.length} · vuelta ${d.lap}`)}</span>
+      <span class="game-status-end"><span class="game-chip" id="deck-kept">${d.kept ? L(`kept ${d.kept}`, `${d.kept} tuttun`, `${d.kept} بلد بودی`, `${d.kept} sabidas`) : L('Tap the card to flip','Çevirmek için karta dokun','برای چرخاندن لمس کن','Toca para voltear')}</span></span>
     </div>
-    <div class="flash-wrap">
-      <div class="flashcard" data-action="flip-card">
+    <div class="flash-wrap deck-wrap">
+      ${deckGhostsHtml(left, soft)}
+      <div class="flashcard" data-action="flip-card" id="deck-card">
         <div class="flash-face" style="background:${soft};">
           ${state.viewParams.flipped ? `
             <div class="flash-hint">${L('Example','Örnek','مثال','Ejemplo')}</div>
@@ -12606,12 +12689,12 @@ function renderVocabSet(id, cardIndex){
         </div>
       </div>
     </div>
-    <div class="flash-dots">${s.cards.map((_,idx)=>`<i class="${idx===i?'active':''}"></i>`).join('')}</div>
+    <div class="flash-dots">${d.queue.map((_,idx)=>`<i class="${idx===d.pos?'active':''}"></i>`).join('')}</div>
     <div class="flash-nav">
-      <button class="btn btn-ghost" data-action="vocab-prev" data-id="${s.id}" data-i="${i}" ${i===0?'disabled':''}>${L('Previous','Önceki','قبلی','Anterior')}</button>
-      ${i===s.cards.length-1
-        ? `<button class="btn btn-primary" data-action="start-vocab-quiz" data-id="${s.id}">${L('Play Game!','Oyunu Oyna!','بازی کن!','¡Juega!')}</button>`
-        : `<button class="btn btn-primary" data-action="vocab-next" data-id="${s.id}" data-i="${i}">${L('Next','Sonraki','بعدی','Siguiente')}</button>`}
+      ${state.viewParams.flipped
+        ? `<button class="btn btn-ghost" style="flex:1;" data-action="deck-again" data-id="${s.id}">${L('Show me again','Tekrar göster','دوباره نشانم بده','Muéstramela otra vez')}</button>
+           <button class="btn btn-primary" style="flex:1;" data-action="deck-keep" data-id="${s.id}">${L('I knew it','Biliyordum','بلد بودم','La sabía')}</button>`
+        : `<button class="btn btn-ghost" style="flex:1;" data-action="flip-card">${L('Flip the card','Kartı çevir','کارت را برگردان','Voltea la tarjeta')}</button>`}
     </div>
   </div>`;
 }
@@ -15029,6 +15112,9 @@ const HANDLERS = {
   },
   'show-word-meaning'(el){ showWordTooltip(el); },
   'flip-card'(){ state.viewParams.flipped = !state.viewParams.flipped; sfx('flip'); render(); },
+  // Sort the deck (tobT7nwI)
+  'deck-keep'(el){ deckSortTap(el.dataset.id, true); },
+  'deck-again'(el){ deckSortTap(el.dataset.id, false); },
   'vocab-next'(el){ const i = +el.dataset.i; go('vocab-set', {id: el.dataset.id, cardIndex: i+1, flipped:false, level:state.viewParams.level, cat:state.viewParams.cat, goal:state.viewParams.goal}); },
   'vocab-prev'(el){ const i = +el.dataset.i; go('vocab-set', {id: el.dataset.id, cardIndex: i-1, flipped:false, level:state.viewParams.level, cat:state.viewParams.cat, goal:state.viewParams.goal}); },
   // Teaching redesign S3, Notice step on the grammar page (see grammarContextHtml).

@@ -1061,11 +1061,16 @@ const GOALS_META = {
 };
 const GOAL_ORDER = ['career','travel','exam','immigration','everyday'];
 const LEVEL_OPTIONS = [
-  {value:'A1', label:{en:'I know a few words and phrases', tr:'Birkaç kelime ve kalıp biliyorum', fa:'چند کلمه و عبارت بلدم', es:'Sé algunas palabras y frases'}},
-  {value:'A2', label:{en:'I can have very basic conversations', tr:'Çok temel sohbetler yapabilirim', fa:'می‌توانم مکالمه‌های خیلی ساده داشته باشم', es:'Puedo tener conversaciones muy básicas'}},
-  {value:'B1', label:{en:'I can talk about familiar topics', tr:'Bildiğim konularda konuşabilirim', fa:'می‌توانم درباره موضوعات آشنا صحبت کنم', es:'Puedo hablar de temas que conozco'}},
-  {value:'B2', label:{en:'I can discuss most topics comfortably', tr:'Çoğu konuyu rahatça tartışabilirim', fa:'می‌توانم راحت درباره بیشتر موضوعات صحبت کنم', es:'Puedo hablar de la mayoría de los temas con comodidad'}},
-  {value:'C1', label:{en:"I'm fluent but want to sound more natural", tr:'Akıcıyım ama daha doğal konuşmak istiyorum', fa:'روان صحبت می‌کنم ولی می‌خواهم طبیعی‌تر باشم', es:'Hablo con fluidez pero quiero sonar más natural'}}
+  {value:'A1', label:{en:"I know a few words and phrases", tr:"Birkaç kelime ve kalıp biliyorum", fa:"چند کلمه و عبارت بلدم", es:"Sé algunas palabras y frases"},
+   sub:{en:"I can say hello and my name, not much more.", tr:"Merhaba diyip adımı söyleyebiliyorum, fazlası değil.", fa:"می‌توانم سلام کنم و اسمم را بگویم، نه بیشتر.", es:"Puedo saludar y decir mi nombre, poco más."}},
+  {value:'A2', label:{en:"I can handle simple everyday situations", tr:"Basit günlük durumların üstesinden gelebiliyorum", fa:"از پس موقعیت‌های ساده روزمره برمی‌آیم", es:"Me defiendo en situaciones sencillas de cada día"},
+   sub:{en:"Order food, ask the way, talk about my family.", tr:"Yemek sipariş etmek, yol sormak, ailemden bahsetmek.", fa:"غذا سفارش بدهم، آدرس بپرسم، درباره خانواده‌ام بگویم.", es:"Pedir comida, preguntar el camino, hablar de mi familia."}},
+  {value:'B1', label:{en:"I can talk about familiar topics and my experiences", tr:"Bildiğim konular ve deneyimlerim hakkında konuşabiliyorum", fa:"می‌توانم درباره موضوعات آشنا و تجربه‌هایم صحبت کنم", es:"Puedo hablar de temas conocidos y de mis experiencias"},
+   sub:{en:"I get by when I travel, but I make mistakes and search for words.", tr:"Seyahatte idare ediyorum ama hata yapıyor, kelime arıyorum.", fa:"در سفر از پسش برمی‌آیم، ولی اشتباه می‌کنم و دنبال کلمه می‌گردم.", es:"Me las arreglo al viajar, pero cometo errores y busco palabras."}},
+  {value:'B2', label:{en:"I can discuss most topics comfortably", tr:"Çoğu konuyu rahatça tartışabiliyorum", fa:"می‌توانم راحت درباره بیشتر موضوعات بحث کنم", es:"Puedo hablar con comodidad de casi cualquier tema"},
+   sub:{en:"I can explain my opinion and follow films with subtitles.", tr:"Fikrimi açıklayabiliyor, altyazılı filmleri takip edebiliyorum.", fa:"می‌توانم نظرم را توضیح بدهم و فیلم را با زیرنویس دنبال کنم.", es:"Puedo explicar mi opinión y seguir películas con subtítulos."}},
+  {value:'C1', label:{en:"I'm fluent but want to sound more natural", tr:"Akıcıyım ama daha doğal konuşmak istiyorum", fa:"روان صحبت می‌کنم ولی می‌خواهم طبیعی‌تر باشم", es:"Hablo con fluidez, pero quiero sonar más natural"},
+   sub:{en:"I want nuance, idioms and a professional tone.", tr:"İnce farklar, deyimler ve profesyonel bir ton istiyorum.", fa:"ظرافت، اصطلاحات و لحن حرفه‌ای می‌خواهم.", es:"Quiero matices, modismos y un tono profesional."}}
 ];
 const LEARNER_OPTIONS = [
   {value:'analyst', icon:'search', label:{en:'Seeing the rule explained clearly', tr:'Kuralın açıkça anlatılmasını görmek', fa:'دیدن قانون با توضیح واضح', es:'Ver la regla explicada con claridad'},
@@ -7396,7 +7401,7 @@ function renderDiagLevel(){
         ${LEVEL_OPTIONS.map(o=>`
           <button class="opt" data-action="diag-level" data-value="${o.value}">
             <span class="opt-ic" style="font-weight:800; color:var(--cat-diag);">${o.value}</span>
-            <span class="opt-main">${esc(L(o.label.en,o.label.tr,o.label.fa, o.label.es))}</span>
+            <span class="opt-main">${esc(L(o.label.en,o.label.tr,o.label.fa, o.label.es))}<small style="display:block; margin-top:3px; font-weight:600; font-size:12.5px; color:var(--ink-soft); line-height:1.4;">${esc(L(o.sub.en,o.sub.tr,o.sub.fa, o.sub.es))}</small></span>
           </button>`).join('')}
       </div>
     </div>

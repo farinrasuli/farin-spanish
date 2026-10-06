@@ -2951,6 +2951,391 @@ const VOCAB_SETS = [
 ]}
 ];
 
+/* Teaching redesign phase 1, S4: A1-A2 vocab additions (farin-lxd, Claude/specs/lxd-phase1-content/es-vocab-A1-A2.js). Per set a
+   useTask {prompt, frame, model}; per card (keyed by the card's previous headword) accept[] (typed answers that count),
+   gap (the exact text to blank when the sentence inflects the headword), and base-form/Spain-standard headword,
+   sentence, note or meaning fixes. replaceCards swaps a whole set's cards. accept/useTask are data only until the
+   typed-recall and Use steps land (phase 2); gap is used by the flashcards, the quiz and the Shuffle now. */
+const VOCAB_PHASE1_A1A2 = {
+ "v-A1-1":{
+  useTask:{prompt:{en:"Introduce yourself to a new classmate in 2 sentences. Use 2 phrases from this set.", tr:"Yeni bir sınıf arkadaşına 2 cümleyle kendini tanıt. Bu setten 2 ifade kullan.", fa:"خودت را در ۲ جمله به یک هم‌کلاسی جدید معرفی کن. از ۲ عبارت این مجموعه استفاده کن."}, frame:"¡Hola! Me llamo ... . Mucho gusto. Soy de ... .", model:"¡Hola! Me llamo Deniz. Mucho gusto, soy de Ankara."},
+  cards:{
+   Hola:{accept:["hola"]},
+   "Buenos días":{accept:["buenos días"]},
+   "Buenas tardes":{accept:["buenas tardes"]},
+   "Buenas noches":{accept:["buenas noches"]},
+   "Me llamo":{accept:["me llamo"]},
+   "Mucho gusto":{accept:["mucho gusto"]},
+   "¿Cómo estás?":{gap:"Cómo estás", accept:["cómo estás"]},
+   "Bien, gracias":{accept:["bien, gracias"]},
+   "Adiós":{accept:["adiós"]},
+   "Hasta luego":{accept:["hasta luego"]}
+  }
+ },
+ "v-A1-2":{
+  useTask:{prompt:{en:"Write 2 sentences about when you do something. Use a number or a time word from this set.", tr:"Bir şeyi ne zaman yaptığın hakkında 2 cümle yaz. Bu setten bir sayı ya da zaman kelimesi kullan.", fa:"درباره زمان انجام کاری ۲ جمله بنویس. از یک عدد یا کلمه زمان این مجموعه استفاده کن."}, frame:"Trabajo por la ... . Salgo a las ... .", model:"Trabajo por la mañana. Salgo de casa a las ocho."},
+  cards:{
+   uno:{accept:["uno"]},
+   dos:{accept:["dos"]},
+   tres:{accept:["tres"]},
+   diez:{accept:["diez"]},
+   veinte:{accept:["veinte"]},
+   "la hora":{gap:"hora", accept:["hora","la hora"]},
+   "el reloj":{gap:"reloj", accept:["reloj","el reloj"]},
+   "la mañana":{accept:["la mañana","mañana"]},
+   "la tarde":{accept:["la tarde","tarde"]},
+   "la noche":{accept:["la noche","noche"]}
+  }
+ },
+ "v-A1-3":{
+  useTask:{prompt:{en:"Write 2 sentences about your family. Use 2 words from this set.", tr:"Ailen hakkında 2 cümle yaz. Bu setten 2 kelime kullan.", fa:"درباره خانواده‌ات ۲ جمله بنویس. از ۲ کلمه این مجموعه استفاده کن."}, frame:"Mi ... se llama ... . Tengo ... .", model:"Mi madre se llama Ayşe. Tengo un hermano y dos abuelos."},
+  cards:{
+   "la madre":{gap:"madre", accept:["madre","la madre"]},
+   "el padre":{gap:"padre", accept:["padre","el padre"]},
+   "el hermano":{gap:"hermano", accept:["hermano","el hermano"]},
+   "la hermana":{gap:"hermana", accept:["hermana","la hermana"]},
+   "el hijo":{gap:"hijo", accept:["hijo","el hijo"]},
+   "la hija":{gap:"hija", accept:["hija","la hija"]},
+   "los abuelos":{gap:"abuelos", accept:["abuelos","los abuelos"]},
+   "el esposo":{gap:"esposo", accept:["esposo","el esposo"]},
+   "la esposa":{gap:"esposa", accept:["esposa","la esposa"]},
+   "el amigo":{gap:"amigo", accept:["amigo","el amigo"]}
+  }
+ },
+ "v-A1-4":{
+  useTask:{prompt:{en:"Write 2 sentences about what you eat or drink in a normal day. Use 2 words from this set.", tr:"Normal bir günde ne yediğin ya da içtiğin hakkında 2 cümle yaz. Bu setten 2 kelime kullan.", fa:"درباره اینکه در یک روز معمولی چه می‌خوری یا می‌نوشی ۲ جمله بنویس. از ۲ کلمه این مجموعه استفاده کن."}, frame:"Por la mañana tomo ... . Para la cena como ... .", model:"Por la mañana tomo un café y pan. Para la cena como fruta."},
+  cards:{
+   "el agua":{gap:"agua", accept:["agua","el agua"]},
+   "el pan":{gap:"pan", accept:["pan","el pan"]},
+   "la fruta":{gap:"fruta", accept:["fruta","la fruta"]},
+   "la carne":{gap:"carne", accept:["carne","la carne"]},
+   "el café":{gap:"café", accept:["café","el café"]},
+   "la leche":{gap:"leche", accept:["leche","la leche"]},
+   "el desayuno":{accept:["el desayuno","desayuno"]},
+   "el almuerzo":{sentence:"El almuerzo en mi casa es a las dos.", gap:"almuerzo", accept:["almuerzo","el almuerzo"]},
+   "la cena":{accept:["la cena","cena"]},
+   delicioso:{gap:"deliciosa", accept:["deliciosa","delicioso"]}
+  }
+ },
+ "v-A1-5":{
+  useTask:{prompt:{en:"Describe what you are wearing today in 2 sentences. Use colours and clothes from this set.", tr:"Bugün ne giydiğini 2 cümleyle anlat. Bu setten renk ve giysi kelimeleri kullan.", fa:"امروز چه پوشیده‌ای را در ۲ جمله توصیف کن. از رنگ‌ها و لباس‌های این مجموعه استفاده کن."}, frame:"Llevo ... y ... . Mis zapatos son ... .", model:"Llevo una camisa blanca y un pantalón negro. Mis zapatos son negros."},
+  cards:{
+   rojo:{accept:["rojo"]},
+   azul:{accept:["azul"]},
+   verde:{accept:["verde"]},
+   negro:{accept:["negro"]},
+   blanco:{gap:"blanca", accept:["blanca","blanco"]},
+   "la camisa":{gap:"camisa", accept:["camisa","la camisa"]},
+   "el pantalón":{gap:"pantalón", accept:["pantalón","el pantalón"]},
+   "los zapatos":{gap:"zapatos", accept:["zapatos","los zapatos"]},
+   "el vestido":{gap:"vestido", accept:["vestido","el vestido"]},
+   "la chaqueta":{accept:["la chaqueta","chaqueta"]}
+  }
+ },
+ "v-A1-6":{
+  useTask:{prompt:{en:"Write 2 sentences about your favourite season or day. Use words from this set.", tr:"En sevdiğin mevsim ya da gün hakkında 2 cümle yaz. Bu setten kelimeler kullan.", fa:"درباره فصل یا روز مورد علاقه‌ات ۲ جمله بنویس. از کلمه‌های این مجموعه استفاده کن."}, frame:"Mi estación favorita es ... . En ... me gusta ... .", model:"Mi estación favorita es la primavera. Los fines de semana salgo con mis amigos."},
+  cards:{
+   lunes:{accept:["lunes"]},
+   viernes:{accept:["viernes"]},
+   "el fin de semana":{accept:["el fin de semana","fin de semana"]},
+   enero:{accept:["enero"]},
+   julio:{accept:["julio"]},
+   diciembre:{accept:["diciembre"]},
+   "el verano":{gap:"verano", accept:["verano","el verano"]},
+   "el invierno":{gap:"invierno", accept:["invierno","el invierno"]},
+   "la primavera":{gap:"primavera", accept:["primavera","la primavera"]},
+   "el otoño":{gap:"otoño", accept:["otoño","el otoño"]}
+  }
+ },
+ "v-A1-7":{
+  useTask:{prompt:{en:"Describe the weather today and the weather in your favourite month. 2 sentences.", tr:"Bugünkü havayı ve en sevdiğin aydaki havayı anlat. 2 cümle.", fa:"آب‌وهوای امروز و آب‌وهوای ماه مورد علاقه‌ات را توصیف کن. ۲ جمله."}, frame:"Hoy ... . En ... hace ... .", model:"Hoy está nublado y hace viento. En julio hace mucho calor."},
+  cards:{
+   "hace sol":{accept:["hace sol"]},
+   "hace calor":{sentence:"En agosto hace calor en Sevilla.", gap:"hace calor", accept:["hace calor"]},
+   "hace frío":{accept:["hace frío"]},
+   llueve:{accept:["llueve"]},
+   nieva:{accept:["nieva"]},
+   "está nublado":{accept:["está nublado"]},
+   "hace viento":{sentence:"Hoy hace viento en la costa.", gap:"hace viento", accept:["hace viento"]},
+   "el paraguas":{accept:["el paraguas","paraguas"]},
+   "la temperatura":{accept:["la temperatura","temperatura"]},
+   "el pronóstico":{accept:["el pronóstico","pronóstico"]}
+  }
+ },
+ "v-A1-8":{
+  useTask:{prompt:{en:"Describe 2 rooms or things in your home. Use words from this set.", tr:"Evindeki 2 oda ya da eşyayı anlat. Bu setten kelimeler kullan.", fa:"۲ اتاق یا چیز در خانه‌ات را توصیف کن. از کلمه‌های این مجموعه استفاده کن."}, frame:"En mi casa hay ... . La ... es ... .", model:"En mi casa hay una cocina pequeña. El dormitorio tiene una ventana grande."},
+  cards:{
+   "la cocina":{accept:["la cocina","cocina"]},
+   "el dormitorio":{gap:"dormitorio", accept:["dormitorio","el dormitorio"]},
+   "el baño":{accept:["el baño","baño"]},
+   "la sala":{
+    word:"el salón",
+    sentence:"Vemos la tele en el salón.",
+    gap:"salón",
+    accept:["salón","el salón","sala","la sala"],
+    note:{en:"Spain: el salón. Latin America: la sala.", tr:"İspanya: el salón. Latin Amerika: la sala.", fa:"اسپانیا: el salón. آمریکای لاتین: la sala."}
+   },
+   "la mesa":{accept:["la mesa","mesa"]},
+   "la silla":{gap:"silla", accept:["silla","la silla"]},
+   "la cama":{accept:["la cama","cama"]},
+   "la ventana":{accept:["la ventana","ventana"]},
+   "la puerta":{accept:["la puerta","puerta"]},
+   "el jardín":{accept:["el jardín","jardín"]}
+  }
+ },
+ "v-A1-9":{
+  useTask:{prompt:{en:"Give directions from your home to a shop or a bank. 2 sentences.", tr:"Evinden bir dükkana ya da bankaya yol tarif et. 2 cümle.", fa:"از خانه‌ات تا یک مغازه یا بانک آدرس بده. ۲ جمله."}, frame:"Sigue todo recto y gira a la ... . El ... está cerca de ... .", model:"Sigue todo recto y gira a la derecha. El banco está cerca de la plaza."},
+  cards:{
+   "la calle":{gap:"calle", accept:["calle","la calle"]},
+   "la plaza":{accept:["la plaza","plaza"]},
+   "el banco":{gap:"banco", accept:["banco","el banco"]},
+   "el hospital":{accept:["el hospital","hospital"]},
+   "la estación":{accept:["la estación","estación"]},
+   "a la derecha":{accept:["a la derecha"]},
+   "a la izquierda":{accept:["a la izquierda"]},
+   "todo recto":{accept:["todo recto"]},
+   "cerca de":{accept:["cerca de"]},
+   "lejos de":{accept:["lejos de"]}
+  }
+ },
+ "v-A1-10":{
+  useTask:{prompt:{en:"Write 2 sentences about your normal day with 2 verbs from this set (use \"yo\": me levanto, desayuno...).", tr:"Bu setten 2 fiille normal günün hakkında 2 cümle yaz (\"yo\" ile: me levanto, desayuno...).", fa:"با ۲ فعل از این مجموعه ۲ جمله درباره روز معمولی‌ات بنویس (با «yo»: me levanto، desayuno...)."}, frame:"Normalmente me ... a las ... . Después ... .", model:"Normalmente me levanto a las siete. Después desayuno con mi familia."},
+  cards:{
+   despertarse:{gap:"despierto", accept:["despierto","me despierto"], note:{en:"e → ie: me despierto, te despiertas.", tr:"e → ie: me despierto, te despiertas.", fa:"e به ie: me despierto، te despiertas."}},
+   levantarse:{gap:"levanto", accept:["levanto","me levanto"]},
+   ducharse:{gap:"ducho", accept:["ducho","me ducho"], meaning:{es:"Lavarse el cuerpo bajo el agua."}},
+   vestirse:{gap:"viste", accept:["viste","se viste"], note:{en:"e → i: me visto, se viste.", tr:"e → i: me visto, se viste.", fa:"e به i: me visto، se viste."}},
+   desayunar:{gap:"Desayunamos", accept:["desayunamos"]},
+   trabajar:{gap:"Trabajo", accept:["trabajo"]},
+   estudiar:{gap:"Estudio", accept:["estudio"]},
+   descansar:{gap:"Descanso", accept:["descanso"]},
+   cenar:{gap:"Cenamos", accept:["cenamos"]},
+   acostarse:{gap:"acuesto", accept:["acuesto","me acuesto"], note:{en:"o → ue: me acuesto, te acuestas.", tr:"o → ue: me acuesto, te acuestas.", fa:"o به ue: me acuesto، te acuestas."}}
+  }
+ },
+ "slang-A1":{
+  useTask:{prompt:{en:"Reply to a friend who invites you out. 2 sentences, 2 expressions from this set.", tr:"Seni dışarı davet eden bir arkadaşına cevap ver. 2 cümle, bu setten 2 ifade.", fa:"به دوستی که تو را دعوت می‌کند جواب بده. ۲ جمله، ۲ عبارت از این مجموعه."}, frame:"¿Quedamos a las ...? ... . Vale, ... .", model:"Vale, quedamos a las ocho. ¡Qué guay!"},
+  cards:{
+   "¡Qué padre! / ¡Qué guay!":{
+    word:"¡Qué guay!",
+    sentence:"¡Qué guay está tu coche nuevo!",
+    gap:"guay",
+    accept:["guay","qué guay"],
+    note:{en:"Spain: guay. Mexico: padre or chido. Other countries: chévere.", tr:"İspanya: guay. Meksika: padre ya da chido. Diğer ülkeler: chévere.", fa:"اسپانیا: guay. مکزیک: padre یا chido. کشورهای دیگر: chévere."}
+   },
+   vale:{accept:["vale"]},
+   "no pasa nada":{accept:["no pasa nada"]},
+   genial:{accept:["genial"]},
+   "chévere / chido":{
+    word:"mola",
+    sentence:"Esta fiesta mola mucho.",
+    gap:"mola",
+    accept:["mola"],
+    note:{en:"Spain: molar (me mola). Latin America: chévere, chido.", tr:"İspanya: molar (me mola). Latin Amerika: chévere, chido.", fa:"اسپانیا: molar (me mola). آمریکای لاتین: chévere، chido."}
+   },
+   oye:{accept:["oye"]},
+   "un montón":{accept:["un montón"]},
+   "¿qué onda? / ¿qué tal?":{
+    word:"¿Qué tal?",
+    sentence:"¿Qué tal, cómo has estado?",
+    gap:"Qué tal",
+    accept:["qué tal"],
+    note:{en:"Spain: ¿qué tal? Mexico: ¿qué onda?", tr:"İspanya: ¿qué tal? Meksika: ¿qué onda?", fa:"اسپانیا: ¿qué tal؟ مکزیک: ¿qué onda؟"}
+   },
+   "estar en las nubes":{gap:"estaba en las nubes", accept:["estaba en las nubes","estar en las nubes"]},
+   "ni idea":{accept:["ni idea"]}
+  }
+ },
+ "v-A2-1":{
+  useTask:{prompt:{en:"Say how you travel to work or to a trip. 2 sentences, 2 words from this set.", tr:"İşe ya da bir geziye nasıl gittiğini anlat. 2 cümle, bu setten 2 kelime.", fa:"بگو چطور به سر کار یا سفر می‌روی. ۲ جمله، ۲ کلمه از این مجموعه."}, frame:"Para ir al trabajo cojo ... . Mi ... sale a las ... .", model:"Para ir al trabajo cojo el autobús. Mi tren sale a las nueve."},
+  cards:{
+   "el autobús":{accept:["el autobús","autobús"]},
+   "el metro":{accept:["el metro","metro"]},
+   "el tren":{accept:["el tren","tren"]},
+   "el taxi":{gap:"taxi", accept:["taxi","el taxi"]},
+   "el coche / el carro":{gap:"coche", accept:["coche","el coche","carro","el carro"]},
+   "la bicicleta":{gap:"bicicleta", accept:["bicicleta","la bicicleta"]},
+   "el billete / el boleto":{gap:"billete", accept:["billete","el billete","boleto","el boleto"]},
+   "la parada":{gap:"parada", accept:["parada","la parada"]},
+   "el vuelo":{gap:"vuelo", accept:["vuelo","el vuelo"]},
+   "conducir / manejar":{gap:"conducir", accept:["conducir","manejar"], note:{en:"Spain: conducir. Latin America: manejar.", tr:"İspanya: conducir. Latin Amerika: manejar.", fa:"اسپانیا: conducir. آمریکای لاتین: manejar."}}
+  }
+ },
+ "v-A2-2":{
+  useTask:{prompt:{en:"Order a meal in 2 sentences. Use 2 words from this set.", tr:"2 cümleyle yemek siparişi ver. Bu setten 2 kelime kullan.", fa:"در ۲ جمله غذا سفارش بده. از ۲ کلمه این مجموعه استفاده کن."}, frame:"¿Nos trae ... , por favor? De ... , quiero ... .", model:"¿Nos trae la carta, por favor? De postre, quiero un flan."},
+  cards:{
+   "la carta / el menú":{gap:"carta", accept:["carta","la carta","menú","el menú"]},
+   "el camarero / el mesero":{gap:"camarero", accept:["camarero","el camarero","mesero","el mesero"]},
+   "la reserva":{gap:"reserva", accept:["reserva","la reserva"]},
+   "el plato principal":{gap:"plato principal", accept:["plato principal","el plato principal"]},
+   "la propina":{gap:"propina", accept:["propina","la propina"]},
+   "la cuenta":{accept:["la cuenta","cuenta"]},
+   pedir:{accept:["pedir"]},
+   "el postre":{gap:"postre", accept:["postre","el postre"]},
+   picante:{accept:["picante"]},
+   "los cubiertos":{accept:["los cubiertos","cubiertos"]}
+  }
+ },
+ "v-A2-3":{
+  useTask:{prompt:{en:"Tell a doctor where it hurts. 2 sentences with body words from this set.", tr:"Doktora neresinin ağrıdığını söyle. Bu setten vücut kelimeleriyle 2 cümle.", fa:"به پزشک بگو کجایت درد می‌کند. ۲ جمله با کلمه‌های بدن از این مجموعه."}, frame:"Me duele(n) ... . También me duele(n) ... .", model:"Me duele la cabeza. También me duelen los pies."},
+  cards:{
+   "la cabeza":{accept:["la cabeza","cabeza"]},
+   "el brazo":{accept:["el brazo","brazo"]},
+   "la mano":{accept:["la mano","mano"]},
+   "la pierna":{accept:["la pierna","pierna"]},
+   "el pie":{gap:"pie", accept:["pie","el pie"]},
+   "el estómago":{accept:["el estómago","estómago"]},
+   "la espalda":{accept:["la espalda","espalda"]},
+   "el corazón":{accept:["el corazón","corazón"]},
+   "los ojos":{accept:["los ojos","ojos"]},
+   "la garganta":{accept:["la garganta","garganta"]}
+  }
+ },
+ "v-A2-4":{
+  useTask:{prompt:{en:"Call a clinic: say how you feel and ask for an appointment. 2 sentences.", tr:"Bir kliniği ara: nasıl hissettiğini söyle ve randevu iste. 2 cümle.", fa:"با یک درمانگاه تماس بگیر: حالت را بگو و وقت بخواه. ۲ جمله."}, frame:"Tengo ... y estoy ... . Quiero pedir una ... .", model:"Tengo fiebre y tos. Quiero pedir una cita para mañana."},
+  cards:{
+   "estar enfermo/a":{gap:"enfermo", accept:["enfermo","enferma","está enfermo","está enferma"]},
+   "la fiebre":{gap:"fiebre", accept:["fiebre","la fiebre"]},
+   "el resfriado":{gap:"resfriado", accept:["resfriado","el resfriado"]},
+   "la tos":{accept:["la tos","tos"]},
+   doler:{gap:"duele", accept:["duele","me duele","doler"], note:{en:"o → ue: me duele, me duelen.", tr:"o → ue: me duele, me duelen.", fa:"o به ue: me duele، me duelen."}},
+   "el medicamento":{accept:["el medicamento","medicamento"]},
+   "la farmacia":{accept:["la farmacia","farmacia"]},
+   "el médico / la médica":{gap:"médico", accept:["médico","el médico","médica","la médica"]},
+   "la cita":{gap:"cita", accept:["cita","la cita"]},
+   "sentirse mejor/peor":{gap:"siento", accept:["siento","me siento"]}
+  }
+ },
+ "v-A2-5":{
+  useTask:{prompt:{en:"Write 2 sentences about your job or the job you want. Use 2 words from this set.", tr:"İşin ya da istediğin iş hakkında 2 cümle yaz. Bu setten 2 kelime kullan.", fa:"درباره شغلت یا شغلی که می‌خواهی ۲ جمله بنویس. از ۲ کلمه این مجموعه استفاده کن."}, frame:"Mi ... es ... . Tengo una ... el ... .", model:"Mi horario es de nueve a cinco. Tengo una reunión el lunes."},
+  cards:{
+   "la reunión":{gap:"reunión", accept:["reunión","la reunión"]},
+   "el jefe / la jefa":{gap:"jefa", accept:["jefe","el jefe","jefa","la jefa"]},
+   "el compañero de trabajo":{gap:"compañero de trabajo", accept:["compañero de trabajo","el compañero de trabajo"]},
+   "el sueldo":{accept:["el sueldo","sueldo"]},
+   "el contrato":{accept:["el contrato","contrato"]},
+   "la entrevista":{gap:"entrevista", accept:["entrevista","la entrevista"]},
+   "el correo electrónico":{accept:["el correo electrónico","correo electrónico"]},
+   renunciar:{accept:["renunciar"]},
+   contratar:{accept:["contratar"]},
+   "el horario":{gap:"horario", accept:["horario","el horario"]}
+  }
+ },
+ "v-A2-6":{
+  useTask:{prompt:{en:"Write 2 sentences about how you use your phone. Use 2 words from this set.", tr:"Telefonunu nasıl kullandığın hakkında 2 cümle yaz. Bu setten 2 kelime kullan.", fa:"درباره اینکه چطور از تلفنت استفاده می‌کنی ۲ جمله بنویس. از ۲ کلمه این مجموعه استفاده کن."}, frame:"Con mi móvil ... . Mi ... se queda sin ... .", model:"Con mi móvil descargo aplicaciones. Mi móvil se queda sin batería por la tarde."},
+  cards:{
+   "el celular / el móvil":{
+    word:"el móvil",
+    sentence:"Se le cayó el móvil y se rompió la pantalla.",
+    gap:"móvil",
+    accept:["móvil","el móvil","celular","el celular"],
+    note:{en:"Spain: el móvil. Latin America: el celular.", tr:"İspanya: el móvil. Latin Amerika: el celular.", fa:"اسپانیا: el móvil. آمریکای لاتین: el celular."}
+   },
+   "la contraseña":{accept:["la contraseña","contraseña"]},
+   descargar:{accept:["descargar"]},
+   "subir una foto":{gap:"Subió una foto", accept:["subió una foto","subir una foto"]},
+   "el wifi":{accept:["el wifi","wifi"]},
+   "la pantalla":{sentence:"La pantalla de mi ordenador está rota.", accept:["la pantalla","pantalla"]},
+   "el mensaje de texto":{gap:"mensaje de texto", accept:["mensaje de texto","el mensaje de texto"]},
+   "la batería":{gap:"batería", accept:["batería","la batería"]},
+   "seguir (a alguien)":{gap:"seguir a", accept:["seguir a","seguir"]},
+   "la aplicación":{gap:"aplicación", accept:["aplicación","la aplicación"]}
+  }
+ },
+ "v-A2-7":{
+  useTask:{prompt:{en:"Write 2 sentences about sport in your life. Use 2 words from this set.", tr:"Hayatındaki spor hakkında 2 cümle yaz. Bu setten 2 kelime kullan.", fa:"درباره ورزش در زندگی‌ات ۲ جمله بنویس. از ۲ کلمه این مجموعه استفاده کن."}, frame:"Yo ... . Mi equipo favorito ... .", model:"Hago ejercicio tres veces por semana. Mi equipo favorito juega el domingo."},
+  cards:{
+   "hacer ejercicio":{gap:"Hago ejercicio", accept:["hago ejercicio","hacer ejercicio"]},
+   "el gimnasio":{gap:"gimnasio", accept:["gimnasio","el gimnasio"]},
+   correr:{gap:"Corro", accept:["corro","correr"]},
+   nadar:{accept:["nadar"]},
+   "el equipo":{gap:"equipo", accept:["equipo","el equipo"]},
+   "el partido":{accept:["el partido","partido"]},
+   entrenar:{accept:["entrenar"]},
+   "ganar / perder":{gap:"ganó", accept:["ganó","ganar"]},
+   "la pelota / el balón":{gap:"pelota", accept:["pelota","la pelota","balón","el balón"]},
+   "estar en forma":{accept:["estar en forma"]}
+  }
+ },
+ "v-A2-8":{
+  useTask:{prompt:{en:"You are in a clothes shop. Write 2 sentences to the shop assistant.", tr:"Bir giyim mağazasındasın. Satış görevlisine 2 cümle yaz.", fa:"در یک مغازه لباس هستی. برای فروشنده ۲ جمله بنویس."}, frame:"¿Puedo probarme ... ? ¿Tiene ... en una talla ... ?", model:"¿Puedo probarme este vestido? ¿Lo tiene en una talla más grande?"},
+  cards:{
+   "el precio":{accept:["el precio","precio"]},
+   "la oferta / el descuento":{gap:"oferta", accept:["oferta","la oferta","descuento","el descuento"]},
+   probarse:{gap:"probarme", accept:["probarme","probarse"]},
+   "el probador":{gap:"probador", accept:["probador","el probador"]},
+   "la talla":{gap:"talla", accept:["talla","la talla"]},
+   "caro / barato":{gap:"caro", accept:["caro","muy caro"]},
+   "pagar en efectivo":{accept:["pagar en efectivo"]},
+   "el recibo":{accept:["el recibo","recibo"]},
+   devolver:{accept:["devolver"]},
+   "el centro comercial":{accept:["el centro comercial","centro comercial"]}
+  }
+ },
+ "v-A2-9":{
+  useTask:{prompt:{en:"Write 2 sentences about how you feel today and why. Use 2 expressions from this set.", tr:"Bugün nasıl hissettiğin ve nedeni hakkında 2 cümle yaz. Bu setten 2 ifade kullan.", fa:"درباره اینکه امروز چه حسی داری و چرا ۲ جمله بنویس. از ۲ عبارت این مجموعه استفاده کن."}, frame:"Estoy ... porque ... . A veces tengo ... .", model:"Estoy cansado porque trabajé mucho. A veces tengo miedo antes de una entrevista."},
+  cards:{
+   "estar feliz / contento":{gap:"feliz", accept:["feliz","contento","estoy feliz"]},
+   "estar triste":{gap:"triste", accept:["triste"]},
+   "estar enojado/a":{
+    word:"estar enfadado/a",
+    sentence:"Mi madre está enfadada porque llegué tarde.",
+    gap:"enfadada",
+    accept:["enfadada","enfadado","enojada","enojado"],
+    note:{en:"Spain: enfadado. Latin America: enojado.", tr:"İspanya: enfadado. Latin Amerika: enojado.", fa:"اسپانیا: enfadado. آمریکای لاتین: enojado."}
+   },
+   "tener miedo":{gap:"tenía miedo", accept:["tenía miedo","tener miedo"]},
+   "estar nervioso/a":{gap:"nerviosa", accept:["nerviosa","nervioso"]},
+   "estar cansado/a":{gap:"cansado", accept:["cansado","cansada"]},
+   "estar sorprendido/a":{gap:"sorprendido", accept:["sorprendido","sorprendida"]},
+   "estar aburrido/a":{gap:"aburridos", accept:["aburridos","aburrido","aburrida"]},
+   "sentirse solo/a":{gap:"se siente solo", accept:["se siente solo","siente solo","sentirse solo"]},
+   "estar orgulloso/a":{gap:"orgulloso", accept:["orgulloso","orgullosa"]}
+  }
+ },
+ "v-A2-10":{
+  useTask:{prompt:{en:"You are at the airport. Write 2 sentences to the check-in desk.", tr:"Havalimanındasın. Check-in masasına 2 cümle yaz.", fa:"در فرودگاه هستی. برای باجه ثبت‌نام پرواز ۲ جمله بنویس."}, frame:"Quiero facturar ... . Prefiero un ... junto a ... .", model:"Quiero facturar esta maleta. Prefiero un asiento junto a la ventana."},
+  cards:{
+   "el pasaporte":{gap:"pasaporte", accept:["pasaporte","el pasaporte"]},
+   "la maleta":{accept:["la maleta","maleta"]},
+   "el equipaje de mano":{gap:"equipaje de mano", accept:["equipaje de mano","el equipaje de mano"]},
+   "facturar el equipaje":{accept:["facturar el equipaje"]},
+   "la puerta de embarque":{accept:["la puerta de embarque","puerta de embarque"]},
+   "el embarque":{accept:["el embarque","embarque"]},
+   "el retraso":{gap:"retraso", accept:["retraso","el retraso"]},
+   "la aduana":{accept:["la aduana","aduana"]},
+   "el asiento":{gap:"asiento", accept:["asiento","el asiento"]},
+   "aterrizar / despegar":{gap:"aterrizar", accept:["aterrizar"]}
+  }
+ },
+ "slang-A2":{
+  useTask:{prompt:{en:"Text a friend after a hard day. 2 sentences, 2 expressions from this set.", tr:"Zor bir günün ardından bir arkadaşına mesaj yaz. 2 cümle, bu setten 2 ifade.", fa:"بعد از یک روز سخت برای یک دوست پیام بنویس. ۲ جمله، ۲ عبارت از این مجموعه."}, frame:"¡Qué ... ! Estoy ... . Te ... .", model:"¡Qué rollo de día! Estoy hasta las narices del tráfico, te echo de menos."},
+  cards:{
+   "¡Qué rollo! / ¡Qué lata!":{gap:"qué rollo", accept:["qué rollo"]},
+   "estar en las nubes":{gap:"estaba en las nubes", accept:["estaba en las nubes","estar en las nubes"]},
+   "dar plantón / dejar plantado":{gap:"dio plantón", accept:["dio plantón","dar plantón"]},
+   "estar hasta las narices":{gap:"hasta las narices", accept:["hasta las narices","estar hasta las narices"]},
+   "¡Qué fuerte!":{accept:["¡qué fuerte!"]},
+   "ni de broma":{accept:["ni de broma"]},
+   "estar sin blanca / estar pelado":{gap:"sin blanca", accept:["sin blanca","estar sin blanca","pelado","estar pelado"]},
+   "meter la pata":{gap:"Metí la pata", accept:["metí la pata","meter la pata"]},
+   "un montón":{accept:["un montón"]},
+   "echar de menos / extrañar":{gap:"echo de menos", accept:["echo de menos","extraño","echar de menos","extrañar"]}
+  }
+ }
+};
+Object.keys(VOCAB_PHASE1_A1A2).forEach(id=>{
+  const set = VOCAB_SETS.find(x=>x.id===id); if(!set) return;
+  const m = VOCAB_PHASE1_A1A2[id];
+  if(m.useTask) set.useTask = m.useTask;
+  if(m.replaceCards){ set.cards = m.replaceCards; return; }
+  set.cards.forEach(c=>{
+    const u = m.cards && m.cards[c.word]; if(!u) return;
+    if(u.meaning) c.meaning = Object.assign({}, c.meaning, u.meaning);
+    ['accept','gap','sentence','note','word'].forEach(k=>{ if(u[k] !== undefined) c[k] = u[k]; });
+  });
+});
+
 /* ============================= GOALS: 4th-tab content (Exam Strategy, Immigration Culture Guide) ============================= */
 const EXAM_STRATEGY = [
   {icon:'chat', title:{en:'Speaking — Extend Every Answer', tr:'Konuşma — Her Cevabı Genişlet', fa:'مکالمه — هر پاسخ را گسترش بده', es:'Hablar — Extiende cada respuesta'},
@@ -5998,7 +6383,7 @@ function srsGrammarQ(item, field, goal){
 }
 function srsVocabQ(set, card){
   const meaning = L(card.meaning.en, card.meaning.tr, card.meaning.fa, card.meaning.es) || card.meaning.en || '';
-  const re = new RegExp(reEsc(card.word), 'i');
+  const re = new RegExp(reEsc(cardGap(card)), 'i');
   const others = shuffle(set.cards.filter(c=>c.word.toLowerCase() !== card.word.toLowerCase())).slice(0, 3).map(c=>c.word);
   const opts = shuffle([card.word].concat(others));
   const inSentence = card.sentence && re.test(card.sentence);
@@ -6131,6 +6516,8 @@ function errorWatchHits(text, item){
   });
   return out;
 }
+// S4: the text to mark/blank in a card's sentence — the inflected `gap` when the sentence does not use the headword as is.
+function cardGap(c){ return (c && c.gap) || c.word; }
 function highlightWord(sentence, word, meaning){
   const re = new RegExp(word.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'), 'i');
   const m = sentence.match(re);
@@ -12085,7 +12472,7 @@ function renderVocabSetIntro(id){
               ${ttsButton(c.sentence || c.word, '')}
             </div>
             <div class="phrase-mean" style="margin-top:2px;">${esc(L(c.meaning.en,c.meaning.tr,c.meaning.fa, c.meaning.es))}</div>
-            <div class="phrase-example">${highlightWord(c.sentence, c.word)}</div>
+            <div class="phrase-example">${highlightWord(c.sentence, cardGap(c))}</div>
             ${c.note ? `<div class="flash-note row" style="margin-top:4px; align-items:flex-start; gap:6px;"><span style="flex:0 0 auto; color:var(--ink-faint);">${ICONS.warn}</span><span style="font-size:12px; color:var(--ink-soft);">${esc(L(c.note.en,c.note.tr,c.note.fa, c.note.es))}</span></div>` : ''}
           </div>
         `).join('')}
@@ -12113,7 +12500,7 @@ function renderVocabSet(id, cardIndex){
         <div class="flash-face" style="background:${soft};">
           ${state.viewParams.flipped ? `
             <div class="flash-hint">${L('Example','Örnek','مثال','Ejemplo')}</div>
-            <div class="flash-sentence" dir="ltr">${highlightWord(card.sentence, card.word, L(card.meaning.en, card.meaning.tr, card.meaning.fa, card.meaning.es))}</div>
+            <div class="flash-sentence" dir="ltr">${highlightWord(card.sentence, cardGap(card), L(card.meaning.en, card.meaning.tr, card.meaning.fa, card.meaning.es))}</div>
             ${ttsButton(card.sentence || card.word, 'on-card')}
             ${card.meaning ? `<div class="flash-hint" style="margin-top:10px;">${L('Meaning','Anlam','معنی','Significado')}</div><div class="flash-sentence" dir="ltr">${esc(card.meaning.en)}${local ? ' — '+esc(local) : ''}</div>` : ''}
             ${card.note ? `<div class="flash-note row" dir="ltr" style="align-items:flex-start; gap:7px;"><span style="flex:0 0 auto; margin-top:1px;">${ICONS.warn}</span><span>${esc(L(card.note.en,card.note.tr,card.note.fa,card.note.es))}</span></div>` : ''}
@@ -12546,7 +12933,7 @@ function grammarQuizQuestions(item){
 function vocabQuizQuestions(s){
   const sibling = VOCAB_SETS_FREE.filter(x=>x.level===s.level && x.category===s.category).flatMap(x=>x.cards);
   const blankOf = (c) => {
-    const re = new RegExp(c.word.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'), 'i');
+    const re = new RegExp(cardGap(c).replace(/[.*+?^${}()|[\]\\]/g,'\\$&'), 'i');
     return c.sentence.replace(re, '_____');
   };
   const whyOf = (c) => L(

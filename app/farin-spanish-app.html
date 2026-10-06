@@ -5262,7 +5262,7 @@ function srsGrammarQ(item, field, goal){
     const b = src && src[field];
     if(b && b.distractors && b.distractors.length >= 2 && !blankListed(TRAP_EXCLUDE_BLANKS, item.id, field, v)){
       const opts = shuffle([b.word].concat(b.distractors.slice(0, 3)));
-      return {prompt:b.sentence, options:opts, correct:opts.indexOf(b.word), why};
+      return {prompt:b.sentence, options:opts, correct:opts.indexOf(b.word), why, answerText:String(b.sentence).replace(/_{2,}/, b.word), answerTr:b.translation};
     }
   }
   // Every version of this blank has a distractor that is also correct: ask a
@@ -5271,7 +5271,7 @@ function srsGrammarQ(item, field, goal){
   const right = field === 'blank' ? (src.right || item.right) : (src.right2 || item.right2);
   const wrongs = [src.wrong || item.wrong, src.wrong2 || item.wrong2].filter((w,i,a)=>w && w !== right && a.indexOf(w)===i);
   const opts = shuffle([right].concat(wrongs));
-  return {prompt:L('Which sentence is correct?','Hangi cümle doğru?','کدام جمله درست است؟','¿Qué oración es correcta?'), options:opts, correct:opts.indexOf(right), why};
+  return {prompt:L('Which sentence is correct?','Hangi cümle doğru?','کدام جمله درست است؟','¿Qué oración es correcta?'), options:opts, correct:opts.indexOf(right), why, answerText:right, answerTr:(right === item.right ? item.rightTranslation : (right === item.right2 ? item.right2Translation : null))};
 }
 function srsVocabQ(set, card){
   const meaning = L(card.meaning.en, card.meaning.tr, card.meaning.fa, card.meaning.es) || card.meaning.en || '';
@@ -5281,14 +5281,14 @@ function srsVocabQ(set, card){
   const inSentence = card.sentence && re.test(card.sentence);
   const prompt = inSentence ? meaning + '\n' + card.sentence.replace(re, '___')
     : L('Which word means this?','Hangi kelime bu anlama geliyor?','کدام کلمه این معنی را دارد؟','¿Qué palabra significa esto?') + '\n' + meaning;
-  return {prompt, options:opts, correct:opts.indexOf(card.word), why:'"'+card.word+'" — '+meaning+(card.sentence ? ' · '+card.sentence : '')};
+  return {prompt, options:opts, correct:opts.indexOf(card.word), why:'"'+card.word+'" — '+meaning+(card.sentence ? ' · '+card.sentence : ''), answerText:card.sentence || card.word, answerTr:'"'+card.word+'" = '+meaning};
 }
 function srsStoryQ(story, v){
   const meaning = L(v.en, v.tr, v.fa, v.es) || v.en || '';
   const others = shuffle(story.vocab.filter(x=>x.word.toLowerCase() !== v.word.toLowerCase())).slice(0, 3).map(x=>x.word);
   const opts = shuffle([v.word].concat(others));
   return {prompt:L('Which word from the story means this?','Hikayedeki hangi kelime bu anlama geliyor?','کدام کلمه داستان این معنی را دارد؟','¿Qué palabra de la historia significa esto?') + '\n' + meaning,
-    options:opts, correct:opts.indexOf(v.word), why:'"'+v.word+'" — '+meaning};
+    options:opts, correct:opts.indexOf(v.word), why:'"'+v.word+'" — '+meaning, answerText:v.word, answerTr:meaning};
 }
 // The two questions for one due item. sv = its souvenir (may be null).
 // Returns {qs:[q1,q2], nextVi} — nextVi is saved when the Shuffle ends.
@@ -10730,6 +10730,8 @@ function effectiveGrammarItem(t, variant){
   if(!variant) return t;
   const e = Object.assign({}, t, variant);
   if(variant.practice && t.practice) e.practice = variant.practice.concat(t.practice);
+  if(variant.right && !variant.rightTranslation) e.rightTranslation = null;
+  if(variant.right2 && !variant.right2Translation) e.right2Translation = null;
   return e;
 }
 function grammarQuizQuestions(item){
@@ -10739,9 +10741,10 @@ function grammarQuizQuestions(item){
   const fixLabel = L('Fix the mistake. Which sentence is right?','Hatayı düzelt. Hangi cümle doğru?','اشتباه را درست کن. کدام جمله درست است؟','Corrige el error. ¿Qué oración es correcta?');
   const norm = s => String(s||'').toLowerCase().replace(/\s+/g,' ').trim();
   const dwText = (map, k) => { const d = map && map[k]; if(!d) return undefined; return typeof d === 'string' ? d : L(d.en, d.tr, d.fa, d.es); };
-  const mk = (prompt, right, wrongs, key, hintFor) => {
+  const mk = (prompt, right, wrongs, key, hintFor, tr) => {
     const opts = shuffle([right].concat(wrongs));
-    const q = {prompt, options:opts, correct:opts.indexOf(right), why, key:norm(key)};
+    const q = {prompt, options:opts, correct:opts.indexOf(right), why, key:norm(key), answerText:String(key)};
+    if(tr) q.answerTr = tr;
     if(hintFor){ const h = opts.map(o=>hintFor(o)); if(h.some(Boolean)) q.hints = h; }
     return q;
   };
@@ -10751,14 +10754,14 @@ function grammarQuizQuestions(item){
   const interim = () => {
     const qs = [];
     const wrongs = uniq([item.wrong, item.wrong2]).filter(w=>w !== item.right && w !== item.right2);
-    if(item.right && wrongs.length >= 2) qs.push(mk(pickLabel, item.right, wrongs, item.right));
-    if(item.right2 && item.right2 !== item.right && wrongs.length >= 2) qs.push(mk(pickLabel, item.right2, wrongs, item.right2));
+    if(item.right && wrongs.length >= 2) qs.push(mk(pickLabel, item.right, wrongs, item.right, null, item.rightTranslation));
+    if(item.right2 && item.right2 !== item.right && wrongs.length >= 2) qs.push(mk(pickLabel, item.right2, wrongs, item.right2, null, item.right2Translation));
     [item.blank, item.blank2].forEach(b=>{
       if(!goodBlank(b)) return;
       const dists = uniq(b.distractors);
       const byFilled = {}; dists.slice(0, 2).forEach(d=>{ byFilled[fillIn(b.sentence, d)] = d; });
-      qs.push(mk(pickLabel, fillIn(b.sentence, b.word), dists.slice(0, 2).map(d=>fillIn(b.sentence, d)), fillIn(b.sentence, b.word), o=>dwText(b.distractorWhy, byFilled[o])));
-      qs.push(mk(b.sentence, b.word, dists, fillIn(b.sentence, b.word), o=>dwText(b.distractorWhy, o)));
+      qs.push(mk(pickLabel, fillIn(b.sentence, b.word), dists.slice(0, 2).map(d=>fillIn(b.sentence, d)), fillIn(b.sentence, b.word), o=>dwText(b.distractorWhy, byFilled[o]), b.translation));
+      qs.push(mk(b.sentence, b.word, dists, fillIn(b.sentence, b.word), o=>dwText(b.distractorWhy, o), b.translation));
     });
     return qs;
   };
@@ -10766,12 +10769,12 @@ function grammarQuizQuestions(item){
     const out = {fill:[], meaning:[], fix:[]};
     (item.practice || []).forEach(p=>{
       if(!p) return;
-      if(p.type === 'fill' && goodBlank(p)) out.fill.push(mk(p.sentence, p.word, uniq(p.distractors), fillIn(p.sentence, p.word), o=>dwText(p.distractorWhy, o)));
+      if(p.type === 'fill' && goodBlank(p)) out.fill.push(mk(p.sentence, p.word, uniq(p.distractors), fillIn(p.sentence, p.word), o=>dwText(p.distractorWhy, o), p.translation));
       else if(p.type === 'meaning' && p.options && p.options.length >= 3){
         const right = p.options[p.correct || 0];
-        out.meaning.push(mk(p.prompt, right, p.options.filter((o,i)=>i !== (p.correct || 0)), p.prompt));
+        { const mq = mk(p.prompt, right, p.options.filter((o,i)=>i !== (p.correct || 0)), p.prompt, null, p.translation); mq.answerText = right; out.meaning.push(mq); }
       }
-      else if(p.type === 'fix' && p.right && p.distractors && p.distractors.length >= 2) out.fix.push(mk(fixLabel + '\n"' + p.wrong + '"', p.right, uniq(p.distractors), p.right));
+      else if(p.type === 'fix' && p.right && p.distractors && p.distractors.length >= 2) out.fix.push(mk(fixLabel + '\n"' + p.wrong + '"', p.right, uniq(p.distractors), p.right, null, p.translation));
     });
     return [].concat(out.fill.slice(0, 2), out.meaning.slice(0, 1), out.fix.slice(0, 1), out.fill.slice(2), out.meaning.slice(1), out.fix.slice(1));
   };
@@ -10808,11 +10811,12 @@ function vocabQuizQuestions(s){
     c.meaning.fa ? ('"'+c.word+'" یعنی: '+c.meaning.fa+'. مثال: '+c.sentence) : undefined,
     '"'+c.word+'": '+c.meaning.es+'. Ejemplo: '+c.sentence
   );
+  const ansFor = (c) => ({answerText:c.sentence, answerTr:'"'+c.word+'" = '+(L(c.meaning.en, c.meaning.tr, c.meaning.fa, c.meaning.es) || c.meaning.en || '')});
   const fillQ = (c) => {
     const pool = sibling.filter(x=>x.word.toLowerCase()!==c.word.toLowerCase());
     const distractors = shuffle(pool).slice(0,3).map(x=>x.word);
     const options = shuffle([c.word, ...distractors]);
-    return {prompt: blankOf(c), options, correct: options.indexOf(c.word), why: whyOf(c)};
+    return Object.assign({prompt: blankOf(c), options, correct: options.indexOf(c.word), why: whyOf(c)}, ansFor(c));
   };
   const reverseLabel = L('Which sentence uses this word?','Bu kelimeyi hangi cümle kullanıyor?','کدام جمله از این کلمه استفاده می‌کند؟','¿Qué oración usa esta palabra?');
   const reverseQ = (c) => {
@@ -10821,7 +10825,7 @@ function vocabQuizQuestions(s){
     const distractorCards = shuffle(pool).slice(0,2);
     const correctOpt = blankOf(c);
     const options = shuffle([correctOpt, ...distractorCards.map(blankOf)]);
-    return {prompt: reverseLabel + '\n"' + c.word + '"', options, correct: options.indexOf(correctOpt), why: whyOf(c)};
+    return Object.assign({prompt: reverseLabel + '\n"' + c.word + '"', options, correct: options.indexOf(correctOpt), why: whyOf(c)}, ansFor(c));
   };
   const tfLabel = L('True or false: this word fits the sentence.','Doğru mu yanlış mı: bu kelime cümleye uyuyor.','درست یا نادرست: این کلمه با جمله مطابقت دارد.','Verdadero o falso: esta palabra encaja en la oración.');
   const tfQ = (c, i) => {
@@ -10837,7 +10841,7 @@ function vocabQuizQuestions(s){
     }
     const opts = shuffle([L('True','Doğru','درست','Verdadero'), L('False','Yanlış','نادرست','Falso')]);
     const answer = isTrue ? L('True','Doğru','درست','Verdadero') : L('False','Yanlış','نادرست','Falso');
-    return {prompt: tfLabel+'\n"'+filled+'"', options: opts, correct: opts.indexOf(answer), why: whyOf(c)};
+    return Object.assign({prompt: tfLabel+'\n"'+filled+'"', options: opts, correct: opts.indexOf(answer), why: whyOf(c)}, ansFor(c));
   };
   const generators = [fillQ, reverseQ, tfQ];
   const chosenCards = shuffle(s.cards).slice(0, 10);
@@ -10981,7 +10985,7 @@ function renderShuffle(){
       }).join('')}
     </div>
     ${sh.answered ? `
-      ${missed && item.why ? `<div class="game-why"><img src="char-${learnerCharKey()}.png" alt=""><div>${esc(item.why)}</div></div>` : ''}
+      ${answerBannerHtml(item, !missed)}
       <button class="btn btn-primary game-cta" data-action="shuffle-next">${L('Next','Devam','بعدی','Siguiente')}</button>
     ` : ''}
   </div>`;
@@ -11135,6 +11139,29 @@ function quizStreakChip(q){
   const hot = n >= 5;
   return `<span id="trap-streak" class="game-streak${hot ? ' hot' : ''}">${ICONS.bolt} ${L(`${n} in a row`, `${n} üst üste`, `${n} پشت سر هم`, `${n} seguidas`)}</span>`;
 }
+/* Feedback after an answer (Farin, 2026-10-06): never restate the grammar rule. A miss shows the
+   correct answer as a full sentence plus its translation in the learner's language; a right
+   answer is just the confirmation (plus the translation when one exists). Questions carry
+   answerText / answerTr where the data has them; translations are only shown when they exist in
+   the content, never invented. */
+function trLine(o){
+  if(!o) return '';
+  if(typeof o === 'string') return o;
+  return L(o.en, o.tr, o.fa, o.es) || '';
+}
+function quizAnswerText(item){
+  if(item.answerText) return item.answerText;
+  const raw = String(item.prompt || ''), nl = raw.indexOf('\n');
+  const body = nl >= 0 ? raw.slice(nl + 1) : raw;
+  const right = item.options[item.correct];
+  return /_{3,}/.test(body) ? body.replace(/_{3,}/, right) : right;
+}
+function answerBannerHtml(item, ok){
+  const ans = quizAnswerText(item), tr = trLine(item.answerTr);
+  if(ok && !tr) return '';
+  const head = ok ? '' : `<b>${esc(L('Correct answer','Doğru cevap','پاسخ درست','Respuesta correcta'))}:</b> `;
+  return `<div class="game-why"><img src="char-${learnerCharKey()}.png" alt=""><div dir="ltr">${head}${esc(ans)}${tr ? `<div dir="auto" style="margin-top:4px; opacity:.85;">${esc(tr)}</div>` : ''}</div></div>`;
+}
 // The hint after a first miss. distractorWhy for the chosen option when it exists, else the
 // item's rule line (grammar). Vocab and story whys give the answer away, so they get a nudge.
 function quizHintText(q, item){
@@ -11144,7 +11171,12 @@ function quizHintText(q, item){
   const own = item.hints && item.hints[i];
   const dot = t => /[.!?؟…]$/.test(String(t).trim()) ? String(t).trim() : String(t).trim() + '.';
   if(own) return lead + dot(own) + tail;
-  if(q.kind === 'grammar' && item.why) return lead + dot(item.why) + tail;
+  if(q.kind === 'grammar'){
+    const gap = /_{3,}/.test(String(item.prompt||''));
+    return lead + (gap
+      ? L('Look again at the words around the gap.','Boşluğun çevresindeki kelimelere tekrar bak.','دوباره به کلمه‌های اطراف جای خالی نگاه کن.','Mira otra vez las palabras que rodean el hueco.')
+      : L('Read each sentence again, one word at a time.','Her cümleyi tekrar oku, kelime kelime.','هر جمله را دوباره بخوان، کلمه به کلمه.','Lee cada frase otra vez, palabra por palabra.')) + tail;
+  }
   if(q.kind === 'vocab') return lead + L('Read the sentence again and think about the meaning.','Cümleyi tekrar oku ve anlamı düşün.','جمله را دوباره بخوان و درباره معنی فکر کن.','Lee la frase otra vez y piensa en el significado.') + tail;
   return lead + L('Think back to the story.','Hikayeyi hatırla.','داستان را به یاد بیاور.','Piensa en la historia.') + tail;
 }
@@ -11180,7 +11212,7 @@ function renderQuiz(){
     </div>
     ${!q.answered && (q.miss||[]).length ? `<div class="game-why"><img src="char-${learnerCharKey()}.png" alt=""><div dir="ltr">${esc(quizHintText(q, item))}</div></div>` : ''}
     ${q.answered ? `
-      ${item.why ? `<div class="game-why"><img src="char-${learnerCharKey()}.png" alt=""><div dir="ltr">${esc(item.why)}</div></div>` : ''}
+      ${answerBannerHtml(item, q.results && q.results[q.index] === true)}
       <button class="btn btn-primary game-cta" data-action="quiz-next">${q.index+1 < q.questions.length ? L('Next question','Sonraki soru','سوال بعدی','Siguiente pregunta') : L('See results','Sonuçları gör','دیدن نتایج','Ver resultados')}</button>
     ` : ''}
   </div>`;

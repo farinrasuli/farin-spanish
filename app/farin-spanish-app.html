@@ -277,6 +277,11 @@
   .game-tile.stamp.line::after{content:''; position:absolute; top:-60%; left:-60%; width:35%; height:220%; background:linear-gradient(120deg, transparent, rgba(255,255,255,.75), transparent); transform:rotate(22deg); animation:badge-shine-sweep 2.2s ease-in-out infinite; pointer-events:none;}
   .game-tile.pulse{animation:build-ear-pulse 1s ease-in-out infinite; border-color:var(--cat-voc);}
   .bingo-clue{margin-top:12px;}
+  /* Gamify every card type (tobT7nwI): Catch these */
+  .catch-tiles{margin-top:10px;}
+  .catch-tiles.four{grid-template-columns:repeat(2, minmax(0, 1fr));}
+  .game-tile.catch{min-height:62px; font-size:15px;}
+  .game-tile.catch.small{font-size:12.5px;}
   /* Gamification v3 build 2: Story Hunt */
   .hunt-card{text-align:start;}
   .hunt-text{font-size:16px; line-height:1.75; color:var(--ink);}
@@ -7260,18 +7265,19 @@ function renderMediaSession(id){
   return `<div class="fade-in">
     ${sectionHead(L(m.title.en,m.title.tr,m.title.fa, m.title.es), (m.goal && GOALS_META[m.goal] ? goalMetaLabel(m.goal)+' · ' : '')+(m.durationMin?m.durationMin+' '+L('min','dk','دقیقه','min'):''))}
     <div class="screen" style="padding-top:0;">
+      ${catchSheetHtml(m)}
       ${embed}
       ${credit}
       ${m.discussionQuestions && m.discussionQuestions.length ? `
       <div class="card-flat" style="margin-top:16px;">
         <div class="eyebrow" style="color:var(--cat-story);">${L('Discussion questions','Tartışma soruları','سؤالات بحث', 'Preguntas de discusión')}</div>
         <ol style="margin:8px 0 0; padding-inline-start:18px;">
-          ${m.discussionQuestions.map(q=>{
+          ${m.discussionQuestions.map((q,i)=>{
             // the question in Spanish (the language being learned) first, like stories;
             // the learner's own language as a small gloss under it
             const main = q.es || L(q.en,q.tr,q.fa);
             const gloss = (q.es && LANG !== 'es') ? L(q.en,q.tr,q.fa) : '';
-            return `<li style="font-size:14px; line-height:1.6; margin-top:6px;">${esc(main)}${gloss ? `<div style="font-size:12px; color:var(--ink-faint); line-height:1.4;">${esc(gloss)}</div>` : ''}</li>`;
+            return `<li style="font-size:14px; line-height:1.6; margin-top:6px;">${esc(main)}${gloss ? `<div style="font-size:12px; color:var(--ink-faint); line-height:1.4;">${esc(gloss)}</div>` : ''}<div id="media-answer-${i}">${mediaAnswerBodyHtml(m, i)}</div></li>`;
           }).join('')}
         </ol>
       </div>` : ''}
@@ -7280,11 +7286,85 @@ function renderMediaSession(id){
         <div class="eyebrow" style="color:var(--cat-voc);">${L('New words','Yeni kelimeler','کلمات جدید', 'Palabras nuevas')}</div>
         ${m.vocab.map(v=>`<div class="phrase-row"><div class="phrase-term" style="color:var(--cat-voc);">${esc(v.word)}</div><div class="phrase-mean">${esc(L(v.en,v.tr,v.fa, v.es))}</div></div>`).join('')}
       </div>` : ''}
-      <button class="btn ${done?'btn-ghost':'btn-primary'}" style="margin-top:16px;" data-action="toggle-roadmap-item" data-id="${roadmapId}">${isPodcast
-        ? (done ? L('Marked as listened ✓','Dinlendi olarak işaretlendi ✓','علامت‌زده به‌عنوان شنیده‌شده ✓','Marcado como escuchado ✓') : L('Mark as listened','Dinlendi olarak işaretle','علامت‌زدن به‌عنوان شنیده‌شده','Marcar como escuchado'))
-        : (done ? L('Marked as watched ✓','İzlendi olarak işaretlendi ✓','علامت‌زده به‌عنوان دیده‌شده ✓','Marcado como visto ✓') : L('Mark as watched','İzlendi olarak işaretle','علامت‌زدن به‌عنوان دیده‌شده','Marcar como visto'))}</button>
+      <button class="btn ${done?'btn-ghost':'btn-primary'}" id="media-done-btn" style="margin-top:16px;" data-action="toggle-roadmap-item" data-id="${roadmapId}">${mediaDoneLabel(m, done, mediaCaughtCount(m))}</button>
     </div>
   </div>`;
+}
+/* ============================= GAMIFY EVERY CARD TYPE (2026-10-07, Trello tobT7nwI) =============================
+   Spec: Claude/specs/gamify-every-card-type-DRAFT.md (§3, §4.7, §4.2, §4.5) with the LXD
+   corrections in lxd-review-story-path-every-card-cozy.md §B. Nothing is added to any
+   roadmap card face; each mechanic lives inside its own screen.
+
+   "Catch these" (media). A sheet above the embed: the item's 3 vocab entries plus 1-3
+   signpost phrases from the per-language bank (4 / 5 / 6 tiles at A1 / A2-B1 / B2-C1).
+   The learner taps a tile when they hear it; the app cannot verify (no IFrame API), so
+   a second tap un-stamps. No timer. progress.mediaCaught[id] = [tile texts];
+   progress.mediaAnswers[id] = {qi, q, text, date} - one saved discussion answer (same
+   pattern as storyAnswerHtml) that becomes the souvenir's flip side. The sticker needs
+   all 3 vocab words caught, not all tiles. Taps never re-render the screen (a render
+   would reload the embed mid-video) - they patch the DOM in place. */
+const CATCH_SIGNPOSTS = {
+  en:['for example', "that's right", "let's look at", 'in other words', 'the difference is', 'remember', 'first of all', 'another example', "let's recap", 'be careful', 'so', "that's all for today"],
+  es:['por ejemplo', 'es decir', 'muy bien', 'vamos a ver', 'fíjate', 'otra vez', 'la diferencia es', '¿vale?', 'entonces', 'recuerda', 'para terminar', 'hasta la próxima']
+};
+function catchHash(s){ let h = 7; for(let i = 0; i < s.length; i++) h = (Math.imul(h, 31) + s.charCodeAt(i)) >>> 0; return h; }
+function catchTileCount(level){ return level === 'A1' ? 4 : ((level === 'B2' || level === 'C1') ? 6 : 5); }
+// A stable order from a seed, so the sheet looks the same on every visit.
+function catchOrder(n, seed){
+  const a = []; for(let i = 0; i < n; i++) a.push(i);
+  let s = seed >>> 0;
+  for(let i = n - 1; i > 0; i--){ s = (Math.imul(s, 1103515245) + 12345) >>> 0; const j = s % (i + 1); const t = a[i]; a[i] = a[j]; a[j] = t; }
+  return a;
+}
+// [{text, vocab:bool}] for one media item; [] when it has fewer than 3 vocab entries.
+function catchTiles(m){
+  const vocab = (m.vocab || []).map(v=>v.word);
+  if(vocab.length < 3) return [];
+  const bank = CATCH_SIGNPOSTS[TTS_LANG.indexOf('es') === 0 ? 'es' : 'en'];
+  const n = catchTileCount(m.level), h = catchHash(m.id);
+  const extra = [];
+  for(let k = 0; extra.length < n - vocab.length && k < bank.length; k++){
+    const p = bank[(h + k * 5) % bank.length];
+    if(!extra.includes(p) && !vocab.includes(p)) extra.push(p);
+  }
+  const all = vocab.map(t=>({text:t, vocab:true})).concat(extra.map(t=>({text:t, vocab:false})));
+  return catchOrder(all.length, h).map(i=>all[i]);
+}
+function mediaCaught(id){ const mc = state.progress && state.progress.mediaCaught; return (mc && Array.isArray(mc[id])) ? mc[id] : []; }
+function mediaCaughtCount(m){ const c = mediaCaught(m.id); return catchTiles(m).filter(t=>c.includes(t.text)).length; }
+function catchVocabDone(m){ const c = mediaCaught(m.id); return !!(m && m.vocab && m.vocab.length >= 3 && m.vocab.every(v=>c.includes(v.word))); }
+function catchCountText(n, total){ return L(`${n} of ${total} caught`, `${total} ifadeden ${n} yakalandı`, `${n} از ${total} شکار شد`, `${n} de ${total} cazadas`); }
+function mediaDoneLabel(m, done, caught){
+  const isPodcast = m.kind === 'podcast';
+  if(done) return isPodcast ? L('Marked as listened ✓','Dinlendi olarak işaretlendi ✓','علامت‌زده به‌عنوان شنیده‌شده ✓','Marcado como escuchado ✓') : L('Marked as watched ✓','İzlendi olarak işaretlendi ✓','علامت‌زده به‌عنوان دیده‌شده ✓','Marcado como visto ✓');
+  if(caught > 0) return L(`I'm done — ${caught} caught`, `Bitti — ${caught} yakaladım`, `تمام شد — ${caught} تا شکار کردم`, `Terminé — ${caught} cazadas`);
+  return isPodcast ? L('Mark as listened','Dinlendi olarak işaretle','علامت‌زدن به‌عنوان شنیده‌شده','Marcar como escuchado') : L('Mark as watched','İzlendi olarak işaretle','علامت‌زدن به‌عنوان دیده‌شده','Marcar como visto');
+}
+function catchSheetHtml(m){
+  const tiles = catchTiles(m);
+  if(!tiles.length) return '';
+  const caught = mediaCaught(m.id);
+  const n = tiles.filter(t=>caught.includes(t.text)).length;
+  return `<div class="card-flat catch-sheet" style="margin-bottom:14px;">
+    <div class="row between" style="align-items:center;">
+      <div class="eyebrow" style="color:var(--cat-lis);">${L('Catch these','Bunları yakala','این‌ها را شکار کن','Caza estas')}</div>
+      <span class="game-chip" id="catch-count" style="font-size:12px; padding:5px 10px;">${catchCountText(n, tiles.length)}</span>
+    </div>
+    <p class="game-hint" style="margin:6px 0 0;">${L('Tap a phrase when you hear it.','Duyduğunda ifadeye dokun.','وقتی شنیدی، روی عبارت بزن.','Toca una frase cuando la oigas.')}</p>
+    <div class="game-tiles catch-tiles${tiles.length === 4 ? ' four' : ''}">
+      ${tiles.map((t,i)=>`<button class="game-tile catch${t.text.length > 14 ? ' small' : ''}${caught.includes(t.text) ? ' stamp' : ''}" data-action="media-catch" data-id="${esc(m.id)}" data-i="${i}" data-t="${esc(t.text)}" aria-pressed="${caught.includes(t.text)}" dir="ltr">${esc(t.text)}</button>`).join('')}
+    </div>
+  </div>`;
+}
+// The body of one discussion question: answer button / textarea / the saved answer.
+function mediaAnswerBodyHtml(m, i){
+  const saved = (state.progress.mediaAnswers || {})[m.id];
+  const mine = !!(saved && saved.qi === i);
+  if(state.viewParams.answerQ === i) return `<textarea class="story-answer" id="media-answer-input" dir="ltr" maxlength="400" placeholder="${esc(L('Write 1 to 3 sentences.','1 ile 3 cümle yaz.','۱ تا ۳ جمله بنویس.','Escribe de 1 a 3 frases.'))}">${esc(mine ? saved.text : '')}</textarea>
+      <button class="btn btn-primary" style="margin-top:8px;" data-action="media-answer-save" data-i="${i}">${L('Save my answer','Cevabımı kaydet','پاسخم را ذخیره کن','Guardar mi respuesta')}</button>`;
+  if(mine) return `<div class="phrase-mean" dir="ltr" style="margin-top:6px; font-style:italic;">${esc(saved.text)}</div>
+      <button class="btn btn-ghost" style="margin-top:6px;" data-action="media-answer-open" data-i="${i}">${L('Change my answer','Cevabımı değiştir','پاسخم را تغییر بده','Cambiar mi respuesta')}</button>`;
+  return `<button class="btn btn-ghost" style="margin-top:6px;" data-action="media-answer-open" data-i="${i}">${L('Answer this one','Bunu cevapla','به این جواب بده','Responde a esta')}</button>`;
 }
 /* Roadmap "Watch or listen" node (2026-10-04, Trello 96gUMgAB; rule from
    Claude/specs/media/README.md). One media node per stage, right after the story
@@ -8162,9 +8242,16 @@ function souvenirContent(node, ctx){
   } else if(t === 'media'){
     const m = MEDIA_LIBRARY.find(x=>x.id===node.refId);
     if(m && m.vocab && m.vocab.length){
-      const v = m.vocab[Math.floor(Math.random()*m.vocab.length)];
+      // Catch these (tobT7nwI): a word the learner caught comes first; the saved
+      // discussion answer is the flip side.
+      const caught = mediaCaught(m.id);
+      const pool = m.vocab.filter(v=>caught.includes(v.word));
+      const from = pool.length ? pool : m.vocab;
+      const v = from[Math.floor(Math.random()*from.length)];
       out.text = v.word;
       out.meaning = {en:v.en, tr:v.tr, fa:v.fa, es:v.es};
+      const ans = state.progress && state.progress.mediaAnswers && state.progress.mediaAnswers[node.refId];
+      if(ans && ans.text) out.keep = {text:ans.text, say:ans.text, note:ans.q || ''};
     }
   } else if(t === 'session'){
     out.label = 'session';
@@ -14423,8 +14510,11 @@ const HANDLERS = {
     // the roadmap's return animation waits until the celebration closes
     if(willCelebrate && state.view==='dashboard') ui.holdAdvance = true;
     save(); render();
-    if(fresh.length) showCelebration(node.type, '', false, {souvenir:fresh[0], fresh:true});
-    else if(willCelebrate) showCelebration('media');
+    // Catch these (tobT7nwI): all 3 vocab words caught earns the "3/3 caught" sticker.
+    const mediaItem = id.indexOf('media:') === 0 ? MEDIA_LIBRARY.find(x=>x.id===id.slice(6).split('#')[0]) : null;
+    const stickers = mediaItem && catchVocabDone(mediaItem) ? [L('3/3 caught','3/3 yakalandı','۳/۳ شکار شد','3/3 cazadas')] : [];
+    if(fresh.length) showCelebration(node.type, '', false, {souvenir:fresh[0], fresh:true, stickers});
+    else if(willCelebrate) showCelebration('media', '', false, {stickers});
   },
   'open-souvenir'(el){ openSouvenirModal(Number(el.dataset.i)); },
   'open-rhythm'(){ openRhythmSheet(); },
@@ -15124,6 +15214,56 @@ const HANDLERS = {
     if(storyAudio.playing){ stopStoryAudio(); return; }
     const st = STORY_LIBRARY.find(x=>x.id===state.viewParams.id);
     if(st) startStoryAudio(st);
+  },
+  // Catch these (tobT7nwI): taps patch the DOM in place - a render() here would reload
+  // the YouTube embed mid-video.
+  'media-catch'(el, e){
+    const m = MEDIA_LIBRARY.find(x=>x.id===el.dataset.id);
+    if(!m) return;
+    const t = el.dataset.t;
+    if(!state.progress.mediaCaught) state.progress.mediaCaught = {};
+    const list = state.progress.mediaCaught[m.id] = mediaCaught(m.id).slice();
+    const at = list.indexOf(t);
+    if(at > -1){
+      list.splice(at, 1);
+      el.classList.remove('stamp'); el.setAttribute('aria-pressed', 'false');
+      sfx('tick');
+    } else {
+      list.push(t);
+      el.classList.add('stamp'); el.setAttribute('aria-pressed', 'true');
+      anim(el, [{transform:'scale(1)'}, {transform:'scale(1.1)'}, {transform:'scale(1)'}], {duration:240, easing:SPRING});
+      fxBingoStamp(-1, tapPoint(e) || centerOf(el), [], false);
+      sfx('stamp');
+    }
+    save();
+    const tiles = catchTiles(m), n = tiles.filter(x=>list.includes(x.text)).length;
+    const cnt = document.getElementById('catch-count'); if(cnt) cnt.textContent = catchCountText(n, tiles.length);
+    const btn = document.getElementById('media-done-btn');
+    if(btn && btn.classList.contains('btn-primary')) btn.textContent = mediaDoneLabel(m, false, n);
+  },
+  'media-answer-open'(el){
+    const m = MEDIA_LIBRARY.find(x=>x.id===state.viewParams.id);
+    if(!m) return;
+    const prev = state.viewParams.answerQ;
+    state.viewParams.answerQ = +el.dataset.i;
+    [prev, state.viewParams.answerQ].forEach(k=>{ if(k == null) return; const box = document.getElementById('media-answer-'+k); if(box) box.innerHTML = mediaAnswerBodyHtml(m, k); });
+    const ta = document.getElementById('media-answer-input'); if(ta) ta.focus();
+  },
+  'media-answer-save'(el){
+    const m = MEDIA_LIBRARY.find(x=>x.id===state.viewParams.id);
+    const ta = document.getElementById('media-answer-input');
+    const text = ta ? ta.value.trim() : '';
+    if(!m || !text) return;
+    const i = +el.dataset.i, qq = (m.discussionQuestions || [])[i] || {};
+    const q = (TTS_LANG.indexOf('es') === 0 ? qq.es : qq.en) || qq.en || '';
+    if(!state.progress.mediaAnswers) state.progress.mediaAnswers = {};
+    const prevQ = state.progress.mediaAnswers[m.id] ? state.progress.mediaAnswers[m.id].qi : null;
+    state.progress.mediaAnswers[m.id] = {qi:i, q, text, date:todayISO()};
+    // the media souvenir (if it exists already) keeps the answer on its flip side
+    (state.progress.souvenirs || []).forEach(sv=>{ if(sv.type === 'media' && svRefId(sv) === m.id) sv.keep = {text, say:text, note:q}; });
+    state.viewParams.answerQ = null;
+    save();
+    [prevQ, i].forEach(k=>{ if(k == null) return; const box = document.getElementById('media-answer-'+k); if(box) box.innerHTML = mediaAnswerBodyHtml(m, k); });
   },
   'story-answer-open'(el){
     const y = window.scrollY;

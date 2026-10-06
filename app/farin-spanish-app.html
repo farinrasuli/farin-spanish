@@ -720,6 +720,9 @@
   .jr-spine.open{transform:translateY(-8px); outline:3px solid var(--accent);}
   .jr-spine-level{font-family:'Fredoka',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; font-weight:800; font-size:14px;}
   .jr-spine-stamp{writing-mode:vertical-rl; transform:rotate(180deg); font-size:9px; font-weight:800; letter-spacing:.08em; opacity:.85;}
+  .jr-pin{position:absolute; top:-6px; inset-inline-end:-6px; width:22px; height:22px; border-radius:50%; background:var(--accent); color:#fff; font-size:12px; display:flex; align-items:center; justify-content:center; box-shadow:var(--clay-shadow-soft); z-index:2;}
+  .pin-btn{margin-top:10px;}
+  .pin-hint{margin-top:12px; font-size:13px; color:#fff; background:rgba(0,0,0,.28); border-radius:12px; padding:8px 12px;}
   .jr-kept-tag{font-size:11px; font-weight:800; letter-spacing:.04em; text-transform:uppercase; padding:4px 10px; border-radius:999px; background:linear-gradient(135deg, #ffd6f5, #c9f7ff 35%, #fff6c2 62%, #d9c9ff); color:#5b3fa6;}
   .pc-stamp.kept{border-color:#8f6fe0; color:#5b3fa6; box-shadow:inset 0 0 0 6px rgba(143,111,224,.22); background:linear-gradient(135deg, rgba(255,214,245,.9), rgba(201,247,255,.9) 35%, rgba(255,246,194,.9) 62%, rgba(217,201,255,.9));}
   .sv-modal-stack{display:flex; flex-direction:column; align-items:center; text-align:center;}
@@ -4682,8 +4685,8 @@ let loadedFromStorage = false;
 function freshState(){
   return {
     view:'diagnostic-intro', viewParams:{}, lang:'tr',
-    profile:{name:'', motivationTag:null, goals:[], archetype:null, level:null, levelStage:1, topics:[], learnerType:null, priorityArea:null, completedDiagnostic:false, dashboardIntroShown:false, recoveryCode:null, wantsContact:false, contactPhone:''},
-    progress:{sessionsExplored:0, streak:0, lastActiveDate:null, completedTraps:[], completedVocabSets:[], completedScenes:[], completedStories:[], completedGames:[], srs:{}, badgesEarnedAt:{}, reviewsCompleted:0, roadmapChecked:{}, dailyTasksDate:null, dailyTasksChecked:{}, writingRoundsDone:0, speakingRoundsDone:0, usedSpeakingTopics:[], xp:0, perfectGameRounds:0, souvenirs:[], gameBests:{}, roadmapGolden:null, lastWords:{}, mediaWatched:[], nodeScores:{}, storyAnswers:{}, journal:{cover:null, pagesKept:[]}},
+    profile:{name:'', motivationTag:null, goals:[], archetype:null, level:null, levelStage:1, topics:[], learnerType:null, priorityArea:null, completedDiagnostic:false, dashboardIntroShown:false, recoveryCode:null, wantsContact:false, contactPhone:'', clubCode:null},
+    progress:{sessionsExplored:0, streak:0, lastActiveDate:null, completedTraps:[], completedVocabSets:[], completedScenes:[], completedStories:[], completedGames:[], srs:{}, badgesEarnedAt:{}, reviewsCompleted:0, roadmapChecked:{}, dailyTasksDate:null, dailyTasksChecked:{}, writingRoundsDone:0, speakingRoundsDone:0, usedSpeakingTopics:[], xp:0, perfectGameRounds:0, souvenirs:[], gameBests:{}, roadmapGolden:null, lastWords:{}, mediaWatched:[], nodeScores:{}, storyAnswers:{}, journal:{cover:null, pagesKept:[]}, pinned:[]},
     diag:{step:0, goals:[], level:null, topics:[], learnerType:null, priorityArea:null, test:null},
     roadmap:null,
     quiz:null, studentPanelCache:null
@@ -4731,6 +4734,8 @@ function load(){
     // Gamification v3 build 2 (M2): journal cover + kept pages
     if(!merged.progress.journal || typeof merged.progress.journal !== 'object') merged.progress.journal = {cover:null, pagesKept:[]};
     if(!Array.isArray(merged.progress.journal.pagesKept)) merged.progress.journal.pagesKept = [];
+    // Gamification v3 build 2 (M8): souvenirs pinned for the next lesson
+    if(!Array.isArray(merged.progress.pinned)) merged.progress.pinned = [];
     if(merged.profile.levelStage===undefined) merged.profile.levelStage = 1;
     if(!merged.progress.dailyTasksChecked) merged.progress.dailyTasksChecked = {};
     if(merged.progress.dailyTasksDate===undefined) merged.progress.dailyTasksDate = null;
@@ -4739,6 +4744,7 @@ function load(){
     if(merged.profile.dashboardIntroShown===undefined) merged.profile.dashboardIntroShown = true;
     if(merged.profile.wantsContact===undefined) merged.profile.wantsContact = false;
     if(merged.profile.contactPhone===undefined) merged.profile.contactPhone = '';
+    if(merged.profile.clubCode===undefined) merged.profile.clubCode = null;
     if(!merged.profile.topics) merged.profile.topics = [];
     if(!merged.profile.goals || !merged.profile.goals.length){
       merged.profile.goals = merged.profile.motivationTag ? [merged.profile.motivationTag] : [];
@@ -5254,7 +5260,7 @@ function srsSetBox(e, box, dueDays){
 function srsOutcome(e, good){
   if(good >= 2) srsSetBox(e, e.box + 1);
   else if(good === 1) srsSetBox(e, e.box, 2);
-  else srsSetBox(e, e.box - 1, 1);
+  else { srsSetBox(e, e.box - 1, 1); e.lapses = (e.lapses||0) + 1; }   // lapses: M8 suggests pinning after two
 }
 // A lesson quiz finished: the first pass creates the entry; a later pass only
 // counts when the item is due (then 80%+ = up, under 50% = down, else stays).
@@ -8114,7 +8120,79 @@ function journalSlotHtml(s, size){
   if(s.start) return souvenirCardHtml(s.sv, size);
   // Gamification v3: a sparkle on cards that are ready to shine (due for review).
   const ready = souvenirDue(s.sv) ? `<span class="sparkle" style="top:-4px; left:-4px; width:9px; height:9px;"></span><span class="sparkle" style="top:10px; right:-5px; left:auto; width:6px; height:6px; animation-delay:.6s;"></span>` : '';
-  return `<button class="jr-slot sv-ready-wrap" data-action="open-souvenir" data-i="${s.i}" aria-label="${esc(s.sv.text||'')}">${souvenirCardHtml(s.sv, size)}${ready}</button>`;
+  const pin = isPinned(s.sv) ? '<span class="jr-pin" aria-hidden="true">📌</span>' : '';
+  return `<button class="jr-slot sv-ready-wrap" data-action="open-souvenir" data-i="${s.i}" aria-label="${esc(s.sv.text||'')}">${souvenirCardHtml(s.sv, size)}${ready}${pin}</button>`;
+}
+/* ============================= GAMIFICATION V3 BUILD 2: BRING TO CLASS (M8, pins only) =============================
+   A learner pins up to 3 souvenirs for the next lesson (progress.pinned[], synced
+   with the rest of progress). Pin/unpin lives on the souvenir in the journal; a
+   souvenir whose item lapsed twice (two 0/2 reviews) gets a "bring it to class?"
+   suggestion. Farin sees a learner's pins in the admin student view: the learner's
+   app stores the Club code it logged into as profile.clubCode, and the admin
+   looks the progress doc up by it. No teacher stamp yet. */
+const PIN_MAX = 3;
+function pinnedList(){ const pr = state.progress; if(!Array.isArray(pr.pinned)) pr.pinned = []; return pr.pinned; }
+function pinKey(sv){ return (sv.level||'') + '|' + (sv.nodeId||''); }
+function isPinned(sv){ return !!sv && pinnedList().some(p=>p.key === pinKey(sv)); }
+function pinSuggested(sv){
+  if(!sv || !SV_REVIEWABLE.includes(sv.type) || isPinned(sv)) return false;
+  const e = state.progress.srs && state.progress.srs[svRefId(sv)];
+  return !!(e && (e.lapses||0) >= 2);
+}
+// Returns 'on' | 'off' | 'full'.
+function togglePin(sv){
+  const list = pinnedList(), key = pinKey(sv);
+  const i = list.findIndex(p=>p.key === key);
+  if(i >= 0){ list.splice(i, 1); return 'off'; }
+  if(list.length >= PIN_MAX) return 'full';
+  list.push({key, nodeId:sv.nodeId, level:sv.level, type:sv.type, text:String(sv.text||''), meaning:svText(sv.meaning), keep:sv.keep ? String(sv.keep.text||'') : '', at:todayISO()});
+  return 'on';
+}
+function pinButtonHtml(sv){
+  const on = isPinned(sv), full = !on && pinnedList().length >= PIN_MAX;
+  const label = on ? L('Pinned for class · remove','Ders için işaretli · kaldır','برای کلاس سنجاق شده · بردار','Fijado para clase · quitar')
+    : (full ? L('3 already pinned for class','Ders için zaten 3 tane işaretli','۳ تا برای کلاس سنجاق شده','Ya hay 3 fijados para clase') : L('Bring to class','Derse getir','به کلاس ببر','Llevar a clase'));
+  const hint = pinSuggested(sv) ? `<div class="pin-hint">${L('This one slipped twice — bring it to class?','Bu iki kez kaçtı — derse getirelim mi?','این یکی دو بار از دست رفت — به کلاس ببریمش؟','Este se escapó dos veces, ¿lo llevamos a clase?')}</div>` : '';
+  return hint + `<button class="btn ${on ? 'btn-primary' : 'btn-ghost'} pin-btn" data-action="pin-souvenir" ${full ? 'disabled' : ''}>${on ? '✓ ' : '📌 '}${label}</button>`;
+}
+let adminStudentPins = null;   // {code, loading, list, error}
+function loadAdminStudentPins(s){
+  adminStudentPins = {code:s.code, loading:true, list:[], error:''};
+  try{
+    const wantEs = s.course === 'es';
+    firebase.firestore().collection('progress').where('profile.clubCode', '==', s.code).limit(5).get().then(snap=>{
+      if(!adminStudentPins || adminStudentPins.code !== s.code) return;
+      const docs = snap.docs.map(d=>d.data() || {});
+      const doc = docs.find(d=>wantEs ? d.app === 'es' : d.app !== 'es') || docs[0] || null;
+      adminStudentPins.loading = false;
+      adminStudentPins.list = doc && doc.progress && Array.isArray(doc.progress.pinned) ? doc.progress.pinned : [];
+      adminStudentPins.linked = !!doc;
+      renderAdminPage();
+    }).catch(err=>{
+      if(!adminStudentPins || adminStudentPins.code !== s.code) return;
+      adminStudentPins.loading = false; adminStudentPins.error = err && err.message || 'error';
+      renderAdminPage();
+    });
+  }catch(e){ adminStudentPins.loading = false; adminStudentPins.error = 'offline'; }
+}
+function adminPinsHtml(s){
+  const p = adminStudentPins && adminStudentPins.code === s.code ? adminStudentPins : null;
+  let body;
+  if(!p || p.loading) body = `<p style="font-size:12px; color:var(--ink-faint); margin:0;">Loading the student's pins…</p>`;
+  else if(p.error) body = `<p style="font-size:12px; color:var(--ink-faint); margin:0;">Pins unavailable (${esc(p.error)}).</p>`;
+  else if(!p.linked) body = `<p style="font-size:12px; color:var(--ink-faint); margin:0;">Not linked yet — pins appear once the student opens their Club panel in the app with this pass.</p>`;
+  else if(!p.list.length) body = `<p style="font-size:12px; color:var(--ink-faint); margin:0;">Nothing pinned yet. The student pins souvenirs in their journal with "Bring to class".</p>`;
+  else body = p.list.map(x=>`<div class="row" style="gap:8px; align-items:flex-start; padding:6px 0; border-top:1px dashed var(--border);">
+      <span style="flex:0 0 auto;">📌</span>
+      <div style="flex:1;">
+        <div style="font-size:13.5px; font-weight:700;" dir="ltr">${esc(x.text||'')}${x.keep && x.keep !== x.text ? ` <span style="font-weight:400; color:var(--ink-soft);">— ${esc(x.keep)}</span>` : ''}</div>
+        <div style="font-size:11.5px; color:var(--ink-faint);">${esc(x.level||'')} · ${esc(x.type||'')}${x.meaning && x.meaning !== x.text ? ' · '+esc(x.meaning) : ''}${x.at ? ' · '+esc(x.at) : ''}</div>
+      </div>
+    </div>`).join('');
+  return `<div style="border:1.5px solid var(--border); border-radius:12px; padding:10px 12px; margin-bottom:12px; background:var(--bg-sunken);">
+    <div style="font-size:10.5px; font-weight:800; color:var(--ink-faint); text-transform:uppercase; letter-spacing:.04em; margin-bottom:6px;">📌 Brought to class (from the student's journal)</div>
+    ${body}
+  </div>`;
 }
 /* ============================= GAMIFICATION V3 BUILD 2: BOOKSHELF (M2) =============================
    Each finished level closes into a volume on a shelf with its stamp on the spine;
@@ -8274,6 +8352,7 @@ function openSouvenirModal(i){
       <div class="cel-side cel-front">${souvenirCardHtml(sv, 'big', souvenirMeaningHtml(sv))}</div>
     </div></div>
     ${speakText ? `<button class="btn btn-primary" style="margin-top:16px;" data-action="speak-sentence" data-text="${esc(speakText)}">${ICONS.soundOn} ${L('Listen','Dinle','گوش کن','Escuchar')}</button>` : ''}
+    <div id="svm-pin">${sv.type === 'start' ? '' : pinButtonHtml(sv)}</div>
     <div class="celebrate-hint">${L('Tap the card to flip it · tap outside to close','Çevirmek için karta, kapatmak için dışarıya dokun','برای برگرداندن روی کارت، برای بستن بیرون بزن','Toca la tarjeta para girarla · toca fuera para cerrar')}</div>
   </div>`;
   document.body.appendChild(el);
@@ -8292,9 +8371,17 @@ function openSouvenirModal(i){
   el.addEventListener('click', (e)=>{
     const sp = e.target.closest('[data-action="speak-sentence"]');
     if(sp){ HANDLERS['speak-sentence'](sp); return; }
+    const pb = e.target.closest('[data-action="pin-souvenir"]');
+    if(pb){
+      const r = togglePin(sv);
+      if(r !== 'full'){ sfx(r === 'on' ? 'reveal' : 'flip'); save(); }
+      const box = el.querySelector('#svm-pin'); if(box) box.innerHTML = pinButtonHtml(sv);
+      return;
+    }
     if(e.target.closest('#svm-card')){ clearTimeout(autoFlip); setFlip(!flipped); return; }
     clearTimeout(autoFlip);
     el.remove();
+    if(state.view === 'journal') render();
   });
 }
 function roadmapAllDone(){
@@ -13696,6 +13783,7 @@ const HANDLERS = {
         return;
       }
       studentPanelData = Object.assign({code}, doc.data());
+      if(state.profile && state.profile.clubCode !== code){ state.profile.clubCode = code; save(); }   // M8: lets the admin find this learner's pins
       ensureStudentCourses(studentPanelData); // in-memory only — persisting the migration happens admin-side
       state.studentPanelCache = studentPanelData;
       go('student-panel');
@@ -14835,6 +14923,7 @@ function renderAdminStudentsTab(){
       ${adminStudentTab==='roadmap' ? `
       ${studentSectionRow('roadmap','🗺️','Roadmap', roadmap.filter(r=>r.done).length+'/'+roadmap.length+' sessions done')}
       ${studentSectionOpen('roadmap')}
+      ${!s.isNew ? adminPinsHtml(s) : ''}
       ${courses.length ? renderCourseChips(courses, adminActiveCourseId) : `<p style="font-size:11.5px; color:var(--ink-faint); margin:-2px 0 10px;">No courses yet — add sessions below, or tap "+ Add Course" once one exists.</p>`}
       ${adminAddingCourse ? renderCourseAddForm() : ''}
       ${activeCourse ? `
@@ -15056,6 +15145,7 @@ function bindAdminActions(root){
         adminStudentError = '';
         adminStudentInfo = '';
         adminStudentOpenSection = null;
+        if(s && !s.isNew) loadAdminStudentPins(s);
         adminEditingStudent = Object.assign({isNew:false, goal:'', learnerType:'', focusAreas:[], sessionsInStage:0, objectives:['','',''], roadmap:[], homework:[], whatsapp:'', package:8, freezeUntil:'', personalization:{observations:[]}}, s);
         // What the roadmap looked like when the form opened - Save uses it to tell "admin edited this
         // link" apart from "the Worker wrote a new link since" (see mergeFreshRoadmapFields()).

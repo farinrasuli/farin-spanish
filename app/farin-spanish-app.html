@@ -289,6 +289,24 @@
   .hunt-clue{position:sticky; bottom:10px; z-index:3; background:var(--cat-story-soft); border:2px solid color-mix(in srgb, var(--cat-story) 35%, transparent); border-radius:18px; padding:12px 60px 12px 16px; box-shadow:var(--clay-shadow-soft);}
   .hunt-clue-text{font-family:'Fredoka',-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; font-weight:700; font-size:18px; line-height:1.3; color:var(--ink); margin-top:4px;}
   .hunt-clue-n{position:absolute; top:12px; inset-inline-end:12px;}
+  /* Gamification v3 build 2: Say It Back */
+  .echo-plays{display:flex; align-items:center; justify-content:center; gap:12px;}
+  .echo-slow{border:none; cursor:pointer;}
+  .echo-line{margin-top:14px; cursor:pointer;}
+  .echo-hidden{margin:16px 0 0; font-size:15px; color:var(--ink-faint); letter-spacing:.02em; cursor:pointer;}
+  .echo-meaning{margin-top:10px; font-size:14px; color:var(--ink-soft); line-height:1.45;}
+  .echo-meaning.faint{font-size:12px; color:var(--ink-faint);}
+  .echo-micwrap{display:flex; flex-direction:column; align-items:center; gap:10px;}
+  .echo-mic{width:72px; height:72px; border-radius:50%; border:none; cursor:pointer; display:inline-flex; align-items:center; justify-content:center; background:var(--accent); color:var(--accent-ink); box-shadow:var(--clay-shadow);}
+  .echo-mic svg{width:30px; height:30px;}
+  .echo-mic:active{transform:scale(.96);}
+  .echo-mic.listening{animation:echo-mic-pulse 1s ease-in-out infinite; background:var(--accent-strong);}
+  @keyframes echo-mic-pulse{0%,100%{transform:scale(1);} 50%{transform:scale(1.08);}}
+  .echo-verdict{font-family:'Fredoka',-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; font-weight:700; font-size:22px; color:var(--ink);}
+  .echo-verdict.clear{color:color-mix(in srgb, var(--success) 62%, var(--ink));}
+  .echo-shadow{display:flex; flex-direction:column; align-items:center; gap:12px;}
+  .echo-say{font-family:'Fredoka',-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; font-weight:700; font-size:20px; color:var(--ink);}
+  .echo-btns{display:flex; gap:10px; flex-wrap:wrap; justify-content:center;}
   /* Full prefers-reduced-motion support: every animation collapses to its end state. */
   @media (prefers-reduced-motion: reduce){ *, *::before, *::after{animation-duration:.001ms !important; animation-delay:0s !important; animation-iteration-count:1 !important; transition-duration:.001ms !important;} }
   /* Gamification v2 (Journey Journal §4): souvenir cards. One 180x232 design;
@@ -4870,6 +4888,7 @@ function pushHistoryEntry(){
 function go(view, params){
   resetConfirmPending = false;
   if(typeof storyAudio !== 'undefined' && storyAudio.playing && view !== 'story-detail') stopStoryAudio();
+  if(typeof echoStopRec === 'function' && view !== 'game-echo') echoStopRec();
   navHistory.push({view: state.view, params: state.viewParams});
   state.view = view; state.viewParams = params || {}; save(); render(); window.scrollTo(0,0);
   pushHistoryEntry();
@@ -6388,7 +6407,7 @@ function buildRoadmap(profile){
      played, so the stage-2 game never reuses a stage-1 set. Build It falls back
      when the grammar taught so far gives fewer than 4 sentences: Trap Dash from
      B1, Word Rush below; Bingo needs 9 words, Listen & Type 3 sentences. */
-  const playedSetIds = new Set(((state.progress && state.progress.completedGames) || []).map(r=>String(r).replace(/-(match|dictation|bingo)$/, '')));
+  const playedSetIds = new Set(((state.progress && state.progress.completedGames) || []).map(r=>String(r).replace(/-(match|dictation|bingo|echo)$/, '')));
   // the sets the stage-1 games of this level use (stage-1 roadmap rebuilt to find them)
   let stage1Sets = new Set();
   if(stage === 2){
@@ -6396,7 +6415,7 @@ function buildRoadmap(profile){
   }
   const pickGameSet = (kind) => {
     const usedByGames = items.filter(it=>it.type==='game' && it.setId).map(it=>it.setId);
-    const fits = s => !!s && (kind !== 'bingo' || s.cards.length >= 9) && (kind !== 'dictation' || s.cards.filter(c=>c.sentence).length >= 3);
+    const fits = s => !!s && (kind !== 'bingo' || s.cards.length >= 9) && ((kind !== 'dictation' && kind !== 'echo') || s.cards.filter(c=>c.sentence).length >= 3);
     const recent = items.filter(it=>it.type==='vocab').map(it=>VOCAB_SETS.find(s=>s.id===it.refId)).reverse();
     const half = Math.ceil(gamePool.length/2);
     const stagePool = stage===2 ? gamePool.slice(half) : gamePool.slice(0, half);
@@ -6815,6 +6834,7 @@ function gameDisplayName(kind){
   if(kind === 'build') return L('Build It','Cümle Kur','جمله بساز','Constrúyelo');
   if(kind === 'bingo') return L('Word Bingo','Kelime Tombalası','بینگوی کلمات','Bingo de palabras');
   if(kind === 'hunt') return L('Story Hunt','Hikaye Avı','شکار داستان','Caza en la historia');
+  if(kind === 'echo') return L('Say It Back','Tekrar Et','بگو ببینم','Repítelo');
   if(kind === 'trap') return L('Trap Dash','Tuzak Kaçışı','فرار از تله‌ها','Escape de trampas');
   if(kind === 'dictation') return L('Listen & Type','Dinle ve Yaz','گوش کن و بنویس','Escucha y escribe');
   return L('Word Rush','Kelime Yarışı','مسابقه کلمات','Carrera de palabras');
@@ -6823,12 +6843,14 @@ function viewGameKind(view){
   if(view === 'game-build') return 'build';
   if(view === 'game-bingo') return 'bingo';
   if(view === 'game-hunt') return 'hunt';
+  if(view === 'game-echo') return 'echo';
   return view==='game-trap' ? 'trap' : (view==='game-dictation' ? 'dictation' : 'match');
 }
 // Stats of a finished round, in one shape for all three games.
 function gameRoundStats(kind, round){
   if(kind === 'bingo') return {first:round.first||0, total:BINGO_SCORED_CALLS, perfect:(round.first||0) === BINGO_SCORED_CALLS};
   if(kind === 'hunt'){ const total = round.targets.length; return {clean:round.clean||0, total, perfect:total>0 && round.clean===total}; }
+  if(kind === 'echo'){ const lines = round.lines.length; return {clear:round.shadow ? null : (round.clear||0), lines, shadow:!!round.shadow, perfect:!round.shadow && lines>0 && round.clear===lines}; }
   if(kind === 'build'){
     const total = round.items.length;
     return {firstTry:round.firstTry||0, total, hints:round.hints||0, perfect:total>0 && round.firstTry===total};
@@ -6849,6 +6871,7 @@ function gameRecordText(kind, st){
   if(kind === 'build') return name+' · '+st.firstTry+'/'+st.total+' '+L('first try','ilk denemede','در اولین تلاش','a la primera');
   if(kind === 'bingo') return name+' · '+st.first+'/'+st.total+' '+L('first tap','ilk dokunuşta','با اولین لمس','al primer toque');
   if(kind === 'hunt') return name+' · '+st.clean+'/'+st.total+' '+L('clean','temiz','بی‌خطا','limpias');
+  if(kind === 'echo') return name+' · '+(st.shadow ? st.lines+' '+L('lines spoken','cümle söylendi','جمله گفته شد','frases dichas') : st.clear+'/'+st.lines+' '+L('lines clear','cümle net','جمله واضح','frases claras'));
   if(kind === 'match') return name+' · '+st.time+'s · '+st.mistakes+' '+(st.mistakes===1 ? L('miss','hata','اشتباه','fallo') : L('misses','hata','اشتباه','fallos'));
   if(kind === 'trap') return name+' · '+st.correct+'/'+st.total+(st.time ? ' · '+st.time+'s' : '');
   return name+' · '+st.pct+'%';
@@ -6856,6 +6879,7 @@ function gameRecordText(kind, st){
 function gameStatStickers(kind, st){
   if(kind === 'bingo') return [st.first+'/'+st.total+' '+L('first tap','ilk dokunuşta','با اولین لمس','al primer toque'), L('Full card','Tam kart','کارت کامل','Cartón lleno')];
   if(kind === 'hunt') return [st.clean+'/'+st.total+' '+L('clean','temiz','بی‌خطا','limpias')];
+  if(kind === 'echo') return [st.shadow ? st.lines+' '+L('lines spoken','cümle söylendi','جمله گفته شد','frases dichas') : st.clear+'/'+st.lines+' '+L('clear','net','واضح','claras')];
   if(kind === 'build') return [st.firstTry+'/'+st.total+' '+L('first try','ilk denemede','در اولین تلاش','a la primera')].concat(st.hints ? [st.hints+' '+(st.hints===1 ? L('hint','ipucu','راهنما','pista') : L('hints','ipucu','راهنما','pistas'))] : []);
   if(kind === 'match') return [st.time+'s', st.mistakes+' '+(st.mistakes===1 ? L('miss','hata','اشتباه','fallo') : L('misses','hata','اشتباه','fallos'))];
   if(kind === 'trap') return [st.correct+'/'+st.total, L('Score','Skor','امتیاز','Puntos')+' '+st.score];
@@ -6865,9 +6889,9 @@ function gameStatStickers(kind, st){
 function updateGameBest(kind, st){
   const pr = state.progress; if(!pr.gameBests) pr.gameBests = {};
   const prev = pr.gameBests[kind];
-  const metric = kind==='match' ? (b=>-(b.time||9999)) : (kind==='trap' ? (b=>b.score||0) : ((kind==='build' || kind==='bingo') ? (b=>b.first||0) : (kind==='hunt' ? (b=>b.clean||0) : (b=>b.pct||0))));
+  const metric = kind==='match' ? (b=>-(b.time||9999)) : (kind==='trap' ? (b=>b.score||0) : ((kind==='build' || kind==='bingo') ? (b=>b.first||0) : (kind==='hunt' ? (b=>b.clean||0) : (kind==='echo' ? (b=>b.clear||0) : (b=>b.pct||0)))));
   const cur = {time:st.time||null, score:st.score!=null ? st.score : null, pct:st.pct!=null ? st.pct : null,
-    first:st.firstTry!=null ? st.firstTry : (st.first!=null ? st.first : null), clean:st.clean!=null ? st.clean : null};
+    first:st.firstTry!=null ? st.firstTry : (st.first!=null ? st.first : null), clean:st.clean!=null ? st.clean : null, clear:st.clear!=null ? st.clear : null};
   if(!prev){ pr.gameBests[kind] = cur; return false; }
   if(metric(cur) > metric(prev)){ pr.gameBests[kind] = cur; return true; }
   return false;
@@ -7186,7 +7210,7 @@ function maybeCelebrate(){
     low = state.quiz.correct/state.quiz.questions.length < .5;
   } else if(v==='game-match' && vp.round && vp.round.matchedKeys && vp.round.matchedKeys.length === vp.round.pairCount){
     target = vp.round; kind = 'game';
-  } else if((v==='game-dictation' || v==='game-trap' || v==='game-build' || v==='game-bingo' || v==='game-hunt') && vp.round && vp.round.finished){
+  } else if((v==='game-dictation' || v==='game-trap' || v==='game-build' || v==='game-bingo' || v==='game-hunt' || v==='game-echo') && vp.round && vp.round.finished){
     target = vp.round; kind = 'game';
   } else if(v==='studio-round' && vp.checked && vp.result && vp.result.passed){
     target = vp.result; kind = vp.mode;
@@ -7597,6 +7621,7 @@ function renderPrivacyPolicy(){
         <h3 class="display" style="font-size:15px; margin:18px 0 8px;">1. Information We Collect</h3>
         <p>When you set up your profile, the App collects the name and learning preferences (level, goals, learning style) you enter. This information, along with your learning progress, is saved locally on your device only.</p>
         <p>We do not require you to create an account with a password, and we do not collect your phone number unless you specifically choose to share it (see Section 2).</p>
+        <p>When you use a speaking activity with the microphone (for example Say It Back or speaking practice), the App uses your browser's built-in speech recognition to turn your voice into text. In Chrome this sends the audio to Google's speech service for processing while you speak; the App itself does not record or store your voice. The microphone is only used when you tap the microphone button, and you can decline the permission - the activity then works without it.</p>
 
         <h3 class="display" style="font-size:15px; margin:18px 0 8px;">2. Optional Contact Information</h3>
         <p>In Settings, you may voluntarily check a box to let the designated teacher message you directly, which requires entering your phone number. This is entirely optional and off by default. If you opt in, your name, phone number, level, and goal are stored so the teacher can reach out to you, primarily via WhatsApp.</p>
@@ -9845,6 +9870,11 @@ function gameKeep(kind, round){
       const pick = round.targets.slice().sort((a,b)=>b.wrong - a.wrong || b.word.length - a.word.length)[0];
       return {text:pick.word, say:pick.word, note:pick.meaning || ''};
     }
+    if(kind === 'echo' && round.lines && round.lines.length){
+      // the learner's clearest line (the longest when nothing was scored)
+      const pick = round.lines.slice().sort((a,b)=>((b.best && b.best.pct) || 0) - ((a.best && a.best.pct) || 0) || b.text.length - a.text.length)[0];
+      return {text:pick.text, say:pick.text, note:pick.meaning || ''};
+    }
     if(kind === 'bingo' && round.tiles){
       // a word missed on first tap, else the word that completed a line
       const ti = (round.missed && round.missed.length) ? round.missed[0] : (round.lineTile != null ? round.lineTile : round.calls[round.calls.length-1]);
@@ -10213,6 +10243,233 @@ function fxHuntMiss(i, wrong){
 function fxHuntPassage(pi){
   const el = document.getElementById('hunt-passage-'+pi);
   anim(el, [{opacity:0, transform:'translateY(10px)'}, {opacity:1, transform:'translateY(0)'}], {duration:360, easing:'ease-out'});
+}
+/* ============================= GAMIFICATION V3 BUILD 2: SAY IT BACK =============================
+   Games catalogue 4.2 + the LXD changes (approved 2026-10-04), A2-B2 only: hear a
+   line from the node's vocab set, say it, watch your words light up. The first
+   play is always audio-only; at A2 the text appears after that first play, at
+   B1-B2 it stays hidden until after the attempt. Speech recognition is the
+   browser's (Chrome sends the audio to Google; see the privacy policy). Scoring:
+   order-tolerant word overlap on the line's words minus mid-sentence capitalised
+   words (names), apostrophes stripped, digits 0-12 read as number words; a line
+   is "clear" when at most one word is missed (lines of 6 words or fewer) or 80%+
+   of the words are heard (longer lines). Up to 3 attempts, the best counts, Next
+   is always there after the first attempt. The round shows "4/5 lines clear",
+   never a percentage; golden = 5/5. Meaning on tap. No "wrong" sound anywhere.
+   Shadow mode (no recognition, permission denied, no network, no microphone):
+   "Say it out loud" + "I said it"; no score, no golden, record "5 lines spoken".
+   Untimed, no lives. Does not count as the set's review. */
+const ECHO_LINES = 5;
+let echoRec = null;
+function echoNumberWords(){
+  return TTS_LANG.indexOf('es') === 0
+    ? ['cero','uno','dos','tres','cuatro','cinco','seis','siete','ocho','nueve','diez','once','doce']
+    : ['zero','one','two','three','four','five','six','seven','eight','nine','ten','eleven','twelve'];
+}
+function echoNorm(s){
+  const NUM = echoNumberWords();
+  return tokenizeForDictation(String(s||'').replace(/['’]/g, '')).map(t=>(/^\d+$/.test(t) && +t <= 12) ? NUM[+t] : t);
+}
+// Raw words of a line with the ones that are scored (mid-sentence capitals skipped).
+function echoLineWords(text){
+  return String(text||'').trim().split(/\s+/).filter(Boolean).map((raw, i)=>{
+    const core = raw.replace(/^[^\p{L}\p{N}]+/u, '');
+    const skip = i > 0 && /^\p{Lu}/u.test(core);
+    return {raw, toks:skip ? [] : echoNorm(raw), skip};
+  });
+}
+function echoScoreLine(text, heard){
+  const words = echoLineWords(text);
+  const counts = {};
+  echoNorm(heard).forEach(t=>{ counts[t] = (counts[t]||0)+1; });
+  let hits = 0, total = 0; const missed = [];
+  words.forEach(w=>w.toks.forEach(t=>{ total++; if(counts[t] > 0){ counts[t]--; hits++; } else missed.push(t); }));
+  const pct = total ? Math.round(hits/total*100) : 0;
+  const clear = total > 0 && (total <= 6 ? (total - hits) <= 1 : hits/total >= .8);
+  return {pct, hits, total, missed, clear};
+}
+// The line with heard words lit (dict-got) and, after an attempt, missed ones dashed.
+function echoWordsHtml(text, heard, showMiss){
+  const counts = {};
+  echoNorm(heard).forEach(t=>{ counts[t] = (counts[t]||0)+1; });
+  return echoLineWords(text).map(w=>{
+    if(w.skip || !w.toks.length) return `<span class="dict-word">${esc(w.raw)}</span>`;
+    let got = true;
+    w.toks.forEach(t=>{ if(counts[t] > 0) counts[t]--; else got = false; });
+    return `<span class="dict-word ${got ? 'dict-got' : (showMiss ? 'dict-miss' : '')}">${esc(w.raw)}</span>`;
+  }).join(' ');
+}
+function echoLevelMode(){
+  const lv = (state.profile && state.profile.level) || 'A2';
+  return (lv === 'A1' || lv === 'A2') ? 'after-play' : 'after-attempt';
+}
+function buildEchoRound(setObj){
+  const withSentence = setObj.cards.filter(c=>c.sentence);
+  if(withSentence.length < 3) return null;
+  const n = s => String(s).trim().split(/\s+/).length;
+  const good = withSentence.filter(c=>n(c.sentence) >= 3 && n(c.sentence) <= 10);
+  const pool = good.length >= 3 ? good : withSentence;
+  const cards = shuffle(pool).slice(0, Math.min(ECHO_LINES, pool.length));
+  const lines = cards.map(c=>({text:c.sentence, word:c.word, meaning:c.meaning || '', attempts:0, best:null, clear:false, spoken:false, revealed:false, showMeaning:false, heard:'', state:'listen'}));
+  return {setId:setObj.id, lines, index:0, listening:false, shadow:false, clear:0, combo:0, finished:false, startedAt:Date.now(), finishedAt:null};
+}
+function echoShadowSupported(){ return !!(window.SpeechRecognition || window.webkitSpeechRecognition); }
+// Plays the line; at A2 the text appears when the first play ends.
+function echoSpeak(round, rate){
+  const line = round.lines[round.index];
+  const reveal = ()=>{ if(!line.revealed && echoLevelMode() === 'after-play'){ line.revealed = true; if(state.viewParams && state.viewParams.round === round) render(); } };
+  try{
+    if(!line.text || typeof speechSynthesis === 'undefined' || typeof SpeechSynthesisUtterance === 'undefined' || ttsVoiceMissing()){ reveal(); return; }
+    speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(line.text);
+    u.lang = TTS_LANG; u.rate = rate || 0.92;
+    u.onend = reveal; u.onerror = reveal;
+    speechSynthesis.speak(u);
+    setTimeout(reveal, 6000);
+  }catch(e){ reveal(); }
+}
+function echoStopRec(){
+  if(echoRec){ try{ echoRec.onend = null; echoRec.onresult = null; echoRec.onerror = null; echoRec.stop(); }catch(e){} echoRec = null; }
+}
+function echoEnterShadow(round){
+  echoStopRec();
+  round.shadow = true; round.listening = false;
+  if(state.viewParams && state.viewParams.round === round){ save(); render(); }
+}
+function echoStartListening(round){
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if(!SR){ echoEnterShadow(round); return; }
+  echoStopRec();
+  try{ if(typeof speechSynthesis !== 'undefined') speechSynthesis.cancel(); }catch(e){}
+  const line = round.lines[round.index];
+  const rec = new SR();
+  rec.lang = TTS_LANG; rec.interimResults = true; rec.continuous = false; rec.maxAlternatives = 1;
+  let finalText = '', failed = false;
+  echoRec = rec;
+  round.listening = true; line.heard = '';
+  rec.onresult = (e)=>{
+    let interim = '';
+    for(let i=0;i<e.results.length;i++){ const r = e.results[i]; if(r.isFinal) finalText += (finalText ? ' ' : '') + r[0].transcript.trim(); else interim += r[0].transcript; }
+    line.heard = (finalText + ' ' + interim).trim();
+    const w = document.getElementById('echo-words');
+    if(w && line.revealed) w.innerHTML = echoWordsHtml(line.text, line.heard, false);
+  };
+  rec.onerror = (e)=>{
+    const code = e && e.error;
+    if(code === 'not-allowed' || code === 'service-not-allowed' || code === 'network' || code === 'audio-capture'){ failed = true; echoEnterShadow(round); }
+  };
+  rec.onend = ()=>{
+    if(echoRec === rec) echoRec = null;
+    if(failed || round.shadow) return;
+    round.listening = false;
+    line.heard = finalText || line.heard;
+    echoAttempt(round, line.heard);
+  };
+  try{ rec.start(); }catch(e){ echoEnterShadow(round); return; }
+  queueFx(()=>companionSay(L("I'm listening…",'Dinliyorum…','دارم گوش می‌دم…','Te escucho…'), 2500));
+  save(); render();
+}
+// One attempt scored: the best of up to 3 counts.
+function echoAttempt(round, heard){
+  const line = round.lines[round.index];
+  const res = echoScoreLine(line.text, heard);
+  line.attempts++;
+  line.revealed = true;
+  if(!line.best || res.pct > line.best.pct) line.best = res;
+  const wasClear = line.clear;
+  line.clear = !!(line.best && line.best.clear);
+  if(line.clear && !wasClear){ round.clear++; round.combo = (round.combo||0) + 1; }
+  else if(!line.clear) round.combo = 0;
+  line.state = 'result';
+  const combo = round.combo, pct = res.pct, clear = res.clear;
+  queueFx(()=>fxEchoResult(pct, clear, combo));
+  if(res.pct < 50) setTimeout(()=>{ if(state.viewParams && state.viewParams.round === round && round.lines[round.index] === line && !round.finished) echoSpeak(round, 0.7); }, 900);
+  save(); render();
+}
+function fxEchoResult(pct, clear, combo){
+  document.querySelectorAll('#echo-words .dict-word').forEach((w,k)=>anim(w, [{opacity:.4, transform:'translateY(4px)'}, {opacity:1, transform:'translateY(0)'}], {duration:200, delay:k*50, easing:'ease-out'}));
+  if(clear){
+    const el = document.getElementById('echo-verdict');
+    const c = centerOf(el);
+    sparkBurst(c.x, c.y, 8, 'var(--success)');
+    sfx('correct'); buzz(12); companionCheer();
+    comboCheck(combo);
+  } else if(pct < 50){
+    companionSay(L("Let's hear it again",'Bir daha dinleyelim','بیا دوباره بشنویم','Vamos a oírla otra vez'), 1800);
+  } else {
+    companionSay(L('Almost!','Neredeyse!','نزدیک بود!','¡Casi!'), 1400);
+  }
+}
+function echoFinish(round, vp){
+  echoStopRec();
+  round.finished = true; round.finishedAt = Date.now();
+  const perfect = !round.shadow && round.clear === round.lines.length;
+  round.xpGain = scoreGameCompletion(vp.refId, perfect);
+  markGameComplete(vp.refId);
+  notePlayed(round.setId);
+}
+function renderGameEcho(){
+  const vp = state.viewParams, round = vp.round;
+  const title = gameDisplayName('echo');
+  const total = round.lines.length;
+  if(round.finished){
+    return `<div class="fade-in game-screen">
+      ${gameTopHtml(title)}
+      <div class="game-card tight badge-unlock-shine">
+        <div class="game-result-title">${round.shadow ? L('Well spoken!','Güzel konuştun!','خوب گفتی!','¡Bien dicho!') : (round.clear === total ? L('Crystal clear!','Pırıl pırıl!','شفاف و واضح!','¡Clarísimo!') : L('Done!','Bitti!','تمام شد!','¡Listo!'))}</div>
+        <p class="game-result-line">${round.shadow
+          ? L(`${total} lines spoken`, `${total} cümle söylendi`, `${total} جمله گفته شد`, `${total} frases dichas`)
+          : L(`${round.clear} of ${total} lines clear`, `${total} cümleden ${round.clear} tanesi net`, `${round.clear} از ${total} جمله واضح`, `${round.clear} de ${total} frases claras`)}</p>
+        <button class="btn btn-primary game-cta" data-action="back-to-roadmap">${L('Back to roadmap','Yol haritasına dön','بازگشت به نقشه راه','Volver a la hoja de ruta')}</button>
+      </div>
+      ${renderBadgeUnlockCard(pullJustEarnedBadges())}
+    </div>`;
+  }
+  const line = round.lines[round.index];
+  const a = round.index + 1;
+  const isLast = round.index + 1 >= total;
+  const showText = line.revealed;
+  const result = line.state === 'result' && line.best;
+  const verdict = !result ? '' : (line.best.clear
+    ? L('Clear!','Net!','واضح!','¡Clara!')
+    : (line.best.pct >= 50 ? L('Almost','Neredeyse','نزدیک بود','Casi') : L('Once more?','Bir daha?','یک بار دیگر؟','¿Otra vez?')));
+  const canRetry = result && !line.best.clear && line.attempts < 3;
+  const words = showText ? echoWordsHtml(line.text, line.heard, !!(result && !line.best.clear)) : '';
+  const meaning = line.showMeaning ? svText(line.meaning) : '';
+  return `<div class="fade-in game-screen">
+    ${gameTopHtml(title)}
+    <div class="game-status">
+      <span class="game-status-text">${L(`Line ${a} of ${total}`, `Cümle ${a}/${total}`, `جمله ${a} از ${total}`, `Frase ${a} de ${total}`)}</span>
+      <span class="game-status-end">${round.shadow ? '' : `<span class="game-chip">${ICONS.check} ${round.clear}</span>`}${trapStreakChip({streak:round.combo||0})}</span>
+    </div>
+    <p class="game-hint">${round.shadow
+      ? L('Listen, then say it out loud.','Dinle, sonra yüksek sesle söyle.','گوش کن، بعد بلند بگو.','Escucha y dilo en voz alta.')
+      : L('Listen, then tap the mic and say it back.','Dinle, sonra mikrofona dokun ve tekrar et.','گوش کن، بعد میکروفون را بزن و تکرار کن.','Escucha, toca el micro y repítela.')}</p>
+    <div class="game-card tight">
+      <div class="echo-plays">
+        <button class="game-play" data-action="echo-play" data-rate="0.92" aria-label="${esc(L('Play','Çal','پخش','Reproducir'))}">${ICONS.soundOn}</button>
+        <button class="game-chip echo-slow" data-action="echo-play" data-rate="0.7">${L('Slow','Yavaş','آهسته','Lento')}</button>
+      </div>
+      ${showText
+        ? `<p class="game-sentence long echo-line" id="echo-words" dir="ltr" data-action="echo-meaning">${words}</p>`
+        : `<p class="echo-hidden" id="echo-words" data-action="echo-meaning">${L('Listen first…','Önce dinle…','اول گوش کن…','Primero escucha…')}</p>`}
+      ${meaning ? `<div class="echo-meaning">${esc(meaning)}</div>` : `<div class="echo-meaning faint">${L('Tap the line for its meaning','Anlamı için cümleye dokun','برای معنی روی جمله بزن','Toca la frase para ver su significado')}</div>`}
+    </div>
+    ${round.shadow
+      ? `<div class="echo-shadow">
+          <div class="echo-say">${L('Say it out loud','Yüksek sesle söyle','بلند بگو','Dilo en voz alta')}</div>
+          <div class="echo-btns">
+            <button class="btn btn-ghost" data-action="echo-play" data-rate="0.92">${L('Once more','Bir daha','یک بار دیگر','Otra vez')}</button>
+            <button class="btn btn-primary" data-action="echo-said">${L('I said it','Söyledim','گفتم','Ya lo dije')}</button>
+          </div>
+        </div>`
+      : `<div class="echo-micwrap">
+          ${result ? `<div class="echo-verdict ${line.best.clear ? 'clear' : ''}" id="echo-verdict">${esc(verdict)}</div>` : ''}
+          ${(!result || canRetry) ? `<button class="echo-mic${round.listening ? ' listening' : ''}" data-action="echo-mic" aria-label="${esc(L('Speak','Konuş','صحبت کن','Habla'))}">${ICONS.mic || ICONS.chat}</button>
+          <div class="game-play-label">${round.listening ? L('Listening… tap to stop','Dinliyorum… durdurmak için dokun','دارم گوش می‌دم… برای توقف بزن','Escuchando… toca para parar') : (result ? L('Once more','Bir daha','یک بار دیگر','Otra vez') : L('Tap and speak','Dokun ve konuş','بزن و بگو','Toca y habla'))}</div>` : ''}
+          ${result ? `<button class="btn btn-primary game-cta" data-action="echo-next">${isLast ? L('See results','Sonuçları gör','دیدن نتایج','Ver resultados') : L('Next line','Sonraki cümle','جمله بعدی','Siguiente frase')}</button>` : ''}
+        </div>`}
+  </div>`;
 }
 function renderGameMatch(){
   const vp = state.viewParams;
@@ -11598,6 +11855,7 @@ const screens = {
   'game-build': renderGameBuild,
   'game-bingo': renderGameBingo,
   'game-hunt': renderGameHunt,
+  'game-echo': renderGameEcho,
   'souvenir-shuffle': renderShuffle,
   'coming-soon': renderNotFound,
   'not-found': renderNotFound,
@@ -12842,8 +13100,65 @@ const HANDLERS = {
       go('game-match', Object.assign({round: buildMatchRound(setObj)}, params));
       return;
     }
+    if(kind === 'echo'){
+      const echoRound = buildEchoRound(setObj);
+      if(echoRound){
+        if(!echoShadowSupported()) echoRound.shadow = true;
+        go('game-echo', Object.assign({round: echoRound}, params));
+        setTimeout(()=>{ if(state.viewParams && state.viewParams.round === echoRound) echoSpeak(echoRound, 0.92); }, 400);
+        return;
+      }
+      // the set has fewer than 3 sentences: Word Rush instead
+      go('game-match', Object.assign({round: buildMatchRound(setObj)}, params));
+      return;
+    }
     if(kind === 'match') go('game-match', Object.assign({round: buildMatchRound(setObj)}, params));
     else go('game-dictation', Object.assign({round: buildDictationRound(setObj)}, params));
+  },
+  'echo-play'(el){
+    const vp = state.viewParams, round = vp && vp.round;
+    if(!round || round.finished) return;
+    if(round.listening) echoStopRec();
+    round.listening = false;
+    echoSpeak(round, Number(el.dataset.rate) || 0.92);
+  },
+  'echo-mic'(){
+    const vp = state.viewParams, round = vp && vp.round;
+    if(!round || round.finished || round.shadow) return;
+    if(round.listening){ const r = echoRec; if(r){ try{ r.stop(); }catch(e){} } return; }
+    const line = round.lines[round.index];
+    if(line.attempts >= 3 && line.state === 'result') return;
+    line.state = 'speak';
+    echoStartListening(round);
+  },
+  'echo-said'(){
+    const vp = state.viewParams, round = vp && vp.round;
+    if(!round || round.finished || !round.shadow) return;
+    const line = round.lines[round.index];
+    line.spoken = true; line.revealed = true; line.attempts++;
+    queueFx(()=>{ sfx('reveal'); companionCheer(); });
+    HANDLERS['echo-next']();
+  },
+  'echo-next'(){
+    const vp = state.viewParams, round = vp && vp.round;
+    if(!round || round.finished) return;
+    echoStopRec(); round.listening = false;
+    if(round.index + 1 < round.lines.length){
+      round.index++;
+      const r = round;
+      setTimeout(()=>{ if(state.viewParams === vp && !r.finished && r.index === vp.round.index) echoSpeak(r, 0.92); }, 350);
+    } else {
+      echoFinish(round, vp);
+    }
+    save(); render();
+  },
+  'echo-meaning'(){
+    const vp = state.viewParams, round = vp && vp.round;
+    if(!round || round.finished) return;
+    const line = round.lines[round.index];
+    if(!line.meaning) return;
+    line.showMeaning = !line.showMeaning;
+    save(); render();
   },
   'hunt-tap'(el, e){
     const vp = state.viewParams, round = vp && vp.round;
@@ -13182,8 +13497,9 @@ const HANDLERS = {
       if(!text || typeof speechSynthesis === 'undefined') return;
       speechSynthesis.cancel();
       const u = new SpeechSynthesisUtterance(text);
-      u.lang = 'es-ES';
-      u.rate = 0.92;
+      u.lang = TTS_LANG;
+      // Gamification v3 build 2: optional data-rate (Say It Back plays 0.92 / 0.7)
+      u.rate = Number(el.dataset.rate) || 0.92;
       speechSynthesis.speak(u);
     }catch(e){}
   },

@@ -2068,6 +2068,127 @@ const GRAMMAR_PRACTICE_A1A2 = {
  }
 };
 Object.keys(GRAMMAR_PRACTICE_A1A2).forEach(id=>{ const it = GRAMMAR_ITEMS.find(g=>g.id===id); if(it) Object.assign(it, GRAMMAR_PRACTICE_A1A2[id]); });
+/* Teaching redesign phase 1, X6: distractorWhy for the A1-A2 grammar items (farin-lxd, Claude/specs/lxd-phase1-content/es-distractorWhy-A1-A2.js).
+   Item-level map: wrong-option text -> {en,tr,fa}. Looked up on a first miss by the tapped option's text (the same
+   strings are used by the base blanks and every goalVariant blank); a per-blank blank.distractorWhy still wins. */
+const GRAMMAR_DISTRACTOR_WHY_A1A2 = {
+ "g-A1-1":{
+  "está":{en:"ESTAR is for place and feelings. A job or origin uses SER: es.", tr:"ESTAR yer ve duygular içindir. Meslek ya da köken SER ile: es.", fa:"estar برای مکان و احساس است. شغل یا اصلیت با ser می‌آید: es."},
+  son:{en:"\"son\" goes with ellos / ellas. Check the subject: ella → es, nosotros → somos.", tr:"\"son\" ellos / ellas ile kullanılır. Öznene bak: ella → es, nosotros → somos.", fa:"«son» با ellos / ellas می‌آید. فاعل را ببین: ella ← es، nosotros ← somos."},
+  es:{en:"\"es\" goes with él / ella / usted. \"Nosotros\" needs \"somos\".", tr:"\"es\" él / ella / usted ile kullanılır. \"Nosotros\" için \"somos\" gerekir.", fa:"«es» با él / ella / usted می‌آید. برای «nosotros» باید «somos» بگذاری."}
+ },
+ "g-A1-2":{
+  son:{en:"\"son\" is SER. Where someone is uses ESTAR: están.", tr:"\"son\" SER fiilidir. Birinin nerede olduğu ESTAR ile söylenir: están.", fa:"«son» از ser است. مکان کسی با estar گفته می‌شود: están."},
+  es:{en:"\"es\" is SER. For place or feelings use ESTAR: está, estás, estoy, están.", tr:"\"es\" SER fiilidir. Yer ve duygular için ESTAR kullan: está, estás, estoy, están.", fa:"«es» از ser است. برای مکان و احساس estar بگذار: está، estás، estoy، están."},
+  eres:{en:"\"eres\" is SER. For how you are today use ESTAR: estás.", tr:"\"eres\" SER fiilidir. Bugün nasıl olduğun için ESTAR kullan: estás.", fa:"«eres» از ser است. برای حال امروز estar بگذار: estás."}
+ },
+ "g-A1-3":{
+  El:{en:"\"El\" is for masculine nouns. \"Mesa\" ends in -a and is feminine: la mesa.", tr:"\"El\" eril isimler içindir. \"Mesa\" -a ile biter ve dişildir: la mesa.", fa:"«El» برای اسم‌های مذکر است. «mesa» به -a ختم می‌شود و مؤنث است: la mesa."},
+  Los:{en:"\"Los\" is masculine plural. Here there is one feminine thing: la.", tr:"\"Los\" eril çoğuldur. Burada tek bir dişil şey var: la.", fa:"«Los» مذکر جمع است. اینجا یک چیز مؤنث هست: la."},
+  una:{en:"\"una\" is feminine. \"Paraguas\" is a masculine word: un paraguas.", tr:"\"una\" dişildir. \"Paraguas\" eril bir kelime: un paraguas.", fa:"«una» مؤنث است. «paraguas» کلمه مذکر است: un paraguas."},
+  unos:{en:"\"unos\" is plural. We need one umbrella: un paraguas.", tr:"\"unos\" çoğuldur. Bir şemsiye lazım: un paraguas.", fa:"«unos» جمع است. یک چتر لازم داریم: un paraguas."}
+ },
+ "g-A1-4":{
+  libro:{en:"\"Dos\" means more than one, so the noun needs -s: libros.", tr:"\"Dos\" birden fazla demektir, isim -s almalı: libros.", fa:"«dos» یعنی بیش از یکی، پس اسم باید -s بگیرد: libros."},
+  libras:{en:"\"Libras\" is a different word (pounds). The plural of libro is libros.", tr:"\"Libras\" başka bir kelimedir (pound). Libro'nun çoğulu libros.", fa:"«libras» کلمه دیگری است (پوند). جمع libro می‌شود libros."},
+  flor:{en:"\"Tres\" means more than one. After a consonant add -es: flores.", tr:"\"Tres\" birden fazla demektir. Ünsüzden sonra -es ekle: flores.", fa:"«tres» یعنی بیش از یکی. بعد از صامت -es اضافه کن: flores."},
+  floras:{en:"After a consonant add -es: flores, not floras.", tr:"Ünsüzden sonra -es eklenir: flores, floras değil.", fa:"بعد از صامت -es اضافه می‌شود: flores، نه floras."}
+ },
+ "g-A1-5":{
+  hablan:{en:"\"hablan\" goes with ellos. \"Nosotros\" ends in -amos: hablamos.", tr:"\"hablan\" ellos ile kullanılır. \"Nosotros\" -amos ile biter: hablamos.", fa:"«hablan» با ellos می‌آید. «nosotros» به -amos ختم می‌شود: hablamos."},
+  hablas:{en:"\"hablas\" goes with tú. \"Nosotros\" ends in -amos: hablamos.", tr:"\"hablas\" tú ile kullanılır. \"Nosotros\" -amos ile biter: hablamos.", fa:"«hablas» با tú می‌آید. «nosotros» به -amos ختم می‌شود: hablamos."},
+  trabaja:{en:"\"trabaja\" goes with él / ella. \"Ellos\" ends in -an: trabajan.", tr:"\"trabaja\" él / ella ile kullanılır. \"Ellos\" -an ile biter: trabajan.", fa:"«trabaja» با él / ella می‌آید. «ellos» به -an ختم می‌شود: trabajan."},
+  trabajamos:{en:"\"trabajamos\" goes with nosotros. \"Ellos\" ends in -an: trabajan.", tr:"\"trabajamos\" nosotros ile kullanılır. \"Ellos\" -an ile biter: trabajan.", fa:"«trabajamos» با nosotros می‌آید. «ellos» به -an ختم می‌شود: trabajan."}
+ },
+ "g-A1-6":{
+  vive:{en:"\"vive\" goes with él / ella. \"Tú\" ends in -es: vives.", tr:"\"vive\" él / ella ile kullanılır. \"Tú\" -es ile biter: vives.", fa:"«vive» با él / ella می‌آید. «tú» به -es ختم می‌شود: vives."},
+  vivo:{en:"\"vivo\" goes with yo. \"Tú\" ends in -es: vives.", tr:"\"vivo\" yo ile kullanılır. \"Tú\" -es ile biter: vives.", fa:"«vivo» با yo می‌آید. «tú» به -es ختم می‌شود: vives."},
+  come:{en:"\"come\" goes with él / ella. \"Ellos\" ends in -en: comen.", tr:"\"come\" él / ella ile kullanılır. \"Ellos\" -en ile biter: comen.", fa:"«come» با él / ella می‌آید. «ellos» به -en ختم می‌شود: comen."},
+  comemos:{en:"\"comemos\" goes with nosotros. \"Ellos\" ends in -en: comen.", tr:"\"comemos\" nosotros ile kullanılır. \"Ellos\" -en ile biter: comen.", fa:"«comemos» با nosotros می‌آید. «ellos» به -en ختم می‌شود: comen."}
+ },
+ "g-A1-7":{
+  tienes:{en:"\"tienes\" goes with tú. \"Ella\" → tiene.", tr:"\"tienes\" tú ile kullanılır. \"Ella\" → tiene.", fa:"«tienes» با tú می‌آید. «ella» ← tiene."},
+  tengo:{en:"\"tengo\" goes with yo only. Match the subject: ella → tiene, tú → tienes.", tr:"\"tengo\" sadece yo ile kullanılır. Özneye uydur: ella → tiene, tú → tienes.", fa:"«tengo» فقط با yo می‌آید. با فاعل هماهنگ کن: ella ← tiene، tú ← tienes."},
+  tiene:{en:"\"tiene\" goes with él / ella. \"Tú\" → tienes.", tr:"\"tiene\" él / ella ile kullanılır. \"Tú\" → tienes.", fa:"«tiene» با él / ella می‌آید. «tú» ← tienes."}
+ },
+ "g-A1-8":{
+  "le gusta":{en:"The thing liked is plural (los perros), so the verb is plural: gustan.", tr:"Sevilen şey çoğul (los perros), bu yüzden fiil de çoğul: gustan.", fa:"چیز مورد علاقه جمع است (los perros)، پس فعل هم جمع است: gustan."},
+  gusta:{en:"The thing liked is plural, so the verb is gustan (and with \"a ella\" you also need le: le gustan).", tr:"Sevilen şey çoğul, bu yüzden fiil gustan olur (\"a ella\" ile ayrıca le gerekir: le gustan).", fa:"چیز مورد علاقه جمع است، پس فعل gustan می‌شود (با «a ella» به le هم نیاز داری: le gustan)."},
+  gustas:{en:"\"gustas\" would mean YOU are liked. The verb agrees with the thing liked: gusta / gustan.", tr:"\"gustas\" SEN sevilirsin demek olur. Fiil sevilen şeye uyar: gusta / gustan.", fa:"«gustas» یعنی تو دوست‌داشتنی هستی. فعل با چیز مورد علاقه هماهنگ است: gusta / gustan."}
+ },
+ "g-A1-9":{
+  "Qué":{en:"\"Qué\" asks \"what\". To ask how someone is called, use Cómo: ¿Cómo te llamas?", tr:"\"Qué\" \"ne\" sorar. Birinin adını sormak için Cómo kullan: ¿Cómo te llamas?", fa:"«Qué» یعنی «چه». برای پرسیدن اسم از Cómo استفاده کن: ¿Cómo te llamas؟"},
+  "Dónde":{en:"\"Dónde\" asks about a place. To ask how someone is called, use Cómo.", tr:"\"Dónde\" yer sorar. Birinin adını sormak için Cómo kullan.", fa:"«Dónde» درباره مکان می‌پرسد. برای پرسیدن اسم Cómo بگذار."},
+  "Cuándo":{en:"\"Cuándo\" asks about time. For a price use Cuánto.", tr:"\"Cuándo\" zaman sorar. Fiyat için Cuánto kullan.", fa:"«Cuándo» درباره زمان می‌پرسد. برای قیمت Cuánto بگذار."},
+  "Cómo":{en:"\"Cómo\" asks \"how\". For a price or an amount use Cuánto.", tr:"\"Cómo\" \"nasıl\" sorar. Fiyat ya da miktar için Cuánto kullan.", fa:"«Cómo» یعنی «چطور». برای قیمت یا مقدار Cuánto بگذار."}
+ },
+ "g-A1-10":{
+  mis:{en:"\"mis\" is for several things. \"Casa\" is one thing: mi.", tr:"\"mis\" birden fazla şey içindir. \"Casa\" tek bir şey: mi.", fa:"«mis» برای چند چیز است. «casa» یک چیز است: mi."},
+  me:{en:"\"me\" is a pronoun (me ayuda). Before a noun use \"mi\".", tr:"\"me\" bir zamirdir (me ayuda). İsimden önce \"mi\" kullan.", fa:"«me» ضمیر است (me ayuda). قبل از اسم «mi» بگذار."},
+  tu:{en:"\"tu\" is for one thing. \"Llaves\" is plural: tus.", tr:"\"tu\" tek şey içindir. \"Llaves\" çoğul: tus.", fa:"«tu» برای یک چیز است. «llaves» جمع است: tus."},
+  su:{en:"\"su\" means his / her / their. Here we ask about YOUR keys: tus.", tr:"\"su\" onun / onların demektir. Burada SENİN anahtarların soruluyor: tus.", fa:"«su» یعنی مال او / آن‌ها. اینجا درباره کلیدهای تو می‌پرسیم: tus."}
+ },
+ "g-A2-1":{
+  comemos:{en:"\"comemos\" is present. \"Anoche\" is the past: comimos.", tr:"\"comemos\" şimdiki zamandır. \"Anoche\" geçmiştir: comimos.", fa:"«comemos» زمان حال است. «anoche» گذشته است: comimos."},
+  comieron:{en:"\"comieron\" goes with ellos. \"Nosotros\" → comimos.", tr:"\"comieron\" ellos ile kullanılır. \"Nosotros\" → comimos.", fa:"«comieron» با ellos می‌آید. «nosotros» ← comimos."},
+  viajas:{en:"\"viajas\" is present. \"El año pasado\" is the past: viajaste.", tr:"\"viajas\" şimdiki zamandır. \"El año pasado\" geçmiştir: viajaste.", fa:"«viajas» زمان حال است. «el año pasado» گذشته است: viajaste."},
+  "viajó":{en:"\"viajó\" goes with él / ella. \"Tú\" → viajaste.", tr:"\"viajó\" él / ella ile kullanılır. \"Tú\" → viajaste.", fa:"«viajó» با él / ella می‌آید. «tú» ← viajaste."}
+ },
+ "g-A2-2":{
+  tenemos:{en:"\"tenemos\" is present. This was in the past: tuvimos (tener is irregular).", tr:"\"tenemos\" şimdiki zamandır. Bu geçmişte oldu: tuvimos (tener düzensizdir).", fa:"«tenemos» زمان حال است. این در گذشته بود: tuvimos (tener بی‌قاعده است)."},
+  tuvieron:{en:"\"tuvieron\" goes with ellos. \"Nosotros\" → tuvimos.", tr:"\"tuvieron\" ellos ile kullanılır. \"Nosotros\" → tuvimos.", fa:"«tuvieron» با ellos می‌آید. «nosotros» ← tuvimos."},
+  haces:{en:"\"haces\" is present. \"Anoche\" is the past: hiciste (hacer is irregular).", tr:"\"haces\" şimdiki zamandır. \"Anoche\" geçmiştir: hiciste (hacer düzensizdir).", fa:"«haces» زمان حال است. «anoche» گذشته است: hiciste (hacer بی‌قاعده است)."},
+  hizo:{en:"\"hizo\" goes with él / ella. \"Tú\" → hiciste.", tr:"\"hizo\" él / ella ile kullanılır. \"Tú\" → hiciste.", fa:"«hizo» با él / ella می‌آید. «tú» ← hiciste."}
+ },
+ "g-A2-3":{
+  tuvo:{en:"\"tuvo\" is the preterite (one finished event). A habit or a description of childhood uses the imperfect: tenía.", tr:"\"tuvo\" preterite'tir (bitmiş tek olay). Çocuklukla ilgili alışkanlık ya da tasvir imperfecto ister: tenía.", fa:"«tuvo» preterite است (یک رویداد تمام‌شده). عادت یا توصیف کودکی imperfecto می‌خواهد: tenía."},
+  tiene:{en:"\"tiene\" is present. \"De pequeña\" is the past: tenía.", tr:"\"tiene\" şimdiki zamandır. \"De pequeña\" geçmiştir: tenía.", fa:"«tiene» زمان حال است. «de pequeña» گذشته است: tenía."},
+  "vivía":{en:"\"vivía\" is singular. \"Mis abuelos\" is plural: vivían.", tr:"\"vivía\" tekildir. \"Mis abuelos\" çoğul: vivían.", fa:"«vivía» مفرد است. «mis abuelos» جمع است: vivían."},
+  viven:{en:"\"viven\" is present. \"Antes\" points to the past: vivían.", tr:"\"viven\" şimdiki zamandır. \"Antes\" geçmişi gösterir: vivían.", fa:"«viven» زمان حال است. «antes» به گذشته اشاره دارد: vivían."}
+ },
+ "g-A2-4":{
+  Fueron:{en:"Times of day use the imperfect: Eran las diez.", tr:"Saat bildirirken imperfecto kullanılır: Eran las diez.", fa:"برای گفتن ساعت imperfecto می‌آید: Eran las diez."},
+  Son:{en:"\"Son\" is present. The story is in the past: Eran.", tr:"\"Son\" şimdiki zamandır. Hikaye geçmişte: Eran.", fa:"«Son» زمان حال است. داستان در گذشته است: Eran."},
+  vi:{en:"\"vi\" is the preterite (one finished event). Something going on in the background uses the imperfect: veía.", tr:"\"vi\" preterite'tir (bitmiş tek olay). Arka planda süren şey imperfecto ister: veía.", fa:"«vi» preterite است (یک رویداد تمام‌شده). کاری که در پس‌زمینه جریان داشت imperfecto می‌خواهد: veía."},
+  veo:{en:"\"veo\" is present. The story is in the past: veía.", tr:"\"veo\" şimdiki zamandır. Hikaye geçmişte: veía.", fa:"«veo» زمان حال است. داستان در گذشته است: veía."}
+ },
+ "g-A2-5":{
+  despiertan:{en:"A reflexive verb needs its pronoun: se despiertan.", tr:"Dönüşlü fiil zamirini ister: se despiertan.", fa:"فعل انعکاسی ضمیرش را می‌خواهد: se despiertan."},
+  despierta:{en:"A reflexive verb needs its pronoun, and \"ellos\" needs the plural: se despiertan.", tr:"Dönüşlü fiil zamirini ister ve \"ellos\" çoğul ister: se despiertan.", fa:"فعل انعکاسی ضمیرش را می‌خواهد و «ellos» جمع می‌خواهد: se despiertan."},
+  acuestas:{en:"A reflexive verb needs its pronoun: te acuestas.", tr:"Dönüşlü fiil zamirini ister: te acuestas.", fa:"فعل انعکاسی ضمیرش را می‌خواهد: te acuestas."},
+  "se acuesta":{en:"\"se acuesta\" goes with él / ella. With \"tú\" use te: te acuestas.", tr:"\"se acuesta\" él / ella ile kullanılır. \"Tú\" ile te kullan: te acuestas.", fa:"«se acuesta» با él / ella می‌آید. با «tú» از te استفاده کن: te acuestas."}
+ },
+ "g-A2-6":{
+  "más":{en:"\"más ... como\" does not work. For \"as ... as\" use tan ... como.", tr:"\"más ... como\" olmaz. \"Kadar\" için tan ... como kullan.", fa:"«más ... como» درست نیست. برای «به اندازه» tan ... como بگذار."},
+  menos:{en:"\"menos ... como\" does not work. For \"as ... as\" use tan ... como.", tr:"\"menos ... como\" olmaz. \"Kadar\" için tan ... como kullan.", fa:"«menos ... como» درست نیست. برای «به اندازه» tan ... como بگذار."},
+  tan:{en:"\"tan\" is for \"as ... as\" (tan caro como). For the most of all, use el más.", tr:"\"tan\" \"kadar\" içindir (tan caro como). Hepsinin en ...'i için el más kullan.", fa:"«tan» برای «به اندازه» است (tan caro como). برای «بیشترین از همه» el más بگذار."},
+  tanto:{en:"\"tanto\" goes before nouns (tanto dinero). Before an adjective use más or tan.", tr:"\"tanto\" isimlerden önce gelir (tanto dinero). Sıfattan önce más ya da tan kullan.", fa:"«tanto» قبل از اسم می‌آید (tanto dinero). قبل از صفت más یا tan بگذار."}
+ },
+ "g-A2-7":{
+  lo:{en:"\"lo\" is masculine. \"La película\" is feminine: la.", tr:"\"lo\" erildir. \"La película\" dişildir: la.", fa:"«lo» مذکر است. «la película» مؤنث است: la."},
+  le:{en:"\"le\" is for the person who receives something. For things use lo, la, los, las.", tr:"\"le\" bir şeyi alan kişi içindir. Şeyler için lo, la, los, las kullan.", fa:"«le» برای کسی است که چیزی را دریافت می‌کند. برای چیزها lo، la، los، las بگذار."},
+  las:{en:"\"las\" is feminine plural. \"Los deberes\" is masculine plural: los.", tr:"\"las\" dişil çoğuldur. \"Los deberes\" eril çoğuldur: los.", fa:"«las» مؤنث جمع است. «los deberes» مذکر جمع است: los."}
+ },
+ "g-A2-8":{
+  lo:{en:"\"lo\" replaces a thing. For the person who receives it, use le.", tr:"\"lo\" bir şeyin yerine geçer. Alan kişi için le kullan.", fa:"«lo» جای یک چیز را می‌گیرد. برای گیرنده le بگذار."},
+  les:{en:"\"les\" is for more than one person. \"Tu hermano\" is one person: le.", tr:"\"les\" birden fazla kişi içindir. \"Tu hermano\" tek kişi: le.", fa:"«les» برای بیش از یک نفر است. «tu hermano» یک نفر است: le."},
+  te:{en:"\"te\" goes with tú. \"A mí\" asks for me.", tr:"\"te\" tú ile kullanılır. \"A mí\" için me gerekir.", fa:"«te» با tú می‌آید. «a mí» به me نیاز دارد."},
+  se:{en:"\"se\" is used instead of le / les before lo, la (se lo doy). With \"a mí\" use me.", tr:"\"se\", lo, la'dan önce le / les yerine kullanılır (se lo doy). \"A mí\" ile me kullan.", fa:"«se» جای le / les قبل از lo، la می‌آید (se lo doy). با «a mí» از me استفاده کن."}
+ },
+ "g-A2-9":{
+  "vamos viajar":{en:"\"ir a\" needs the \"a\": vamos a viajar. Here the simple future is viajaremos.", tr:"\"ir a\" için \"a\" gerekir: vamos a viajar. Burada basit gelecek viajaremos.", fa:"«ir a» به «a» نیاز دارد: vamos a viajar. اینجا آینده ساده است: viajaremos."},
+  "viajábamos":{en:"\"viajábamos\" is the past. \"El próximo año\" is the future: viajaremos.", tr:"\"viajábamos\" geçmiştir. \"El próximo año\" gelecektir: viajaremos.", fa:"«viajábamos» گذشته است. «el próximo año» آینده است: viajaremos."},
+  "vas trabajar":{en:"\"ir a\" needs the \"a\": vas a trabajar. Here the simple future is trabajarás.", tr:"\"ir a\" için \"a\" gerekir: vas a trabajar. Burada basit gelecek trabajarás.", fa:"«ir a» به «a» نیاز دارد: vas a trabajar. اینجا آینده ساده است: trabajarás."},
+  trabajabas:{en:"\"trabajabas\" is the past. \"El próximo verano\" is the future: trabajarás.", tr:"\"trabajabas\" geçmiştir. \"El próximo verano\" gelecektir: trabajarás.", fa:"«trabajabas» گذشته است. «el próximo verano» آینده است: trabajarás."}
+ },
+ "g-A2-10":{
+  Cierras:{en:"\"cierras\" is a statement. A command to tú uses the él / ella form: cierra.", tr:"\"cierras\" bir bildirimdir. tú emri él / ella biçimini kullanır: cierra.", fa:"«cierras» جمله خبری است. امر با tú شکل él / ella را می‌گیرد: cierra."},
+  Cerrar:{en:"The infinitive is not the command for one friend. Use the él / ella form: cierra.", tr:"Mastar, tek bir arkadaşa verilen emir değildir. él / ella biçimini kullan: cierra.", fa:"مصدر امر برای یک دوست نیست. شکل él / ella را بگذار: cierra."},
+  Ordenas:{en:"\"ordenas\" is a statement. A command to tú uses the él / ella form: ordena.", tr:"\"ordenas\" bir bildirimdir. tú emri él / ella biçimini kullanır: ordena.", fa:"«ordenas» جمله خبری است. امر با tú شکل él / ella را می‌گیرد: ordena."},
+  Ordenar:{en:"The infinitive is not the command for one friend. Use the él / ella form: ordena.", tr:"Mastar, tek bir arkadaşa verilen emir değildir. él / ella biçimini kullan: ordena.", fa:"مصدر امر برای یک دوست نیست. شکل él / ella را بگذار: ordena."}
+ }
+};
+Object.keys(GRAMMAR_DISTRACTOR_WHY_A1A2).forEach(id=>{ const it = GRAMMAR_ITEMS.find(g=>g.id===id); if(it) it.distractorWhy = GRAMMAR_DISTRACTOR_WHY_A1A2[id]; });
 
 /* === VOCAB_SETS_PLACEHOLDER — content author inserts A1-C1 vocab + slang sets here === */
 const VOCAB_SETS = [
@@ -12360,7 +12481,8 @@ function grammarQuizQuestions(item){
   const pickLabel = L('Which sentence is correct?','Hangi cümle doğru?','کدام جمله درست است؟','¿Qué oración es correcta?');
   const fixLabel = L('Fix the mistake. Which sentence is right?','Hatayı düzelt. Hangi cümle doğru?','اشتباه را درست کن. کدام جمله درست است؟','Corrige el error. ¿Qué oración es correcta?');
   const norm = s => String(s||'').toLowerCase().replace(/\s+/g,' ').trim();
-  const dwText = (map, k) => { const d = map && map[k]; if(!d) return undefined; return typeof d === 'string' ? d : L(d.en, d.tr, d.fa, d.es); };
+  // X6 hint after a first miss: the blank's own distractorWhy, else the item-level map (same option strings in every blank).
+  const dwText = (map, k) => { const d = (map && map[k]) || (item.distractorWhy && item.distractorWhy[k]); if(!d) return undefined; return typeof d === 'string' ? d : L(d.en, d.tr, d.fa, d.es); };
   const mk = (prompt, right, wrongs, key, hintFor, tr) => {
     const opts = shuffle([right].concat(wrongs));
     const q = {prompt, options:opts, correct:opts.indexOf(right), why, key:norm(key), answerText:String(key)};

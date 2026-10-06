@@ -698,6 +698,15 @@
   .rm2-companion{position:absolute; top:-58px; inset-inline-start:calc(50% + 40px); padding:0; margin:0; border:none; background:none; cursor:pointer; z-index:6; filter:drop-shadow(0 8px 12px rgba(0,0,0,.25));}
   .rm2-companion img{display:block; object-fit:contain;}
   .rm2-companion.rm2-companion-end{position:relative; top:auto; inset-inline-start:auto;}
+  /* Gamification v3 build 2 (M5 step 1): the companion carries the journal cover and its level pins */
+  .rm2-companion{overflow:visible;}
+  .cmp-cover{position:absolute; bottom:2px; inset-inline-end:-6px; width:20px; height:26px; border-radius:3px 5px 5px 3px; box-shadow:var(--clay-shadow-soft); border-inline-start:3px solid rgba(0,0,0,.18); box-sizing:border-box;}
+  .cmp-pins{position:absolute; top:-4px; inset-inline-start:-6px; display:flex; flex-direction:column; gap:2px;}
+  .cmp-pin{width:18px; height:18px; border-radius:50%; background:var(--cat-review); box-shadow:var(--clay-shadow-soft); color:#3b2f63; font-size:7.5px; font-weight:900; display:flex; align-items:center; justify-content:center;}
+  .cmp-pin-row{display:flex; gap:6px; justify-content:center; flex-wrap:wrap; margin-top:8px;}
+  .cmp-pin-row .cmp-pin{width:26px; height:26px; font-size:10px;}
+  .cmp-cover-tag{display:inline-flex; align-items:center; gap:8px; margin-top:10px; padding:6px 12px 6px 8px; border-radius:999px; background:rgba(255,255,255,.22); font-size:12px; font-weight:700; color:#fff;}
+  .cmp-cover-tag .cmp-cover{position:static; width:14px; height:18px;}
   .rm2-endcap-row{display:flex; align-items:flex-end; justify-content:center; gap:2px;}
   .rm2-goal-wrap{position:relative; display:inline-block;}
   .rm2-head-count{display:flex; align-items:center; gap:10px; flex:0 0 auto;}
@@ -4623,7 +4632,16 @@ const BADGES = [
   // perfect round (zero mistakes / 100% avg match / 8-for-8) — see
   // scoreGameCompletion() which increments perfectGameRounds.
   {id:'flawless-5', icon:'bolt', title:{en:'Flawless Five', tr:'Kusursuz Beşli', es:'Cinco perfectos'}, desc:{en:'Finish 5 game rounds with a perfect score.', tr:'5 oyun turunu kusursuz bitir.', es:'Termina 5 rondas de juego con puntuación perfecta.'},
-   check:(st)=> (st.progress.perfectGameRounds||0) >= 5}
+   check:(st)=> (st.progress.perfectGameRounds||0) >= 5},
+  // Gamification v3 build 2 (approved 2026-10-04): souvenirs Kept, a page Kept, weeks in rhythm. No comeback badge.
+  {id:'kept-10', icon:'star', title:{en:'Keeper of Ten', tr:'On Hatıranın Bekçisi', fa:'نگهبان ده یادگاری', es:'Guardián de diez'}, desc:{en:'Keep 10 souvenirs for good (box 4 in review).', tr:'10 hatırayı kalıcı yap (tekrarda 4. kutu).', fa:'۱۰ یادگاری را برای همیشه ماندگار کن (جعبه ۴ مرور).', es:'Guarda 10 recuerdos para siempre (caja 4 del repaso).'},
+   check:(st)=>{ const srs = st.progress.srs || {}; return Object.keys(srs).filter(id=>srs[id] && (srs[id].hi||0) >= 4 && srsSource(id, srs[id].kind)).length >= 10; }},
+  {id:'page-kept', icon:'book', title:{en:'A Page for Good', tr:'Kalıcı Bir Sayfa', fa:'یک صفحه برای همیشه', es:'Una página para siempre'}, desc:{en:'Every souvenir on one journal page is Kept.', tr:'Bir günlük sayfasındaki her hatıra kalıcı.', fa:'هر یادگاری یک صفحه از دفتر ماندگار شد.', es:'Todos los recuerdos de una página del diario están guardados.'},
+   check:(st)=> ((st.progress.journal && st.progress.journal.pagesKept) || []).length >= 1},
+  {id:'rhythm-4', icon:'repeat', title:{en:'Four Weeks in Rhythm', tr:'Ritimde Dört Hafta', fa:'چهار هفته در ریتم', es:'Cuatro semanas con ritmo'}, desc:{en:'Meet your weekly goal 4 weeks in a row.', tr:'Haftalık hedefini üst üste 4 hafta tuttur.', fa:'۴ هفته پشت سر هم به هدف هفتگی‌ات برس.', es:'Cumple tu meta semanal 4 semanas seguidas.'},
+   check:(st)=> Math.max(st.progress.bestRhythm||0, st.progress.rhythmWeeks||0) >= 4},
+  {id:'rhythm-12', icon:'repeat', title:{en:'A Season in Rhythm', tr:'Ritimde Bir Mevsim', fa:'یک فصل در ریتم', es:'Una temporada con ritmo'}, desc:{en:'Meet your weekly goal 12 weeks in a row.', tr:'Haftalık hedefini üst üste 12 hafta tuttur.', fa:'۱۲ هفته پشت سر هم به هدف هفتگی‌ات برس.', es:'Cumple tu meta semanal 12 semanas seguidas.'},
+   check:(st)=> Math.max(st.progress.bestRhythm||0, st.progress.rhythmWeeks||0) >= 12}
 ];
 function badgeColor(id){
   if(id.indexOf('grammar')===0) return {bg:'var(--cat-gram)'};
@@ -4635,6 +4653,8 @@ function badgeColor(id){
   if(id.indexOf('writer')===0) return {bg:'var(--clay-orange)'};
   if(id.indexOf('speaker')===0) return {bg:'var(--clay-sky)'};
   if(id.indexOf('game')===0) return {bg:'var(--cat-review)'};
+  if(id.indexOf('kept')===0 || id==='page-kept') return {bg:'var(--clay-lavender)'};
+  if(id.indexOf('rhythm')===0) return {bg:'var(--clay-sage)'};
   return {bg:'var(--cat-review)'};
 }
 /* Roadmap 2.0 Phase 4 (ported from the English app): the single badge-unlock
@@ -7733,6 +7753,7 @@ function profileHeaderCard(p){
     <span class="sparkle" style="top:90px; left:16px; width:5px; height:5px; animation-delay:1s;"></span>
     <span class="sparkle" style="bottom:14px; right:20px; left:auto; width:5px; height:5px; animation-delay:1.5s;"></span>
     <img src="char-${charKey}.png" alt="" class="character-portrait" loading="lazy">
+    ${typeof companionPinRowHtml === 'function' ? companionPinRowHtml() : ''}
     <div class="eyebrow" style="color:rgba(255,255,255,.8);"><bdi>${esc(p.name)}</bdi></div>
     <h1 class="display" style="font-size:23px; margin-top:4px; color:#fff;">${esc(L(arch.name.en,arch.name.tr,arch.name.fa, arch.name.es))}</h1>
     <p style="margin-top:10px; color:rgba(255,255,255,.92); font-size:14px; line-height:1.5;">${esc(L(blurb.en,blurb.tr,blurb.fa, blurb.es))}</p>
@@ -7990,8 +8011,28 @@ function renderDashboard(){
    ui.advanceFrom is transient (never saved): it is worked out by comparing the
    current index with the one this roadmap showed last time it was drawn. */
 const ui = {advanceFrom:null, rmLast:null, holdAdvance:false};
+/* Gamification v3 build 2 (M5 step 1, no new art): the companion carries the current
+   journal cover (M2) and collects a pin for every finished level page (v2 pins). */
+function companionLevelPins(){ return finishedJournalLevels(); }
+function companionPinsHtml(max){
+  const pins = companionLevelPins();
+  if(!pins.length) return '';
+  const shown = pins.slice(-(max || 3));
+  return `<span class="cmp-pins" aria-hidden="true">${shown.map(lv=>`<span class="cmp-pin">${esc(lv)}</span>`).join('')}</span>`;
+}
+function companionCoverHtml(){
+  if(!(state.progress.souvenirs||[]).length) return '';
+  return `<span class="cmp-cover" style="${journalCoverStyle()}" aria-hidden="true"></span>`;
+}
+function companionPinRowHtml(){
+  const pins = companionLevelPins();
+  const cover = journalCoverKey();
+  const coverName = cover === 'foil' ? L('Foil cover','Yaldızlı kapak','جلد فویلی','Tapa de lámina') : (cover === 'plain' ? L('First cover','İlk kapak','جلد اول','Primera tapa') : L('New cover','Yeni kapak','جلد جدید','Tapa nueva'));
+  return (pins.length ? `<div class="cmp-pin-row">${pins.map(lv=>`<span class="cmp-pin">${esc(lv)}</span>`).join('')}</div>` : '')
+    + ((state.progress.souvenirs||[]).length ? `<span class="cmp-cover-tag"><span class="cmp-cover" style="${journalCoverStyle()}"></span>${esc(journalName())} · ${esc(coverName)}</span>` : '');
+}
 function roadmapCompanionHtml(size, extraCls){
-  return `<button class="rm2-companion ${extraCls||''}" data-action="nav" data-view="journal" aria-label="${esc(journalName())}" style="width:${size}px; height:${size}px;"><img src="char-${learnerCharKey()}.png" alt="" class="roadmap-char-portrait" style="width:${size}px; height:${size}px;"></button>`;
+  return `<button class="rm2-companion ${extraCls||''}" data-action="nav" data-view="journal" aria-label="${esc(journalName())}" style="width:${size}px; height:${size}px;"><img src="char-${learnerCharKey()}.png" alt="" class="roadmap-char-portrait" style="width:${size}px; height:${size}px;">${companionCoverHtml()}${companionPinsHtml(3)}</button>`;
 }
 // Called from renderRoadmapCard: decides whether this draw is a "return after a node".
 function roadmapAdvanceFrom(currentIndex){
@@ -8292,7 +8333,7 @@ function journalCoverHtml(){
     kept ? L(`${kept} kept`, `${kept} kalıcı`, `${kept} ماندگار`, `${kept} guardado${kept===1?'':'s'}`) : ''].filter(Boolean).join(' · ');
   return `<div class="jr-cover" style="${journalCoverStyle()}">
     <img src="char-${learnerCharKey()}.png" alt="" class="jr-cover-char">
-    <div><div class="jr-cover-name">${esc(archShortName())} ${esc(journalName())}</div><div class="jr-cover-line">${esc(line)}</div></div>
+    <div><div class="jr-cover-name">${esc(archShortName())} ${esc(journalName())}</div><div class="jr-cover-line">${esc(line)}</div>${companionLevelPins().length ? `<div class="cmp-pin-row" style="justify-content:flex-start;">${companionLevelPins().map(lv=>`<span class="cmp-pin">${esc(lv)}</span>`).join('')}</div>` : ''}</div>
   </div>`;
 }
 function journalShelfHtml(open){

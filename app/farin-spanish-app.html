@@ -9127,6 +9127,13 @@ const PRACTICE_TOPICS = {
     ]
   }
 };
+/* Teaching redesign phase 1, item 8 (B6): writing and speaking practise what the learner just
+   studied. stageDoneIds() = the ids of this roadmap's nodes of a kind that are completed,
+   newest first (order of completion). */
+function stageDoneIds(nodeType, completedIds){
+  const inRoadmap = currentRoadmap().filter(n=>n.type === nodeType).map(n=>n.refId);
+  return (completedIds || []).slice().reverse().filter((id, i, a)=>inRoadmap.includes(id) && a.indexOf(id) === i);
+}
 /* goal is one goal key, or 'all' to draw on every goal the learner chose. */
 function buildPracticeRound(goal, level, difficulty){
   const goalKeys = goal==='all' ? profileGoalKeys(state.profile) : [goal];
@@ -9139,7 +9146,15 @@ function buildPracticeRound(goal, level, difficulty){
   const vSets = vTagged.length ? vTagged : vPoolAll;
   const slSets = slTagged.length ? slTagged : slPoolAll;
   const flattenCards = sets => sets.reduce((acc,s)=>acc.concat(s.cards), []);
-  const vCards = flattenCards(vSets);
+  // Words: from the vocab sets completed on this stage's roadmap, newest set first (a second set
+  // is added until there are about 6 cards to choose from). No completed set yet: the level pool.
+  const stageSets = stageDoneIds('vocab', state.progress.completedVocabSets).map(id=>VOCAB_SETS.find(x=>x.id===id)).filter(x=>x && x.category === 'vocab');
+  let vCards = flattenCards(vSets);
+  if(stageSets.length){
+    const pool = [];
+    for(const st of stageSets){ st.cards.forEach(c=>pool.push(c)); if(pool.length >= 6) break; }
+    if(pool.length) vCards = pool;
+  }
   const slCards = flattenCards(slSets);
   const pick = (arr, n) => {
     const pool = arr.slice(), out = [];
@@ -9157,7 +9172,9 @@ function buildPracticeRound(goal, level, difficulty){
   if(difficulty !== 'easy' && gPoolAll.length){
     const withVariant = gPoolAll.filter(g=>g.goalVariant && goalKeys.some(gk=>g.goalVariant[gk]));
     const gSource = withVariant.length ? withVariant : gPoolAll;
-    const gItem = gSource[Math.floor(Math.random()*gSource.length)];
+    // Grammar: the item completed most recently on this roadmap, else a random one of the level.
+    const lastG = stageDoneIds('grammar', state.progress.completedTraps).map(id=>gPoolAll.find(x=>x.id===id)).find(Boolean);
+    const gItem = lastG || gSource[Math.floor(Math.random()*gSource.length)];
     grammar = {title: grammarTitle(gItem), markerWord: gItem.blank.word, exp: L(gItem.exp.en, gItem.exp.tr, gItem.exp.fa, gItem.exp.es)};
   }
   let slang = null;
@@ -9304,9 +9321,9 @@ function practiceFeedback(result, round){
   if(round.grammar){
     if(result.grammarSpotted){
       lines.push({ok:true, text: L(
-        `Nice — you used "${round.grammar.title}".`,
-        `Harika — "${round.grammar.title}" yapısını kullandın.`,
-        `عالی — از «${round.grammar.title}» استفاده کردی.`, `Bien — usaste "${round.grammar.title}".`
+        `Try using "${round.grammar.title}" in a full sentence. Check that it follows the rule.`,
+        `"${round.grammar.title}" yapısını tam bir cümlede kullanmayı dene. Kurala uyduğundan emin ol.`,
+        `سعی کن از «${round.grammar.title}» در یک جمله کامل استفاده کنی. مطمئن شو با قاعده می‌خواند.`, `Intenta usar "${round.grammar.title}" en una frase completa. Comprueba que sigue la regla.`
       )});
     } else {
       lines.push({ok:false, text: L(

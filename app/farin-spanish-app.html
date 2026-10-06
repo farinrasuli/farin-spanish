@@ -4580,7 +4580,7 @@ function freshState(){
   return {
     view:'diagnostic-intro', viewParams:{}, lang:'tr',
     profile:{name:'', motivationTag:null, goals:[], archetype:null, level:null, levelStage:1, topics:[], learnerType:null, priorityArea:null, completedDiagnostic:false, dashboardIntroShown:false, recoveryCode:null, wantsContact:false, contactPhone:''},
-    progress:{sessionsExplored:0, streak:0, lastActiveDate:null, completedTraps:[], completedVocabSets:[], completedScenes:[], completedStories:[], completedGames:[], srs:{}, badgesEarnedAt:{}, reviewsCompleted:0, roadmapChecked:{}, dailyTasksDate:null, dailyTasksChecked:{}, writingRoundsDone:0, speakingRoundsDone:0, usedSpeakingTopics:[], xp:0, perfectGameRounds:0, souvenirs:[], gameBests:{}, roadmapGolden:null, lastWords:{}, mediaWatched:[]},
+    progress:{sessionsExplored:0, streak:0, lastActiveDate:null, completedTraps:[], completedVocabSets:[], completedScenes:[], completedStories:[], completedGames:[], srs:{}, badgesEarnedAt:{}, reviewsCompleted:0, roadmapChecked:{}, dailyTasksDate:null, dailyTasksChecked:{}, writingRoundsDone:0, speakingRoundsDone:0, usedSpeakingTopics:[], xp:0, perfectGameRounds:0, souvenirs:[], gameBests:{}, roadmapGolden:null, lastWords:{}, mediaWatched:[], nodeScores:{}},
     diag:{step:0, goals:[], level:null, topics:[], learnerType:null, priorityArea:null, test:null},
     roadmap:null,
     quiz:null, studentPanelCache:null
@@ -4623,6 +4623,7 @@ function load(){
     if(merged.progress.roadmapGolden===undefined) merged.progress.roadmapGolden = null;
     if(!merged.progress.lastWords) merged.progress.lastWords = {};
     if(!Array.isArray(merged.progress.mediaWatched)) merged.progress.mediaWatched = [];
+    if(!merged.progress.nodeScores || typeof merged.progress.nodeScores !== 'object') merged.progress.nodeScores = {};
     if(merged.profile.levelStage===undefined) merged.profile.levelStage = 1;
     if(!merged.progress.dailyTasksChecked) merged.progress.dailyTasksChecked = {};
     if(merged.progress.dailyTasksDate===undefined) merged.progress.dailyTasksDate = null;
@@ -7078,7 +7079,7 @@ function backToRoadmap(){
 function maybeCelebrate(){
   const v = state.view, vp = state.viewParams || {};
   let target = null, kind = null, detail = '', low = false;
-  if(v==='quiz' && state.quiz && state.quiz.index >= state.quiz.questions.length){
+  if(v==='quiz' && state.quiz && state.quiz.index >= state.quiz.questions.length && !state.quiz.retryOffered){
     target = state.quiz; kind = state.quiz.kind; detail = state.quiz.correct+' / '+state.quiz.questions.length+' '+L('correct','doğru','درست','correctas');
     low = state.quiz.correct/state.quiz.questions.length < .5;
   } else if(v==='game-match' && vp.round && vp.round.matchedKeys && vp.round.matchedKeys.length === vp.round.pairCount){
@@ -10845,11 +10846,51 @@ function questionTimeLimit(item){ return item.options.length <= 2 ? 15 : 20; }
 // (grammar, vocab, story) and review have no countdown; only games keep a timer.
 const QUIZ_UNTIMED_KINDS = ['grammar','vocab','story','review'];
 function quizTimed(kind){ return !QUIZ_UNTIMED_KINDS.includes(kind); }
-function startQuiz(kind, contextId, questions, backView, backParams){
+/* Teaching redesign phase 1, X1 completion rule (B2). A grammar / vocab / story node is
+   done when its quiz scores 60% or more on FIRST attempts. Under 60% the learner gets one
+   "Practise again" round (their misses plus fresh questions). After that second round the
+   node is done whatever the score, marked weak:true, and its item goes into review at box 0,
+   due tomorrow. progress.nodeScores[type:refId] = {first, tries, weak}. */
+const LESSON_PASS = 0.6;
+const LESSON_KINDS = ['grammar','vocab','story'];
+function lessonQuizQuestions(kind, id, goal){
+  if(kind === 'grammar'){
+    const t = GRAMMAR_ITEMS.find(x=>x.id===id); if(!t) return [];
+    const variant = goal && t.goalVariant && t.goalVariant[goal];
+    return grammarQuizQuestions(variant ? Object.assign({}, t, variant) : t);
+  }
+  if(kind === 'vocab'){ const v = VOCAB_SETS.find(x=>x.id===id); return v ? vocabQuizQuestions(v) : []; }
+  if(kind === 'story'){ const st = STORY_LIBRARY.find(x=>x.id===id); return st ? storyQuizQuestions(st) : []; }
+  return [];
+}
+function nodeScoreKey(kind, id){
+  const set = kind === 'vocab' ? VOCAB_SETS.find(x=>x.id===id) : null;
+  return ((set && set.category === 'slang') ? 'slang' : kind) + ':' + id;
+}
+// Called when a lesson quiz has been answered to the end. Sets q.retryOffered (not done yet)
+// or marks the node done.
+function completeLessonQuiz(q){
+  const pr = state.progress;
+  if(!pr.nodeScores) pr.nodeScores = {};
+  const total = q.questions.length || 1, pct = q.correct/total, round = q.round || 1;
+  const lesson = LESSON_KINDS.includes(q.kind);
+  if(lesson && round === 1 && pct < LESSON_PASS){ q.retryOffered = true; q.firstPct = pct; return; }
+  const first = round === 1 ? pct : (q.firstPct != null ? q.firstPct : pct);
+  const weak = lesson && round >= 2;
+  const arr = progressArrForKind(q.kind);
+  if(!arr.includes(q.contextId)) arr.push(q.contextId);
+  if(lesson) pr.nodeScores[nodeScoreKey(q.kind, q.contextId)] = {first:Math.round(first*100)/100, tries:round, weak};
+  updateSRS(q.contextId, q.kind, first);
+  if(weak){ const e = pr.srs[q.contextId]; if(e) srsSetBox(e, 0, 1); }
+  q.retryOffered = false; q.weak = weak;
+  if(q.kind === 'vocab') notePlayed(q.contextId);
+}
+function startQuiz(kind, contextId, questions, backView, backParams, extra){
   questions.forEach(qq=>{ if(qq.itemId===undefined){ qq.itemId = contextId; qq.kind = kind; } });
   const timeLimit = questionTimeLimit(questions[0]);
   gcBubble = null;
   state.quiz = {kind, contextId, questions, index:0, correct:0, streak:0, answered:false, selected:null, results:[], backView, backParams: backParams || {}, timeLimit, deadline: quizTimed(kind) ? Date.now()+timeLimit*1000 : null, lastTickSecond:null};
+  if(extra) Object.assign(state.quiz, extra);
   go('quiz');
 }
 function handleQuizTimeout(){
@@ -10946,6 +10987,7 @@ function renderQuiz(){
       <span class="game-status-text">${L(`Question ${a} of ${b}`, `Soru ${a}/${b}`, `سوال ${a} از ${b}`, `Pregunta ${a} de ${b}`)}</span>
       <span class="game-status-end">${quizStreakChip(q)}</span>
     </div>
+    ${q.round === 2 ? `<p class="game-hint" style="margin:0;">${L('Practise again','Tekrar çalış','دوباره تمرین کن','Practicar otra vez')}</p>` : ''}
     <div class="game-card${longOpts ? ' tight' : ''}">
       ${quizPromptHtml(item, q)}
     </div>
@@ -11025,6 +11067,11 @@ function renderQuizResults(){
       <p class="game-result-line" style="margin-bottom:6px;">${resultLead(pct)} ${kindLabel.toLowerCase()}.</p>
       ${renderBadgeUnlockCard(justEarned)}
 
+      ${q.retryOffered ? `<div class="game-card tight" style="margin-top:14px; text-align:center;">
+        <div class="game-result-title" style="font-size:20px;">${L('Almost there. One more go?','Neredeyse oldu. Bir tur daha?','نزدیک بود. یک دور دیگر؟','Casi. ¿Otra vuelta?')}</div>
+        <p class="game-result-line">${L('Practise again with the ones you missed plus a few new ones. Then this step is done.','Kaçırdıklarınla birkaç yeni soruyla tekrar çalış. Sonra bu adım tamamlanır.','دوباره با سوال‌هایی که اشتباه کردی و چند سوال تازه تمرین کن. بعد این قدم تمام می‌شود.','Practica otra vez con los que fallaste y algunos nuevos. Después este paso queda hecho.')}</p>
+        <button class="btn btn-primary game-cta" data-action="quiz-retry">${L('Practise again','Tekrar çalış','دوباره تمرین کن','Practicar otra vez')}</button>
+      </div>` : (q.weak ? `<p class="game-result-line" style="margin-top:8px;">${L('Done. This one will come back in your review tomorrow.','Tamam. Bu yarın tekrarında geri gelecek.','تمام شد. این فردا در مرورت برمی‌گردد.','Hecho. Este volverá en tu repaso de mañana.')}</p>` : '')}
       ${q.kind==='review' ? renderReviewBreakdown(q) : ''}
 
       <div class="whatsapp-card" style="margin-top:22px; text-align:start;">
@@ -12415,7 +12462,7 @@ const HANDLERS = {
     const effective = variant ? Object.assign({}, t, variant) : t;
     const backView = goal ? 'goal-level-detail' : 'grammar-list';
     const backParams = goal ? {goal, level: state.viewParams.level, tab:'grammar'} : {level: state.viewParams.level};
-    startQuiz('grammar', t.id, grammarQuizQuestions(effective), backView, backParams);
+    startQuiz('grammar', t.id, grammarQuizQuestions(effective), backView, backParams, {goal: variant ? goal : null});
   },
   'start-vocab-quiz'(el){
     const s = VOCAB_SETS.find(x=>x.id===el.dataset.id);
@@ -12494,6 +12541,20 @@ const HANDLERS = {
     { const it = q.questions[q.index]; const word = it.options[it.correct]; const pt = tapPoint(e); const streak = q.streak; queueFx(()=>fxQuizAnswer(i, pt, isCorrect, streak, word)); }
     save(); render();
   },
+  // X1: one "Practise again" round — the misses (options reshuffled) plus fresh questions.
+  'quiz-retry'(){
+    const q = state.quiz;
+    if(!q || !q.retryOffered || !q.contextId) return;
+    const misses = q.questions.filter((_,i)=>!q.results[i]).map(m=>{
+      const order = shuffle(m.options.map((_, i)=>i));
+      return Object.assign({}, m, {options:order.map(i=>m.options[i]), correct:order.indexOf(m.correct)});
+    });
+    const seen = new Set(misses.map(m=>m.prompt));
+    const fresh = shuffle(lessonQuizQuestions(q.kind, q.contextId, q.goal).filter(x=>!seen.has(x.prompt)));
+    const qs = misses.concat(fresh).slice(0, q.questions.length);
+    startQuiz(q.kind, q.contextId, qs, q.backView, q.backParams, {round:2, firstPct:q.firstPct, goal:q.goal});
+    window.scrollTo(0,0);
+  },
   'quiz-next'(){
     const q = state.quiz;
     q.index++; q.answered = false; q.selected = null;
@@ -12504,15 +12565,7 @@ const HANDLERS = {
     }
     if(q.index >= q.questions.length){
       if(q.contextId){
-        const arr = progressArrForKind(q.kind);
-        // Gamification (4bDl1BS3, ported from the English app): +10 XP for a
-        // regular node's first-ever completion — awarded exactly when the id
-        // newly enters this dedup'd array, so a later requeue through the
-        // review flow (same item, already completed) doesn't re-earn it.
-        // Gamification v3 (M7): XP is retired — the +10 described above is no longer added.
-        if(!arr.includes(q.contextId)) arr.push(q.contextId);
-        updateSRS(q.contextId, q.kind, q.correct/q.questions.length);
-        if(q.kind === 'vocab') notePlayed(q.contextId);
+        completeLessonQuiz(q);
       } else {
         const byItem = {};
         q.questions.forEach((qq,idx)=>{

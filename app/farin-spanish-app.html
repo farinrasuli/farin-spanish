@@ -6279,8 +6279,11 @@ function buildRoadmap(profile){
   // selection is level-only for now — prefers a story the student hasn't read,
   // falls back to a completed one if every story at this level is done.
   const storyPoolAll = STORY_LIBRARY.filter(s=>s.level===profile.level);
+  // Teaching redesign phase 1, item 9 (B7): the learner's favourite topics come first, then
+  // unread before read (sortStoriesByTopic is stable, so level order is kept inside each group).
+  const storySorted = sortStoriesByTopic(storyPoolAll, profile.topics || []);
   const storyPick = storyPoolAll.length
-    ? (storyPoolAll.find(s=>!(state.progress && state.progress.completedStories && state.progress.completedStories.includes(s.id))) || storyPoolAll[0])
+    ? (storySorted.find(s=>!(state.progress && state.progress.completedStories && state.progress.completedStories.includes(s.id))) || storySorted[0])
     : null;
   // "Watch or listen" goes right after the story (see pickRoadmapMedia()).
   const mediaPick = pickRoadmapMedia(profile, stage);

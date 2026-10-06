@@ -6553,17 +6553,22 @@ function roadmapNodeId(item){ return item.type+':'+item.refId+(item.occ?('#'+ite
    kinds, cycling per level+stage instead (0=match,1=dictation,2=trap, then
    wraps) means across a full course (5 levels x 2 stages = 10 slots) a
    student meets all 3 kinds repeatedly and evenly. */
-/* Gamification v3 build 1 (approved 2026-10-03): four game slots per level,
-   [stage 1 mid, stage 1 end, stage 2 mid, stage 2 end]. Interim table — Story
-   Hunt and Say It Back replace it with the LXD table in build 2. Trap Dash only
-   from B1 (timed), Listen & Type from A2. New roadmaps only: existing game nodes
-   keep their kind and refId. */
+/* Gamification v3 build 2 (approved 2026-10-04): the LXD four-slot table,
+   [stage 1 mid, stage 1 end, stage 2 mid, stage 2 end]. Rules: recognition
+   before production within a level; Say It Back at A2-B2 only; Trap Dash from
+   B1 (timed); Listen & Type from A2. Story Hunt slots are end-of-stage slots and
+   the node is placed directly after the story node (see pushGame). Fallbacks:
+   Build It -> Trap Dash (B1+) or Word Rush with fewer than 4 taught sentences;
+   Bingo needs 9 words and Listen & Type / Say It Back 3 sentences, else Word
+   Rush; Story Hunt with no huntable story -> Word Rush; Say It Back never falls
+   back for missing speech recognition (shadow mode). New roadmaps only:
+   existing game nodes keep their kind and refId. */
 const GAME_ROTATION = {
-  A1:['match','bingo','build','match'],
-  A2:['build','bingo','dictation','match'],
-  B1:['trap','bingo','build','dictation'],
-  B2:['build','dictation','bingo','trap'],
-  C1:['trap','bingo','build','dictation']
+  A1:['match','hunt','build','bingo'],
+  A2:['build','echo','dictation','hunt'],
+  B1:['trap','hunt','build','echo'],
+  B2:['build','hunt','bingo','echo'],
+  C1:['trap','hunt','build','dictation']
 };
 function gameKindForSlot(level, stage, mid){
   const r = GAME_ROTATION[level] || GAME_ROTATION.A1;

@@ -1149,17 +1149,23 @@ const GOALS_META = {
 };
 const GOAL_ORDER = ['career','travel','exam','immigration','everyday'];
 const LEVEL_OPTIONS = [
-  {value:'A1', label:{en:"I know a few words and phrases", tr:"Birkaç kelime ve kalıp biliyorum", fa:"چند کلمه و عبارت بلدم", es:"Sé algunas palabras y frases"},
-   sub:{en:"I can say hello and my name, not much more.", tr:"Merhaba diyip adımı söyleyebiliyorum, fazlası değil.", fa:"می‌توانم سلام کنم و اسمم را بگویم، نه بیشتر.", es:"Puedo saludar y decir mi nombre, poco más."}},
-  {value:'A2', label:{en:"I can handle simple everyday situations", tr:"Basit günlük durumların üstesinden gelebiliyorum", fa:"از پس موقعیت‌های ساده روزمره برمی‌آیم", es:"Me defiendo en situaciones sencillas de cada día"},
-   sub:{en:"Order food, ask the way, talk about my family.", tr:"Yemek sipariş etmek, yol sormak, ailemden bahsetmek.", fa:"غذا سفارش بدهم، آدرس بپرسم، درباره خانواده‌ام بگویم.", es:"Pedir comida, preguntar el camino, hablar de mi familia."}},
-  {value:'B1', label:{en:"I can talk about familiar topics and my experiences", tr:"Bildiğim konular ve deneyimlerim hakkında konuşabiliyorum", fa:"می‌توانم درباره موضوعات آشنا و تجربه‌هایم صحبت کنم", es:"Puedo hablar de temas conocidos y de mis experiencias"},
-   sub:{en:"I get by when I travel, but I make mistakes and search for words.", tr:"Seyahatte idare ediyorum ama hata yapıyor, kelime arıyorum.", fa:"در سفر از پسش برمی‌آیم، ولی اشتباه می‌کنم و دنبال کلمه می‌گردم.", es:"Me las arreglo al viajar, pero cometo errores y busco palabras."}},
-  {value:'B2', label:{en:"I can discuss most topics comfortably", tr:"Çoğu konuyu rahatça tartışabiliyorum", fa:"می‌توانم راحت درباره بیشتر موضوعات بحث کنم", es:"Puedo hablar con comodidad de casi cualquier tema"},
+  {value:"A1", label:{en:"I know a few words and phrases", tr:"Birkaç kelime ve kalıp biliyorum", fa:"چند کلمه و عبارت بلدم", es:"Sé algunas palabras y frases"},
+   sub:{en:"I can say hello and my name, not much more.", tr:"Merhaba diyebilir ve adımı söyleyebilirim, daha fazlasını değil.", fa:"می‌توانم سلام کنم و اسمم را بگویم، نه بیشتر.", es:"Sé saludar y decir mi nombre, poco más."}},
+  {value:"A2", label:{en:"I can handle simple everyday situations", tr:"Basit günlük durumların üstesinden gelebiliyorum", fa:"از پس موقعیت‌های ساده روزمره برمی‌آیم", es:"Me defiendo en situaciones sencillas de cada día"},
+   sub:{en:"Order food, ask the way, talk about my family.", tr:"Yemek sipariş etmek, yol sormak, ailemden bahsetmek.", fa:"غذا سفارش بدهم، آدرس بپرسم، درباره خانواده‌ام بگویم.", es:"Pedir comida, preguntar una dirección, hablar de mi familia."}},
+  {value:"B1", label:{en:"I can talk about familiar topics and my experiences", tr:"Bildiğim konular ve deneyimlerim hakkında konuşabiliyorum", fa:"می‌توانم درباره موضوعات آشنا و تجربه‌هایم صحبت کنم", es:"Puedo hablar de temas conocidos y de mis experiencias"},
+   sub:{en:"I get by when I travel, but I make mistakes and search for words.", tr:"Seyahatte idare ediyorum ama hata yapıyor, kelime arıyorum.", fa:"در سفر از پسش برمی‌آیم، ولی اشتباه می‌کنم و دنبال کلمه می‌گردم.", es:"Me defiendo cuando viajo, pero cometo errores y busco palabras."}},
+  {value:"B2", label:{en:"I can discuss most topics comfortably", tr:"Çoğu konuyu rahatça tartışabiliyorum", fa:"می‌توانم راحت درباره بیشتر موضوعات بحث کنم", es:"Puedo hablar de casi todo con comodidad"},
    sub:{en:"I can explain my opinion and follow films with subtitles.", tr:"Fikrimi açıklayabiliyor, altyazılı filmleri takip edebiliyorum.", fa:"می‌توانم نظرم را توضیح بدهم و فیلم را با زیرنویس دنبال کنم.", es:"Puedo explicar mi opinión y seguir películas con subtítulos."}},
-  {value:'C1', label:{en:"I'm fluent but want to sound more natural", tr:"Akıcıyım ama daha doğal konuşmak istiyorum", fa:"روان صحبت می‌کنم ولی می‌خواهم طبیعی‌تر باشم", es:"Hablo con fluidez, pero quiero sonar más natural"},
-   sub:{en:"I want nuance, idioms and a professional tone.", tr:"İnce farklar, deyimler ve profesyonel bir ton istiyorum.", fa:"ظرافت، اصطلاحات و لحن حرفه‌ای می‌خواهم.", es:"Quiero matices, modismos y un tono profesional."}}
+  {value:"C1", label:{en:"I'm fluent but want to sound more natural", tr:"Akıcıyım ama daha doğal konuşmak istiyorum", fa:"روان صحبت می‌کنم ولی می‌خواهم طبیعی‌تر باشم", es:"Hablo con fluidez, pero quiero sonar más natural"},
+   sub:{en:"I want nuance, idioms and a professional tone.", tr:"İnce farklar, deyimler ve profesyonel bir ton istiyorum.", fa:"ظرافت، اصطلاحات و لحن حرفه‌ای می‌خواهم.", es:"Quiero matices, expresiones y un tono profesional."}}
 ];
+/* S1 calibration offer, bubble lines (farin-lxd, Claude/specs/lxd-phase1-content/level-options.js). Data only for now: the offer itself
+   (after the first 3 Try beats of a new roadmap, 90%+ -> up, 35%- -> one stage earlier, one offer per roadmap) is a follow-up. */
+const CALIBRATION = {
+ up:{en:"These were easy for you. Want to jump up a level?", tr:"Bunlar sana kolay geldi. Bir seviye yukarı çıkmak ister misin?", fa:"این‌ها برایت آسان بود. می‌خواهی یک سطح بالاتر بروی؟", es:"Esto te ha resultado fácil. ¿Quieres subir un nivel?"},
+ down:{en:"Let's make this feel right. Start one stage earlier?", tr:"Hadi bunu sana uygun hale getirelim. Bir aşama önceden başlayalım mı?", fa:"بیا مناسبش کنیم. از یک مرحله قبل‌تر شروع کنیم؟", es:"Vamos a ajustarlo. ¿Empezamos una etapa antes?"}
+};
 const LEARNER_OPTIONS = [
   {value:'analyst', icon:'search', label:{en:'Seeing the rule explained clearly', tr:'Kuralın açıkça anlatılmasını görmek', fa:'دیدن قانون با توضیح واضح', es:'Ver la regla explicada con claridad'},
    blurb:{en:'You learn best with clear explanations — every round comes with the "why" behind it.', tr:'En iyi net açıklamalarla öğrenirsin — her turda "neden"ini de göreceksin.', fa:'با توضیح‌های واضح بهتر یاد می‌گیری — هر تمرین با «چرایی»‌اش همراه است.', es:'Aprendes mejor con explicaciones claras — cada ronda viene con el "por qué" detrás.'}},

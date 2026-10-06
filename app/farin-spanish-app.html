@@ -277,6 +277,18 @@
   .game-tile.stamp.line::after{content:''; position:absolute; top:-60%; left:-60%; width:35%; height:220%; background:linear-gradient(120deg, transparent, rgba(255,255,255,.75), transparent); transform:rotate(22deg); animation:badge-shine-sweep 2.2s ease-in-out infinite; pointer-events:none;}
   .game-tile.pulse{animation:build-ear-pulse 1s ease-in-out infinite; border-color:var(--cat-voc);}
   .bingo-clue{margin-top:12px;}
+  /* Gamification v3 build 2: Story Hunt */
+  .hunt-card{text-align:start;}
+  .hunt-text{font-size:16px; line-height:1.75; color:var(--ink);}
+  .hunt-text p{margin:0 0 10px;}
+  .hunt-text p:last-child{margin-bottom:0;}
+  .hunt-w{cursor:pointer; border-radius:7px; padding:1px 2px; margin:0 -2px; transition:background .15s;}
+  .hunt-w.warm{background:var(--cat-story-soft);}
+  .hunt-w.found{background:var(--cat-story); color:#fff; font-weight:800; padding:1px 7px; margin:0; cursor:default;}
+  .hunt-w.pulse{animation:build-ear-pulse 1s ease-in-out infinite; display:inline-block; background:var(--cat-story-soft);}
+  .hunt-clue{position:sticky; bottom:10px; z-index:3; background:var(--cat-story-soft); border:2px solid color-mix(in srgb, var(--cat-story) 35%, transparent); border-radius:18px; padding:12px 60px 12px 16px; box-shadow:var(--clay-shadow-soft);}
+  .hunt-clue-text{font-family:'Fredoka',-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; font-weight:700; font-size:18px; line-height:1.3; color:var(--ink); margin-top:4px;}
+  .hunt-clue-n{position:absolute; top:12px; inset-inline-end:12px;}
   /* Full prefers-reduced-motion support: every animation collapses to its end state. */
   @media (prefers-reduced-motion: reduce){ *, *::before, *::after{animation-duration:.001ms !important; animation-delay:0s !important; animation-iteration-count:1 !important; transition-duration:.001ms !important;} }
   /* Gamification v2 (Journey Journal §4): souvenir cards. One 180x232 design;
@@ -5230,12 +5242,13 @@ function srsReview(id, good){
   srsOutcome(e, good);
   return true;
 }
-// A game played on one vocab set (Word Rush, Listen & Type, Word Bingo) counts as
-// that set's review when it is due. Build It and Trap Dash never do.
+// A game played on one vocab set (Word Rush, Listen & Type, Word Bingo) or one story
+// (Story Hunt) counts as that item's review when it is due. Build It, Trap Dash and
+// Say It Back never do.
 function srsGameReview(setId, good){
   notePlayed(setId);
   const e = setId && state.progress.srs[setId];
-  if(!e || e.kind !== 'vocab' || !srsIsDue(e)) return false;
+  if(!e || (e.kind !== 'vocab' && e.kind !== 'story') || !srsIsDue(e)) return false;
   srsOutcome(e, good);
   return true;
 }
@@ -6402,6 +6415,23 @@ function buildRoadmap(profile){
       if(buildCandidates(profile, taught).length < BUILD_MIN) kind = low ? 'match' : 'trap';
     }
     if(kind === 'trap' && low) kind = 'match';
+    /* Gamification v3 build 2: Story Hunt plays the stage's story, so its node goes
+       directly after the story node (and the "Watch or listen" node that follows
+       it), before the writing node - not at the slot's usual position. The slot
+       number and refId (storyId-hunt) are unchanged. No story node yet, or a story
+       with fewer than 4 findable words: Word Rush in the slot's own position. */
+    if(kind === 'hunt'){
+      const si = items.findIndex(it=>it.type==='story');
+      const hs = si >= 0 ? STORY_LIBRARY_FREE.find(s=>s.id===items[si].refId) : null;
+      if(hs && huntable(hs)){
+        let at = si + 1;
+        if(items[at] && items[at].type === 'media') at++;
+        items.splice(at, 0, {type:'game', gameKind:'hunt', slot, refId:hs.id+'-hunt', setId:null, goal:g,
+          title:L('Game','Oyun','بازی','Juego')+': '+gameDisplayName('hunt')+' — '+L(hs.title.en, hs.title.tr, hs.title.fa, hs.title.es)});
+        return;
+      }
+      kind = 'match';
+    }
     if((kind === 'build' || kind === 'trap') && gPoolAll.length){
       items.push({type:'game', gameKind:kind, slot, refId:kind+'-'+profile.level+'-s'+stage+(mid ? '-mid' : ''), setId:null, goal:g,
         title:L('Game','Oyun','بازی','Juego')+': '+gameDisplayName(kind)});
@@ -6784,6 +6814,7 @@ function ensureGolden(roadmap){
 function gameDisplayName(kind){
   if(kind === 'build') return L('Build It','Cümle Kur','جمله بساز','Constrúyelo');
   if(kind === 'bingo') return L('Word Bingo','Kelime Tombalası','بینگوی کلمات','Bingo de palabras');
+  if(kind === 'hunt') return L('Story Hunt','Hikaye Avı','شکار داستان','Caza en la historia');
   if(kind === 'trap') return L('Trap Dash','Tuzak Kaçışı','فرار از تله‌ها','Escape de trampas');
   if(kind === 'dictation') return L('Listen & Type','Dinle ve Yaz','گوش کن و بنویس','Escucha y escribe');
   return L('Word Rush','Kelime Yarışı','مسابقه کلمات','Carrera de palabras');
@@ -6791,11 +6822,13 @@ function gameDisplayName(kind){
 function viewGameKind(view){
   if(view === 'game-build') return 'build';
   if(view === 'game-bingo') return 'bingo';
+  if(view === 'game-hunt') return 'hunt';
   return view==='game-trap' ? 'trap' : (view==='game-dictation' ? 'dictation' : 'match');
 }
 // Stats of a finished round, in one shape for all three games.
 function gameRoundStats(kind, round){
   if(kind === 'bingo') return {first:round.first||0, total:BINGO_SCORED_CALLS, perfect:(round.first||0) === BINGO_SCORED_CALLS};
+  if(kind === 'hunt'){ const total = round.targets.length; return {clean:round.clean||0, total, perfect:total>0 && round.clean===total}; }
   if(kind === 'build'){
     const total = round.items.length;
     return {firstTry:round.firstTry||0, total, hints:round.hints||0, perfect:total>0 && round.firstTry===total};
@@ -6815,12 +6848,14 @@ function gameRecordText(kind, st){
   const name = gameDisplayName(kind);
   if(kind === 'build') return name+' · '+st.firstTry+'/'+st.total+' '+L('first try','ilk denemede','در اولین تلاش','a la primera');
   if(kind === 'bingo') return name+' · '+st.first+'/'+st.total+' '+L('first tap','ilk dokunuşta','با اولین لمس','al primer toque');
+  if(kind === 'hunt') return name+' · '+st.clean+'/'+st.total+' '+L('clean','temiz','بی‌خطا','limpias');
   if(kind === 'match') return name+' · '+st.time+'s · '+st.mistakes+' '+(st.mistakes===1 ? L('miss','hata','اشتباه','fallo') : L('misses','hata','اشتباه','fallos'));
   if(kind === 'trap') return name+' · '+st.correct+'/'+st.total+(st.time ? ' · '+st.time+'s' : '');
   return name+' · '+st.pct+'%';
 }
 function gameStatStickers(kind, st){
   if(kind === 'bingo') return [st.first+'/'+st.total+' '+L('first tap','ilk dokunuşta','با اولین لمس','al primer toque'), L('Full card','Tam kart','کارت کامل','Cartón lleno')];
+  if(kind === 'hunt') return [st.clean+'/'+st.total+' '+L('clean','temiz','بی‌خطا','limpias')];
   if(kind === 'build') return [st.firstTry+'/'+st.total+' '+L('first try','ilk denemede','در اولین تلاش','a la primera')].concat(st.hints ? [st.hints+' '+(st.hints===1 ? L('hint','ipucu','راهنما','pista') : L('hints','ipucu','راهنما','pistas'))] : []);
   if(kind === 'match') return [st.time+'s', st.mistakes+' '+(st.mistakes===1 ? L('miss','hata','اشتباه','fallo') : L('misses','hata','اشتباه','fallos'))];
   if(kind === 'trap') return [st.correct+'/'+st.total, L('Score','Skor','امتیاز','Puntos')+' '+st.score];
@@ -6830,9 +6865,9 @@ function gameStatStickers(kind, st){
 function updateGameBest(kind, st){
   const pr = state.progress; if(!pr.gameBests) pr.gameBests = {};
   const prev = pr.gameBests[kind];
-  const metric = kind==='match' ? (b=>-(b.time||9999)) : (kind==='trap' ? (b=>b.score||0) : ((kind==='build' || kind==='bingo') ? (b=>b.first||0) : (b=>b.pct||0)));
+  const metric = kind==='match' ? (b=>-(b.time||9999)) : (kind==='trap' ? (b=>b.score||0) : ((kind==='build' || kind==='bingo') ? (b=>b.first||0) : (kind==='hunt' ? (b=>b.clean||0) : (b=>b.pct||0))));
   const cur = {time:st.time||null, score:st.score!=null ? st.score : null, pct:st.pct!=null ? st.pct : null,
-    first:st.firstTry!=null ? st.firstTry : (st.first!=null ? st.first : null)};
+    first:st.firstTry!=null ? st.firstTry : (st.first!=null ? st.first : null), clean:st.clean!=null ? st.clean : null};
   if(!prev){ pr.gameBests[kind] = cur; return false; }
   if(metric(cur) > metric(prev)){ pr.gameBests[kind] = cur; return true; }
   return false;
@@ -7151,7 +7186,7 @@ function maybeCelebrate(){
     low = state.quiz.correct/state.quiz.questions.length < .5;
   } else if(v==='game-match' && vp.round && vp.round.matchedKeys && vp.round.matchedKeys.length === vp.round.pairCount){
     target = vp.round; kind = 'game';
-  } else if((v==='game-dictation' || v==='game-trap' || v==='game-build' || v==='game-bingo') && vp.round && vp.round.finished){
+  } else if((v==='game-dictation' || v==='game-trap' || v==='game-build' || v==='game-bingo' || v==='game-hunt') && vp.round && vp.round.finished){
     target = vp.round; kind = 'game';
   } else if(v==='studio-round' && vp.checked && vp.result && vp.result.passed){
     target = vp.result; kind = vp.mode;
@@ -9707,6 +9742,7 @@ function fallbackGameSet(minCards){
 function gameFallbackNote(vp){
   if(!vp || !vp.fallbackFrom) return '';
   const name = gameDisplayName(vp.fallbackFrom);
+  if(vp.fallbackFrom === 'hunt') return L(`${name} opens once you have finished a story. `, `${name} bir hikaye bitirdiğinde açılır. `, `${name} وقتی یک داستان را تمام کنی باز می‌شود. `, `${name} se abre cuando termines una historia. `);
   return L(`${name} opens after a few more grammar steps. `, `${name} birkaç dilbilgisi adımından sonra açılır. `, `${name} بعد از چند قدم گرامر دیگر باز می‌شود. `, `${name} se abre tras unos pasos más de gramática. `);
 }
 /* ============================= GAMIFICATION V3: BUILD IT =============================
@@ -9803,6 +9839,11 @@ function gameKeep(kind, round){
       const pick = round.items.slice().sort((a,b)=>(b.misses + (b.hinted?1:0)) - (a.misses + (a.hinted?1:0)) || b.sentence.length - a.sentence.length)[0];
       const item = GRAMMAR_ITEMS.find(g=>g.id===pick.itemId);
       return {text:pick.sentence, say:pick.sentence, note:item ? grammarRuleLine(item) : ''};
+    }
+    if(kind === 'hunt' && round.targets && round.targets.length){
+      // the word that took the most taps (the longest on a clean round)
+      const pick = round.targets.slice().sort((a,b)=>b.wrong - a.wrong || b.word.length - a.word.length)[0];
+      return {text:pick.word, say:pick.word, note:pick.meaning || ''};
     }
     if(kind === 'bingo' && round.tiles){
       // a word missed on first tap, else the word that completed a line
@@ -9998,6 +10039,180 @@ function fxBingoStamp(i, pt, newLines, full){
       document.querySelectorAll('[data-action="bingo-tap"]').forEach((t,k)=>anim(t, [{transform:'scale(1)'}, {transform:'scale(.9)', offset:.3}, {transform:'scale(1.06)', offset:.6}, {transform:'scale(1)'}], {duration:420, delay:k*40, easing:'ease-out'}));
     }, 360);
   }
+}
+/* ============================= GAMIFICATION V3 BUILD 2: STORY HUNT =============================
+   Games catalogue 4.3 + the LXD changes (approved 2026-10-04): a passage from the
+   learner's story; find the word that matches each clue by tapping it in the text.
+   The clue is the meaning in the learner's own language at every level. Passage cap
+   80 words at A1, 100 at A2, 130 at B1+ (the story's level). A vocab word is findable
+   when a token matches it: English = the word plus up to 3 letters, or its stem
+   without a final "e"; Spanish = the article dropped, a reflexive "-se" reduced to
+   the infinitive, then the first max(4, length-3) letters ("arrastrarse" finds
+   "se arrastró"). Up to two passages, 3-4 targets each, 6-8 total; under 4 targets
+   the story isn't huntable and the node falls back to Word Rush. "clean" = found
+   with no wrong tap. Untimed, no lives. Counts as the story's review when it is
+   due. Souvenir: the word that took the most taps. Uses the most recently
+   completed story (the node's own story once it is done). */
+const HUNT_MIN_TARGETS = 4;
+function huntPassageCap(level){ return level === 'A1' ? 80 : (level === 'A2' ? 100 : 130); }
+function huntFold(s){ return String(s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, ''); }
+function huntBase(word){
+  let w = String(word||'').split('/')[0].trim().toLowerCase();
+  if(TTS_LANG.indexOf('es') === 0) w = w.replace(/^(el|la|los|las|un|una|unos|unas)\s+/, '');
+  return w;
+}
+function huntTokWord(raw){ return String(raw||'').replace(/^[^\p{L}\p{N}]+|[^\p{L}\p{N}]+$/gu, ''); }
+function huntMatches(target, tok){
+  const t = huntFold(tok), w = huntFold(target);
+  if(!t || !w) return false;
+  if(TTS_LANG.indexOf('es') === 0){
+    const b = w.replace(/(a|e|i)rse$/, '$1r');
+    const n = Math.max(4, b.length - 3);
+    return b.length >= 4 && t.slice(0, n) === b.slice(0, n);
+  }
+  if(t === w) return true;
+  if(t.length > w.length && t.length - w.length <= 3 && t.slice(0, w.length) === w) return true;
+  if(w.slice(-1) === 'e'){ const st = w.slice(0, -1); return t.length >= st.length && t.length - st.length <= 3 && t.slice(0, st.length) === st; }
+  return false;
+}
+// The story's single-word vocab entries (phrases can't be tapped as one word).
+function huntVocab(story){
+  return (story && story.vocab || []).filter(v=>v && v.word && huntBase(v.word) && !/\s/.test(huntBase(v.word)));
+}
+// Up to two runs of consecutive paragraphs under the cap, maximising distinct
+// findable words; returned in story order as {paras[], found[]}.
+function huntPassages(story){
+  if(!story || !story.text) return [];
+  const cap = huntPassageCap(story.level);
+  const paras = String(story.text).split('\n\n').map(p=>p.trim()).filter(Boolean);
+  const vocab = huntVocab(story);
+  const pTok = paras.map(p=>p.split(/\s+/));
+  const pFound = pTok.map(toks=>{ const ws = toks.map(huntTokWord); return vocab.filter(v=>ws.some(t=>huntMatches(huntBase(v.word), t))).map(v=>v.word); });
+  const runs = [];
+  for(let i=0;i<paras.length;i++){
+    let words = 0; const set = new Set();
+    for(let j=i;j<paras.length;j++){
+      if(j > i && words + pTok[j].length > cap) break;
+      words += pTok[j].length; pFound[j].forEach(w=>set.add(w));
+      runs.push({i, j, words, found:Array.from(set)});
+      if(words >= cap) break;
+    }
+  }
+  runs.sort((a,b)=>b.found.length - a.found.length || a.words - b.words);
+  const p1 = runs[0];
+  if(!p1 || !p1.found.length) return [];
+  const p2 = runs.find(r=>(r.j < p1.i || r.i > p1.j) && r.found.some(w=>!p1.found.includes(w)));
+  const out = p2 ? [p1, p2] : [p1];
+  out.sort((a,b)=>a.i - b.i);
+  return out.map(r=>({paras:paras.slice(r.i, r.j+1), found:r.found}));
+}
+function huntTargetCount(story){
+  const used = new Set(); let n = 0;
+  huntPassages(story).forEach(p=>{ let k = 0; p.found.forEach(w=>{ if(k < 4 && !used.has(w)){ used.add(w); k++; } }); n += k; });
+  return n;
+}
+function huntable(story){ return !!story && huntTargetCount(story) >= HUNT_MIN_TARGETS; }
+// The story a hunt node plays: its own story once that is completed, else the most
+// recently completed huntable story, else any huntable story of the level.
+function huntStoryFor(refId){
+  const done = (state.progress && state.progress.completedStories) || [];
+  const own = STORY_LIBRARY_FREE.find(s=>refId === s.id + '-hunt') || null;
+  if(own && done.includes(own.id) && huntable(own)) return own;
+  const recent = done.slice().reverse().map(id=>STORY_LIBRARY_FREE.find(s=>s.id===id)).find(huntable);
+  if(recent) return recent;
+  if(huntable(own)) return own;
+  const lvl = state.profile && state.profile.level;
+  return STORY_LIBRARY_FREE.find(s=>s.level===lvl && huntable(s)) || null;
+}
+function buildHuntRound(story){
+  const ps = huntPassages(story);
+  if(!ps.length) return null;
+  const vocab = huntVocab(story);
+  const used = new Set(), passages = [], targets = [];
+  ps.forEach((p, pi)=>{
+    const toks = [];
+    let si = 0;
+    p.paras.forEach((para, k)=>{
+      para.split(/\s+/).forEach(raw=>{
+        toks.push({raw, w:huntTokWord(raw), si, para:k});
+        if(/[.!?…]["'”’»)\]]*$/.test(raw)) si++;
+      });
+      si++;
+    });
+    const mine = [];
+    shuffle(p.found).forEach(w=>{ if(mine.length < 4 && !used.has(w)){ used.add(w); mine.push(w); } });
+    mine.forEach(w=>{
+      const v = vocab.find(x=>x.word===w) || {};
+      targets.push({word:w, base:huntBase(w), meaning:{en:v.en, tr:v.tr, fa:v.fa, es:v.es}, pi, found:false, wrong:0});
+    });
+    passages.push({toks, found:[]});
+  });
+  if(targets.length < HUNT_MIN_TARGETS) return null;
+  return {storyId:story.id, passages, targets, ti:0, clean:0, combo:0, busy:false, finished:false, startedAt:Date.now(), finishedAt:null};
+}
+function renderGameHunt(){
+  const vp = state.viewParams, round = vp.round;
+  const title = gameDisplayName('hunt');
+  const total = round.targets.length;
+  if(round.finished){
+    const flawless = round.clean === total;
+    return `<div class="fade-in game-screen">
+      ${gameTopHtml(title)}
+      <div class="game-card tight badge-unlock-shine">
+        <div class="game-result-title">${flawless ? L('Flawless!','Kusursuz!','بی‌نقص!','¡Perfecto!') : L('All found!','Hepsi bulundu!','همه پیدا شد!','¡Todas encontradas!')}</div>
+        <p class="game-result-line">${L(`${round.clean} of ${total} found clean`, `${total} kelimeden ${round.clean} tanesi temiz bulundu`, `${round.clean} از ${total} بدون خطا پیدا شد`, `${round.clean} de ${total} encontradas limpias`)}</p>
+        <button class="btn btn-primary game-cta" data-action="back-to-roadmap">${L('Back to roadmap','Yol haritasına dön','بازگشت به نقشه راه','Volver a la hoja de ruta')}</button>
+      </div>
+      ${renderBadgeUnlockCard(pullJustEarnedBadges())}
+    </div>`;
+  }
+  const t = round.targets[round.ti];
+  const p = round.passages[t.pi];
+  const a = round.ti + 1;
+  const hit = p.toks.findIndex(k=>huntMatches(t.base, k.w));
+  const warmSi = (t.wrong >= 2 && hit >= 0) ? p.toks[hit].si : -1;
+  const pulse = t.wrong >= 4 ? hit : -1;
+  const paras = [];
+  p.toks.forEach((k,i)=>{
+    const cls = 'hunt-w' + (p.found.includes(i) ? ' found' : '') + (k.si === warmSi ? ' warm' : '') + (i === pulse ? ' pulse' : '');
+    (paras[k.para] = paras[k.para] || []).push(`<span class="${cls}" data-action="hunt-tap" data-i="${i}">${esc(k.raw)}</span>`);
+  });
+  return `<div class="fade-in game-screen">
+    ${gameTopHtml(title)}
+    <div class="game-status">
+      <span class="game-status-text">${L(`Word ${a} of ${total}`, `Kelime ${a}/${total}`, `کلمه ${a} از ${total}`, `Palabra ${a} de ${total}`)}</span>
+      <span class="game-status-end">${trapStreakChip({streak:round.combo||0})}</span>
+    </div>
+    <p class="game-hint">${L('Find the word in the story and tap it.','Kelimeyi hikayede bul ve dokun.','کلمه را در داستان پیدا کن و رویش بزن.','Encuentra la palabra en la historia y tócala.')}</p>
+    <div class="game-card hunt-card" id="hunt-passage-${t.pi}">
+      <div class="hunt-text" dir="ltr">${paras.map(ws=>`<p>${ws.join(' ')}</p>`).join('')}</div>
+    </div>
+    <div class="hunt-clue" dir="auto">
+      <div class="eyebrow" style="color:var(--cat-story);">${L('Find the word that means','Şu anlama gelen kelimeyi bul','کلمه‌ای را پیدا کن که یعنی','Encuentra la palabra que significa')}</div>
+      <div class="hunt-clue-text">${esc(svText(t.meaning) || t.word)}</div>
+      <span class="game-chip hunt-clue-n">${a}/${total}</span>
+    </div>
+  </div>`;
+}
+function huntTokEl(i){ return document.querySelector('[data-action="hunt-tap"][data-i="'+i+'"]'); }
+function fxHuntFound(i, pt, combo){
+  const el = huntTokEl(i);
+  anim(el, [{transform:'scale(1)'}, {transform:'scale(1.15)'}, {transform:'scale(1)'}], {duration:260, easing:SPRING});
+  const c = pt || centerOf(el);
+  sparkBurst(c.x, c.y, 6, 'var(--cat-story)');
+  sfx('correct'); buzz(12); companionCheer();
+  comboCheck(combo);
+}
+function fxHuntMiss(i, wrong){
+  const el = huntTokEl(i);
+  anim(el, [{transform:'translateX(0)'}, {transform:'translateX(-4px)'}, {transform:'translateX(4px)'}, {transform:'translateX(-4px)'}, {transform:'translateX(0)'}], {duration:180, easing:'linear'});
+  sfx('flip');
+  companionOops();
+  if(wrong === 2) companionSay(L('Getting warmer','Yaklaşıyorsun','داری نزدیک می‌شی','Te acercas'), 1600);
+}
+function fxHuntPassage(pi){
+  const el = document.getElementById('hunt-passage-'+pi);
+  anim(el, [{opacity:0, transform:'translateY(10px)'}, {opacity:1, transform:'translateY(0)'}], {duration:360, easing:'ease-out'});
 }
 function renderGameMatch(){
   const vp = state.viewParams;
@@ -11382,6 +11597,7 @@ const screens = {
   'game-trap': renderGameTrap,
   'game-build': renderGameBuild,
   'game-bingo': renderGameBingo,
+  'game-hunt': renderGameHunt,
   'souvenir-shuffle': renderShuffle,
   'coming-soon': renderNotFound,
   'not-found': renderNotFound,
@@ -12607,6 +12823,16 @@ const HANDLERS = {
       go('game-match', Object.assign({round: buildMatchRound(fb), fallbackFrom:'trap'}, params));
       return;
     }
+    if(kind === 'hunt'){
+      const story = huntStoryFor(el.dataset.refId);
+      const huntRound = story ? buildHuntRound(story) : null;
+      if(huntRound){ go('game-hunt', Object.assign({round: huntRound}, params)); return; }
+      // no huntable story finished yet: Word Rush instead
+      const fbh = fallbackGameSet();
+      if(!fbh) return;
+      go('game-match', Object.assign({round: buildMatchRound(fbh), fallbackFrom:'hunt'}, params));
+      return;
+    }
     const setObj = VOCAB_SETS.find(x=>x.id===el.dataset.setId);
     if(!setObj) return;
     if(kind === 'bingo'){
@@ -12618,6 +12844,44 @@ const HANDLERS = {
     }
     if(kind === 'match') go('game-match', Object.assign({round: buildMatchRound(setObj)}, params));
     else go('game-dictation', Object.assign({round: buildDictationRound(setObj)}, params));
+  },
+  'hunt-tap'(el, e){
+    const vp = state.viewParams, round = vp && vp.round;
+    if(!round || round.finished || round.busy) return;
+    const i = Number(el.dataset.i), t = round.targets[round.ti], p = round.passages[t.pi], tok = p.toks[i];
+    if(!tok || p.found.includes(i)) return;
+    const pt = tapPoint(e);
+    if(!huntMatches(t.base, tok.w)){
+      t.wrong++; round.combo = 0;
+      const wrong = t.wrong;
+      queueFx(()=>fxHuntMiss(i, wrong));
+      save(); render();
+      return;
+    }
+    t.found = true; p.found.push(i);
+    if(t.wrong === 0){ round.clean++; round.combo = (round.combo||0) + 1; } else round.combo = 0;
+    const combo = round.combo, last = round.ti + 1 >= round.targets.length;
+    const nextPi = last ? t.pi : round.targets[round.ti + 1].pi;
+    if(last){
+      round.finished = true; round.finishedAt = Date.now();
+      round.xpGain = scoreGameCompletion(vp.refId, round.clean === round.targets.length);
+      markGameComplete(vp.refId);
+      const ratio = round.clean / round.targets.length;
+      srsGameReview(round.storyId, ratio >= .8 ? 2 : (ratio >= .5 ? 1 : 0));
+    }
+    queueFx(()=>fxHuntFound(i, pt, combo));
+    round.busy = !last;
+    save(); render();
+    if(!last){
+      // the next clue after 500ms; a new passage fades in after a 600ms pause
+      const wait = nextPi !== t.pi ? 1100 : 500, idx = round.ti;
+      setTimeout(()=>{
+        if(state.viewParams !== vp || vp.round.ti !== idx || vp.round.finished) return;
+        round.ti++; round.busy = false;
+        if(nextPi !== t.pi) queueFx(()=>fxHuntPassage(nextPi));
+        save(); render();
+      }, wait);
+    }
   },
   'bingo-tap'(el, e){
     const vp = state.viewParams, round = vp && vp.round;

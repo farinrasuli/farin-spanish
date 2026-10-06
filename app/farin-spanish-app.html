@@ -4555,7 +4555,7 @@ const STORY_LIBRARY = [
    Course content will reuse the free arrays' shapes with `course` + `unit`; every free pool reads the
    *_FREE arrays below so paid items never leak into the free path. Spanish has no authored course
    units yet: Travel Spanish is a SHELL (syllabus outline, every unit "Soon"). */
-const COURSE_EXTRA = {speaking:[], judge:[], writing:[], perspective:[], exit:[]};
+const COURSE_EXTRA = {speaking:[], judge:[], writing:[], perspective:[], exit:[], checkpoint:[]};
 const GRAMMAR_ITEMS_FREE = GRAMMAR_ITEMS.filter(x=>!x.course);
 const VOCAB_SETS_FREE = VOCAB_SETS.filter(x=>!x.course);
 const STORY_LIBRARY_FREE = STORY_LIBRARY.filter(x=>!x.course);
@@ -14216,6 +14216,7 @@ const COURSE_TYPE_META = {
   branch:{en:'Branching scene', tr:'Dallanan sahne', es:'Escena con ramas', cat:'lis', ic:'chat'}
 };
 const COURSE_SESSION_NAMES = [{en:'Learn', tr:'Öğren', fa:'یاد بگیر', es:'Aprende'}, {en:'Practise', tr:'Alıştır', fa:'تمرین کن', es:'Practica'}, {en:'Do', tr:'Yap', fa:'انجام بده', es:'Hazlo'}];
+const COURSE_CP_SESSION_NAMES = [{en:'Check', tr:'Kontrol et', fa:'بررسی کن', es:'Comprueba'}, {en:'Show it', tr:'Göster', fa:'نشان بده', es:'Demuéstralo'}];
 const courseUi = {judge:null, exit:null, wres:null};
 function cl(o){ return o ? L(o.en, o.tr, o.fa, o.es) : ''; }
 const CES = {"Courses":"Cursos","HR & Business English, Travel, IELTS":"Español para viajar, DELE","Free sample unit":"Unidad de muestra gratis","Coming soon":"Próximamente","units":"unidades","Focused courses for one real-life goal. Your free Roadmap is never touched.":"Cursos centrados en un objetivo de la vida real. Tu Ruta gratuita no se toca.","Soon":"Pronto","Free":"Gratis","Entry level":"Nivel de entrada","weeks":"semanas","What you will do":"Lo que vas a hacer","track":"ruta","B1 track: more frames and model texts.":"Ruta B1: más plantillas y textos modelo.","B2 track: frames removed after the model.":"Ruta B2: sin plantillas después del modelo.","Module":"Módulo","Full course":"Curso completo","The sample unit is free. The full course is on its way.":"La unidad de muestra es gratis. El curso completo está en camino.","Tell me when it opens":"Avísame cuando abra","Premium course":"Curso premium","This course is being built":"Este curso se está construyendo","This unit is part of the full course":"Esta unidad es parte del curso completo","Leave a message and Farin will tell you when it opens.":"Deja un mensaje y Farin te avisará cuando abra.","Purchases are not open yet. Try the free sample unit meanwhile.":"Las compras aún no están abiertas. Mientras tanto, prueba la unidad de muestra gratis.","Back to courses":"Volver a los cursos","By the end of this unit":"Al final de esta unidad","Unit complete!":"¡Unidad completada!","Session":"Sesión","Warm-up":"Calentamiento","You are the interviewer. Ask:":"Tú eres quien entrevista. Pregunta:","Follow-up":"Pregunta de seguimiento","Useful phrases":"Frases útiles","Culture note":"Nota cultural","Say your answers out loud: 90 seconds, then 60, then 45. Recorded answers and teacher feedback come with the full course.":"Di tus respuestas en voz alta: 90 segundos, luego 60 y luego 45. Las respuestas grabadas y los comentarios del profesor llegan con el curso completo.","I've practised it":"Ya lo practiqué","This part of the course is not built yet.":"Esta parte del curso aún no está lista.","Nicely spotted!":"¡Bien visto!","judged correctly":"bien valoradas","Done":"Listo","Tap each part you can find in this answer.":"Toca cada parte que encuentres en esta respuesta.","Missing":"Falta","A complete answer. All four parts are there.":"Una respuesta completa. Están las cuatro partes.","Nothing to fix in this line.":"Nada que corregir en esta línea.","Next":"Siguiente","Check":"Comprobar","Model":"Modelo","Frame":"Plantilla","Write here":"Escribe aquí","Use":"Usa","words":"palabras","sentences":"frases","Not used yet":"Aún sin usar","Check it yourself":"Compruébalo tú mismo","Check and save":"Comprobar y guardar","Not scored":"Sin puntuación","Save to my journal":"Guardar en mi diario","Complete":"Completa","Something is missing":"Falta algo","Is this answer STAR-complete?":"¿Esta respuesta está completa según STAR?","Nothing to check yet.":"Aún no hay nada que comprobar.","Secure!":"¡Seguro!","Almost there":"Casi","Questions that slipped come back in the next units.":"Las preguntas que fallaste vuelven en las próximas unidades."};
@@ -14267,7 +14268,7 @@ function courseStepsAvailable(uid, type){
   if(type==='game') return !!it.vocab;
   return !!it[type];
 }
-function courseUnitCourse(uid){ return COURSES.find(c=>c.modules.some(m=>m.units.some(u=>u.id===uid))) || null; }
+function courseUnitCourse(uid){ return COURSES.find(c=>c.modules.some(m=>m.units.some(u=>u.id===uid) || (m.checkpoint && m.checkpoint.id===uid))) || null; }
 function courseStepDone(uid, type){
   const pr = state.progress, it = courseUnitItems(uid);
   if(type==='story') return !!(it.story && (pr.completedStories||[]).includes(it.story.id));
@@ -14349,7 +14350,7 @@ function renderCoursesHome(){
 
 /* ---------- course detail ---------- */
 function courseUnitRowHtml(c, u, isCheckpoint){
-  const ready = !isCheckpoint && courseUnitReady(u.id);
+  const ready = courseUnitReady(u.id);
   const free = courseUnitAccess(c, u.id);
   const p = ready ? courseUnitProgress(c.id, u.id) : {done:0,total:0};
   const done = ready && p.total && p.done===p.total;
@@ -14423,6 +14424,15 @@ function renderCourseUnit(cid, uid){
   const f = courseFindUnit(cid, uid); if(!f) return renderNotFound();
   const {c, u} = f, it = courseUnitItems(uid), steps = courseUnitSteps(cid, uid);
   const left = steps.filter(s=>!s.done).length;
+  // Checkpoints: same step screens, but the top card lists the units it covers and the sessions get their own names.
+  const isCp = !!(f.m.checkpoint && f.m.checkpoint.id===uid);
+  const cpMeta = isCp ? COURSE_EXTRA.checkpoint.find(x=>x.id===uid) : null;
+  const sessNames = isCp ? COURSE_CP_SESSION_NAMES : COURSE_SESSION_NAMES;
+  const topCard = !isCp ? `<div class="eyebrow" style="color:var(--cat-diag);">${CL('By the end of this unit','Bu ünitenin sonunda','در پایان این واحد')}</div>
+        <p style="margin:4px 0 0; font-size:14px; font-weight:700;">${esc(cl(u.cando))}</p>`
+    : `<div class="eyebrow" style="color:var(--cat-diag);">${CL('This checkpoint covers','Bu kontrolün kapsadığı üniteler','این ایستگاه این واحدها را پوشش می‌دهد','Este control repasa')}</div>
+        <p style="margin:4px 0 0; font-size:14px; font-weight:700;">${esc(((cpMeta && cpMeta.covers) || []).map(id=>{ const x = courseFindUnit(cid, id); return x ? cl(x.u.title) : ''; }).filter(Boolean).join(' · '))}</p>
+        <p style="margin:6px 0 0; font-size:12.5px; color:var(--ink-soft);">${CL('Check your writing against the list yourself. Teacher marking comes with the full course.','Yazını listeye göre kendin kontrol et. Öğretmen değerlendirmesi tam kursla gelir.','نوشته‌ات را خودت با فهرست بررسی کن. نمره‌دهی معلم با دوره کامل می‌آید.','Revisa tú mismo tu texto con la lista. La corrección del profesor llega con el curso completo.')}</p>`;
   const rowFor = s=>{
     const m = COURSE_TYPE_META[s.type] || COURSE_TYPE_META.exit;
     let tail = '';
@@ -14440,13 +14450,12 @@ function renderCourseUnit(cid, uid){
     ${sectionHead(cl(u.title), cl(c.title))}
     <div class="screen" style="padding-top:0;">
       <div class="card-flat" style="margin-bottom:14px; background:var(--cat-diag-soft); border-color:var(--cat-diag-soft);">
-        <div class="eyebrow" style="color:var(--cat-diag);">${CL('By the end of this unit','Bu ünitenin sonunda','در پایان این واحد')}</div>
-        <p style="margin:4px 0 0; font-size:14px; font-weight:700;">${esc(cl(u.cando))}</p>
+        ${topCard}
       </div>
-      ${left===0 && steps.length ? `<div class="card-flat badge-unlock-shine" style="margin-bottom:14px; text-align:center; background:var(--cat-review-soft); border-color:var(--cat-review-soft);"><div class="display" style="font-size:17px;">${CL('Unit complete!','Ünite tamamlandı!','واحد تمام شد!')}</div></div>` : ''}
+      ${left===0 && steps.length ? `<div class="card-flat badge-unlock-shine" style="margin-bottom:14px; text-align:center; background:var(--cat-review-soft); border-color:var(--cat-review-soft);"><div class="display" style="font-size:17px;">${isCp ? CL('Checkpoint complete!','Kontrol tamamlandı!','ایستگاه تمام شد!','¡Control completado!') : CL('Unit complete!','Ünite tamamlandı!','واحد تمام شد!')}</div></div>` : ''}
       ${[0,1,2].map(si=>{
         const ss = steps.filter(s=>s.si===si); if(!ss.length) return '';
-        return `<div class="eyebrow" style="margin:14px 0 8px;">${CL('Session','Oturum','جلسه')} ${si+1} · ${esc(cl(COURSE_SESSION_NAMES[si]))}</div><div class="stack" style="gap:8px;">${ss.map(rowFor).join('')}</div>`;
+        return `<div class="eyebrow" style="margin:14px 0 8px;">${CL('Session','Oturum','جلسه')} ${si+1} · ${esc(cl(sessNames[si]))}</div><div class="stack" style="gap:8px;">${ss.map(rowFor).join('')}</div>`;
       }).join('')}
     </div>
   </div>`;
@@ -14469,7 +14478,7 @@ function renderCourseStep(){
     return courseStepShell(cid, uid, type, `
       <h2 class="display" style="font-size:18px; margin:0 0 10px;">${esc(cl(sp.topic))}</h2>
       <div class="card-flat"><div class="eyebrow">${CL('Warm-up','Isınma','گرم کردن')}</div><p style="margin:4px 0 0;">${esc(cl(sp.warmup))}</p></div>
-      <div class="eyebrow" style="margin:14px 0 8px;">${CL('You are the interviewer. Ask:','Mülakatçı sensin. Sor:','تو مصاحبه‌گر هستی. بپرس:')}</div>
+      <div class="eyebrow" style="margin:14px 0 8px;">${COURSE_EXTRA.checkpoint.some(x=>x.id===uid) ? CL('Your tasks:','Görevlerin:','کارهای تو:','Tus tareas:') : CL('You are the interviewer. Ask:','Mülakatçı sensin. Sor:','تو مصاحبه‌گر هستی. بپرس:')}</div>
       <div class="stack" style="gap:8px;">${sp.questions.map((q,i)=>`<div class="card-flat"><b>${i+1}.</b> ${esc(cl(q))}</div>`).join('')}
         ${(sp.followups||[]).map(q=>`<div class="card-flat" style="background:var(--cat-lis-soft); border-color:var(--cat-lis-soft);"><div class="eyebrow" style="color:var(--cat-lis);">${CL('Follow-up','Takip sorusu','سؤال تکمیلی')}</div>${esc(cl(q))}</div>`).join('')}</div>
       <div class="eyebrow" style="margin:14px 0 8px;">${CL('Useful phrases','Faydalı kalıplar','عبارت‌های مفید')}</div>

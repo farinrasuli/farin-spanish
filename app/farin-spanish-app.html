@@ -650,6 +650,18 @@
   .flash-dots i.active{background:var(--accent); width:16px; border-radius:3px;}
   .flash-nav{display:flex; gap:10px; margin-top:16px;}
 
+  /* Teaching redesign S3: grammar page context dialogue (Meet + Notice). */
+  .gc-card{margin-bottom:14px; padding-bottom:10px;}
+  .gc-line{display:flex; gap:9px; align-items:flex-start; padding:9px 0; border-bottom:1px solid var(--border-soft);}
+  .gc-line:last-of-type{border-bottom:none;}
+  .gc-who{flex:0 0 auto; width:24px; height:24px; border-radius:50%; background:var(--cat-gram-soft); color:var(--cat-gram); font-size:11px; font-weight:800; display:inline-flex; align-items:center; justify-content:center; margin-top:2px;}
+  .gc-body{flex:1 1 auto; min-width:0;}
+  .gc-text{font-size:15px; line-height:1.6; font-weight:600; color:var(--ink);}
+  .gc-tr{font-size:12.5px; color:var(--ink-faint); margin-top:2px; line-height:1.45;}
+  .gc-w{cursor:pointer; border-radius:6px; padding:0 2px; transition:background .18s, color .18s;}
+  .gc-w.lit{background:var(--cat-gram-soft); color:var(--cat-gram); font-weight:800; box-shadow:0 0 0 1.5px var(--cat-gram-soft);}
+  .gc-foot{display:flex; align-items:center; justify-content:space-between; gap:10px; margin-top:10px; font-size:12.5px; font-weight:600; color:var(--ink-soft);}
+  .gc-show{padding:6px 12px; font-size:12.5px; flex:0 0 auto;}
   .phrase-row{display:flex; flex-direction:column; gap:3px; padding:12px 0; border-bottom:1px solid var(--border-soft);}
   .phrase-row:last-child{border-bottom:none;}
   .phrase-term{font-weight:800; font-size:16px; letter-spacing:-.01em;}
@@ -1607,6 +1619,455 @@ const GRAMMAR_ITEMS = [
  wrong2:"Habla tres idiomas, sin embargo toca el piano.", right2:"Habla tres idiomas, además toca el piano.",
  blank2:{sentence:"Él cocinaba la cena; ___, ella ponía la mesa.", word:"mientras tanto", distractors:["sin embargo","aunque"]}}
 ];
+
+/* Teaching redesign phase 1 (LXD content, 2026-10-06, Trello oLGTmULW / lxd HGzvWmE6). The A1-A2 grammar
+   items get a context dialogue (Meet + Notice), practice[8] in the S3 order (fill, fill, meaning, fix, build,
+   type, type, type), errorWatch rules and a yourTurn frame — written by farin-lxd (Claude/specs/lxd-phase1-content/es-grammar-A1-A2.js).
+   Merged onto the BASE items at load, not into goalVariant. build/type items are data only until the quiz
+   engine gets those question types (phase 2, item 12); yourTurn is data only until the Use step (phase 2, item 13). */
+const GRAMMAR_PRACTICE_A1A2 = {
+ "g-A1-1":{
+  context:{lines:[
+    {who:"A", text:"¿Quién es ella?", tr:"O kim?", fa:"او کیست؟"},
+    {who:"B", text:"Es mi hermana, Lucía. Es enfermera.", tr:"Kız kardeşim Lucía. Hemşire.", fa:"خواهرم لوسیا است. پرستار است."},
+    {who:"A", text:"¿Y tú? ¿De dónde eres?", tr:"Ya sen? Nerelisin?", fa:"تو چطور؟ اهل کجایی؟"},
+    {who:"B", text:"Soy de Estambul, pero mi madre es de Teherán.", tr:"İstanbulluyum ama annem Tahranlı.", fa:"من اهل استانبولم، ولی مادرم اهل تهران است."}
+   ], targets:["es","Es","eres","Soy"]},
+  practice:[
+   {type:"fill", sentence:"Mi padre ___ ingeniero.", word:"es", distractors:["está","son","soy"]},
+   {type:"fill", sentence:"Ellos ___ de Colombia.", word:"son", distractors:["es","están","somos"]},
+   {type:"meaning", prompt:{en:"\"Ana es alegre.\" What does this tell us about Ana?", tr:"\"Ana es alegre.\" Bu cümle Ana hakkında ne söylüyor?", fa:"«Ana es alegre.» این جمله درباره آنا چه می‌گوید؟"}, options:[{en:"She is a cheerful person.", tr:"O neşeli biri.", fa:"او آدمی شاد است."},{en:"She is happy right now, today.", tr:"O şu an, bugün mutlu.", fa:"او همین حالا، امروز خوشحال است."},{en:"She was happy yesterday.", tr:"Dün mutluydu.", fa:"او دیروز خوشحال بود."}], correct:0},
+   {type:"fix", wrong:"Yo estoy de Turquía.", right:"Yo soy de Turquía.", distractors:["Yo es de Turquía.","Yo están de Turquía."]},
+   {type:"build", words:["Nosotros","somos","estudiantes","de","español"], answer:"Nosotros somos estudiantes de español."},
+   {type:"type", sentence:"Tú ___ mi mejor amigo.", accept:["eres"], hint:{en:"tú → eres", tr:"tú → eres", fa:"tú → eres"}},
+   {type:"type", sentence:"¿De dónde ___ usted?", accept:["es"], hint:{en:"\"Usted\" means you (polite), but it takes the él/ella form: es.", tr:"\"Usted\" kibar \"siz\" demektir ama él/ella çekimini alır: es.", fa:"«usted» یعنی شما (مؤدبانه)، ولی صرف él/ella را می‌گیرد: es."}},
+   {type:"type", sentence:"Mi hermana y yo ___ altas.", accept:["somos"], hint:{en:"\"My sister and I\" = nosotras → somos.", tr:"\"Kız kardeşim ve ben\" = nosotras → somos.", fa:"«خواهرم و من» یعنی nosotras ← somos."}}
+  ],
+  errorWatch:[
+   {find:["estoy médico","estoy médica","estoy profesor","estoy profesora","estoy estudiante","está médico","está profesora","yo es","yo eres","tú es","nosotros son","ellos es"], fix:{en:"Jobs, origin and identity use SER: soy médico, es profesora. Yo → soy, tú → eres, nosotros → somos, ellos → son.", tr:"Meslek, köken ve kimlik SER ile: soy médico, es profesora. Yo → soy, tú → eres, nosotros → somos, ellos → son.", fa:"شغل، اصلیت و هویت با SER: soy médico، es profesora. Yo ← soy، tú ← eres، nosotros ← somos، ellos ← son."}}
+  ],
+  yourTurn:{prompt:{en:"Write one sentence about you: your name, your job or where you are from.", tr:"Kendin hakkında bir cümle yaz: adın, mesleğin ya da nereli olduğun.", fa:"یک جمله درباره خودت بنویس: اسمت، شغلت یا اهل کجا هستی."}, model:"Soy Deniz, soy diseñadora y soy de Ankara.", selfCheck:{en:"Did you use soy (not estoy) for your job and where you are from?", tr:"Mesleğin ve memleketin için estoy değil soy kullandın mı?", fa:"برای شغل و اصلیتت از soy استفاده کردی (نه estoy)؟"}}
+ },
+ "g-A1-2":{
+  context:{lines:[
+    {who:"A", text:"¿Dónde estás? ¿Estás en casa?", tr:"Neredesin? Evde misin?", fa:"کجایی؟ خانه‌ای؟"},
+    {who:"B", text:"No, estoy en el trabajo. Estoy muy cansada.", tr:"Hayır, işteyim. Çok yorgunum.", fa:"نه، سر کارم. خیلی خسته‌ام."},
+    {who:"A", text:"¿Y tu hermano? ¿Dónde está?", tr:"Ya erkek kardeşin? O nerede?", fa:"برادرت چطور؟ او کجاست؟"},
+    {who:"B", text:"Está en el parque con los niños. Están muy contentos.", tr:"Parkta, çocuklarla birlikte. Çok mutlular.", fa:"در پارک است با بچه‌ها. خیلی خوشحال‌اند."}
+   ], targets:["estás","Estás","estoy","Estoy","está","Está","Están"]},
+  practice:[
+   {type:"fill", sentence:"Mi casa ___ cerca del centro.", word:"está", distractors:["es","son","soy"]},
+   {type:"fill", sentence:"Los niños ___ en la escuela.", word:"están", distractors:["son","es","está"]},
+   {type:"meaning", prompt:{en:"\"Estoy aburrido.\" What does this tell us?", tr:"\"Estoy aburrido.\" Bu cümle ne söylüyor?", fa:"«Estoy aburrido.» این جمله چه می‌گوید؟"}, options:[{en:"I feel bored right now.", tr:"Şu an sıkılıyorum.", fa:"همین حالا حوصله‌ام سر رفته."},{en:"I am a boring person.", tr:"Ben sıkıcı biriyim.", fa:"من آدم کسل‌کننده‌ای هستم."},{en:"I was bored yesterday.", tr:"Dün sıkılmıştım.", fa:"دیروز حوصله‌ام سر رفته بود."}], correct:0},
+   {type:"fix", wrong:"Mi madre es en la cocina.", right:"Mi madre está en la cocina.", distractors:["Mi madre eres en la cocina.","Mi madre están en la cocina."]},
+   {type:"build", words:["Nosotros","estamos","en","casa","esta","noche"], answer:"Nosotros estamos en casa esta noche."},
+   {type:"type", sentence:"¿Dónde ___ las llaves?", accept:["están"], hint:{en:"Location → estar. \"Las llaves\" is plural → están.", tr:"Yer → estar. \"Las llaves\" çoğul → están.", fa:"مکان ← estar. «las llaves» جمع است ← están."}},
+   {type:"type", sentence:"Yo ___ muy contento hoy.", accept:["estoy"], hint:{en:"A feeling today → estar. yo → estoy.", tr:"Bugünkü bir duygu → estar. yo → estoy.", fa:"احساس امروز ← estar. yo ← estoy."}},
+   {type:"type", sentence:"Tú ___ en Madrid, ¿verdad?", accept:["estás"], hint:{en:"Location → estar. tú → estás.", tr:"Yer → estar. tú → estás.", fa:"مکان ← estar. tú ← estás."}}
+  ],
+  errorWatch:[
+   {find:["soy en","eres en","soy cansado","soy cansada","soy contento","soy contenta","soy enfermo","soy enferma","estoy médico"], fix:{en:"Places and feelings use ESTAR: estoy en casa, estoy cansado. (Jobs and origin use SER: soy médico.)", tr:"Yer ve duygular ESTAR ile: estoy en casa, estoy cansado. (Meslek ve köken SER ile: soy médico.)", fa:"مکان و احساس با ESTAR: estoy en casa، estoy cansado. (شغل و اصلیت با SER: soy médico.)"}}
+  ],
+  yourTurn:{prompt:{en:"Write two sentences: where you are now and how you feel today.", tr:"İki cümle yaz: şu an neredesin ve bugün nasıl hissediyorsun.", fa:"دو جمله بنویس: الان کجایی و امروز چه حسی داری."}, model:"Estoy en casa. Hoy estoy un poco cansado.", selfCheck:{en:"Places and feelings use estar. Did you write estoy (not soy)?", tr:"Yer ve duygular estar ile. soy değil estoy yazdın mı?", fa:"مکان و احساس با estar. estoy نوشتی (نه soy)؟"}}
+ },
+ "g-A1-3":{
+  context:{lines:[
+    {who:"A", text:"¿Qué hay en la mesa?", tr:"Masanın üstünde ne var?", fa:"روی میز چه هست؟"},
+    {who:"B", text:"Hay un libro, una carpeta y el móvil de Ana.", tr:"Bir kitap, bir dosya ve Ana'nın telefonu var.", fa:"یک کتاب، یک پوشه و تلفن آنا هست."},
+    {who:"A", text:"¿Y dónde está la llave de casa?", tr:"Peki evin anahtarı nerede?", fa:"کلید خانه کجاست؟"},
+    {who:"B", text:"La llave está en el bolso, junto al pasaporte.", tr:"Anahtar çantanın içinde, pasaportun yanında.", fa:"کلید توی کیف است، کنار گذرنامه."}
+   ], targets:["un","una","el","la","La"]},
+  practice:[
+   {type:"fill", sentence:"___ casa de mi tío es muy grande.", word:"La", distractors:["El","Los","Un"]},
+   {type:"fill", sentence:"Quiero ___ café, por favor.", word:"un", distractors:["una","la","unas"]},
+   {type:"meaning", prompt:{en:"\"Hay una manzana.\" What do we know?", tr:"\"Hay una manzana.\" Ne öğreniyoruz?", fa:"«Hay una manzana.» چه چیزی می‌فهمیم؟"}, options:[{en:"There is one apple (a feminine word), not a specific one.", tr:"Bir elma var (dişil bir kelime), belirli bir elma değil.", fa:"یک سیب هست (کلمه مؤنث)، نه سیب مشخصی."},{en:"The apple we both know.", tr:"İkimizin de bildiği elma.", fa:"سیبی که هر دو می‌شناسیم."},{en:"Several apples.", tr:"Birkaç elma.", fa:"چند سیب."}], correct:0},
+   {type:"fix", wrong:"Es una problema grande.", right:"Es un problema grande.", distractors:["Es unos problema grande.","Es una problemas grande."]},
+   {type:"build", words:["Necesito","una","silla","y","un","libro"], answer:"Necesito una silla y un libro."},
+   {type:"type", sentence:"Mi madre tiene ___ coche rojo.", accept:["un"], hint:{en:"Coche is masculine: un coche.", tr:"Coche eriltir: un coche.", fa:"coche مذکر است: un coche."}},
+   {type:"type", sentence:"¿Dónde está ___ mochila?", accept:["la"], hint:{en:"Mochila ends in -a and is feminine: la mochila.", tr:"Mochila -a ile biter ve dişildir: la mochila.", fa:"mochila به -a ختم می‌شود و مؤنث است: la mochila."}},
+   {type:"type", sentence:"Me gusta ___ película de ayer.", accept:["la"], hint:{en:"Película is feminine even though it has a tricky ending: la película.", tr:"Película, sonu yanıltıcı olsa da dişildir: la película.", fa:"película با وجود پایانش مؤنث است: la película."}}
+  ],
+  errorWatch:[
+   {find:["la libro","el casa","un casa","una libro","la coche","el mesa","la problema","la mapa","el mano","una coche","un mesa","una problema","la día"], fix:{en:"Learn the noun with its article: el libro, el coche, el problema, el día, el mapa (masculine); la casa, la mesa, la mano, la foto (feminine).", tr:"İsmi tanımlığıyla birlikte öğren: el libro, el coche, el problema, el día, el mapa (eril); la casa, la mesa, la mano, la foto (dişil).", fa:"اسم را همراه حرف تعریفش یاد بگیر: el libro، el coche، el problema، el día، el mapa (مذکر)؛ la casa، la mesa، la mano، la foto (مؤنث)."}}
+  ],
+  yourTurn:{prompt:{en:"Write two sentences about things in your bag or on your desk. Use un / una or el / la.", tr:"Çantandaki ya da masandaki şeyler hakkında iki cümle yaz. un / una ya da el / la kullan.", fa:"درباره چیزهای داخل کیف یا روی میزت دو جمله بنویس. از un / una یا el / la استفاده کن."}, model:"En mi mochila hay un cuaderno y una botella de agua.", selfCheck:{en:"Does each article match its noun: el / un for masculine, la / una for feminine?", tr:"Her tanımlık ismine uyuyor mu: eril için el / un, dişil için la / una?", fa:"هر حرف تعریف با اسمش جور است: برای مذکر el / un، برای مؤنث la / una؟"}}
+ },
+ "g-A1-4":{
+  context:{lines:[
+    {who:"A", text:"¿Cómo son tus vecinos?", tr:"Komşuların nasıl?", fa:"همسایه‌هایت چطورند؟"},
+    {who:"B", text:"Son simpáticos. Tienen dos hijos y tres gatos grandes.", tr:"Cana yakınlar. İki çocukları ve üç büyük kedileri var.", fa:"خوش‌برخوردند. دو فرزند و سه گربه بزرگ دارند."},
+    {who:"A", text:"¿Y las casas del barrio?", tr:"Peki mahalledeki evler?", fa:"خانه‌های محله چطور؟"},
+    {who:"B", text:"Las casas son pequeñas, pero los jardines son preciosos.", tr:"Evler küçük ama bahçeler çok güzel.", fa:"خانه‌ها کوچک‌اند، ولی باغ‌ها بسیار زیبا هستند."}
+   ], targets:["vecinos","simpáticos","gatos","casas","pequeñas","jardines"]},
+  practice:[
+   {type:"fill", sentence:"Las casas son ___.", word:"grandes", distractors:["grande","grandas","granda"]},
+   {type:"fill", sentence:"Hay muchas ___ en la plaza.", word:"flores", distractors:["flor","floras","florees"]},
+   {type:"meaning", prompt:{en:"\"Los estudiantes son simpáticos.\" How many students?", tr:"\"Los estudiantes son simpáticos.\" Kaç öğrenci var?", fa:"«Los estudiantes son simpáticos.» چند دانشجو؟"}, options:[{en:"More than one.", tr:"Birden fazla.", fa:"بیش از یکی."},{en:"Only one.", tr:"Sadece bir.", fa:"فقط یکی."},{en:"It does not say.", tr:"Söylemiyor.", fa:"نمی‌گوید."}], correct:0},
+   {type:"fix", wrong:"Los casa son grandes.", right:"Las casas son grandes.", distractors:["Los casas son grandes.","Las casa son grandes."]},
+   {type:"build", words:["Mis","amigos","son","muy","simpáticos"], answer:"Mis amigos son muy simpáticos."},
+   {type:"type", sentence:"Un lápiz, dos ___.", accept:["lápices"], hint:{en:"Words ending in -z change to -ces: lápiz → lápices.", tr:"-z ile biten kelimelerde z, c olur ve -es gelir: lápiz → lápices.", fa:"کلمه‌هایی که به -z ختم می‌شوند به -ces تبدیل می‌شوند: lápiz ← lápices."}},
+   {type:"type", sentence:"Una ciudad, tres ___.", accept:["ciudades"], hint:{en:"Ends in a consonant: add -es.", tr:"Ünsüzle biter: -es ekle.", fa:"به صامت ختم می‌شود: -es اضافه کن."}},
+   {type:"type", sentence:"Un coche rojo, dos coches ___.", accept:["rojos"], hint:{en:"The adjective also becomes plural: rojo → rojos.", tr:"Sıfat da çoğul olur: rojo → rojos.", fa:"صفت هم جمع می‌شود: rojo ← rojos."}}
+  ],
+  errorWatch:[
+   {find:["dos libro","tres libro","dos casa","tres casa","dos amigo","tres amigo","muchos niño","muchas flor","las casa","los casas","los libro","las flor"], fix:{en:"Make the article, the noun and the adjective plural together: las casas pequeñas, los libros nuevos.", tr:"Tanımlığı, ismi ve sıfatı birlikte çoğul yap: las casas pequeñas, los libros nuevos.", fa:"حرف تعریف، اسم و صفت را با هم جمع ببند: las casas pequeñas، los libros nuevos."}}
+  ],
+  yourTurn:{prompt:{en:"Write two sentences about your friends or your family. Use a plural noun and a plural adjective.", tr:"Arkadaşların ya da ailen hakkında iki cümle yaz. Çoğul bir isim ve çoğul bir sıfat kullan.", fa:"درباره دوستان یا خانواده‌ات دو جمله بنویس. یک اسم جمع و یک صفت جمع بگذار."}, model:"Mis amigos son divertidos. Tengo dos primas simpáticas.", selfCheck:{en:"Do the article, noun and adjective all end the same way (-os, -as, -es)?", tr:"Tanımlık, isim ve sıfat aynı şekilde mi bitiyor (-os, -as, -es)?", fa:"حرف تعریف، اسم و صفت همه به یک شکل ختم می‌شوند (-os، -as، -es)؟"}}
+ },
+ "g-A1-5":{
+  context:{lines:[
+    {who:"A", text:"¿Qué haces los fines de semana?", tr:"Hafta sonları ne yaparsın?", fa:"آخر هفته‌ها چه کار می‌کنی؟"},
+    {who:"B", text:"Descanso, cocino y hablo con mis amigos.", tr:"Dinlenirim, yemek yaparım ve arkadaşlarımla konuşurum.", fa:"استراحت می‌کنم، آشپزی می‌کنم و با دوستانم حرف می‌زنم."},
+    {who:"A", text:"¿Y tu hermana?", tr:"Peki kız kardeşin?", fa:"خواهرت چطور؟"},
+    {who:"B", text:"Ella trabaja los sábados y estudia los domingos.", tr:"O cumartesi çalışır, pazar da ders çalışır.", fa:"او شنبه‌ها کار می‌کند و یکشنبه‌ها درس می‌خواند."}
+   ], targets:["Descanso","cocino","hablo","trabaja","estudia"]},
+  practice:[
+   {type:"fill", sentence:"Mis padres ___ en una tienda.", word:"trabajan", distractors:["trabaja","trabajamos","trabajo"]},
+   {type:"fill", sentence:"Yo ___ la guitarra los viernes.", word:"toco", distractors:["tocas","toca","tocamos"]},
+   {type:"meaning", prompt:{en:"\"Trabajamos juntos.\" Who works?", tr:"\"Trabajamos juntos.\" Kim çalışıyor?", fa:"«Trabajamos juntos.» چه کسی کار می‌کند؟"}, options:[{en:"We do (including me).", tr:"Biz (ben de dahil).", fa:"ما (من هم هستم)."},{en:"They do.", tr:"Onlar.", fa:"آن‌ها."},{en:"You do (one person).", tr:"Sen (tek kişi).", fa:"تو (یک نفر)."}], correct:0},
+   {type:"fix", wrong:"Ellos habla inglés muy bien.", right:"Ellos hablan inglés muy bien.", distractors:["Ellos hablamos inglés muy bien.","Ellos hablas inglés muy bien."]},
+   {type:"build", words:["Tú","compras","el","pan","cada","mañana"], answer:"Tú compras el pan cada mañana."},
+   {type:"type", sentence:"Yo ___ (cocinar) casi todos los días.", accept:["cocino"], hint:{en:"yo → -o: cocino.", tr:"yo → -o: cocino.", fa:"yo ← ‎-o: cocino."}},
+   {type:"type", sentence:"¿Tú ___ (escuchar) música en el autobús?", accept:["escuchas"], hint:{en:"tú → -as: escuchas.", tr:"tú → -as: escuchas.", fa:"tú ← ‎-as: escuchas."}},
+   {type:"type", sentence:"Vosotros ___ (trabajar) en el mismo sitio.", accept:["trabajáis"], hint:{en:"vosotros → -áis (used in Spain): trabajáis.", tr:"vosotros → -áis (İspanya'da kullanılır): trabajáis.", fa:"vosotros ← ‎-áis (در اسپانیا): trabajáis."}}
+  ],
+  errorWatch:[
+   {find:["yo hablas","yo habla","tú hablo","tú habla","él hablo","ella hablo","nosotros hablan","ellos hablamos","yo trabajas","yo trabaja","tú trabajo","tú trabaja","él trabajo","ella trabajo","yo hablar","yo trabajar","él hablar","ella hablar","tú hablar","yo estudiar","ella estudiar"], fix:{en:"Change the ending to match the person: yo -o, tú -as, él / ella -a, nosotros -amos, ellos -an. Do not leave the infinitive (-ar).", tr:"Eki kişiye göre değiştir: yo -o, tú -as, él / ella -a, nosotros -amos, ellos -an. Mastarı (-ar) olduğu gibi bırakma.", fa:"پایان فعل را با شخص هماهنگ کن: yo ‎-o، tú ‎-as، él / ella ‎-a، nosotros ‎-amos، ellos ‎-an. مصدر (-ar) را همان‌طور نگذار."}}
+  ],
+  yourTurn:{prompt:{en:"Write two sentences about your week: one about you and one about another person.", tr:"Haftan hakkında iki cümle yaz: biri senin, biri başka birinin hakkında.", fa:"درباره هفته‌ات دو جمله بنویس: یکی درباره خودت و یکی درباره کس دیگری."}, model:"Yo trabajo por la mañana y estudio por la tarde. Mi amigo trabaja en un banco.", selfCheck:{en:"Check each verb ending: yo -o, tú -as, él / ella -a, nosotros -amos, ellos -an.", tr:"Her fiil ekini kontrol et: yo -o, tú -as, él / ella -a, nosotros -amos, ellos -an.", fa:"پایان هر فعل را بررسی کن: yo ‎-o، tú ‎-as، él / ella ‎-a، nosotros ‎-amos، ellos ‎-an."}}
+ },
+ "g-A1-6":{
+  context:{lines:[
+    {who:"A", text:"¿Dónde vives?", tr:"Nerede yaşıyorsun?", fa:"کجا زندگی می‌کنی؟"},
+    {who:"B", text:"Vivo en Sevilla con mi hermana. Comemos juntas casi todos los días.", tr:"Sevilla'da kız kardeşimle yaşıyorum. Hemen her gün birlikte yemek yeriz.", fa:"با خواهرم در سویا زندگی می‌کنم. تقریباً هر روز با هم غذا می‌خوریم."},
+    {who:"A", text:"¿Y qué coméis?", tr:"Peki ne yersiniz?", fa:"و چه می‌خورید؟"},
+    {who:"B", text:"Ella come verdura y yo como pasta. Bebemos mucha agua.", tr:"O sebze yer, ben makarna yerim. Çok su içeriz.", fa:"او سبزی می‌خورد و من پاستا. آب زیاد می‌نوشیم."}
+   ], targets:["Vivo","Comemos","coméis","come","como","Bebemos"]},
+  practice:[
+   {type:"fill", sentence:"Mi hermano ___ el periódico cada mañana.", word:"lee", distractors:["leo","lees","leen"]},
+   {type:"fill", sentence:"Nosotros ___ en un piso pequeño.", word:"vivimos", distractors:["vive","viven","vivo"]},
+   {type:"meaning", prompt:{en:"\"¿Dónde vivís?\" Who is the speaker asking?", tr:"\"¿Dónde vivís?\" Konuşan kime soruyor?", fa:"«¿Dónde vivís?» گوینده از چه کسی می‌پرسد؟"}, options:[{en:"Several people, informally (Spain).", tr:"Birkaç kişiye, samimi biçimde (İspanya).", fa:"از چند نفر، غیررسمی (اسپانیا)."},{en:"One person.", tr:"Tek bir kişiye.", fa:"از یک نفر."},{en:"Himself or herself.", tr:"Kendine.", fa:"از خودش."}], correct:0},
+   {type:"fix", wrong:"Tú escribe un correo.", right:"Tú escribes un correo.", distractors:["Tú escribo un correo.","Tú escribimos un correo."]},
+   {type:"build", words:["Ellos","beben","agua","con","la","comida"], answer:"Ellos beben agua con la comida."},
+   {type:"type", sentence:"Yo ___ (beber) mucha agua.", accept:["bebo"], hint:{en:"yo → -o: bebo.", tr:"yo → -o: bebo.", fa:"yo ← ‎-o: bebo."}},
+   {type:"type", sentence:"¿Tú ___ (comer) en casa?", accept:["comes"], hint:{en:"tú → -es: comes.", tr:"tú → -es: comes.", fa:"tú ← ‎-es: comes."}},
+   {type:"type", sentence:"Mis padres ___ (abrir) la tienda a las nueve.", accept:["abren"], hint:{en:"ellos → -en, also for -ir verbs: abren.", tr:"ellos → -en, -ir fiillerinde de: abren.", fa:"ellos ← ‎-en، برای فعل‌های -ir هم: abren."}}
+  ],
+  errorWatch:[
+   {find:["yo come","yo vive","yo bebe","tú vivo","él vivo","ella vivo","nosotros comen","nosotros viven","ellos comemos","ellos vivimos","yo comer","yo vivir","ella comer","ella vivir"], fix:{en:"Change the ending to match the person: yo -o, tú -es, él / ella -e, nosotros -emos / -imos, ellos -en. Do not leave the infinitive.", tr:"Eki kişiye göre değiştir: yo -o, tú -es, él / ella -e, nosotros -emos / -imos, ellos -en. Mastarı olduğu gibi bırakma.", fa:"پایان فعل را با شخص هماهنگ کن: yo ‎-o، tú ‎-es، él / ella ‎-e، nosotros ‎-emos / ‎-imos، ellos ‎-en. مصدر را همان‌طور نگذار."}}
+  ],
+  yourTurn:{prompt:{en:"Write two sentences about what you eat or drink, or about where you live.", tr:"Ne yediğin, ne içtiğin ya da nerede yaşadığın hakkında iki cümle yaz.", fa:"درباره اینکه چه می‌خوری یا می‌نوشی یا کجا زندگی می‌کنی دو جمله بنویس."}, model:"Vivo en un piso pequeño. Como fruta todas las mañanas.", selfCheck:{en:"Check each verb ending: yo -o, tú -es, él / ella -e, nosotros -emos / -imos, ellos -en.", tr:"Her fiil ekini kontrol et: yo -o, tú -es, él / ella -e, nosotros -emos / -imos, ellos -en.", fa:"پایان هر فعل را بررسی کن: yo ‎-o، tú ‎-es، él / ella ‎-e، nosotros ‎-emos / ‎-imos، ellos ‎-en."}}
+ },
+ "g-A1-7":{
+  context:{lines:[
+    {who:"A", text:"¿Cuántos años tienes?", tr:"Kaç yaşındasın?", fa:"چند سالته؟"},
+    {who:"B", text:"Tengo veintiocho años. ¿Y tú?", tr:"Yirmi sekiz yaşındayım. Ya sen?", fa:"بیست و هشت سال دارم. تو چطور؟"},
+    {who:"A", text:"Tengo treinta. Y tengo mucha hambre. ¿Tienes algo de comer?", tr:"Otuz. Ve çok acıktım. Yiyecek bir şeyin var mı?", fa:"سی سال. و خیلی گرسنه‌ام. چیزی برای خوردن داری؟"},
+    {who:"B", text:"Sí, tenemos un bocadillo y fruta.", tr:"Evet, bir sandviçimiz ve meyvemiz var.", fa:"بله، یک ساندویچ و میوه داریم."}
+   ], targets:["tienes","Tengo","tengo","Tienes","tenemos"]},
+  practice:[
+   {type:"fill", sentence:"Mi hermana ___ sed. ¿Hay agua?", word:"tiene", distractors:["tienes","tengo","está"]},
+   {type:"fill", sentence:"Nosotros ___ una clase a las nueve.", word:"tenemos", distractors:["tienen","tiene","tengo"]},
+   {type:"meaning", prompt:{en:"\"Tengo frío.\" What does it mean?", tr:"\"Tengo frío.\" Ne demek?", fa:"«Tengo frío.» یعنی چه؟"}, options:[{en:"I feel cold.", tr:"Üşüyorum.", fa:"سردم است."},{en:"I am a cold-hearted person.", tr:"Soğuk kalpli biriyim.", fa:"من آدم سرد و بی‌احساسی هستم."},{en:"I have a cold (an illness).", tr:"Nezleyim (hastalık).", fa:"سرما خورده‌ام (بیماری)."}], correct:0},
+   {type:"fix", wrong:"Ella es mucho sueño.", right:"Ella tiene mucho sueño.", distractors:["Ella está mucho sueño.","Ella tienes mucho sueño."]},
+   {type:"build", words:["Mis","padres","tienen","una","casa","grande"], answer:"Mis padres tienen una casa grande."},
+   {type:"type", sentence:"¿Cuántos años ___ tu abuelo?", accept:["tiene"], hint:{en:"Age uses tener. él → tiene.", tr:"Yaş için tener kullanılır. él → tiene.", fa:"سن با tener می‌آید. él ← tiene."}},
+   {type:"type", sentence:"Yo ___ dos hermanos.", accept:["tengo"], hint:{en:"yo → tengo (irregular).", tr:"yo → tengo (düzensiz).", fa:"yo ← tengo (بی‌قاعده)."}},
+   {type:"type", sentence:"Vosotros ___ mucha suerte.", accept:["tenéis"], hint:{en:"vosotros → tenéis (used in Spain).", tr:"vosotros → tenéis (İspanya'da kullanılır).", fa:"vosotros ← tenéis (در اسپانیا)."}}
+  ],
+  errorWatch:[
+   {find:["soy hambre","estoy hambre","soy sed","estoy sed","estoy calor","soy sueño","estoy sueño","soy veinte","soy treinta","soy miedo","estoy miedo","soy años","estoy años","yo tienes","yo tiene","tú tiene","él tengo","ella tengo","nosotros tiene","ellos tiene"], fix:{en:"Age and body feelings use TENER: tengo veinte años, tengo hambre, tengo sed, tengo sueño. Yo tengo, tú tienes, él tiene, nosotros tenemos, ellos tienen.", tr:"Yaş ve bedensel hisler TENER ile: tengo veinte años, tengo hambre, tengo sed, tengo sueño. Yo tengo, tú tienes, él tiene, nosotros tenemos, ellos tienen.", fa:"سن و حس‌های بدنی با TENER: tengo veinte años، tengo hambre، tengo sed، tengo sueño. Yo tengo، tú tienes، él tiene، nosotros tenemos، ellos tienen."}}
+  ],
+  yourTurn:{prompt:{en:"Write two sentences about you: your age or your family, and one feeling (hambre, sed, sueño...).", tr:"Kendin hakkında iki cümle yaz: yaşın ya da ailen, bir de bir his (hambre, sed, sueño...).", fa:"درباره خودت دو جمله بنویس: سن یا خانواده‌ات و یک احساس (hambre، sed، sueño...)."}, model:"Tengo treinta años y tengo dos hermanos. Hoy tengo mucho sueño.", selfCheck:{en:"Age and feelings use tener, not ser or estar. Did you write tengo?", tr:"Yaş ve hisler tener ile, ser ya da estar ile değil. tengo yazdın mı?", fa:"سن و احساس با tener است، نه ser یا estar. tengo نوشتی؟"}}
+ },
+ "g-A1-8":{
+  context:{lines:[
+    {who:"A", text:"¿Te gusta el café?", tr:"Kahveyi sever misin?", fa:"قهوه دوست داری؟"},
+    {who:"B", text:"Sí, me gusta mucho. Pero no me gustan los dulces.", tr:"Evet, çok severim. Ama tatlıları sevmem.", fa:"بله، خیلی دوست دارم. ولی شیرینی‌ها را دوست ندارم."},
+    {who:"A", text:"A mí me gustan las galletas. ¿Y a tu hermana?", tr:"Ben kurabiyeleri severim. Peki kız kardeşin?", fa:"من بیسکویت‌ها را دوست دارم. خواهرت چطور؟"},
+    {who:"B", text:"A ella le gusta el chocolate. A mis padres les gusta el té.", tr:"O çikolatayı sever. Annemle babam çayı sever.", fa:"او شکلات دوست دارد. پدر و مادرم چای دوست دارند."}
+   ], targets:["Te","gusta","me","gustan","le","les"]},
+  practice:[
+   {type:"fill", sentence:"A mí ___ gustan los gatos.", word:"me", distractors:["yo","mi","te"]},
+   {type:"fill", sentence:"A mis padres ___ gusta viajar.", word:"les", distractors:["le","los","nos"]},
+   {type:"meaning", prompt:{en:"\"Me gustan las películas.\" Why is it gustan (not gusta)?", tr:"\"Me gustan las películas.\" Neden gusta değil de gustan?", fa:"«Me gustan las películas.» چرا gustan است (نه gusta)؟"}, options:[{en:"Because the thing I like (películas) is plural.", tr:"Çünkü sevdiğim şey (películas) çoğul.", fa:"چون چیزی که دوست دارم (películas) جمع است."},{en:"Because I am plural.", tr:"Çünkü ben çoğulum.", fa:"چون من جمع هستم."},{en:"Because it is polite.", tr:"Çünkü kibar bir biçim.", fa:"چون مؤدبانه است."}], correct:0},
+   {type:"fix", wrong:"Me gusta los libros.", right:"Me gustan los libros.", distractors:["Me gusto los libros.","Yo gustan los libros."]},
+   {type:"build", words:["A","ella","le","gusta","el","chocolate"], answer:"A ella le gusta el chocolate."},
+   {type:"type", sentence:"A ti ___ gusta el fútbol, ¿verdad?", accept:["te"], hint:{en:"a ti → te.", tr:"a ti → te.", fa:"a ti ← te."}},
+   {type:"type", sentence:"A nosotros ___ gustan las fiestas.", accept:["nos"], hint:{en:"a nosotros → nos.", tr:"a nosotros → nos.", fa:"a nosotros ← nos."}},
+   {type:"type", sentence:"Me ___ bailar.", accept:["gusta"], hint:{en:"After gustar, a verb in the infinitive counts as one thing → gusta.", tr:"gustar'dan sonra mastar tek bir şey sayılır → gusta.", fa:"بعد از gustar مصدر یک چیز حساب می‌شود ← gusta."}}
+  ],
+  errorWatch:[
+   {find:["yo gusto","yo gustan","tú gustas","nosotros gustamos","me gusta los","me gusta las","te gusta los","te gusta las","le gusta los","le gusta las","me gustan el","me gustan la","nos gusta los","nos gusta las"], fix:{en:"The verb agrees with the thing you like: me gusta el café, me gustan los dulces. The liker comes first: me, te, le, nos, les.", tr:"Fiil sevdiğin şeye uyar: me gusta el café, me gustan los dulces. Seven kişi önce gelir: me, te, le, nos, les.", fa:"فعل با چیزی که دوست داری هماهنگ می‌شود: me gusta el café، me gustan los dulces. دوست‌دارنده اول می‌آید: me، te، le، nos، les."}}
+  ],
+  yourTurn:{prompt:{en:"Write two sentences about what you like and what you do not like.", tr:"Nelerden hoşlandığın ve nelerden hoşlanmadığın hakkında iki cümle yaz.", fa:"درباره چیزهایی که دوست داری و چیزهایی که دوست نداری دو جمله بنویس."}, model:"Me gusta el té, pero no me gustan los dulces.", selfCheck:{en:"Gusta (one thing or a verb) or gustan (several things)? Did you start with me / te / le / nos / les?", tr:"Gusta (tek şey ya da fiil) mı gustan (birden fazla şey) mı? me / te / le / nos / les ile başladın mı?", fa:"gusta (یک چیز یا فعل) یا gustan (چند چیز)؟ با me / te / le / nos / les شروع کردی؟"}}
+ },
+ "g-A1-9":{
+  context:{lines:[
+    {who:"A", text:"¿Cómo te llamas? ¿De dónde eres?", tr:"Adın ne? Nerelisin?", fa:"اسمت چیست؟ اهل کجایی؟"},
+    {who:"B", text:"Me llamo Karim, soy de Marruecos. ¿Y tú?", tr:"Adım Karim, Faslıyım. Ya sen?", fa:"اسمم کریم است، اهل مراکشم. تو چطور؟"},
+    {who:"A", text:"Elena, de Valencia. ¿Cuándo llegaste a Madrid?", tr:"Elena, Valencialıyım. Madrid'e ne zaman geldin?", fa:"النا، اهل والنسیا. کی به مادرید رسیدی؟"},
+    {who:"B", text:"El lunes. ¿Cuánto cuesta un billete a Valencia?", tr:"Pazartesi. Valencia'ya bilet ne kadar?", fa:"دوشنبه. بلیت والنسیا چقدر است؟"}
+   ], targets:["Cómo","dónde","Cuándo","Cuánto"]},
+  practice:[
+   {type:"fill", sentence:"¿___ vives? — En Granada.", word:"Dónde", distractors:["Cuándo","Quién","Cuánto"]},
+   {type:"fill", sentence:"¿___ cuesta este billete? — Diez euros.", word:"Cuánto", distractors:["Cuándo","Cómo","Dónde"]},
+   {type:"meaning", prompt:{en:"\"¿Quién es ella?\" What are we asking?", tr:"\"¿Quién es ella?\" Ne soruyoruz?", fa:"«¿Quién es ella?» چه می‌پرسیم؟"}, options:[{en:"Who she is.", tr:"O kim.", fa:"او کیست."},{en:"Where she is.", tr:"O nerede.", fa:"او کجاست."},{en:"When she comes.", tr:"O ne zaman geliyor.", fa:"او کی می‌آید."}], correct:0},
+   {type:"fix", wrong:"¿Qué te llamas?", right:"¿Cómo te llamas?", distractors:["¿Cuál te llamas?","¿Quién te llamas?"]},
+   {type:"build", words:["¿Dónde","está","la","estación","de","tren?"], answer:"¿Dónde está la estación de tren?"},
+   {type:"type", sentence:"¿De ___ eres? — Soy de Perú.", accept:["dónde"], hint:{en:"To ask about a place: dónde (with an accent).", tr:"Yer sormak için: dónde (aksanlı).", fa:"برای پرسیدن مکان: dónde (با اکسان)."}},
+   {type:"type", sentence:"¿___ te llamas? — Me llamo Sara.", accept:["cómo"], hint:{en:"To ask about the way or a name: cómo.", tr:"Tarz ya da isim sormak için: cómo.", fa:"برای پرسیدن شیوه یا اسم: cómo."}},
+   {type:"type", sentence:"¿___ cuesta el café? — Dos euros.", accept:["cuánto"], hint:{en:"To ask about an amount or a price: cuánto.", tr:"Miktar ya da fiyat sormak için: cuánto.", fa:"برای پرسیدن مقدار یا قیمت: cuánto."}}
+  ],
+  errorWatch:[
+   {find:["qué te llamas","cuál te llamas","cómo tú te llamas","cómo tú llamas","cuándo cuesta","dónde cuesta","cómo cuesta"], fix:{en:"Choose the question word for what you want to know: cómo (how), dónde (where), cuándo (when), cuánto (how much), quién (who), qué (what). Write ¿ at the start and ? at the end.", tr:"Öğrenmek istediğine göre soru kelimesini seç: cómo (nasıl), dónde (nerede), cuándo (ne zaman), cuánto (ne kadar), quién (kim), qué (ne). Başa ¿, sona ? koy.", fa:"کلمه پرسشی را بر اساس چیزی که می‌خواهی بدانی انتخاب کن: cómo (چطور)، dónde (کجا)، cuándo (کی)، cuánto (چقدر)، quién (کی/چه کسی)، qué (چه). در ابتدا ¿ و در آخر ? بگذار."}}
+  ],
+  yourTurn:{prompt:{en:"Write two questions to ask a new classmate.", tr:"Yeni bir sınıf arkadaşına sormak için iki soru yaz.", fa:"برای پرسیدن از یک هم‌کلاسی جدید دو سؤال بنویس."}, model:"¿De dónde eres? ¿Cuándo es tu cumpleaños?", selfCheck:{en:"Did you start each question with ¿ and write the accent on cómo, dónde, cuándo?", tr:"Her soruya ¿ ile başladın mı ve cómo, dónde, cuándo'da aksanı yazdın mı?", fa:"هر سؤال را با ¿ شروع کردی و اکسان cómo، dónde، cuándo را نوشتی؟"}}
+ },
+ "g-A1-10":{
+  context:{lines:[
+    {who:"A", text:"¿Es tu bolso?", tr:"Bu senin çantan mı?", fa:"این کیف توست؟"},
+    {who:"B", text:"No, no es mi bolso. Es el bolso de mi hermana.", tr:"Hayır, benim çantam değil. Kız kardeşimin çantası.", fa:"نه، کیف من نیست. کیف خواهرم است."},
+    {who:"A", text:"¿Y estas son tus llaves?", tr:"Peki bunlar senin anahtarların mı?", fa:"این‌ها کلیدهای توست؟"},
+    {who:"B", text:"No, no son mis llaves. Nuestras llaves están en casa.", tr:"Hayır, benim anahtarlarım değil. Bizim anahtarlarımız evde.", fa:"نه، کلیدهای من نیستند. کلیدهای ما در خانه است."}
+   ], targets:["no","tu","mi","tus","mis","Nuestras"]},
+  practice:[
+   {type:"fill", sentence:"Mi hermana ___ come carne.", word:"no", distractors:["nada","sin","ninguno"]},
+   {type:"fill", sentence:"Esta es ___ casa, la casa de mi familia y yo.", word:"nuestra", distractors:["nuestro","nosotros","nuestras"]},
+   {type:"meaning", prompt:{en:"\"Son mis libros.\" What does \"mis\" tell us?", tr:"\"Son mis libros.\" \"mis\" bize ne söylüyor?", fa:"«Son mis libros.» «mis» چه چیزی می‌گوید؟"}, options:[{en:"The books are mine, and there are several.", tr:"Kitaplar benim ve birden fazla.", fa:"کتاب‌ها مال من هستند و چندتا هستند."},{en:"There is one book, and it is mine.", tr:"Tek bir kitap var ve benim.", fa:"یک کتاب هست و مال من است."},{en:"The books are yours.", tr:"Kitaplar senin.", fa:"کتاب‌ها مال تو هستند."}], correct:0},
+   {type:"fix", wrong:"Yo hablo no francés.", right:"Yo no hablo francés.", distractors:["Yo hablo francés no.","No yo hablo francés."]},
+   {type:"build", words:["Mi","hermana","no","vive","con","nuestros","padres"], answer:"Mi hermana no vive con nuestros padres."},
+   {type:"type", sentence:"___ tengo tiempo hoy. (negative)", accept:["no"], hint:{en:"To make a sentence negative, put no before the verb.", tr:"Cümleyi olumsuz yapmak için fiilden önce no koy.", fa:"برای منفی کردن جمله، no را قبل از فعل بگذار."}},
+   {type:"type", sentence:"Estos son ___ libros. (de ti, plural)", accept:["tus"], hint:{en:"Several things that are yours: tus.", tr:"Senin olan birden fazla şey: tus.", fa:"چند چیز که مال تو هستند: tus."}},
+   {type:"type", sentence:"Ellos viven con ___ abuelos. (de ellos)", accept:["sus"], hint:{en:"Several things that belong to them: sus.", tr:"Onların olan birden fazla şey: sus.", fa:"چند چیز که مال آن‌هاست: sus."}}
+  ],
+  errorWatch:[
+   {find:["hablo no","tengo no","soy no","estoy no","tu libros","mi amigos","mi libros","mi padres","tu amigos","tu padres","nuestro casa","nuestra libro","mis amigo","tus amigo"], fix:{en:"Put no right before the verb: no hablo. Possessives agree with the thing owned: mi libro, mis libros, nuestra casa.", tr:"no'yu fiilin hemen önüne koy: no hablo. İyelik sıfatı sahip olunan şeye uyar: mi libro, mis libros, nuestra casa.", fa:"no را درست قبل از فعل بگذار: no hablo. صفت ملکی با چیز مورد مالکیت هماهنگ می‌شود: mi libro، mis libros، nuestra casa."}}
+  ],
+  yourTurn:{prompt:{en:"Write two sentences: one negative about you (no...) and one with a possessive (mi, tu, su, nuestro...).", tr:"İki cümle yaz: biri senin hakkında olumsuz (no...), biri iyelik sıfatlı (mi, tu, su, nuestro...).", fa:"دو جمله بنویس: یکی منفی درباره خودت (no...) و یکی با صفت ملکی (mi، tu، su، nuestro...)."}, model:"No hablo francés. Mis padres viven en Estambul.", selfCheck:{en:"Is no right before the verb? Does mi / tu / su get an -s when the thing is plural (mis, tus, sus)?", tr:"no fiilin hemen önünde mi? Şey çoğulsa mi / tu / su -s alıyor mu (mis, tus, sus)?", fa:"no درست قبل از فعل است؟ وقتی چیز جمع است mi / tu / su -s می‌گیرد (mis، tus، sus)؟"}}
+ },
+ "g-A2-1":{
+  context:{lines:[
+    {who:"A", text:"¿Qué tal tu fin de semana? ¿Descansaste?", tr:"Hafta sonun nasıldı? Dinlendin mi?", fa:"آخر هفته‌ات چطور بود؟ استراحت کردی؟"},
+    {who:"B", text:"Sí. El sábado visité a mi tía y cocinamos juntas.", tr:"Evet. Cumartesi teyzemi ziyaret ettim ve birlikte yemek yaptık.", fa:"بله. شنبه به خاله‌ام سر زدم و با هم آشپزی کردیم."},
+    {who:"A", text:"¿Y el domingo?", tr:"Peki pazar?", fa:"یکشنبه چطور؟"},
+    {who:"B", text:"Comimos en un restaurante y después paseamos por el centro.", tr:"Bir restoranda yedik, sonra merkezde yürüdük.", fa:"در رستوران غذا خوردیم و بعد در مرکز شهر قدم زدیم."}
+   ], targets:["Descansaste","visité","cocinamos","Comimos","paseamos"]},
+  practice:[
+   {type:"fill", sentence:"Ayer yo ___ a mi abuela por teléfono.", word:"llamé", distractors:["llamo","llamó","llamamos"]},
+   {type:"fill", sentence:"El año pasado ellos ___ en Sevilla.", word:"vivieron", distractors:["viven","vivió","vivimos"]},
+   {type:"meaning", prompt:{en:"\"Trabajé ayer.\" What does it tell us?", tr:"\"Trabajé ayer.\" Bu ne söylüyor?", fa:"«Trabajé ayer.» این چه می‌گوید؟"}, options:[{en:"The action is finished: it happened yesterday.", tr:"Eylem bitti: dün oldu.", fa:"کار تمام شده: دیروز اتفاق افتاد."},{en:"I work every day.", tr:"Her gün çalışırım.", fa:"هر روز کار می‌کنم."},{en:"I will work tomorrow.", tr:"Yarın çalışacağım.", fa:"فردا کار خواهم کرد."}], correct:0},
+   {type:"fix", wrong:"Anoche nosotros comemos pizza.", right:"Anoche nosotros comimos pizza.", distractors:["Anoche nosotros comieron pizza.","Anoche nosotros comí pizza."]},
+   {type:"build", words:["Ayer","compré","pan","y","fruta","en","el","mercado"], answer:"Ayer compré pan y fruta en el mercado."},
+   {type:"type", sentence:"Ayer ella ___ (llegar) tarde.", accept:["llegó"], hint:{en:"él / ella, -ar verbs: -ó (with accent): llegó.", tr:"él / ella, -ar fiilleri: -ó (aksanlı): llegó.", fa:"él / ella، فعل‌های -ar: ‎-ó (با اکسان): llegó."}},
+   {type:"type", sentence:"Tú ___ (escribir) un correo anoche.", accept:["escribiste"], hint:{en:"tú, -ir verbs: -iste: escribiste.", tr:"tú, -ir fiilleri: -iste: escribiste.", fa:"tú، فعل‌های -ir: ‎-iste: escribiste."}},
+   {type:"type", sentence:"Vosotros ___ (hablar) con el jefe ayer.", accept:["hablasteis"], hint:{en:"vosotros, -ar verbs: -asteis (used in Spain): hablasteis.", tr:"vosotros, -ar fiilleri: -asteis (İspanya'da kullanılır): hablasteis.", fa:"vosotros، فعل‌های -ar: ‎-asteis (در اسپانیا): hablasteis."}}
+  ],
+  errorWatch:[
+   {find:["ayer yo hablo","ayer yo trabajo","ayer yo como","ayer yo vivo","ayer hablo","ayer trabajo","ayer compro","ayer estudio","anoche hablo","anoche trabajo","anoche estudio"], fix:{en:"For finished past actions, use the preterite: yo -é / -í, tú -aste / -iste, él / ella -ó / -ió, nosotros -amos / -imos, ellos -aron / -ieron.", tr:"Bitmiş geçmiş eylemler için preterite kullan: yo -é / -í, tú -aste / -iste, él / ella -ó / -ió, nosotros -amos / -imos, ellos -aron / -ieron.", fa:"برای کارهای تمام‌شده در گذشته از preterite استفاده کن: yo ‎-é / ‎-í، tú ‎-aste / ‎-iste، él / ella ‎-ó / ‎-ió، nosotros ‎-amos / ‎-imos، ellos ‎-aron / ‎-ieron."}}
+  ],
+  yourTurn:{prompt:{en:"Write two sentences about what you did yesterday or last weekend.", tr:"Dün ya da geçen hafta sonu ne yaptığını anlatan iki cümle yaz.", fa:"درباره کاری که دیروز یا آخر هفته گذشته کردی دو جمله بنویس."}, model:"Ayer trabajé por la mañana y por la tarde visité a un amigo.", selfCheck:{en:"Check each verb ending: yo -é / -í, tú -aste / -iste, él / ella -ó / -ió. Did you write the accent?", tr:"Her fiil ekini kontrol et: yo -é / -í, tú -aste / -iste, él / ella -ó / -ió. Aksanı yazdın mı?", fa:"پایان هر فعل را بررسی کن: yo ‎-é / ‎-í، tú ‎-aste / ‎-iste، él / ella ‎-ó / ‎-ió. اکسان را نوشتی؟"}}
+ },
+ "g-A2-2":{
+  context:{lines:[
+    {who:"A", text:"¿Adónde fuiste de vacaciones?", tr:"Tatilde nereye gittin?", fa:"برای تعطیلات کجا رفتی؟"},
+    {who:"B", text:"Fui a Granada con mi familia. Tuvimos mucha suerte con el tiempo.", tr:"Ailemle Granada'ya gittim. Havayla ilgili çok şanslıydık.", fa:"با خانواده‌ام به گرانادا رفتم. از نظر آب‌وهوا خیلی شانس آوردیم."},
+    {who:"A", text:"¿Y qué hicisteis allí?", tr:"Orada ne yaptınız?", fa:"آنجا چه کار کردید؟"},
+    {who:"B", text:"Hicimos muchas fotos y mi hermano fue al museo solo.", tr:"Çok fotoğraf çektik ve kardeşim müzeye tek başına gitti.", fa:"عکس‌های زیادی گرفتیم و برادرم تنها به موزه رفت."}
+   ], targets:["fuiste","Fui","Tuvimos","hicisteis","Hicimos","fue"]},
+  practice:[
+   {type:"fill", sentence:"Ayer yo ___ al médico.", word:"fui", distractors:["fue","fuimos","era"]},
+   {type:"fill", sentence:"El verano pasado nosotros ___ mucho calor.", word:"tuvimos", distractors:["tenemos","tuvieron","tengo"]},
+   {type:"meaning", prompt:{en:"\"La película fue muy buena.\" What does \"fue\" mean here?", tr:"\"La película fue muy buena.\" Burada \"fue\" ne anlama geliyor?", fa:"«La película fue muy buena.» «fue» اینجا چه معنایی دارد؟"}, options:[{en:"It was (from ser).", tr:"Idi (ser fiilinden).", fa:"بود (از ser)."},{en:"He or she went (from ir).", tr:"Gitti (ir fiilinden).", fa:"رفت (از ir)."},{en:"It is (present).", tr:"Dir (şimdiki zaman).", fa:"است (زمان حال)."}], correct:0},
+   {type:"fix", wrong:"Ayer yo hací la compra.", right:"Ayer yo hice la compra.", distractors:["Ayer yo hizo la compra.","Ayer yo hicimos la compra."]},
+   {type:"build", words:["Mis","padres","fueron","a","Italia","el","año","pasado"], answer:"Mis padres fueron a Italia el año pasado."},
+   {type:"type", sentence:"Anoche tú ___ (hacer) la cena.", accept:["hiciste"], hint:{en:"hacer → hice, hiciste, hizo, hicimos, hicisteis, hicieron.", tr:"hacer → hice, hiciste, hizo, hicimos, hicisteis, hicieron.", fa:"hacer ← hice، hiciste، hizo، hicimos، hicisteis، hicieron."}},
+   {type:"type", sentence:"Mi hermano ___ (ir) a la playa ayer.", accept:["fue"], hint:{en:"ir → fui, fuiste, fue, fuimos, fuisteis, fueron (no accent).", tr:"ir → fui, fuiste, fue, fuimos, fuisteis, fueron (aksansız).", fa:"ir ← fui، fuiste، fue، fuimos، fuisteis، fueron (بدون اکسان)."}},
+   {type:"type", sentence:"Ellos ___ (tener) una reunión el lunes.", accept:["tuvieron"], hint:{en:"tener → tuve, tuviste, tuvo, tuvimos, tuvisteis, tuvieron.", tr:"tener → tuve, tuviste, tuvo, tuvimos, tuvisteis, tuvieron.", fa:"tener ← tuve، tuviste، tuvo، tuvimos، tuvisteis، tuvieron."}}
+  ],
+  errorWatch:[
+   {find:["hací","fuí","tuví","yo fue","tú fui","él fui","nosotros fue","ellos fue","yo hizo","él hice","ella hice","tú tuve","yo tuvo"], fix:{en:"These four are irregular in the preterite: ir / ser → fui, fuiste, fue; tener → tuve, tuviste, tuvo; hacer → hice, hiciste, hizo. Fue and fui have no accent.", tr:"Bu dört fiil preterite'te düzensizdir: ir / ser → fui, fuiste, fue; tener → tuve, tuviste, tuvo; hacer → hice, hiciste, hizo. Fue ve fui aksansızdır.", fa:"این چهار فعل در preterite بی‌قاعده‌اند: ir / ser ← fui، fuiste، fue؛ tener ← tuve، tuviste، tuvo؛ hacer ← hice، hiciste، hizo. fue و fui اکسان ندارند."}}
+  ],
+  yourTurn:{prompt:{en:"Write two sentences about a trip or a day last year. Use fui, tuve, hice or fue.", tr:"Geçen yılki bir gezi ya da bir gün hakkında iki cümle yaz. fui, tuve, hice ya da fue kullan.", fa:"درباره یک سفر یا یک روز در سال گذشته دو جمله بنویس. از fui، tuve، hice یا fue استفاده کن."}, model:"El año pasado fui a Roma. Hice muchas fotos y tuve mucha suerte.", selfCheck:{en:"Check the irregular forms: ir / ser → fui, fue; tener → tuve; hacer → hice, hizo. Is the form right for the person?", tr:"Düzensiz biçimleri kontrol et: ir / ser → fui, fue; tener → tuve; hacer → hice, hizo. Biçim kişiye uyuyor mu?", fa:"شکل‌های بی‌قاعده را بررسی کن: ir / ser ← fui، fue؛ tener ← tuve؛ hacer ← hice، hizo. شکل با شخص جور است؟"}}
+ },
+ "g-A2-3":{
+  context:{lines:[
+    {who:"A", text:"¿Cómo era tu vida de niño?", tr:"Çocukken hayatın nasıldı?", fa:"زندگی‌ات در کودکی چطور بود؟"},
+    {who:"B", text:"Vivíamos en un pueblo pequeño. Todos los días jugaba en la calle con mis primos.", tr:"Küçük bir köyde yaşıyorduk. Her gün sokakta kuzenlerimle oynardım.", fa:"در یک روستای کوچک زندگی می‌کردیم. هر روز در کوچه با پسرعموهایم بازی می‌کردم."},
+    {who:"A", text:"¿Y qué hacía tu madre?", tr:"Annen ne yapardı?", fa:"مادرت چه کار می‌کرد؟"},
+    {who:"B", text:"Trabajaba en una tienda y siempre cocinaba para todos.", tr:"Bir dükkanda çalışırdı ve her zaman herkes için yemek pişirirdi.", fa:"در یک مغازه کار می‌کرد و همیشه برای همه آشپزی می‌کرد."}
+   ], targets:["era","Vivíamos","jugaba","hacía","Trabajaba","cocinaba"]},
+  practice:[
+   {type:"fill", sentence:"De niña, ella ___ en el parque cada tarde.", word:"jugaba", distractors:["jugó","juega","juegue"]},
+   {type:"fill", sentence:"Cuando éramos niños, nosotros ___ leche cada mañana.", word:"bebíamos", distractors:["bebemos","beberemos","beban"]},
+   {type:"meaning", prompt:{en:"\"Antes vivía en Bilbao.\" What does this tell us?", tr:"\"Antes vivía en Bilbao.\" Bu ne söylüyor?", fa:"«Antes vivía en Bilbao.» این چه می‌گوید؟"}, options:[{en:"I lived there for a while in the past, not now.", tr:"Geçmişte bir süre orada yaşadım, şimdi değil.", fa:"در گذشته مدتی آنجا زندگی می‌کردم، الان نه."},{en:"I live there now.", tr:"Şimdi orada yaşıyorum.", fa:"الان آنجا زندگی می‌کنم."},{en:"I will live there.", tr:"Orada yaşayacağım.", fa:"آنجا زندگی خواهم کرد."}], correct:0},
+   {type:"fix", wrong:"De niño, yo juegaba con mis primos.", right:"De niño, yo jugaba con mis primos.", distractors:["De niño, yo juegaban con mis primos.","De niño, yo jugabas con mis primos."]},
+   {type:"build", words:["Antes","mis","abuelos","vivían","en","un","pueblo"], answer:"Antes mis abuelos vivían en un pueblo."},
+   {type:"type", sentence:"Cuando yo ___ (ser) pequeño, tenía un perro.", accept:["era"], hint:{en:"ser is irregular in the imperfect: era, eras, era, éramos, erais, eran.", tr:"ser imperfecto'da düzensizdir: era, eras, era, éramos, erais, eran.", fa:"ser در imperfecto بی‌قاعده است: era، eras، era، éramos، erais، eran."}},
+   {type:"type", sentence:"Mi padre siempre ___ (leer) el periódico por la mañana.", accept:["leía"], hint:{en:"-er / -ir verbs: -ía. él → leía.", tr:"-er / -ir fiilleri: -ía. él → leía.", fa:"فعل‌های -er / -ir: ‎-ía. él ← leía."}},
+   {type:"type", sentence:"Nosotros ___ (ir) a la playa cada verano.", accept:["íbamos"], hint:{en:"ir is irregular: iba, ibas, iba, íbamos, ibais, iban.", tr:"ir düzensizdir: iba, ibas, iba, íbamos, ibais, iban.", fa:"ir بی‌قاعده است: iba، ibas، iba، íbamos، ibais، iban."}}
+  ],
+  errorWatch:[
+   {find:["juegaba","vivíaba","comíaba","de niño juego","de niña juego","de pequeño juego","de pequeña juego"], fix:{en:"For habits and descriptions in the past use the imperfect: -aba for -ar verbs, -ía for -er / -ir verbs. There is no stem change: jugaba, not juegaba.", tr:"Geçmişteki alışkanlık ve tasvirler için imperfecto kullan: -ar fiillerinde -aba, -er / -ir fiillerinde -ía. Kök değişimi yok: jugaba, juegaba değil.", fa:"برای عادت‌ها و توصیف‌ها در گذشته از imperfecto استفاده کن: برای فعل‌های -ar پایان ‎-aba و برای -er / -ir پایان ‎-ía. تغییر ریشه نداریم: jugaba، نه juegaba."}}
+  ],
+  yourTurn:{prompt:{en:"Write two sentences about your life as a child: where you lived and what you did every day.", tr:"Çocukluğun hakkında iki cümle yaz: nerede yaşadığın ve her gün ne yaptığın.", fa:"درباره کودکی‌ات دو جمله بنویس: کجا زندگی می‌کردی و هر روز چه کار می‌کردی."}, model:"De niño vivía en un pueblo y jugaba al fútbol todos los días.", selfCheck:{en:"Habits and descriptions in the past: -aba, -ía. Irregular: ir → iba, ser → era, ver → veía.", tr:"Geçmişte alışkanlık ve tasvir: -aba, -ía. Düzensiz: ir → iba, ser → era, ver → veía.", fa:"عادت و توصیف در گذشته: ‎-aba، ‎-ía. بی‌قاعده: ir ← iba، ser ← era، ver ← veía."}}
+ },
+ "g-A2-4":{
+  context:{lines:[
+    {who:"A", text:"¿Qué hacías anoche a las nueve?", tr:"Dün gece dokuzda ne yapıyordun?", fa:"دیشب ساعت نه چه کار می‌کردی؟"},
+    {who:"B", text:"Cocinaba cuando sonó el teléfono. Era mi madre.", tr:"Yemek yapıyordum ki telefon çaldı. Annemdi.", fa:"داشتم آشپزی می‌کردم که تلفن زنگ زد. مادرم بود."},
+    {who:"A", text:"¿Y qué pasó después?", tr:"Peki sonra ne oldu?", fa:"بعد چه شد؟"},
+    {who:"B", text:"Hablamos una hora y la cena se quemó.", tr:"Bir saat konuştuk ve yemek yandı.", fa:"یک ساعت حرف زدیم و شام سوخت."}
+   ], targets:["hacías","Cocinaba","sonó","Era","Hablamos","quemó"]},
+  practice:[
+   {type:"fill", sentence:"Mientras ella ___, el bebé dormía.", word:"leía", distractors:["leyó","lee","leerá"]},
+   {type:"fill", sentence:"De repente, ___ un ruido muy fuerte.", word:"se oyó", distractors:["se oía","se oye","se oirá"]},
+   {type:"meaning", prompt:{en:"\"Cuando llegué, cenaban.\" What was happening when I arrived?", tr:"\"Cuando llegué, cenaban.\" Ben vardığımda ne oluyordu?", fa:"«Cuando llegué, cenaban.» وقتی رسیدم چه اتفاقی در جریان بود؟"}, options:[{en:"They were having dinner.", tr:"Akşam yemeği yiyorlardı.", fa:"داشتند شام می‌خوردند."},{en:"They had already finished dinner.", tr:"Akşam yemeğini bitirmişlerdi.", fa:"شام را تمام کرده بودند."},{en:"They will have dinner later.", tr:"Daha sonra yemek yiyecekler.", fa:"بعداً شام می‌خورند."}], correct:0},
+   {type:"fix", wrong:"Cuando era niño, fui al parque todos los días.", right:"Cuando era niño, iba al parque todos los días.", distractors:["Cuando era niño, voy al parque todos los días.","Cuando era niño, irá al parque todos los días."]},
+   {type:"build", words:["Cuando","llegué","a","casa","mis","hijos","dormían"], answer:"Cuando llegué a casa mis hijos dormían."},
+   {type:"type", sentence:"Mientras yo estudiaba, mi hermano ___ (llegar).", accept:["llegó"], hint:{en:"A single event that interrupts → preterite: llegó.", tr:"Araya giren tek bir olay → preterite: llegó.", fa:"یک رویداد مشخص که وسط می‌آید ← preterite: llegó."}},
+   {type:"type", sentence:"Hacía sol cuando nosotros ___ (salir).", accept:["salimos"], hint:{en:"A finished event → preterite: salimos.", tr:"Biten bir olay → preterite: salimos.", fa:"یک رویداد تمام‌شده ← preterite: salimos."}},
+   {type:"type", sentence:"Eran las cinco cuando ella ___ (despertarse).", accept:["se despertó","despertó"], hint:{en:"Waking up is one event → preterite: se despertó.", tr:"Uyanmak tek bir olay → preterite: se despertó.", fa:"بیدار شدن یک رویداد است ← preterite: se despertó."}}
+  ],
+  errorWatch:[
+   {find:["cuando era niño fui","cuando era niña fui","cuando era joven fui","mientras yo cociné","mientras yo estudié","mientras yo trabajé","mientras comí","mientras trabajé","mientras estudié","era las","fueron las"], fix:{en:"Background and repeated actions use the imperfect (cocinaba, era, tenía). A single finished event uses the preterite (sonó, llegó). Times are always imperfect: eran las cinco.", tr:"Fon ve tekrarlanan eylemler imperfecto kullanır (cocinaba, era, tenía). Tek, bitmiş olay preterite kullanır (sonó, llegó). Saatler hep imperfecto: eran las cinco.", fa:"پس‌زمینه و کارهای تکراری imperfecto می‌گیرند (cocinaba، era، tenía). یک رویداد تمام‌شده preterite می‌گیرد (sonó، llegó). ساعت‌ها همیشه imperfecto هستند: eran las cinco."}}
+  ],
+  yourTurn:{prompt:{en:"Write two sentences about a memory: what was going on (background) and what happened (event).", tr:"Bir anı hakkında iki cümle yaz: neler oluyordu (fon) ve ne oldu (olay).", fa:"درباره یک خاطره دو جمله بنویس: چه چیزی در جریان بود (پس‌زمینه) و چه اتفاقی افتاد (رویداد)."}, model:"Estudiaba en la biblioteca cuando llamó mi amigo.", selfCheck:{en:"Background or ongoing = imperfect (estudiaba). A single event = preterite (llamó). Did you use one of each?", tr:"Fon ya da süregelen = imperfecto (estudiaba). Tek olay = preterite (llamó). Her birinden birer tane kullandın mı?", fa:"پس‌زمینه یا ادامه‌دار = imperfecto (estudiaba). رویداد مشخص = preterite (llamó). از هر کدام یکی گذاشتی؟"}}
+ },
+ "g-A2-5":{
+  context:{lines:[
+    {who:"A", text:"¿A qué hora te levantas?", tr:"Saat kaçta kalkarsın?", fa:"ساعت چند بلند می‌شوی؟"},
+    {who:"B", text:"Me levanto a las siete y me ducho. Mi hermana se despierta más tarde.", tr:"Yedide kalkarım ve duş alırım. Kız kardeşim daha geç uyanır.", fa:"ساعت هفت بلند می‌شوم و دوش می‌گیرم. خواهرم دیرتر بیدار می‌شود."},
+    {who:"A", text:"¿Y vosotros? ¿Os acostáis tarde?", tr:"Peki siz? Geç mi yatarsınız?", fa:"شما چطور؟ دیر می‌خوابید؟"},
+    {who:"B", text:"Sí, nos acostamos a medianoche.", tr:"Evet, gece yarısı yatarız.", fa:"بله، نیمه‌شب می‌خوابیم."}
+   ], targets:["te","Me","me","se","Os","nos"]},
+  practice:[
+   {type:"fill", sentence:"Yo ___ levanto a las siete.", word:"me", distractors:["te","se","nos"]},
+   {type:"fill", sentence:"Mis padres ___ acuestan temprano.", word:"se", distractors:["me","nos","os"]},
+   {type:"meaning", prompt:{en:"\"Me lavo las manos.\" Who washes the hands?", tr:"\"Me lavo las manos.\" Elleri kim yıkıyor?", fa:"«Me lavo las manos.» چه کسی دست‌ها را می‌شوید؟"}, options:[{en:"I wash my own hands.", tr:"Kendi ellerimi yıkıyorum.", fa:"من دست‌های خودم را می‌شویم."},{en:"I wash someone else's hands.", tr:"Başkasının ellerini yıkıyorum.", fa:"من دست‌های کس دیگری را می‌شویم."},{en:"Someone washes my hands.", tr:"Biri ellerimi yıkıyor.", fa:"کسی دست‌های مرا می‌شوید."}], correct:0},
+   {type:"fix", wrong:"Ella peina se cada mañana.", right:"Ella se peina cada mañana.", distractors:["Ella se peinan cada mañana.","Ella peina se cada mañana."]},
+   {type:"build", words:["Nosotros","nos","acostamos","a","las","once"], answer:"Nosotros nos acostamos a las once."},
+   {type:"type", sentence:"¿Tú ___ (despertarse) pronto?", accept:["te despiertas"], hint:{en:"tú → te, and e → ie: te despiertas.", tr:"tú → te ve e → ie: te despiertas.", fa:"tú ← te و e ← ie: te despiertas."}},
+   {type:"type", sentence:"Ellos ___ (ducharse) por la noche.", accept:["se duchan"], hint:{en:"ellos → se: se duchan.", tr:"ellos → se: se duchan.", fa:"ellos ← se: se duchan."}},
+   {type:"type", sentence:"Vosotros ___ (levantarse) a las siete.", accept:["os levantáis"], hint:{en:"vosotros → os: os levantáis (used in Spain).", tr:"vosotros → os: os levantáis (İspanya'da kullanılır).", fa:"vosotros ← os: os levantáis (در اسپانیا)."}}
+  ],
+  errorWatch:[
+   {find:["me levantas","me duchas","me acuestas","nos levanto","nos ducho","nos acuesto","se levanto","se ducho","se acuesto","se levantamos","se duchamos"], fix:{en:"The reflexive pronoun matches the person and goes before the verb: yo me, tú te, él / ella se, nosotros nos, vosotros os, ellos se.", tr:"Dönüşlü zamir kişiye uyar ve fiilden önce gelir: yo me, tú te, él / ella se, nosotros nos, vosotros os, ellos se.", fa:"ضمیر انعکاسی با شخص هماهنگ است و قبل از فعل می‌آید: yo me، tú te، él / ella se، nosotros nos، vosotros os، ellos se."}}
+  ],
+  yourTurn:{prompt:{en:"Write two sentences about your morning or evening routine. Use two reflexive verbs.", tr:"Sabah ya da akşam rutinin hakkında iki cümle yaz. İki dönüşlü fiil kullan.", fa:"درباره روال صبح یا شب خودت دو جمله بنویس. دو فعل انعکاسی بگذار."}, model:"Me levanto a las siete y me ducho. Por la noche me acuesto tarde.", selfCheck:{en:"Does each reflexive verb have me / te / se / nos / os before it, matching the person?", tr:"Her dönüşlü fiilin önünde kişiye uygun me / te / se / nos / os var mı?", fa:"قبل از هر فعل انعکاسی me / te / se / nos / os متناسب با شخص هست؟"}}
+ },
+ "g-A2-6":{
+  context:{lines:[
+    {who:"A", text:"¿Qué móvil es más barato, este o ese?", tr:"Hangi telefon daha ucuz, bu mu şu mu?", fa:"کدام گوشی ارزان‌تر است، این یا آن؟"},
+    {who:"B", text:"Este es más barato que ese, pero ese es mejor.", tr:"Bu ondan daha ucuz ama şu daha iyi.", fa:"این از آن ارزان‌تر است، ولی آن بهتر است."},
+    {who:"A", text:"¿Y este modelo? ¿Es el más caro?", tr:"Peki bu model? En pahalısı mı?", fa:"این مدل چطور؟ گران‌ترین است؟"},
+    {who:"B", text:"Sí, es el más caro, pero también es tan rápido como el mejor.", tr:"Evet, en pahalısı ama en iyisi kadar hızlı da.", fa:"بله، گران‌ترین است، ولی به اندازه بهترین هم سریع است."}
+   ], targets:["más","que","mejor","tan","como"]},
+  practice:[
+   {type:"fill", sentence:"Mi hermano es ___ alto que yo.", word:"más", distractors:["tan","mejor","muy"]},
+   {type:"fill", sentence:"Esta ciudad es ___ grande como Madrid.", word:"tan", distractors:["más","menos","muy"]},
+   {type:"meaning", prompt:{en:"\"Ana es la más joven del grupo.\" What does it mean?", tr:"\"Ana es la más joven del grupo.\" Ne demek?", fa:"«Ana es la más joven del grupo.» یعنی چه؟"}, options:[{en:"Nobody in the group is younger than Ana.", tr:"Grupta Ana'dan genç kimse yok.", fa:"در گروه کسی جوان‌تر از آنا نیست."},{en:"Ana is younger than one person.", tr:"Ana bir kişiden daha genç.", fa:"آنا از یک نفر جوان‌تر است."},{en:"Ana is as young as the others.", tr:"Ana diğerleri kadar genç.", fa:"آنا هم‌سن بقیه است."}], correct:0},
+   {type:"fix", wrong:"Este libro es más bueno que ese.", right:"Este libro es mejor que ese.", distractors:["Este libro es más mejor que ese.","Este libro es mejor de ese."]},
+   {type:"build", words:["Mi","casa","es","más","pequeña","que","la","tuya"], answer:"Mi casa es más pequeña que la tuya."},
+   {type:"type", sentence:"Este café es ___ (bueno) que ese.", accept:["mejor"], hint:{en:"Irregular: bueno → mejor.", tr:"Düzensiz: bueno → mejor.", fa:"بی‌قاعده: bueno ← mejor."}},
+   {type:"type", sentence:"Ella es ___ (alta) que su hermano.", accept:["más alta"], hint:{en:"más + adjective + que.", tr:"más + sıfat + que.", fa:"más + صفت + que."}},
+   {type:"type", sentence:"Soy tan alto ___ mi padre.", accept:["como"], hint:{en:"tan + adjective + como (as ... as).", tr:"tan + sıfat + como (kadar).", fa:"tan + صفت + como (به اندازه)."}}
+  ],
+  errorWatch:[
+   {find:["más mejor","más peor","más como","menos como","tan más"], fix:{en:"Compare with más / menos + adjective + que, and tan + adjective + como. Irregular: bueno → mejor, malo → peor (never más mejor).", tr:"Karşılaştırma: más / menos + sıfat + que, tan + sıfat + como. Düzensiz: bueno → mejor, malo → peor (más mejor değil).", fa:"مقایسه: más / menos + صفت + que و tan + صفت + como. بی‌قاعده: bueno ← mejor، malo ← peor (نه más mejor)."}}
+  ],
+  yourTurn:{prompt:{en:"Write two sentences comparing things you know. Use más...que in one and tan...como in the other.", tr:"Bildiğin şeyleri karşılaştıran iki cümle yaz. Birinde más...que, diğerinde tan...como kullan.", fa:"دو جمله برای مقایسه چیزهایی که می‌شناسی بنویس. در یکی más...que و در دیگری tan...como بگذار."}, model:"Mi ciudad es más grande que mi pueblo. Mi hermano es tan alto como yo.", selfCheck:{en:"más / menos goes with que; tan goes with como. Did you write mejor (not más bueno)?", tr:"más / menos, que ile; tan, como ile gider. más bueno değil mejor yazdın mı?", fa:"más / menos با que و tan با como می‌آید. mejor نوشتی (نه más bueno)؟"}}
+ },
+ "g-A2-7":{
+  context:{lines:[
+    {who:"A", text:"¿Compraste el pan?", tr:"Ekmeği aldın mı?", fa:"نان را خریدی؟"},
+    {who:"B", text:"Sí, lo compré. Y las manzanas las puse en la cocina.", tr:"Evet, aldım. Elmaları da mutfağa koydum.", fa:"بله، خریدمش. و سیب‌ها را توی آشپزخانه گذاشتم."},
+    {who:"A", text:"¿Y los huevos? ¿Los compraste?", tr:"Peki yumurtalar? Onları aldın mı?", fa:"تخم‌مرغ‌ها چطور؟ آن‌ها را خریدی؟"},
+    {who:"B", text:"Claro, los tengo aquí.", tr:"Tabii, burada onlar.", fa:"البته، همین‌جا دارمشان."}
+   ], targets:["lo","las","Los","los"]},
+  practice:[
+   {type:"fill", sentence:"¿Ves la casa? — Sí, ___ veo.", word:"la", distractors:["lo","las","le"]},
+   {type:"fill", sentence:"¿Tienes mis llaves? — Sí, ___ tengo aquí.", word:"las", distractors:["los","la","les"]},
+   {type:"meaning", prompt:{en:"\"Lo compré.\" What does \"lo\" replace?", tr:"\"Lo compré.\" \"lo\" neyin yerine geçiyor?", fa:"«Lo compré.» «lo» جای چه چیزی را می‌گیرد؟"}, options:[{en:"A masculine singular thing, like el pan.", tr:"Eril tekil bir şey, el pan gibi.", fa:"یک چیز مذکر مفرد، مثل el pan."},{en:"A feminine thing, like la leche.", tr:"Dişil bir şey, la leche gibi.", fa:"یک چیز مؤنث، مثل la leche."},{en:"Several things.", tr:"Birden fazla şey.", fa:"چند چیز."}], correct:0},
+   {type:"fix", wrong:"Tengo las aquí.", right:"Las tengo aquí.", distractors:["Tengo la aquí.","Las tengo la aquí."]},
+   {type:"build", words:["Los","compré","ayer","en","el","mercado"], answer:"Los compré ayer en el mercado."},
+   {type:"type", sentence:"¿Quieres el café? — Sí, ___ quiero.", accept:["lo"], hint:{en:"el café is masculine singular → lo.", tr:"el café eril tekil → lo.", fa:"el café مذکر مفرد است ← lo."}},
+   {type:"type", sentence:"¿Ves a Ana? — Sí, ___ veo.", accept:["la"], hint:{en:"Ana is one woman → la.", tr:"Ana tek bir kadın → la.", fa:"آنا یک زن است ← la."}},
+   {type:"type", sentence:"¿Compráis los billetes? — Sí, ___ compramos hoy.", accept:["los"], hint:{en:"los billetes is masculine plural → los.", tr:"los billetes eril çoğul → los.", fa:"los billetes مذکر جمع است ← los."}}
+  ],
+  errorWatch:[
+   {find:["lo la","la lo","los las","las los","le lo","le la","le los","le las"], fix:{en:"A direct-object pronoun replaces the thing and goes before the verb: lo, la, los, las. It matches the thing in gender and number. With a second pronoun, le becomes se (se lo dije).", tr:"Nesne zamiri şeyin yerine geçer ve fiilden önce gelir: lo, la, los, las. Cinsiyet ve sayıda şeye uyar. İkinci bir zamirle le, se olur (se lo dije).", fa:"ضمیر مفعولی جای چیز را می‌گیرد و قبل از فعل می‌آید: lo، la، los، las. در جنسیت و تعداد با آن چیز هماهنگ است. با ضمیر دوم، le به se تبدیل می‌شود (se lo dije)."}}
+  ],
+  yourTurn:{prompt:{en:"Think of two things you use every day. Write two sentences with a pronoun (lo, la, los, las) instead of the name.", tr:"Her gün kullandığın iki şeyi düşün. İsim yerine zamir (lo, la, los, las) kullanarak iki cümle yaz.", fa:"به دو چیزی فکر کن که هر روز استفاده می‌کنی. دو جمله بنویس که به جای اسم ضمیر (lo، la، los، las) داشته باشد."}, model:"Mi móvil lo uso mucho. Las llaves las dejo en la mesa.", selfCheck:{en:"Does the pronoun match the thing (lo / la / los / las) and sit before the verb?", tr:"Zamir şeye uyuyor mu (lo / la / los / las) ve fiilden önce mi?", fa:"ضمیر با چیز جور است (lo / la / los / las) و قبل از فعل آمده؟"}}
+ },
+ "g-A2-8":{
+  context:{lines:[
+    {who:"A", text:"¿Qué le compraste a tu madre?", tr:"Annene ne aldın?", fa:"برای مادرت چه خریدی؟"},
+    {who:"B", text:"Le compré un libro. A mis hermanos les compré chocolate.", tr:"Ona bir kitap aldım. Kardeşlerime çikolata aldım.", fa:"برایش یک کتاب خریدم. برای برادرهایم شکلات خریدم."},
+    {who:"A", text:"¿Y a ti qué te regalaron?", tr:"Peki sana ne hediye ettiler?", fa:"برای تو چه هدیه‌ای دادند؟"},
+    {who:"B", text:"Me regalaron un reloj. Y mi amiga nos mandó una carta.", tr:"Bana bir saat hediye ettiler. Arkadaşım da bize bir mektup gönderdi.", fa:"یک ساعت به من هدیه دادند. و دوستم برایمان نامه‌ای فرستاد."}
+   ], targets:["le","Le","les","te","Me","nos"]},
+  practice:[
+   {type:"fill", sentence:"Yo ___ escribo una carta a mi abuela.", word:"le", distractors:["les","lo","me"]},
+   {type:"fill", sentence:"A nosotros ___ mandan dinero nuestros padres.", word:"nos", distractors:["les","te","se"]},
+   {type:"meaning", prompt:{en:"\"Le doy el libro.\" Who gets the book?", tr:"\"Le doy el libro.\" Kitabı kim alıyor?", fa:"«Le doy el libro.» چه کسی کتاب را می‌گیرد؟"}, options:[{en:"One other person (him, her or you, formal).", tr:"Başka tek bir kişi (o ya da siz, kibar).", fa:"یک نفر دیگر (او یا شما، مؤدبانه)."},{en:"Several people.", tr:"Birden fazla kişi.", fa:"چند نفر."},{en:"Me.", tr:"Ben.", fa:"من."}], correct:0},
+   {type:"fix", wrong:"A mi padre compré un regalo.", right:"A mi padre le compré un regalo.", distractors:["A mi padre lo compré un regalo.","A mi padre les compré un regalo."]},
+   {type:"build", words:["Les","envío","un","mensaje","a","mis","padres"], answer:"Les envío un mensaje a mis padres."},
+   {type:"type", sentence:"A ti ___ voy a dar un regalo.", accept:["te"], hint:{en:"a ti → te.", tr:"a ti → te.", fa:"a ti ← te."}},
+   {type:"type", sentence:"Yo ___ cuento todo a mi hermana.", accept:["le"], hint:{en:"One person (mi hermana) → le.", tr:"Tek kişi (mi hermana) → le.", fa:"یک نفر (mi hermana) ← le."}},
+   {type:"type", sentence:"¿___ puedes decir la hora, por favor? (a mí)", accept:["me"], hint:{en:"a mí → me.", tr:"a mí → me.", fa:"a mí ← me."}}
+  ],
+  errorWatch:[
+   {find:["les dije a mi madre","les compré a mi madre","le compré a mis padres","le doy a mis padres","le escribo a mis padres","les escribo a mi madre","le mando a mis amigos","les mando a mi hermana"], fix:{en:"The pronoun agrees with the person who receives: le = one person, les = more than one. Add it even when you name the person: le compré un regalo a mi madre.", tr:"Zamir alan kişiye uyar: le = tek kişi, les = birden fazla. Kişiyi adıyla söylesen de ekle: le compré un regalo a mi madre.", fa:"ضمیر با گیرنده هماهنگ است: le = یک نفر، les = بیش از یک نفر. حتی وقتی اسم شخص را می‌آوری هم بگذار: le compré un regalo a mi madre."}}
+  ],
+  yourTurn:{prompt:{en:"Write two sentences about gifts or messages: what you give or send to someone. Use le, les, te or nos.", tr:"Hediyeler ya da mesajlar hakkında iki cümle yaz: birine ne verdiğin ya da gönderdiğin. le, les, te ya da nos kullan.", fa:"درباره هدیه یا پیام دو جمله بنویس: چه چیزی به کسی می‌دهی یا می‌فرستی. از le، les، te یا nos استفاده کن."}, model:"A mi madre le compré un libro. A mis amigos les mando fotos.", selfCheck:{en:"le = one person, les = more than one. Did you add the pronoun even when you named the person?", tr:"le = tek kişi, les = birden fazla. Kişiyi adıyla söylesen de zamiri ekledin mi?", fa:"le = یک نفر، les = بیش از یک نفر. حتی با ذکر اسم شخص ضمیر را گذاشتی؟"}}
+ },
+ "g-A2-9":{
+  context:{lines:[
+    {who:"A", text:"¿Qué vas a hacer este verano?", tr:"Bu yaz ne yapacaksın?", fa:"این تابستان چه کار می‌کنی؟"},
+    {who:"B", text:"Voy a viajar a Portugal. Mis padres viajarán conmigo.", tr:"Portekiz'e seyahat edeceğim. Annemle babam da benimle gelecek.", fa:"به پرتغال سفر می‌کنم. پدر و مادرم هم با من خواهند آمد."},
+    {who:"A", text:"¡Qué bien! ¿Cuánto tiempo vais a estar allí?", tr:"Ne güzel! Orada ne kadar kalacaksınız?", fa:"عالی! چقدر آنجا می‌مانید؟"},
+    {who:"B", text:"Estaremos dos semanas. Te mandaré muchas fotos.", tr:"İki hafta kalacağız. Sana çok fotoğraf göndereceğim.", fa:"دو هفته می‌مانیم. برایت عکس‌های زیادی می‌فرستم."}
+   ], targets:["vas","Voy","viajarán","vais","Estaremos","mandaré"]},
+  practice:[
+   {type:"fill", sentence:"Mañana yo ___ estudiar para el examen.", word:"voy a", distractors:["voy","vas a","van a"]},
+   {type:"fill", sentence:"Esta noche ellos ___ la cena.", word:"prepararán", distractors:["prepararon","preparaban","preparamos"]},
+   {type:"meaning", prompt:{en:"\"Mañana lloverá.\" What kind of statement is it?", tr:"\"Mañana lloverá.\" Bu nasıl bir ifade?", fa:"«Mañana lloverá.» این چه نوع جمله‌ای است؟"}, options:[{en:"A prediction about the future.", tr:"Gelecekle ilgili bir tahmin.", fa:"یک پیش‌بینی درباره آینده."},{en:"A habit in the past.", tr:"Geçmişte bir alışkanlık.", fa:"یک عادت در گذشته."},{en:"A fact about now.", tr:"Şu anla ilgili bir gerçek.", fa:"یک واقعیت درباره الان."}], correct:0},
+   {type:"fix", wrong:"Voy hablar con mi jefe mañana.", right:"Voy a hablar con mi jefe mañana.", distractors:["Voy hablando con mi jefe mañana.","Voy de hablar con mi jefe mañana."]},
+   {type:"build", words:["Mañana","vamos","a","comer","en","casa","de","Ana"], answer:"Mañana vamos a comer en casa de Ana."},
+   {type:"type", sentence:"Yo ___ (hablar) con el jefe mañana.", accept:["hablaré"], hint:{en:"Simple future: infinitive + é: hablaré.", tr:"Basit gelecek: mastar + é: hablaré.", fa:"آینده ساده: مصدر + é: hablaré."}},
+   {type:"type", sentence:"Tú ___ (ser) un gran médico.", accept:["serás"], hint:{en:"Simple future: infinitive + ás: serás.", tr:"Basit gelecek: mastar + ás: serás.", fa:"آینده ساده: مصدر + ás: serás."}},
+   {type:"type", sentence:"Nosotros ___ (tener) una fiesta el sábado.", accept:["tendremos"], hint:{en:"Irregular stem: tener → tendr- + emos: tendremos.", tr:"Düzensiz kök: tener → tendr- + emos: tendremos.", fa:"ریشه بی‌قاعده: tener ← tendr- + emos: tendremos."}}
+  ],
+  errorWatch:[
+   {find:["voy estudiar","voy hablar","voy comer","vas hacer","va comer","vamos hacer","van hacer","voy viajar","vamos viajar","vais hacer","voy trabajar"], fix:{en:"ir a + infinitive always needs the a: voy a estudiar, vamos a viajar. Simple future: add -é, -ás, -á, -emos, -éis, -án to the infinitive.", tr:"ir a + mastar'da a her zaman gerekir: voy a estudiar, vamos a viajar. Basit gelecek: mastara -é, -ás, -á, -emos, -éis, -án ekle.", fa:"در ir a + مصدر همیشه a لازم است: voy a estudiar، vamos a viajar. آینده ساده: به مصدر ‎-é، ‎-ás، ‎-á، ‎-emos، ‎-éis، ‎-án اضافه کن."}}
+  ],
+  yourTurn:{prompt:{en:"Write two sentences about your plans: one with ir a + infinitive and one with the simple future.", tr:"Planların hakkında iki cümle yaz: biri ir a + mastar, biri basit gelecek ile.", fa:"درباره برنامه‌هایت دو جمله بنویس: یکی با ir a + مصدر و یکی با آینده ساده."}, model:"Mañana voy a trabajar hasta las cinco. El año que viene viajaré a España.", selfCheck:{en:"Did you write voy / vas / va + a + infinitive? Does the simple future have its accent (hablaré, hablarás)?", tr:"voy / vas / va + a + mastar yazdın mı? Basit gelecekte aksan var mı (hablaré, hablarás)?", fa:"voy / vas / va + a + مصدر نوشتی؟ در آینده ساده اکسان هست (hablaré، hablarás)؟"}}
+ },
+ "g-A2-10":{
+  context:{lines:[
+    {who:"A", text:"Perdona, ¿cómo llego a la estación?", tr:"Affedersin, istasyona nasıl gidebilirim?", fa:"ببخشید، چطور به ایستگاه برسم؟"},
+    {who:"B", text:"Sigue todo recto y gira a la izquierda. Cruza la plaza.", tr:"Dosdoğru git ve sola dön. Meydanı geç.", fa:"مستقیم برو و به چپ بپیچ. از میدان رد شو."},
+    {who:"A", text:"¿Y si me pierdo?", tr:"Ya kaybolursam?", fa:"اگر گم شدم چه؟"},
+    {who:"B", text:"Llámame y ten paciencia. ¡Yo te ayudo!", tr:"Beni ara ve sabırlı ol. Ben sana yardım ederim!", fa:"با من تماس بگیر و صبور باش. من کمکت می‌کنم!"}
+   ], targets:["Sigue","gira","Cruza","Llámame","ten"]},
+  practice:[
+   {type:"fill", sentence:"___ la puerta, hace frío.", word:"Cierra", distractors:["Cierras","Cerrando","Cerré"]},
+   {type:"fill", sentence:"___ más despacio, por favor.", word:"Habla", distractors:["Hablas","Hablando","Hablaste"]},
+   {type:"meaning", prompt:{en:"\"Come más verdura.\" What is the speaker doing?", tr:"\"Come más verdura.\" Konuşan ne yapıyor?", fa:"«Come más verdura.» گوینده چه کار می‌کند؟"}, options:[{en:"Telling one person (tú) to eat more vegetables.", tr:"Tek bir kişiye (tú) daha çok sebze yemesini söylüyor.", fa:"به یک نفر (tú) می‌گوید سبزی بیشتری بخورد."},{en:"Saying that someone eats vegetables every day.", tr:"Birinin her gün sebze yediğini söylüyor.", fa:"می‌گوید کسی هر روز سبزی می‌خورد."},{en:"Asking a question about vegetables.", tr:"Sebzeler hakkında bir soru soruyor.", fa:"درباره سبزی سؤال می‌پرسد."}], correct:0},
+   {type:"fix", wrong:"Hazes la cama antes de salir.", right:"Haz la cama antes de salir.", distractors:["Haza la cama antes de salir.","Haciendo la cama antes de salir."]},
+   {type:"build", words:["Ten","paciencia","y","espera","un","momento"], answer:"Ten paciencia y espera un momento."},
+   {type:"type", sentence:"___ (decir) la verdad, por favor.", accept:["di"], hint:{en:"Irregular tú command: decir → di.", tr:"Düzensiz tú emri: decir → di.", fa:"امر بی‌قاعده با tú: decir ← di."}},
+   {type:"type", sentence:"___ (poner) la mesa, por favor.", accept:["pon"], hint:{en:"Irregular tú command: poner → pon.", tr:"Düzensiz tú emri: poner → pon.", fa:"امر بی‌قاعده با tú: poner ← pon."}},
+   {type:"type", sentence:"___ (venir) a mi casa mañana.", accept:["ven"], hint:{en:"Irregular tú command: venir → ven.", tr:"Düzensiz tú emri: venir → ven.", fa:"امر بی‌قاعده با tú: venir ← ven."}}
+  ],
+  errorWatch:[
+   {find:["hazes","decí","poné","vení","hacé","tené"], fix:{en:"Affirmative tú commands: regular verbs use the él / ella form (habla, come, escribe). Eight are irregular: di, haz, ve, pon, sal, sé, ten, ven.", tr:"Olumlu tú emri: düzenli fiiller él / ella biçimini kullanır (habla, come, escribe). Sekizi düzensiz: di, haz, ve, pon, sal, sé, ten, ven.", fa:"امر مثبت با tú: فعل‌های باقاعده شکل él / ella را می‌گیرند (habla، come، escribe). هشت فعل بی‌قاعده‌اند: di، haz، ve، pon، sal، sé، ten، ven."}}
+  ],
+  yourTurn:{prompt:{en:"Write two pieces of advice for a friend. Use tú commands.", tr:"Bir arkadaşına iki tavsiye yaz. tú emri kullan.", fa:"دو توصیه برای یک دوست بنویس. از امر با tú استفاده کن."}, model:"Duerme ocho horas y bebe mucha agua.", selfCheck:{en:"Does each command use the él / ella form, or one of the eight irregular ones (di, haz, ve, pon, sal, sé, ten, ven)?", tr:"Her emir él / ella biçimini ya da sekiz düzensizden birini kullanıyor mu (di, haz, ve, pon, sal, sé, ten, ven)?", fa:"هر امر شکل él / ella یا یکی از هشت بی‌قاعده را دارد (di، haz، ve، pon، sal، sé، ten، ven)؟"}}
+ }
+};
+Object.keys(GRAMMAR_PRACTICE_A1A2).forEach(id=>{ const it = GRAMMAR_ITEMS.find(g=>g.id===id); if(it) Object.assign(it, GRAMMAR_PRACTICE_A1A2[id]); });
 
 /* === VOCAB_SETS_PLACEHOLDER — content author inserts A1-C1 vocab + slang sets here === */
 const VOCAB_SETS = [
@@ -5526,6 +5987,28 @@ function structureExplanation(text){
 }
 function tapMark(word, meaning){
   return meaning ? `<mark class="vocab-hl" data-action="show-word-meaning" data-word="${esc(word)}" data-meaning="${esc(meaning)}">${esc(word)}</mark>` : '<b>'+esc(word)+'</b>';
+}
+/* Teaching redesign S3: error watch for free writing. Whole-word, case-insensitive phrase match against an item's
+   errorWatch rules; a match is skipped when any of the 3 words before it is on the skip list (Spanish list from S3,
+   so "no es", "puede ser" and the like are not flagged). Never blocks: the caller shows "Check this: ..." with the fix. */
+const ERROR_WATCH_SKIP = ['no','que','si','puede','puedes','va a','vas a','para','tiene que'];
+function errorWatchHits(text, item){
+  const out = [];
+  if(!text || !item || !item.errorWatch) return out;
+  const low = String(text).toLowerCase().replace(/[’‘]/g, "'").replace(/\s+/g, ' ');
+  item.errorWatch.forEach(rule=>{
+    (rule.find || []).forEach(phrase=>{
+      const re = new RegExp("(^|[^\\p{L}\\p{N}'])" + reEsc(String(phrase).toLowerCase()) + "(?![\\p{L}\\p{N}])", 'gu');
+      let m;
+      while((m = re.exec(low))){
+        const before = low.slice(0, m.index + m[1].length).split(/[^\p{L}\p{N}']+/u).filter(Boolean).slice(-3);
+        const skip = ERROR_WATCH_SKIP.some(s=>s.includes(' ') ? (' ' + before.join(' ') + ' ').includes(' ' + s + ' ') : before.includes(s));
+        if(!skip && !out.some(h=>h.phrase === phrase)) out.push({phrase, fix:rule.fix});
+        if(!m[0].length) re.lastIndex++;
+      }
+    });
+  });
+  return out;
 }
 function highlightWord(sentence, word, meaning){
   const re = new RegExp(word.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'), 'i');
@@ -9868,7 +10351,7 @@ function buildPracticeRound(goal, level, difficulty){
     // Grammar: the item completed most recently on this roadmap, else a random one of the level.
     const lastG = stageDoneIds('grammar', state.progress.completedTraps).map(id=>gPoolAll.find(x=>x.id===id)).find(Boolean);
     const gItem = lastG || gSource[Math.floor(Math.random()*gSource.length)];
-    grammar = {title: grammarTitle(gItem), markerWord: gItem.blank.word, exp: L(gItem.exp.en, gItem.exp.tr, gItem.exp.fa, gItem.exp.es)};
+    grammar = {id: gItem.id, title: grammarTitle(gItem), markerWord: gItem.blank.word, exp: L(gItem.exp.en, gItem.exp.tr, gItem.exp.fa, gItem.exp.es)};
   }
   let slang = null;
   if(difficulty === 'difficult' && slCards.length){
@@ -9948,6 +10431,9 @@ function checkPracticeAnswer(round, text){
   const sc = clean.split(/[.!?]+/).map(s=>s.trim()).filter(Boolean).length;
   const lengthOk = wc >= round.minWords && sc >= round.minSentences;
   const grammarSpotted = round.grammar ? grammarUsedInContext(clean, round.grammar.markerWord) : null;
+  // S3 error watch on the round's grammar item (rounds saved before the item id was stored have none).
+  const ewItem = round.grammar && round.grammar.id ? GRAMMAR_ITEMS.find(g=>g.id===round.grammar.id) : null;
+  const errorWatch = ewItem ? errorWatchHits(clean, ewItem) : [];
   const slangSpotted = round.slang ? lower.includes(round.slang.word.toLowerCase()) : null;
   const extraKnownWords = round.words.map(w=>w.word).concat(round.grammar?[round.grammar.markerWord]:[]).concat(round.slang?[round.slang.word]:[]);
   const realCheck = checkTextLooksReal(clean, extraKnownWords.join(' ').split(/\s+/));
@@ -9968,7 +10454,7 @@ function checkPracticeAnswer(round, text){
   if(!looksReal) score = Math.min(score, 15);
   else if(!hasStructure) score = Math.min(score, 40);
 
-  return {wordsHit, wordsMissed, wc, sc, lengthOk, grammarSpotted, slangSpotted, looksReal, hasStructure, score, passed: score>=60 && looksReal && hasStructure};
+  return {wordsHit, wordsMissed, wc, sc, lengthOk, grammarSpotted, errorWatch, slangSpotted, looksReal, hasStructure, score, passed: score>=60 && looksReal && hasStructure};
 }
 function practiceFeedback(result, round){
   const lines = [];
@@ -10012,6 +10498,8 @@ function practiceFeedback(result, round){
     )});
   }
   if(round.grammar){
+    // S3 error watch: "Check this" with the item's fix line. Never blocks, never scores.
+    (result.errorWatch || []).slice(0, 2).forEach(h=>lines.push({ok:false, text: L('Check this: ','Şuna bak: ','این را بررسی کن: ','Revisa esto: ') + '"' + h.phrase + '" — ' + trLine(h.fix)}));
     if(result.grammarSpotted){
       lines.push({ok:true, text: L(
         `Try using "${round.grammar.title}" in a full sentence. Check that it follows the rule.`,
@@ -11296,6 +11784,39 @@ function renderGrammarList(){
     </div>
   </div>`;
 }
+/* Teaching redesign S3, Meet + Notice: the item's context dialogue at the top of the grammar page. Each line
+   has a play button; at A1-A2 a Turkish/Farsi UI shows the translation under the line. "Tap the words that
+   show the rule": a target token lights up in the grammar colour, a wrong tap only shakes; after 2 taps or
+   "Show me" every target lights up. No score. Tap state lives in viewParams.notice (gone on navigation). */
+function grammarContextHtml(t){
+  const c = t.context;
+  if(!c || !c.lines || !c.lines.length) return '';
+  const n = state.viewParams.notice || {lit:[], taps:0, all:false};
+  const targets = c.targets || [];
+  const all = n.all || n.taps >= 2;
+  const showTr = (t.level === 'A1' || t.level === 'A2') && (LANG === 'tr' || LANG === 'fa');
+  const core = w => w.replace(/^[^\p{L}\p{N}']+|[^\p{L}\p{N}']+$/gu, '');
+  const word = (w, li, wi) => {
+    const isT = targets.includes(core(w));
+    const lit = isT && (all || n.lit.includes(li + ':' + wi));
+    return `<span class="gc-w${lit ? ' lit' : ''}" data-action="notice-tap" data-li="${li}" data-wi="${wi}" data-t="${isT ? 1 : 0}">${esc(w)}</span>`;
+  };
+  return `<div class="card-flat gc-card">
+    <div class="eyebrow" style="color:var(--cat-gram);">${L('Hear it first','Önce dinle','اول بشنو','Escúchalo primero')}</div>
+    ${c.lines.map((ln, li)=>`<div class="gc-line" dir="ltr">
+      <span class="gc-who">${esc(ln.who || '')}</span>
+      <div class="gc-body">
+        <div class="gc-text">${String(ln.text || '').split(/(\s+)/).map((w, wi)=>(!w || /^\s+$/.test(w)) ? w : word(w, li, wi)).join('')}</div>
+        ${showTr && (ln.tr || ln.fa) ? `<div class="gc-tr" dir="auto">${esc(L('', ln.tr, ln.fa) || '')}</div>` : ''}
+      </div>
+      ${ttsButton(ln.text || '', '')}
+    </div>`).join('')}
+    <div class="gc-foot">
+      <span>${all ? L('These are the words that show the rule.','Kuralı gösteren kelimeler bunlar.','این‌ها کلمه‌هایی هستند که قاعده را نشان می‌دهند.','Estas son las palabras que muestran la regla.') : L('Tap the words that show the rule.','Kuralı gösteren kelimelere dokun.','روی کلمه‌هایی بزن که قاعده را نشان می‌دهند.','Toca las palabras que muestran la regla.')}</span>
+      ${all ? '' : `<button type="button" class="btn btn-ghost gc-show" data-action="notice-show">${L('Show me','Göster','نشانم بده','Muéstramelo')}</button>`}
+    </div>
+  </div>`;
+}
 function renderGrammarTrap(id){
   const t = GRAMMAR_ITEMS.find(x=>x.id===id);
   if(!t) return renderNotFound();
@@ -11309,6 +11830,7 @@ function renderGrammarTrap(id){
   return `<div class="fade-in">
     ${sectionHead('', '')}
     <div class="screen" style="padding-top:0;">
+      ${grammarContextHtml(t)}
       <div class="tip-card" style="position:relative; overflow:hidden; background:radial-gradient(circle at 16% 8%, rgba(255,255,255,.35), transparent 55%), linear-gradient(150deg, var(--cat-gram), color-mix(in srgb, var(--cat-gram) 78%, #000 18%)); border-radius:26px; padding:22px 20px 20px; box-shadow:0 16px 30px -14px color-mix(in srgb, var(--cat-gram) 55%, transparent);">
         <div class="eyebrow" style="color:rgba(255,255,255,.85);">${L('TIP','İPUCU','نکته', 'CONSEJO')}</div>
         <h1 class="display" style="font-size:24px; margin-top:8px; line-height:1.3; color:#fff;">${esc(grammarTitle(t))}</h1>
@@ -11869,8 +12391,10 @@ function grammarQuizQuestions(item){
       if(!p) return;
       if(p.type === 'fill' && goodBlank(p)) out.fill.push(mk(p.sentence, p.word, uniq(p.distractors), fillIn(p.sentence, p.word), o=>dwText(p.distractorWhy, o), p.translation));
       else if(p.type === 'meaning' && p.options && p.options.length >= 3){
-        const right = p.options[p.correct || 0];
-        { const mq = mk(p.prompt, right, p.options.filter((o,i)=>i !== (p.correct || 0)), p.prompt, null, p.translation); mq.answerText = right; out.meaning.push(mq); }
+        // Spanish meaning items carry {en,tr,fa} prompts and options (the learner reads them in their UI language); English ones are strings.
+        const txt = x => (x && typeof x === 'object') ? (L(x.en, x.tr, x.fa, x.es) || x.en) : x;
+        const ci = p.correct || 0, opts = p.options.map(txt), prompt = txt(p.prompt);
+        { const mq = mk(prompt, opts[ci], opts.filter((o,i)=>i !== ci), prompt, null, p.translation); mq.answerText = opts[ci]; out.meaning.push(mq); }
       }
       else if(p.type === 'fix' && p.right && p.distractors && p.distractors.length >= 2) out.fix.push(mk(fixLabel + '\n"' + p.wrong + '"', p.right, uniq(p.distractors), p.right, null, p.translation));
     });
@@ -11890,12 +12414,12 @@ function grammarQuizQuestions(item){
     return out;
   };
   let qs = fromPractice();
-  if(qs.length < 6){
+  if(qs.length < 8){
+    // Practice items always make the cut; the interim generator only fills the remaining slots.
     const have = new Set(qs.map(q=>q.key + '|' + q.prompt));
-    qs = qs.concat(shuffle(interim()).filter(q=>!have.has(q.key + '|' + q.prompt)));
-    qs = spread(qs);
-  } else qs = spread(qs);
-  return qs.slice(0, 8);
+    qs = qs.concat(shuffle(interim()).filter(q=>!have.has(q.key + '|' + q.prompt))).slice(0, 8);
+  }
+  return spread(qs).slice(0, 8);
 }
 function vocabQuizQuestions(s){
   const sibling = VOCAB_SETS_FREE.filter(x=>x.level===s.level && x.category===s.category).flatMap(x=>x.cards);
@@ -13902,6 +14426,19 @@ const HANDLERS = {
   'flip-card'(){ state.viewParams.flipped = !state.viewParams.flipped; sfx('flip'); render(); },
   'vocab-next'(el){ const i = +el.dataset.i; go('vocab-set', {id: el.dataset.id, cardIndex: i+1, flipped:false, level:state.viewParams.level, cat:state.viewParams.cat, goal:state.viewParams.goal}); },
   'vocab-prev'(el){ const i = +el.dataset.i; go('vocab-set', {id: el.dataset.id, cardIndex: i-1, flipped:false, level:state.viewParams.level, cat:state.viewParams.cat, goal:state.viewParams.goal}); },
+  // Teaching redesign S3, Notice step on the grammar page (see grammarContextHtml).
+  'notice-tap'(el){
+    const n = state.viewParams.notice || (state.viewParams.notice = {lit:[], taps:0, all:false});
+    if(n.all || n.taps >= 2) return;
+    n.taps++;
+    if(el.dataset.t === '1'){ n.lit.push(el.dataset.li + ':' + el.dataset.wi); render(); return; }
+    anim(el, [{transform:'translateX(0)'},{transform:'translateX(-4px)'},{transform:'translateX(4px)'},{transform:'translateX(0)'}], {duration:240});
+    if(n.taps >= 2) setTimeout(render, 260);
+  },
+  'notice-show'(){
+    const n = state.viewParams.notice || (state.viewParams.notice = {lit:[], taps:0, all:false});
+    n.all = true; render();
+  },
   'start-grammar-quiz'(el){
     const t = GRAMMAR_ITEMS.find(x=>x.id===el.dataset.id);
     const goal = state.viewParams.goal;

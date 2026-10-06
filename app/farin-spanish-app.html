@@ -261,6 +261,9 @@
   .build-tile:active{transform:scale(.97);}
   .build-tile.used{visibility:hidden;}
   .build-solved{display:inline-block; background:var(--success-soft); border:2px solid var(--success); color:color-mix(in srgb, var(--success) 62%, var(--ink)); border-radius:18px; padding:10px 16px; font-family:'Fredoka',-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; font-weight:700; font-size:22px; line-height:1.35; cursor:pointer;}
+  .tts-btn{border:none; cursor:pointer; display:inline-flex; align-items:center; justify-content:center; width:34px; height:34px; border-radius:50%; background:var(--cat-voc-soft); color:var(--cat-voc); flex:0 0 auto; padding:0; margin-inline-start:auto;}
+  .tts-btn svg{width:17px; height:17px;}
+  .tts-btn.on-card{margin:10px auto 0; width:44px; height:44px; background:var(--bg-elevated); box-shadow:var(--clay-shadow-soft);}
   .build-ear{border:none; cursor:pointer; align-self:center;}
   .build-ear svg{width:16px; height:16px;}
   .build-ear.pulse{animation:build-ear-pulse 1s ease-in-out infinite; background:var(--accent-soft); color:var(--accent-strong);}
@@ -10280,6 +10283,11 @@ function renderVocabList(){
     </div>
   </div>`;
 }
+// A small play button. Speaks with the app's learning-language voice (speakTarget). The click is
+// handled before the flashcard flips, so tapping it never turns the card.
+function ttsButton(text, cls){
+  return `<button class="tts-btn ${cls||''}" data-action="speak-word" data-text="${esc(text)}" aria-label="${L('Listen','Dinle','گوش کن','Escuchar')}">${ICONS.soundOn}</button>`;
+}
 function renderVocabSetIntro(id){
   const s = VOCAB_SETS.find(x=>x.id===id);
   if(!s) return renderNotFound();
@@ -10301,6 +10309,7 @@ function renderVocabSetIntro(id){
             <div class="row" style="gap:8px; align-items:center;">
               <span style="display:inline-flex; align-items:center; justify-content:center; width:22px; height:22px; border-radius:50%; background:var(--cat-voc-soft); color:var(--cat-voc); font-size:11px; font-weight:800; flex:0 0 auto;">${idx+1}</span>
               <div class="phrase-term" style="color:var(--cat-voc);">${esc(c.word)}</div>
+              ${ttsButton(c.sentence || c.word, '')}
             </div>
             <div class="phrase-mean" style="margin-top:2px;">${esc(L(c.meaning.en,c.meaning.tr,c.meaning.fa, c.meaning.es))}</div>
             <div class="phrase-example">${highlightWord(c.sentence, c.word)}</div>
@@ -10332,11 +10341,13 @@ function renderVocabSet(id, cardIndex){
           ${state.viewParams.flipped ? `
             <div class="flash-hint">${L('Example','Örnek','مثال','Ejemplo')}</div>
             <div class="flash-sentence" dir="ltr">${highlightWord(card.sentence, card.word, L(card.meaning.en, card.meaning.tr, card.meaning.fa, card.meaning.es))}</div>
+            ${ttsButton(card.sentence || card.word, 'on-card')}
             ${card.meaning ? `<div class="flash-hint" style="margin-top:10px;">${L('Meaning','Anlam','معنی','Significado')}</div><div class="flash-sentence" dir="ltr">${esc(card.meaning.en)}${local ? ' — '+esc(local) : ''}</div>` : ''}
             ${card.note ? `<div class="flash-note row" dir="ltr" style="align-items:flex-start; gap:7px;"><span style="flex:0 0 auto; margin-top:1px;">${ICONS.warn}</span><span>${esc(L(card.note.en,card.note.tr,card.note.fa,card.note.es))}</span></div>` : ''}
           ` : `
             <div class="flash-hint">${L('Word','Kelime','کلمه','Palabra')}</div>
             <div class="flash-word" dir="ltr">${esc(card.word)}</div>
+            ${ttsButton(card.word, 'on-card')}
             <div class="flash-hint" style="font-weight:600; text-transform:none; letter-spacing:0;">${L('tap to reveal','görmek için dokun','برای دیدن لمس کن','toca para revelar')}</div>
           `}
         </div>
@@ -12699,6 +12710,7 @@ const HANDLERS = {
       setTimeout(()=>{ el.textContent = original; }, 1500);
     });
   },
+  'speak-word'(el){ speakTarget(el.dataset.text, 0.85); },
   'speak-sentence'(el){
     try{
       const text = el.dataset.text;

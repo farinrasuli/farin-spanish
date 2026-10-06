@@ -709,6 +709,19 @@
   .jr-slot{padding:0; margin:0; border:none; background:none; cursor:pointer; border-radius:14px;}
   .jr-empty{box-sizing:border-box; border:2px dashed var(--border); background:var(--bg-sunken); display:flex; align-items:center; justify-content:center;}
   .jr-empty span{opacity:.3; display:flex; transform:scale(1.4);}
+  /* Gamification v3 build 2 (M2): cover, shelf, KEPT stamp */
+  .jr-cover{display:flex; align-items:center; gap:14px; border-radius:22px; padding:14px 16px; box-shadow:var(--clay-shadow); margin-bottom:14px; text-align:start;}
+  .jr-cover-char{width:64px; height:64px; object-fit:contain; flex:0 0 auto; filter:drop-shadow(0 6px 10px rgba(0,0,0,.25));}
+  .jr-cover-name{font-family:'Fredoka',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; font-weight:700; font-size:19px; line-height:1.2;}
+  .jr-cover-line{font-size:12.5px; opacity:.9; margin-top:3px;}
+  .jr-shelf{position:relative; display:flex; align-items:flex-end; gap:8px; padding:0 14px 10px; margin-bottom:14px; overflow-x:auto;}
+  .jr-shelf-board{position:absolute; left:0; right:0; bottom:0; height:10px; border-radius:6px; background:color-mix(in srgb, var(--ink) 18%, var(--bg-sunken)); box-shadow:0 4px 8px rgba(0,0,0,.18);}
+  .jr-spine{position:relative; z-index:1; flex:0 0 auto; width:44px; height:118px; border:none; border-radius:8px 8px 3px 3px; box-shadow:var(--clay-shadow-soft); cursor:pointer; display:flex; flex-direction:column; align-items:center; justify-content:space-between; padding:10px 0 8px; box-sizing:border-box; transition:transform .2s;}
+  .jr-spine.open{transform:translateY(-8px); outline:3px solid var(--accent);}
+  .jr-spine-level{font-family:'Fredoka',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; font-weight:800; font-size:14px;}
+  .jr-spine-stamp{writing-mode:vertical-rl; transform:rotate(180deg); font-size:9px; font-weight:800; letter-spacing:.08em; opacity:.85;}
+  .jr-kept-tag{font-size:11px; font-weight:800; letter-spacing:.04em; text-transform:uppercase; padding:4px 10px; border-radius:999px; background:linear-gradient(135deg, #ffd6f5, #c9f7ff 35%, #fff6c2 62%, #d9c9ff); color:#5b3fa6;}
+  .pc-stamp.kept{border-color:#8f6fe0; color:#5b3fa6; box-shadow:inset 0 0 0 6px rgba(143,111,224,.22); background:linear-gradient(135deg, rgba(255,214,245,.9), rgba(201,247,255,.9) 35%, rgba(255,246,194,.9) 62%, rgba(217,201,255,.9));}
   .sv-modal-stack{display:flex; flex-direction:column; align-items:center; text-align:center;}
   .pc-stack{display:flex; flex-direction:column; align-items:center; width:100%; max-width:360px;}
   .pc-page{position:relative; width:100%; box-sizing:border-box; background:var(--bg-elevated); border-radius:24px; padding:14px; box-shadow:var(--clay-shadow);}
@@ -4670,7 +4683,7 @@ function freshState(){
   return {
     view:'diagnostic-intro', viewParams:{}, lang:'tr',
     profile:{name:'', motivationTag:null, goals:[], archetype:null, level:null, levelStage:1, topics:[], learnerType:null, priorityArea:null, completedDiagnostic:false, dashboardIntroShown:false, recoveryCode:null, wantsContact:false, contactPhone:''},
-    progress:{sessionsExplored:0, streak:0, lastActiveDate:null, completedTraps:[], completedVocabSets:[], completedScenes:[], completedStories:[], completedGames:[], srs:{}, badgesEarnedAt:{}, reviewsCompleted:0, roadmapChecked:{}, dailyTasksDate:null, dailyTasksChecked:{}, writingRoundsDone:0, speakingRoundsDone:0, usedSpeakingTopics:[], xp:0, perfectGameRounds:0, souvenirs:[], gameBests:{}, roadmapGolden:null, lastWords:{}, mediaWatched:[], nodeScores:{}, storyAnswers:{}},
+    progress:{sessionsExplored:0, streak:0, lastActiveDate:null, completedTraps:[], completedVocabSets:[], completedScenes:[], completedStories:[], completedGames:[], srs:{}, badgesEarnedAt:{}, reviewsCompleted:0, roadmapChecked:{}, dailyTasksDate:null, dailyTasksChecked:{}, writingRoundsDone:0, speakingRoundsDone:0, usedSpeakingTopics:[], xp:0, perfectGameRounds:0, souvenirs:[], gameBests:{}, roadmapGolden:null, lastWords:{}, mediaWatched:[], nodeScores:{}, storyAnswers:{}, journal:{cover:null, pagesKept:[]}},
     diag:{step:0, goals:[], level:null, topics:[], learnerType:null, priorityArea:null, test:null},
     roadmap:null,
     quiz:null, studentPanelCache:null
@@ -4715,6 +4728,9 @@ function load(){
     if(!Array.isArray(merged.progress.mediaWatched)) merged.progress.mediaWatched = [];
     if(!merged.progress.nodeScores || typeof merged.progress.nodeScores !== 'object') merged.progress.nodeScores = {};
     if(!merged.progress.storyAnswers || typeof merged.progress.storyAnswers !== 'object') merged.progress.storyAnswers = {};
+    // Gamification v3 build 2 (M2): journal cover + kept pages
+    if(!merged.progress.journal || typeof merged.progress.journal !== 'object') merged.progress.journal = {cover:null, pagesKept:[]};
+    if(!Array.isArray(merged.progress.journal.pagesKept)) merged.progress.journal.pagesKept = [];
     if(merged.profile.levelStage===undefined) merged.profile.levelStage = 1;
     if(!merged.progress.dailyTasksChecked) merged.progress.dailyTasksChecked = {};
     if(merged.progress.dailyTasksDate===undefined) merged.progress.dailyTasksDate = null;
@@ -5269,6 +5285,7 @@ function srsGameReview(setId, good){
   const e = setId && state.progress.srs[setId];
   if(!e || (e.kind !== 'vocab' && e.kind !== 'story') || !srsIsDue(e)) return false;
   srsOutcome(e, good);
+  try{ checkPagesKept(); }catch(err){}
   return true;
 }
 function srsSource(id, kind){
@@ -7260,6 +7277,7 @@ function render(){
   if(state.view !== 'dashboard') hideCharTip(true);
   runPendingFx();
   maybeCelebrate();
+  try{ maybeShowPageKept(); }catch(e){}
 }
 function langToggle(){
   return `<button class="lang-btn" data-action="toggle-lang">${LANG.toUpperCase()}</button>`;
@@ -8098,11 +8116,134 @@ function journalSlotHtml(s, size){
   const ready = souvenirDue(s.sv) ? `<span class="sparkle" style="top:-4px; left:-4px; width:9px; height:9px;"></span><span class="sparkle" style="top:10px; right:-5px; left:auto; width:6px; height:6px; animation-delay:.6s;"></span>` : '';
   return `<button class="jr-slot sv-ready-wrap" data-action="open-souvenir" data-i="${s.i}" aria-label="${esc(s.sv.text||'')}">${souvenirCardHtml(s.sv, size)}${ready}</button>`;
 }
+/* ============================= GAMIFICATION V3 BUILD 2: BOOKSHELF (M2) =============================
+   Each finished level closes into a volume on a shelf with its stamp on the spine;
+   the current level is the open page; old volumes still feed the Shuffle (dueItems()
+   reads every SRS entry regardless of page). When every reviewable souvenir on a
+   finished page is Kept (box 4+), the page earns a "{LEVEL} KEPT" stamp (v2 stamp
+   sequence, foil). Covers are cosmetics: a page complete gives a new cover from the
+   --cat-* gradients, a page Kept gives the foil cover. progress.journal =
+   {cover, pagesKept[], keptPending}. */
+const JOURNAL_COVERS = ['review','gram','voc','story','diag','lis'];
+function journalState(){
+  const pr = state.progress;
+  if(!pr.journal || typeof pr.journal !== 'object') pr.journal = {cover:null, pagesKept:[]};
+  if(!Array.isArray(pr.journal.pagesKept)) pr.journal.pagesKept = [];
+  return pr.journal;
+}
+// Level pages with souvenirs, oldest first; the current page is excluded.
+function finishedJournalLevels(){
+  const cur = roadmapLevelKey();
+  const lv = Array.from(new Set((state.progress.souvenirs||[]).map(s=>s.level))).filter(l=>l && l !== cur);
+  lv.sort((a,b)=>LEVEL_STAGES.indexOf(a) - LEVEL_STAGES.indexOf(b));
+  return lv;
+}
+function journalCoverKey(){
+  const j = journalState();
+  if(j.cover) return j.cover;
+  if(j.pagesKept.length) return 'foil';
+  const n = finishedJournalLevels().length;
+  return n ? 'cat-' + JOURNAL_COVERS[(n - 1) % JOURNAL_COVERS.length] : 'plain';
+}
+function journalCoverStyle(key){
+  key = key || journalCoverKey();
+  if(key === 'foil') return 'background:linear-gradient(135deg, #ffd6f5, #c9f7ff 35%, #fff6c2 62%, #d9c9ff); color:#3b2f63;';
+  const m = /^cat-(\w+)$/.exec(key || '');
+  const c = m ? 'var(--cat-' + m[1] + ')' : 'var(--accent)';
+  return 'background:linear-gradient(150deg, ' + c + ', color-mix(in srgb, ' + c + ' 74%, #000 26%)); color:#fff;';
+}
+// A new cover when a page is completed (foil stays once earned).
+function journalPageCompleted(){
+  const j = journalState();
+  if(j.cover === 'foil') return;
+  const n = finishedJournalLevels().length + 1;
+  j.cover = 'cat-' + JOURNAL_COVERS[(n - 1) % JOURNAL_COVERS.length];
+}
+function journalPageKept(level){
+  const mine = (state.progress.souvenirs||[]).filter(s=>s.level===level && SV_REVIEWABLE.includes(s.type));
+  return mine.length > 0 && mine.every(sv=>souvenirShine(sv) >= SRS_KEPT_BOX);
+}
+// Finished pages only (the open page keeps gaining souvenirs). Returns the newly kept levels.
+function checkPagesKept(){
+  const j = journalState();
+  const fresh = [];
+  const cur = roadmapLevelKey();
+  const pages = finishedJournalLevels().concat(cur && roadmapAllDone() ? [cur] : []);
+  pages.forEach(lv=>{ if(!j.pagesKept.includes(lv) && journalPageKept(lv)){ j.pagesKept.push(lv); fresh.push(lv); } });
+  if(fresh.length){ j.cover = 'foil'; j.keptPending = fresh[0]; }
+  return fresh;
+}
+// Shows the pending KEPT stamp when nothing else is on screen (called from render()).
+function maybeShowPageKept(){
+  const j = state.progress && state.progress.journal;
+  if(!j || !j.keptPending) return;
+  if(state.view !== 'dashboard' && state.view !== 'journal') return;
+  if(document.querySelector('.celebrate-overlay')) return;
+  const lv = j.keptPending; j.keptPending = null; save();
+  showPageKept(lv);
+}
+function showPageKept(level){
+  if(document.querySelector('.celebrate-overlay')) return;
+  hideCharTip(true);
+  const slots = journalPageSlots(level);
+  const el = document.createElement('div');
+  el.className = 'celebrate-overlay pc-overlay';
+  el.innerHTML = `<div class="pc-stack">
+    <div class="pc-page">
+      <div class="eyebrow" style="color:var(--ink-soft); text-align:center;">${esc(journalPageTitle(level))}</div>
+      <div class="pc-grid">${slots.map(s=>`<div class="pc-slot" style="opacity:1;">${journalSlotHtml(Object.assign({}, s, {i:undefined, start:true}), 'tiny')}</div>`).join('')}</div>
+      <div class="pc-stamp kept" id="pc-stamp"><span>${esc(level)}</span><small>${L('KEPT','KALICI','ماندگار','GUARDADO')}</small></div>
+    </div>
+    <div class="pc-char-wrap" id="pc-char"><img src="char-${learnerCharKey()}.png" alt=""></div>
+    <p class="game-result-line" style="color:#fff; margin-top:10px; text-align:center;">${L('Every souvenir on this page is yours for good.','Bu sayfadaki her hatıra artık hep senin.','هر یادگاری این صفحه دیگر برای همیشه مال توست.','Cada recuerdo de esta página ya es tuyo para siempre.')}</p>
+    <div class="celebrate-hint">${L('Tap to close','Kapatmak için dokun','برای بستن بزن','Toca para cerrar')}</div>
+  </div>`;
+  document.body.appendChild(el);
+  const st = el.querySelector('#pc-stamp');
+  const land = ()=>{
+    st.style.opacity = '1';
+    anim(st, [{transform:'translate(-50%,-50%) scale(1.6) rotate(0deg)', opacity:0}, {transform:'translate(-50%,-50%) scale(1) rotate(-12deg)', opacity:1}], {duration:380, easing:SPRING});
+    setTimeout(()=>{ sfx('stamp'); buzz(20); const img = el.querySelector('#pc-char img'); const c = centerOf(img); sparkBurst(c.x, c.y, 10, '#ffd166', 100); anim(img, [{transform:'rotate(0deg) scale(1)'}, {transform:'rotate(180deg) scale(1.15)'}, {transform:'rotate(360deg) scale(1)'}], {duration:800, easing:'ease-in-out'}); }, 300);
+  };
+  el.addEventListener('click', ()=>el.remove());
+  if(reducedMotion()){ st.style.opacity = '1'; sfx('stamp'); } else setTimeout(land, 500);
+}
+function journalCoverHtml(){
+  const vols = finishedJournalLevels().length, kept = journalState().pagesKept.length;
+  const line = [vols ? L(`${vols} volume${vols===1?'':'s'} on the shelf`, `Rafta ${vols} cilt`, `${vols} جلد در قفسه`, `${vols} volumen${vols===1?'':'es'} en la estantería`) : L('Volume 1, in progress','1. cilt, devam ediyor','جلد ۱، در حال نوشتن','Volumen 1, en marcha'),
+    kept ? L(`${kept} kept`, `${kept} kalıcı`, `${kept} ماندگار`, `${kept} guardado${kept===1?'':'s'}`) : ''].filter(Boolean).join(' · ');
+  return `<div class="jr-cover" style="${journalCoverStyle()}">
+    <img src="char-${learnerCharKey()}.png" alt="" class="jr-cover-char">
+    <div><div class="jr-cover-name">${esc(archShortName())} ${esc(journalName())}</div><div class="jr-cover-line">${esc(line)}</div></div>
+  </div>`;
+}
+function journalShelfHtml(open){
+  const levels = finishedJournalLevels();
+  if(!levels.length) return '';
+  const kept = journalState().pagesKept;
+  return `<div class="jr-shelf">
+    ${levels.map((lv,i)=>`<button class="jr-spine${open===lv ? ' open' : ''}" style="${journalCoverStyle(kept.includes(lv) ? 'foil' : 'cat-'+JOURNAL_COVERS[i % JOURNAL_COVERS.length])}" data-action="journal-volume" data-level="${esc(lv)}" aria-label="${esc(journalPageTitle(lv))}">
+      <span class="jr-spine-level">${esc(lv)}</span>
+      <span class="jr-spine-stamp">${kept.includes(lv) ? L('KEPT','KALICI','ماندگار','GUARDADO') : L('COMPLETE','TAMAM','کامل','COMPLETO')}</span>
+    </button>`).join('')}
+    <div class="jr-shelf-board"></div>
+  </div>`;
+}
+function journalPageHtml(lv, closable){
+  const kept = journalState().pagesKept.includes(lv);
+  return `<div class="card-flat jr-page" style="margin-bottom:14px;">
+    <div class="row between" style="align-items:center;">
+      <div class="eyebrow" style="color:var(--ink-soft);">${esc(journalPageTitle(lv))}</div>
+      ${kept ? `<span class="jr-kept-tag">✦ ${L('Kept','Kalıcı','ماندگار','Guardado')}</span>` : ''}
+      ${closable ? `<button class="btn btn-ghost btn-sm" data-action="journal-volume" data-level="${esc(lv)}">${L('Close','Kapat','بستن','Cerrar')}</button>` : ''}
+    </div>
+    <div class="jr-grid">${journalPageSlots(lv).map(s=>journalSlotHtml(s, 'mini')).join('')}</div>
+  </div>`;
+}
 function renderJournal(){
   const cur = roadmapLevelKey();
-  const levels = Array.from(new Set((state.progress.souvenirs||[]).map(s=>s.level).concat(cur ? [cur] : []))).filter(Boolean);
-  levels.sort((a,b)=>LEVEL_STAGES.indexOf(b) - LEVEL_STAGES.indexOf(a));
   const count = (state.progress.souvenirs||[]).length;
+  const openVol = state.viewParams && state.viewParams.volume;
   const ready = readyToShineCount();
   const readyBanner = ready ? `<button class="sh-banner" data-action="start-shuffle">
         <span class="sparkle" style="top:8px; left:12px; color:#fff;"></span><span class="sparkle" style="bottom:10px; right:90px; left:auto; width:6px; height:6px; color:#fff; animation-delay:.7s;"></span>
@@ -8112,11 +8253,11 @@ function renderJournal(){
   return `<div class="fade-in">
     ${sectionHead(journalName(), count ? L(count+' souvenirs collected — tap one to flip it', count+' hatıra toplandı — çevirmek için birine dokun', count+' یادگاری جمع شده — برای برگرداندن روی یکی بزن', count+' recuerdos reunidos — toca uno para darle la vuelta') : L('Finish a step on your roadmap to collect your first souvenir.','İlk hatıranı toplamak için yol haritanda bir adımı bitir.','برای جمع‌کردن اولین یادگاری، یک قدم از نقشه راهت را تمام کن.','Termina un paso de tu hoja de ruta para reunir tu primer recuerdo.'))}
     <div class="screen" style="padding-top:0;">
+      ${journalCoverHtml()}
       ${readyBanner}
-      ${levels.map(lv=>`<div class="card-flat" style="margin-bottom:14px;">
-        <div class="eyebrow" style="color:var(--ink-soft);">${esc(journalPageTitle(lv))}</div>
-        <div class="jr-grid">${journalPageSlots(lv).map(s=>journalSlotHtml(s, 'mini')).join('')}</div>
-      </div>`).join('')}
+      ${journalShelfHtml(openVol)}
+      ${openVol && openVol !== cur ? journalPageHtml(openVol, true) : ''}
+      ${cur ? journalPageHtml(cur, false) : ''}
     </div>
   </div>`;
 }
@@ -8167,6 +8308,7 @@ function showPageComplete(){
   if(document.querySelector('.celebrate-overlay')) return;
   hideCharTip(true);
   const level = roadmapLevelKey();
+  journalPageCompleted(); checkPagesKept(); save();
   const slots = journalPageSlots(level);
   const el = document.createElement('div');
   el.className = 'celebrate-overlay pc-overlay';
@@ -11530,6 +11672,7 @@ function fxShuffleReveal(){
 }
 function finishShuffle(sh){
   sh.finished = true;
+  checkPagesKept();
   state.progress.reviewsCompleted = (state.progress.reviewsCompleted||0) + 1;
   state.progress.lastShuffleDate = todayISO();
   markActivity();
@@ -12818,6 +12961,11 @@ const HANDLERS = {
   'open-souvenir'(el){ openSouvenirModal(Number(el.dataset.i)); },
   'open-rhythm'(){ openRhythmSheet(); },
   'open-page-complete'(){ showPageComplete(); },
+  'journal-volume'(el){
+    const lv = el.dataset.level;
+    state.viewParams = Object.assign({}, state.viewParams, {volume: state.viewParams.volume === lv ? null : lv});
+    render();
+  },
   'advance-roadmap-level'(){
     checkRoadmapStageAdvance();
     save(); render();

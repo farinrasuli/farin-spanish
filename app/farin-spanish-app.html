@@ -264,6 +264,9 @@
   .tts-btn{border:none; cursor:pointer; display:inline-flex; align-items:center; justify-content:center; width:34px; height:34px; border-radius:50%; background:var(--cat-voc-soft); color:var(--cat-voc); flex:0 0 auto; padding:0; margin-inline-start:auto;}
   .tts-btn svg{width:17px; height:17px;}
   .tts-btn.on-card{margin:10px auto 0; width:44px; height:44px; background:var(--bg-elevated); box-shadow:var(--clay-shadow-soft);}
+  .story-sent{border-radius:6px; transition:background .2s, box-shadow .2s;}
+  .story-sent.reading{background:color-mix(in srgb, var(--cat-story) 24%, transparent); box-shadow:0 0 0 3px color-mix(in srgb, var(--cat-story) 24%, transparent);}
+  .story-answer{width:100%; box-sizing:border-box; min-height:84px; margin-top:8px; padding:10px 12px; border-radius:12px; border:2px solid var(--border); background:var(--bg-elevated); color:var(--ink); font:inherit; font-size:14.5px; line-height:1.5; resize:vertical;}
   .build-ear{border:none; cursor:pointer; align-self:center;}
   .build-ear svg{width:16px; height:16px;}
   .build-ear.pulse{animation:build-ear-pulse 1s ease-in-out infinite; background:var(--accent-soft); color:var(--accent-strong);}
@@ -4583,7 +4586,7 @@ function freshState(){
   return {
     view:'diagnostic-intro', viewParams:{}, lang:'tr',
     profile:{name:'', motivationTag:null, goals:[], archetype:null, level:null, levelStage:1, topics:[], learnerType:null, priorityArea:null, completedDiagnostic:false, dashboardIntroShown:false, recoveryCode:null, wantsContact:false, contactPhone:''},
-    progress:{sessionsExplored:0, streak:0, lastActiveDate:null, completedTraps:[], completedVocabSets:[], completedScenes:[], completedStories:[], completedGames:[], srs:{}, badgesEarnedAt:{}, reviewsCompleted:0, roadmapChecked:{}, dailyTasksDate:null, dailyTasksChecked:{}, writingRoundsDone:0, speakingRoundsDone:0, usedSpeakingTopics:[], xp:0, perfectGameRounds:0, souvenirs:[], gameBests:{}, roadmapGolden:null, lastWords:{}, mediaWatched:[], nodeScores:{}},
+    progress:{sessionsExplored:0, streak:0, lastActiveDate:null, completedTraps:[], completedVocabSets:[], completedScenes:[], completedStories:[], completedGames:[], srs:{}, badgesEarnedAt:{}, reviewsCompleted:0, roadmapChecked:{}, dailyTasksDate:null, dailyTasksChecked:{}, writingRoundsDone:0, speakingRoundsDone:0, usedSpeakingTopics:[], xp:0, perfectGameRounds:0, souvenirs:[], gameBests:{}, roadmapGolden:null, lastWords:{}, mediaWatched:[], nodeScores:{}, storyAnswers:{}},
     diag:{step:0, goals:[], level:null, topics:[], learnerType:null, priorityArea:null, test:null},
     roadmap:null,
     quiz:null, studentPanelCache:null
@@ -4627,6 +4630,7 @@ function load(){
     if(!merged.progress.lastWords) merged.progress.lastWords = {};
     if(!Array.isArray(merged.progress.mediaWatched)) merged.progress.mediaWatched = [];
     if(!merged.progress.nodeScores || typeof merged.progress.nodeScores !== 'object') merged.progress.nodeScores = {};
+    if(!merged.progress.storyAnswers || typeof merged.progress.storyAnswers !== 'object') merged.progress.storyAnswers = {};
     if(merged.profile.levelStage===undefined) merged.profile.levelStage = 1;
     if(!merged.progress.dailyTasksChecked) merged.progress.dailyTasksChecked = {};
     if(merged.progress.dailyTasksDate===undefined) merged.progress.dailyTasksDate = null;
@@ -4799,6 +4803,7 @@ function pushHistoryEntry(){
 }
 function go(view, params){
   resetConfirmPending = false;
+  if(typeof storyAudio !== 'undefined' && storyAudio.playing && view !== 'story-detail') stopStoryAudio();
   navHistory.push({view: state.view, params: state.viewParams});
   state.view = view; state.viewParams = params || {}; save(); render(); window.scrollTo(0,0);
   pushHistoryEntry();
@@ -6809,6 +6814,8 @@ function souvenirContent(node, ctx){
       out.text = (s.title && s.title.es) || svText(s.title);
       out.meaning = s.title || '';
       if(s.genre) out.art = 'story-'+String(s.genre).toLowerCase()+'-cutout.png';
+      const ans = state.progress && state.progress.storyAnswers && state.progress.storyAnswers[node.refId];
+      if(ans && ans.text) out.keep = {text:ans.text, say:ans.text, note:ans.q || ''};
     }
   } else if(t === 'writing' || t === 'speaking'){
     const words = String(ctx.words || (state.progress.lastWords && state.progress.lastWords[t]) || '').trim();
@@ -10567,15 +10574,77 @@ function renderStoryList(){
     </div>
   </div>`;
 }
+/* Teaching redesign phase 1, item 7 (S6 steps 2 and 5): the story is read aloud one sentence at a
+   time with the sentence being read highlighted (0.8x at A1-A2, 0.92x above), and the learner can
+   answer one discussion question in writing; the answer is kept on the story's souvenir. */
+var storyAudio = {token:0, playing:false};
+function storyAudioMark(si){
+  document.querySelectorAll('.story-sent.reading').forEach(n=>n.classList.remove('reading'));
+  if(si == null) return;
+  const n = document.querySelector('.story-sent[data-si="'+si+'"]');
+  if(n){ n.classList.add('reading'); try{ n.scrollIntoView({block:'center', behavior:'smooth'}); }catch(e){} }
+}
+function storyListenLabel(){
+  return storyAudio.playing
+    ? ICONS.soundOff + ' ' + L('Stop','Durdur','توقف','Parar')
+    : ICONS.soundOn + ' ' + L('Listen to the story','Hikayeyi dinle','گوش دادن به داستان','Escucha la historia');
+}
+function stopStoryAudio(){
+  storyAudio.token++; storyAudio.playing = false;
+  try{ if(typeof speechSynthesis !== 'undefined') speechSynthesis.cancel(); }catch(e){}
+  storyAudioMark(null);
+  const b = document.querySelector('[data-action="story-listen"]');
+  if(b) b.innerHTML = storyListenLabel();
+}
+function startStoryAudio(story){
+  try{
+    if(typeof speechSynthesis === 'undefined' || typeof SpeechSynthesisUtterance === 'undefined') return;
+    const sents = [].concat.apply([], story.text.split('\n\n').map(splitSentences));
+    const rate = (story.level === 'A1' || story.level === 'A2') ? 0.8 : 0.92;
+    speechSynthesis.cancel();
+    const my = ++storyAudio.token; storyAudio.playing = true;
+    const b = document.querySelector('[data-action="story-listen"]'); if(b) b.innerHTML = storyListenLabel();
+    const next = i => {
+      if(storyAudio.token !== my) return;
+      if(i >= sents.length || state.view !== 'story-detail'){ stopStoryAudio(); return; }
+      storyAudioMark(i);
+      const u = new SpeechSynthesisUtterance(sents[i]);
+      u.lang = TTS_LANG; u.rate = rate;
+      u.onend = ()=>next(i+1);
+      u.onerror = ()=>{ if(storyAudio.token === my) stopStoryAudio(); };
+      speechSynthesis.speak(u);
+    };
+    next(0);
+  }catch(e){ stopStoryAudio(); }
+}
+function storyAnswerHtml(s, q, i){
+  const saved = (state.progress.storyAnswers || {})[s.id];
+  const openQ = state.viewParams.answerQ;
+  const mine = saved && saved.qi === i;
+  const num = `<span style="display:inline-flex; align-items:center; justify-content:center; width:20px; height:20px; border-radius:50%; background:var(--cat-story-soft); color:var(--cat-story); font-size:10.5px; font-weight:800; flex:0 0 auto; margin-top:1px;">${i+1}</span>`;
+  let body = '';
+  if(openQ === i){
+    body = `<textarea class="story-answer" id="story-answer-input" dir="ltr" maxlength="400" placeholder="${esc(L('Write 1 to 3 sentences.','1 ile 3 cümle yaz.','۱ تا ۳ جمله بنویس.','Escribe de 1 a 3 frases.'))}">${esc(mine ? saved.text : '')}</textarea>
+      <button class="btn btn-primary" style="margin-top:8px;" data-action="story-answer-save" data-i="${i}">${L('Save my answer','Cevabımı kaydet','پاسخم را ذخیره کن','Guardar mi respuesta')}</button>`;
+  } else if(mine){
+    body = `<div class="phrase-mean" dir="ltr" style="margin-top:6px; font-style:italic;">${esc(saved.text)}</div>
+      <button class="btn btn-ghost" style="margin-top:6px;" data-action="story-answer-open" data-i="${i}">${L('Change my answer','Cevabımı değiştir','پاسخم را تغییر بده','Cambiar mi respuesta')}</button>`;
+  } else {
+    body = `<button class="btn btn-ghost" style="margin-top:6px;" data-action="story-answer-open" data-i="${i}">${L('Answer this one','Bunu cevapla','به این جواب بده','Responde a esta')}</button>`;
+  }
+  return `<div class="phrase-row"><div class="row" style="gap:8px; align-items:flex-start;">${num}<div style="flex:1;"><div class="phrase-term" style="font-weight:600;">${esc(q)}</div>${body}</div></div></div>`;
+}
 function renderStoryDetail(id){
   const s = STORY_LIBRARY.find(x=>x.id===id);
   if(!s) return renderNotFound();
   const gl = GENRE_LABEL[s.genre];
-  const paragraphs = s.text.split('\n\n').map(p=>`<p style="margin:0 0 14px;">${highlightStoryVocab(p, s.vocab)}</p>`).join('');
+  let sentIdx = 0;
+  const paragraphs = s.text.split('\n\n').map(p=>`<p style="margin:0 0 14px;">${splitSentences(p).map(t=>`<span class="story-sent" data-si="${sentIdx++}">${highlightStoryVocab(t, s.vocab)}</span>`).join(' ')}</p>`).join('');
   return `<div class="fade-in">
     ${sectionHead(L(s.title.en,s.title.tr,s.title.fa, s.title.es), L(gl.en,gl.tr,gl.fa, gl.es)+' · '+s.level, 'story-list')}
     <div class="screen" style="padding-top:0;">
-      <div class="row" style="justify-content:flex-end; margin-bottom:2px;">
+      <div class="row" style="justify-content:space-between; align-items:center; margin-bottom:2px;">
+        <button class="game-chip build-ear" data-action="story-listen" style="align-self:center;">${storyListenLabel()}</button>
         <button class="icon-btn" data-action="toggle-story-music" aria-label="${L('Toggle background music','Arka plan müziğini aç/kapat','روشن/خاموش کردن موسیقی پس‌زمینه', 'Activar/desactivar música de fondo')}">${storyMusicMuted ? ICONS.soundOff : ICONS.soundOn}</button>
       </div>
       <div class="card-flat" dir="ltr" style="line-height:1.7; font-size:15px;">${paragraphs}</div>
@@ -10603,7 +10672,7 @@ function renderStoryDetail(id){
         <h3 class="display" style="font-size:14px;">${L('Discussion questions','Tartışma soruları','سوالات بحث', 'Preguntas de discusión')}</h3>
       </div>
       <div class="card-flat" dir="ltr">
-        ${s.discussionQuestions.map((q,i)=>`<div class="phrase-row"><div class="row" style="gap:8px; align-items:flex-start;"><span style="display:inline-flex; align-items:center; justify-content:center; width:20px; height:20px; border-radius:50%; background:var(--cat-story-soft); color:var(--cat-story); font-size:10.5px; font-weight:800; flex:0 0 auto; margin-top:1px;">${i+1}</span><div class="phrase-term" style="font-weight:600;">${esc(q)}</div></div></div>`).join('')}
+        ${s.discussionQuestions.map((q,i)=>storyAnswerHtml(s, q, i)).join('')}
       </div>` : ''}
       ${s.writingPractice ? `
       <h3 class="display" style="font-size:14px; margin:20px 0 4px;">${L('Writing practice','Yazma alıştırması','تمرین نوشتاری', 'Práctica de escritura')}</h3>
@@ -12709,6 +12778,31 @@ const HANDLERS = {
       el.textContent = L('Copied!','Kopyalandı!','کپی شد!', '¡Copiado!');
       setTimeout(()=>{ el.textContent = original; }, 1500);
     });
+  },
+  'story-listen'(){
+    if(storyAudio.playing){ stopStoryAudio(); return; }
+    const st = STORY_LIBRARY.find(x=>x.id===state.viewParams.id);
+    if(st) startStoryAudio(st);
+  },
+  'story-answer-open'(el){
+    const y = window.scrollY;
+    state.viewParams.answerQ = +el.dataset.i;
+    render(); window.scrollTo(0, y);
+    const ta = document.getElementById('story-answer-input'); if(ta) ta.focus();
+  },
+  'story-answer-save'(el){
+    const st = STORY_LIBRARY.find(x=>x.id===state.viewParams.id);
+    const ta = document.getElementById('story-answer-input');
+    const text = ta ? ta.value.trim() : '';
+    if(!st || !text) return;
+    const i = +el.dataset.i, q = (st.discussionQuestions || [])[i] || '';
+    if(!state.progress.storyAnswers) state.progress.storyAnswers = {};
+    state.progress.storyAnswers[st.id] = {qi:i, q, text, date:todayISO()};
+    // the story's souvenir (if it exists already) keeps the answer on its flip side
+    (state.progress.souvenirs || []).forEach(sv=>{ if(sv.type === 'story' && svRefId(sv) === st.id) sv.keep = {text, say:text, note:q}; });
+    state.viewParams.answerQ = null;
+    const y = window.scrollY;
+    save(); render(); window.scrollTo(0, y);
   },
   'speak-word'(el){ speakTarget(el.dataset.text, 0.85); },
   'speak-sentence'(el){

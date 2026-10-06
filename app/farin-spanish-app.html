@@ -11030,6 +11030,19 @@ function quizStreakChip(q){
   const hot = n >= 5;
   return `<span id="trap-streak" class="game-streak${hot ? ' hot' : ''}">${ICONS.bolt} ${L(`${n} in a row`, `${n} üst üste`, `${n} پشت سر هم`, `${n} seguidas`)}</span>`;
 }
+// The hint after a first miss. distractorWhy for the chosen option when it exists, else the
+// item's rule line (grammar). Vocab and story whys give the answer away, so they get a nudge.
+function quizHintText(q, item){
+  const lead = L('Not quite. ','Tam değil. ','کاملاً درست نیست. ','Casi. ');
+  const tail = L(' Try again.',' Tekrar dene.',' دوباره امتحان کن.',' Inténtalo otra vez.');
+  const i = (q.miss||[])[0];
+  const own = item.hints && item.hints[i];
+  const dot = t => /[.!?؟…]$/.test(String(t).trim()) ? String(t).trim() : String(t).trim() + '.';
+  if(own) return lead + dot(own) + tail;
+  if(q.kind === 'grammar' && item.why) return lead + dot(item.why) + tail;
+  if(q.kind === 'vocab') return lead + L('Read the sentence again and think about the meaning.','Cümleyi tekrar oku ve anlamı düşün.','جمله را دوباره بخوان و درباره معنی فکر کن.','Lee la frase otra vez y piensa en el significado.') + tail;
+  return lead + L('Think back to the story.','Hikayeyi hatırla.','داستان را به یاد بیاور.','Piensa en la historia.') + tail;
+}
 function renderQuiz(){
   const q = state.quiz;
   const item = q.questions[q.index];
@@ -11051,14 +11064,16 @@ function renderQuiz(){
     <div class="game-opts">
       ${item.options.map((opt,i)=>{
         let cls = 'game-opt' + (longOpts ? ' long' : '');
+        const missed = (q.miss||[]).includes(i);
         if(q.answered){
           if(i===item.correct) cls += ' ok';
-          else if(i===q.selected) cls += ' no';
+          else if(i===q.selected || missed) cls += ' no';
           else cls += ' dim';
-        }
-        return `<button class="${cls}" dir="ltr" ${q.answered?'disabled':''} data-action="quiz-answer" data-i="${i}">${esc(opt)}</button>`;
+        } else if(missed) cls += ' no';
+        return `<button class="${cls}" dir="ltr" ${q.answered || missed ? 'disabled' : ''} data-action="quiz-answer" data-i="${i}">${esc(opt)}</button>`;
       }).join('')}
     </div>
+    ${!q.answered && (q.miss||[]).length ? `<div class="game-why"><img src="char-${learnerCharKey()}.png" alt=""><div dir="ltr">${esc(quizHintText(q, item))}</div></div>` : ''}
     ${q.answered ? `
       ${item.why ? `<div class="game-why"><img src="char-${learnerCharKey()}.png" alt=""><div dir="ltr">${esc(item.why)}</div></div>` : ''}
       <button class="btn btn-primary game-cta" data-action="quiz-next">${q.index+1 < q.questions.length ? L('Next question','Sonraki soru','سوال بعدی','Siguiente pregunta') : L('See results','Sonuçları gör','دیدن نتایج','Ver resultados')}</button>
@@ -11719,6 +11734,12 @@ function fxQuizAnswer(i, pt, isCorrect, streak, word, action){
   companionSay(String(word).length <= 10
     ? L("It's '"+word+"'", "Doğrusu: '"+word+"'", "درستش: «"+word+"»", "Es '"+word+"'")
     : L("It's the green one",'Doğrusu yeşil olan','درستش سبزه','Es la verde'), 1600);
+}
+// First miss in a lesson quiz: the option shakes, nothing is revealed (the hint is on screen).
+function fxQuizMiss(i){
+  const btn = document.querySelector('[data-action="quiz-answer"][data-i="'+i+'"]');
+  if(btn) fxWrongButton(btn); else sfx('wrong');
+  companionOops();
 }
 function comboCheck(n){
   if(n === 3){ companionSay(L('Nice!','Güzel!','عالی!','¡Bien!'), 1400); sfx('combo'); }
@@ -12586,16 +12607,31 @@ const HANDLERS = {
     save(); render();
     window.scrollTo(0,0);
   },
+  /* X6: in lesson quizzes a first miss does not reveal the answer. The chosen option is
+     marked, a hint appears (distractorWhy for that option when LXD wrote one, else the
+     rule line) and the learner tries again with the remaining options. A second miss shows
+     the answer and the why. The score counts first attempts only (q.correct / q.results). */
   'quiz-answer'(el, e){
     const q = state.quiz, i = +el.dataset.i;
     if(q.answered) return;
     if(!q.results) q.results = [];
+    const it = q.questions[q.index];
+    const isCorrect = i === it.correct;
+    const miss = q.miss || [];
+    if(miss.includes(i)) return;
+    if(LESSON_KINDS.includes(q.kind) && it.options.length >= 3 && !miss.length && !isCorrect){
+      q.miss = [i]; q.results[q.index] = false; q.streak = 0;
+      queueFx(()=>fxQuizMiss(i));
+      save(); render();
+      return;
+    }
     q.answered = true; q.selected = i;
-    const isCorrect = i === q.questions[q.index].correct;
-    if(isCorrect) q.correct++;
-    q.results[q.index] = isCorrect;
-    q.streak = isCorrect ? (q.streak||0) + 1 : 0;
-    { const it = q.questions[q.index]; const word = it.options[it.correct]; const pt = tapPoint(e); const streak = q.streak; queueFx(()=>fxQuizAnswer(i, pt, isCorrect, streak, word)); }
+    if(!miss.length){
+      if(isCorrect) q.correct++;
+      q.results[q.index] = isCorrect;
+      q.streak = isCorrect ? (q.streak||0) + 1 : 0;
+    }
+    { const word = it.options[it.correct]; const pt = tapPoint(e); const streak = q.streak; queueFx(()=>fxQuizAnswer(i, pt, isCorrect, streak, word)); }
     save(); render();
   },
   // X1: one "Practise again" round — the misses (options reshuffled) plus fresh questions.
@@ -12615,7 +12651,7 @@ const HANDLERS = {
   },
   'quiz-next'(){
     const q = state.quiz;
-    q.index++; q.answered = false; q.selected = null;
+    q.index++; q.answered = false; q.selected = null; q.miss = null;
     if(q.index < q.questions.length){
       q.timeLimit = questionTimeLimit(q.questions[q.index]);
       q.deadline = quizTimed(q.kind) ? Date.now() + q.timeLimit*1000 : null;

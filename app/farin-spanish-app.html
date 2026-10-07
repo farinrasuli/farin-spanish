@@ -1115,15 +1115,18 @@
     var params = ['pageSize=1000'];
     if(self._orderBy) params.push('orderBy=' + encodeURIComponent(self._orderBy));
     var url = BASE + '/' + self.collPath + '?' + params.join('&');
-    return authHeaders().then(function(h){
-      return req('GET', url, h);
-    }).then(function(json){
-      var docs = ((json && json.documents) || []).map(function(d){
-        var id = d.name.split('/').pop();
-        return {id: id, exists: true, data: function(){ return decodeFields(d.fields || {}); }};
+    var docs = [];
+    // Follows nextPageToken, so a collection past 1000 docs is never cut off silently.
+    function page(h, token){
+      return req('GET', url + (token ? '&pageToken=' + encodeURIComponent(token) : ''), h).then(function(json){
+        ((json && json.documents) || []).forEach(function(d){
+          var id = d.name.split('/').pop();
+          docs.push({id: id, exists: true, data: function(){ return decodeFields(d.fields || {}); }});
+        });
+        return json && json.nextPageToken ? page(h, json.nextPageToken) : new QuerySnapshot(docs);
       });
-      return new QuerySnapshot(docs);
-    });
+    }
+    return authHeaders().then(function(h){ return page(h, null); });
   };
   CollRef.prototype.add = function(data){
     var self = this;
@@ -6100,6 +6103,34 @@ function markDailyVisit(){
   }
   return false;
 }
+/* Usage tracking for the admin Users tab (2026-10-07). Each app open updates
+   profile.activity: first/last open, opens, distinct days, device and UI
+   language. Saved locally here; it reaches the cloud with the next backup
+   (the first open of a day always backs up), so a same-day reopen never
+   writes a stale device's whole account over a newer cloud copy. */
+function deviceInfo(){
+  const ua = navigator.userAgent || '';
+  const os = /android/i.test(ua) ? 'Android' : /iphone|ipad|ipod/i.test(ua) || (/macintosh/i.test(ua) && navigator.maxTouchPoints > 1) ? 'iOS'
+    : /windows/i.test(ua) ? 'Windows' : /macintosh|mac os/i.test(ua) ? 'Mac' : /linux|cros/i.test(ua) ? 'Linux' : 'Other';
+  let mode = 'browser';
+  try{
+    if(String(document.referrer).indexOf('android-app://') === 0) mode = 'app';
+    else if(navigator.standalone || (window.matchMedia && matchMedia('(display-mode: standalone)').matches)) mode = 'home screen';
+  }catch(e){}
+  return {os, mode};
+}
+function trackAppOpen(){
+  try{
+    const now = Date.now(), today = todayISO(), dev = deviceInfo();
+    const a = Object.assign({}, state.profile.activity);
+    if(!a.first) a.first = state.profile.joinedAt || now;
+    a.opens = (a.opens || 0) + 1;
+    if(a.lastDay !== today){ a.days = (a.days || 0) + 1; a.lastDay = today; }
+    a.last = now; a.os = dev.os; a.mode = dev.mode; a.ui = LANG;
+    state.profile.activity = a;
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  }catch(e){}
+}
 function markActivity(){
   markDailyVisit();
   recordActiveDay();
@@ -9173,8 +9204,9 @@ function renderPrivacyPolicy(){
         <p>This Privacy Policy explains how this Spanish learning application ("the App") handles information.</p>
 
         <h3 class="display" style="font-size:15px; margin:18px 0 8px;">1. Information We Collect</h3>
-        <p>When you set up your profile, the App collects the name and learning preferences (level, goals, learning style) you enter. This information, along with your learning progress, is saved locally on your device only.</p>
+        <p>When you set up your profile, the App collects the name and learning preferences (level, goals, learning style) you enter. This information, along with your learning progress, is saved on your device and also backed up to our database (provided by Google Firebase) under a private recovery code, so you can continue your progress on another device by entering that code. If you choose a password, you can also continue by entering your name and that password. Your password itself is never stored; the App only keeps a one-way scrambled version of your name and password, used to find your account.</p>
         <p>We do not require you to create an account with a password, and we do not collect your phone number unless you specifically choose to share it (see Section 2).</p>
+        <p>The App also saves basic usage information with your backup: when you joined, when you last opened the App, how many days and times you have opened it, your device type (for example Android or Windows, installed app or browser) and the App's display language.</p>
         <p>When you use a speaking activity with the microphone (for example Say It Back or speaking practice), the App uses your browser's built-in speech recognition to turn your voice into text. In Chrome this sends the audio to Google's speech service for processing while you speak; the App itself does not record or store your voice. The microphone is only used when you tap the microphone button, and you can decline the permission - the activity then works without it.</p>
 
         <h3 class="display" style="font-size:15px; margin:18px 0 8px;">2. Optional Contact Information</h3>
@@ -9192,7 +9224,7 @@ function renderPrivacyPolicy(){
         </ul>
 
         <h3 class="display" style="font-size:15px; margin:18px 0 8px;">4. Who Can Access Your Information</h3>
-        <p>Your saved profile and progress live only in your device's local storage and are not accessible to us. Contact information you opt in to share (Section 2) is only accessible to the designated teacher. We do not sell your personal information.</p>
+        <p>The teacher who runs the App can view saved profiles, progress and usage information through a password-protected admin page, to support learners and improve the App. Apart from that, your saved profile and progress are only accessible to someone who has your specific recovery code, or your name together with your password. Contact information you opt in to share (Section 2) is only accessible to the designated teacher. We do not sell your personal information.</p>
 
         <h3 class="display" style="font-size:15px; margin:18px 0 8px;">5. WhatsApp</h3>
         <p>When you or the teacher initiate contact through WhatsApp, that message and any information shared are sent through WhatsApp, a third-party messaging service operated by Meta.</p>
@@ -15385,6 +15417,9 @@ const HANDLERS = {
         name, motivationTag:d.goals[0], goals:d.goals.slice(), archetype:ARCHETYPES[d.goals[0]].name.en,
         level:d.level, levelStage:1, topics:(d.topics||[]).slice(), learnerType:d.learnerType, priorityArea:d.priorityArea, completedDiagnostic:true, dashboardIntroShown:false,
         recoveryCode,
+        // Redoing the diagnostic keeps the original join date and usage stats.
+        joinedAt: prev.joinedAt || Date.now(),
+        activity: prev.activity || {first: Date.now(), last: Date.now(), opens: 1, days: 1, lastDay: todayISO(), os: deviceInfo().os, mode: deviceInfo().mode, ui: LANG},
         loginId: keepLogin ? prev.loginId : (login ? login.id : null),
         loginName: keepLogin ? (prev.loginName || prev.name) : (login ? name : null),
         // true when the password couldn't be saved (offline); Settings asks for it again
@@ -17212,7 +17247,7 @@ function buildHomeworkWhatsAppMessage(student, item){
 let adminContacts = null;
 let adminError = '';
 let adminLoading = false;
-let adminTab = 'contacts';
+let adminTab = 'users';
 let adminStudents = null;
 let adminStudentsLoading = false;
 let adminStudentsLoadErrors = [];
@@ -17263,10 +17298,11 @@ function renderAdminPage(){
     </div>`;
   } else {
     const tabs = `<div class="row" style="gap:8px; margin-bottom:14px; flex-wrap:wrap;">
+      <button class="btn btn-sm ${adminTab==='users'?'btn-primary':'btn-ghost'}" data-admin-action="tab-users">Users${adminUsers ? ` (${adminUsers.length})` : ''}</button>
       <button class="btn btn-sm ${adminTab==='contacts'?'btn-primary':'btn-ghost'}" data-admin-action="tab-contacts">Contacts (${(adminContacts||[]).length})</button>
       <button class="btn btn-sm ${adminTab==='students'?'btn-primary':'btn-ghost'}" data-admin-action="tab-students">Student Panels (${(adminStudents||[]).length})</button>
     </div>`;
-    const body = adminTab === 'contacts' ? renderAdminContactsTab() : renderAdminStudentsTab();
+    const body = adminTab === 'contacts' ? renderAdminContactsTab() : adminTab === 'users' ? renderAdminUsersTab() : renderAdminStudentsTab();
     html = `<div class="screen" style="padding-top:24px; max-width:480px; margin:0 auto;">
       <div class="row between" style="margin-bottom:14px;">
         <h1 class="display" style="font-size:20px;">Admin</h1>
@@ -17971,6 +18007,7 @@ function bindAdminActions(root){
           return firebase.auth().signInWithEmailAndPassword(email, pw);
         }).then(()=>{
           loadAdminContacts();
+          loadAdminUsers();
         }).catch(err=>{
           adminError = err.message || String(err);
           renderAdminPage();
@@ -17993,9 +18030,27 @@ function bindAdminActions(root){
         });
       } else if(action === 'signout'){
         firebase.auth().signOut().then(()=>{
-          adminContacts = null; adminStudents = null; adminTab = 'contacts'; adminEditingStudent = null;
+          adminContacts = null; adminStudents = null; adminTab = 'users'; adminEditingStudent = null; adminUsers = null; adminUserOpen = null;
           renderAdminPage();
         });
+      } else if(action === 'tab-users'){
+        adminTab = 'users';
+        renderAdminPage();
+        if(adminUsers === null) loadAdminUsers();
+      } else if(action === 'reload-users'){
+        loadAdminUsers();
+      } else if(action === 'users-filter'){
+        adminUsersFilter = el.dataset.filter;
+        adminUserOpen = null;
+        renderAdminPage();
+      } else if(action === 'users-sort'){
+        adminUsersSort = el.dataset.sort;
+        renderAdminPage();
+      } else if(action === 'toggle-user'){
+        adminUserOpen = adminUserOpen === el.dataset.id ? null : el.dataset.id;
+        refreshAdminUsersList();
+      } else if(action === 'users-csv'){
+        downloadAdminUsersCsv();
       } else if(action === 'tab-contacts'){
         adminTab = 'contacts';
         renderAdminPage();
@@ -18307,6 +18362,8 @@ function bindAdminActions(root){
       }
     };
   });
+  const usersSearch = root.querySelector('#admin-users-search');
+  if(usersSearch) usersSearch.oninput = function(){ adminUsersQuery = usersSearch.value; adminUserOpen = null; refreshAdminUsersList(); };
 }
 function loadAdminContacts(){
   adminLoading = true;
@@ -18342,6 +18399,222 @@ function loadAdminStudents(){
     adminStudentsLoading = false;
     renderAdminPage();
   });
+}
+/* ============================= ADMIN: USERS TAB (2026-10-07) =============================
+   Every learner account of both apps: the shared 'progress' collection holds one
+   backup per learner (doc id = recovery code; Spanish ones tagged app:'es').
+   Login pointer docs (pw-…) are skipped. Accounts only exist once a learner has
+   finished the diagnostic, because nothing is backed up before that.
+   "Last seen" = the later of the last backup and the last app open
+   (profile.activity, recorded by trackAppOpen() from 2026-10-07 on). */
+let adminUsers = null;
+let adminUsersLoading = false;
+let adminUsersError = '';
+let adminUsersQuery = '';
+let adminUsersFilter = 'all';   // all | en | es | today | week | gone | contact
+let adminUsersSort = 'recent';  // recent | new | xp | name
+let adminUserOpen = null;       // id of the expanded user
+const DAY_MS = 86400000;
+function loadAdminUsers(){
+  adminUsersLoading = true;
+  adminUsersError = '';
+  renderAdminPage();
+  firebase.firestore().collection('progress').get().then(snap=>{
+    adminUsers = snap.docs.map(d=>Object.assign({id:d.id}, d.data()))
+      .filter(u=>u.id.indexOf(LOGIN_DOC_PREFIX) !== 0 && u.kind !== 'login' && u.profile)
+      .map(u=>{
+        u.app = u.app === 'es' ? 'es' : 'en';
+        u.progress = u.progress || {};
+        const a = u.profile.activity || {};
+        u.lastSeen = Math.max(Number(u.savedAt)||0, Number(a.last)||0);
+        u.joined = Number(u.profile.joinedAt) || 0;
+        u.roadmapStats = adminUserRoadmapStats(u);
+        return u;
+      });
+    adminUsersLoading = false;
+    renderAdminPage();
+  }).catch(err=>{
+    adminUsersError = err.message || String(err);
+    adminUsersLoading = false;
+    renderAdminPage();
+  });
+}
+// Roadmap steps done / total, using the app's own completion rules: the learner's
+// profile + progress are swapped in for the moment, then put back.
+function adminUserRoadmapStats(u){
+  if(u.app !== LOGIN_APP) return null; // the other app's roadmap uses content this app doesn't have
+  const keepProfile = state.profile, keepProgress = state.progress;
+  try{
+    state.profile = Object.assign({}, freshState().profile, u.profile);
+    state.progress = Object.assign({}, freshState().progress, JSON.parse(JSON.stringify(u.progress)));
+    migrateProgressV3(state.progress);
+    const items = (u.roadmap && u.roadmap.length) ? u.roadmap : buildRoadmap(state.profile);
+    return {done: items.filter(isRoadmapNodeDone).length, total: items.length};
+  }catch(e){ return null; }
+  finally{ state.profile = keepProfile; state.progress = keepProgress; }
+}
+function adminAgo(ms){
+  if(!ms) return '—';
+  const d = Math.floor((Date.now() - ms) / DAY_MS);
+  if(d <= 0){ const h = Math.floor((Date.now() - ms) / 3600000); return h <= 0 ? 'just now' : h + 'h ago'; }
+  if(d === 1) return 'yesterday';
+  if(d < 14) return d + 'd ago';
+  if(d < 60) return Math.floor(d/7) + 'w ago';
+  return adminDate(ms);
+}
+function adminDate(ms){
+  return ms ? new Date(ms).toLocaleDateString('en-GB', {day:'numeric', month:'short', year:'numeric'}) : '—';
+}
+function adminUserCount(u, key){ const v = u.progress[key]; return Array.isArray(v) ? v.length : (Number(v) || 0); }
+function adminUserWantsContact(u){ return !!(u.profile.wantsContact && u.profile.contactPhone); }
+function adminUsersFiltered(){
+  const now = Date.now(), q = adminUsersQuery.trim().toLowerCase();
+  const pass = {
+    all: ()=>true, en: u=>u.app==='en', es: u=>u.app==='es',
+    today: u=>now - u.lastSeen < DAY_MS, week: u=>now - u.lastSeen < 7*DAY_MS,
+    gone: u=>now - u.lastSeen >= 14*DAY_MS, contact: adminUserWantsContact
+  }[adminUsersFilter] || (()=>true);
+  const sorters = {
+    recent: (a,b)=>b.lastSeen - a.lastSeen,
+    new: (a,b)=>b.joined - a.joined || b.lastSeen - a.lastSeen,
+    xp: (a,b)=>adminUserCount(b,'xp') - adminUserCount(a,'xp'),
+    name: (a,b)=>String(a.profile.name||'').localeCompare(String(b.profile.name||''))
+  };
+  return (adminUsers||[])
+    .filter(u=>pass(u) && (!q || [u.profile.name, u.profile.loginName, u.id, u.profile.contactPhone, u.profile.clubCode].some(v=>v && String(v).toLowerCase().indexOf(q) !== -1)))
+    .sort(sorters[adminUsersSort] || sorters.recent);
+}
+function renderAdminUsersTab(){
+  if(adminUsersLoading && !adminUsers) return `<p style="text-align:center; padding:20px; color:var(--ink-faint);">Loading users…</p>`;
+  if(adminUsersError) return `<div style="background:var(--error-soft); border-radius:14px; padding:10px 13px;">
+      <p style="color:var(--error); font-size:12.5px; font-weight:600; margin:0 0 8px;">Couldn't load users — ${esc(adminUsersError)}</p>
+      <button class="btn btn-sm btn-ghost" data-admin-action="reload-users">↻ Retry</button>
+    </div>`;
+  const all = adminUsers || [], now = Date.now();
+  const within = ms=>all.filter(u=>now - u.lastSeen < ms).length;
+  const tile = (n, label, color)=>`<div style="flex:1 1 30%; min-width:92px; background:var(--bg-elevated); border:1.5px solid var(--border); border-radius:14px; padding:10px 12px;">
+      <div style="font-size:22px; font-weight:800; color:${color||'var(--ink)'}; line-height:1.1;">${n}</div>
+      <div style="font-size:11.5px; color:var(--ink-soft); font-weight:600; margin-top:2px;">${label}</div>
+    </div>`;
+  const byLevel = {};
+  all.forEach(u=>{ const l = u.profile.level || '?'; byLevel[l] = (byLevel[l]||0) + 1; });
+  const levels = Object.keys(byLevel).sort().map(l=>`<span class="pill" style="background:var(--bg-sunken); color:var(--ink-soft);">${esc(l)} · ${byLevel[l]}</span>`).join(' ');
+  const chip = (key, label)=>`<button class="btn btn-sm ${adminUsersFilter===key?'btn-primary':'btn-ghost'}" data-admin-action="users-filter" data-filter="${key}">${label}</button>`;
+  const sortChip = (key, label)=>`<button class="btn btn-sm ${adminUsersSort===key?'btn-primary':'btn-ghost'}" style="padding:4px 10px; font-size:12px;" data-admin-action="users-sort" data-sort="${key}">${label}</button>`;
+  return `<div class="stack" style="gap:10px;">
+    <div class="row" style="gap:8px; flex-wrap:wrap;">
+      ${tile(all.length, 'Learners')}
+      ${tile(within(DAY_MS), 'Active today', 'var(--success)')}
+      ${tile(within(7*DAY_MS), 'Active 7 days', 'var(--accent)')}
+      ${tile(within(30*DAY_MS), 'Active 30 days')}
+      ${tile(all.filter(u=>u.joined && now - u.joined < 7*DAY_MS).length, 'New this week', 'var(--cat-story)')}
+      ${tile(all.filter(adminUserWantsContact).length, 'Want contact', 'var(--cat-diag)')}
+    </div>
+    <div style="font-size:12px; color:var(--ink-soft); line-height:1.9;">
+      English ${all.filter(u=>u.app==='en').length} · Spanish ${all.filter(u=>u.app==='es').length} &nbsp; ${levels}
+    </div>
+    <input id="admin-users-search" type="search" value="${esc(adminUsersQuery)}" placeholder="Search name, phone, recovery code…" style="width:100%; box-sizing:border-box; padding:10px 13px; border-radius:12px; border:1.5px solid var(--border); font-size:14px; background:var(--bg-elevated); color:var(--ink);">
+    <div class="row" style="gap:6px; flex-wrap:wrap;">
+      ${chip('all','All')}${chip('today','Today')}${chip('week','7 days')}${chip('gone','Gone 14d+')}${chip('contact','Want contact')}${chip('en','EN')}${chip('es','ES')}
+    </div>
+    <div class="row between" style="align-items:center; gap:6px; flex-wrap:wrap;">
+      <div class="row" style="gap:4px; align-items:center; flex-wrap:wrap;">
+        <span style="font-size:12px; color:var(--ink-faint); margin-right:2px;">Sort</span>
+        ${sortChip('recent','Last seen')}${sortChip('new','Newest')}${sortChip('xp','XP')}${sortChip('name','Name')}
+      </div>
+      <div class="row" style="gap:6px;">
+        <button class="btn btn-sm btn-ghost" data-admin-action="users-csv" title="Download as CSV">⬇ CSV</button>
+        <button class="btn btn-sm btn-ghost" data-admin-action="reload-users" title="Reload">${adminUsersLoading ? '…' : '↻'}</button>
+      </div>
+    </div>
+    <div id="admin-users-list" class="stack" style="gap:8px;">${renderAdminUsersList()}</div>
+  </div>`;
+}
+function renderAdminUsersList(){
+  const list = adminUsersFiltered();
+  if(!list.length) return `<p style="padding:20px; text-align:center; color:var(--ink-faint);">${(adminUsers||[]).length ? 'No users match.' : 'No users yet.'}</p>`;
+  return `<p style="font-size:12px; color:var(--ink-faint); margin:0;">${list.length} shown</p>` + list.map(u=>{
+    const p = u.profile, open = adminUserOpen === u.id, rs = u.roadmapStats;
+    const age = Date.now() - u.lastSeen;
+    const dot = `<span title="green: today · pink: this week · grey: longer" style="width:9px; height:9px; border-radius:50%; flex:0 0 auto; background:${age < DAY_MS ? 'var(--success)' : age < 7*DAY_MS ? 'var(--cat-lis)' : 'var(--border)'};"></span>`;
+    return `<div>
+      <button class="item-row" data-admin-action="toggle-user" data-id="${esc(u.id)}" style="margin-bottom:0; width:100%; ${open?'border-radius:14px 14px 0 0;':''}">
+        ${dot}
+        <div class="item-body">
+          <div class="item-title">${esc(p.name || '(no name)')}${adminUserWantsContact(u) ? ' <span class="pill" style="background:var(--cat-diag-soft); color:var(--cat-diag);">📞</span>' : ''}${p.clubCode ? ' <span class="pill" style="background:var(--cat-story-soft); color:var(--cat-story);">Club</span>' : ''}</div>
+          <div class="item-sub">${u.app==='es'?'ES':'EN'} · ${esc(p.level||'—')} · seen ${adminAgo(u.lastSeen)} · 🔥${Number(u.progress.streak)||0} · ${adminUserCount(u,'xp')} XP${rs ? ` · map ${rs.done}/${rs.total}` : ''}</div>
+        </div>
+        <span class="chevron" style="transform:rotate(${open?'90deg':'0deg'});">${ICONS.chev}</span>
+      </button>
+      ${open ? renderAdminUserDetail(u) : ''}
+    </div>`;
+  }).join('');
+}
+function renderAdminUserDetail(u){
+  const p = u.profile, pr = u.progress, a = p.activity || {}, rs = u.roadmapStats;
+  const row = (k, v)=>`<div class="row between" style="gap:10px; padding:3px 0; font-size:13px; border-bottom:1px solid var(--border-soft);"><span style="color:var(--ink-soft);">${k}</span><span style="font-weight:600; text-align:right; word-break:break-word;">${v}</span></div>`;
+  const head = t=>`<div class="eyebrow" style="margin:12px 0 4px;">${t}</div>`;
+  const list = v=>Array.isArray(v) && v.length ? esc(v.join(', ')) : '—';
+  const uiName = {en:'English', tr:'Turkish', fa:'Persian', es:'Spanish'};
+  return `<div style="border:1.5px solid var(--border); border-top:none; border-radius:0 0 14px 14px; padding:4px 14px 14px; margin-bottom:4px;">
+    ${head('Account')}
+    ${row('App', u.app==='es' ? 'Spanish' : 'English')}
+    ${row('Recovery code', `<code>${esc(u.id)}</code>`)}
+    ${row('Password login', p.loginName ? '✓ as “' + esc(p.loginName) + '”' : p.passwordPending ? 'pending (offline when set)' : '—')}
+    ${p.clubCode ? row('Club pass', esc(p.clubCode)) : ''}
+    ${row('Joined', p.joinedAt ? adminDate(p.joinedAt) : '<span style="color:var(--ink-faint);">before tracking</span>')}
+    ${head('Activity')}
+    ${row('Last seen', u.lastSeen ? adminAgo(u.lastSeen) + ' · ' + adminDate(u.lastSeen) : '—')}
+    ${row('Last backup', u.savedAt ? new Date(Number(u.savedAt)).toLocaleString('en-GB') : '—')}
+    ${row('Last active day', esc(pr.lastActiveDate || '—'))}
+    ${row('Days active / app opens', a.days ? `${a.days} / ${a.opens||0} <span style="color:var(--ink-faint); font-weight:500;">since ${adminDate(a.first)}</span>` : '<span style="color:var(--ink-faint);">not tracked yet</span>')}
+    ${row('Streak', '🔥 ' + (Number(pr.streak)||0))}
+    ${row('Device', a.os ? esc(a.os + ' · ' + (a.mode||'browser')) : '—')}
+    ${row('App language', a.ui ? esc(uiName[a.ui] || a.ui) : '—')}
+    ${head('Learner')}
+    ${row('Level', esc((p.level||'—') + (p.levelStage ? ' · stage ' + p.levelStage : '')))}
+    ${row('Goals', list(p.goals && p.goals.length ? p.goals : (p.motivationTag ? [p.motivationTag] : [])))}
+    ${row('Learner type', esc(p.learnerType || '—'))}
+    ${row('Priority area', esc(p.priorityArea || '—'))}
+    ${row('Topics', list(p.topics))}
+    ${head('Progress')}
+    ${row('XP', adminUserCount(u,'xp'))}
+    ${row('Roadmap', rs ? `${rs.done} / ${rs.total} steps` : '—')}
+    ${row('Activities done', adminUserCount(u,'sessionsExplored'))}
+    ${row('Stories · word sets · scenes', `${adminUserCount(u,'completedStories')} · ${adminUserCount(u,'completedVocabSets')} · ${adminUserCount(u,'completedScenes')}`)}
+    ${row('Grammar traps · games', `${adminUserCount(u,'completedTraps')} · ${adminUserCount(u,'completedGames')}`)}
+    ${row('Reviews · writing · speaking', `${adminUserCount(u,'reviewsCompleted')} · ${adminUserCount(u,'writingRoundsDone')} · ${adminUserCount(u,'speakingRoundsDone')}`)}
+    ${row('Words in review', Object.keys(pr.srs || {}).length)}
+    ${adminUserWantsContact(u) ? `${head('Contact')}
+    <div class="row between" style="align-items:center; gap:10px;">
+      <span style="font-weight:600;">${esc(p.contactPhone)}</span>
+      <a class="btn btn-whatsapp btn-sm" target="_blank" rel="noopener" href="${waLinkTo(p.contactPhone, 'Hi ' + (p.name||'') + '! This is your Farin English teacher.')}">${ICONS.whatsapp}</a>
+    </div>` : ''}
+  </div>`;
+}
+// Re-renders only the list, so the search box keeps focus while typing.
+function refreshAdminUsersList(){
+  const el = document.getElementById('admin-users-list');
+  if(!el){ renderAdminPage(); return; }
+  el.innerHTML = renderAdminUsersList();
+  bindAdminActions(el);
+}
+function downloadAdminUsersCsv(){
+  const cols = ['name','app','level','goals','recovery_code','password_login','joined','last_seen','last_active_day','days_active','app_opens','streak','xp','roadmap_done','roadmap_total','activities','stories','word_sets','games','reviews','device','app_language','wants_contact','phone','club_pass'];
+  const iso = ms=>ms ? new Date(Number(ms)).toISOString() : '';
+  const rows = adminUsersFiltered().map(u=>{
+    const p = u.profile, a = p.activity || {}, rs = u.roadmapStats || {};
+    return [p.name, u.app, p.level, (p.goals||[]).join(' / '), u.id, p.loginName ? 'yes' : '', iso(p.joinedAt), iso(u.lastSeen), u.progress.lastActiveDate, a.days, a.opens,
+      u.progress.streak, adminUserCount(u,'xp'), rs.done, rs.total, adminUserCount(u,'sessionsExplored'), adminUserCount(u,'completedStories'), adminUserCount(u,'completedVocabSets'),
+      adminUserCount(u,'completedGames'), adminUserCount(u,'reviewsCompleted'), a.os ? a.os + ' ' + (a.mode||'') : '', a.ui, adminUserWantsContact(u) ? 'yes' : '', adminUserWantsContact(u) ? p.contactPhone : '', p.clubCode];
+  });
+  const cell = v=>{ const s = v === undefined || v === null ? '' : String(v); return /[",\n]/.test(s) ? '"' + s.replace(/"/g,'""') + '"' : s; };
+  const csv = '﻿' + [cols].concat(rows).map(r=>r.map(cell).join(',')).join('\n');
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(new Blob([csv], {type:'text/csv;charset=utf-8'}));
+  link.download = 'farin-users-' + todayISO() + '.csv';
+  document.body.appendChild(link); link.click(); link.remove();
+  setTimeout(()=>URL.revokeObjectURL(link.href), 1000);
 }
 // The student edit form has two tabs (Roadmap / Student Info) and only renders one at a time, so the
 // Student Info inputs are NOT in the DOM while the Roadmap tab is showing. Reading them directly made
@@ -18478,7 +18751,7 @@ if(location.hash === '#admin'){
   firebase.auth().setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(()=>{});
   firebase.auth().onAuthStateChanged(function(user){
     adminAuthResolved = true;
-    if(user) loadAdminContacts();
+    if(user){ loadAdminContacts(); loadAdminUsers(); }
     else renderAdminPage();
   });
   setTimeout(()=>{ if(!adminAuthResolved) renderAdminPage(); }, 4000);
@@ -18489,6 +18762,7 @@ if(location.hash === '#admin'){
   if(roadmapMediaAdded) save();
   detectComeback();
   if(state.profile.completedDiagnostic){ rollWeeks(); }
+  if(state.profile.completedDiagnostic) trackAppOpen();
   if(state.profile.completedDiagnostic && markDailyVisit()){ save(); }
   const fallbackRecoveryCode = (!loadedFromStorage && !state.profile.completedDiagnostic) ? getRecoveryCookie() : null;
   if(fallbackRecoveryCode && typeof firebase !== 'undefined'){

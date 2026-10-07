@@ -5913,6 +5913,50 @@ function syncToCloud(){
    stored. Changing the password writes a new pw- doc and deletes the old one. */
 const LOGIN_APP = 'es';
 const TTS_LANG = 'es-ES'; // voice used by the games (Build It, Word Bingo)
+/* Natural voice (2026-10-07): with no voice set, the browser uses its default,
+   which on many devices is the most robotic one installed. ttsVoice() ranks the
+   installed voices for TTS_LANG and prefers neural ones (Edge "Natural"/"Online",
+   Google, Android "network", Apple Premium/Enhanced/Siri); every utterance the
+   app speaks is built by ttsUtter(). A voice that fails (e.g. an online voice
+   while offline) is dropped and the next best one is used. */
+let ttsVoiceCache = null;
+const ttsBadVoices = new Set();
+function ttsVoiceScore(v){
+  const n = String(v.name||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase();
+  const lang = String(v.lang||'').replace('_','-').toLowerCase(), want = TTS_LANG.toLowerCase();
+  if(lang.indexOf(want.slice(0,2)) !== 0 || ttsBadVoices.has(v.name)) return -1;
+  let s = lang === want ? 30 : 0;
+  if(/natural|neural|wavenet|journey|studio|premium/.test(n)) s += 100;
+  if(/enhanced|siri/.test(n)) s += 70;
+  if(/^google/.test(n) || /network/.test(n)) s += 50;
+  if(/online/.test(n)) s += 20;
+  if(/\b(aria|jenny|ava|emma|andrew|brian|guy|elvira|alvaro|samantha|daniel|monica|jorge)\b/.test(n)) s += 10;
+  if(!v.localService && typeof navigator !== 'undefined' && navigator.onLine === false) s -= 150;
+  // child voices and Apple's novelty voices
+  if(/microsoft ana |espeak|compact|\b(albert|bad news|bahh|bells|boing|bubbles|cellos|deranged|eddy|flo|fred|good news|grandma|grandpa|hysterical|jester|junior|kathy|organ|ralph|reed|rocko|sandy|shelley|superstar|trinoids|whisper|wobble|zarvox)\b/.test(n)) s -= 200;
+  if(v.default) s += 2;
+  return s;
+}
+function ttsVoice(){
+  if(ttsVoiceCache) return ttsVoiceCache;
+  try{
+    let best = null, top = -1;
+    (speechSynthesis.getVoices() || []).forEach(v=>{ const s = ttsVoiceScore(v); if(s > top){ top = s; best = v; } });
+    ttsVoiceCache = best;
+  }catch(e){}
+  return ttsVoiceCache;
+}
+try{ if(typeof speechSynthesis !== 'undefined') speechSynthesis.addEventListener('voiceschanged', ()=>{ ttsVoiceCache = null; }); }catch(e){}
+function ttsUtter(text, rate){
+  const u = new SpeechSynthesisUtterance(text);
+  u.lang = TTS_LANG; u.rate = rate || 0.92;
+  const v = ttsVoice();
+  if(v){
+    u.voice = v;
+    u.addEventListener('error', e=>{ if(e.error !== 'interrupted' && e.error !== 'canceled'){ ttsBadVoices.add(v.name); ttsVoiceCache = null; } });
+  }
+  return u;
+}
 const LOGIN_SALT = 'farin-spanish-login-v1';
 const LOGIN_DOC_PREFIX = 'pw-';
 const PASSWORD_MIN = 6;
@@ -11718,9 +11762,7 @@ function speakTarget(text, rate){
   try{
     if(!text || typeof speechSynthesis === 'undefined') return;
     speechSynthesis.cancel();
-    const u = new SpeechSynthesisUtterance(text);
-    u.lang = TTS_LANG; u.rate = rate || 0.92;
-    speechSynthesis.speak(u);
+    speechSynthesis.speak(ttsUtter(text, rate));
   }catch(e){}
 }
 // Splits a fill-in sentence into slots {pre, w, post, target}. null = not buildable.
@@ -12259,8 +12301,7 @@ function echoSpeak(round, rate){
   try{
     if(!line.text || typeof speechSynthesis === 'undefined' || typeof SpeechSynthesisUtterance === 'undefined' || ttsVoiceMissing()){ reveal(); return; }
     speechSynthesis.cancel();
-    const u = new SpeechSynthesisUtterance(line.text);
-    u.lang = TTS_LANG; u.rate = rate || 0.92;
+    const u = ttsUtter(line.text, rate);
     u.onend = reveal; u.onerror = reveal;
     speechSynthesis.speak(u);
     setTimeout(reveal, 6000);
@@ -13668,8 +13709,7 @@ function startStoryAudio(story){
       if(storyAudio.token !== my) return;
       if(i >= sents.length || state.view !== 'story-detail'){ stopStoryAudio(); return; }
       storyAudioMark(i);
-      const u = new SpeechSynthesisUtterance(sents[i]);
-      u.lang = TTS_LANG; u.rate = rate;
+      const u = ttsUtter(sents[i], rate);
       u.onend = ()=>next(i+1);
       u.onerror = ()=>{ if(storyAudio.token === my) stopStoryAudio(); };
       speechSynthesis.speak(u);
@@ -16148,10 +16188,8 @@ const HANDLERS = {
       const text = el.dataset.text;
       if(!text || typeof speechSynthesis === 'undefined') return;
       speechSynthesis.cancel();
-      const u = new SpeechSynthesisUtterance(text);
-      u.lang = TTS_LANG;
       // Gamification v3 build 2: optional data-rate (Say It Back plays 0.92 / 0.7)
-      u.rate = Number(el.dataset.rate) || 0.92;
+      const u = ttsUtter(text, Number(el.dataset.rate) || 0.92);
       speechSynthesis.speak(u);
     }catch(e){}
   },

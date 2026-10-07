@@ -400,6 +400,7 @@
   .ch-keep-t{font-size:11px; font-weight:800; letter-spacing:.5px; text-transform:uppercase; color:var(--ink-soft);}
   .ch-keep-s{margin:4px 0 10px; font-size:15px; font-weight:600; line-height:1.45; color:var(--ink);}
   .ch-keep .game-chip{border:0; cursor:pointer;}
+  .ch-plan-line{margin-top:14px; text-align:start;}
   /* Full prefers-reduced-motion support: every animation collapses to its end state. */
   @media (prefers-reduced-motion: reduce){ *, *::before, *::after{animation-duration:.001ms !important; animation-delay:0s !important; animation-iteration-count:1 !important; transition-duration:.001ms !important;} }
   /* Gamification v2 (Journey Journal §4): souvenir cards. One 180x232 design;
@@ -6063,6 +6064,7 @@ function go(view, params){
   resetConfirmPending = false;
   if(typeof storyAudio !== 'undefined' && storyAudio.playing && view !== 'story-detail') stopStoryAudio();
   if(typeof echoStopRec === 'function' && view !== 'game-echo') echoStopRec();
+  if(state.view === 'game-chores-room' && view !== 'game-chores-room'){ try{ if(typeof speechSynthesis !== 'undefined') speechSynthesis.cancel(); }catch(e){} }
   navHistory.push({view: state.view, params: state.viewParams});
   state.view = view; state.viewParams = params || {}; save(); render(); window.scrollTo(0,0);
   pushHistoryEntry();
@@ -12797,6 +12799,21 @@ function chUiHtml(round){
       <button class="btn btn-primary game-cta" data-action="chores-plan">${esc(chChrome('lookDone'))}</button>`;
   }
   if(round.finished) return status + chResultHtml(round, loc, cs);
+  if(round.phase === 'done' && round.say === 'offer'){
+    // A2+: say the plan out loud — Say It Back's shadow mode (unscored, skippable), LXD §C
+    return status + `<p class="game-hint">${esc(chChrome('sayPlan'))}</p>
+      <div class="game-card tight">
+        <button class="game-play" data-action="chores-say-play" aria-label="${esc(L('Play','Çal','پخش','Reproducir'))}">${ICONS.soundOn}</button>
+        <p class="game-sentence long ch-plan-line" dir="ltr">${esc(round.plan)}</p>
+      </div>
+      <div class="echo-shadow">
+        <div class="echo-say">${L('Say it out loud','Yüksek sesle söyle','بلند بگو','Dilo en voz alta')}</div>
+        <div class="echo-btns">
+          <button class="btn btn-ghost" data-action="chores-say-skip">${esc(chChrome('sayPlanSkip'))}</button>
+          <button class="btn btn-primary" data-action="chores-said">${L('I said it','Söyledim','گفتم','Ya lo dije')}</button>
+        </div>
+      </div>`;
+  }
   const queue = `<div class="ch-queue" dir="ltr">${ords.map((w,i)=>{
     const c = round.picked[i] ? cs.find(x=>x.id===round.picked[i]) : null;
     const canPick = lv === 3 && !!c && i > 0 && i < n-1 && round.phase === 'plan';
@@ -12914,8 +12931,13 @@ function chRecord(vp, round){
   markGameComplete(vp.refId);
 }
 function chAfterWatch(vp, round){
+  // A2 and up: offer "Say the plan" once (unscored, skippable); A1 finishes straight away.
+  if(round.level >= 2 && !round.say){ round.say = 'offer'; save(); render(); return; }
+  chFinish(vp, round);
+}
+function chFinish(vp, round){
   round.finished = true; round.finishedAt = Date.now();
-  save(); render();
+  save(); render();   // the finished round triggers the celebration + souvenir (maybeCelebrate)
 }
 function renderGameMatch(){
   const vp = state.viewParams;
@@ -15773,6 +15795,13 @@ const HANDLERS = {
     gcBubble = null; save();
     chPlayP = chPlay(vp);
   },
+  'chores-say-play'(){ const vp = state.viewParams, round = vp && vp.round; if(!round || !round.plan) return; speakTarget(round.plan, 0.92); },
+  'chores-said'(){
+    const vp = state.viewParams, round = vp && vp.round; if(!round || round.say !== 'offer') return;
+    round.say = 'said'; queueFx(()=>{ sfx('reveal'); companionCheer(); });
+    chFinish(vp, round);
+  },
+  'chores-say-skip'(){ const vp = state.viewParams, round = vp && vp.round; if(!round || round.say !== 'offer') return; round.say = 'skipped'; chFinish(vp, round); },
   'chores-building'(){
     const vp = state.viewParams || {}, round = vp.round;
     go('game-chores-building', {refId:vp.refId, goal:vp.goal, justLit:round ? round.placeId : null});

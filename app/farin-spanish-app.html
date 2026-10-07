@@ -380,6 +380,9 @@
   .cel-caption{opacity:0;}
   .cel-end .cel-sticker, .cel-end .cel-sv, .cel-end .cel-caption{opacity:1 !important;}
   .cel-end .cel-flip{transform:rotateY(180deg) !important;}
+  /* "Take the other one" chip under the souvenir (tobT7nwI) */
+  .cel-alt{opacity:0; margin-top:10px; border:0; border-radius:999px; padding:8px 14px; font:inherit; font-weight:800; font-size:13px; background:rgba(255,255,255,.18); color:#fff; cursor:pointer; transition:opacity .25s;}
+  .cel-end .cel-alt{opacity:1 !important;}
   @media (max-height:760px){ .celebrate-overlay .celebrate-char{width:130px; height:130px;} .celebrate-stack .cute-bubble{font-size:17px; padding:14px 18px; margin-bottom:12px;} }
 
   .eyebrow{font-size:12px; font-weight:700; letter-spacing:.09em; text-transform:uppercase; color:var(--ink-faint);}
@@ -8428,12 +8431,50 @@ let celebrateSeq = null;
 function clearCelebrateSeq(){
   if(celebrateSeq){ celebrateSeq.timers.forEach(clearTimeout); celebrateSeq.timers = []; }
 }
+/* "Take the other one" (tobT7nwI, spec §3): the other phrase a node could have put on
+   its souvenir, or null when there is only one candidate (story titles, game records,
+   sessions). Vocab prefers an "again" word from Sort the deck; media prefers a caught word. */
+function souvenirAltContent(sv){
+  const id = svRefId(sv), t = sv.type;
+  const pickFrom = (pref, all)=>{ const from = pref.length ? pref : all; return from[Math.floor(Math.random()*from.length)]; };
+  if(t === 'vocab' || t === 'slang'){
+    const set = VOCAB_SETS.find(s=>s.id===id);
+    const others = set ? set.cards.filter(c=>c.word !== sv.text) : [];
+    if(!others.length) return null;
+    const ds = deckSortFor(id);
+    const again = ds ? (ds.twice || []).concat(ds.again || []) : [];
+    const c = pickFrom(others.filter(x=>again.includes(x.word)), others);
+    return {text:c.word, meaning:c.meaning || ''};
+  }
+  if(t === 'media'){
+    const m = MEDIA_LIBRARY.find(x=>x.id===id);
+    const others = m && m.vocab ? m.vocab.filter(v=>v.word !== sv.text) : [];
+    if(!others.length) return null;
+    const caught = mediaCaught(id);
+    const v = pickFrom(others.filter(x=>caught.includes(x.word)), others);
+    return {text:v.word, meaning:{en:v.en, tr:v.tr, fa:v.fa, es:v.es}};
+  }
+  if(t === 'grammar'){
+    const it = GRAMMAR_ITEMS.find(g=>g.id===id);
+    if(!it || !it.blank || !it.blank2) return null;
+    const cands = [it.blank2, it.blank].map(b=>String(b.sentence).replace(/_{2,}/, b.word)).filter(x=>x !== sv.text);
+    return cands.length ? {text:cands[0], meaning:sv.meaning} : null;
+  }
+  if(t === 'writing' || t === 'speaking'){
+    const words = String((state.progress.lastWords && state.progress.lastWords[t]) || '').trim();
+    const cut = s=>s.length > 80 ? s.slice(0,80).replace(/\s+\S*$/,'')+'…' : s;
+    const sents = (words.match(/[^.!?]+[.!?]*/g) || []).map(x=>x.trim()).filter(x=>x.length > 3 && cut(x) !== sv.text);
+    return sents.length ? {text:cut(sents[0]), meaning:sv.meaning} : null;
+  }
+  return null;
+}
 function showCelebration(kind, detail, low, extra){
   extra = extra || {};
   if(document.querySelector('.celebrate-overlay')) return;
   hideCharTip(true);
   clearCelebrateSeq();
   const sv = extra.souvenir || null;
+  const alt = sv && extra.fresh ? souvenirAltContent(sv) : null;   // "Take the other one" (tobT7nwI)
   const stickers = (extra.stickers || []).map(t=>({t, hot:false}));
   if(extra.newBest) stickers.push({t:L('New best!','Yeni rekor!','رکورد تازه!','¡Nuevo récord!'), hot:true});
   const el = document.createElement('div');
@@ -8451,6 +8492,7 @@ function showCelebration(kind, detail, low, extra){
         <div class="cel-side cel-back">${souvenirCardHtml(sv, 'big', souvenirBackHtml(sv))}</div>
         <div class="cel-side cel-front">${souvenirCardHtml(sv, 'big')}</div>
       </div></div>
+      ${alt ? `<button class="cel-alt" id="cel-alt" type="button">↻ ${L('Take the other one','Diğerini al','آن یکی را بردار','Toma la otra')}</button>` : ''}
       <div class="celebrate-hint cel-caption" id="cel-caption">${esc(L('Added to your '+journalName(), journalName()+' koleksiyonuna eklendi', 'به '+journalName()+' تو اضافه شد', 'Añadido a tu '+journalName()))}</div>` : ''}
     <div class="celebrate-hint">${L('Back to your roadmap in a moment…','Birazdan yol haritana dönüyorsun…','تا چند لحظه دیگر به نقشه راهت برمی‌گردی…', 'En un momento vuelves a tu hoja de ruta…')}</div>
   </div>`;
@@ -8465,6 +8507,7 @@ function showCelebration(kind, detail, low, extra){
     const c = centerOf(q('#cel-sv'));
     sparkBurst(c.x, c.y, 10, sv.golden ? '#ffd166' : '#fff', 110);
     sfx('reveal'); buzz([8,40,8]);
+    const ab = q('#cel-alt'); if(ab) ab.style.opacity = '1';
   };
   // End state: everything shown, souvenir face-up, caption visible.
   const finish = ()=>{
@@ -8476,6 +8519,26 @@ function showCelebration(kind, detail, low, extra){
   };
   seq.finish = finish;
   el.addEventListener('click', ()=>{ if(seq.done) seq.exit(); else finish(); });
+  // "Take the other one" (tobT7nwI, spec §3): once, swap the souvenir for the node's other
+  // candidate phrase - a 180° flip on the card, then the chip fades. Tap-to-skip unchanged.
+  const altBtn = q('#cel-alt');
+  if(altBtn) altBtn.addEventListener('click', (ev)=>{
+    ev.stopPropagation();
+    if(!seq.done) finish();
+    if(!alt || seq.swapped) return;
+    seq.swapped = true;
+    sv.text = alt.text; sv.meaning = alt.meaning;
+    save();
+    sfx('flip');
+    const box = q('#cel-sv'), front = q('.cel-front');
+    const redraw = ()=>{ if(front) front.innerHTML = souvenirCardHtml(sv, 'big'); };
+    const a = anim(box, [{transform:'rotateY(0deg)'}, {transform:'rotateY(90deg)'}], {duration:180, easing:'ease-in'});
+    if(a) a.onfinish = ()=>{ redraw(); anim(box, [{transform:'rotateY(-90deg)'}, {transform:'rotateY(0deg)'}], {duration:180, easing:'ease-out'}); };
+    else redraw();
+    altBtn.disabled = true;
+    const f = anim(altBtn, [{opacity:1}, {opacity:0}], {duration:300, fill:'forwards'});
+    if(f) f.onfinish = ()=>altBtn.remove(); else altBtn.remove();
+  });
   clearTimeout(celebrateTimer);
   celebrateTimer = setTimeout(()=>seq.exit(), CELEBRATE_MS);
   if(reducedMotion()){ finish(); return; }
@@ -8511,6 +8574,7 @@ function showCelebration(kind, detail, low, extra){
     const dy = -(r.top + r.height/2 - 40);
     anim(box, [{transform:'translateY(0) scale(1)', opacity:1}, {transform:`translateY(${dy}px) scale(.3)`, opacity:0}], {duration:500, easing:'ease-in', fill:'forwards'});
     const cap = q('#cel-caption'); cap.style.opacity = '1';
+    const ab = q('#cel-alt'); if(ab) ab.style.opacity = '0';
     anim(cap, [{opacity:0, transform:'translateY(6px)'}, {opacity:1, transform:'translateY(0)'}], {duration:300, easing:'ease-out'});
   });
   at(3100, ()=>{ seq.done = true; });

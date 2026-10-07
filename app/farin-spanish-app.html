@@ -401,6 +401,10 @@
   .ch-keep-s{margin:4px 0 10px; font-size:15px; font-weight:600; line-height:1.45; color:var(--ink);}
   .ch-keep .game-chip{border:0; cursor:pointer;}
   .ch-plan-line{margin-top:14px; text-align:start;}
+  /* Natural voice clips (Claude/tts): small accent pill while a clip plays — flag + "Bella · American English". */
+  #tts-badge{position:fixed; left:50%; top:calc(10px + env(safe-area-inset-top, 0px)); z-index:9000; display:flex; align-items:center; gap:7px; padding:6px 12px 6px 9px; border-radius:999px; background:var(--bg-elevated); color:var(--ink); border:1px solid var(--border); box-shadow:var(--shadow); font-size:12.5px; font-weight:700; line-height:1; white-space:nowrap; opacity:0; transform:translate(-50%,-6px); transition:opacity .2s ease, transform .2s ease; pointer-events:none;}
+  #tts-badge.on{opacity:1; transform:translate(-50%,0);}
+  #tts-badge svg{border-radius:2px; flex:0 0 auto; box-shadow:0 0 0 1px var(--border);}
   /* Full prefers-reduced-motion support: every animation collapses to its end state. */
   @media (prefers-reduced-motion: reduce){ *, *::before, *::after{animation-duration:.001ms !important; animation-delay:0s !important; animation-iteration-count:1 !important; transition-duration:.001ms !important;} }
   /* Gamification v2 (Journey Journal §4): souvenir cards. One 180x232 design;
@@ -5984,6 +5988,73 @@ function ttsUtter(text, rate){
   }
   return u;
 }
+/* Natural voice clips (2026-10-07, Farin: Bella = US, George = UK, with a small sign
+   showing the accent). Lines the app speaks were pre-generated with Kokoro
+   (Claude/tts/) into audio/<lang>/<key>.mp3; audio/<lang>/manifest.json maps each
+   key to its voice. ttsSpeak() plays the clip when one exists and otherwise falls
+   back to the device voice (ttsUtter). ttsNorm/ttsKey must stay identical to
+   Claude/tts/corpus.mjs, or clips will not be found. */
+const TTS_AUDIO_BASE = 'audio/' + TTS_LANG.slice(0, 2) + '/';
+const TTS_AUDIO_VOICES = {
+  b:{name:'Bella', flag:'us', label:()=>L('American English','Amerikan İngilizcesi','انگلیسی آمریکایی','inglés americano')},
+  g:{name:'George', flag:'uk', label:()=>L('British English','İngiliz İngilizcesi','انگلیسی بریتانیایی','inglés británico')}
+};
+const TTS_FLAGS = {
+  us:'<svg viewBox="0 0 19 13" width="19" height="13" aria-hidden="true"><rect width="19" height="13" fill="#fff"/><path d="M0 0h19M0 2h19M0 4h19M0 6h19M0 8h19M0 10h19M0 12h19" stroke="#b22234" stroke-width="1"/><rect width="8" height="7" fill="#3c3b6e"/></svg>',
+  uk:'<svg viewBox="0 0 19 13" width="19" height="13" aria-hidden="true"><rect width="19" height="13" fill="#012169"/><path d="M0 0l19 13M19 0L0 13" stroke="#fff" stroke-width="2.6"/><path d="M0 0l19 13M19 0L0 13" stroke="#c8102e" stroke-width="1"/><path d="M9.5 0v13M0 6.5h19" stroke="#fff" stroke-width="4"/><path d="M9.5 0v13M0 6.5h19" stroke="#c8102e" stroke-width="2.2"/></svg>'
+};
+let ttsClips = null, ttsAudio = null, ttsBadgeTimer = 0;
+function ttsNorm(t){
+  return String(t||'').toLowerCase().replace(/[‘’ʼ`]/g,"'").replace(/[^a-z0-9áéíóúüñ']+/g,' ').trim();
+}
+function ttsKey(t){
+  const s = ttsNorm(t); let h1 = 0xdeadbeef, h2 = 0x41c6ce57;
+  for(let i=0;i<s.length;i++){ const c = s.charCodeAt(i); h1 = Math.imul(h1 ^ c, 2654435761); h2 = Math.imul(h2 ^ c, 1597334677); }
+  h1 = Math.imul(h1 ^ (h1>>>16), 2246822507) ^ Math.imul(h2 ^ (h2>>>13), 3266489909);
+  h2 = Math.imul(h2 ^ (h2>>>16), 2246822507) ^ Math.imul(h1 ^ (h1>>>13), 3266489909);
+  return (h2>>>0).toString(16).padStart(8,'0') + (h1>>>0).toString(16).padStart(8,'0');
+}
+try{ fetch(TTS_AUDIO_BASE + 'manifest.json').then(r=>r.ok ? r.json() : null).then(m=>{ ttsClips = m; }).catch(()=>{}); }catch(e){}
+function ttsHasClip(text){ return !!(ttsClips && ttsClips[ttsKey(text)]); }
+function ttsBadge(code){
+  clearTimeout(ttsBadgeTimer);
+  let el = document.getElementById('tts-badge');
+  if(!code){ if(el) ttsBadgeTimer = setTimeout(()=>el.classList.remove('on'), 500); return; }
+  const v = TTS_AUDIO_VOICES[code]; if(!v) return;
+  if(!el){ el = document.createElement('div'); el.id = 'tts-badge'; el.setAttribute('aria-hidden','true'); document.body.appendChild(el); }
+  el.innerHTML = TTS_FLAGS[v.flag] + '<span>' + v.name + ' · ' + v.label() + '</span>';
+  el.classList.add('on');
+}
+// Stops whatever is speaking (clip or device voice).
+function ttsStop(){
+  if(ttsAudio){ const a = ttsAudio; ttsAudio = null; try{ a.onended = a.onerror = null; a.pause(); }catch(e){} ttsBadge(null); }
+  try{ if(typeof speechSynthesis !== 'undefined'){ speechSynthesis.cancel(); } }catch(e){}
+}
+function ttsSpeakDevice(text, rate, cb){
+  try{
+    if(typeof speechSynthesis === 'undefined' || typeof SpeechSynthesisUtterance === 'undefined'){ if(cb.error) cb.error(); return; }
+    const u = ttsUtter(text, rate);
+    u.onend = ()=>{ if(cb.end) cb.end(); };
+    u.onerror = ()=>{ if(cb.error) cb.error(); };
+    speechSynthesis.speak(u);
+  }catch(e){ if(cb.error) cb.error(); }
+}
+// Speaks text: the natural clip when there is one, else the device voice.
+// cb = {end, error}; rate follows the old utterance rates (0.92 = normal).
+function ttsSpeak(text, rate, cb){
+  cb = cb || {};
+  ttsStop();
+  if(!text) return;
+  const code = ttsClips && ttsClips[ttsKey(text)];
+  if(!code){ ttsSpeakDevice(text, rate, cb); return; }
+  const a = new Audio(TTS_AUDIO_BASE + ttsKey(text) + '.mp3');
+  a.playbackRate = Math.min(1, (rate || 0.92) / 0.92); a.preservesPitch = true;
+  ttsAudio = a; ttsBadge(code);
+  const fail = ()=>{ if(ttsAudio !== a) return; ttsAudio = null; ttsBadge(null); ttsSpeakDevice(text, rate, cb); };
+  a.onended = ()=>{ if(ttsAudio !== a) return; ttsAudio = null; ttsBadge(null); if(cb.end) cb.end(); };
+  a.onerror = fail;
+  try{ const p = a.play(); if(p && p.catch) p.catch(fail); }catch(e){ fail(); }
+}
 const LOGIN_SALT = 'farin-spanish-login-v1';
 const LOGIN_DOC_PREFIX = 'pw-';
 const PASSWORD_MIN = 6;
@@ -6090,7 +6161,7 @@ function go(view, params){
   resetConfirmPending = false;
   if(typeof storyAudio !== 'undefined' && storyAudio.playing && view !== 'story-detail') stopStoryAudio();
   if(typeof echoStopRec === 'function' && view !== 'game-echo') echoStopRec();
-  if(state.view === 'game-chores-room' && view !== 'game-chores-room'){ try{ if(typeof speechSynthesis !== 'undefined') speechSynthesis.cancel(); }catch(e){} }
+  if(state.view === 'game-chores-room' && view !== 'game-chores-room'){ ttsStop(); }
   navHistory.push({view: state.view, params: state.viewParams});
   state.view = view; state.viewParams = params || {}; save(); render(); window.scrollTo(0,0);
   pushHistoryEntry();
@@ -11835,9 +11906,7 @@ function gameFallbackNote(vp){
 const BUILD_MIN = 4;
 function speakTarget(text, rate){
   try{
-    if(!text || typeof speechSynthesis === 'undefined') return;
-    speechSynthesis.cancel();
-    speechSynthesis.speak(ttsUtter(text, rate));
+    ttsSpeak(text, rate);
   }catch(e){}
 }
 // Splits a fill-in sentence into slots {pre, w, post, target}. null = not buildable.
@@ -12374,11 +12443,8 @@ function echoSpeak(round, rate){
   const line = round.lines[round.index];
   const reveal = ()=>{ if(!line.revealed && echoLevelMode() === 'after-play'){ line.revealed = true; if(state.viewParams && state.viewParams.round === round) render(); } };
   try{
-    if(!line.text || typeof speechSynthesis === 'undefined' || typeof SpeechSynthesisUtterance === 'undefined' || ttsVoiceMissing()){ reveal(); return; }
-    speechSynthesis.cancel();
-    const u = ttsUtter(line.text, rate);
-    u.onend = reveal; u.onerror = reveal;
-    speechSynthesis.speak(u);
+    if(!line.text || (!ttsHasClip(line.text) && (typeof speechSynthesis === 'undefined' || typeof SpeechSynthesisUtterance === 'undefined' || ttsVoiceMissing()))){ reveal(); return; }
+    ttsSpeak(line.text, rate, {end:reveal, error:reveal});
     setTimeout(reveal, 6000);
   }catch(e){ reveal(); }
 }
@@ -12394,7 +12460,7 @@ function echoStartListening(round){
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
   if(!SR){ echoEnterShadow(round); return; }
   echoStopRec();
-  try{ if(typeof speechSynthesis !== 'undefined') speechSynthesis.cancel(); }catch(e){}
+  ttsStop();
   const line = round.lines[round.index];
   const rec = new SR();
   rec.lang = TTS_LANG; rec.interimResults = true; rec.continuous = false; rec.maxAlternatives = 1;
@@ -13856,7 +13922,7 @@ function storyListenLabel(){
 }
 function stopStoryAudio(){
   storyAudio.token++; storyAudio.playing = false;
-  try{ if(typeof speechSynthesis !== 'undefined') speechSynthesis.cancel(); }catch(e){}
+  ttsStop();
   storyAudioMark(null);
   const b = document.querySelector('[data-action="story-listen"]');
   if(b) b.innerHTML = storyListenLabel();
@@ -13864,21 +13930,18 @@ function stopStoryAudio(){
 // fromSi/toSi (uVzMAAGg): read only that sentence range — the open page; the whole story when omitted.
 function startStoryAudio(story, fromSi, toSi){
   try{
-    if(typeof speechSynthesis === 'undefined' || typeof SpeechSynthesisUtterance === 'undefined') return;
     const sents = [].concat.apply([], story.text.split('\n\n').map(splitSentences));
+    if(!ttsHasClip(sents[0] || '') && (typeof speechSynthesis === 'undefined' || typeof SpeechSynthesisUtterance === 'undefined')) return;
     const from = Math.max(0, fromSi || 0), to = (toSi == null) ? sents.length - 1 : Math.min(toSi, sents.length - 1);
     const rate = (story.level === 'A1' || story.level === 'A2') ? 0.8 : 0.92;
-    speechSynthesis.cancel();
+    ttsStop();
     const my = ++storyAudio.token; storyAudio.playing = true;
     const b = document.querySelector('[data-action="story-listen"]'); if(b) b.innerHTML = storyListenLabel();
     const next = i => {
       if(storyAudio.token !== my) return;
       if(i > to || state.view !== 'story-detail'){ stopStoryAudio(); return; }
       storyAudioMark(i);
-      const u = ttsUtter(sents[i], rate);
-      u.onend = ()=>next(i+1);
-      u.onerror = ()=>{ if(storyAudio.token === my) stopStoryAudio(); };
-      speechSynthesis.speak(u);
+      ttsSpeak(sents[i], rate, {end:()=>next(i+1), error:()=>{ if(storyAudio.token === my) stopStoryAudio(); }});
     };
     next(from);
   }catch(e){ stopStoryAudio(); }
@@ -16599,11 +16662,8 @@ const HANDLERS = {
   'speak-sentence'(el){
     try{
       const text = el.dataset.text;
-      if(!text || typeof speechSynthesis === 'undefined') return;
-      speechSynthesis.cancel();
       // Gamification v3 build 2: optional data-rate (Say It Back plays 0.92 / 0.7)
-      const u = ttsUtter(text, Number(el.dataset.rate) || 0.92);
-      speechSynthesis.speak(u);
+      ttsSpeak(text, Number(el.dataset.rate) || 0.92);
     }catch(e){}
   },
   'toggle-contact-optin'(el){

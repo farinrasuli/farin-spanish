@@ -6,6 +6,10 @@ const PAGE_URL = self.registration.scope;
    caches any chores/*.webp on first use. */
 const ART_PRECACHE = [];
 const ART_RE = /\/chores\/[^/?#]+\.webp$/;
+// Natural voice clips (Claude/tts): audio/<lang>/<key>.mp3 never change under one name -> cache-first;
+// audio/<lang>/manifest.json changes when clips are added -> network-first, cached copy offline.
+const AUDIO_RE = /\/audio\/[a-z]{2}\/[0-9a-f]{16}\.mp3$/;
+const MANIFEST_RE = /\/audio\/[a-z]{2}\/manifest\.json$/;
 /* Offline: the app's own images, the Google Fonts files and the pinned Firebase SDK are
    cache-first, filled on first use, so a learner who has opened the app once can open it again
    with no connection. Bump CACHE whenever an image is replaced under the same name. */
@@ -31,6 +35,21 @@ self.addEventListener('activate', (e) => {
     )).then(() => self.clients.claim())
   );
 });
+
+// Audio clips: a media element asks for byte ranges, and a 206 can't be cached, so fetch the whole
+// file (no Range header), cache that 200 and answer with it.
+function audioCacheFirst(req) {
+  return caches.match(req.url).then((hit) => hit || fetch(req.url).then((res) => {
+    if (res && res.status === 200) { const copy = res.clone(); caches.open(CACHE).then((c) => c.put(req.url, copy)); }
+    return res;
+  }));
+}
+function networkFirst(req) {
+  return fetch(req).then((res) => {
+    if (res && res.ok) { const copy = res.clone(); caches.open(CACHE).then((c) => c.put(req, copy)); }
+    return res;
+  }).catch(() => caches.match(req));
+}
 
 const cacheable = (res) => res && (res.ok || res.type === 'opaque');
 
@@ -75,6 +94,8 @@ self.addEventListener('fetch', (e) => {
   const url = new URL(e.request.url);
   if (url.origin === self.location.origin) {
     // game art and app images: cache-first, filled on first use (the files never change under one name)
+    if (AUDIO_RE.test(url.pathname)) { e.respondWith(audioCacheFirst(e.request)); return; }
+    if (MANIFEST_RE.test(url.pathname)) { e.respondWith(networkFirst(e.request)); return; }
     if (ART_RE.test(url.pathname) || IMG_RE.test(url.pathname)) e.respondWith(cacheFirst(e.request));
     return;
   }

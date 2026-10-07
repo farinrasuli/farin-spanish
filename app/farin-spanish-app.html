@@ -6076,6 +6076,8 @@ function goBack(){
     save(); render(); window.scrollTo(0,0);
     return;
   }
+  // Course steps (Trello yNFXBq6k): Back out of a step opened from a course unit lands on its step list.
+  if(state.courseReturn && courseBackLeavesStep() && courseReturnGo()) return;
   const prev = navHistory.pop();
   if(prev){ state.view = prev.view; state.viewParams = prev.params; }
   else { state.view = state.profile.completedDiagnostic ? 'dashboard' : 'diagnostic-intro'; state.viewParams = {}; }
@@ -8732,6 +8734,8 @@ function backToRoadmap(){
   clearTimeout(celebrateTimer); celebrateTimer = null;
   clearCelebrateSeq(); celebrateSeq = null;
   document.querySelectorAll('.celebrate-overlay').forEach(n=>n.remove());
+  // Course steps (Trello yNFXBq6k): a step opened from a course unit finishes on that unit's step list, not the roadmap.
+  if(state.courseReturn && state.view !== 'dashboard'){ ui.holdAdvance = false; if(courseReturnGo()) return; }
   const held = ui.holdAdvance; ui.holdAdvance = false;
   if(state.view !== 'dashboard') go('dashboard');
   else if(held) render();
@@ -8766,6 +8770,8 @@ function maybeCelebrate(){
 function render(){
   const root = document.getElementById('app');
   document.documentElement.dir = LANG==='fa' ? 'rtl' : 'ltr';
+  // Course return context (yNFXBq6k) ends once the learner is back in the course area or on Home.
+  if(state.courseReturn && courseReturnEnds(state.view)) state.courseReturn = null;
   root.innerHTML = screens[state.view] ? screens[state.view]() : screens['dashboard']();
   // Roadmap 2.0 Phase 2 (IBz4oLGr): Studio and Stories are retired as standalone
   // bottom-nav tabs — their content now lives only as roadmap node types, opened
@@ -16425,6 +16431,8 @@ function courseUnitProgress(cid, uid){ const s = courseUnitSteps(cid, uid); retu
 function courseOpenStep(cid, uid, type){
   const c = courseGet(cid); if(!c) return;
   if(!courseUnitAccess(c, uid)){ go('course-gate', {cid, uid}); return; }
+  // Every exit of this step (done, continue, back, finish) returns here: see courseReturnGo().
+  state.courseReturn = {cid, uid};
   const it = courseUnitItems(uid);
   if(type==='story' && it.story) return go('story-detail', {id:it.story.id, level:it.story.level});
   if(type==='grammar' && it.grammar) return go('grammar-trap', {id:it.grammar.id, level:it.grammar.level});
@@ -16432,7 +16440,7 @@ function courseOpenStep(cid, uid, type){
   if(type==='game' && it.vocab) return HANDLERS['start-game']({dataset:{kind:'match', setId:it.vocab.id, refId:courseGameRef(uid), goal:''}});
   if(type==='b2' && it.b2) return go('grammar-trap', {id:it.b2.id, level:it.b2.level});
   if(type==='trap'){
-    const round = courseTrapRound(cid, uid); if(!round) return;
+    const round = courseTrapRound(cid, uid); if(!round){ state.courseReturn = null; return; }
     gcBubble = null; trapWarnKey = null;
     return go('game-trap', {round, refId:courseTrapRef(uid), goal:''});
   }
@@ -16442,6 +16450,35 @@ function courseOpenStep(cid, uid, type){
   if(type==='exit') courseUi.exit = null;
   courseUi.wres = null;
   go('course-step', {cid, uid, type});
+}
+/* Course return context (Trello yNFXBq6k). courseOpenStep() sets state.courseReturn = {cid, uid};
+   while it is set, the shared exits (backToRoadmap after a celebration / "back to list",
+   goBack from a step) land on that unit's step list instead of Home. Checkpoint steps return
+   to the course detail. It ends as soon as the learner is back in the course area or on a
+   Home tab (render), so the free roadmap keeps returning to Home. The Home button is a
+   deliberate exit and still goes Home. */
+function courseReturnEnds(view){ return ['courses-home','course-detail','course-unit','course-gate','course-final','dashboard','goals-list','student-club'].includes(view); }
+function courseReturnTarget(){
+  const r = state.courseReturn, f = r && courseFindUnit(r.cid, r.uid); if(!f) return null;
+  const isCp = !!(f.m.checkpoint && f.m.checkpoint.id===r.uid);
+  return isCp ? {view:'course-detail', params:{cid:r.cid}} : {view:'course-unit', params:{cid:r.cid, uid:r.uid}};
+}
+// Back leaves the step when it is a native course step, or when the screen behind is the course area / Home / nothing.
+function courseBackLeavesStep(){
+  const top = navHistory[navHistory.length-1];
+  return state.view==='course-step' || !top || courseReturnEnds(top.view);
+}
+// Go to the return target as if Back had been pressed up to it: the history is cut just before
+// it (after a reload, a minimal Courses > course > unit trail), so the finished step isn't reachable with Back.
+function courseReturnGo(){
+  const t = courseReturnTarget(); state.courseReturn = null;
+  if(!t) return false;
+  const same = h=>h && h.view===t.view && (h.params||{}).cid===t.params.cid && (t.view!=='course-unit' || (h.params||{}).uid===t.params.uid);
+  let at = -1; for(let i=navHistory.length-1; i>=0; i--) if(same(navHistory[i])){ at = i; break; }
+  const keep = at >= 0 ? navHistory.slice(0, at) : [{view:'courses-home', params:{}}].concat(t.view==='course-unit' ? [{view:'course-detail', params:{cid:t.params.cid}}] : []);
+  go(t.view, t.params);
+  navHistory = keep;
+  return true;
 }
 // Trap Dash inside a course: the unit's own grammar blanks (blank, blank2), plus the
 // b2 item's blanks on the B2 track. Same round shape as buildTrapRound().

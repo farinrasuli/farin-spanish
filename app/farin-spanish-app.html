@@ -17575,7 +17575,7 @@ function renderAdminPage(){
     </div>`;
   } else {
     const tabs = `<div class="row" style="gap:8px; margin-bottom:14px; flex-wrap:wrap;">
-      <button class="btn btn-sm ${adminTab==='users'?'btn-primary':'btn-ghost'}" data-admin-action="tab-users">Users${adminUsers ? ` (${adminUsers.length})` : ''}</button>
+      <button class="btn btn-sm ${adminTab==='users'?'btn-primary':'btn-ghost'}" data-admin-action="tab-users">Users${adminUsers ? ` (${adminUsersBase().length})` : ''}</button>
       <button class="btn btn-sm ${adminTab==='contacts'?'btn-primary':'btn-ghost'}" data-admin-action="tab-contacts">Contacts (${(adminContacts||[]).length})</button>
       <button class="btn btn-sm ${adminTab==='students'?'btn-primary':'btn-ghost'}" data-admin-action="tab-students">Student Panels (${(adminStudents||[]).length})</button>
     </div>`;
@@ -18307,7 +18307,7 @@ function bindAdminActions(root){
         });
       } else if(action === 'signout'){
         firebase.auth().signOut().then(()=>{
-          adminContacts = null; adminStudents = null; adminTab = 'users'; adminEditingStudent = null; adminUsers = null; adminUserOpen = null;
+          adminContacts = null; adminStudents = null; adminTab = 'users'; adminEditingStudent = null; adminUsers = null; adminUserOpen = null; adminUsersShowHidden = false;
           renderAdminPage();
         });
       } else if(action === 'tab-users'){
@@ -18326,6 +18326,17 @@ function bindAdminActions(root){
       } else if(action === 'toggle-user'){
         adminUserOpen = adminUserOpen === el.dataset.id ? null : el.dataset.id;
         refreshAdminUsersList();
+      } else if(action === 'users-scope'){
+        adminUsersScope = el.dataset.scope;
+        adminUsersShowHidden = false;
+        adminUserOpen = null;
+        renderAdminPage();
+      } else if(action === 'users-show-hidden'){
+        adminUsersShowHidden = !adminUsersShowHidden;
+        adminUserOpen = null;
+        renderAdminPage();
+      } else if(action === 'toggle-hide-user'){
+        adminToggleUserHidden(el.dataset.id);
       } else if(action === 'users-csv'){
         downloadAdminUsersCsv();
       } else if(action === 'tab-contacts'){
@@ -18683,7 +18694,15 @@ function loadAdminStudents(){
    Login pointer docs (pw-…) are skipped. Accounts only exist once a learner has
    finished the diagnostic, because nothing is backed up before that.
    "Last seen" = the later of the last backup and the last app open
-   (profile.activity, recorded by trackAppOpen() from 2026-10-07 on). */
+   (profile.activity, recorded by trackAppOpen() from 2026-10-07 on).
+   Three views (Farin, 2026-10-07): "People" (default) groups accounts with the same
+   name in the same app into one row (a learner who redid the test on another
+   phone, or the many test runs named "Alex"), "Name + password" lists only
+   accounts with a password login (every sign-up since 2026-10-01; learners who
+   joined earlier have none unless they set one), "All accounts" lists every doc.
+   "Hide" only takes accounts out of this list (e.g. test accounts); nothing
+   is deleted. Hidden accounts are kept in progress/admin-hidden-users as SHA-256
+   hashes of their recovery codes, so that doc never reveals a code. */
 let adminUsers = null;
 let adminUsersLoading = false;
 let adminUsersError = '';
@@ -18691,13 +18710,23 @@ let adminUsersQuery = '';
 let adminUsersFilter = 'all';   // all | en | es | today | week | gone | contact
 let adminUsersSort = 'recent';  // recent | new | xp | name
 let adminUserOpen = null;       // id of the expanded user
+let adminUsersScope = 'people'; // people: one row per name | login: name + password accounts | all: every account
+let adminUsersShowHidden = false;
+let adminUsersHidden = [];      // SHA-256 hashes of hidden recovery codes
+const ADMIN_HIDDEN_DOC = 'admin-hidden-users';
+function adminSha256(text){
+  return crypto.subtle.digest('SHA-256', new TextEncoder().encode(text))
+    .then(b=>Array.from(new Uint8Array(b)).map(x=>x.toString(16).padStart(2,'0')).join(''));
+}
 const DAY_MS = 86400000;
 function loadAdminUsers(){
   adminUsersLoading = true;
   adminUsersError = '';
   renderAdminPage();
-  firebase.firestore().collection('progress').get().then(snap=>{
-    adminUsers = snap.docs.map(d=>Object.assign({id:d.id}, d.data()))
+  const db = firebase.firestore().collection('progress');
+  Promise.all([db.get(), db.doc(ADMIN_HIDDEN_DOC).get()]).then(([snap, hiddenDoc])=>{
+    adminUsersHidden = (hiddenDoc.exists && (hiddenDoc.data() || {}).hidden) || [];
+    const users = snap.docs.map(d=>Object.assign({id:d.id}, d.data()))
       .filter(u=>u.id.indexOf(LOGIN_DOC_PREFIX) !== 0 && u.kind !== 'login' && u.profile)
       .map(u=>{
         u.app = u.app === 'es' ? 'es' : 'en';
@@ -18706,10 +18735,14 @@ function loadAdminUsers(){
         u.lastSeen = Math.max(Number(u.savedAt)||0, Number(a.last)||0);
         u.joined = Number(u.profile.joinedAt) || 0;
         u.roadmapStats = adminUserRoadmapStats(u);
+        u.hasLogin = !!(u.profile.loginName || u.profile.loginId);
         return u;
       });
-    adminUsersLoading = false;
-    renderAdminPage();
+    return Promise.all(users.map(u=>adminSha256(u.id).then(h=>{ u.hash = h; u.hidden = adminUsersHidden.indexOf(h) !== -1; }))).then(()=>{
+      adminUsers = users;
+      adminUsersLoading = false;
+      renderAdminPage();
+    });
   }).catch(err=>{
     adminUsersError = err.message || String(err);
     adminUsersLoading = false;
@@ -18744,6 +18777,33 @@ function adminDate(ms){
 }
 function adminUserCount(u, key){ const v = u.progress[key]; return Array.isArray(v) ? v.length : (Number(v) || 0); }
 function adminUserWantsContact(u){ return !!(u.profile.wantsContact && u.profile.contactPhone); }
+// The accounts in view: password accounts (or all), minus hidden ones (or only the hidden ones).
+function adminUsersBase(){
+  const list = (adminUsers||[]).filter(u=>(adminUsersScope !== 'login' || u.hasLogin) && u.hidden === adminUsersShowHidden);
+  if(adminUsersScope !== 'people') return list;
+  // One row per name per app: the most recently seen account, with the rest as .others.
+  const groups = {};
+  list.slice().sort((a,b)=>b.lastSeen - a.lastSeen).forEach(u=>{
+    const key = u.app + '|' + (normalizeLoginName(u.profile.name) || u.id);
+    if(groups[key]) groups[key].others.push(u);
+    else groups[key] = Object.assign({}, u, {others: []});
+  });
+  return Object.keys(groups).map(k=>groups[k]);
+}
+function adminToggleUserHidden(id){
+  const row = adminUsersBase().find(x=>x.id === id);
+  if(!row) return;
+  const ids = [row.id].concat((row.others||[]).map(o=>o.id));
+  const accounts = (adminUsers||[]).filter(u=>ids.indexOf(u.id) !== -1 && u.hash);
+  const hide = !row.hidden, hashes = accounts.map(u=>u.hash);
+  const next = hide ? adminUsersHidden.concat(hashes.filter(h=>adminUsersHidden.indexOf(h) === -1)) : adminUsersHidden.filter(h=>hashes.indexOf(h) === -1);
+  firebase.firestore().collection('progress').doc(ADMIN_HIDDEN_DOC).set({kind:'admin', hidden:next, savedAt:Date.now()}).then(()=>{
+    adminUsersHidden = next;
+    accounts.forEach(u=>{ u.hidden = hide; });
+    adminUserOpen = null;
+    renderAdminPage();
+  }).catch(err=>{ alert("Couldn't save: " + (err.message || err)); });
+}
 function adminUsersFiltered(){
   const now = Date.now(), q = adminUsersQuery.trim().toLowerCase();
   const pass = {
@@ -18757,7 +18817,7 @@ function adminUsersFiltered(){
     xp: (a,b)=>adminUserCount(b,'xp') - adminUserCount(a,'xp'),
     name: (a,b)=>String(a.profile.name||'').localeCompare(String(b.profile.name||''))
   };
-  return (adminUsers||[])
+  return adminUsersBase()
     .filter(u=>pass(u) && (!q || [u.profile.name, u.profile.loginName, u.id, u.profile.contactPhone, u.profile.clubCode].some(v=>v && String(v).toLowerCase().indexOf(q) !== -1)))
     .sort(sorters[adminUsersSort] || sorters.recent);
 }
@@ -18767,7 +18827,13 @@ function renderAdminUsersTab(){
       <p style="color:var(--error); font-size:12.5px; font-weight:600; margin:0 0 8px;">Couldn't load users — ${esc(adminUsersError)}</p>
       <button class="btn btn-sm btn-ghost" data-admin-action="reload-users">↻ Retry</button>
     </div>`;
-  const all = adminUsers || [], now = Date.now();
+  const all = adminUsersBase(), now = Date.now();
+  const visible = (adminUsers||[]).filter(u=>!u.hidden);
+  const withLogin = visible.filter(u=>u.hasLogin).length;
+  const people = {};
+  visible.forEach(u=>{ people[u.app + '|' + (normalizeLoginName(u.profile.name) || u.id)] = 1; });
+  const hiddenCount = (adminUsers||[]).filter(u=>u.hidden && (adminUsersScope !== 'login' || u.hasLogin)).length;
+  const scopeChip = (key, label)=>`<button class="btn btn-sm ${adminUsersScope===key && !adminUsersShowHidden?'btn-primary':'btn-ghost'}" data-admin-action="users-scope" data-scope="${key}">${label}</button>`;
   const within = ms=>all.filter(u=>now - u.lastSeen < ms).length;
   const tile = (n, label, color)=>`<div style="flex:1 1 30%; min-width:92px; background:var(--bg-elevated); border:1.5px solid var(--border); border-radius:14px; padding:10px 12px;">
       <div style="font-size:22px; font-weight:800; color:${color||'var(--ink)'}; line-height:1.1;">${n}</div>
@@ -18779,8 +18845,13 @@ function renderAdminUsersTab(){
   const chip = (key, label)=>`<button class="btn btn-sm ${adminUsersFilter===key?'btn-primary':'btn-ghost'}" data-admin-action="users-filter" data-filter="${key}">${label}</button>`;
   const sortChip = (key, label)=>`<button class="btn btn-sm ${adminUsersSort===key?'btn-primary':'btn-ghost'}" style="padding:4px 10px; font-size:12px;" data-admin-action="users-sort" data-sort="${key}">${label}</button>`;
   return `<div class="stack" style="gap:10px;">
+    <div class="row" style="gap:6px; flex-wrap:wrap; align-items:center;">
+      ${scopeChip('people', `People (${Object.keys(people).length})`)}${scopeChip('login', `Name + password (${withLogin})`)}${scopeChip('all', `All accounts (${visible.length})`)}
+      ${hiddenCount || adminUsersShowHidden ? `<button class="btn btn-sm ${adminUsersShowHidden?'btn-primary':'btn-ghost'}" data-admin-action="users-show-hidden">🙈 Hidden (${hiddenCount})</button>` : ''}
+    </div>
+    <p style="font-size:12px; color:var(--ink-faint); margin:-2px 0 0;">${adminUsersShowHidden ? 'Hidden accounts. Open one and tap “Show in list again” to bring it back.' : adminUsersScope === 'people' ? 'One row per learner: accounts with the same name are grouped (×2 = two accounts, e.g. the test redone on another phone). 🔑 = has a name + password login. Hide test accounts with the button inside a row.' : adminUsersScope === 'login' ? 'Accounts with a name + password login. Every sign-up since 1 Oct 2026 has one; learners who joined before that don’t, unless they set one in Settings.' : 'Every saved account, duplicates included.'}</p>
     <div class="row" style="gap:8px; flex-wrap:wrap;">
-      ${tile(all.length, 'Learners')}
+      ${tile(all.length, adminUsersShowHidden ? 'Hidden' : adminUsersScope === 'people' ? 'People' : adminUsersScope === 'login' ? 'With password' : 'All accounts')}
       ${tile(within(DAY_MS), 'Active today', 'var(--success)')}
       ${tile(within(7*DAY_MS), 'Active 7 days', 'var(--accent)')}
       ${tile(within(30*DAY_MS), 'Active 30 days')}
@@ -18818,7 +18889,7 @@ function renderAdminUsersList(){
       <button class="item-row" data-admin-action="toggle-user" data-id="${esc(u.id)}" style="margin-bottom:0; width:100%; ${open?'border-radius:14px 14px 0 0;':''}">
         ${dot}
         <div class="item-body">
-          <div class="item-title">${esc(p.name || '(no name)')}${adminUserWantsContact(u) ? ' <span class="pill" style="background:var(--cat-diag-soft); color:var(--cat-diag);">📞</span>' : ''}${p.clubCode ? ' <span class="pill" style="background:var(--cat-story-soft); color:var(--cat-story);">Club</span>' : ''}</div>
+          <div class="item-title">${esc(p.name || '(no name)')}${u.hasLogin || (u.others||[]).some(o=>o.hasLogin) ? ' 🔑' : ''}${(u.others||[]).length ? ` <span class="pill" style="background:var(--bg-sunken); color:var(--ink-soft);">×${u.others.length + 1}</span>` : ''}${u.joined && Date.now() - u.joined < 7*DAY_MS ? ' <span class="pill" style="background:var(--success-soft); color:var(--success);">NEW</span>' : ''}${adminUserWantsContact(u) ? ' <span class="pill" style="background:var(--cat-diag-soft); color:var(--cat-diag);">📞</span>' : ''}${p.clubCode ? ' <span class="pill" style="background:var(--cat-story-soft); color:var(--cat-story);">Club</span>' : ''}</div>
           <div class="item-sub">${u.app==='es'?'ES':'EN'} · ${esc(p.level||'—')} · seen ${adminAgo(u.lastSeen)} · 🔥${Number(u.progress.streak)||0} · ${adminUserCount(u,'xp')} XP${rs ? ` · map ${rs.done}/${rs.total}` : ''}</div>
         </div>
         <span class="chevron" style="transform:rotate(${open?'90deg':'0deg'});">${ICONS.chev}</span>
@@ -18867,6 +18938,10 @@ function renderAdminUserDetail(u){
       <span style="font-weight:600;">${esc(p.contactPhone)}</span>
       <a class="btn btn-whatsapp btn-sm" target="_blank" rel="noopener" href="${waLinkTo(p.contactPhone, 'Hi ' + (p.name||'') + '! This is your Farin English teacher.')}">${ICONS.whatsapp}</a>
     </div>` : ''}
+    ${(u.others||[]).length ? `${head('Other accounts with this name (' + u.others.length + ')')}
+    ${u.others.map(o=>row(`<code>${esc(o.id)}</code>${o.hasLogin ? ' 🔑' : ''}`, `${esc(o.profile.level||'—')} · seen ${adminAgo(o.lastSeen)} · ${adminUserCount(o,'sessionsExplored')} activities`)).join('')}` : ''}
+    <button class="btn btn-sm btn-ghost" style="width:100%; margin-top:14px;" data-admin-action="toggle-hide-user" data-id="${esc(u.id)}">${u.hidden ? '👁 Show in list again' : (u.others||[]).length ? '🙈 Hide from list (all ' + (u.others.length + 1) + ' accounts)' : '🙈 Hide from list (test or duplicate account)'}</button>
+    <p style="font-size:11.5px; color:var(--ink-faint); text-align:center; margin:6px 0 0;">Hiding never deletes the account; the learner can still use it.</p>
   </div>`;
 }
 // Re-renders only the list, so the search box keeps focus while typing.

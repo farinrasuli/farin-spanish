@@ -5790,7 +5790,7 @@ function freshState(){
   return {
     view:'diagnostic-intro', viewParams:{}, lang:'tr',
     profile:{name:'', motivationTag:null, goals:[], archetype:null, level:null, levelStage:1, topics:[], learnerType:null, priorityArea:null, completedDiagnostic:false, dashboardIntroShown:false, recoveryCode:null, wantsContact:false, contactPhone:'', clubCode:null},
-    progress:{sessionsExplored:0, streak:0, lastActiveDate:null, completedTraps:[], completedVocabSets:[], completedScenes:[], completedStories:[], completedGames:[], srs:{}, badgesEarnedAt:{}, reviewsCompleted:0, roadmapChecked:{}, dailyTasksDate:null, dailyTasksChecked:{}, writingRoundsDone:0, speakingRoundsDone:0, usedSpeakingTopics:[], xp:0, perfectGameRounds:0, souvenirs:[], gameBests:{}, roadmapGolden:null, lastWords:{}, mediaWatched:[], nodeScores:{}, storyAnswers:{}, journal:{cover:null, pagesKept:[]}, pinned:[], storyChoices:{}},
+    progress:{sessionsExplored:0, streak:0, lastActiveDate:null, completedTraps:[], completedVocabSets:[], completedScenes:[], completedStories:[], completedGames:[], srs:{}, badgesEarnedAt:{}, reviewsCompleted:0, roadmapChecked:{}, dailyTasksDate:null, dailyTasksChecked:{}, writingRoundsDone:0, speakingRoundsDone:0, usedSpeakingTopics:[], xp:0, perfectGameRounds:0, souvenirs:[], gameBests:{}, roadmapGolden:null, lastWords:{}, mediaWatched:[], nodeScores:{}, storyAnswers:{}, journal:{cover:null, pagesKept:[]}, pinned:[], storyChoices:{}, chores:{}},
     diag:{step:0, goals:[], level:null, topics:[], learnerType:null, priorityArea:null, test:null},
     roadmap:null,
     quiz:null, studentPanelCache:null
@@ -5830,6 +5830,8 @@ function load(){
     // Gamification v2 (Journey Journal §10)
     if(!Array.isArray(merged.progress.souvenirs)) merged.progress.souvenirs = [];
     if(!merged.progress.gameBests) merged.progress.gameBests = {};
+    // Cozy Chores: tidied places per level, {flat1:{'1':{smooth, of, date}}, ...}
+    if(!merged.progress.chores || typeof merged.progress.chores !== 'object') merged.progress.chores = {};
     if(merged.progress.roadmapGolden===undefined) merged.progress.roadmapGolden = null;
     if(!merged.progress.lastWords) merged.progress.lastWords = {};
     if(!Array.isArray(merged.progress.mediaWatched)) merged.progress.mediaWatched = [];
@@ -7686,6 +7688,11 @@ function buildRoadmap(profile){
         title:L('Game','Oyun','بازی','Juego')+': '+gameDisplayName(kind)});
       return;
     }
+    if(kind === 'chores'){   // only reachable when CHORES_LIVE is true (see GAME_ROTATION)
+      items.push({type:'game', gameKind:'chores', slot, refId:'chores-'+profile.level+'-s'+stage+(mid ? '-mid' : ''), setId:null, goal:g,
+        title:L('Game','Oyun','بازی','Juego')+': '+gameDisplayName('chores')});
+      return;
+    }
     if(kind === 'build' || kind === 'trap') kind = 'match';
     let setObj = pickGameSet(kind);
     if(!setObj && kind !== 'match'){ kind = 'match'; setObj = pickGameSet('match'); }
@@ -7800,6 +7807,16 @@ const GAME_ROTATION = {
   B2:['build','hunt','bingo','echo'],
   C1:['trap','hunt','build','dictation']
 };
+/* Cozy Chores (Trello 1m2Y0zdU) is built in but NOT in the rotation yet: Farin chose painted art
+   and the painted plates don't exist, so the game plays with stand-in SVG art. Flipping
+   CHORES_LIVE to true puts 'chores' into slot CHORES_SLOT of every level's rotation (0 = stage-1
+   mid, 1 = stage-1 end, 2 = stage-2 mid, 3 = stage-2 end), so NEW roadmaps get one Cozy Chores
+   card per stage-1 (the displaced kind drops out of that slot; existing roadmaps keep their game
+   nodes). While false, buildRoadmap output is unchanged and the game is reachable only through
+   a game node of kind 'chores' (none exist) — i.e. dormant. */
+const CHORES_LIVE = false;
+const CHORES_SLOT = 0;
+if(CHORES_LIVE) Object.keys(GAME_ROTATION).forEach(l=>{ GAME_ROTATION[l][CHORES_SLOT] = 'chores'; });
 function gameKindForSlot(level, stage, mid){
   const r = GAME_ROTATION[level] || GAME_ROTATION.A1;
   return r[(stage===2 ? 2 : 0) + (mid ? 0 : 1)];
@@ -8224,6 +8241,7 @@ function gameDisplayName(kind){
   if(kind === 'bingo') return L('Word Bingo','Kelime Tombalası','بینگوی کلمات','Bingo de palabras');
   if(kind === 'hunt') return L('Story Hunt','Hikaye Avı','شکار داستان','Caza en la historia');
   if(kind === 'echo') return L('Say It Back','Tekrar Et','بگو ببینم','Repítelo');
+  if(kind === 'chores') return chChrome('title');   // one short word per language (Chores / Ev İşleri / خانه‌داری / Tareas)
   if(kind === 'trap') return L('Trap Dash','Tuzak Kaçışı','فرار از تله‌ها','Escape de trampas');
   if(kind === 'dictation') return L('Listen & Type','Dinle ve Yaz','گوش کن و بنویس','Escucha y escribe');
   return L('Word Rush','Kelime Yarışı','مسابقه کلمات','Carrera de palabras');
@@ -8233,12 +8251,14 @@ function viewGameKind(view){
   if(view === 'game-bingo') return 'bingo';
   if(view === 'game-hunt') return 'hunt';
   if(view === 'game-echo') return 'echo';
+  if(view === 'game-chores-room' || view === 'game-chores-building') return 'chores';
   return view==='game-trap' ? 'trap' : (view==='game-dictation' ? 'dictation' : 'match');
 }
 // Stats of a finished round, in one shape for all three games.
 function gameRoundStats(kind, round){
   if(kind === 'bingo') return {first:round.first||0, total:BINGO_SCORED_CALLS, perfect:(round.first||0) === BINGO_SCORED_CALLS};
   if(kind === 'hunt'){ const total = round.targets.length; return {clean:round.clean||0, total, perfect:total>0 && round.clean===total}; }
+  if(kind === 'chores'){ const total = round.total || 0, first = round.smooth || 0; return {first, total, perfect:total>0 && first===total, place:chPlaceShort(chLoc(round.placeId))}; }
   if(kind === 'echo'){ const lines = round.lines.length; return {clear:round.shadow ? null : (round.clear||0), lines, shadow:!!round.shadow, perfect:!round.shadow && lines>0 && round.clear===lines}; }
   if(kind === 'build'){
     const total = round.items.length;
@@ -8260,6 +8280,7 @@ function gameRecordText(kind, st){
   if(kind === 'build') return name+' · '+st.firstTry+'/'+st.total+' '+L('first try','ilk denemede','در اولین تلاش','a la primera');
   if(kind === 'bingo') return name+' · '+st.first+'/'+st.total+' '+L('first tap','ilk dokunuşta','با اولین لمس','al primer toque');
   if(kind === 'hunt') return name+' · '+st.clean+'/'+st.total+' '+L('clean','temiz','بی‌خطا','limpias');
+  if(kind === 'chores') return chFmt(chChrome('record'), {n:st.first, total:st.total});   // "Cozy Chores · 4/5 smooth"
   if(kind === 'echo') return name+' · '+(st.shadow ? st.lines+' '+L('lines spoken','cümle söylendi','جمله گفته شد','frases dichas') : st.clear+'/'+st.lines+' '+L('lines clear','cümle net','جمله واضح','frases claras'));
   if(kind === 'match') return name+' · '+st.time+'s · '+st.mistakes+' '+(st.mistakes===1 ? L('miss','hata','اشتباه','fallo') : L('misses','hata','اشتباه','fallos'));
   if(kind === 'trap') return name+' · '+st.correct+'/'+st.total+(st.time ? ' · '+st.time+'s' : '');
@@ -8268,6 +8289,7 @@ function gameRecordText(kind, st){
 function gameStatStickers(kind, st){
   if(kind === 'bingo') return [st.first+'/'+st.total+' '+L('first tap','ilk dokunuşta','با اولین لمس','al primer toque'), L('Full card','Tam kart','کارت کامل','Cartón lleno')];
   if(kind === 'hunt') return [st.clean+'/'+st.total+' '+L('clean','temiz','بی‌خطا','limpias')];
+  if(kind === 'chores') return [st.perfect ? chChrome('stickerPerfect') : chFmt(chChrome('sticker'), {n:st.first, total:st.total})].concat(st.place ? [st.place] : []);
   if(kind === 'echo') return [st.shadow ? st.lines+' '+L('lines spoken','cümle söylendi','جمله گفته شد','frases dichas') : st.clear+'/'+st.lines+' '+L('clear','net','واضح','claras')];
   if(kind === 'build') return [st.firstTry+'/'+st.total+' '+L('first try','ilk denemede','در اولین تلاش','a la primera')].concat(st.hints ? [st.hints+' '+(st.hints===1 ? L('hint','ipucu','راهنما','pista') : L('hints','ipucu','راهنما','pistas'))] : []);
   if(kind === 'match') return [st.time+'s', st.mistakes+' '+(st.mistakes===1 ? L('miss','hata','اشتباه','fallo') : L('misses','hata','اشتباه','fallos'))];
@@ -8278,7 +8300,7 @@ function gameStatStickers(kind, st){
 function updateGameBest(kind, st){
   const pr = state.progress; if(!pr.gameBests) pr.gameBests = {};
   const prev = pr.gameBests[kind];
-  const metric = kind==='match' ? (b=>-(b.time||9999)) : (kind==='trap' ? (b=>b.score||0) : ((kind==='build' || kind==='bingo') ? (b=>b.first||0) : (kind==='hunt' ? (b=>b.clean||0) : (kind==='echo' ? (b=>b.clear||0) : (b=>b.pct||0)))));
+  const metric = kind==='match' ? (b=>-(b.time||9999)) : (kind==='trap' ? (b=>b.score||0) : ((kind==='build' || kind==='bingo' || kind==='chores') ? (b=>b.first||0) : (kind==='hunt' ? (b=>b.clean||0) : (kind==='echo' ? (b=>b.clear||0) : (b=>b.pct||0)))));
   const cur = {time:st.time||null, score:st.score!=null ? st.score : null, pct:st.pct!=null ? st.pct : null,
     first:st.firstTry!=null ? st.firstTry : (st.first!=null ? st.first : null), clean:st.clean!=null ? st.clean : null, clear:st.clear!=null ? st.clear : null};
   if(!prev){ pr.gameBests[kind] = cur; return false; }
@@ -8681,7 +8703,7 @@ function maybeCelebrate(){
     low = state.quiz.correct/state.quiz.questions.length < .5;
   } else if(v==='game-match' && vp.round && vp.round.matchedKeys && vp.round.matchedKeys.length === vp.round.pairCount){
     target = vp.round; kind = 'game';
-  } else if((v==='game-dictation' || v==='game-trap' || v==='game-build' || v==='game-bingo' || v==='game-hunt' || v==='game-echo') && vp.round && vp.round.finished){
+  } else if((v==='game-dictation' || v==='game-trap' || v==='game-build' || v==='game-bingo' || v==='game-hunt' || v==='game-echo' || v==='game-chores-room') && vp.round && vp.round.finished){
     target = vp.round; kind = 'game';
   } else if(v==='studio-round' && vp.checked && vp.result && vp.result.passed){
     target = vp.result; kind = vp.mode;
@@ -11786,6 +11808,10 @@ function gameKeep(kind, round){
       // the learner's clearest line (the longest when nothing was scored)
       const pick = round.lines.slice().sort((a,b)=>((b.best && b.best.pct) || 0) - ((a.best && a.best.pct) || 0) || b.text.length - a.text.length)[0];
       return {text:pick.text, say:pick.text, note:pick.meaning || ''};
+    }
+    if(kind === 'chores' && round.plan){
+      // the learner's own plan sentence, in their order — the flip side the Shuffle reviews
+      return {text:round.plan, say:round.plan, note:chPlaceShort(chLoc(round.placeId))};
     }
     if(kind === 'bingo' && round.tiles){
       // a word missed on first tap, else the word that completed a line
@@ -15616,6 +15642,7 @@ const HANDLERS = {
       go('game-match', Object.assign({round: buildMatchRound(fbh), fallbackFrom:'hunt'}, params));
       return;
     }
+    if(kind === 'chores'){ go('game-chores-building', params); return; }   // the learner picks the place inside
     const setObj = VOCAB_SETS.find(x=>x.id===el.dataset.setId);
     if(!setObj) return;
     if(kind === 'bingo'){

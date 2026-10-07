@@ -319,6 +319,87 @@
   .echo-shadow{display:flex; flex-direction:column; align-items:center; gap:12px;}
   .echo-say{font-family:'Fredoka',-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; font-weight:700; font-size:20px; color:var(--ink);}
   .echo-btns{display:flex; gap:10px; flex-wrap:wrap; justify-content:center;}
+  /* ---- Cozy Chores: stage engine (painted plate + cut-out layers + atmosphere; transform/opacity only) ---- */
+  .ch-stage{position:relative; width:100%; border-radius:22px; overflow:hidden; box-shadow:var(--clay-shadow-soft); contain:paint; touch-action:manipulation; background:#1d2a33; flex:0 0 auto;}
+  .ch-stage.ch-ext{aspect-ratio:4/5;}
+  .ch-stage.ch-int{aspect-ratio:4/3; background:#2a1c18;}
+  .ch-layer{position:absolute; transform-origin:50% 100%; will-change:transform,opacity;}
+  .ch-layer>svg,.ch-layer>img{display:block; width:100%; height:auto;}
+  .ch-gone{opacity:0 !important; pointer-events:none !important;}
+  .ch-layer.ch-tap{cursor:pointer;}
+  .ch-plate{transform-origin:50% 50%;}
+  .ch-fill{position:absolute;}
+  @keyframes chk-sway{0%,100%{transform:rotate(-1.4deg);}50%{transform:rotate(1.4deg);}}
+  @keyframes chk-bob{0%,100%{transform:translateY(0);}50%{transform:translateY(-1.2%);}}
+  @keyframes chk-drift{0%{transform:translateY(0) scale(.6); opacity:0;} 25%{opacity:.6;} 100%{transform:translateY(-130%) scale(1.3); opacity:0;}}
+  @keyframes chk-mote{0%{transform:translate(0,0); opacity:0;} 30%{opacity:.85;} 100%{transform:translate(14px,-120px); opacity:0;}}
+  @keyframes chk-flicker{0%,100%{opacity:.92;} 35%{opacity:1;} 55%{opacity:.86;} 78%{opacity:.98;}}
+  @keyframes chk-glow{0%,100%{opacity:.5; transform:scale(1);} 50%{opacity:.78; transform:scale(1.04);}}
+  @keyframes chk-tvwash{0%,100%{opacity:.55;} 20%{opacity:.85;} 43%{opacity:.4;} 71%{opacity:.9;}}
+  @keyframes chk-rainfall{from{transform:translate3d(0,-50%,0);} to{transform:translate3d(0,0,0);}}
+  @keyframes chk-paraslow{0%,100%{transform:translateX(-1.1%);} 50%{transform:translateX(1.1%);}}
+  @keyframes chk-twinkle{0%,100%{transform:scale(.3); opacity:0;} 50%{transform:scale(1); opacity:.9;}}
+  .ch-a-sway{animation:chk-sway 5.2s ease-in-out infinite;}
+  .ch-a-sway-slow{animation:chk-sway 8.4s ease-in-out infinite;}
+  .ch-a-bob{animation:chk-bob 3.8s ease-in-out infinite;}
+  .ch-a-flicker{animation:chk-flicker 2.7s ease-in-out infinite;}
+  .ch-a-glow{animation:chk-glow 4.6s ease-in-out infinite;}
+  .ch-a-tv{animation:chk-tvwash 2.2s steps(1,end) infinite;}
+  .ch-a-para{animation:chk-paraslow 26s ease-in-out infinite;}
+  .ch-a-twinkle{animation:chk-twinkle 2.2s ease-in-out infinite;}
+  .ch-rain{position:absolute; inset:-50% 0 0; height:200%; pointer-events:none; background-repeat:repeat;}
+  .ch-rain-near{animation:chk-rainfall .62s linear infinite; opacity:.5; background-image:repeating-linear-gradient(104deg, rgba(255,255,255,.55) 0 1px, transparent 1px 7px);}
+  .ch-rain-far{animation:chk-rainfall 1.25s linear infinite; opacity:.26; background-image:repeating-linear-gradient(100deg, rgba(255,255,255,.4) 0 1px, transparent 1px 13px);}
+  .ch-wash{position:absolute; inset:0; pointer-events:none; transition:opacity .6s;}
+  .ch-dark{mix-blend-mode:multiply;}
+  .ch-warm{mix-blend-mode:screen;}
+  .ch-mote{position:absolute; width:4px; height:4px; border-radius:50%; background:#ffe6b0; pointer-events:none; animation:chk-mote 7s linear infinite;}
+  .ch-spark{position:absolute; pointer-events:none; background:radial-gradient(circle,#fff 0 32%,transparent 72%);}
+  .ch-group{position:absolute; inset:0; pointer-events:none; transition:opacity .6s;}
+  .ch-hot{position:absolute; border:0; background:transparent; padding:0; margin:0; border-radius:10px; cursor:pointer;}
+  .ch-hot:focus-visible{outline:3px solid #ffd98a; outline-offset:2px;}
+  .ch-hot.ch-hot-off{cursor:default;}
+  .ch-hot .ch-cap{position:absolute; left:50%; bottom:-6px; transform:translateX(-50%); background:rgba(20,14,12,.72); color:#fff; font-size:11px; font-weight:800; padding:3px 8px; border-radius:9px; white-space:nowrap;}
+  .ch-hot .ch-cap.ch-lit{background:rgba(233,169,60,.92); color:#2a1c18;}
+  .ch-bubble{position:absolute; max-width:62%; background:#fff; color:#33241f; border-radius:14px; padding:7px 10px; font-size:12.5px; font-weight:700; line-height:1.3; box-shadow:0 5px 14px rgba(20,14,12,.3); opacity:0; transition:opacity .2s; pointer-events:none; z-index:70;}
+  .ch-bubble.ch-on{opacity:1;}
+  @media (prefers-reduced-motion: reduce){ .ch-rain{opacity:.18 !important;} .ch-mote{opacity:.5 !important;} }
+  /* ---- Cozy Chores: chrome under the stage (logical properties; the stage itself is always LTR) ---- */
+  .ch-names{display:flex; flex-wrap:wrap; gap:6px;}
+  .ch-names span{display:inline-flex; flex-direction:column; font-size:13px; font-weight:700; padding:6px 10px; border-radius:12px; background:var(--bg-elevated); border:1.5px solid var(--border); color:var(--ink-soft); box-shadow:var(--clay-shadow-soft);}
+  .ch-names span small{font-size:11px; font-weight:600; color:var(--ink-soft); opacity:.8;}
+  .ch-names span.ch-seen{background:var(--success-soft); border-color:var(--success); color:color-mix(in srgb, var(--success) 62%, var(--ink));}
+  .ch-queue{display:flex; gap:6px;}
+  .ch-slot{flex:1; min-height:62px; min-width:0; border:2px dashed var(--border); border-radius:14px; background:var(--bg-elevated); padding:6px 5px; display:flex; flex-direction:column; justify-content:center; gap:2px; transition:border-color .2s, background .2s;}
+  .ch-slot.ch-filled{border-style:solid; border-color:var(--success); background:var(--success-soft);}
+  .ch-slot.ch-active{border-color:var(--accent); background:var(--cat-review-soft); box-shadow:0 0 0 3px color-mix(in srgb, var(--accent) 22%, transparent);}
+  .ch-slot.ch-bumped{border-color:var(--cat-review);}
+  .ch-slot.ch-landed{opacity:.92;}
+  .ch-slot .ch-word{font-size:9.5px; font-weight:800; letter-spacing:.3px; color:var(--accent-strong, var(--accent)); text-transform:uppercase; border:0; background:none; padding:0; text-align:start; font-family:inherit; cursor:default;}
+  .ch-slot .ch-word.ch-pick{text-decoration:underline dotted; cursor:pointer;}
+  .ch-slot .ch-what{font-size:11.5px; font-weight:700; line-height:1.15; overflow-wrap:anywhere; color:var(--ink);}
+  .ch-slot .ch-after{font-size:10px; font-weight:600; line-height:1.15; color:color-mix(in srgb, var(--success) 62%, var(--ink));}
+  .ch-say{font-size:16px; font-weight:600; line-height:1.5; color:var(--ink); min-height:52px; text-align:start;}
+  .ch-say .ch-now{background:var(--cat-review-soft); border-radius:6px; padding:1px 5px; box-shadow:0 0 0 2px var(--cat-review-soft);}
+  .ch-say .ch-faint{color:var(--ink-soft); opacity:.6;}
+  .ch-chips{display:flex; flex-wrap:wrap; gap:8px;}
+  .ch-chip{display:inline-flex; flex-direction:column; align-items:flex-start; min-height:44px; padding:9px 14px; border-radius:22px; border:2px solid var(--border); background:var(--bg-elevated); color:var(--ink); font-family:'Fredoka',-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; font-weight:700; font-size:15px; line-height:1.2; text-align:start; box-shadow:var(--clay-shadow-soft); cursor:pointer; transition:transform .08s ease;}
+  .ch-chip:active{transform:scale(.97);}
+  .ch-chip small{font-family:inherit; font-size:11.5px; font-weight:600; color:var(--ink-soft);}
+  .ch-chip.ch-picked{background:var(--success-soft); border-color:var(--success); color:color-mix(in srgb, var(--success) 62%, var(--ink));}
+  .ch-conns .ch-chip{min-height:40px; font-size:14px; padding:7px 12px;}
+  .ch-tools{display:flex; flex-wrap:wrap; gap:8px;}
+  .ch-tools .game-chip{cursor:pointer; border:0; font-family:inherit; text-align:start; white-space:normal; line-height:1.3;}
+  .ch-tools .game-chip.ch-on{background:var(--cat-review-soft); color:var(--ink);}
+  .ch-hint-gloss{margin-top:-10px;}
+  .ch-frame{display:flex; align-items:center; gap:10px; text-align:start; font-size:15.5px; font-weight:600; line-height:1.4;}
+  .ch-frame span{flex:1 1 auto; min-width:0;}
+  .ch-frame .game-chip{flex:0 0 auto; border:0; cursor:pointer;}
+  .ch-end{margin:-8px 0 14px; font-size:14px; font-weight:600; line-height:1.5; color:var(--ink);}
+  .ch-keep{margin:0 0 16px; padding:12px 14px; border-radius:16px; background:var(--cat-review-soft); text-align:start;}
+  .ch-keep-t{font-size:11px; font-weight:800; letter-spacing:.5px; text-transform:uppercase; color:var(--ink-soft);}
+  .ch-keep-s{margin:4px 0 10px; font-size:15px; font-weight:600; line-height:1.45; color:var(--ink);}
+  .ch-keep .game-chip{border:0; cursor:pointer;}
   /* Full prefers-reduced-motion support: every animation collapses to its end state. */
   @media (prefers-reduced-motion: reduce){ *, *::before, *::after{animation-duration:.001ms !important; animation-delay:0s !important; animation-iteration-count:1 !important; transition-duration:.001ms !important;} }
   /* Gamification v2 (Journey Journal §4): souvenir cards. One 180x232 design;
@@ -12493,6 +12574,282 @@ async function runSteps(steps, ctx){
   await Promise.all(pend);
 }
 
+/* ---- Cozy Chores: game shell — building (pick a place) → room (look → plan → play → done) ----
+   One place per card. All six places open at every level; difficulty lives in the chips:
+   A1 = the 3 simplest chores (lv 1), A2 = 4, B1+ = 5 (+ the learner can cycle a middle
+   slot's connector and pick a before/after connector for a model line). Soft rules only:
+   a bumpy order replays the chore with a visible consequence; smooth = chores − rules fired.
+   Strings come from CHORES_CONTENT (farin-lxd); scene ids map to content ids below.
+   Where the LXD's content has no entry for a scene chore (scenes.json is the engine's
+   truth), the scene's own English label/narration is used — see the build report. */
+const CH_PLACE = {home1:'flat1', home2:'flat2', home3:'flat3', home4:'flat4', bakery:'bakery', flowers:'flowershop'};
+const CH_CHORE_ALIAS = {flowers:{water:'flowers', trim:'stems', sweep:'petals'}};
+let chPlayP = null;   // the running play loop's promise (tests await it)
+function chT(){ return TTS_LANG.slice(0, 2); }
+function chUi(o){ if(!o || typeof o !== 'object') return o || ''; const t = chT(); return o[LANG] != null ? o[LANG] : (o[t] != null ? o[t] : (o.en || '')); }
+function chTg(o){ if(!o || typeof o !== 'object') return o || ''; const t = chT(); return o[t] != null ? o[t] : (o.en || ''); }
+function chGloss(o){ if(!o || typeof o !== 'object' || LANG === chT()) return ''; return o[LANG] || ''; }
+function chFmt(s, v){ return String(s||'').replace(/\{(\w+)\}/g, (m,k)=> v[k] != null ? String(v[k]) : m); }
+function chChrome(k){ return chUi((CHORES_CONTENT.chrome||{})[k]); }
+function chLevel(){ const l = (state.profile && state.profile.level) || 'A1'; return l === 'A1' ? 1 : (l === 'A2' ? 2 : 3); }
+function chLoc(id){ return CHORES_SCENES.locations.find(l=>l.id===id) || null; }
+function chPlace(loc){ return (CHORES_CONTENT.places||{})[CH_PLACE[loc.id]] || null; }
+function chPlaceShort(loc){ const p = chPlace(loc); return p ? chUi(p.short) : (loc.name[chT()] || loc.name.en); }
+function chPlaceName(loc){ const p = chPlace(loc); return p ? chUi(p.name) : (loc.name[chT()] || loc.name.en); }
+function chChoreContent(loc, chore){ const p = chPlace(loc); if(!p || !p.chores) return null; const al = CH_CHORE_ALIAS[loc.id] || {}; return p.chores[al[chore.id] || chore.id] || null; }
+function chChoresFor(loc, lv){ return loc.chores.filter(c=>c.lv <= lv); }
+function chOrdinals(n){ const o = CHORES_SCENES.ordinals, set = o[chT()] || o.en; return set[String(n)] || o.en[String(n)]; }
+function chB1Choices(){ const o = CHORES_SCENES.ordinals; return (o[chT()] || o.en).b1Choices; }
+function chLowerFirst(s){ s = String(s||''); return s.charAt(0).toLowerCase() + s.slice(1); }
+function chCap(s){ s = String(s||''); return s.charAt(0).toUpperCase() + s.slice(1); }
+// Narration follows the taught form: EN A1 "I wash the dishes." / A2+ "I'm washing…";
+// ES A1-A2 "Lavo los platos." / B1+ "Estoy lavando…" (no Spanish progressive before B1).
+function chChoreText(loc, chore, lv){
+  const c = chChoreContent(loc, chore), t = chT();
+  let narr;
+  if(c && c.narration){ const n = c.narration, key = t === 'es' ? (lv >= 3 ? 'B1plus' : 'A1A2') : (lv >= 2 ? 'A2plus' : 'A1'); narr = chTg(n[key] || n.A1 || n.A1A2); }
+  else narr = chore.narr[lv === 1 ? '1' : '2'];
+  return {
+    chip: c ? chTg(c.chip) : chCap(chore.label),
+    imp: c ? chTg(c.imperative) : chore.imp,
+    narr,
+    done: c ? chTg(c.done) : chCap(chore.after) + '.',
+    gloss: c ? chGloss(c.chip) : '',
+    ing: c && c.ing ? chTg(c.ing) : '', inf: c && c.inf ? chTg(c.inf) : '', subj: c && c.subj ? chTg(c.subj) : ''
+  };
+}
+function chContentRule(loc){ const p = chPlace(loc); return p && p.rule ? p.rule : null; }
+// Does the LXD's one {before, after} rule describe this scene rule? ('*' = any chore.)
+function chRuleMaps(loc, rule){
+  const r = chContentRule(loc); if(!r) return false;
+  const al = CH_CHORE_ALIAS[loc.id] || {}, m = id => (al[id] || id);
+  if(rule.first === '*') return m(rule.then) === r.after;
+  return m(rule.first) === r.before && (rule.then === '*' || m(rule.then) === r.after);
+}
+function chRuleLine(loc, rule){ const r = chContentRule(loc); return (r && chRuleMaps(loc, rule)) ? chUi(r.consequence) : rule.line; }
+// A2+: the mapped rule whose chores are in play at this level becomes a reading chip.
+function chHintRule(loc, lv){
+  const cs = chChoresFor(loc, lv), inPlan = id => id === '*' || cs.some(c=>c.id===id);
+  return loc.rules.find(r=>chRuleMaps(loc, r) && inPlan(r.first) && inPlan(r.then)) || null;
+}
+function chObjectText(loc, Lr){
+  const p = chPlace(loc), name = String(Lr.name||'');
+  if(p && p.objects){ const k = Object.keys(p.objects).find(k=>String(p.objects[k].en||'').toLowerCase() === name.toLowerCase()); if(k) return {text:chTg(p.objects[k]), gloss:chGloss(p.objects[k])}; }
+  return {text:name, gloss:''};
+}
+function chProgress(){ const pr = state.progress; if(!pr.chores || typeof pr.chores !== 'object') pr.chores = {}; return pr.chores; }
+// Places tidied at this level (progress.chores[placeId][level] = {smooth, of, date}; content place ids).
+function chLitAt(lv){ const pc = chProgress(), set = new Set(); CHORES_SCENES.locations.forEach(l=>{ const rec = pc[CH_PLACE[l.id]]; if(rec && rec[String(lv)]) set.add(l.id); }); return set; }
+function chNewRound(placeId){
+  const loc = chLoc(placeId), lv = chLevel(), cs = chChoresFor(loc, lv);
+  return {placeId, place:CH_PLACE[placeId], level:lv, levelCode:(state.profile && state.profile.level) || 'A1', total:cs.length, phase:'look',
+    picked:[], conn:{}, fired:[], bumped:{}, seen:{}, done:[], playIdx:-1, playing:false, hintOpen:false, glossOpen:false, connector:null,
+    say:null, smooth:null, plan:'', finished:false, startedAt:Date.now(), finishedAt:null};
+}
+function chConnector(round, i, n){ return round.conn[i] || chOrdinals(n)[i]; }
+function chPlanText(round){
+  const loc = chLoc(round.placeId), cs = chChoresFor(loc, round.level), n = cs.length;
+  return round.picked.map((id,i)=>{ const c = cs.find(x=>x.id===id); return chConnector(round, i, n) + ' ' + chLowerFirst(chChoreText(loc, c, round.level).imp); }).join(' ');
+}
+// The room scene with level gating and already-done chores applied: a chore outside this
+// level (or already done) starts with its mess hidden and its tidy state shown, so a room
+// never ends with mess the learner could not clear.
+function chSceneFor(round){
+  const loc = chLoc(round.placeId);
+  const out = loc.chores.filter(c=>c.lv > round.level || round.done.includes(c.id));
+  const hide = new Set(out.flatMap(c=>c.mess)), show = new Set(out.flatMap(c=>c.tidy));
+  return Object.assign({}, loc, {
+    layers: loc.layers.map(x => hide.has(x.id) ? Object.assign({}, x, {hidden:true, name:undefined}) : (show.has(x.id) ? Object.assign({}, x, {hidden:false}) : x)),
+    atmos: loc.atmos.map(a => a.id && show.has(a.id) ? Object.assign({}, a, {hidden:false}) : a)
+  });
+}
+function chMountRoom(){
+  const vp = state.viewParams, round = vp && vp.round, stage = document.getElementById('ch-stage');
+  if(!round || !stage || stage.childElementCount) return;
+  mountScene(stage, chSceneFor(round), chTapLayer);
+  const c = layer('char'); if(c) c.dataset.x = 46;
+}
+// Look phase: tap a mess object to hear and see its name (free vocabulary, unscored).
+function chTapLayer(Lr){
+  const vp = state.viewParams, round = vp && vp.round; if(!round || round.phase === 'play' || round.finished) return;
+  const n = layer(Lr.id); if(!n || n.classList.contains('ch-gone')) return;
+  const o = chObjectText(chLoc(round.placeId), Lr);
+  VERB.say(o.text + (o.gloss ? ' · ' + o.gloss : ''), 1600, Math.min(Lr.x, 60), Math.max(2, Lr.y - 10));
+  VERB.shake(Lr.id);
+  sfx('tick');
+  if(!sfxMuted) speakTarget(o.text);
+  if(!round.seen[Lr.name]){ round.seen[Lr.name] = true; save(); }
+  if(round.phase === 'look') chRefresh();
+}
+function chBuildingScene(){
+  const E = CHORES_SCENES.exterior, lv = chLevel(), lit = chLitAt(lv), all = lit.size >= CHORES_SCENES.locations.length;
+  return { shape:E.shape, atmos:E.atmos,
+    layers: E.layers.map(x => Object.assign({}, x, {hidden: x.litFor ? !lit.has(x.litFor) : !!x.hidden})),
+    hots: E.hots.map(h => { const loc = chLoc(h.id), isLit = lit.has(h.id);
+      return Object.assign({}, h, {label:chPlaceShort(loc), cap:chPlaceShort(loc) + (isLit ? ' ✓' : ''), lit:isLit, disabled:isLit && !all, action:'chores-enter', data:{place:h.id}}); })
+  };
+}
+function chMountBuilding(){ const stage = document.getElementById('ch-stage'); if(!stage || stage.childElementCount) return; mountScene(stage, chBuildingScene()); }
+function renderGameChoresBuilding(){
+  const vp = state.viewParams, lv = chLevel(), lit = chLitAt(lv), total = CHORES_SCENES.locations.length, all = lit.size >= total;
+  const just = vp.justLit ? chLoc(vp.justLit) : null;
+  queueFx(chMountBuilding);
+  const line = just ? (all ? chChrome('allLit') : chFmt(chChrome('lit'), {place:chPlaceShort(just)})) : chChrome('pickPlace');
+  return `<div class="fade-in game-screen ch-screen">
+    ${gameTopHtml(chChrome('title'))}
+    <div class="game-status">
+      <span class="game-status-text">${esc(chChrome('name'))} · ${esc(CHORES_SCENES.levels[String(lv)].code)}</span>
+      <span class="game-status-end"><span class="game-chip">${lit.size}/${total}</span></span>
+    </div>
+    <p class="game-hint">${esc(line)}</p>
+    <div class="ch-stage ch-ext" id="ch-stage" dir="ltr"></div>
+    ${just ? `<button class="btn btn-primary game-cta" data-action="back-to-roadmap">${L('Back to roadmap','Yol haritasına dön','بازگشت به نقشه راه','Volver a la hoja de ruta')}</button>` : ''}
+  </div>`;
+}
+function renderGameChoresRoom(){
+  const vp = state.viewParams, round = vp.round;
+  queueFx(chMountRoom);
+  return `<div class="fade-in game-screen ch-screen">
+    ${gameTopHtml(chChrome('title'))}
+    <div class="ch-stage ch-int" id="ch-stage" dir="ltr"></div>
+    <div id="ch-ui">${chUiHtml(round)}</div>
+  </div>`;
+}
+// The chrome under the stage is patched in place (never a full render while the character works).
+function chRefresh(){ const u = document.getElementById('ch-ui'), vp = state.viewParams; if(u && vp && vp.round) u.innerHTML = chUiHtml(vp.round); }
+function chUiHtml(round){
+  const loc = chLoc(round.placeId), lv = round.level, cs = chChoresFor(loc, lv), n = cs.length, ords = chOrdinals(n);
+  const T = c => chChoreText(loc, c, lv);
+  const playing = round.phase === 'play';
+  const status = `<div class="game-status"><span class="game-status-text">${esc(chPlaceName(loc))}</span>${(playing || round.phase === 'done') ? `<span class="game-status-end"><span class="game-chip">${ICONS.check} ${round.done.length}/${n}</span></span>` : ''}</div>`;
+  if(round.phase === 'look'){
+    const hidden = new Set(loc.chores.filter(c=>c.lv > lv).flatMap(c=>c.mess));
+    const names = loc.layers.filter(x=>x.name && !hidden.has(x.id));
+    return status + `<p class="game-hint">${esc(chChrome('look'))}</p>
+      <div class="ch-names" dir="ltr">${names.map(x=>{ const o = chObjectText(loc, x); return `<span class="${round.seen[x.name] ? 'ch-seen' : ''}">${esc(o.text)}${o.gloss ? `<small>${esc(o.gloss)}</small>` : ''}</span>`; }).join('')}</div>
+      <button class="btn btn-primary game-cta" data-action="chores-plan">${esc(chChrome('lookDone'))}</button>`;
+  }
+  if(round.finished) return status + chResultHtml(round, loc, cs);
+  const queue = `<div class="ch-queue" dir="ltr">${ords.map((w,i)=>{
+    const c = round.picked[i] ? cs.find(x=>x.id===round.picked[i]) : null;
+    const canPick = lv === 3 && !!c && i > 0 && i < n-1 && round.phase === 'plan';
+    const landed = !!c && round.done.includes(c.id);
+    return `<div class="ch-slot${c ? ' ch-filled' : ''}${playing && round.playIdx === i ? ' ch-active' : ''}${round.bumped[i] ? ' ch-bumped' : ''}${landed ? ' ch-landed' : ''}">
+      <button type="button" class="ch-word${canPick ? ' ch-pick' : ''}" data-action="chores-cycle" data-i="${i}" ${canPick ? '' : 'disabled'}>${esc(chConnector(round, i, n).replace(/,$/, ''))}</button>
+      <span class="ch-what">${c ? esc(T(c).chip) : '…'}</span>${landed ? `<span class="ch-after">${esc(T(c).done)}</span>` : ''}</div>`; }).join('')}</div>`;
+  const sentence = round.picked.length ? round.picked.map((id,i)=>{ const txt = chConnector(round, i, n) + ' ' + chLowerFirst(T(cs.find(x=>x.id===id)).imp); return (playing && round.playIdx === i) ? `<span class="ch-now">${esc(txt)}</span>` : esc(txt); }).join(' ') : '<span class="ch-faint">…</span>';
+  let h = status;
+  if(round.phase === 'plan') h += `<p class="game-hint">${esc(chChrome('plan'))}</p>`;
+  else if(playing) h += `<p class="game-hint">${L('Watch…','İzle…','تماشا کن…','Mira…')}</p>`;
+  h += queue + `<div class="game-card tight ch-say" dir="ltr">${sentence}</div>`;
+  if(round.phase === 'plan'){
+    h += `<div class="ch-chips" dir="ltr">${cs.map(c=>{ const t = T(c), on = round.picked.includes(c.id);
+      return `<button type="button" class="ch-chip${on ? ' ch-picked' : ''}" data-action="chores-pick" data-id="${c.id}">${on ? '✓ ' : ''}${esc(t.chip)}${(lv === 1 || round.glossOpen) && t.gloss ? `<small>${esc(t.gloss)}</small>` : ''}</button>`; }).join('')}</div>`;
+    // A2+: chip meanings behind a tap; the soft rule as a before/after reading chip
+    const hintRule = lv >= 2 ? chHintRule(loc, lv) : null, r = chContentRule(loc), anyGloss = cs.some(c=>T(c).gloss);
+    if(lv >= 2 && (anyGloss || hintRule)){
+      h += `<div class="ch-tools">${anyGloss ? `<button type="button" class="game-chip${round.glossOpen ? ' ch-on' : ''}" data-action="chores-gloss">${L('Meanings','Anlamlar','معنی‌ها','Significados')}</button>` : ''}${hintRule ? `<button type="button" class="game-chip ch-hint${round.hintOpen ? ' ch-on' : ''}" data-action="chores-hint">${round.hintOpen ? esc(chTg(r.hint)) : L('Tip','İpucu','راهنما','Pista')}</button>` : ''}</div>`;
+      if(round.hintOpen && hintRule && chGloss(r.hint)) h += `<p class="game-hint ch-hint-gloss">${esc(chGloss(r.hint))}</p>`;
+    }
+    // B1+: the learner's own connector (before / after / as soon as / once) — a model line, never scored
+    if(lv === 3 && round.picked.length === n) h += chConnectorHtml(round, loc, cs);
+    h += `<button class="btn btn-primary game-cta" data-action="chores-go" ${round.picked.length < n ? 'disabled' : ''}>${esc(chChrome('go'))}</button>`;
+  }
+  return h;
+}
+function chConnectorHtml(round, loc, cs){
+  const conns = CHORES_CONTENT.connectors || {}, rank = {A1:1, A2:2, B1:3, B2:4, C1:5}, mine = rank[round.levelCode] || 3;
+  const keys = Object.keys(conns).filter(k=>conns[k] && conns[k].word && (rank[conns[k].minLevel] || 3) <= mine);
+  if(!keys.length || round.picked.length < 2) return '';
+  const X = chChoreText(loc, cs.find(c=>c.id===round.picked[0]), round.level), Y = chChoreText(loc, cs.find(c=>c.id===round.picked[1]), round.level);
+  const line = round.connector && conns[round.connector] ? chFrame(conns[round.connector].frame, X, Y) : '';
+  return `<p class="game-hint">${esc(chChrome('planFree'))}</p>
+    <div class="ch-chips ch-conns" dir="ltr">${keys.map(k=>`<button type="button" class="ch-chip${round.connector === k ? ' ch-picked' : ''}" data-action="chores-connector" data-k="${k}">${esc(chTg(conns[k].word))}${chGloss(conns[k].word) ? `<small>${esc(chGloss(conns[k].word))}</small>` : ''}</button>`).join('')}</div>
+    ${line ? `<div class="game-card tight ch-frame" dir="ltr"><span>${esc(line)}</span><button type="button" class="game-chip" data-action="speak-sentence" data-text="${esc(line)}" aria-label="${esc(L('Hear it','Dinle','بشنو','Escúchalo'))}">${ICONS.soundOn}</button></div>` : ''}`;
+}
+// Fills a connector frame: X = the chore done first, Y = the next one.
+function chFrame(frame, X, Y){
+  const strip = s => String(s||'').replace(/[.]$/, ''), base = t => chLowerFirst(strip(t.chip));
+  let out = String(frame||'');
+  out = out.replace(/\{X\.ing\}/g, X.ing).replace(/\{Y\.ing\}/g, Y.ing).replace(/\{X\.inf\}/g, X.inf).replace(/\{Y\.inf\}/g, Y.inf)
+    .replace(/\{X\.subj\}/g, X.subj).replace(/\{Y\.subj\}/g, Y.subj).replace(/\{X\.base\}/g, base(X)).replace(/\{Y\.base\}/g, base(Y));
+  out = out.replace(/\{X\}/g, (m, off)=> off === 0 ? strip(X.chip) : base(X)).replace(/\{Y\}/g, (m, off)=> off === 0 ? strip(Y.chip) : base(Y));
+  return out;
+}
+function chResultHtml(round, loc, cs){
+  const p = chPlace(loc), perfect = round.smooth === round.total;
+  const sticker = perfect ? chChrome('stickerPerfect') : chFmt(chChrome('sticker'), {n:round.smooth, total:round.total});
+  return `<div class="game-card tight badge-unlock-shine">
+      <div class="game-result-title">${esc(perfect ? chChrome('smooth') : L('All done!','Hepsi tamam!','همه انجام شد!','¡Todo hecho!'))}</div>
+      <p class="game-result-line">${esc(sticker)}</p>
+      ${p && p.end ? `<p class="ch-end">${esc(chUi(p.end))}</p>` : ''}
+      <div class="ch-keep" dir="ltr"><div class="ch-keep-t">${esc(chChrome('souvenirBack'))}</div><div class="ch-keep-s">“${esc(round.plan)}”</div>
+        <button type="button" class="game-chip" data-action="speak-sentence" data-text="${esc(round.plan)}">${ICONS.soundOn} ${L('Hear it','Dinle','بشنو','Escúchalo')}</button></div>
+      <button class="btn btn-primary game-cta" data-action="chores-building">${esc(chChrome('back'))}</button>
+    </div>${renderBadgeUnlockCard(pullJustEarnedBadges())}`;
+}
+function chMatch(pat, id){ return pat === '*' || pat === id; }
+// Rule semantics (scenes.json): 'late' fires after `first` completes if a `then` chore already
+// ran; 'early' fires after a `then` chore completes while `first` is still undone. Once each.
+function chCheckRules(loc, round, k, cs){
+  const inPlan = id => cs.some(c=>c.id===id), hits = [], id = round.picked[k], done = round.done;
+  for(const r of loc.rules){
+    if(round.fired.includes(r.id)) continue;
+    if(r.when === 'early'){
+      if(!inPlan(r.first) || r.first === id) continue;
+      if(chMatch(r.then, id) && !done.includes(r.first)) hits.push(r);
+    } else {
+      if(!chMatch(r.first, id)) continue;
+      if(r.then !== '*' && !inPlan(r.then)) continue;
+      if(done.some(d => d !== id && chMatch(r.then, d))) hits.push(r);
+    }
+  }
+  return hits;
+}
+async function chPlay(vp){
+  const round = vp.round, loc = chLoc(round.placeId), cs = chChoresFor(loc, round.level), n = cs.length;
+  const alive = () => state.viewParams === vp && !!document.getElementById('ch-stage');
+  round.playing = true; round.phase = 'play'; chRefresh();
+  for(let i=0;i<round.picked.length;i++){
+    if(!alive()) return;
+    round.playIdx = i; chRefresh();
+    const c = cs.find(x=>x.id===round.picked[i]), t = chChoreText(loc, c, round.level);
+    if(!sfxMuted) speakTarget(t.narr);
+    await runSteps(c.steps, {narr:t.narr});
+    round.done.push(c.id);
+    sfx('correct');
+    for(const r of chCheckRules(loc, round, i, cs)){
+      round.fired.push(r.id); round.bumped[i] = true; chRefresh();
+      sfx('tick');
+      await VERB.wait(200);
+      if(!alive()) return;
+      await runSteps(r.fx, {line:chRuleLine(loc, r)});
+    }
+    chRefresh();
+    await VERB.wait(160);
+  }
+  if(!alive()) return;
+  round.playIdx = -1; round.playing = false; round.phase = 'done';
+  round.smooth = n - round.fired.length; round.plan = chPlanText(round);
+  chRefresh();
+  await runSteps(loc.finale, {});
+  if(!alive()) return;
+  sfx(round.smooth === n ? 'combo' : 'reveal');
+  companionSay(round.smooth === n ? chChrome('smooth') : chFmt(chChrome('sticker'), {n:round.smooth, total:n}), 2200);
+  companionCheer();
+  chRecord(vp, round);
+  chAfterWatch(vp, round);
+}
+function chRecord(vp, round){
+  const pc = chProgress(), rec = pc[round.place] || (pc[round.place] = {}), prev = rec[String(round.level)];
+  if(!prev || round.smooth >= prev.smooth) rec[String(round.level)] = {smooth:round.smooth, of:round.total, date:todayISO()};
+  scoreGameCompletion(vp.refId, round.smooth === round.total);   // before markGameComplete (first-completion check)
+  markGameComplete(vp.refId);
+}
+function chAfterWatch(vp, round){
+  round.finished = true; round.finishedAt = Date.now();
+  save(); render();
+}
 function renderGameMatch(){
   const vp = state.viewParams;
   const round = vp.round;
@@ -13990,6 +14347,8 @@ const screens = {
   'game-bingo': renderGameBingo,
   'game-hunt': renderGameHunt,
   'game-echo': renderGameEcho,
+  'game-chores-building': renderGameChoresBuilding,
+  'game-chores-room': renderGameChoresRoom,
   'souvenir-shuffle': renderShuffle,
   'coming-soon': renderNotFound,
   'not-found': renderNotFound,
@@ -15317,6 +15676,40 @@ const HANDLERS = {
       echoFinish(round, vp);
     }
     save(); render();
+  },
+  // ---- Cozy Chores ----
+  'chores-enter'(el){
+    const id = el.dataset.place, vp = state.viewParams || {}; if(!chLoc(id)) return;
+    const lit = chLitAt(chLevel());
+    if(lit.has(id) && lit.size < CHORES_SCENES.locations.length) return;   // tidied at this level: pick a dark window
+    sfx('hop');
+    go('game-chores-room', {refId:vp.refId, goal:vp.goal, round:chNewRound(id)});
+  },
+  'chores-plan'(){ const vp = state.viewParams, round = vp && vp.round; if(!round || round.phase !== 'look') return; round.phase = 'plan'; save(); chRefresh(); },
+  'chores-pick'(el){
+    const vp = state.viewParams, round = vp && vp.round; if(!round || round.phase !== 'plan') return;
+    const id = el.dataset.id, i = round.picked.indexOf(id);
+    if(i >= 0){ round.picked.splice(i, 1); round.connector = null; } else if(round.picked.length < round.total) round.picked.push(id); else return;
+    sfx('hop'); save(); chRefresh();
+  },
+  'chores-cycle'(el){
+    const vp = state.viewParams, round = vp && vp.round; if(!round || round.phase !== 'plan' || round.level !== 3) return;
+    const i = Number(el.dataset.i), ch = chB1Choices(), cur = chConnector(round, i, round.total);
+    round.conn[i] = ch[(ch.indexOf(cur) + 1) % ch.length]; sfx('flip'); save(); chRefresh();
+  },
+  'chores-gloss'(){ const vp = state.viewParams, round = vp && vp.round; if(!round) return; round.glossOpen = !round.glossOpen; chRefresh(); },
+  'chores-hint'(){ const vp = state.viewParams, round = vp && vp.round; if(!round) return; round.hintOpen = !round.hintOpen; sfx('flip'); chRefresh(); },
+  'chores-connector'(el){ const vp = state.viewParams, round = vp && vp.round; if(!round || round.phase !== 'plan') return; const k = el.dataset.k; round.connector = round.connector === k ? null : k; sfx('flip'); chRefresh(); },
+  'chores-go'(){
+    const vp = state.viewParams, round = vp && vp.round;
+    if(!round || round.phase !== 'plan' || round.picked.length < round.total) return;
+    gcBubble = null; save();
+    chPlayP = chPlay(vp);
+  },
+  'chores-building'(){
+    const vp = state.viewParams || {}, round = vp.round;
+    go('game-chores-building', {refId:vp.refId, goal:vp.goal, justLit:round ? round.placeId : null});
+    navHistory.length = 0;   // the finished room isn't reachable with Back
   },
   'echo-meaning'(){
     const vp = state.viewParams, round = vp && vp.round;

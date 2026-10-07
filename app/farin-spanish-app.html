@@ -826,7 +826,7 @@
   .rm2-track{display:flex; flex-direction:column;}
   /* Gamification v2 (Journey Journal §2/§7): companion on the roadmap + header count. */
   @property --rm2-fill{syntax:'<percentage>'; inherits:false; initial-value:0%;}
-  .rm2-companion{position:absolute; top:-49px; inset-inline-start:calc(50% + 40px); padding:0; margin:0; border:none; background:none; cursor:pointer; z-index:6; filter:drop-shadow(0 8px 12px rgba(0,0,0,.25));}
+  .rm2-companion{position:absolute; top:-58px; inset-inline-start:calc(50% + 40px); padding:0; margin:0; border:none; background:none; cursor:pointer; z-index:6; filter:drop-shadow(0 8px 12px rgba(0,0,0,.25));}
   .rm2-companion img{display:block; object-fit:contain;}
   .rm2-companion.rm2-companion-end{position:relative; top:auto; inset-inline-start:auto;}
   /* Gamification v3 build 2 (M5 step 1): the companion carries the journal cover and its level pins */
@@ -896,8 +896,8 @@
   .rm2-cap{display:flex; flex-direction:column; align-items:center; text-align:center; padding:4px 0 34px;}
   .rm2-cap-end{padding:34px 0 4px;}
   .rm2-cap-label{font-size:9.5px; font-weight:800; color:var(--ink-faint); text-transform:uppercase; letter-spacing:.05em; margin-top:6px;}
-  .rm2-seam{height:18px; display:flex; align-items:center; justify-content:center; position:relative; z-index:5;}
-  .rm2-seam-ic{position:relative; top:0;}
+  .rm2-seam{height:0; display:flex; justify-content:center; position:relative; z-index:5;}
+  .rm2-seam-ic{position:relative; top:-30px;}
   .rm2-node{position:relative; z-index:1; overflow:hidden; display:block; width:100%; text-align:start; color:inherit; font-family:inherit;}
   .rm2-node-current{animation:rm2-node-pulse 2.6s ease-in-out infinite;}
   @keyframes rm2-node-pulse{0%,100%{transform:scale(1);} 50%{transform:scale(1.012);}}
@@ -10501,7 +10501,7 @@ function renderRoadmapCard(p){
     // Gamification v2 (2026-09-30): the v1 "⚡ GAME" corner pill and the streak
     // mirror chip on the current card are gone (card faces carry no gamification
     // labels). A game's identity is its GAME subtitle; the streak stays in the top bar.
-    return `<div class="${cls}" style="border-radius:30px; padding:40px 24px 42px; min-height:132px; background:${bg}; border:none; box-shadow:${shadow}; color:#fff;">
+    return `<div class="${cls}" style="border-radius:32px; padding:54px 26px 56px; min-height:168px; background:${bg}; border:none; box-shadow:${shadow}; color:#fff;">
       ${sparkles}
       ${cardIcon}
       ${studyOpenTag}
@@ -10540,7 +10540,7 @@ function renderRoadmapCard(p){
         </div>
         <div class="progress-track" style="margin-top:10px;"><div class="progress-fill" style="width:${(doneCount/roadmap.length)*100}%; background:${archColor};"></div></div>
       </div>
-      <div class="card-flat" style="position:relative; overflow:visible; padding:18px 14px;">
+      <div class="card-flat" style="position:relative; overflow:visible; padding:18px 8px;">
         ${stackedRoadmap(roadmap.length, pinFn, cardFn, L(arch.name.en,arch.name.tr,arch.name.fa, arch.name.es), startMedia, allDone ? L("You've made it!",'Başardın!','موفق شدی!', '¡Lo lograste!') : nextDisplayLevel(p), endMedia)}
       </div>
       ${allDone ? `
@@ -17213,7 +17213,7 @@ function coursesDashTile(){
   const c = live.sort((a,b)=>(courseProg(b.id).lastAt||0) - (courseProg(a.id).lastAt||0))[0] || null;
   const nx = c ? courseNext(c.id) : null;
   const sub = c ? (nx ? courseNextText(c.id, nx, true) : cl(c.title)+' · '+CL('Course complete','Kurs tamamlandı','دوره تمام شد','Curso completado'))
-    : (LOGIN_APP==='es' ? CL('Travel Spanish, DELE','Seyahat İspanyolcası, DELE','اسپانیایی برای سفر، آزمون DELE','Español para viajar, DELE') : CL('HR & Business English, Travel, IELTS','İK ve İş İngilizcesi, Seyahat, IELTS','انگلیسی منابع انسانی و کسب‌وکار، سفر، آیلتس','HR & Business English, Travel, IELTS'));
+    : '';
   const act = c ? `data-action="course-open" data-view="course-detail" data-cid="${c.id}"` : `data-action="nav" data-view="courses-home"`;
   return `<button class="hero-card" ${act} style="${COURSE_HERO_BG} margin-top:12px; padding:16px 18px;">
     ${claySparkles()}
@@ -17221,8 +17221,8 @@ function coursesDashTile(){
       <div class="row" style="gap:12px; align-items:center; min-width:0;">
         <span class="item-ic" style="background:rgba(255,255,255,.26); color:#fff; flex:0 0 auto;">${LOGIN_APP==='es' ? ICONS.suitcase : ICONS.users}</span>
         <div style="min-width:0;">
-          <div class="display" style="font-size:19px; color:#fff;">${c ? esc(cl(c.title)) : CL('Courses','Kurslar','دوره‌ها','Cursos')}</div>
-          <div style="font-size:12.5px; font-weight:700; color:rgba(255,255,255,.92); line-height:1.35;">${esc(sub)}</div>
+          <div class="display" style="font-size:19px; color:#fff;">${c ? esc(cl(c.title)) : CL('Premium courses','Premium kurslar','دوره‌های ویژه','Cursos premium')}</div>
+          ${sub ? `<div style="font-size:12.5px; font-weight:700; color:rgba(255,255,255,.92); line-height:1.35;">${esc(sub)}</div>` : ''}
         </div>
       </div>
       <span style="color:#fff;">${ICONS.chev}</span>

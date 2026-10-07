@@ -285,6 +285,10 @@
   /* Sort the deck: ghost stack behind the flashcard */
   .deck-wrap{position:relative;}
   .deck-ghost{position:absolute; inset:0; border-radius:20px; border:1px solid var(--border-soft); box-shadow:var(--clay-shadow-soft); pointer-events:none;}
+  /* Fill it: live pills, the learner's text in the result */
+  .fill-pill.lit{background:var(--success-soft) !important; color:var(--success) !important;}
+  .fill-text{margin:8px 0 0; font-size:15px; line-height:1.65; color:var(--ink); white-space:pre-wrap; overflow-wrap:anywhere;}
+  .fill-structure{text-decoration:underline; text-decoration-color:var(--cat-gram); text-decoration-thickness:2px; text-underline-offset:3px;}
   /* Gamification v3 build 2: Story Hunt */
   .hunt-card{text-align:start;}
   .hunt-text{font-size:16px; line-height:1.75; color:var(--ink);}
@@ -8239,7 +8243,17 @@ function souvenirContent(node, ctx){
       if(ans && ans.text) out.keep = {text:ans.text, say:ans.text, note:ans.q || ''};
     }
   } else if(t === 'writing' || t === 'speaking'){
-    const words = String(ctx.words || (state.progress.lastWords && state.progress.lastWords[t]) || '').trim();
+    let words = String(ctx.words || (state.progress.lastWords && state.progress.lastWords[t]) || '').trim();
+    // Fill it (tobT7nwI): the sentence with the most target words leads the card.
+    const hitWords = (state.progress.lastWordsHit && state.progress.lastWordsHit[t]) || [];
+    if(words && hitWords.length){
+      const sents = (words.match(/[^.!?]+[.!?]*/g) || []).map(x=>x.trim()).filter(Boolean);
+      const hits = x=>hitWords.reduce((n,w)=>{ const lw = w.toLowerCase(), st = stemWord(lw.split(' ')[0]);
+        return n + (new RegExp('\\b' + reEsc(lw).replace(/\s+/g,'\\s+'), 'i').test(x) ? 2 : (st.length >= 3 && new RegExp('\\b' + reEsc(st), 'i').test(x) ? 1 : 0)); }, 0);
+      let best = '', bs = 0;
+      sents.forEach(x=>{ const n = hits(x); if(n > bs){ bs = n; best = x; } });
+      if(best) words = best;
+    }
     if(words){ out.text = words.length > 80 ? words.slice(0,80).replace(/\s+\S*$/,'')+'…' : words; out.label = 'words'; }
   } else if(t === 'game'){
     const kind = ctx.kind || node.gameKind || 'match';
@@ -11239,6 +11253,103 @@ function renderStudioSetup(){
   </div>`;
 }
 
+/* "Fill it" (tobT7nwI; spec §4.5 + LXD §B) - writing rounds. A debounced input listener
+   lights each target word's pill the moment it appears (matched by checkPracticeAnswer's
+   own rule, so a lit pill is always a counted word); the endowed progress bar starts at
+   15% ("Getting started" until the first word, then "n of minWords words"), caps at 100%
+   and is never red; the result leads with the learner's own text ("Your words", target
+   words marked, the structure underlined when grammarUsedInContext found it) and the
+   /100 pill is demoted under it at half size. Not timed. checkPracticeAnswer's scoring
+   and its errorWatch lines are untouched. Speaking rounds keep the old result card. */
+const FILL_ENDOWED = 15;
+let fillTimer = null;
+function fillWordCount(text){ const c = String(text||'').trim(); return c ? c.split(/\s+/).filter(Boolean).length : 0; }
+function fillBarPct(wc, minWords){ return minWords ? Math.min(100, FILL_ENDOWED + Math.round((100 - FILL_ENDOWED) * Math.min(wc / minWords, 1))) : 100; }
+function fillBarLabel(wc, minWords){
+  return wc ? L(`${wc} of ${minWords} words`, `${minWords} kelimeden ${wc}`, `${wc} از ${minWords} کلمه`, `${wc} de ${minWords} palabras`) : L('Getting started','Başlıyoruz','شروع شد','Empezando');
+}
+function fillBarHtml(round, text){
+  const wc = fillWordCount(text), pct = fillBarPct(wc, round.minWords);
+  return `<div class="fill-bar" style="margin-top:12px;">
+    <div id="fill-label" style="font-size:12px; font-weight:700; color:var(--ink-soft); margin-bottom:6px;">${fillBarLabel(wc, round.minWords)}</div>
+    <div class="progress-track"><div class="progress-fill" id="fill-fill" style="width:${pct}%;${pct >= 100 ? ' background:var(--success);' : ''}"></div></div>
+  </div>`;
+}
+function fillAllHit(result, round){ return round.words.length > 0 && result.wordsHit.length === round.words.length; }
+function fillBind(){
+  const ta = document.getElementById('studio-answer-input');
+  if(!ta || ta.dataset.fillBound) return;
+  ta.dataset.fillBound = '1';
+  ta.addEventListener('input', ()=>{ clearTimeout(fillTimer); fillTimer = setTimeout(fillUpdate, 160); });
+}
+function fillUpdate(){
+  const vp = state.viewParams;
+  if(state.view !== 'studio-round' || !vp || vp.mode !== 'writing' || !vp.round) return;
+  const ta = document.getElementById('studio-answer-input');
+  if(!ta) return;
+  const round = vp.round, text = ta.value;
+  const result = checkPracticeAnswer(round, text);
+  let newly = 0;
+  round.words.forEach((w,k)=>{
+    const pill = document.getElementById('fill-pill-'+k);
+    if(!pill) return;
+    const on = result.wordsHit.includes(w.word), was = pill.classList.contains('lit');
+    if(on && !was){ newly++; pill.classList.add('lit'); anim(pill, [{transform:'scale(1)'}, {transform:'scale(1.18)'}, {transform:'scale(1)'}], {duration:260, easing:SPRING}); }
+    else if(!on && was) pill.classList.remove('lit');
+  });
+  if(newly) sfx('hop');
+  const wc = fillWordCount(text), pct = fillBarPct(wc, round.minWords);
+  const fill = document.getElementById('fill-fill'); if(fill){ fill.style.width = pct+'%'; fill.style.background = pct >= 100 ? 'var(--success)' : ''; }
+  const lab = document.getElementById('fill-label'); if(lab) lab.textContent = fillBarLabel(wc, round.minWords);
+  const btn = document.getElementById('studio-check-btn'); if(btn) btn.classList.toggle('badge-unlock-shine', fillAllHit(result, round));
+}
+// The learner's text with the target words marked (same matching as checkPracticeAnswer)
+// and the structure's marker word underlined when it was found in a full sentence.
+function fillMarkedTextHtml(result, round, text){
+  const rx = s=>s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const alts = [];
+  result.wordsHit.forEach(w=>{
+    const lw = w.toLowerCase(), first = lw.split(' ')[0];
+    alts.push(rx(lw).replace(/\s+/g, '\\s+'));
+    const st = stemWord(first); if(st.length >= 2) alts.push(rx(st));
+    const vs = /^(.{2,}?)(ar|er|ir)$/.exec(first); if(vs && TTS_LANG.indexOf('es') === 0) alts.push(rx(vs[1]));
+  });
+  const marker = result.grammarSpotted && round.grammar && round.grammar.markerWord ? rx(round.grammar.markerWord.toLowerCase()) : '';
+  if(!alts.length && !marker) return esc(text);
+  const re = new RegExp('\\b(?:(' + (alts.join('|') || '(?!x)x') + ')\\p{L}*|(' + (marker || '(?!x)x') + ')\\b)', 'giu');
+  return esc(text).replace(re, (m0, w)=> w ? `<span class="vocab-hl">${m0}</span>` : `<u class="fill-structure">${m0}</u>`);
+}
+function studioResultHtml(result, round, mode, text){
+  const band = result.score>=80 ? 'good' : result.score>=60 ? 'ok' : 'low';
+  const bandColor = band==='good' ? 'var(--success)' : band==='ok' ? 'var(--cat-gram)' : 'var(--error)';
+  const bandSoft = band==='good' ? 'var(--success-soft)' : band==='ok' ? 'var(--cat-gram-soft)' : 'var(--error-soft)';
+  const headline = band==='good' ? L('Excellent!','Mükemmel!','عالی!','¡Excelente!') : band==='ok' ? L('Nice work!','Güzel iş!','کار خوب!','¡Buen trabajo!') : L('Keep practicing','Pratik yapmaya devam','به تمرین ادامه بده','Sigue practicando');
+  const lines = practiceFeedback(result, round).map(line=>`<div class="row" style="gap:8px; align-items:flex-start;">
+            <span style="flex:0 0 auto; margin-top:2px; color:${line.ok?'var(--success)':'var(--error)'};">${line.ok ? ICONS.check : '×'}</span>
+            <span style="font-size:13.5px; line-height:1.5;">${esc(line.text)}</span>
+          </div>`).join('');
+  const pills = round.words.map(w=>`<span class="pill" style="margin:2px 4px 2px 0; background:${result.wordsHit.includes(w.word)?'var(--success-soft)':'var(--error-soft)'}; color:${result.wordsHit.includes(w.word)?'var(--success)':'var(--error)'};">${esc(w.word)}</span>`).join('');
+  if(mode !== 'writing') return `<div class="card-flat" style="margin-top:14px;">
+        <div class="row between" style="align-items:center;">
+          <div class="eyebrow" style="color:${bandColor};">${headline}</div>
+          <span class="pill" style="background:${bandSoft}; color:${bandColor}; font-size:14px; padding:6px 14px;">${result.score}/100</span>
+        </div>
+        <div class="stack" style="gap:9px; margin-top:12px;">${lines}</div>
+        <div style="margin-top:10px;">${pills}</div>
+      </div>`;
+  // Fill it: the learner's own words lead; the score is demoted under them.
+  return `<div class="card-flat fill-result" style="margin-top:14px;">
+        <div class="eyebrow" style="color:var(--cat-voc);">${L('Your words','Senin sözlerin','حرف‌های تو','Tus palabras')}</div>
+        <p class="fill-text" dir="ltr">${fillMarkedTextHtml(result, round, text)}</p>
+        ${fillAllHit(result, round) ? `<div class="game-why" style="margin-top:12px;"><img src="char-${learnerCharKey()}.png" alt=""><span>${L('All of them. Nice.','Hepsi. Güzel.','همه‌شان. عالی.','Todas. Muy bien.')}</span></div>` : ''}
+        <div class="row between" style="align-items:center; margin-top:12px;">
+          <div class="eyebrow" style="color:${bandColor};">${headline}</div>
+          <span class="pill" style="background:${bandSoft}; color:${bandColor}; font-size:11px; padding:3px 8px;">${result.score}/100</span>
+        </div>
+        <div class="stack" style="gap:9px; margin-top:10px;">${lines}</div>
+        <div style="margin-top:10px;">${pills}</div>
+      </div>`;
+}
 function renderStudioRound(){
   const vp = state.viewParams;
   const round = vp.round;
@@ -11247,7 +11358,8 @@ function renderStudioRound(){
   const speechOk = studioSpeechSupported();
   const listening = !!studioRecognition;
   const dl = STUDIO_DIFFICULTY_LABEL[round.difficulty];
-  const wordPills = round.words.map(w=>`<span class="pill vocab-hl" data-action="show-word-meaning" data-word="${esc(w.word)}" data-meaning="${esc(w.meaning)}" style="background:var(--cat-voc-soft); color:var(--cat-voc); margin:3px 4px 3px 0;">${esc(w.word)}</span>`).join('');
+  if(mode==='writing') queueFx(fillBind);   // Fill it (tobT7nwI): live pills + endowed bar
+  const wordPills = round.words.map((w,k)=>`<span class="pill vocab-hl fill-pill${result && result.wordsHit.includes(w.word) ? ' lit' : ''}" id="fill-pill-${k}" data-action="show-word-meaning" data-word="${esc(w.word)}" data-meaning="${esc(w.meaning)}" style="background:var(--cat-voc-soft); color:var(--cat-voc); margin:3px 4px 3px 0;">${esc(w.word)}</span>`).join('');
   return `<div class="fade-in">
     ${sectionHead(
       mode==='writing' ? L('Writing Practice','Yazma Pratiği','تمرین نوشتن', 'Práctica de escritura') : L('Speaking Practice','Konuşma Pratiği','تمرین صحبت‌کردن', 'Práctica de conversación'),
@@ -11264,6 +11376,7 @@ function renderStudioRound(){
         ${round.grammar ? `<div style="margin-top:12px; font-size:13px; color:var(--ink-soft);"><b>${L('Try this grammar:','Bu yapıyı dene:','این ساختار را امتحان کن:', 'Prueba esta gramática:')}</b> ${esc(round.grammar.title)}</div>` : ''}
         ${round.slang ? `<div style="margin-top:6px; font-size:13px; color:var(--ink-soft);"><b>${L('Bonus slang:','Bonus argo:','اصطلاح اضافه:', 'Argot extra:')}</b> ${esc(round.slang.word)} — ${esc(round.slang.meaning)}</div>` : ''}
         <div style="margin-top:10px; font-size:12px; color:var(--ink-soft);">${L(`Aim for at least ${round.minWords} words.`,`En az ${round.minWords} kelime hedefle.`,`حداقل ${round.minWords} کلمه هدف بگیر.`, `Apunta a escribir al menos ${round.minWords} palabras.`)}</div>
+        ${mode==='writing' ? fillBarHtml(round, vp.transcript || '') : ''}
       </div>
 
       ${mode==='speaking' ? (speechOk
@@ -11273,29 +11386,9 @@ function renderStudioRound(){
 
       <textarea id="studio-answer-input" rows="5" placeholder="${esc(L('Type your answer here...','Cevabını buraya yaz...','پاسخت را اینجا بنویس...', 'Escribe tu respuesta aquí...'))}" style="width:100%; box-sizing:border-box; margin-top:14px; padding:14px; border-radius:16px; border:1.5px solid var(--border); font-size:15px; font-family:inherit; background:var(--bg-elevated); color:var(--ink); resize:vertical;">${esc(vp.transcript||'')}</textarea>
 
-      <button class="btn btn-primary" style="margin-top:12px;" data-action="studio-check-answer">${L('Check my answer','Cevabımı kontrol et','پاسخم را بررسی کن', 'Revisar mi respuesta')}</button>
+      <button class="btn btn-primary${mode==='writing' && result && fillAllHit(result, round) ? ' badge-unlock-shine' : ''}" id="studio-check-btn" style="margin-top:12px;" data-action="studio-check-answer">${L('Check my answer','Cevabımı kontrol et','پاسخم را بررسی کن', 'Revisar mi respuesta')}</button>
 
-      ${result ? (()=>{
-        const band = result.score>=80 ? 'good' : result.score>=60 ? 'ok' : 'low';
-        const bandColor = band==='good' ? 'var(--success)' : band==='ok' ? 'var(--cat-gram)' : 'var(--error)';
-        const bandSoft = band==='good' ? 'var(--success-soft)' : band==='ok' ? 'var(--cat-gram-soft)' : 'var(--error-soft)';
-        const headline = band==='good' ? L('Excellent!','Mükemmel!','عالی!', '¡Excelente!') : band==='ok' ? L('Nice work!','Güzel iş!','کار خوب!', '¡Buen trabajo!') : L('Keep practicing','Pratik yapmaya devam','به تمرین ادامه بده', 'Sigue practicando');
-        return `<div class="card-flat" style="margin-top:14px;">
-        <div class="row between" style="align-items:center;">
-          <div class="eyebrow" style="color:${bandColor};">${headline}</div>
-          <span class="pill" style="background:${bandSoft}; color:${bandColor}; font-size:14px; padding:6px 14px;">${result.score}/100</span>
-        </div>
-        <div class="stack" style="gap:9px; margin-top:12px;">
-          ${practiceFeedback(result, round).map(line=>`<div class="row" style="gap:8px; align-items:flex-start;">
-            <span style="flex:0 0 auto; margin-top:2px; color:${line.ok?'var(--success)':'var(--error)'};">${line.ok ? ICONS.check : '×'}</span>
-            <span style="font-size:13.5px; line-height:1.5;">${esc(line.text)}</span>
-          </div>`).join('')}
-        </div>
-        <div style="margin-top:10px;">
-          ${round.words.map(w=>`<span class="pill" style="margin:2px 4px 2px 0; background:${result.wordsHit.includes(w.word)?'var(--success-soft)':'var(--error-soft)'}; color:${result.wordsHit.includes(w.word)?'var(--success)':'var(--error)'};">${esc(w.word)}</span>`).join('')}
-        </div>
-      </div>`;
-      })() : ''}
+      ${result ? studioResultHtml(result, round, mode, vp.transcript || '') : ''}
       ${(result && result.passed) ? renderBadgeUnlockCard(pullJustEarnedBadges()) : ''}
 
       <div class="row" style="gap:8px; margin-top:16px;">
@@ -14744,6 +14837,9 @@ const HANDLERS = {
       state.progress[key] = (state.progress[key]||0) + 1;
       if(!state.progress.lastWords) state.progress.lastWords = {};
       state.progress.lastWords[vp.mode] = String(text||'').slice(0, 300);
+      // Fill it (tobT7nwI): which target words landed, so the souvenir can lead with the best sentence.
+      if(!state.progress.lastWordsHit) state.progress.lastWordsHit = {};
+      state.progress.lastWordsHit[vp.mode] = result.wordsHit.slice();
       // Gamification v3 build 2 (M6): a passed writing round answers the pending journal reflection.
       const rf = studioReflection(vp);
       if(rf){ storyChoices()[rf.levelBase + ':reflected'] = todayISO(); storyChoices()[rf.levelBase + ':reflection'] = String(text||'').slice(0, 400); }

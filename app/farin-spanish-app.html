@@ -438,6 +438,9 @@
   .prove-done b{color:var(--cat-gram); margin-inline-end:4px;}
   .sv-emblem{position:absolute; top:12px; right:12px; z-index:2; background:#fff; color:var(--cat-gram); font-size:10px; font-weight:900; letter-spacing:.03em; padding:3px 8px; border-radius:999px; white-space:nowrap; box-shadow:0 3px 8px -3px rgba(0,0,0,.3);}
   .sv-gold .sv-emblem{top:36px;}
+  .say-scene{margin:0 0 10px; font-size:14px; font-weight:700; color:var(--ink-soft); line-height:1.45;}
+  .say-opts{flex-direction:row;}
+  .say-opts .game-opt{flex:1;}
   .sv-shine{position:absolute; left:14px; bottom:14px; z-index:2; font-size:17px; line-height:1; letter-spacing:2px; color:#fff; text-shadow:0 0 8px rgba(255,255,255,.95), 0 0 2px rgba(255,255,255,.9);}
   .sv-kept{position:absolute; left:0; bottom:0; width:96px; height:96px; z-index:1; clip-path:polygon(0 0, 0 100%, 100% 100%); background:linear-gradient(135deg, #ffd6f5, #c9f7ff 35%, #fff6c2 62%, #d9c9ff); opacity:.95;}
   .sv-kept::after{content:''; position:absolute; inset:0; background:linear-gradient(120deg, transparent 30%, rgba(255,255,255,.85) 45%, transparent 60%); background-size:220% 100%; animation:sv-foil 3.2s ease-in-out infinite;}
@@ -2433,25 +2436,25 @@ const VOCAB_SETS = [
 ]},
 
 {id:'slang-A1', level:'A1', category:'slang', goals:['everyday'], title:{en:'Daily Slang', tr:'Günlük Argo', fa:'اصطلاحات روزمره', es:'Argot cotidiano'}, cards:[
-  {word:'¡Qué padre! / ¡Qué guay!', sentence:'¡Qué padre está tu carro nuevo!', meaning:{en:'How cool! (México: qué padre, España: qué guay)', tr:'Ne harika! (Meksika: qué padre, İspanya: qué guay)', fa:'چقدر باحال! (مکزیک: qué padre، اسپانیا: qué guay)', es:'¡Qué genial! (México: qué padre, España: qué guay)'},
+  {register:'casual', word:'¡Qué padre! / ¡Qué guay!', sentence:'¡Qué padre está tu carro nuevo!', meaning:{en:'How cool! (México: qué padre, España: qué guay)', tr:'Ne harika! (Meksika: qué padre, İspanya: qué guay)', fa:'چقدر باحال! (مکزیک: qué padre، اسپانیا: qué guay)', es:'¡Qué genial! (México: qué padre, España: qué guay)'},
    note:{en:'A casual way to say something is awesome — the exact phrase varies by country.', tr:'Bir şeyin harika olduğunu söylemenin gündelik yolu — ülkeye göre değişir.', fa:'راهی خودمانی برای گفتن اینکه چیزی فوق‌العاده است — بسته به کشور فرق می‌کند.', es:'Una forma informal de decir que algo es genial — la expresión exacta cambia según el país.'}},
-  {word:'vale', sentence:'¿Nos vemos a las ocho? — Vale.', meaning:{en:'Okay / alright (very common in Spain).', tr:"Tamam / peki (İspanya'da çok yaygın).", fa:'باشه / اوکی (در اسپانیا خیلی رایج).', es:'Vale / de acuerdo (muy común en España).'},
+  {register:'both', word:'vale', sentence:'¿Nos vemos a las ocho? — Vale.', meaning:{en:'Okay / alright (very common in Spain).', tr:"Tamam / peki (İspanya'da çok yaygın).", fa:'باشه / اوکی (در اسپانیا خیلی رایج).', es:'Vale / de acuerdo (muy común en España).'},
    note:{en:'Used constantly in Spain to mean "okay" or to confirm you understood.', tr:"İspanya'da «tamam» anlamında ya da anladığını onaylamak için sürekli kullanılır.", fa:'در اسپانیا مدام برای گفتن «باشه» یا تأیید فهمیدن چیزی استفاده می‌شود.', es:'Se usa constantemente en España para decir "de acuerdo" o confirmar que entendiste.'}},
-  {word:'no pasa nada', sentence:'Perdón por llegar tarde. — No pasa nada.', meaning:{en:"It's okay / no worries.", tr:'Sorun değil / önemli değil.', fa:'مهم نیست / اشکالی نداره.', es:'No hay problema / no te preocupes.'},
+  {register:'both', word:'no pasa nada', sentence:'Perdón por llegar tarde. — No pasa nada.', meaning:{en:"It's okay / no worries.", tr:'Sorun değil / önemli değil.', fa:'مهم نیست / اشکالی نداره.', es:'No hay problema / no te preocupes.'},
    note:{en:'A relaxed way to tell someone not to worry about something small.', tr:'Birine küçük bir şey için endişelenmemesini söylemenin rahat bir yolu.', fa:'راهی خودمانی برای گفتن به کسی که نگران چیز کوچکی نباشد.', es:'Una forma relajada de decirle a alguien que no se preocupe por algo pequeño.'}},
-  {word:'genial', sentence:'¡Genial! Nos vemos el sábado.', meaning:{en:'Great! Awesome!', tr:'Harika!', fa:'عالیه!', es:'¡Genial! ¡Increíble!'},
+  {register:'both', word:'genial', sentence:'¡Genial! Nos vemos el sábado.', meaning:{en:'Great! Awesome!', tr:'Harika!', fa:'عالیه!', es:'¡Genial! ¡Increíble!'},
    note:{en:'A simple, upbeat way to react positively to news.', tr:'Bir habere olumlu tepki vermenin basit ve neşeli bir yolu.', fa:'راهی ساده و پرانرژی برای واکنش مثبت به یک خبر.', es:'Una forma simple y animada de reaccionar positivamente a una noticia.'}},
-  {word:'chévere / chido', sentence:'Esta fiesta está muy chévere.', meaning:{en:'Cool / nice (Latin America: chévere / chido)', tr:'Harika / güzel (Latin Amerika: chévere / chido)', fa:'باحال / خوب (آمریکای لاتین: chévere / chido)', es:'Genial / bacán (América Latina: chévere / chido)'},
+  {register:'casual', word:'chévere / chido', sentence:'Esta fiesta está muy chévere.', meaning:{en:'Cool / nice (Latin America: chévere / chido)', tr:'Harika / güzel (Latin Amerika: chévere / chido)', fa:'باحال / خوب (آمریکای لاتین: chévere / chido)', es:'Genial / bacán (América Latina: chévere / chido)'},
    note:{en:'Very common casual praise across Latin America — chévere leans Caribbean/Andean, chido leans Mexican.', tr:"Latin Amerika'da çok yaygın samimi bir övgü — chévere daha çok Karayip/And bölgesinde, chido ise Meksika'da kullanılır.", fa:'ستایشی خودمانی و بسیار رایج در آمریکای لاتین — chévere بیشتر در کارائیب/آند و chido بیشتر در مکزیک به کار می‌رود.', es:'Un elogio informal muy común en toda América Latina — chévere se usa más en el Caribe y los Andes, chido es más mexicano.'}},
-  {word:'oye', sentence:'Oye, ¿tienes un minuto?', meaning:{en:'Hey (used to get attention).', tr:'Hey (dikkat çekmek için).', fa:'هی (برای جلب توجه).', es:'Oye (se usa para llamar la atención de alguien).'},
+  {register:'casual', word:'oye', sentence:'Oye, ¿tienes un minuto?', meaning:{en:'Hey (used to get attention).', tr:'Hey (dikkat çekmek için).', fa:'هی (برای جلب توجه).', es:'Oye (se usa para llamar la atención de alguien).'},
    note:{en:'Literally means "listen" — used the way English speakers use "hey."', tr:'Kelimenin tam anlamıyla "dinle" demektir — İngilizcedeki "hey" gibi kullanılır.', fa:'به معنای واقعی «گوش کن» است — مثل «هی» در انگلیسی استفاده می‌شود.', es:'Literalmente significa "escucha" — se usa como un saludo casual para llamar la atención.'}},
-  {word:'un montón', sentence:'Te quiero un montón.', meaning:{en:'A lot / tons.', tr:'Bir sürü / çok fazla.', fa:'خیلی زیاد.', es:'Mucho / un montón.'},
+  {register:'casual', word:'un montón', sentence:'Te quiero un montón.', meaning:{en:'A lot / tons.', tr:'Bir sürü / çok fazla.', fa:'خیلی زیاد.', es:'Mucho / un montón.'},
    note:{en:'A casual intensifier — literally means "a pile."', tr:'Kelimenin tam anlamıyla "bir yığın" demek olan gündelik bir pekiştirici.', fa:'به معنای واقعی «یک توده» — یک تشدیدکننده خودمانی.', es:'Un intensificador informal — literalmente significa "una pila".'}},
-  {word:'¿qué onda? / ¿qué tal?', sentence:'¿Qué onda, cómo has estado?', meaning:{en:"What's up? How's it going?", tr:'Naber? Nasıl gidiyor?', fa:'چه خبر؟ اوضاع چطوره؟', es:'¿Qué tal? ¿Cómo va todo?'},
+  {register:'casual', word:'¿qué onda? / ¿qué tal?', sentence:'¿Qué onda, cómo has estado?', meaning:{en:"What's up? How's it going?", tr:'Naber? Nasıl gidiyor?', fa:'چه خبر؟ اوضاع چطوره؟', es:'¿Qué tal? ¿Cómo va todo?'},
    note:{en:'Casual greeting — qué onda leans Mexican, qué tal works everywhere.', tr:"Samimi bir selamlama — qué onda daha çok Meksika'da kullanılır, qué tal her yerde geçerlidir.", fa:'احوال‌پرسی خودمانی — qué onda بیشتر مکزیکی است، qué tal همه‌جا کاربرد دارد.', es:'Saludo informal — qué onda es más mexicano, qué tal funciona en cualquier país.'}},
-  {word:'estar en las nubes', sentence:'Perdón, estaba en las nubes.', meaning:{en:'To be daydreaming / not paying attention.', tr:'Dalıp gitmek / hayal kurmak.', fa:'در رؤیا بودن / حواس‌پرت بودن.', es:'Estar distraído, sin prestar atención.'},
+  {register:'casual', word:'estar en las nubes', sentence:'Perdón, estaba en las nubes.', meaning:{en:'To be daydreaming / not paying attention.', tr:'Dalıp gitmek / hayal kurmak.', fa:'در رؤیا بودن / حواس‌پرت بودن.', es:'Estar distraído, sin prestar atención.'},
    note:{en:'Literally "to be in the clouds" — a fun idiom for spacing out.', tr:'Kelimenin tam anlamıyla "bulutların içinde olmak" — dalıp gitmek için eğlenceli bir deyim.', fa:'به معنای واقعی «در ابرها بودن» — اصطلاحی بامزه برای حواس‌پرتی.', es:'Literalmente "estar en las nubes" — una expresión divertida para cuando alguien está distraído.'}},
-  {word:'ni idea', sentence:'¿Dónde está Marcos? — Ni idea.', meaning:{en:'No idea / no clue.', tr:'Hiçbir fikrim yok.', fa:'هیچ ایده‌ای ندارم.', es:'Ni idea / no tengo ni idea.'},
+  {register:'casual', word:'ni idea', sentence:'¿Dónde está Marcos? — Ni idea.', meaning:{en:'No idea / no clue.', tr:'Hiçbir fikrim yok.', fa:'هیچ ایده‌ای ندارم.', es:'Ni idea / no tengo ni idea.'},
    note:{en:'A short, casual way to say you have no idea.', tr:'"Bilmiyorum" demenin kısa ve samimi bir yolu.', fa:'راهی کوتاه و خودمانی برای گفتن اینکه نمی‌دانی.', es:'Una forma corta e informal de decir que no sabes algo.'}}
 ]}
 ,
@@ -2587,25 +2590,25 @@ const VOCAB_SETS = [
 ]},
 
 {id:'slang-B2', level:'B2', category:'slang', goals:['everyday'], title:{en:"Daily Slang (Advanced)", tr:"Günlük Argo (İleri Düzey)", fa:"اصطلاحات روزمره (پیشرفته)", es:"Argot cotidiano (avanzado)"}, cards:[
-  {word:'estar en la luna', sentence:'Perdona, ¿qué dijiste? Estaba en la luna.', meaning:{en:"To be daydreaming / completely distracted.", tr:"Dalgın olmak / aklı başka yerde olmak.", fa:"حواس‌پرت بودن / تو فکر بودن.", es:"Estar totalmente distraído, sin prestar atención."},
+  {register:'casual', word:'estar en la luna', sentence:'Perdona, ¿qué dijiste? Estaba en la luna.', meaning:{en:"To be daydreaming / completely distracted.", tr:"Dalgın olmak / aklı başka yerde olmak.", fa:"حواس‌پرت بودن / تو فکر بودن.", es:"Estar totalmente distraído, sin prestar atención."},
    note:{en:"Similar to 'estar en las nubes,' but implies you're especially checked out of the conversation.", tr:"'Estar en las nubes' ifadesine benzer, ama sohbetten özellikle kopmuş olduğunu ima eder.", fa:"شبیه 'estar en las nubes' است، اما نشان می‌دهد که فرد به‌طور خاص از مکالمه بیرون رفته.", es:"Parecida a 'estar en las nubes', pero da a entender que estás especialmente ausente de la conversación."}},
-  {word:'no tener pelos en la lengua', sentence:'Mi jefa no tiene pelos en la lengua, siempre dice lo que piensa.', meaning:{en:"To speak one's mind bluntly / not mince words.", tr:"Dobra dobra konuşmak.", fa:"رک و پوست‌کنده حرف زدن.", es:"Hablar con total franqueza, sin filtrar lo que se piensa."},
+  {register:'casual', word:'no tener pelos en la lengua', sentence:'Mi jefa no tiene pelos en la lengua, siempre dice lo que piensa.', meaning:{en:"To speak one's mind bluntly / not mince words.", tr:"Dobra dobra konuşmak.", fa:"رک و پوست‌کنده حرف زدن.", es:"Hablar con total franqueza, sin filtrar lo que se piensa."},
    note:{en:"A vivid idiom — literally 'to have no hairs on your tongue,' meaning nothing holds your words back.", tr:"Canlı bir deyim — kelimenin tam anlamıyla 'dilinde kıl olmamak', yani sözlerini hiçbir şey tutmaz.", fa:"اصطلاحی تصویری — به معنای واقعی 'مو روی زبان نداشتن'، یعنی چیزی جلوی حرف زدنت را نمی‌گیرد.", es:"Un modismo muy visual — literalmente 'no tener pelos en la lengua', es decir, nada frena lo que dices."}},
-  {word:'estar hasta las narices', sentence:'Estoy hasta las narices de tantas reuniones inútiles.', meaning:{en:"To be fed up / totally sick of something.", tr:"Bir şeyden bıkmak, gına gelmek.", fa:"از چیزی به‌شدت خسته/کلافه بودن.", es:"Estar completamente harto de algo."},
+  {register:'casual', word:'estar hasta las narices', sentence:'Estoy hasta las narices de tantas reuniones inútiles.', meaning:{en:"To be fed up / totally sick of something.", tr:"Bir şeyden bıkmak, gına gelmek.", fa:"از چیزی به‌شدت خسته/کلافه بودن.", es:"Estar completamente harto de algo."},
    note:{en:"A strong, common way to express frustration — more emphatic than simply 'estar cansado.'", tr:"Sinirlenmeyi ifade etmenin güçlü ve yaygın bir yolu — sadece 'estar cansado' demekten daha vurgulu.", fa:"راهی قوی و رایج برای بیان ناراحتی — تأکیدی‌تر از صرفاً گفتن 'estar cansado'.", es:"Una forma fuerte y común de expresar frustración — más enfática que simplemente decir 'estar cansado'."}},
-  {word:'dar en el clavo', sentence:'Con esa idea diste en el clavo, es justo lo que necesitábamos.', meaning:{en:"To hit the nail on the head / get it exactly right.", tr:"Tam üstüne basmak / tam isabet etmek.", fa:"دقیقاً درست گفتن / به‌هدف زدن.", es:"Acertar exactamente en algo."},
+  {register:'both', word:'dar en el clavo', sentence:'Con esa idea diste en el clavo, es justo lo que necesitábamos.', meaning:{en:"To hit the nail on the head / get it exactly right.", tr:"Tam üstüne basmak / tam isabet etmek.", fa:"دقیقاً درست گفتن / به‌هدف زدن.", es:"Acertar exactamente en algo."},
    note:{en:"Literally 'to hit the nail' — used when someone identifies a problem or solution perfectly.", tr:"Kelimenin tam anlamıyla 'çiviye vurmak' — biri bir sorunu ya da çözümü tam isabetle bulduğunda kullanılır.", fa:"به معنای واقعی 'به میخ زدن' — وقتی کسی مشکل یا راه‌حلی را کاملاً درست تشخیص می‌دهد به کار می‌رود.", es:"Literalmente 'golpear el clavo' — se usa cuando alguien identifica un problema o solución con precisión."}},
-  {word:'ser pan comido', sentence:'No te preocupes por el examen, va a ser pan comido.', meaning:{en:"To be a piece of cake / very easy.", tr:"Çocuk oyuncağı olmak.", fa:"خیلی آسان بودن / مثل آب خوردن.", es:"Ser algo muy fácil de hacer."},
+  {register:'both', word:'ser pan comido', sentence:'No te preocupes por el examen, va a ser pan comido.', meaning:{en:"To be a piece of cake / very easy.", tr:"Çocuk oyuncağı olmak.", fa:"خیلی آسان بودن / مثل آب خوردن.", es:"Ser algo muy fácil de hacer."},
    note:{en:"Literally 'eaten bread' — the Spanish equivalent of the English 'piece of cake.'", tr:"Kelimenin tam anlamıyla 'yenmiş ekmek' — İngilizcedeki 'piece of cake' ifadesinin İspanyolca karşılığı.", fa:"به معنای واقعی 'نان خورده‌شده' — معادل اسپانیایی اصطلاح انگلیسی 'piece of cake'.", es:"Literalmente 'pan que ya se comió' — el equivalente en español de 'a piece of cake' en inglés."}},
-  {word:'tomar el pelo', sentence:'¿En serio ganaste la lotería o me estás tomando el pelo?', meaning:{en:"To pull someone's leg / tease.", tr:"Birini kandırmak / dalga geçmek.", fa:"کسی را دست انداختن / سر به سرش گذاشتن.", es:"Bromear con alguien haciéndole creer algo falso."},
+  {register:'casual', word:'tomar el pelo', sentence:'¿En serio ganaste la lotería o me estás tomando el pelo?', meaning:{en:"To pull someone's leg / tease.", tr:"Birini kandırmak / dalga geçmek.", fa:"کسی را دست انداختن / سر به سرش گذاشتن.", es:"Bromear con alguien haciéndole creer algo falso."},
    note:{en:"Extremely common — don't take it literally, it has nothing to do with actual hair!", tr:"Çok yaygın kullanılır — kelimenin tam anlamıyla düşünmeyin, gerçek saçla ilgisi yoktur!", fa:"بسیار رایج است — به معنای واقعی کلمه فکر نکن، هیچ ربطی به موی واقعی ندارد!", es:"Muy común — no lo tomes literalmente, ¡no tiene nada que ver con el pelo de verdad!"}},
-  {word:'estar como una cabra', sentence:'Mi tío está como una cabra, siempre inventa historias increíbles.', meaning:{en:"To be a bit crazy / eccentric (affectionately).", tr:"Biraz kaçık olmak (sevecen bir şekilde).", fa:"کمی دیوانه/عجیب بودن (از سر محبت).", es:"Ser un poco loco o excéntrico, de forma cariñosa."},
+  {register:'casual', word:'estar como una cabra', sentence:'Mi tío está como una cabra, siempre inventa historias increíbles.', meaning:{en:"To be a bit crazy / eccentric (affectionately).", tr:"Biraz kaçık olmak (sevecen bir şekilde).", fa:"کمی دیوانه/عجیب بودن (از سر محبت).", es:"Ser un poco loco o excéntrico, de forma cariñosa."},
    note:{en:"Playful, not offensive — usually said about someone endearingly quirky.", tr:"Şakacı bir ifadedir, kırıcı değildir — genellikle sevimli bir şekilde tuhaf biri için kullanılır.", fa:"شوخ‌طبعانه است، نه توهین‌آمیز — معمولاً درباره‌ی کسی که رفتار بامزه و عجیبی دارد گفته می‌شود.", es:"Es una expresión cariñosa, no ofensiva — se usa para alguien peculiar de forma entrañable."}},
-  {word:'costar un ojo de la cara', sentence:'Ese apartamento en el centro le costó un ojo de la cara.', meaning:{en:"To cost an arm and a leg / be very expensive.", tr:"Çok pahalıya mal olmak.", fa:"خیلی گران تمام شدن.", es:"Ser extremadamente caro."},
+  {register:'casual', word:'costar un ojo de la cara', sentence:'Ese apartamento en el centro le costó un ojo de la cara.', meaning:{en:"To cost an arm and a leg / be very expensive.", tr:"Çok pahalıya mal olmak.", fa:"خیلی گران تمام شدن.", es:"Ser extremadamente caro."},
    note:{en:"A dramatic idiom for something outrageously expensive — very similar to the English equivalent.", tr:"Aşırı derecede pahalı bir şey için kullanılan dramatik bir deyim — İngilizce karşılığına çok benzer.", fa:"اصطلاحی اغراق‌آمیز برای چیزی که به‌طرز عجیبی گران است — بسیار شبیه معادل انگلیسی آن.", es:"Un modismo exagerado para algo increíblemente caro — muy parecido a su equivalente en inglés."}},
-  {word:'ponerse las pilas', sentence:'Si quieres aprobar el examen, tienes que ponerte las pilas.', meaning:{en:"To get your act together / start putting in effort.", tr:"Kendini toparlamak / işe koyulmak.", fa:"دست‌به‌کار شدن / جدی شدن.", es:"Empezar a esforzarse más, ponerse activo."},
+  {register:'casual', word:'ponerse las pilas', sentence:'Si quieres aprobar el examen, tienes que ponerte las pilas.', meaning:{en:"To get your act together / start putting in effort.", tr:"Kendini toparlamak / işe koyulmak.", fa:"دست‌به‌کار شدن / جدی شدن.", es:"Empezar a esforzarse más, ponerse activo."},
    note:{en:"Literally 'to put in your batteries' — a common way to tell someone (or yourself) to get energized.", tr:"Kelimenin tam anlamıyla 'pillerini takmak' — birine (ya da kendine) enerji toplaması gerektiğini söylemenin yaygın bir yolu.", fa:"به معنای واقعی 'باتری‌هایت را بگذار' — راهی رایج برای گفتن به کسی (یا خودت) که باید پرانرژی شود.", es:"Literalmente 'colocarse las baterías' — una forma común de decirle a alguien (o a ti mismo) que se active."}},
-  {word:'estar forrado', sentence:'Desde que vendió la empresa, está forrado.', meaning:{en:"To be loaded / very rich.", tr:"Parayı basmak / çok zengin olmak.", fa:"خیلی پولدار بودن / پول پارو کردن.", es:"Tener mucho dinero."},
+  {register:'casual', word:'estar forrado', sentence:'Desde que vendió la empresa, está forrado.', meaning:{en:"To be loaded / very rich.", tr:"Parayı basmak / çok zengin olmak.", fa:"خیلی پولدار بودن / پول پارو کردن.", es:"Tener mucho dinero."},
    note:{en:"A casual, slightly humorous way to say someone is wealthy.", tr:"Birinin zengin olduğunu söylemenin gündelik ve biraz esprili bir yolu.", fa:"راهی خودمانی و کمی طنزآمیز برای گفتن اینکه کسی ثروتمند است.", es:"Una forma informal y algo humorística de decir que alguien tiene mucho dinero."}}
 ]}
 
@@ -2742,25 +2745,25 @@ const VOCAB_SETS = [
 ]},
 
 {id:'slang-A2', level:'A2', category:'slang', goals:['everyday'], title:{en:'More Daily Slang', tr:'Daha Fazla Günlük Argo', fa:'اصطلاحات روزمره بیشتر', es:'Más argot cotidiano'}, cards:[
-  {word:'¡Qué rollo! / ¡Qué lata!', sentence:'Tengo que trabajar el sábado, ¡qué rollo!', meaning:{en:'What a drag! / What a pain! (Spain: qué rollo, some Latin America: qué lata)', tr:'Ne sıkıcı! (İspanya: qué rollo, bazı Latin Amerika ülkeleri: qué lata)', fa:'چه حوصله‌سربر! (اسپانیا: qué rollo، برخی کشورهای آمریکای لاتین: qué lata)', es:'¡Qué fastidio! (España: qué rollo, algunos países de América Latina: qué lata)'},
+  {register:'casual', word:'¡Qué rollo! / ¡Qué lata!', sentence:'Tengo que trabajar el sábado, ¡qué rollo!', meaning:{en:'What a drag! / What a pain! (Spain: qué rollo, some Latin America: qué lata)', tr:'Ne sıkıcı! (İspanya: qué rollo, bazı Latin Amerika ülkeleri: qué lata)', fa:'چه حوصله‌سربر! (اسپانیا: qué rollo، برخی کشورهای آمریکای لاتین: qué lata)', es:'¡Qué fastidio! (España: qué rollo, algunos países de América Latina: qué lata)'},
    note:{en:'Used to complain casually about something annoying or boring.', tr:'Sinir bozucu ya da sıkıcı bir şeyden gündelik şekilde şikayet etmek için kullanılır.', fa:'برای گلایه‌ی خودمانی از چیزی آزاردهنده یا خسته‌کننده استفاده می‌شود.', es:'Se usa para quejarse de manera informal de algo molesto o aburrido.'}},
-  {word:'estar en las nubes', sentence:'Perdón, no te escuché, estaba en las nubes.', meaning:{en:'To be daydreaming / not paying attention.', tr:'Dalgın olmak, hayal kurmak.', fa:'حواس‌پرت بودن، تو رویا بودن.', es:'Estar distraído, sin prestar atención.'},
+  {register:'casual', word:'estar en las nubes', sentence:'Perdón, no te escuché, estaba en las nubes.', meaning:{en:'To be daydreaming / not paying attention.', tr:'Dalgın olmak, hayal kurmak.', fa:'حواس‌پرت بودن، تو رویا بودن.', es:'Estar distraído, sin prestar atención.'},
    note:{en:"Literally \"to be in the clouds\" — a friendly way to admit you weren't listening.", tr:'Kelimenin tam anlamıyla "bulutlarda olmak" — dinlemediğini itiraf etmenin samimi bir yolu.', fa:'به معنای واقعی «در ابرها بودن» — راهی دوستانه برای اعتراف به اینکه گوش نمی‌دادی.', es:'Literalmente "estar en las nubes" — una forma amistosa de admitir que no estabas prestando atención.'}},
-  {word:'dar plantón / dejar plantado', sentence:'Quedamos a las siete y me dio plantón.', meaning:{en:'To stand someone up.', tr:'Birini ekmek (buluşmaya gelmemek).', fa:'سر قرار نیامدن، کسی را کاشتن.', es:'No presentarse a una cita con alguien.'},
+  {register:'casual', word:'dar plantón / dejar plantado', sentence:'Quedamos a las siete y me dio plantón.', meaning:{en:'To stand someone up.', tr:'Birini ekmek (buluşmaya gelmemek).', fa:'سر قرار نیامدن، کسی را کاشتن.', es:'No presentarse a una cita con alguien.'},
    note:{en:"Common when someone doesn't show up for a planned meeting or date.", tr:'Biri planlanan bir buluşmaya veya randevuya gelmediğinde kullanılır.', fa:'وقتی کسی سر قرار یا ملاقات از پیش تعیین‌شده نمی‌آید، به کار می‌رود.', es:'Se usa cuando alguien no se presenta a una cita planeada.'}},
-  {word:'estar hasta las narices', sentence:'Estoy hasta las narices de este tráfico.', meaning:{en:'To be totally fed up.', tr:'Bıkmak, gına gelmek.', fa:'به‌شدت خسته و کلافه بودن.', es:'Estar completamente harto de algo.'},
+  {register:'casual', word:'estar hasta las narices', sentence:'Estoy hasta las narices de este tráfico.', meaning:{en:'To be totally fed up.', tr:'Bıkmak, gına gelmek.', fa:'به‌شدت خسته و کلافه بودن.', es:'Estar completamente harto de algo.'},
    note:{en:"A very common — and very Spanish — way to say you can't take something anymore.", tr:'Bir şeye artık dayanamadığını söylemenin çok yaygın ve çok İspanyolvari bir yolu.', fa:'راهی بسیار رایج (و کاملاً اسپانیایی) برای گفتن اینکه دیگر تحمل چیزی را نداری.', es:'Una forma muy común de decir que ya no aguantas algo más.'}},
-  {word:'¡Qué fuerte!', sentence:'¿En serio te despidieron? ¡Qué fuerte!', meaning:{en:"Wow, that's intense! / No way!", tr:'Vay canına, bu çok fena! / Yok artık!', fa:'وای چقدر عجیب! / نه بابا!', es:'¡Vaya, qué impresión! / ¡No puede ser!'},
+  {register:'casual', word:'¡Qué fuerte!', sentence:'¿En serio te despidieron? ¡Qué fuerte!', meaning:{en:"Wow, that's intense! / No way!", tr:'Vay canına, bu çok fena! / Yok artık!', fa:'وای چقدر عجیب! / نه بابا!', es:'¡Vaya, qué impresión! / ¡No puede ser!'},
    note:{en:'A strong reaction to surprising or shocking news.', tr:'Şaşırtıcı ya da şoke edici bir habere verilen güçlü bir tepki.', fa:'واکنشی قوی به خبری تعجب‌آور یا شوکه‌کننده.', es:'Una reacción fuerte a una noticia sorprendente o impactante.'}},
-  {word:'ni de broma', sentence:'¿Vas a saltar en paracaídas? — Ni de broma.', meaning:{en:'No way / not a chance.', tr:'Kesinlikle olmaz / asla.', fa:'اصلاً / امکان نداره.', es:'De ninguna manera / ni hablar.'},
+  {register:'casual', word:'ni de broma', sentence:'¿Vas a saltar en paracaídas? — Ni de broma.', meaning:{en:'No way / not a chance.', tr:'Kesinlikle olmaz / asla.', fa:'اصلاً / امکان نداره.', es:'De ninguna manera / ni hablar.'},
    note:{en:'A firm, informal way to refuse something — stronger than a simple "no."', tr:'Bir şeyi reddetmenin kesin ve samimi bir yolu — basit bir "hayır"dan daha güçlü.', fa:'راهی قاطع و خودمانی برای رد کردن چیزی — قوی‌تر از یک «نه» ساده.', es:'Una forma firme e informal de rechazar algo — más fuerte que un simple "no".'}},
-  {word:'estar sin blanca / estar pelado', sentence:'No puedo salir esta semana, estoy sin blanca.', meaning:{en:'To be broke / out of money (Spain: sin blanca, Latin America: pelado).', tr:'Meteliksiz olmak, parasız olmak (İspanya: sin blanca, Latin Amerika: pelado).', fa:'بی‌پول بودن (اسپانیا: sin blanca، آمریکای لاتین: pelado).', es:'No tener dinero (España: sin blanca, América Latina: pelado).'},
+  {register:'casual', word:'estar sin blanca / estar pelado', sentence:'No puedo salir esta semana, estoy sin blanca.', meaning:{en:'To be broke / out of money (Spain: sin blanca, Latin America: pelado).', tr:'Meteliksiz olmak, parasız olmak (İspanya: sin blanca, Latin Amerika: pelado).', fa:'بی‌پول بودن (اسپانیا: sin blanca، آمریکای لاتین: pelado).', es:'No tener dinero (España: sin blanca, América Latina: pelado).'},
    note:{en:'A casual way to say you have no money left this month.', tr:'Bu ay hiç paranın kalmadığını söylemenin gündelik bir yolu.', fa:'راهی خودمانی برای گفتن اینکه این ماه هیچ پولی برایت نمانده.', es:'Una forma informal de decir que no te queda dinero este mes.'}},
-  {word:'meter la pata', sentence:'Metí la pata y le conté la sorpresa antes de tiempo.', meaning:{en:'To mess up / put your foot in it.', tr:'Pot kırmak, çuvallamak.', fa:'گند زدن، سوتی دادن.', es:'Cometer un error, decir o hacer algo indebido.'},
+  {register:'both', word:'meter la pata', sentence:'Metí la pata y le conté la sorpresa antes de tiempo.', meaning:{en:'To mess up / put your foot in it.', tr:'Pot kırmak, çuvallamak.', fa:'گند زدن، سوتی دادن.', es:'Cometer un error, decir o hacer algo indebido.'},
    note:{en:'Perfect for admitting you made an awkward mistake, like revealing a secret.', tr:'Bir sırrı ifşa etmek gibi utandırıcı bir hata yaptığını itiraf etmek için tam yerinde.', fa:'مناسب برای اعتراف به یک اشتباه خجالت‌آور، مثل لو دادن یک راز.', es:'Perfecto para admitir que cometiste un error incómodo, como revelar un secreto.'}},
-  {word:'un montón', sentence:'Te quiero un montón.', meaning:{en:'A lot / a ton.', tr:'Çok fazla, bir sürü.', fa:'خیلی زیاد.', es:'Mucho, en gran cantidad.'},
+  {register:'casual', word:'un montón', sentence:'Te quiero un montón.', meaning:{en:'A lot / a ton.', tr:'Çok fazla, bir sürü.', fa:'خیلی زیاد.', es:'Mucho, en gran cantidad.'},
    note:{en:'A warm, casual intensifier — friendlier than simply saying "mucho."', tr:'Sıcak ve samimi bir vurgu sözcüğü — sadece "mucho" demekten daha içten.', fa:'یک تشدیدکننده‌ی گرم و خودمانی — دوستانه‌تر از گفتن ساده‌ی «mucho».', es:'Un intensificador cálido e informal — más cercano que decir simplemente "mucho".'}},
-  {word:'echar de menos / extrañar', sentence:'Te echo de menos desde que te fuiste.', meaning:{en:'To miss someone (Spain: echar de menos, Latin America: extrañar).', tr:'Birini özlemek (İspanya: echar de menos, Latin Amerika: extrañar).', fa:'دلتنگ کسی بودن (اسپانیا: echar de menos، آمریکای لاتین: extrañar).', es:'Sentir la falta de alguien (España: echar de menos, América Latina: extrañar).'},
+  {register:'both', word:'echar de menos / extrañar', sentence:'Te echo de menos desde que te fuiste.', meaning:{en:'To miss someone (Spain: echar de menos, Latin America: extrañar).', tr:'Birini özlemek (İspanya: echar de menos, Latin Amerika: extrañar).', fa:'دلتنگ کسی بودن (اسپانیا: echar de menos، آمریکای لاتین: extrañar).', es:'Sentir la falta de alguien (España: echar de menos, América Latina: extrañar).'},
    note:{en:'One of the most useful phrases for talking about people or places far away.', tr:'Uzaktaki insanlar veya yerler hakkında konuşmak için en kullanışlı ifadelerden biri.', fa:'یکی از کاربردی‌ترین عبارت‌ها برای صحبت درباره‌ی افراد یا مکان‌های دور.', es:'Una de las frases más útiles para hablar de personas o lugares lejanos.'}}
 ]}
 ,
@@ -2895,16 +2898,16 @@ const VOCAB_SETS = [
 ]},
 
 {id:"slang-C1", level:"C1", category:"slang", goals:["everyday","travel"], title:{en:"Daily Slang", tr:"Günlük Argo", fa:"اصطلاحات روزمره", es:"Argot cotidiano"}, cards:[
-  {word:"estar hasta las narices", sentence:"Estoy hasta las narices de tanta burocracia.", meaning:{en:"To be totally fed up with something.", tr:"Bir şeyden resmen bıkmış, gına gelmiş olmak.", fa:"به‌کل از چیزی خسته و کلافه بودن.", es:"Estar completamente harto de algo."}, note:{en:"Literally «up to your nostrils» — a colorful, very common way to say you've completely had enough.", tr:"Kelimenin tam anlamıyla «burnuna kadar gelmiş» demektir — bir şeye resmen tahammülünün kalmadığını söylemenin renkli ve çok yaygın bir yolu.", fa:"به‌معنای واقعی «تا بینی‌ات پر شدن» — راهی رنگین و بسیار رایج برای گفتن اینکه دیگر واقعاً تحملت تمام شده.", es:"Literalmente «hasta las narices» — una forma colorida y muy común de decir que ya no aguantas más algo."}},
-  {word:"ser un rollo", sentence:"La reunión de hoy fue un rollo tremendo.", meaning:{en:"To be boring or a drag.", tr:"Sıkıcı olmak, can sıkıcı olmak.", fa:"خسته‌کننده و کسل‌کننده بودن.", es:"Ser aburrido o pesado."}, note:{en:"Used to describe anything tedious — a meeting, a movie, a chore.", tr:"Toplantı, film veya bir iş gibi sıkıcı herhangi bir şeyi tanımlamak için kullanılır.", fa:"برای توصیف هرچیز کسل‌کننده استفاده می‌شود — یک جلسه، یک فیلم، یک کار روزمره.", es:"Se usa para describir cualquier cosa tediosa — una reunión, una película, una tarea."}},
-  {word:"flipar", sentence:"¡Flipé cuando me dijeron el precio del alquiler!", meaning:{en:"To be blown away or totally shocked (Spain).", tr:"Şok olmak, çok şaşırmak (İspanya).", fa:"شدیداً شگفت‌زده یا شوکه شدن (اسپانیا).", es:"Sorprenderse muchísimo o quedar impactado (España)."}, note:{en:"Extremely common in Spain for both good and bad surprises — context tells you which.", tr:"İspanya'da hem iyi hem kötü sürprizler için son derece yaygındır — hangisi olduğunu bağlam belirler.", fa:"در اسپانیا برای شگفتی‌های خوب و بد به یک اندازه بسیار رایج است — بافت جمله مشخص می‌کند کدام است.", es:"Extremadamente común en España tanto para sorpresas buenas como malas — el contexto indica cuál es."}},
-  {word:"estar en la luna", sentence:"Perdona, no te escuché, estaba en la luna.", meaning:{en:"To be spaced out or not paying attention.", tr:"Dalgın olmak, hiç dikkat etmemek.", fa:"کاملاً حواس‌پرت بودن.", es:"Estar completamente distraído."}, note:{en:"Interchangeable with estar en las nubes in most everyday speech.", tr:"Günlük konuşmada çoğunlukla estar en las nubes ile birbirinin yerine kullanılabilir.", fa:"در اغلب گفتار روزمره با estar en las nubes قابل تعویض است.", es:"Se puede intercambiar con estar en las nubes en la mayoría del habla cotidiana."}},
-  {word:"curro / chamba", sentence:"No puedo salir esta noche, mañana tengo curro temprano.", meaning:{en:"Job / work (Spain: curro, Mexico: chamba).", tr:"İş, çalışma (İspanya: curro, Meksika: chamba).", fa:"کار (اسپانیا: curro، مکزیک: chamba).", es:"Trabajo (España: curro, México: chamba)."}, note:{en:"A casual substitute for trabajo — heard constantly among friends and coworkers.", tr:"Trabajo kelimesinin gündelik bir muadili — arkadaşlar ve iş arkadaşları arasında sürekli duyulur.", fa:"جایگزینی خودمانی برای trabajo — دائماً بین دوستان و همکاران شنیده می‌شود.", es:"Un sustituto informal de trabajo — se escucha constantemente entre amigos y compañeros de trabajo."}},
-  {word:"quedar", sentence:"¿Quedamos a las ocho frente al cine?", meaning:{en:"To arrange to meet up with someone.", tr:"Biriyle buluşmak üzere anlaşmak.", fa:"قرار گذاشتن برای دیدن کسی.", es:"Ponerse de acuerdo para verse con alguien."}, note:{en:"A core everyday verb for making plans — quedar con alguien means to make plans to meet.", tr:"Plan yapmak için temel bir günlük fiil — quedar con alguien, biriyle buluşmak için plan yapmak demektir.", fa:"فعلی اصلی و روزمره برای برنامه‌ریزی — quedar con alguien یعنی برنامه‌ریزی برای دیدن کسی.", es:"Un verbo cotidiano esencial para hacer planes — quedar con alguien significa acordar verse."}},
-  {word:"menudo + sustantivo", sentence:"¡Menudo lío se armó en la oficina hoy!", meaning:{en:"What a... (used to emphasize, often ironically).", tr:"Ne biçim... (genellikle ironik olarak vurgu yapmak için kullanılır).", fa:"چه... (اغلب برای تأکید، به‌طور کنایه‌آمیز استفاده می‌شود).", es:"Vaya... (se usa para enfatizar, a menudo con ironía)."}, note:{en:"Placed before a noun for emphasis, often sarcastic — menudo lío means what a mess.", tr:"Vurgu için bir ismin önüne konur — genellikle alaycıdır: menudo lío, ne biçim karmaşa demektir.", fa:"برای تأکید قبل از یک اسم می‌آید — اغلب کنایه‌آمیز: menudo lío یعنی چه شلوغی‌ای.", es:"Se coloca antes de un sustantivo para dar énfasis — a menudo con sarcasmo: menudo lío significa vaya desorden."}},
-  {word:"dar la lata", sentence:"Deja de dar la lata con el mismo tema.", meaning:{en:"To pester or nag someone repeatedly.", tr:"Birini sürekli sıkıştırmak, dırdır etmek.", fa:"مدام کسی را اذیت کردن یا غر زدن.", es:"Molestar o insistir repetidamente sobre algo."}, note:{en:"Literally to give the tin can — a playful way to complain about someone being annoying.", tr:"Kelimenin tam anlamıyla teneke kutuyu vermek — birinin sinir bozucu olmasından şakayla şikayet etmenin bir yolu.", fa:"به‌معنای واقعی «قوطی حلبی دادن» — راهی شوخ‌طبعانه برای شکایت از آزاردهنده بودن کسی.", es:"Literalmente dar la lata — una forma juguetona de quejarse de que alguien es pesado."}},
-  {word:"ponerse las pilas", sentence:"Si quieres aprobar el examen, tienes que ponerte las pilas.", meaning:{en:"To get one's act together and start putting in effort.", tr:"Kendine çekidüzen vermek, işe koyulmak.", fa:"جدی شدن و شروع به تلاش کردن.", es:"Empezar a esforzarse en serio, espabilarse."}, note:{en:"Literally to put in your batteries — a lively way to tell someone to get moving.", tr:"Kelimenin tam anlamıyla pilleri takmak — birine harekete geçmesini söylemenin canlı bir yolu.", fa:"به‌معنای واقعی «باتری‌هایت را بگذار» — راهی پرانرژی برای گفتن به کسی که دست‌به‌کار شود.", es:"Literalmente ponerse las pilas — una forma animada de decirle a alguien que se mueva."}},
-  {word:"caer bien / caer mal", sentence:"Tu amigo me cayó muy bien desde el primer momento.", meaning:{en:"To make a good or bad impression on someone.", tr:"Birine iyi veya kötü izlenim bırakmak.", fa:"روی کسی تأثیر خوب یا بد گذاشتن.", es:"Causarle a alguien una buena o mala impresión."}, note:{en:"Different from gustar — caer bien is specifically about how likable a person seems.", tr:"Gustar'dan farklıdır — caer bien özellikle bir kişinin ne kadar sevimli göründüğüyle ilgilidir.", fa:"با gustar فرق دارد — caer bien مشخصاً درباره این است که یک فرد چقدر دوست‌داشتنی به نظر می‌رسد.", es:"Es distinto de gustar — caer bien se refiere específicamente a lo simpática que parece una persona."}}
+  {register:'casual', word:"estar hasta las narices", sentence:"Estoy hasta las narices de tanta burocracia.", meaning:{en:"To be totally fed up with something.", tr:"Bir şeyden resmen bıkmış, gına gelmiş olmak.", fa:"به‌کل از چیزی خسته و کلافه بودن.", es:"Estar completamente harto de algo."}, note:{en:"Literally «up to your nostrils» — a colorful, very common way to say you've completely had enough.", tr:"Kelimenin tam anlamıyla «burnuna kadar gelmiş» demektir — bir şeye resmen tahammülünün kalmadığını söylemenin renkli ve çok yaygın bir yolu.", fa:"به‌معنای واقعی «تا بینی‌ات پر شدن» — راهی رنگین و بسیار رایج برای گفتن اینکه دیگر واقعاً تحملت تمام شده.", es:"Literalmente «hasta las narices» — una forma colorida y muy común de decir que ya no aguantas más algo."}},
+  {register:'casual', word:"ser un rollo", sentence:"La reunión de hoy fue un rollo tremendo.", meaning:{en:"To be boring or a drag.", tr:"Sıkıcı olmak, can sıkıcı olmak.", fa:"خسته‌کننده و کسل‌کننده بودن.", es:"Ser aburrido o pesado."}, note:{en:"Used to describe anything tedious — a meeting, a movie, a chore.", tr:"Toplantı, film veya bir iş gibi sıkıcı herhangi bir şeyi tanımlamak için kullanılır.", fa:"برای توصیف هرچیز کسل‌کننده استفاده می‌شود — یک جلسه، یک فیلم، یک کار روزمره.", es:"Se usa para describir cualquier cosa tediosa — una reunión, una película, una tarea."}},
+  {register:'casual', word:"flipar", sentence:"¡Flipé cuando me dijeron el precio del alquiler!", meaning:{en:"To be blown away or totally shocked (Spain).", tr:"Şok olmak, çok şaşırmak (İspanya).", fa:"شدیداً شگفت‌زده یا شوکه شدن (اسپانیا).", es:"Sorprenderse muchísimo o quedar impactado (España)."}, note:{en:"Extremely common in Spain for both good and bad surprises — context tells you which.", tr:"İspanya'da hem iyi hem kötü sürprizler için son derece yaygındır — hangisi olduğunu bağlam belirler.", fa:"در اسپانیا برای شگفتی‌های خوب و بد به یک اندازه بسیار رایج است — بافت جمله مشخص می‌کند کدام است.", es:"Extremadamente común en España tanto para sorpresas buenas como malas — el contexto indica cuál es."}},
+  {register:'casual', word:"estar en la luna", sentence:"Perdona, no te escuché, estaba en la luna.", meaning:{en:"To be spaced out or not paying attention.", tr:"Dalgın olmak, hiç dikkat etmemek.", fa:"کاملاً حواس‌پرت بودن.", es:"Estar completamente distraído."}, note:{en:"Interchangeable with estar en las nubes in most everyday speech.", tr:"Günlük konuşmada çoğunlukla estar en las nubes ile birbirinin yerine kullanılabilir.", fa:"در اغلب گفتار روزمره با estar en las nubes قابل تعویض است.", es:"Se puede intercambiar con estar en las nubes en la mayoría del habla cotidiana."}},
+  {register:'casual', word:"curro / chamba", sentence:"No puedo salir esta noche, mañana tengo curro temprano.", meaning:{en:"Job / work (Spain: curro, Mexico: chamba).", tr:"İş, çalışma (İspanya: curro, Meksika: chamba).", fa:"کار (اسپانیا: curro، مکزیک: chamba).", es:"Trabajo (España: curro, México: chamba)."}, note:{en:"A casual substitute for trabajo — heard constantly among friends and coworkers.", tr:"Trabajo kelimesinin gündelik bir muadili — arkadaşlar ve iş arkadaşları arasında sürekli duyulur.", fa:"جایگزینی خودمانی برای trabajo — دائماً بین دوستان و همکاران شنیده می‌شود.", es:"Un sustituto informal de trabajo — se escucha constantemente entre amigos y compañeros de trabajo."}},
+  {register:'both', word:"quedar", sentence:"¿Quedamos a las ocho frente al cine?", meaning:{en:"To arrange to meet up with someone.", tr:"Biriyle buluşmak üzere anlaşmak.", fa:"قرار گذاشتن برای دیدن کسی.", es:"Ponerse de acuerdo para verse con alguien."}, note:{en:"A core everyday verb for making plans — quedar con alguien means to make plans to meet.", tr:"Plan yapmak için temel bir günlük fiil — quedar con alguien, biriyle buluşmak için plan yapmak demektir.", fa:"فعلی اصلی و روزمره برای برنامه‌ریزی — quedar con alguien یعنی برنامه‌ریزی برای دیدن کسی.", es:"Un verbo cotidiano esencial para hacer planes — quedar con alguien significa acordar verse."}},
+  {register:'casual', word:"menudo + sustantivo", sentence:"¡Menudo lío se armó en la oficina hoy!", meaning:{en:"What a... (used to emphasize, often ironically).", tr:"Ne biçim... (genellikle ironik olarak vurgu yapmak için kullanılır).", fa:"چه... (اغلب برای تأکید، به‌طور کنایه‌آمیز استفاده می‌شود).", es:"Vaya... (se usa para enfatizar, a menudo con ironía)."}, note:{en:"Placed before a noun for emphasis, often sarcastic — menudo lío means what a mess.", tr:"Vurgu için bir ismin önüne konur — genellikle alaycıdır: menudo lío, ne biçim karmaşa demektir.", fa:"برای تأکید قبل از یک اسم می‌آید — اغلب کنایه‌آمیز: menudo lío یعنی چه شلوغی‌ای.", es:"Se coloca antes de un sustantivo para dar énfasis — a menudo con sarcasmo: menudo lío significa vaya desorden."}},
+  {register:'casual', word:"dar la lata", sentence:"Deja de dar la lata con el mismo tema.", meaning:{en:"To pester or nag someone repeatedly.", tr:"Birini sürekli sıkıştırmak, dırdır etmek.", fa:"مدام کسی را اذیت کردن یا غر زدن.", es:"Molestar o insistir repetidamente sobre algo."}, note:{en:"Literally to give the tin can — a playful way to complain about someone being annoying.", tr:"Kelimenin tam anlamıyla teneke kutuyu vermek — birinin sinir bozucu olmasından şakayla şikayet etmenin bir yolu.", fa:"به‌معنای واقعی «قوطی حلبی دادن» — راهی شوخ‌طبعانه برای شکایت از آزاردهنده بودن کسی.", es:"Literalmente dar la lata — una forma juguetona de quejarse de que alguien es pesado."}},
+  {register:'casual', word:"ponerse las pilas", sentence:"Si quieres aprobar el examen, tienes que ponerte las pilas.", meaning:{en:"To get one's act together and start putting in effort.", tr:"Kendine çekidüzen vermek, işe koyulmak.", fa:"جدی شدن و شروع به تلاش کردن.", es:"Empezar a esforzarse en serio, espabilarse."}, note:{en:"Literally to put in your batteries — a lively way to tell someone to get moving.", tr:"Kelimenin tam anlamıyla pilleri takmak — birine harekete geçmesini söylemenin canlı bir yolu.", fa:"به‌معنای واقعی «باتری‌هایت را بگذار» — راهی پرانرژی برای گفتن به کسی که دست‌به‌کار شود.", es:"Literalmente ponerse las pilas — una forma animada de decirle a alguien que se mueva."}},
+  {register:'both', word:"caer bien / caer mal", sentence:"Tu amigo me cayó muy bien desde el primer momento.", meaning:{en:"To make a good or bad impression on someone.", tr:"Birine iyi veya kötü izlenim bırakmak.", fa:"روی کسی تأثیر خوب یا بد گذاشتن.", es:"Causarle a alguien una buena o mala impresión."}, note:{en:"Different from gustar — caer bien is specifically about how likable a person seems.", tr:"Gustar'dan farklıdır — caer bien özellikle bir kişinin ne kadar sevimli göründüğüyle ilgilidir.", fa:"با gustar فرق دارد — caer bien مشخصاً درباره این است که یک فرد چقدر دوست‌داشتنی به نظر می‌رسد.", es:"Es distinto de gustar — caer bien se refiere específicamente a lo simpática que parece una persona."}}
 ]}
 ,
 {id:"v-B1-1", level:"B1", category:"vocab", goals:["everyday","exam"], title:{en:"Environment", tr:"Çevre", fa:"محیط زیست", es:"Medio ambiente"}, cards:[
@@ -3038,25 +3041,25 @@ const VOCAB_SETS = [
 ]},
 
 {id:"slang-B1", level:"B1", category:"slang", goals:["everyday"], title:{en:"Daily Slang", tr:"Günlük Argo", fa:"اصطلاحات روزمره", es:"Argot cotidiano"}, cards:[
-  {word:"estar como una cabra", sentence:"No le hagas caso, está como una cabra.", meaning:{en:"To be a bit crazy / wild (playful).", tr:"Biraz çılgın olmak (esprili bir ifade).", fa:"کمی دیوانه بودن (به‌شوخی).", es:"Estar un poco loco o hacer locuras, de forma cariñosa."},
+  {register:'casual', word:"estar como una cabra", sentence:"No le hagas caso, está como una cabra.", meaning:{en:"To be a bit crazy / wild (playful).", tr:"Biraz çılgın olmak (esprili bir ifade).", fa:"کمی دیوانه بودن (به‌شوخی).", es:"Estar un poco loco o hacer locuras, de forma cariñosa."},
    note:{en:"A very common Spain expression — literally 'to be like a goat.' Affectionate, not insulting, among friends.", tr:"İspanya'da çok yaygın bir ifade — kelimenin tam anlamıyla 'keçi gibi olmak.' Arkadaşlar arasında hakaret değil, sevecen bir ifadedir.", fa:"عبارتی بسیار رایج در اسپانیا — به‌معنای واقعی «مثل بز بودن». بین دوستان محبت‌آمیز است، نه توهین.", es:"Una expresión muy común en España — literalmente 'estar como una cabra'. Es cariñosa, no insultante, entre amigos."}},
-  {word:"curro", sentence:"Hoy tengo mucho curro, no puedo salir.", meaning:{en:"Job / work (informal).", tr:"İş (gündelik dil).", fa:"کار (محاوره‌ای).", es:"Trabajo, de forma coloquial."},
+  {register:'casual', word:"curro", sentence:"Hoy tengo mucho curro, no puedo salir.", meaning:{en:"Job / work (informal).", tr:"İş (gündelik dil).", fa:"کار (محاوره‌ای).", es:"Trabajo, de forma coloquial."},
    note:{en:"Very common in Spain as a casual word for 'job' — curro = trabajo, currar = trabajar.", tr:"İspanya'da 'iş' için çok yaygın gündelik bir kelimedir — curro = iş, currar = çalışmak.", fa:"در اسپانیا کلمه‌ای بسیار رایج و محاوره‌ای برای «کار» است — curro = کار، currar = کار کردن.", es:"Muy común en España como forma coloquial de decir 'trabajo' — curro = trabajo, currar = trabajar."}},
-  {word:"tener buena onda / tener buen rollo", sentence:"Ese profesor tiene muy buena onda con los estudiantes.", meaning:{en:"To have good vibes / to be easygoing.", tr:"İyi enerjisi olmak / kolay geçinilir olmak.", fa:"انرژی خوبی داشتن / خوش‌برخورد بودن.", es:"Tener una actitud positiva y agradable (México: buena onda, España: buen rollo)."},
+  {register:'casual', word:"tener buena onda / tener buen rollo", sentence:"Ese profesor tiene muy buena onda con los estudiantes.", meaning:{en:"To have good vibes / to be easygoing.", tr:"İyi enerjisi olmak / kolay geçinilir olmak.", fa:"انرژی خوبی داشتن / خوش‌برخورد بودن.", es:"Tener una actitud positiva y agradable (México: buena onda, España: buen rollo)."},
    note:{en:"Buena onda is common across Latin America; buen rollo is the equivalent in Spain.", tr:"Buena onda Latin Amerika'da yaygındır; buen rollo ise İspanya'daki karşılığıdır.", fa:"buena onda در آمریکای لاتین رایج است؛ buen rollo معادل آن در اسپانیاست.", es:"Buena onda se usa mucho en América Latina; buen rollo es el equivalente en España."}},
-  {word:"estar sin blanca / estar pelado", sentence:"No puedo ir al cine, estoy sin blanca hasta el viernes.", meaning:{en:"To be broke / out of money.", tr:"Parasız kalmak / meteliksiz olmak.", fa:"بی‌پول بودن.", es:"No tener dinero (España: estar sin blanca, muchos países de América Latina: estar pelado)."},
+  {register:'casual', word:"estar sin blanca / estar pelado", sentence:"No puedo ir al cine, estoy sin blanca hasta el viernes.", meaning:{en:"To be broke / out of money.", tr:"Parasız kalmak / meteliksiz olmak.", fa:"بی‌پول بودن.", es:"No tener dinero (España: estar sin blanca, muchos países de América Latina: estar pelado)."},
    note:{en:"Estar sin blanca is a Spain classic; estar pelado is heard widely across Latin America.", tr:"Estar sin blanca İspanya'ya özgü klasik bir ifadedir; estar pelado ise Latin Amerika'da yaygın olarak duyulur.", fa:"estar sin blanca اصطلاحی کلاسیک در اسپانیاست؛ estar pelado در سراسر آمریکای لاتین شنیده می‌شود.", es:"Estar sin blanca es un clásico de España; estar pelado se escucha ampliamente en América Latina."}},
-  {word:"ni de coña", sentence:"¿Vas a pagar tú la cena? — ¡Ni de coña!", meaning:{en:"No way! (emphatic refusal).", tr:"Asla olmaz! (kesin ret).", fa:"محاله! (رد قاطع).", es:"De ninguna manera, forma enfática de decir que no."},
+  {register:'casual', word:"ni de coña", sentence:"¿Vas a pagar tú la cena? — ¡Ni de coña!", meaning:{en:"No way! (emphatic refusal).", tr:"Asla olmaz! (kesin ret).", fa:"محاله! (رد قاطع).", es:"De ninguna manera, forma enfática de decir que no."},
    note:{en:"A strong, casual way to say 'absolutely not' — common in Spain, a bit rougher in tone.", tr:"'Kesinlikle hayır' demenin güçlü ve gündelik bir yolu — İspanya'da yaygındır, biraz daha sert bir tondadır.", fa:"راهی قوی و خودمانی برای گفتن «قطعاً نه» — در اسپانیا رایج است و لحنی کمی خشن‌تر دارد.", es:"Una forma fuerte e informal de decir 'de ninguna manera' — común en España, con un tono un poco más brusco."}},
-  {word:"echar de menos / extrañar", sentence:"Te echo de menos desde que te fuiste.", meaning:{en:"To miss someone.", tr:"Özlemek.", fa:"دلتنگ کسی شدن.", es:"Sentir la falta de alguien (España: echar de menos, América Latina: extrañar)."},
+  {register:'both', word:"echar de menos / extrañar", sentence:"Te echo de menos desde que te fuiste.", meaning:{en:"To miss someone.", tr:"Özlemek.", fa:"دلتنگ کسی شدن.", es:"Sentir la falta de alguien (España: echar de menos, América Latina: extrañar)."},
    note:{en:"Both mean the same thing — echar de menos is more common in Spain, extrañar in Latin America.", tr:"İkisi de aynı anlama gelir — echar de menos İspanya'da, extrañar ise Latin Amerika'da daha yaygındır.", fa:"هر دو یک معنا دارند — echar de menos بیشتر در اسپانیا و extrañar بیشتر در آمریکای لاتین رایج است.", es:"Ambas significan lo mismo — echar de menos es más común en España, extrañar en América Latina."}},
-  {word:"dar plantón", sentence:"Quedé con él a las ocho y me dio plantón.", meaning:{en:"To stand someone up.", tr:"Birini ekmek / randevuya gelmemek.", fa:"سرکسی را کلاه گذاشتن (سر قرار نیامدن).", es:"No presentarse a una cita acordada."},
+  {register:'casual', word:"dar plantón", sentence:"Quedé con él a las ocho y me dio plantón.", meaning:{en:"To stand someone up.", tr:"Birini ekmek / randevuya gelmemek.", fa:"سرکسی را کلاه گذاشتن (سر قرار نیامدن).", es:"No presentarse a una cita acordada."},
    note:{en:"Widely used across the Spanish-speaking world for not showing up to a planned meeting.", tr:"İspanyolca konuşulan dünyada, planlanan bir buluşmaya gelmemek için yaygın olarak kullanılır.", fa:"در سراسر جهان اسپانیایی‌زبان برای نیامدن سر یک قرار از پیش تعیین‌شده استفاده می‌شود.", es:"Se usa ampliamente en todo el mundo hispanohablante para no presentarse a una cita planeada."}},
-  {word:"ponerse las pilas", sentence:"Si quieres aprobar, tienes que ponerte las pilas.", meaning:{en:"To get one's act together / get energized.", tr:"Kendini toparlamak / işe koyulmak.", fa:"جدی شدن / انرژی گرفتن برای کار.", es:"Esforzarse más, espabilarse."},
+  {register:'casual', word:"ponerse las pilas", sentence:"Si quieres aprobar, tienes que ponerte las pilas.", meaning:{en:"To get one's act together / get energized.", tr:"Kendini toparlamak / işe koyulmak.", fa:"جدی شدن / انرژی گرفتن برای کار.", es:"Esforzarse más, espabilarse."},
    note:{en:"Literally 'to put in your batteries' — a fun way to tell someone to focus and try harder.", tr:"Kelimenin tam anlamıyla 'pillerini takmak' — birine odaklanmasını ve daha çok çabalamasını söylemenin eğlenceli bir yolu.", fa:"به‌معنای واقعی «باتری‌هایت را بگذار» — راهی بامزه برای گفتن به کسی که تمرکز کند و بیشتر تلاش کند.", es:"Literalmente 'ponerse las pilas' — una forma divertida de decirle a alguien que se concentre y se esfuerce más."}},
-  {word:"estar hasta las narices", sentence:"Estoy hasta las narices de tanto tráfico.", meaning:{en:"To be fed up.", tr:"Bıkmak / gına gelmek.", fa:"به شدت خسته/کلافه شدن از چیزی.", es:"Estar muy harto de algo."},
+  {register:'casual', word:"estar hasta las narices", sentence:"Estoy hasta las narices de tanto tráfico.", meaning:{en:"To be fed up.", tr:"Bıkmak / gına gelmek.", fa:"به شدت خسته/کلافه شدن از چیزی.", es:"Estar muy harto de algo."},
    note:{en:"A vivid, informal way to say you've had enough — common in Spain.", tr:"Bir şeye artık dayanamadığını söylemenin canlı ve gündelik bir yolu — İspanya'da yaygındır.", fa:"راهی زنده و خودمانی برای گفتن اینکه دیگر کافی است — در اسپانیا رایج است.", es:"Una forma vívida e informal de decir que ya no aguantas más algo — común en España."}},
-  {word:"a lo mejor", sentence:"A lo mejor llego un poco tarde, hay mucho tráfico.", meaning:{en:"Maybe / perhaps.", tr:"Belki.", fa:"شاید.", es:"Quizás, posiblemente."},
+  {register:'both', word:"a lo mejor", sentence:"A lo mejor llego un poco tarde, hay mucho tráfico.", meaning:{en:"Maybe / perhaps.", tr:"Belki.", fa:"شاید.", es:"Quizás, posiblemente."},
    note:{en:"A very natural, everyday way to say 'maybe' — more common in casual speech than 'quizás.'", tr:"'Belki' demenin çok doğal ve gündelik bir yolu — günlük konuşmada 'quizás'tan daha yaygındır.", fa:"راهی بسیار طبیعی و روزمره برای گفتن «شاید» — در گفتار محاوره‌ای رایج‌تر از quizás است.", es:"Una forma muy natural y cotidiana de decir 'quizás' — más común en el habla informal que 'quizás'."}}
 ]}
 ];
@@ -8420,6 +8423,14 @@ function souvenirContent(node, ctx){
         card = card || shuffle(set.cards).find(gotRight);
       }
       card = card || set.cards[Math.floor(Math.random()*set.cards.length)];
+      // Say it? (uVzMAAGg): a slang card the learner placed in a scene keeps "Say this when… {scene}" on its flip side.
+      const ss = set.category === 'slang' && state.progress && state.progress.slangSay && state.progress.slangSay[set.id];
+      if(ss && ss.scenes && typeof ss.scenes === 'object'){
+        const okNow = c => !(q && q.results) || q.questions.some((qq,i)=>q.results[i] && String(qq.why||'').indexOf('"'+c.word+'"')===0);
+        if(ss.scenes[card.word] == null){ const alt = shuffle(set.cards).find(c=>ss.scenes[c.word] != null && okNow(c)); if(alt) card = alt; }
+        const sc = SLANG_SCENES[ss.scenes[card.word]];
+        if(sc) out.keep = {text:L('Say this when…','Şöyle bir anda söyle…','این را وقتی بگو که…','Dilo cuando…') + ' ' + trLine(sc.text), say:card.word, note:svText(card.meaning || '')};
+      }
       out.text = card.word;
       out.meaning = card.meaning || '';
     }
@@ -13486,16 +13497,93 @@ function deckSortTap(setId, keep){
   const done = ()=>{ if(fired) return; fired = true; deckBusy = false; if(state.view === 'vocab-set') render(); };
   a.onfinish = done; a.oncancel = done;
 }
+/* Slang "Say it?" (Trello uVzMAAGg; gamify-every-card §4.3 as changed by the LXD review §B Q4).
+   A 4-round beat between the slang flashcards and the quiz: one scene (UI language), the phrase
+   (target language), Say it / Not here. Register is a per-card flag (card.register 'casual' |
+   'both'; a missing flag reads as casual). Each round draws 2 formal + 2 informal scenes from
+   SLANG_SCENES and 4 cards, and makes sure at least one 'both' card lands in a formal scene.
+   Right answer = Say it unless the card is casual and the scene formal. No penalty, no score, no
+   SRS: progress.slangSay[setId] = {right, total, scenes:{word:sceneIndex}, date} only feeds the
+   souvenir's flip side ("Say this when… {scene}"). Beat state lives in viewParams.say. */
+const SLANG_SCENES = [
+  {register:'formal', text:{en:'Your manager asks how the project is going.', tr:'Müdürün projenin nasıl gittiğini soruyor.', fa:'مدیرت می‌پرسد پروژه چطور پیش می‌رود.', es:'Tu jefe te pregunta cómo va el proyecto.'}},
+  {register:'formal', text:{en:'A job interview. The interviewer greets you.', tr:'İş görüşmesi. Mülakatçı seni selamlıyor.', fa:'مصاحبهٔ کاری. مصاحبه‌کننده به تو سلام می‌کند.', es:'Una entrevista de trabajo. La entrevistadora te saluda.'}},
+  {register:'formal', text:{en:'At the bank. The clerk asks what you need.', tr:'Bankadasın. Görevli ne istediğini soruyor.', fa:'در بانک. کارمند می‌پرسد چه کاری داری.', es:'En el banco. El empleado te pregunta qué necesitas.'}},
+  {register:'formal', text:{en:'You are writing an email to your landlord.', tr:'Ev sahibine e-posta yazıyorsun.', fa:'داری به صاحب‌خانه‌ات ایمیل می‌نویسی.', es:'Estás escribiendo un correo a tu casero.'}},
+  {register:'informal', text:{en:'Your best friend texts you after class.', tr:'En yakın arkadaşın dersten sonra mesaj atıyor.', fa:'بهترین دوستت بعد از کلاس پیام می‌دهد.', es:'Tu mejor amigo te escribe después de clase.'}},
+  {register:'informal', text:{en:"A friend's birthday party. The music is loud.", tr:'Bir arkadaşının doğum günü partisi. Müzik yüksek.', fa:'جشن تولد یک دوست. موسیقی بلند است.', es:'La fiesta de cumpleaños de un amigo. La música está alta.'}},
+  {register:'informal', text:{en:'Your flatmate is cooking. You come home.', tr:'Ev arkadaşın yemek yapıyor. Eve geliyorsun.', fa:'هم‌خانه‌ات دارد آشپزی می‌کند. تو می‌رسی خانه.', es:'Tu compañero de piso está cocinando. Llegas a casa.'}},
+  {register:'informal', text:{en:'Your cousin shows you a funny video.', tr:'Kuzenin sana komik bir video gösteriyor.', fa:'پسرعمویت یک ویدیوی خنده‌دار نشانت می‌دهد.', es:'Tu prima te enseña un vídeo gracioso.'}}
+];
+function slangRegister(card){ return card && card.register === 'both' ? 'both' : 'casual'; }
+function slangSayOk(sc, card){ return !(sc.register === 'formal' && slangRegister(card) === 'casual'); }
+function slangSayRounds(s){
+  const idx = SLANG_SCENES.map((x,i)=>i);
+  const scenes = shuffle(idx.filter(i=>SLANG_SCENES[i].register === 'formal')).slice(0, 2)
+    .concat(shuffle(idx.filter(i=>SLANG_SCENES[i].register === 'informal')).slice(0, 2));
+  const reg = i => slangRegister(s.cards[i]);
+  const cards = shuffle(s.cards.map((c,i)=>i)).slice(0, 4);
+  let bi = cards.findIndex(i=>reg(i) === 'both');
+  if(bi < 0){ const alt = s.cards.map((c,i)=>i).find(i=>reg(i) === 'both'); if(alt != null && cards.length){ cards[cards.length - 1] = alt; bi = cards.length - 1; } }
+  if(bi > 0){ const t = cards[0]; cards[0] = cards[bi]; cards[bi] = t; }   // slot 0 is a formal scene
+  return shuffle(scenes.map((sc,k)=>({scene:sc, card:cards[k]})).filter(r=>r.card != null));
+}
+function slangSayState(s){
+  const vp = state.viewParams; let y = vp.say;
+  if(!y || y.setId !== s.id || !Array.isArray(y.rounds)) y = vp.say = {setId:s.id, rounds:slangSayRounds(s), i:0, right:0, answered:null, done:false, hits:{}};
+  return y;
+}
+// The plain line after a miss: names the scene, never scolds.
+function slangSayLine(sc, card, a){
+  const scene = trLine(sc.text);
+  if(sc.register === 'formal' && a === 'say') return L('Not here.','Burada değil.','اینجا نه.','Aquí no.') + ' ' + scene + ' ' + L('Keep this one for friends.','Bunu arkadaşlarına sakla.','این را برای دوستانت نگه دار.','Guárdala para los amigos.');
+  if(sc.register === 'formal') return L('This one works at work too.','Bu iş yerinde de olur.','این یکی سر کار هم جواب می‌دهد.','Esta también vale en el trabajo.') + ' ' + scene;
+  return L('It works here.','Burada olur.','اینجا جواب می‌دهد.','Aquí sí vale.') + ' ' + scene + ' ' + L('Go ahead and say it.','Rahatça söyle.','راحت بگو.','Dilo tranquilamente.');
+}
+function slangSayHtml(s){
+  const y = slangSayState(s);
+  if(y.done || !y.rounds.length) return null;
+  const r = y.rounds[y.i], sc = SLANG_SCENES[r.scene], card = s.cards[r.card];
+  const sayOk = slangSayOk(sc, card), a = y.answered;
+  const cls = (mine, right) => a ? (right ? ' ok' : (a === mine ? ' no' : ' dim')) : '';
+  const last = y.i + 1 >= y.rounds.length;
+  return `<div class="fade-in game-screen">
+    ${gameTopHtml(setTitle(s))}
+    <div class="game-status">
+      <span class="game-status-text">${L(`Scene ${y.i+1} of ${y.rounds.length}`, `Sahne ${y.i+1}/${y.rounds.length}`, `صحنه ${y.i+1} از ${y.rounds.length}`, `Escena ${y.i+1} de ${y.rounds.length}`)}</span>
+      <span class="game-status-end"><span class="game-chip">${ICONS.check} ${y.right}</span></span>
+    </div>
+    <p class="game-hint">${L('Would you say this here?','Bunu burada söyler miydin?','اینجا این را می‌گویی؟','¿Lo dirías aquí?')}</p>
+    <div class="game-card tight say-card">
+      <p class="say-scene" dir="auto">${esc(trLine(sc.text))}</p>
+      <p class="game-sentence${String(card.word).length > 26 ? ' long' : ''}" dir="ltr">${esc(card.word)}</p>
+    </div>
+    <div class="game-opts say-opts">
+      <button class="game-opt${cls('say', sayOk)}" data-action="slang-say" data-a="say" ${a ? 'disabled' : ''}>${L('Say it','Söyle','بگو','Dilo')}</button>
+      <button class="game-opt${cls('not', !sayOk)}" data-action="slang-say" data-a="not" ${a ? 'disabled' : ''}>${L('Not here','Burada değil','اینجا نه','Aquí no')}</button>
+    </div>
+    ${a ? `${(a === 'say') === sayOk ? '' : `<div class="game-why"><img src="char-${learnerCharKey()}.png" alt=""><div dir="auto">${esc(slangSayLine(sc, card, a))}</div></div>`}
+      <button class="btn btn-primary game-cta" data-action="slang-say-next">${last ? L('Done','Tamam','تمام','Listo') : L('Next scene','Sonraki sahne','صحنه بعدی','Siguiente escena')}</button>`
+      : `<button class="btn btn-ghost" data-action="slang-say-skip">${L('Skip to the game','Oyuna geç','برو سراغ بازی','Saltar al juego')}</button>`}
+  </div>`;
+}
+function slangSaySummary(s){
+  const y = state.viewParams.say;
+  if(!y || y.setId !== s.id || !y.done || !y.rounds.length || y.answered === 'skipped') return '';
+  return ' ' + L(`You placed ${y.right} of ${y.rounds.length} scenes right.`, `${y.rounds.length} sahneden ${y.right}'ini doğru yerleştirdin.`, `${y.right} از ${y.rounds.length} صحنه را درست گفتی.`, `Acertaste ${y.right} de ${y.rounds.length} escenas.`);
+}
+
 function renderVocabSet(id, cardIndex){
   const s = VOCAB_SETS.find(x=>x.id===id);
   if(!s) return (typeof renderComingSoon === 'function' ? renderComingSoon() : renderNotFound());
   const d = deckState(s);
   const soft = s.category === 'slang' ? 'var(--cat-diag-soft)' : 'var(--cat-voc-soft)';
+  if(d.done && s.category === 'slang'){ const say = slangSayHtml(s); if(say) return say; }   // Say it? beat before the quiz
   if(d.done) return `<div class="fade-in game-screen">
     ${gameTopHtml(setTitle(s))}
     <div class="game-card">
       <div class="game-result-title">${L('Deck sorted','Deste sıralandı','دسته مرتب شد','Baraja ordenada')}</div>
-      <div class="game-result-line">${L(`You kept ${d.kept} straight away.`, `${d.kept} kartı hemen tuttun.`, `${d.kept} کارت را همان اول بلد بودی.`, `Sabías ${d.kept} a la primera.`)}${d.again.length ? ' ' + L(`${d.again.length} took a second look.`, `${d.again.length} karta ikinci kez baktın.`, `${d.again.length} کارت را دوباره دیدی.`, `${d.again.length} necesitaron un segundo vistazo.`) : ''}</div>
+      <div class="game-result-line">${L(`You kept ${d.kept} straight away.`, `${d.kept} kartı hemen tuttun.`, `${d.kept} کارت را همان اول بلد بودی.`, `Sabías ${d.kept} a la primera.`)}${d.again.length ? ' ' + L(`${d.again.length} took a second look.`, `${d.again.length} karta ikinci kez baktın.`, `${d.again.length} کارت را دوباره دیدی.`, `${d.again.length} necesitaron un segundo vistazo.`) : ''}${s.category === 'slang' ? esc(slangSaySummary(s)) : ''}</div>
       <button class="btn btn-primary game-cta" data-action="start-vocab-quiz" data-id="${s.id}">${L('Play Game!','Oyunu Oyna!','بازی کن!','¡Juega!')}</button>
     </div>
   </div>`;
@@ -16074,6 +16162,33 @@ const HANDLERS = {
     const backView = goal ? 'goal-level-detail' : 'grammar-list';
     const backParams = goal ? {goal, level: state.viewParams.level, tab:'grammar'} : {level: state.viewParams.level};
     startQuiz('grammar', t.id, grammarQuizQuestions(effective), backView, backParams, {goal: variant ? goal : null});
+  },
+  // Slang "Say it?" (uVzMAAGg): one tap per scene; right = cheer, wrong = a plain line naming the scene.
+  'slang-say'(el, e){
+    const s = VOCAB_SETS.find(x=>x.id===state.viewParams.id), y = s && state.viewParams.say;
+    if(!s || !y || y.setId !== s.id || y.answered || y.done) return;
+    const r = y.rounds[y.i], sc = SLANG_SCENES[r.scene], card = s.cards[r.card];
+    const a = el.dataset.a === 'say' ? 'say' : 'not', ok = (a === 'say') === slangSayOk(sc, card);
+    y.answered = a;
+    const pt = tapPoint(e) || centerOf(el);
+    if(ok){ y.right++; if(a === 'say') y.hits[card.word] = r.scene; sfx('correct'); queueFx(()=>{ fxCorrectButton(document.querySelector('[data-action="slang-say"][data-a="'+a+'"]'), pt); companionCheer(); }); }
+    else { sfx('wrong'); queueFx(companionOops); }
+    save(); render();
+  },
+  'slang-say-next'(){
+    const s = VOCAB_SETS.find(x=>x.id===state.viewParams.id), y = s && state.viewParams.say;
+    if(!s || !y || y.done) return;
+    y.i++; y.answered = null;
+    if(y.i >= y.rounds.length){
+      y.done = true;
+      if(!state.progress.slangSay) state.progress.slangSay = {};
+      state.progress.slangSay[s.id] = {right:y.right, total:y.rounds.length, scenes:y.hits, date:todayISO()};
+    }
+    save(); render(); window.scrollTo(0,0);
+  },
+  'slang-say-skip'(){
+    const y = state.viewParams.say; if(!y) return;
+    y.done = true; y.answered = 'skipped'; save(); render();
   },
   'start-vocab-quiz'(el){
     const s = VOCAB_SETS.find(x=>x.id===el.dataset.id);

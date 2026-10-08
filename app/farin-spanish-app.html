@@ -584,6 +584,11 @@
   .sh-caption{font-family:'Fredoka',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; font-weight:700; font-size:20px; color:var(--ink);}
   .sh-sub{font-size:13.5px; font-weight:700; color:var(--ink-soft); margin-top:-8px;}
   .sh-grid{display:flex; flex-wrap:wrap; justify-content:center; gap:10px; margin:6px 0 4px;}
+  /* Light the shelf (FCgBqtei): the face-down deck behind the stage card, the closing sweep, the Kept beat */
+  .sh-deck{position:relative; display:inline-block;}
+  .sh-deck .deck-ghost{border-radius:10px;}
+  .sh-lit{display:inline-block; border-radius:14px;}
+  .sh-sweep .sh-lit .sv-shine, .sh-sweep .sh-lit .sv-kept{opacity:0;}
   /* Completion sequence (§3): stat stickers, the souvenir flip, the caption. */
   .cel-stickers{display:flex; flex-wrap:wrap; justify-content:center; gap:6px; margin-top:10px;}
   .cel-sticker{display:inline-block; background:#fff; color:var(--clay-orange-deep); font-family:'Fredoka',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; font-weight:700; font-size:16px; padding:4px 12px; border-radius:999px; box-shadow:var(--clay-shadow-soft), 0 0 0 1.5px color-mix(in srgb, var(--cat-review) 60%, transparent); opacity:0;}
@@ -16062,12 +16067,16 @@ function renderShuffle(){
   if(!sh || !sh.cards || !sh.cards.length) return `<div class="fade-in game-screen">${gameTopHtml(title)}<button class="btn btn-primary game-cta" data-action="back-to-roadmap">${L('Back to roadmap','Yol haritasına dön','بازگشت به نقشه راه','Volver a la hoja de ruta')}</button></div>`;
   if(sh.finished){
     const n = sh.cards.length;
+    // Light the shelf (FCgBqtei): the closing sweep lights each card's shine mark in turn (once; tap skips).
+    const sweep = !sh.swept && !reducedMotion();
+    if(sweep){ sh.swept = true; queueFx(fxShuffleSweep); }
+    const kept = sh.cards.filter(c=>c.kept).length;
     return `<div class="fade-in game-screen">
       ${gameTopHtml(title)}
       <div class="game-card tight badge-unlock-shine">
         <div class="game-result-title">${sh.mode === 'warm' ? L('Warmed up!','Isındın!','گرم شدی!','¡Calentamiento hecho!') : L('All shined up!','Hepsi parlıyor!','همه درخشیدند!','¡Todo brilla!')}</div>
-        <p class="game-result-line">${L(`${n} souvenir${n===1?'':'s'} reviewed`, `${n} hatıra tekrar edildi`, `${n} یادگاری مرور شد`, `${n} recuerdo${n===1?'':'s'} repasado${n===1?'':'s'}`)}</p>
-        <div class="sh-grid">${sh.cards.map(c=>souvenirCardHtml(c.sv, 'mini')).join('')}</div>
+        <p class="game-result-line">${L(`${n} souvenir${n===1?'':'s'} reviewed`, `${n} hatıra tekrar edildi`, `${n} یادگاری مرور شد`, `${n} recuerdo${n===1?'':'s'} repasado${n===1?'':'s'}`)}${kept ? ' · ' + shuffleKeptLine(kept) : ''}</p>
+        <div class="sh-grid${sweep ? ' sh-sweep' : ''}" id="sh-grid" data-action="shuffle-sweep-skip">${sh.cards.map((c,i)=>`<div class="sh-lit" id="sh-lit-${i}">${souvenirCardHtml(c.sv, 'mini')}</div>`).join('')}</div>
         <button class="btn btn-primary game-cta" style="margin-top:14px;" data-action="back-to-roadmap">${L('Back to roadmap','Yol haritasına dön','بازگشت به نقشه راه','Volver a la hoja de ruta')}</button>
       </div>
     </div>`;
@@ -16093,13 +16102,16 @@ function renderShuffle(){
   const a = step.c + 1, b = sh.cards.length;
   const longOpts = item.options.some(o=>String(o).length > 26);
   const missed = sh.answered && sh.selected !== item.correct;
+  // Light the shelf (FCgBqtei): the cards still waiting sit face down behind this one.
+  const left = shuffleLeft(sh, step.c);
+  if(!step.retry && step.k === 0 && !sh.answered && sh.drawn !== sh.pos){ sh.drawn = sh.pos; if(step.c > 0) queueFx(fxShuffleDraw); }
   return `<div class="fade-in game-screen">
     ${gameTopHtml(title)}
     <div class="game-status">
       <span class="game-status-text">${step.retry ? L('One more look','Bir kez daha','یک نگاه دیگر','Una mirada más') : L(`Souvenir ${a} of ${b}`, `Hatıra ${a}/${b}`, `یادگاری ${a} از ${b}`, `Recuerdo ${a} de ${b}`)}</span>
-      <span class="game-status-end">${quizStreakChip({streak:sh.streak, correct:sh.cards.reduce((n,c)=>n + c.first.filter(x=>x===true).length, 0)})}</span>
+      <span class="game-status-end">${left ? `<span class="game-chip" id="sh-left">${esc(shuffleLeftLabel(left))}</span>` : ''}${quizStreakChip({streak:sh.streak, correct:sh.cards.reduce((n,c)=>n + c.first.filter(x=>x===true).length, 0)})}</span>
     </div>
-    <div class="sh-stage">${souvenirCardHtml(card.sv, 'tiny', souvenirBackHtml(card.sv))}</div>
+    <div class="sh-stage"><div class="sh-deck" id="sh-deck">${deckGhostsHtml(Math.min(2, left), 'var(--cat-review-soft)')}${souvenirCardHtml(card.sv, 'tiny', souvenirBackHtml(card.sv))}</div></div>
     <div class="game-card${longOpts ? ' tight' : ''}">${quizPromptHtml(item, qv)}</div>
     <div class="game-opts">
       ${item.options.map((opt,i)=>{
@@ -16124,6 +16136,80 @@ function fxShuffleReveal(){
     sparkBurst(c.x, c.y, 10, '#ffd166', 110);
     sfx('reveal'); buzz([8,40,8]);
   }, reducedMotion() ? 0 : 260);
+  // Light the shelf (FCgBqtei): the first item in this Shuffle that reaches its Kept box gets the Kept beat.
+  const sh = state.viewParams && state.viewParams.sh;
+  if(sh && sh.reveal != null && sh.keptBeat === sh.reveal) fxShuffleKept();
+}
+/* "Light the shelf" (FCgBqtei; spec §4.8). Presentation only, no scheduling change:
+   (1) the cards still to come sit face down behind the stage card (deckGhostsHtml, two
+   layers at most) with an "n left" chip; the next card is drawn off the deck;
+   (2) closing sweep: on the results card each reviewed card's shine mark ticks on in turn,
+   160 ms apart, one note each up a C5-E5-G5-C6 ladder (playPlink, on the audio clock, so no
+   timers; muted with the other sounds); a tap on the cards finishes it at once;
+   (3) the Kept beat: when an item crosses SRS_KEPT_BOX for the first time (hi was below it),
+   its card scales up at the reveal and the foil corner slides in with sfx('stamp'). At most
+   one per Shuffle (sh.keptBeat); every kept card gets the "Kept!" caption as before.
+   Reduced motion: no deck draw, no sweep (marks shown at once), no slide; the stamp still sounds. */
+const SH_LADDER = [523.25, 659.25, 783.99, 1046.5];   // C5 E5 G5 C6
+function shuffleLadder(n){
+  if(n <= 0) return [];
+  if(n <= SH_LADDER.length) return SH_LADDER.slice(SH_LADDER.length - n);
+  const five = [523.25, 587.33, 659.25, 783.99, 1046.5];   // C5 D5 E5 G5 C6
+  return Array.from({length:n}, (x,i)=>five[Math.min(i, five.length - 1)]);
+}
+// Cards that are still face down: not decided yet and not the one on the stage.
+function shuffleLeft(sh, cur){ return sh && sh.cards ? sh.cards.filter((c,i)=>i !== cur && !c.done).length : 0; }
+function shuffleLeftLabel(n){ return L(`${n} left`, `${n} kaldı`, `${n} تا مانده`, n === 1 ? 'Queda 1' : `Quedan ${n}`); }
+function shuffleKeptLine(k){ return L(`${k} kept for good`, `${k} tanesi artık kalıcı`, `${k} تا برای همیشه ماندگار شد`, `${k} guardado${k===1?'':'s'} para siempre`); }
+function fxShuffleDraw(){
+  const deck = document.getElementById('sh-deck');
+  const card = deck && deck.querySelector('.sv-box');
+  anim(card, [{transform:'translate(10px, 10px) rotate(4deg)', opacity:.6}, {transform:'translate(0, 0) rotate(0deg)', opacity:1}], {duration:260, easing:SPRING});
+}
+function fxShuffleKept(){
+  const box = document.getElementById('sh-sv');
+  if(!box) return;
+  const corner = box.querySelector('.cel-front .sv-kept'), tag = box.querySelector('.cel-front .sv-shine-kept');
+  const at = reducedMotion() ? 0 : 640;
+  anim(box, [{transform:'scale(1)'}, {transform:'scale(1.14)', offset:.45}, {transform:'scale(1)'}], {duration:560, delay:at, easing:'ease-out'});
+  anim(corner, [{transform:'translate(-100%, 100%)', opacity:0}, {transform:'translate(0, 0)', opacity:.95}], {duration:420, delay:at, easing:SPRING, fill:'backwards'});
+  anim(tag, [{transform:'scale(.4)', opacity:0}, {transform:'scale(1)', opacity:1}], {duration:320, delay:at + 200, easing:SPRING, fill:'backwards'});
+  setTimeout(()=>{
+    const el = document.getElementById('sh-sv');
+    if(!el) return;
+    sfx('stamp'); buzz([10,30,18]);
+    const c = centerOf(el);
+    sparkBurst(c.x, c.y, 14, '#c9a7ff', 130);
+  }, at);
+}
+let shSweepAnims = [];
+function fxShuffleSweep(){
+  const sh = state.viewParams && state.viewParams.sh;
+  const grid = document.getElementById('sh-grid');
+  if(!sh || !grid) return;
+  const n = sh.cards.length, gap = 160, t0 = 420;
+  shSweepAnims = [];
+  const keep = a=>{ if(a) shSweepAnims.push(a); };
+  sh.cards.forEach((c,i)=>{
+    const lit = document.getElementById('sh-lit-' + i);
+    if(!lit) return;
+    const at = t0 + i * gap;
+    lit.querySelectorAll('.sv-shine, .sv-kept').forEach(m=>keep(anim(m, [{opacity:0, transform:'scale(.4)'}, {opacity:m.classList.contains('sv-kept') ? .95 : 1, transform:'scale(1)'}], {duration:280, delay:at, easing:SPRING, fill:'forwards'})));
+    keep(anim(lit, [{transform:'translateY(0) scale(1)', filter:'brightness(1)'}, {transform:'translateY(-6px) scale(1.07)', filter:'brightness(1.2)', offset:.4}, {transform:'translateY(0) scale(1)', filter:'brightness(1)'}], {duration:380, delay:at, easing:'ease-out'}));
+  });
+  // a safety net: if the browser could not animate, the marks must still show
+  if(!shSweepAnims.length) grid.classList.remove('sh-sweep');
+  shuffleSweepSound(n, t0);
+}
+// The ladder, scheduled on the audio clock (one plink per card, 160 ms apart).
+function shuffleSweepSound(n, t0){
+  if(sfxMuted) return;
+  try{
+    const ctx = sfxCtx();
+    ensureReverbBus();
+    const base = ctx.currentTime + (t0 || 0) / 1000;
+    shuffleLadder(n).forEach((f,i)=>playPlink(f, base + i * 0.16, 0.06, 0.5, true));
+  }catch(e){}
 }
 function finishShuffle(sh){
   sh.finished = true;
@@ -18246,6 +18332,8 @@ const HANDLERS = {
     hideCharTip(true);
     go('souvenir-shuffle', {sh});
   },
+  // Light the shelf (FCgBqtei): a tap on the cards finishes the closing sweep at once.
+  'shuffle-sweep-skip'(){ shSweepAnims.forEach(a=>{ try{ a.finish(); }catch(e){} }); shSweepAnims = []; const g = document.getElementById('sh-grid'); if(g) g.classList.remove('sh-sweep'); },
   'shuffle-answer'(el, e){
     const sh = state.viewParams && state.viewParams.sh;
     if(!sh || sh.answered || sh.finished || sh.reveal != null) return;
@@ -18259,9 +18347,12 @@ const HANDLERS = {
         // the box is decided on the first attempts
         card.done = true;
         card.good = card.first.filter(Boolean).length;
+        const hiBefore = (state.progress.srs[card.id] && state.progress.srs[card.id].hi) || 0;
         card.counted = srsReview(card.id, card.good);
         const entry = state.progress.srs[card.id];
         if(entry) entry.vi = card.nextVi;
+        // Light the shelf (FCgBqtei): crossing into Kept for the first time; the first such card gets the beat.
+        if(entry && hiBefore < SRS_KEPT_BOX && (entry.hi || 0) >= SRS_KEPT_BOX){ card.kept = true; if(sh.keptBeat == null) sh.keptBeat = step.c; }
       }
     }
     sh.streak = ok ? (sh.streak||0) + 1 : 0;

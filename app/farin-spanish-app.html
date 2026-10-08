@@ -277,6 +277,37 @@
   .game-tile.stamp.line::after{content:''; position:absolute; top:-60%; left:-60%; width:35%; height:220%; background:linear-gradient(120deg, transparent, rgba(255,255,255,.75), transparent); transform:rotate(22deg); animation:badge-shine-sweep 2.2s ease-in-out infinite; pointer-events:none;}
   .game-tile.pulse{animation:build-ear-pulse 1s ease-in-out infinite; border-color:var(--cat-voc);}
   .bingo-clue{margin-top:12px;}
+  /* Five new games wave A (Jq6f9OFv): Mini Cross - grid, clue bar, in-game keyboard (spec §7.6 tokens) */
+  .cross-card{padding:14px 10px;}
+  .cross-grid-wrap{position:relative; width:max-content; max-width:100%; margin:0 auto; border-radius:12px; overflow:hidden; padding:2px;}
+  .cross-grid-wrap.gold::after{content:''; position:absolute; top:-60%; left:-60%; width:35%; height:220%; background:linear-gradient(120deg, transparent, rgba(255,255,255,.8), transparent); transform:rotate(22deg); animation:badge-shine-sweep 1.4s ease-in-out 2; pointer-events:none;}
+  .cross-grid{display:grid; gap:3px; --cell:34px;}
+  .cross-blank{width:var(--cell); height:var(--cell);}
+  .cross-cell{position:relative; width:var(--cell); height:var(--cell); box-sizing:border-box; border-radius:8px; border:2px solid var(--border); background:var(--bg-elevated); color:var(--ink); padding:0; display:flex; align-items:center; justify-content:center; font-family:'Fredoka',-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; font-weight:700; font-size:calc(var(--cell) * .56); line-height:1; text-transform:uppercase; cursor:pointer; -webkit-tap-highlight-color:transparent; transition:background .12s ease, border-color .12s ease, color .12s ease;}
+  .cross-cell.pop{animation:cross-pop .22s ease-out both;}
+  .cross-cell.word{background:var(--cat-voc-soft);}
+  .cross-cell.cur{border-color:var(--cat-voc); box-shadow:0 0 0 2px color-mix(in srgb, var(--cat-voc) 35%, transparent);}
+  .cross-cell.lock{color:color-mix(in srgb, var(--cat-voc) 70%, var(--ink));}
+  .cross-cell.ok{background:var(--cat-voc); border-color:var(--cat-voc); color:#fff;}
+  .cross-cell.bad .cross-ch{color:var(--error);}
+  .cross-cell:disabled{cursor:default;}
+  .cross-num{position:absolute; top:1px; left:2px; font-family:inherit; font-size:9px; font-weight:800; line-height:1; color:var(--ink-faint);}
+  .cross-cell.ok .cross-num{color:rgba(255,255,255,.85);}
+  .cross-dot{position:absolute; top:3px; right:3px; width:5px; height:5px; border-radius:50%; background:var(--cat-gram);}
+  .cross-cell .sparkle{top:-4px; right:-4px; left:auto; width:8px; height:8px; color:var(--cat-review); z-index:2;}
+  .cross-clue{display:flex; align-items:center; gap:4px; min-height:52px; padding:6px; border-radius:16px; background:var(--ink); color:var(--bg-elevated); font-size:15px; font-weight:800; line-height:1.3;}
+  .cross-clue-text{flex:1 1 auto; min-width:0; text-align:center; padding:2px 4px; overflow-wrap:anywhere;}
+  .cross-clue-text small{display:block; font-size:11.5px; font-weight:700; opacity:.7; margin-bottom:2px;}
+  .cross-clue-alt{display:block; margin-top:4px; font-size:13.5px; font-weight:700; opacity:.85;}
+  .cross-arrow{flex:0 0 44px; height:44px; border:0; border-radius:12px; background:transparent; color:inherit; font-family:inherit; font-size:28px; font-weight:800; line-height:1; padding:0 0 4px; cursor:pointer;}
+  .cross-arrow:active{background:rgba(255,255,255,.14);}
+  .cross-kb{display:flex; flex-direction:column; gap:6px; margin:0 -10px; -webkit-user-select:none; user-select:none; touch-action:manipulation;}
+  .cross-kb-row{display:flex; justify-content:center; gap:3px;}
+  .cross-key{flex:0 1 calc((100% - 27px) / 10); max-width:44px; min-width:0; height:44px; border:0; border-radius:10px; padding:0; background:var(--bg-elevated); color:var(--ink); box-shadow:var(--clay-shadow-soft); font-family:'Fredoka',-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; font-weight:700; font-size:18px; text-transform:uppercase; cursor:pointer; -webkit-tap-highlight-color:transparent; transition:transform .06s ease, background .1s ease;}
+  .cross-key:active{transform:scale(.94); background:var(--bg-sunken);}
+  .cross-key.wide{flex-basis:calc((100% - 27px) / 10 * 1.5 + 2px); max-width:66px; font-size:20px;}
+  .cross-help{display:flex; justify-content:center; gap:8px; flex-wrap:wrap; margin-top:-6px;}
+  @keyframes cross-pop{from{transform:scale(.6); opacity:0;} to{transform:scale(1); opacity:1;}}
   /* Gamify every card type (tobT7nwI): Catch these */
   .catch-tiles{margin-top:10px;}
   .catch-tiles.four{grid-template-columns:repeat(2, minmax(0, 1fr));}
@@ -6490,7 +6521,8 @@ function markGameComplete(refId){
   if(!refId) return;
   state.progress.lastGameAt = Date.now();
   if(!state.progress.completedGames) state.progress.completedGames = [];
-  if(!state.progress.completedGames.includes(refId)) state.progress.completedGames.push(refId);
+  // free play (Games shelf, "Mini Cross with these words") counts as activity, never as a roadmap node
+  if(!(state.viewParams && state.viewParams.free) && !state.progress.completedGames.includes(refId)) state.progress.completedGames.push(refId);
   markActivity();
 }
 /* Gamification (Trello 4bDl1BS3, ported from the English app; spec approved
@@ -6581,6 +6613,7 @@ function srsReview(id, good){
 // Say It Back never do.
 function srsGameReview(setId, good){
   notePlayed(setId);
+  if(state.viewParams && state.viewParams.free) return false;   // free play never touches the scheduler
   const e = setId && state.progress.srs[setId];
   if(!e || (e.kind !== 'vocab' && e.kind !== 'story') || !srsIsDue(e)) return false;
   srsOutcome(e, good);
@@ -7822,7 +7855,7 @@ function buildRoadmap(profile){
      played, so the stage-2 game never reuses a stage-1 set. Build It falls back
      when the grammar taught so far gives fewer than 4 sentences: Trap Dash from
      B1, Word Rush below; Bingo needs 9 words, Listen & Type 3 sentences. */
-  const playedSetIds = new Set(((state.progress && state.progress.completedGames) || []).map(r=>String(r).replace(/-(match|dictation|bingo|echo)$/, '')));
+  const playedSetIds = new Set(((state.progress && state.progress.completedGames) || []).map(r=>String(r).replace(/-(match|dictation|bingo|echo|cross)$/, '')));
   // the sets the stage-1 games of this level use (stage-1 roadmap rebuilt to find them)
   let stage1Sets = new Set();
   if(stage === 2){
@@ -7830,7 +7863,7 @@ function buildRoadmap(profile){
   }
   const pickGameSet = (kind) => {
     const usedByGames = items.filter(it=>it.type==='game' && it.setId).map(it=>it.setId);
-    const fits = s => !!s && (kind !== 'bingo' || s.cards.length >= 9) && ((kind !== 'dictation' && kind !== 'echo') || s.cards.filter(c=>c.sentence).length >= 3);
+    const fits = s => !!s && (kind !== 'bingo' || s.cards.length >= 9) && (kind !== 'cross' || crossSetOk(s)) && ((kind !== 'dictation' && kind !== 'echo') || s.cards.filter(c=>c.sentence).length >= 3);
     const recent = items.filter(it=>it.type==='vocab').map(it=>VOCAB_SETS.find(s=>s.id===it.refId)).reverse();
     const half = Math.ceil(gamePool.length/2);
     const stagePool = stage===2 ? gamePool.slice(half) : gamePool.slice(0, half);
@@ -8427,6 +8460,7 @@ function ensureGolden(roadmap){
 }
 function gameDisplayName(kind){
   if(kind === 'build') return L('Build It','Cümle Kur','جمله بساز','Constrúyelo');
+  if(kind === 'cross') return L('Mini Cross','Mini Bulmaca','جدول کوچک','Minicrucigrama');
   if(kind === 'bingo') return L('Word Bingo','Kelime Tombalası','بینگوی کلمات','Bingo de palabras');
   if(kind === 'hunt') return L('Story Hunt','Hikaye Avı','شکار داستان','Caza en la historia');
   if(kind === 'echo') return L('Say It Back','Tekrar Et','بگو ببینم','Repítelo');
@@ -8438,6 +8472,7 @@ function gameDisplayName(kind){
 function viewGameKind(view){
   if(view === 'game-build') return 'build';
   if(view === 'game-bingo') return 'bingo';
+  if(view === 'game-cross') return 'cross';
   if(view === 'game-hunt') return 'hunt';
   if(view === 'game-echo') return 'echo';
   if(view === 'game-chores-room' || view === 'game-chores-building') return 'chores';
@@ -8445,6 +8480,7 @@ function viewGameKind(view){
 }
 // Stats of a finished round, in one shape for all three games.
 function gameRoundStats(kind, round){
+  if(kind === 'cross'){ const total = round.words.length, clean = round.clean||0, time = Math.max(1, Math.round(((round.finishedAt||Date.now()) - round.startedAt)/1000)); return {clean, total, reveals:round.reveals||0, hints:round.hints||0, time, perfect:total>0 && clean===total && !(round.hints||0)}; }
   if(kind === 'bingo') return {first:round.first||0, total:BINGO_SCORED_CALLS, perfect:(round.first||0) === BINGO_SCORED_CALLS};
   if(kind === 'hunt'){ const total = round.targets.length; return {clean:round.clean||0, total, perfect:total>0 && round.clean===total}; }
   if(kind === 'chores'){ const total = round.total || 0, first = round.smooth || 0; return {first, total, perfect:total>0 && first===total, place:chPlaceShort(chLoc(round.placeId))}; }
@@ -8467,6 +8503,7 @@ function gameRoundStats(kind, round){
 function gameRecordText(kind, st){
   const name = gameDisplayName(kind);
   if(kind === 'build') return name+' · '+st.firstTry+'/'+st.total+' '+L('first try','ilk denemede','در اولین تلاش','a la primera');
+  if(kind === 'cross') return name+' · '+st.clean+'/'+st.total+' '+L('clean','temiz','بی‌خطا','limpias');
   if(kind === 'bingo') return name+' · '+st.first+'/'+st.total+' '+L('first tap','ilk dokunuşta','با اولین لمس','al primer toque');
   if(kind === 'hunt') return name+' · '+st.clean+'/'+st.total+' '+L('clean','temiz','بی‌خطا','limpias');
   if(kind === 'chores') return chFmt(chChrome('record'), {n:st.first, total:st.total});   // "Cozy Chores · 4/5 smooth"
@@ -8476,6 +8513,7 @@ function gameRecordText(kind, st){
   return name+' · '+st.pct+'%';
 }
 function gameStatStickers(kind, st){
+  if(kind === 'cross') return [st.clean+'/'+st.total+' '+L('clean','temiz','بی‌خطا','limpias')].concat(st.reveals ? [] : [L('No reveals','Harf açmadan','بدون فاش‌کردن حرف','Sin letras reveladas')]);
   if(kind === 'bingo') return [st.first+'/'+st.total+' '+L('first tap','ilk dokunuşta','با اولین لمس','al primer toque'), L('Full card','Tam kart','کارت کامل','Cartón lleno')];
   if(kind === 'hunt') return [st.clean+'/'+st.total+' '+L('clean','temiz','بی‌خطا','limpias')];
   if(kind === 'chores') return [st.perfect ? chChrome('stickerPerfect') : chFmt(chChrome('sticker'), {n:st.first, total:st.total})].concat(st.place ? [st.place] : []);
@@ -8489,6 +8527,13 @@ function gameStatStickers(kind, st){
 function updateGameBest(kind, st){
   const pr = state.progress; if(!pr.gameBests) pr.gameBests = {};
   const prev = pr.gameBests[kind];
+  if(kind === 'cross'){
+    // best = most clean words; the fastest time is kept alongside for the results card (D5 = B), never shown during play
+    const better = !prev || (st.clean||0) > (prev.clean||0);
+    const time = Math.min(prev && prev.time ? prev.time : Infinity, st.time || Infinity);
+    pr.gameBests.cross = Object.assign({}, better ? {clean:st.clean, total:st.total} : prev, {time:isFinite(time) ? time : null});
+    return !!prev && better;
+  }
   const metric = kind==='match' ? (b=>-(b.time||9999)) : (kind==='trap' ? (b=>b.score||0) : ((kind==='build' || kind==='bingo' || kind==='chores') ? (b=>b.first||0) : (kind==='hunt' ? (b=>b.clean||0) : (kind==='echo' ? (b=>b.clear||0) : (b=>b.pct||0)))));
   const cur = {time:st.time||null, score:st.score!=null ? st.score : null, pct:st.pct!=null ? st.pct : null,
     first:st.firstTry!=null ? st.firstTry : (st.first!=null ? st.first : null), clean:st.clean!=null ? st.clean : null, clear:st.clear!=null ? st.clear : null};
@@ -8639,6 +8684,7 @@ function celebrationExtras(view, vp, kind){
       const st = gameRoundStats(gk, vp.round);
       extra.stickers = gameStatStickers(gk, st);
       extra.newBest = updateGameBest(gk, st);
+      if(vp.free) return extra;   // free play: stickers and bests only - no souvenir, no roadmap node
       const node = findRoadmapNode(n=>n.type==='game' && n.refId===vp.refId);
       if(node) ctx = {node, stats:st, perfect:st.perfect, kind:gk, round:vp.round};
       const fresh = awardSouvenirs(ctx);
@@ -8906,7 +8952,7 @@ function maybeCelebrate(){
     low = state.quiz.correct/state.quiz.questions.length < .5;
   } else if(v==='game-match' && vp.round && vp.round.matchedKeys && vp.round.matchedKeys.length === vp.round.pairCount){
     target = vp.round; kind = 'game';
-  } else if((v==='game-dictation' || v==='game-trap' || v==='game-build' || v==='game-bingo' || v==='game-hunt' || v==='game-echo' || v==='game-chores-room') && vp.round && vp.round.finished){
+  } else if((v==='game-dictation' || v==='game-trap' || v==='game-build' || v==='game-bingo' || v==='game-cross' || v==='game-hunt' || v==='game-echo' || v==='game-chores-room') && vp.round && vp.round.finished){
     target = vp.round; kind = 'game';
   } else if(v==='studio-round' && vp.checked && vp.result && vp.result.passed){
     target = vp.result; kind = vp.mode;
@@ -11878,10 +11924,19 @@ function fallbackGameSet(minCards){
   const fromRoadmap = currentRoadmap().filter(n=>n.type==='vocab').map(n=>VOCAB_SETS.find(s=>s.id===n.refId)).filter(ok);
   return pool.find(s=>done.includes(s.id)) || fromRoadmap[0] || pool[0] || VOCAB_SETS.find(ok) || null;
 }
+// Results-card buttons shared by the games: back to the roadmap (or the unit, via courseResultCta). From the
+// Games shelf (viewParams.shelf) it is "Back to games" + "Play again" instead. noCourse = the plain button only.
+function gameDoneCta(noCourse){
+  const vp = state.viewParams || {};
+  const back = `<button class="btn btn-primary game-cta" data-action="back-to-roadmap">${vp.shelf ? L('Back to games','Oyunlara dön','بازگشت به بازی‌ها','Volver a los juegos') : L('Back to roadmap','Yol haritasına dön','بازگشت به نقشه راه','Volver a la hoja de ruta')}</button>`;
+  if(vp.shelf) return back + `<button class="btn btn-ghost" style="margin-top:8px;" data-action="shelf-play" data-kind="${esc(viewGameKind(state.view))}">${L('Play again','Tekrar oyna','دوباره بازی کن','Jugar otra vez')}</button>`;
+  return noCourse ? back : courseResultCta(back);
+}
 function gameFallbackNote(vp){
   if(!vp || !vp.fallbackFrom) return '';
   const name = gameDisplayName(vp.fallbackFrom);
   if(vp.fallbackFrom === 'hunt') return L(`${name} opens once you have finished a story. `, `${name} bir hikaye bitirdiğinde açılır. `, `${name} وقتی یک داستان را تمام کنی باز می‌شود. `, `${name} se abre cuando termines una historia. `);
+  if(vp.fallbackFrom === 'cross') return L(`${name} needs more single words than this set has. `, `${name} için bu sette yeterli tek kelime yok. `, `${name} به کلمه‌های تکی بیشتری از این مجموعه نیاز دارد. `, `${name} necesita más palabras sueltas de las que tiene este conjunto. `);
   return L(`${name} opens after a few more grammar steps. `, `${name} birkaç dilbilgisi adımından sonra açılır. `, `${name} بعد از چند قدم گرامر دیگر باز می‌شود. `, `${name} se abre tras unos pasos más de gramática. `);
 }
 /* ============================= GAMIFICATION V3: BUILD IT =============================
@@ -11988,6 +12043,13 @@ function gameKeep(kind, round){
     if(kind === 'chores' && round.plan){
       // the learner's own plan sentence, in their order — the flip side the Shuffle reviews
       return {text:round.plan, say:round.plan, note:chPlaceShort(chLoc(round.placeId))};
+    }
+    if(kind === 'cross' && round.words && round.words.length){
+      // the word that needed most checks or a revealed letter (the longest on a perfect round); flip side = meaning + sentence
+      const cost = (w, wi) => (w.checks - 1) + (crossWordCells(round, wi).some(i=>round.cells[i].revealed) ? 2 : 0);
+      const pick = round.words.map((w,wi)=>({w, c:cost(w, wi)})).sort((a,b)=>b.c - a.c || b.w.len - a.w.len)[0].w;
+      const ui = L(pick.m.en, pick.m.tr, pick.m.fa, pick.m.es) || pick.m.en || '';
+      return {text:pick.w, say:pick.w, note:[ui, pick.sentence].filter(Boolean).join(' · ')};
     }
     if(kind === 'bingo' && round.tiles){
       // a word missed on first tap, else the word that completed a line
@@ -12183,6 +12245,423 @@ function fxBingoStamp(i, pt, newLines, full){
       document.querySelectorAll('[data-action="bingo-tap"]').forEach((t,k)=>anim(t, [{transform:'scale(1)'}, {transform:'scale(.9)', offset:.3}, {transform:'scale(1.06)', offset:.6}, {transform:'scale(1)'}], {duration:420, delay:k*40, easing:'ease-out'}));
     }, 360);
   }
+}
+/* ============================= FIVE NEW GAMES, WAVE A: MINI CROSS =============================
+   Spec: Claude/specs/games-5-new-cards-2026-10-04.md §7 (approved by Farin 2026-10-07, Trello
+   Jq6f9OFv). A pocket criss-cross made of the words of one vocab set the learner has learned:
+   tap a cell, type on the in-game keyboard, a word is checked the moment its last cell fills.
+   Clue by level: the UI-language meaning at A1-A2 (A1 also gives every first letter), the gapped
+   example sentence at B1 ("Show meaning" counts as a hint), the target-language definition at
+   B2-C1 ("Show more" = the gapped sentence, free). Letters match without accents (ñ stays its own
+   letter, ü matches u); a solved word shows its accented form with a sparkle on the changed
+   letter. No timer during play (D5 = B: the time appears on the results card only, as a personal
+   best), no lives, a miss is a soft tick + shake. "clean" = a word solved with no revealed letter;
+   after two failed checks on a word one wrong letter is revealed for the learner. A short set
+   borrows single words from the level's finished stories and other finished sets; at least 4
+   placed words are always the set's own. Fewer than 5 placed words -> Word Bingo (then Word Rush)
+   in start-game, per spec §9. Seed = hash(refId) so a roadmap replay shows the same puzzle; the
+   Games shelf passes no refId and gets a fresh puzzle. */
+const CROSS_MIN_WORDS = 5;
+const CROSS_MAX_SIDE = 9;
+const CROSS_TARGET = {A1:5, A2:6, B1:6, B2:7, C1:7};
+const CROSS_TRIES = 60;
+function crossHash(s){ let h = 2166136261; s = String(s||''); for(let i=0;i<s.length;i++){ h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); } return h >>> 0; }
+function crossRng(seed){ let a = (seed >>> 0) || 1; return ()=>{ a = (a + 0x6D2B79F5) | 0; let t = Math.imul(a ^ (a >>> 15), 1 | a); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
+function crossShuffle(arr, rnd){ const a = arr.slice(); for(let i=a.length-1;i>0;i--){ const j = Math.floor(rnd()*(i+1)); [a[i],a[j]] = [a[j],a[i]]; } return a; }
+// Letters are compared without accents; ñ stays its own letter and ü matches u.
+function crossFold(s){ return String(s||'').toLowerCase().replace(/ñ/g, '\u0001').normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/\u0001/g, 'ñ'); }
+// The one word a card gives the grid: "/" variants and the Spanish article dropped (huntBase), letters only, 3-8 long.
+function crossWordOf(word){ const w = huntBase(word); return /^[a-záéíóúüñ]{3,8}$/i.test(w) ? w : ''; }
+// The example sentence with the word gapped, or '' when the sentence doesn't contain the word.
+function crossGap(sentence, word){
+  const s = String(sentence||'').trim(); if(!s || !word) return '';
+  const re = new RegExp('(^|[^\\p{L}])(' + reEsc(word) + ')(?!\\p{L})', 'iu');
+  return re.test(s) ? s.replace(re, (m, pre)=>pre + '____') : '';
+}
+function crossCardsOf(cards, own){
+  const out = [], seen = new Set();
+  (cards||[]).forEach(c=>{
+    const w = crossWordOf(c && c.word); if(!w) return;
+    const f = crossFold(w); if(seen.has(f)) return; seen.add(f);
+    const m = (c.meaning && typeof c.meaning === 'object') ? c.meaning : {en:String(c.meaning||'')};
+    out.push({w, fold:f, len:w.length, m:{en:m.en||'', tr:m.tr||'', fa:m.fa||'', es:m.es||''}, sentence:c.sentence||'', own:!!own});
+  });
+  return out;
+}
+// A word that sits inside another word (cook / cooker) is skipped: the filler first, else the shorter one.
+function crossDropNested(list){
+  const drop = new Set();
+  for(let i=0;i<list.length;i++) for(let j=0;j<list.length;j++){
+    if(i===j || drop.has(i) || drop.has(j)) continue;
+    const a = list[i], b = list[j];
+    if(a.fold.length < b.fold.length && b.fold.indexOf(a.fold) >= 0) drop.add(a.own && !b.own ? j : i);
+  }
+  return list.filter((x,i)=>!drop.has(i));
+}
+// The clue for one word at this level, with its optional second text ("Show meaning" = a hint, "Show more" = free).
+// lang 'tl' = target-language text (always LTR), 'ui' = the learner's own language.
+function crossClue(c, level){
+  const ui = L(c.m.en, c.m.tr, c.m.fa, c.m.es) || c.m.en || '';
+  const gap = crossGap(c.sentence, c.w);
+  const def = c.m[TTS_LANG.slice(0, 2)] || '';
+  const has = s => crossFold(s).indexOf(c.fold) >= 0;
+  const UI = {text:ui, lang:'ui'}, GAP = {text:gap, lang:'tl'}, DEF = {text:def, lang:'tl'};
+  const mk = (main, alt, kind) => ({text:main.text, lang:main.lang, alt:alt ? alt.text : '', altLang:alt ? alt.lang : '', altKind:alt ? kind : ''});
+  if(level === 'A1' || level === 'A2') return (ui && !has(ui)) ? mk(UI, null) : (gap ? mk(GAP, null) : mk(UI, null));
+  if(level === 'B1') return gap ? mk(GAP, ui ? UI : null, 'meaning') : mk(UI, null);
+  if(def && !has(def)) return mk(DEF, gap ? GAP : (ui && ui !== def ? UI : null), gap ? 'more' : 'meaning');
+  if(gap) return mk(GAP, (ui && ui !== def && !has(ui)) ? UI : null, 'meaning');
+  return mk(UI, null);
+}
+// The set's own single words plus, when asked, fillers: the level's finished stories, then other finished sets at the level.
+function crossCandidates(setObj, level, withFill){
+  const out = crossCardsOf(setObj.cards, true);
+  if(withFill){
+    const seen = new Set(out.map(c=>c.fold));
+    const pr = state.progress || {};
+    (pr.completedStories||[]).map(id=>STORY_LIBRARY_FREE.find(s=>s.id===id)).filter(s=>s && s.level===level).forEach(s=>(s.vocab||[]).forEach(v=>{
+      const w = crossWordOf(v && v.word); if(!w) return; const f = crossFold(w); if(seen.has(f)) return; seen.add(f);
+      out.push({w, fold:f, len:w.length, m:{en:v.en||'', tr:v.tr||'', fa:v.fa||'', es:v.es||''}, sentence:'', own:false});
+    }));
+    (pr.completedVocabSets||[]).map(id=>VOCAB_SETS_FREE.find(s=>s.id===id)).filter(s=>s && s.id!==setObj.id && s.level===level && s.category!=='slang')
+      .forEach(s=>crossCardsOf(s.cards, false).forEach(c=>{ if(!seen.has(c.fold)){ seen.add(c.fold); out.push(c); } }));
+  }
+  return crossDropNested(out).map(c=>Object.assign(c, {clue:crossClue(c, level)})).filter(c=>c.clue.text);
+}
+// One criss-cross attempt: the first word across in the middle, then every next word wherever it crosses a placed
+// word on a shared letter with nothing else touching (more crossings, then a smaller box, win; ties random).
+function crossTryLayout(order, target, rnd){
+  const cells = new Map(), placed = [];
+  const K = (r,c)=>r*64 + c, at = (r,c)=>cells.get(K(r,c));
+  let box = null;
+  const grow = (b, r, c, dir, len)=>({minR:Math.min(b ? b.minR : r, r), maxR:Math.max(b ? b.maxR : r, dir==='A' ? r : r+len-1), minC:Math.min(b ? b.minC : c, c), maxC:Math.max(b ? b.maxC : c, dir==='A' ? c+len-1 : c)});
+  const side = b=>Math.max(b.maxR-b.minR+1, b.maxC-b.minC+1);
+  const area = b=>(b.maxR-b.minR+1)*(b.maxC-b.minC+1);
+  const canPlace = (w, r, c, dir)=>{
+    const dr = dir==='A' ? 0 : 1, dc = dir==='A' ? 1 : 0;
+    if(at(r-dr, c-dc) || at(r+dr*w.len, c+dc*w.len)) return -1;   // would extend another word
+    let k = 0;
+    for(let i=0;i<w.len;i++){
+      const rr = r+dr*i, cc = c+dc*i, cell = at(rr, cc);
+      if(cell){
+        if(cell.ch !== w.w[i] || (dir==='A' ? cell.a : cell.d) >= 0) return -1;   // letter differs, or merges with a word in the same direction
+        k++;
+      } else if(at(rr+dc, cc+dr) || at(rr-dc, cc-dr)) return -1;   // letters may only touch at crossings
+    }
+    return k;
+  };
+  const put = (w, r, c, dir)=>{
+    const dr = dir==='A' ? 0 : 1, dc = dir==='A' ? 1 : 0, idx = placed.length;
+    for(let i=0;i<w.len;i++){
+      const rr = r+dr*i, cc = c+dc*i;
+      let cell = at(rr, cc);
+      if(!cell){ cell = {r:rr, c:cc, ch:w.w[i], fold:w.fold[i], a:-1, d:-1}; cells.set(K(rr,cc), cell); }
+      if(dir==='A') cell.a = idx; else cell.d = idx;
+    }
+    placed.push(Object.assign({}, w, {r, c, dir}));
+    box = grow(box, r, c, dir, w.len);
+  };
+  const first = order[0];
+  put(first, 30, 30 - Math.floor(first.len/2), 'A');
+  let rest = order.slice(1), moved = true;
+  while(moved && placed.length < target && rest.length){
+    moved = false;
+    const left = [];
+    for(const w of rest){
+      if(placed.length >= target){ left.push(w); continue; }
+      const opts = [];
+      cells.forEach(cell=>{
+        for(let i=0;i<w.len;i++){
+          if(w.fold[i] !== cell.fold) continue;
+          if(cell.d < 0){ const b = grow(box, cell.r-i, cell.c, 'D', w.len); if(side(b) <= CROSS_MAX_SIDE){ const k = canPlace(w, cell.r-i, cell.c, 'D'); if(k > 0) opts.push({r:cell.r-i, c:cell.c, dir:'D', k, area:area(b), rnd:rnd()}); } }
+          if(cell.a < 0){ const b = grow(box, cell.r, cell.c-i, 'A', w.len); if(side(b) <= CROSS_MAX_SIDE){ const k = canPlace(w, cell.r, cell.c-i, 'A'); if(k > 0) opts.push({r:cell.r, c:cell.c-i, dir:'A', k, area:area(b), rnd:rnd()}); } }
+        }
+      });
+      if(!opts.length){ left.push(w); continue; }
+      opts.sort((x,y)=>y.k - x.k || x.area - y.area || x.rnd - y.rnd);
+      put(w, opts[0].r, opts[0].c, opts[0].dir);
+      moved = true;
+    }
+    rest = left;
+  }
+  let crossings = 0; cells.forEach(c=>{ if(c.a >= 0 && c.d >= 0) crossings++; });
+  return {placed, cells, box, crossings, area:area(box)};
+}
+// 60 random orders (the set's own words first, the longest own word seeding the grid); the layout with the most
+// words wins, then the most crossings, then the smallest box. null when no layout reaches 5 words with 4 own.
+function crossBestLayout(cands, target, rnd){
+  const own = cands.filter(c=>c.own), fill = cands.filter(c=>!c.own);
+  if(own.length < 4) return null;
+  let best = null;
+  for(let t=0;t<CROSS_TRIES;t++){
+    const o = crossShuffle(own, rnd);
+    let li = 0; o.forEach((w,i)=>{ if(w.len > o[li].len) li = i; });
+    o.unshift(o.splice(li, 1)[0]);
+    const lay = crossTryLayout(o.concat(crossShuffle(fill, rnd)), target, rnd);
+    if(lay.placed.length < CROSS_MIN_WORDS || lay.placed.filter(w=>w.own).length < 4) continue;
+    if(!best || lay.placed.length > best.placed.length || (lay.placed.length === best.placed.length && (lay.crossings > best.crossings || (lay.crossings === best.crossings && lay.area < best.area)))) best = lay;
+  }
+  return best;
+}
+// Cheap pre-check for the shelf / pushGame: can this set host a puzzle at all (4+ single words)?
+function crossSetOk(setObj){ return !!setObj && crossCardsOf(setObj.cards, true).length >= 4; }
+function buildCrossRound(setObj, refId){
+  if(!setObj || !setObj.cards) return null;
+  const level = (state.profile && state.profile.level) || 'A1';
+  const target = CROSS_TARGET[level] || 6;
+  const rnd = crossRng(refId ? crossHash(refId) : (Math.random()*4294967295) >>> 0);
+  const ownOnly = crossCandidates(setObj, level, false);
+  let lay = ownOnly.length >= CROSS_MIN_WORDS ? crossBestLayout(ownOnly, target, rnd) : null;
+  if(!lay || lay.placed.length < target){
+    const more = crossCandidates(setObj, level, true);
+    if(more.length > ownOnly.length){ const l2 = crossBestLayout(more, target, rnd); if(l2 && (!lay || l2.placed.length > lay.placed.length)) lay = l2; }
+  }
+  if(!lay) return null;
+  const rows = lay.box.maxR - lay.box.minR + 1, cols = lay.box.maxC - lay.box.minC + 1;
+  const cells = new Array(rows*cols).fill(null);
+  lay.cells.forEach(c=>{ const r = c.r - lay.box.minR, cc = c.c - lay.box.minC; cells[r*cols+cc] = {r, c:cc, ch:c.ch, fold:c.fold, a:c.a, d:c.d, num:0, entry:'', given:false, revealed:false, locked:false}; });
+  const words = lay.placed.map(w=>({w:w.w, fold:w.fold, len:w.len, r:w.r - lay.box.minR, c:w.c - lay.box.minC, dir:w.dir, own:w.own, num:0, clue:w.clue, m:w.m, sentence:w.sentence, altShown:false, hint:false, checks:0, solved:false}));
+  // Numbering as in a printed crossword: row by row; a cell that starts both an across and a down word has one number.
+  let n = 0;
+  cells.forEach(cell=>{ if(!cell) return; const starts = [cell.a, cell.d].filter(i=>i >= 0 && words[i].r === cell.r && words[i].c === cell.c); if(starts.length){ n++; cell.num = n; starts.forEach(i=>{ words[i].num = n; }); } });
+  if(level === 'A1') words.forEach(w=>{ const cell = cells[w.r*cols+w.c]; cell.entry = cell.fold; cell.given = true; cell.locked = true; });
+  const round = {setId:setObj.id, level, rows, cols, cells, words, dir:'A', cur:0, clean:0, reveals:0, hints:0, combo:0, bad:[], popped:false, finished:false, startedAt:Date.now(), finishedAt:null};
+  crossGoWord(round, crossOrder(round)[0]);
+  return round;
+}
+/* ---- Grid helpers shared by the handlers, the renderer and the smoke harness ---- */
+function crossWordCells(round, wi){ const w = round.words[wi], out = []; for(let i=0;i<w.len;i++) out.push(w.dir==='A' ? w.r*round.cols + w.c + i : (w.r+i)*round.cols + w.c); return out; }
+function crossWordAt(round, i, dir){ const cell = round.cells[i]; return cell ? (dir==='A' ? cell.a : cell.d) : -1; }
+// The word under the cursor in the current direction (switching direction when the cell has no word that way).
+function crossCurWord(round){ let wi = crossWordAt(round, round.cur, round.dir); if(wi < 0){ round.dir = round.dir==='A' ? 'D' : 'A'; wi = crossWordAt(round, round.cur, round.dir); } return wi < 0 ? 0 : wi; }
+// First empty open cell of a word, else its first open cell, else its first cell.
+function crossFirstOpen(round, wi){
+  const idxs = crossWordCells(round, wi);
+  let i = idxs.find(x=>!round.cells[x].locked && !round.cells[x].entry);
+  if(i === undefined) i = idxs.find(x=>!round.cells[x].locked);
+  return i === undefined ? idxs[0] : i;
+}
+// Clue order: all across words by number, then all down words.
+function crossOrder(round){ return round.words.map((w,i)=>i).sort((a,b)=>{ const x = round.words[a], y = round.words[b]; return x.dir===y.dir ? x.num-y.num : (x.dir==='A' ? -1 : 1); }); }
+function crossGoWord(round, wi){ round.dir = round.words[wi].dir; round.cur = crossFirstOpen(round, wi); }
+// ‹ / › : the next (or previous) unsolved word in clue order.
+function crossStep(round, delta){
+  const ord = crossOrder(round), wi = crossCurWord(round);
+  let k = ord.indexOf(wi);
+  for(let n=0;n<ord.length;n++){ k = (k + delta + ord.length) % ord.length; if(!round.words[ord[k]].solved) break; }
+  crossGoWord(round, ord[k]);
+}
+function crossSetReveal(round, i){ const c = round.cells[i]; c.entry = c.fold; c.revealed = true; c.locked = true; }
+// A word is right: lock its cells, count it clean when no letter was revealed, move on. accents = typed letters that
+// now show their accented form (the sparkle). done = the whole grid is solved.
+function crossSolve(round, wi){
+  const w = round.words[wi], idxs = crossWordCells(round, wi);
+  w.solved = true;
+  const accents = idxs.filter(i=>{ const c = round.cells[i]; return !c.locked && c.ch !== c.fold; });
+  idxs.forEach(i=>{ round.cells[i].locked = true; });
+  const clean = !idxs.some(i=>round.cells[i].revealed);
+  if(clean) round.clean++;
+  round.combo = (w.checks === 1 && clean) ? round.combo + 1 : 0;
+  round.bad = [];
+  const done = round.words.every(x=>x.solved);
+  if(!done) crossStep(round, 1);
+  return {ok:true, wi, idxs, accents, combo:round.combo, done};
+}
+// Auto-check once a word's last empty cell fills. A miss keeps the right letters and the wrong ones (shown red for
+// 900ms, still editable); after two failed checks one wrong letter is revealed for the learner.
+function crossCheck(round, wi){
+  const w = round.words[wi], idxs = crossWordCells(round, wi);
+  w.checks++;
+  const bad = idxs.filter(i=>round.cells[i].entry !== round.cells[i].fold);
+  if(!bad.length) return crossSolve(round, wi);
+  round.combo = 0;
+  let auto = null;
+  if(w.checks >= 2){ auto = bad.shift(); crossSetReveal(round, auto); round.reveals++; }
+  if(!bad.length) return Object.assign(crossSolve(round, wi), {auto});
+  round.bad = bad; round.cur = bad[0];
+  return {ok:false, bad:bad.slice(), auto};
+}
+// A letter from the keyboard: fills the cursor cell (skipping locked letters), advances inside the word, checks when full.
+function crossType(round, letter){
+  if(round.finished) return null;
+  let wi = crossCurWord(round);
+  if(round.words[wi].solved){ crossStep(round, 1); wi = crossCurWord(round); if(round.words[wi].solved) return null; }
+  const idxs = crossWordCells(round, wi);
+  let p = Math.max(0, idxs.indexOf(round.cur));
+  while(p < idxs.length && round.cells[idxs[p]].locked) p++;
+  if(p >= idxs.length) return null;
+  round.cells[idxs[p]].entry = letter; round.bad = [];
+  let q = -1;
+  for(let k=p+1;k<idxs.length;k++){ const c2 = round.cells[idxs[k]]; if(!c2.locked && !c2.entry){ q = k; break; } }
+  if(q < 0) for(let k=p+1;k<idxs.length;k++){ if(!round.cells[idxs[k]].locked){ q = k; break; } }
+  round.cur = idxs[q >= 0 ? q : p];
+  if(idxs.every(x=>round.cells[x].entry)) return crossCheck(round, wi);
+  return {typed:true};
+}
+// Backspace: clears the cursor cell, or steps back to the previous open cell and clears that.
+function crossBackspace(round){
+  if(round.finished) return;
+  const wi = crossCurWord(round), idxs = crossWordCells(round, wi);
+  const p = idxs.indexOf(round.cur), cell = round.cells[round.cur];
+  round.bad = [];
+  if(cell && !cell.locked && cell.entry){ cell.entry = ''; return; }
+  for(let k=p-1;k>=0;k--){ const c2 = round.cells[idxs[k]]; if(!c2.locked){ c2.entry = ''; round.cur = idxs[k]; return; } }
+}
+// "Reveal a letter": fills the cursor cell (or the word's first open cell), counts as a hint, checks the word when full.
+function crossReveal(round){
+  if(round.finished) return null;
+  const wi = crossCurWord(round);
+  if(round.words[wi].solved) return null;
+  const idxs = crossWordCells(round, wi);
+  let i = round.cur;
+  if(round.cells[i].locked){ const o = idxs.find(x=>!round.cells[x].locked); if(o === undefined) return null; i = o; }
+  crossSetReveal(round, i); round.reveals++;
+  round.bad = round.bad.filter(x=>x !== i);
+  if(idxs.every(x=>round.cells[x].entry)) return crossCheck(round, wi);
+  round.cur = crossFirstOpen(round, wi);
+  return {revealed:true};
+}
+/* ---- Mini Cross: screen (layout per spec §7.6: status row, grid card, clue bar, in-game keyboard, help row) ---- */
+function crossCellSize(cols){ const avail = Math.min(window.innerWidth || 480, 480) - 60; return Math.max(24, Math.min(34, Math.floor((avail - (cols-1)*3)/cols))); }
+function crossDirName(dir){ return dir === 'A' ? L('Across','Soldan sağa','افقی','Horizontal') : L('Down','Yukarıdan aşağı','عمودی','Vertical'); }
+function crossTimeText(sec){ sec = Math.max(0, Math.round(sec||0)); return Math.floor(sec/60) + ':' + String(sec % 60).padStart(2, '0'); }
+function crossCellEl(i){ return document.querySelector('.cross-cell[data-i="'+i+'"]'); }
+function crossGridHtml(round){
+  const wi = round.finished ? -1 : crossCurWord(round);
+  const hl = new Set(wi >= 0 ? crossWordCells(round, wi) : []);
+  const cell = crossCellSize(round.cols);
+  const pop = !round.popped && !round.finished;
+  let k = 0;
+  let html = `<div class="cross-grid-wrap${round.finished ? ' gold' : ''}" id="cross-wrap"><div class="cross-grid" dir="ltr" role="grid" style="--cell:${cell}px; grid-template-columns:repeat(${round.cols}, var(--cell));">`;
+  for(let i=0;i<round.cells.length;i++){
+    const c = round.cells[i];
+    if(!c){ html += '<span class="cross-blank"></span>'; continue; }
+    const wA = c.a >= 0 ? round.words[c.a] : null, wD = c.d >= 0 ? round.words[c.d] : null;
+    const allOk = (!wA || wA.solved) && (!wD || wD.solved);
+    const anyOk = !!((wA && wA.solved) || (wD && wD.solved));
+    const cls = ['cross-cell'];
+    if(allOk) cls.push('ok'); else { if(c.locked) cls.push('lock'); if(hl.has(i)) cls.push('word'); if(i === round.cur) cls.push('cur'); }
+    if(round.bad.indexOf(i) >= 0) cls.push('bad');
+    if(pop) cls.push('pop');
+    const shown = (c.locked || anyOk) ? c.ch : c.entry;   // the accented form once a letter is fixed
+    const w = (round.dir === 'A' && wA) ? wA : (wD || wA);
+    const pos = w.dir === 'A' ? c.c - w.c + 1 : c.r - w.r + 1;
+    const label = w.num + ' ' + crossDirName(w.dir) + ', ' + L(`letter ${pos} of ${w.len}`, `harf ${pos}/${w.len}`, `حرف ${pos} از ${w.len}`, `letra ${pos} de ${w.len}`);
+    html += `<button type="button" class="${cls.join(' ')}" data-action="cross-cell" data-quiet="1" data-i="${i}" aria-label="${esc(label)}"${pop ? ` style="animation-delay:${(k++)*20}ms;"` : ''}${round.finished ? ' disabled' : ''}>${c.num ? `<span class="cross-num">${c.num}</span>` : ''}${c.revealed ? '<span class="cross-dot"></span>' : ''}<span class="cross-ch">${esc(shown)}</span></button>`;
+  }
+  return html + '</div></div>';
+}
+function crossStatusHtml(round){
+  const solved = round.words.filter(w=>w.solved).length, total = round.words.length, n = round.reveals;
+  const chip = n ? `<span class="game-status-end"><span class="game-chip">${n} ${n === 1 ? L('reveal','açılan harf','حرف فاش‌شده','letra revelada') : L('reveals','açılan harf','حرف فاش‌شده','letras reveladas')}</span></span>` : '';
+  return `<div class="game-status" id="cross-status"><span class="game-status-text">${round.finished ? L('Grid complete!','Bulmaca tamam!','جدول کامل شد!','¡Crucigrama completo!') : L(`${solved} of ${total} words`, `${solved}/${total} kelime`, `${solved} از ${total} کلمه`, `${solved} de ${total} palabras`)}</span>${chip}</div>`;
+}
+function crossClueHtml(round){
+  if(round.finished) return '';
+  const w = round.words[crossCurWord(round)];
+  const alt = w.altShown && w.clue.alt ? `<span class="cross-clue-alt" dir="${w.clue.altLang === 'tl' ? 'ltr' : 'auto'}">${esc(w.clue.alt)}</span>` : '';
+  return `<div class="cross-clue" id="cross-clue" dir="ltr">
+    <button type="button" class="cross-arrow" data-action="cross-prev" data-quiet="1" aria-label="${esc(L('Previous clue','Önceki ipucu','سرنخ قبلی','Pista anterior'))}">‹</button>
+    <div class="cross-clue-text"><small>${w.num} ${esc(crossDirName(w.dir))}${w.solved ? ' ✓' : ''}</small><span dir="${w.clue.lang === 'tl' ? 'ltr' : 'auto'}">${esc(w.clue.text)}</span>${alt}</div>
+    <button type="button" class="cross-arrow" data-action="cross-next" data-quiet="1" aria-label="${esc(L('Next clue','Sonraki ipucu','سرنخ بعدی','Siguiente pista'))}">›</button>
+  </div>`;
+}
+// QWERTY in both apps; the Spanish side adds Ñ (accented vowels aren't needed: matching ignores accents).
+function crossKeyboardHtml(round){
+  if(round.finished) return '';
+  const rows = ['qwertyuiop', TTS_LANG.indexOf('es') === 0 ? 'asdfghjklñ' : 'asdfghjkl', 'zxcvbnm'];
+  return `<div class="cross-kb" id="cross-kb" dir="ltr" role="group" aria-label="${esc(L('Keyboard','Klavye','صفحه‌کلید','Teclado'))}">${rows.map((r,ri)=>`<div class="cross-kb-row">${r.split('').map(k=>`<button type="button" class="cross-key" data-action="cross-key" data-quiet="1" data-k="${k}">${k}</button>`).join('')}${ri === 2 ? `<button type="button" class="cross-key wide" data-action="cross-back" data-quiet="1" aria-label="${esc(L('Delete','Sil','حذف','Borrar'))}">⌫</button>` : ''}</div>`).join('')}</div>`;
+}
+function crossHelpHtml(round){
+  if(round.finished) return '';
+  const w = round.words[crossCurWord(round)];
+  const altBtn = (w.clue.alt && !w.altShown && !w.solved) ? `<button class="btn btn-ghost btn-sm" data-action="cross-alt">${w.clue.altKind === 'meaning' ? L('Show meaning','Anlamı göster','معنی را نشان بده','Mostrar el significado') : L('Show more','Daha fazla göster','بیشتر نشان بده','Mostrar más')}</button>` : '';
+  return `<div class="cross-help" id="cross-help"><button class="btn btn-ghost btn-sm" data-action="cross-reveal">${L('Reveal a letter','Bir harf aç','یک حرف را فاش کن','Revelar una letra')}</button>${altBtn}</div>`;
+}
+// Results card. D5 = B (Farin 2026-10-07): the round's time and the personal best appear here only, never during play.
+function crossResultHtml(round){
+  const st = gameRoundStats('cross', round), t = crossTimeText(st.time), best = round.prevBestTime;
+  const timeLine = best && st.time >= best
+    ? L(`Time ${t} · your best ${crossTimeText(best)}`, `Süre ${t} · en iyin ${crossTimeText(best)}`, `زمان ${t} · بهترینت ${crossTimeText(best)}`, `Tiempo ${t} · tu mejor ${crossTimeText(best)}`)
+    : (best ? L(`New best time: ${t}!`, `Yeni en iyi süre: ${t}!`, `بهترین زمان جدید: ${t}!`, `¡Nuevo mejor tiempo: ${t}!`) : L(`Time ${t}`, `Süre ${t}`, `زمان ${t}`, `Tiempo ${t}`));
+  const n = st.reveals;
+  const reveals = n ? ' · ' + n + ' ' + (n === 1 ? L('reveal','açılan harf','حرف فاش‌شده','letra revelada') : L('reveals','açılan harf','حرف فاش‌شده','letras reveladas')) : '';
+  return `<div class="game-card tight badge-unlock-shine">
+    <div class="game-result-title">${st.perfect ? L('Flawless!','Kusursuz!','بی‌نقص!','¡Perfecto!') : L('Grid complete!','Bulmaca tamam!','جدول کامل شد!','¡Crucigrama completo!')}</div>
+    <p class="game-result-line" style="margin-bottom:4px;">${L(`${st.clean} of ${st.total} words clean`, `${st.total} kelimeden ${st.clean} tanesi temiz`, `${st.clean} از ${st.total} کلمه بی‌خطا`, `${st.clean} de ${st.total} palabras limpias`)}${reveals}</p>
+    <p class="game-result-line" style="margin-top:0;">${timeLine}</p>
+    ${gameDoneCta()}
+  </div>`;
+}
+function renderGameCross(){
+  const vp = state.viewParams, round = vp.round;
+  return `<div class="fade-in game-screen">
+    ${gameTopHtml(L('Cross','Bulmaca','جدول','Crucigrama'))}
+    ${crossStatusHtml(round)}
+    <div class="game-card tight cross-card">${crossGridHtml(round)}</div>
+    ${round.finished ? crossResultHtml(round) + renderBadgeUnlockCard(pullJustEarnedBadges()) : crossClueHtml(round) + crossKeyboardHtml(round) + crossHelpHtml(round)}
+  </div>`;
+}
+// Redraws the live parts of the screen in place (no fade-in on every keypress).
+function crossRefresh(){
+  const vp = state.viewParams, round = vp && vp.round;
+  if(!round || state.view !== 'game-cross') return;
+  const swap = (id, html)=>{ const el = document.getElementById(id); if(el && html) el.outerHTML = html; };
+  swap('cross-status', crossStatusHtml(round));
+  swap('cross-wrap', crossGridHtml(round));
+  swap('cross-clue', crossClueHtml(round));
+  swap('cross-help', crossHelpHtml(round));
+}
+function fxCrossSolve(res, round){
+  const w = round.words[res.wi];
+  res.idxs.forEach((i,k)=>anim(crossCellEl(i), [{transform:'scale(1)'}, {transform:'scale(1.12)'}, {transform:'scale(1)'}], {duration:220, delay:k*40, easing:'ease-out'}));
+  if(!reducedMotion()) res.accents.forEach(i=>{ const el = crossCellEl(i); if(!el) return; const s = document.createElement('span'); s.className = 'sparkle'; el.appendChild(s); setTimeout(()=>s.remove(), 2000); });
+  sfx('correct'); buzz(12); companionCheer();
+  speakTarget(w.w, 0.92);
+  if(res.combo === 2) setTimeout(()=>{ sfx('combo'); companionSay(L('Two in a row!','İki arka arkaya!','دو تا پشت هم!','¡Dos seguidas!'), 1400); }, 260);
+  else if(res.combo > 2) setTimeout(()=>comboCheck(res.combo), 260);
+}
+function fxCrossDone(){
+  const wrap = document.getElementById('cross-wrap'); if(!wrap) return;
+  const c = centerOf(wrap);
+  sfx('reveal'); buzz([8,40,8]);
+  sparkBurst(c.x, c.y, 16, 'var(--cat-review)', 110);
+}
+// What happens after a keypress / reveal: redraw, then the feedback the result calls for.
+function crossAfter(round, vp, res){
+  if(!res || res.typed){ crossRefresh(); return; }
+  if(res.revealed){ crossRefresh(); sfx('flip'); anim(crossCellEl(res.i), [{transform:'scale(1)'}, {transform:'scale(1.15)'}, {transform:'scale(1)'}], {duration:220, easing:'ease-out'}); save(); return; }
+  if(res.ok === false){
+    crossRefresh();
+    sfx('tick'); companionOops();
+    res.bad.forEach(i=>anim(crossCellEl(i), [{transform:'translateX(0)'}, {transform:'translateX(-3px)'}, {transform:'translateX(3px)'}, {transform:'translateX(-3px)'}, {transform:'translateX(0)'}], {duration:300, easing:'linear'}));
+    const n = res.bad.length;
+    companionSay(res.auto != null ? L('Here is one letter for you','Sana bir harf','یه حرف از من','Te doy una letra') : (n === 1 ? L('One letter is off','Bir harf yanlış','یک حرف اشتباهه','Una letra no va') : L(`${n} letters are off`, `${n} harf yanlış`, `${n} حرف اشتباهه`, `${n} letras no van`)), 1600);
+    setTimeout(()=>{ if(state.viewParams !== vp) return; round.bad = []; document.querySelectorAll('.cross-cell.bad').forEach(e=>e.classList.remove('bad')); }, 900);
+    save();
+    return;
+  }
+  if(res.done){
+    round.finished = true; round.finishedAt = Date.now();
+    const gb = state.progress.gameBests || {};
+    round.prevBestTime = (gb.cross && gb.cross.time) || null;
+    const st = gameRoundStats('cross', round);
+    round.xpGain = scoreGameCompletion(vp.refId, st.perfect);
+    markGameComplete(vp.refId);
+    srsGameReview(round.setId, st.clean === st.total ? 2 : (st.clean >= st.total - 1 ? 1 : 0));
+    queueFx(()=>{ fxCrossSolve(res, round); setTimeout(fxCrossDone, 520); });
+    save(); render();
+    return;
+  }
+  crossRefresh();
+  fxCrossSolve(res, round);
+  save();
+}
+// Learner's choice (Jq6f9OFv): a finished vocab set that can host a puzzle offers Mini Cross as free play
+// (no roadmap node, no scheduler, no souvenir; bests still count). Shown on the set's intro screen.
+function crossOfferHtml(s){
+  if(!s || s.category === 'slang' || !((state.progress && state.progress.completedVocabSets) || []).includes(s.id) || !crossSetOk(s)) return '';
+  return `<button class="btn btn-ghost" style="margin-top:10px;" data-action="start-game" data-kind="cross" data-set-id="${esc(s.id)}" data-ref-id="${esc(s.id)}-cross" data-free="1">${ICONS.bolt} ${L('Mini Cross with these words','Bu kelimelerle Mini Bulmaca','جدول کوچک با همین کلمه‌ها','Minicrucigrama con estas palabras')}</button>`;
 }
 /* ============================= GAMIFICATION V3 BUILD 2: STORY HUNT =============================
    Games catalogue 4.3 + the LXD changes (approved 2026-10-04): a passage from the
@@ -13495,6 +13974,7 @@ function renderVocabSetIntro(id){
         `).join('')}
       </div>
       <button class="btn btn-primary" style="margin-top:16px;" data-action="nav" data-view="vocab-set" data-id="${s.id}">${L('Start flashcards','Kartlara başla','شروع فلش‌کارت‌ها', 'Empezar las tarjetas')}</button>
+      ${crossOfferHtml(s)}
     </div>
   </div>`;
 }
@@ -14787,6 +15267,7 @@ const screens = {
   'game-trap': renderGameTrap,
   'game-build': renderGameBuild,
   'game-bingo': renderGameBingo,
+  'game-cross': renderGameCross,
   'game-hunt': renderGameHunt,
   'game-echo': renderGameEcho,
   'game-chores-building': renderGameChoresBuilding,
@@ -15504,7 +15985,7 @@ function bindEvents(root){
     if(!el) return;
     const action = el.dataset.action;
     const handler = HANDLERS[action];
-    if(handler){ playClickSound(); handler(el, e); }
+    if(handler){ if(!el.hasAttribute('data-quiet')) playClickSound(); handler(el, e); }   // data-quiet: the Mini Cross keyboard keeps its own sounds
   };
 }
 
@@ -16030,6 +16511,8 @@ const HANDLERS = {
     const kind = el.dataset.kind;
     gcBubble = null; trapWarnKey = null;
     const params = {refId: el.dataset.refId, goal: el.dataset.goal};
+    // free play (Games shelf, "Mini Cross with these words"): no roadmap node, no scheduler, no souvenir
+    if(el.dataset.free){ params.free = true; if(el.dataset.shelf) params.shelf = true; }
     if(kind === 'build'){
       const buildRound = buildBuildRound(state.profile);
       if(buildRound){ go('game-build', Object.assign({round: buildRound}, params)); return; }
@@ -16064,6 +16547,16 @@ const HANDLERS = {
     if(kind === 'chores'){ go('game-chores-building', params); return; }   // the learner picks the place inside
     const setObj = VOCAB_SETS.find(x=>x.id===el.dataset.setId);
     if(!setObj) return;
+    if(kind === 'cross'){
+      // Mini Cross: a seeded puzzle for a roadmap node (replay = same grid), a fresh one for free play.
+      const crossRound = buildCrossRound(setObj, params.free ? null : params.refId);
+      if(crossRound){ queueFx(()=>{ sfx('tick'); crossRound.popped = true; }); go('game-cross', Object.assign({round: crossRound}, params)); return; }
+      // fewer than 5 placeable words (spec §9): Word Bingo, else Word Rush
+      const crossFb = buildBingoRound(setObj);
+      if(crossFb){ queueFx(()=>bingoSpeak(crossFb)); go('game-bingo', Object.assign({round: crossFb, fallbackFrom:'cross'}, params)); return; }
+      go('game-match', Object.assign({round: buildMatchRound(setObj), fallbackFrom:'cross'}, params));
+      return;
+    }
     if(kind === 'bingo'){
       const bingoRound = buildBingoRound(setObj);
       if(bingoRound){ queueFx(()=>bingoSpeak(bingoRound)); go('game-bingo', Object.assign({round: bingoRound}, params)); return; }
@@ -16257,6 +16750,35 @@ const HANDLERS = {
     if(!round || round.finished) return;
     round.clueShown = true;
     save(); render();
+  },
+  // ---- Mini Cross (Jq6f9OFv wave A) ----
+  'cross-cell'(el){
+    const vp = state.viewParams, round = vp && vp.round; if(!round || round.finished) return;
+    const i = Number(el.dataset.i), c = round.cells[i]; if(!c) return;
+    if(i === round.cur){ if(c.a >= 0 && c.d >= 0) round.dir = round.dir === 'A' ? 'D' : 'A'; }   // same cell again: across <-> down
+    else { round.cur = i; if((round.dir === 'A' ? c.a : c.d) < 0) round.dir = round.dir === 'A' ? 'D' : 'A'; }
+    round.bad = [];
+    crossRefresh();
+  },
+  'cross-key'(el){
+    const vp = state.viewParams, round = vp && vp.round; if(!round || round.finished) return;
+    const k = crossFold(el.dataset.k || ''); if(!/^[a-zñ]$/.test(k)) return;
+    crossAfter(round, vp, crossType(round, k));
+  },
+  'cross-back'(){ const vp = state.viewParams, round = vp && vp.round; if(!round || round.finished) return; crossBackspace(round); crossRefresh(); },
+  'cross-prev'(){ const vp = state.viewParams, round = vp && vp.round; if(!round || round.finished) return; crossStep(round, -1); round.bad = []; crossRefresh(); },
+  'cross-next'(){ const vp = state.viewParams, round = vp && vp.round; if(!round || round.finished) return; crossStep(round, 1); round.bad = []; crossRefresh(); },
+  'cross-alt'(){
+    const vp = state.viewParams, round = vp && vp.round; if(!round || round.finished) return;
+    const w = round.words[crossCurWord(round)]; if(!w.clue.alt || w.altShown) return;
+    w.altShown = true;
+    if(w.clue.altKind === 'meaning' && !w.hint){ w.hint = true; round.hints++; }   // B1 "Show meaning" counts as a hint (no golden round)
+    sfx('flip'); save(); crossRefresh();
+  },
+  'cross-reveal'(){
+    const vp = state.viewParams, round = vp && vp.round; if(!round || round.finished) return;
+    const res = crossReveal(round); if(!res) return;
+    crossAfter(round, vp, res);
   },
   'build-tile'(el){
     const vp = state.viewParams, round = vp && vp.round;
@@ -19885,6 +20407,16 @@ try{
     navigator.serviceWorker.register('farin-sw.js', { scope: 'farin-spanish-app.html' }).catch(function(){});
   }
 }catch(e){}
+
+// Mini Cross: a physical keyboard works too (letters, Backspace, Enter/Tab/arrows between clues).
+try{ document.addEventListener('keydown', function(e){
+  if(state.view !== 'game-cross' || !state.viewParams || !state.viewParams.round || state.viewParams.round.finished) return;
+  if(e.ctrlKey || e.metaKey || e.altKey) return;
+  if(e.key === 'Backspace'){ e.preventDefault(); HANDLERS['cross-back'](); return; }
+  if(e.key === 'Enter' || e.key === 'Tab' || e.key === 'ArrowRight' || e.key === 'ArrowDown'){ e.preventDefault(); HANDLERS['cross-next'](); return; }
+  if(e.key === 'ArrowLeft' || e.key === 'ArrowUp'){ e.preventDefault(); HANDLERS['cross-prev'](); return; }
+  if(e.key && e.key.length === 1 && /^[a-zñ]$/.test(crossFold(e.key))){ e.preventDefault(); HANDLERS['cross-key']({dataset:{k:crossFold(e.key)}}); }
+}); }catch(e){}
 
 try{ window.addEventListener('popstate', function(){ goBack(); }); }catch(e){}
 

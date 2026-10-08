@@ -299,6 +299,9 @@
   .cross-clue-text{flex:1 1 auto; min-width:0; text-align:center; padding:2px 4px; overflow-wrap:anywhere;}
   .cross-clue-text small{display:block; font-size:11.5px; font-weight:700; opacity:.7; margin-bottom:2px;}
   .cross-clue-alt{display:block; margin-top:4px; font-size:13.5px; font-weight:700; opacity:.85;}
+  .cross-clue-frame{display:block; margin-top:4px; font-size:14px; font-weight:800; letter-spacing:.01em; opacity:.92;}
+  .cross-words{margin:0 0 14px; font-size:14px; font-weight:700; line-height:1.6; color:var(--ink-soft);}
+  .cross-words b{color:var(--ink);}
   .cross-arrow{flex:0 0 44px; height:44px; border:0; border-radius:12px; background:transparent; color:inherit; font-family:inherit; font-size:28px; font-weight:800; line-height:1; padding:0 0 4px; cursor:pointer;}
   .cross-arrow:active{background:rgba(255,255,255,.14);}
   .cross-kb{display:flex; flex-direction:column; gap:6px; margin:0 -10px; -webkit-user-select:none; user-select:none; touch-action:manipulation;}
@@ -8800,6 +8803,8 @@ function souvenirBackHtml(sv){
     <span class="sparkle" style="bottom:34px; right:28px; left:auto; width:6px; height:6px; animation-delay:1.4s; color:#fff;"></span>
   </div>`;
 }
+// A kept phrase with its key word bold (Mini Cross phrase cards: keep.key), else the plain text.
+function svKeepHtml(keep){ const t = esc(keep.text || ''); return keep.key ? t.replace(new RegExp('(^|[^\\p{L}])(' + reEsc(esc(keep.key)) + ')(?!\\p{L})', 'giu'), '$1<b>$2</b>') : t; }
 // The meaning side used when a souvenir is flipped in the journal.
 function souvenirMeaningHtml(sv){
   const m = svTypeMeta(sv.type);
@@ -8808,7 +8813,7 @@ function souvenirMeaningHtml(sv){
     return `<div class="sv-card sv-meaningface" style="--svc:var(--cat-${m.c});">
       <div class="sv-eyebrow">${esc(sv.text||'')}</div>
       <div class="sv-body">
-        <div class="sv-phrase" dir="ltr" style="font-size:17px;">${esc(sv.keep.text||'')}</div>
+        <div class="sv-phrase" dir="ltr" style="font-size:17px;">${svKeepHtml(sv.keep)}</div>
         ${note ? `<div class="sv-meaning" style="font-size:13px; margin-top:8px;">${esc(note)}</div>` : ''}
       </div>
     </div>`;
@@ -12077,7 +12082,7 @@ function gameFallbackNote(vp){
   if(!vp || !vp.fallbackFrom) return '';
   const name = gameDisplayName(vp.fallbackFrom);
   if(vp.fallbackFrom === 'hunt') return L(`${name} opens once you have finished a story. `, `${name} bir hikaye bitirdiğinde açılır. `, `${name} وقتی یک داستان را تمام کنی باز می‌شود. `, `${name} se abre cuando termines una historia. `);
-  if(vp.fallbackFrom === 'cross') return L(`${name} needs more single words than this set has. `, `${name} için bu sette yeterli tek kelime yok. `, `${name} به کلمه‌های تکی بیشتری از این مجموعه نیاز دارد. `, `${name} necesita más palabras sueltas de las que tiene este conjunto. `);
+  if(vp.fallbackFrom === 'cross') return L(`${name} needs more words than this set has. `, `${name} için bu sette yeterli kelime yok. `, `${name} به کلمه‌های بیشتری از این مجموعه نیاز دارد. `, `${name} necesita más palabras de las que tiene este conjunto. `);
   return L(`${name} opens after a few more grammar steps. `, `${name} birkaç dilbilgisi adımından sonra açılır. `, `${name} بعد از چند قدم گرامر دیگر باز می‌شود. `, `${name} se abre tras unos pasos más de gramática. `);
 }
 /* ============================= GAMIFICATION V3: BUILD IT =============================
@@ -12190,7 +12195,7 @@ function gameKeep(kind, round){
       const cost = (w, wi) => (w.checks - 1) + (crossWordCells(round, wi).some(i=>round.cells[i].revealed) ? 2 : 0);
       const pick = round.words.map((w,wi)=>({w, c:cost(w, wi)})).sort((a,b)=>b.c - a.c || b.w.len - a.w.len)[0].w;
       const ui = L(pick.m.en, pick.m.tr, pick.m.fa, pick.m.es) || pick.m.en || '';
-      return {text:pick.w, say:pick.w, note:[ui, pick.sentence].filter(Boolean).join(' · ')};
+      return {text:pick.phrase || pick.w, say:pick.phrase || pick.w, key:pick.frame ? pick.w : '', note:[ui, pick.sentence].filter(Boolean).join(' · ')};
     }
     if(kind === 'order' && round.customers && round.customers.length){
       // the order that took the most serves (the longest one on a perfect round); flip side = the whole order and its tray in words
@@ -12406,7 +12411,11 @@ function fxBingoStamp(i, pt, newLines, full){
    borrows single words from the level's finished stories and other finished sets; at least 4
    placed words are always the set's own. Fewer than 5 placed words -> Word Bingo (then Word Rush)
    in start-game, per spec §9. Seed = hash(refId) so a roadmap replay shows the same puzzle; the
-   Games shelf passes no refId and gets a fresh puzzle. */
+   Games shelf passes no refId and gets a fresh puzzle.
+   Coverage fix (lxd cross-coverage-decision.md, 2026-10-08, option A): a phrase card gives its content word
+   (crossKeyWord: English last candidate, Spanish first; stoplists; 3-9 letters) and the clue keeps the chunk
+   intact as a frame ("without ____"); the whole phrase is spoken on solve and shown, key word bold, on the
+   results card and the souvenir. */
 const CROSS_MIN_WORDS = 5;
 const CROSS_MAX_SIDE = 9;
 const CROSS_TARGET = {A1:5, A2:6, B1:6, B2:7, C1:7};
@@ -12416,8 +12425,29 @@ function crossRng(seed){ let a = (seed >>> 0) || 1; return ()=>{ a = (a + 0x6D2B
 function crossShuffle(arr, rnd){ const a = arr.slice(); for(let i=a.length-1;i>0;i--){ const j = Math.floor(rnd()*(i+1)); [a[i],a[j]] = [a[j],a[i]]; } return a; }
 // Letters are compared without accents; ñ stays its own letter and ü matches u.
 function crossFold(s){ return String(s||'').toLowerCase().replace(/ñ/g, '\u0001').normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/\u0001/g, 'ñ'); }
-// The one word a card gives the grid: "/" variants and the Spanish article dropped (huntBase), letters only, 3-8 long.
-function crossWordOf(word){ const w = huntBase(word); return /^[a-záéíóúüñ]{3,8}$/i.test(w) ? w : ''; }
+// The word a card gives the grid (lxd cross-coverage-decision.md, option A): a single word of 3-9 letters, or the
+// content word of a phrase card - the last candidate in English (favorite color -> color, a piece of -> piece), the
+// first in Spanish (la tarjeta de crédito -> tarjeta, hacer ejercicio -> ejercicio) - skipping the stoplist and proper
+// nouns (a non-initial capitalised token). Returns {w, phrase, frame} or null; phrase = the card's text before "/"
+// (Spanish article dropped, casing kept), frame = the phrase with the key word gapped so the clue shows the chunk intact.
+const CROSS_STOP = {
+  en:new Set('a an the to of in on at for with without by from into onto up down out off over under about around through i me my you your he him his she her it its we us our they them their this that these those there here is am are was were be been being do does did done have has had having get gets got getting go goes went going take takes took taking make makes made making can could will would shall should may might must not no yes please too very so and or but if then than as how what where when who whom whose which why some any much many more most few little lot lots something someone anything anyone everything everyone nothing one ones thing things like after before two three four five six seven eight nine ten far non self pre post anti'.split(' ')),
+  es:new Set('el la los las un una unos unas lo al del de a en con sin por para sobre entre hasta desde yo tu usted el ella nosotros ellos ellas mi mis tus su sus nuestro nuestra me te se nos le les es son esta estan ser estar hay tener tengo tiene hacer hago hace ir voy va dar poder puede querer quiero quisiera gustaria no si y o pero que como donde cuando quien cual muy mas menos mucho muchos poco pocos algo alguien nada nadie todo todos ya aqui alli asi bien mal cuanto cuanta cuantos cuantas este esta estos estas ese esa eso aquel otra otro cada vamos vas buen bueno buena buenos buenas'.split(' '))
+};
+function crossKeyWord(word){
+  let base = String(word||'').split('/')[0].trim();
+  if(TTS_LANG.indexOf('es') === 0) base = base.replace(/^(el|la|los|las|un|una|unos|unas)\s+/i, '');
+  const toks = base.replace(/[()\[\].,!?;:…"“”¿¡]/g, ' ').split(/[\s\-–—]+/).filter(Boolean);
+  const ok = t => /^[a-záéíóúüñ]{3,9}$/i.test(t);
+  if(!toks.length) return null;
+  if(toks.length === 1) return ok(toks[0]) ? {w:toks[0].toLowerCase(), phrase:base, frame:''} : null;
+  const stop = CROSS_STOP[TTS_LANG.indexOf('es') === 0 ? 'es' : 'en'];
+  const cands = toks.filter((t, i)=>ok(t) && !stop.has(crossFold(t)) && !(i > 0 && /^\p{Lu}/u.test(t)));
+  if(!cands.length) return null;
+  const key = (TTS_LANG.indexOf('es') === 0 ? cands[0] : cands[cands.length - 1]).toLowerCase();
+  const frame = base.replace(new RegExp('(^|[^\\p{L}])(' + reEsc(key) + ')(?!\\p{L})', 'giu'), (m, pre)=>pre + '____');   // every occurrence (on the one hand, on the other hand)
+  return {w:key, phrase:base, frame};
+}
 // The example sentence with the word gapped, or '' when the sentence doesn't contain the word.
 function crossGap(sentence, word){
   const s = String(sentence||'').trim(); if(!s || !word) return '';
@@ -12427,10 +12457,10 @@ function crossGap(sentence, word){
 function crossCardsOf(cards, own){
   const out = [], seen = new Set();
   (cards||[]).forEach(c=>{
-    const w = crossWordOf(c && c.word); if(!w) return;
-    const f = crossFold(w); if(seen.has(f)) return; seen.add(f);
+    const k = crossKeyWord(c && c.word); if(!k) return;
+    const w = k.w, f = crossFold(w); if(seen.has(f)) return; seen.add(f);
     const m = (c.meaning && typeof c.meaning === 'object') ? c.meaning : {en:String(c.meaning||'')};
-    out.push({w, fold:f, len:w.length, m:{en:m.en||'', tr:m.tr||'', fa:m.fa||'', es:m.es||''}, sentence:c.sentence||'', own:!!own});
+    out.push({w, fold:f, len:w.length, m:{en:m.en||'', tr:m.tr||'', fa:m.fa||'', es:m.es||''}, sentence:c.sentence||'', own:!!own, phrase:k.phrase, frame:k.frame});
   });
   return out;
 }
@@ -12445,14 +12475,26 @@ function crossDropNested(list){
   return list.filter((x,i)=>!drop.has(i));
 }
 // The clue for one word at this level, with its optional second text ("Show meaning" = a hint, "Show more" = free).
-// lang 'tl' = target-language text (always LTR), 'ui' = the learner's own language.
+// lang 'tl' = target-language text (always LTR), 'ui' = the learner's own language. A phrase card (c.frame) keeps its
+// chunk intact (lxd cross-coverage-decision.md): A1-A2 the frame + the meaning, both shown, no hint; B1 the gapped
+// sentence (the gap falls inside the phrase) with "Show meaning" as the hint, or frame + meaning when there is no gap;
+// B2-C1 the definition with the frame on a second line (frame, always shown) and "Show more" = the gapped sentence.
+// open = the second text is shown from the start and costs nothing. The leak checks apply to the key word.
 function crossClue(c, level){
   const ui = L(c.m.en, c.m.tr, c.m.fa, c.m.es) || c.m.en || '';
   const gap = crossGap(c.sentence, c.w);
   const def = c.m[TTS_LANG.slice(0, 2)] || '';
   const has = s => crossFold(s).indexOf(c.fold) >= 0;
-  const UI = {text:ui, lang:'ui'}, GAP = {text:gap, lang:'tl'}, DEF = {text:def, lang:'tl'};
-  const mk = (main, alt, kind) => ({text:main.text, lang:main.lang, alt:alt ? alt.text : '', altLang:alt ? alt.lang : '', altKind:alt ? kind : ''});
+  const UI = {text:ui, lang:'ui'}, GAP = {text:gap, lang:'tl'}, DEF = {text:def, lang:'tl'}, FR = {text:c.frame || '', lang:'tl'};
+  const mk = (main, alt, kind, open, frame) => ({text:main.text, lang:main.lang, alt:alt ? alt.text : '', altLang:alt ? alt.lang : '', altKind:alt ? kind : '', open:!!(alt && open), frame:frame || ''});
+  if(c.frame){
+    const UI2 = (ui && !has(ui)) ? UI : (gap ? GAP : null);   // the meaning, unless it gives the word away
+    if(level === 'A1' || level === 'A2') return mk(FR, UI2, 'meaning', true);
+    if(level === 'B1') return gap ? mk(GAP, ui ? UI : null, 'meaning') : mk(FR, UI2, 'meaning', true);
+    if(def && !has(def)) return mk(DEF, gap ? GAP : (ui && ui !== def && !has(ui) ? UI : null), gap ? 'more' : 'meaning', false, c.frame);
+    if(gap) return mk(GAP, (ui && ui !== def && !has(ui)) ? UI : null, 'meaning', false, c.frame);
+    return mk(FR, UI2, 'meaning', true);
+  }
   if(level === 'A1' || level === 'A2') return (ui && !has(ui)) ? mk(UI, null) : (gap ? mk(GAP, null) : mk(UI, null));
   if(level === 'B1') return gap ? mk(GAP, ui ? UI : null, 'meaning') : mk(UI, null);
   if(def && !has(def)) return mk(DEF, gap ? GAP : (ui && ui !== def ? UI : null), gap ? 'more' : 'meaning');
@@ -12466,8 +12508,8 @@ function crossCandidates(setObj, level, withFill){
     const seen = new Set(out.map(c=>c.fold));
     const pr = state.progress || {};
     (pr.completedStories||[]).map(id=>STORY_LIBRARY_FREE.find(s=>s.id===id)).filter(s=>s && s.level===level).forEach(s=>(s.vocab||[]).forEach(v=>{
-      const w = crossWordOf(v && v.word); if(!w) return; const f = crossFold(w); if(seen.has(f)) return; seen.add(f);
-      out.push({w, fold:f, len:w.length, m:{en:v.en||'', tr:v.tr||'', fa:v.fa||'', es:v.es||''}, sentence:'', own:false});
+      const k = crossKeyWord(v && v.word); if(!k) return; const w = k.w, f = crossFold(w); if(seen.has(f)) return; seen.add(f);
+      out.push({w, fold:f, len:w.length, m:{en:v.en||'', tr:v.tr||'', fa:v.fa||'', es:v.es||''}, sentence:'', own:false, phrase:k.phrase, frame:k.frame});
     }));
     (pr.completedVocabSets||[]).map(id=>VOCAB_SETS_FREE.find(s=>s.id===id)).filter(s=>s && s.id!==setObj.id && s.level===level && s.category!=='slang')
       .forEach(s=>crossCardsOf(s.cards, false).forEach(c=>{ if(!seen.has(c.fold)){ seen.add(c.fold); out.push(c); } }));
@@ -12549,7 +12591,7 @@ function crossBestLayout(cands, target, rnd){
   }
   return best;
 }
-// Cheap pre-check for the shelf / pushGame: can this set host a puzzle at all (4+ single words)?
+// Cheap pre-check for the shelf / pushGame: can this set host a puzzle at all (4+ own words, phrase cards included)?
 function crossSetOk(setObj){ return !!setObj && crossCardsOf(setObj.cards, true).length >= 4; }
 function buildCrossRound(setObj, refId){
   if(!setObj || !setObj.cards) return null;
@@ -12566,7 +12608,7 @@ function buildCrossRound(setObj, refId){
   const rows = lay.box.maxR - lay.box.minR + 1, cols = lay.box.maxC - lay.box.minC + 1;
   const cells = new Array(rows*cols).fill(null);
   lay.cells.forEach(c=>{ const r = c.r - lay.box.minR, cc = c.c - lay.box.minC; cells[r*cols+cc] = {r, c:cc, ch:c.ch, fold:c.fold, a:c.a, d:c.d, num:0, entry:'', given:false, revealed:false, locked:false}; });
-  const words = lay.placed.map(w=>({w:w.w, fold:w.fold, len:w.len, r:w.r - lay.box.minR, c:w.c - lay.box.minC, dir:w.dir, own:w.own, num:0, clue:w.clue, m:w.m, sentence:w.sentence, altShown:false, hint:false, checks:0, solved:false}));
+  const words = lay.placed.map(w=>({w:w.w, fold:w.fold, len:w.len, r:w.r - lay.box.minR, c:w.c - lay.box.minC, dir:w.dir, own:w.own, num:0, clue:w.clue, m:w.m, sentence:w.sentence, phrase:w.phrase || '', frame:w.frame || '', altShown:!!w.clue.open, hint:false, checks:0, solved:false}));
   // Numbering as in a printed crossword: row by row; a cell that starts both an across and a down word has one number.
   let n = 0;
   cells.forEach(cell=>{ if(!cell) return; const starts = [cell.a, cell.d].filter(i=>i >= 0 && words[i].r === cell.r && words[i].c === cell.c); if(starts.length){ n++; cell.num = n; starts.forEach(i=>{ words[i].num = n; }); } });
@@ -12670,6 +12712,8 @@ function crossReveal(round){
 /* ---- Mini Cross: screen (layout per spec §7.6: status row, grid card, clue bar, in-game keyboard, help row) ---- */
 function crossCellSize(cols){ const avail = Math.min(window.innerWidth || 480, 480) - 60; return Math.max(24, Math.min(34, Math.floor((avail - (cols-1)*3)/cols))); }
 function crossDirName(dir){ return dir === 'A' ? L('Across','Soldan sağa','افقی','Horizontal') : L('Down','Yukarıdan aşağı','عمودی','Vertical'); }
+// A solved entry for the results list and the souvenir: the phrase with its key word bold (a <b>piece</b> of), else the word.
+function crossPhraseHtml(w){ return esc(w.phrase || w.w).replace(new RegExp('(^|[^\\p{L}])(' + reEsc(w.w) + ')(?!\\p{L})', 'giu'), '$1<b>$2</b>'); }
 function crossTimeText(sec){ sec = Math.max(0, Math.round(sec||0)); return Math.floor(sec/60) + ':' + String(sec % 60).padStart(2, '0'); }
 function crossCellEl(i){ return document.querySelector('.cross-cell[data-i="'+i+'"]'); }
 function crossGridHtml(round){
@@ -12708,7 +12752,7 @@ function crossClueHtml(round){
   const alt = w.altShown && w.clue.alt ? `<span class="cross-clue-alt" dir="${w.clue.altLang === 'tl' ? 'ltr' : 'auto'}">${esc(w.clue.alt)}</span>` : '';
   return `<div class="cross-clue" id="cross-clue" dir="ltr">
     <button type="button" class="cross-arrow" data-action="cross-prev" data-quiet="1" aria-label="${esc(L('Previous clue','Önceki ipucu','سرنخ قبلی','Pista anterior'))}">‹</button>
-    <div class="cross-clue-text"><small>${w.num} ${esc(crossDirName(w.dir))}${w.solved ? ' ✓' : ''}</small><span dir="${w.clue.lang === 'tl' ? 'ltr' : 'auto'}">${esc(w.clue.text)}</span>${alt}</div>
+    <div class="cross-clue-text"><small>${w.num} ${esc(crossDirName(w.dir))}${w.solved ? ' ✓' : ''}</small><span dir="${w.clue.lang === 'tl' ? 'ltr' : 'auto'}">${esc(w.clue.text)}</span>${w.clue.frame ? `<span class="cross-clue-frame" dir="ltr">${esc(w.clue.frame)}</span>` : ''}${alt}</div>
     <button type="button" class="cross-arrow" data-action="cross-next" data-quiet="1" aria-label="${esc(L('Next clue','Sonraki ipucu','سرنخ بعدی','Siguiente pista'))}">›</button>
   </div>`;
 }
@@ -12736,6 +12780,7 @@ function crossResultHtml(round){
     <div class="game-result-title">${st.perfect ? L('Flawless!','Kusursuz!','بی‌نقص!','¡Perfecto!') : L('Grid complete!','Bulmaca tamam!','جدول کامل شد!','¡Crucigrama completo!')}</div>
     <p class="game-result-line" style="margin-bottom:4px;">${L(`${st.clean} of ${st.total} words clean`, `${st.total} kelimeden ${st.clean} tanesi temiz`, `${st.clean} از ${st.total} کلمه بی‌خطا`, `${st.clean} de ${st.total} palabras limpias`)}${reveals}</p>
     <p class="game-result-line" style="margin-top:0;">${timeLine}</p>
+    <p class="cross-words" dir="ltr">${crossOrder(round).map(wi=>crossPhraseHtml(round.words[wi])).join(' · ')}</p>
     ${gameDoneCta()}
   </div>`;
 }
@@ -12763,7 +12808,7 @@ function fxCrossSolve(res, round){
   res.idxs.forEach((i,k)=>anim(crossCellEl(i), [{transform:'scale(1)'}, {transform:'scale(1.12)'}, {transform:'scale(1)'}], {duration:220, delay:k*40, easing:'ease-out'}));
   if(!reducedMotion()) res.accents.forEach(i=>{ const el = crossCellEl(i); if(!el) return; const s = document.createElement('span'); s.className = 'sparkle'; el.appendChild(s); setTimeout(()=>s.remove(), 2000); });
   sfx('correct'); buzz(12); companionCheer();
-  speakTarget(w.w, 0.92);
+  speakTarget(w.phrase || w.w, 0.92);   // the whole phrase for a phrase card
   if(res.combo === 2) setTimeout(()=>{ sfx('combo'); companionSay(L('Two in a row!','İki arka arkaya!','دو تا پشت هم!','¡Dos seguidas!'), 1400); }, 260);
   else if(res.combo > 2) setTimeout(()=>comboCheck(res.combo), 260);
 }

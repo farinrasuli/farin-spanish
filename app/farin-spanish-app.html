@@ -444,6 +444,40 @@
   .ch-bubble{position:absolute; max-width:62%; background:#fff; color:#33241f; border-radius:14px; padding:7px 10px; font-size:12.5px; font-weight:700; line-height:1.3; box-shadow:0 5px 14px rgba(20,14,12,.3); opacity:0; transition:opacity .2s; pointer-events:none; z-index:70;}
   .ch-bubble.ch-on{opacity:1;}
   @media (prefers-reduced-motion: reduce){ .ch-rain{opacity:.18 !important;} .ch-mote{opacity:.5 !important;} }
+  /* ---- Story Path (RzlovAPw): the shared stage + the chapter card (no score, no timer) ---- */
+  .sp-stage-wrap{position:relative; flex:0 0 auto; cursor:pointer;}
+  .sp-stage-wrap .ch-stage{border-radius:26px;}
+  .sp-tag{position:absolute; inset-inline-start:12px; bottom:10px; z-index:70; max-width:80%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:11px; font-weight:800; letter-spacing:.02em; padding:4px 9px; border-radius:999px; background:rgba(255,255,255,.8); color:#3b2f63; pointer-events:none;}
+  .sp-swap{width:100%; aspect-ratio:4/3; background:radial-gradient(ellipse 46% 40% at 50% 46%, rgba(255,246,214,.75), rgba(255,246,214,0) 72%);}
+  .sp-card{text-align:start;}
+  .sp-card-top{display:flex; justify-content:flex-end; margin:-8px -8px 2px 0;}
+  .sp-text{margin:0; font-size:18px; line-height:1.65; font-weight:600; color:var(--ink);}
+  .sp-flip{font-style:italic;}
+  .sp-memory{margin:12px 0 0; padding-inline-start:12px; border-inline-start:3px solid var(--cat-story); font-size:15.5px; line-height:1.55; font-style:italic; font-weight:600; color:color-mix(in srgb, var(--cat-story) 62%, var(--ink));}
+  .sp-gloss{border-bottom:2px dotted var(--cat-story); cursor:pointer; border-radius:4px; padding:0 1px;}
+  .sp-gloss.on{background:var(--cat-story-soft);}
+  .sp-gloss.sp-feelword{border-bottom-style:solid;}
+  .sp-gloss-row{margin-top:12px;}
+  .sp-gloss-row[hidden]{display:none;}
+  .sp-feel{margin-top:14px; display:flex; gap:10px; align-items:flex-start; background:var(--cat-story-soft); border-radius:18px; padding:12px 14px; font-size:15.5px; font-weight:700; line-height:1.5; color:var(--ink);}
+  .sp-feel-ic{flex:0 0 auto; color:var(--cat-story); font-size:18px; line-height:1.3;}
+  .sp-prompt{margin:0; font-family:'Fredoka',-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; font-weight:700; font-size:20px; line-height:1.4; color:var(--ink);}
+  .sp-tr{display:block; margin-top:6px; font-size:13.5px; font-weight:600; line-height:1.45; color:var(--ink-soft);}
+  .sp-opt{text-align:start; display:flex; flex-direction:column; align-items:flex-start; gap:2px;}
+  .sp-opt .sp-tr{margin-top:2px; font-size:13px;}
+  .sp-said{display:flex; gap:8px; align-items:center; margin:0 0 12px; font-weight:800; line-height:1.4; color:color-mix(in srgb, var(--cat-story) 62%, var(--ink));}
+  .sp-said-list{margin:4px 0 16px; text-align:start;}
+  .sp-said-list .sp-said{margin:0 0 6px;}
+  .sp-recap{margin:8px 0 0; font-size:15.5px; line-height:1.55; font-weight:600; color:var(--ink);}
+  .sp-ribbon{display:flex; justify-content:center; gap:10px; margin:10px 0 12px;}
+  .sp-dot{width:20px; height:20px; border-radius:50%; overflow:hidden; display:flex; box-shadow:0 0 0 2px var(--bg-elevated), 0 0 0 3.5px var(--cat-story);}
+  .sp-dot i{flex:1; display:block;}
+  .sp-dot .a{background:var(--cat-story);}
+  .sp-dot .b{background:var(--clay-orange);}
+  .sp-dot .n{background:var(--bg-sunken);}
+  .sp-end-line{margin:10px 0 0; font-size:15.5px; line-height:1.5; font-weight:700; color:var(--ink);}
+  .sp-note{margin:14px 0 0; font-size:13.5px; font-weight:700; line-height:1.5; color:var(--ink-soft);}
+  .sp-trbtn{align-self:center;}
   /* ---- Cozy Chores: chrome under the stage (logical properties; the stage itself is always LTR) ---- */
   .ch-names{display:flex; flex-wrap:wrap; gap:6px;}
   .ch-names span{display:inline-flex; flex-direction:column; font-size:13px; font-weight:700; padding:6px 10px; border-radius:12px; background:var(--bg-elevated); border:1.5px solid var(--border); color:var(--ink-soft); box-shadow:var(--clay-shadow-soft);}
@@ -13860,7 +13894,7 @@ function mountScene(stage, scene, onTapLayer){
     d.className = 'ch-layer' + (Lr.plate ? ' ch-plate' : '') + (Lr.anim ? ' ch-' + Lr.anim : '') + (Lr.hidden ? ' ch-gone' : '');
     if(Lr.op != null) d.style.opacity = Lr.op;
     if(Lr.flip) d.style.scale = '-1 1';
-    d.innerHTML = choresArt(Lr.art || Lr.id, !!Lr.plate);
+    d.innerHTML = Lr.src ? '<img src="' + esc(Lr.src) + '" alt="" draggable="false">' : (Lr.html != null ? String(Lr.html) : choresArt(Lr.art || Lr.id, !!Lr.plate));
     if(Lr.name && onTapLayer){ d.classList.add('ch-tap'); d.onclick = ()=>onTapLayer(Lr); }
     stage.appendChild(d);
   });
@@ -14040,6 +14074,380 @@ const STORY_PATH = {lane:{
   festival:"L'Amuravela"
  }
 }};
+/* ============================= STORY PATH (Trello RzlovAPw) — engine, dormant behind PATH_LIVE =============================
+   One spine ("The Lane"), first person, one protagonist, a real town per app, six chapters per level (A1 + A2 are
+   written), two decisions per chapter, two outcomes per decision: no right answer, no score, no timer, no lives
+   (story-path-DRAFT.md as amended by story-path-selif-review.md and lxd-review-story-path-every-card-cozy.md §A).
+   A chapter is one roadmap node (rotation positions 0/1/4 — chapters 1-3 on stage 1, 4-6 on stage 2) and plays as
+   beats: ("Previously…" for chapters of this arc not played yet) → open (+ at A2 the memory line that calls back
+   last year's choice) → decision 1 → outcome + the feeling-and-reason line → turn → decision 2 → outcome →
+   (chapter 5: the same moment told by the other person) → close → (chapter 6: how the three remember me) → done.
+   A1 shows the UI-language line under every prompt and option; from A2 it sits behind "Show translation".
+   Glossed words are tappable (meaning shown, word spoken); the chosen line is spoken back. Every step is a tap
+   (the stage advances too); nothing auto-plays past the learner.
+   The stage is the shared scene engine (mountScene): until painted plates exist each scene is a coloured panel
+   per chapter plus its scene id; PATH_SCENES[id] = {shape:'int', layers:[{id:'plate', plate:true, x:0, y:0,
+   w:100, z:1, src:'path/plate-<id>.webp'}]} drops a plate in by id (scenes lane-ch<N>-1 / lane-ch<N>-2, outcome
+   swaps lane-ch<N>-d<K><a|b>), with no change here.
+   progress.path = {level, chapter, choices[], stance, history[], reflect{}}: choices[ch] = two letters, d1 then d2
+   ('ab'; strings, because Firestore cannot store nested arrays); stance = {warmth, candour} recomputed from the
+   option map of the arc; history = arcs left behind ({level, choices, stance, date, done}); reflect = the
+   answered reflections. The souvenir is the chapter's glossed feeling word (chN.souvenir), reviewed as a vocab
+   item from box 0 (srs id sp-<level>-ch<N>: the Shuffle asks meaning -> word among that chapter's glosses),
+   never the plot. reflect.end (SELIF's two checkpoint questions) is the level's 100% journal prompt, answered once
+   at a writing node; reflect.page1 is offered at the stage-1 writing node, which follows chapter 2. Finishing an
+   arc is recognised (a golden souvenir, a badge per level); single choices never are. */
+const PATH_SCENES = {};
+const PATH_CH = 6;
+const PATH_PANEL = [
+  'linear-gradient(165deg,#a8e1ff 0%,#5aa9e6 50%,#2c6893 100%)',   // 1 street, bus stop, the sea
+  'linear-gradient(165deg,#ffe0b5 0%,#e8a66b 52%,#94552f 100%)',   // 2 café / bakery
+  'linear-gradient(165deg,#fff3b0 0%,#f3cc55 50%,#c2852a 100%)',   // 3 home, kitchen
+  'linear-gradient(165deg,#c4f3df 0%,#5fc9b8 50%,#2b766c 100%)',   // 4 workplace, the street outside
+  'linear-gradient(165deg,#e6d8ff 0%,#a68cef 52%,#5a46a2 100%)',   // 5 home, upstairs
+  'linear-gradient(165deg,#ffd166 0%,#ff8fa3 48%,#4867d2 100%)'    // 6 festival, harbour
+];
+const PATH_GRADE = {
+  afternoon:'linear-gradient(180deg,rgba(255,228,160,.24),rgba(255,170,90,.12))',
+  evening:'linear-gradient(180deg,rgba(54,38,118,.36),rgba(255,138,92,.2))'
+};
+function pathTgt(){ return TTS_LANG.slice(0, 2); }
+// target-language text of a content object (or a plain string)
+function pathT(o){ return (o && typeof o === 'object') ? String(o[pathTgt()] || '') : String(o || ''); }
+// the UI-language line, when it differs from the target text
+function pathUiLine(o){ const t = pathT(o), u = svText(o); return u && u !== t ? String(u) : ''; }
+function pathArc(level){ return (typeof STORY_PATH !== 'undefined' && STORY_PATH.lane && STORY_PATH.lane[level]) || null; }
+function pathChapter(level, n){ const a = pathArc(level); return (a && a['ch' + n]) || null; }
+function pathState(){
+  const pr = state.progress;
+  if(!pr.path || typeof pr.path !== 'object') pr.path = {};
+  const p = pr.path;
+  if(typeof p.level !== 'string') p.level = null;
+  if(typeof p.chapter !== 'number') p.chapter = 0;
+  if(!Array.isArray(p.choices)) p.choices = [];
+  if(!p.stance || typeof p.stance !== 'object') p.stance = {warmth:0, candour:0};
+  if(!Array.isArray(p.history)) p.history = [];
+  if(!p.reflect || typeof p.reflect !== 'object') p.reflect = {};
+  return p;
+}
+function pathRefParts(refId){ const m = /^path-lane-(A1|A2|B1|B2|C1)-e([1-6])$/.exec(String(refId || '')); return m ? {level:m[1], ch:Number(m[2])} : null; }
+function pathNodeChapter(node){ const r = node && pathRefParts(node.refId); return r ? pathChapter(r.level, r.ch) : null; }
+function pathSrsId(level, ch){ return 'sp-' + level + '-ch' + ch; }
+// The last arc kept for a level (a finished one first).
+function pathHistoryFor(level){
+  const list = pathState().history.filter(h=>h && h.level === level);
+  return list.filter(h=>h.done).pop() || list.pop() || null;
+}
+// The choices saved for a level's arc: the arc in progress, else the one kept in history.
+function pathArcChoices(level){
+  const p = pathState();
+  if(p.level === level) return p.choices;
+  const h = pathHistoryFor(level);
+  return (h && Array.isArray(h.choices)) ? h.choices : [];
+}
+function pathStance(level, choices){
+  const st = {warmth:0, candour:0};
+  for(let c = 1; c <= PATH_CH; c++){
+    const ch = pathChapter(level, c), pick = (choices && choices[c]) || '';
+    if(!ch) continue;
+    for(let d = 0; d < 2; d++){
+      const o = pick[d], opt = (o === 'a' || o === 'b') ? ch['d' + (d + 1)][o] : null;
+      if(opt && (opt.stance === 'warmth' || opt.stance === 'candour')) st[opt.stance]++;
+    }
+  }
+  return st;
+}
+// The composed ending (README: neighbour by warmth >= 4, friend by candour >= 4, the chapter-5 person by ch5 d2).
+function pathEndings(level, choices){
+  const st = pathStance(level, choices), c5 = (choices && choices[5]) || '';
+  return {neighbour:st.warmth >= 4 ? 'a' : 'b', friend:st.candour >= 4 ? 'a' : 'b', person:c5[1] === 'a' ? 'a' : 'b'};
+}
+// A2+: the memory line calling back the previous level's choice named in chN.back.ref; 'none' with no record.
+function pathBackLine(level, ch){
+  const c = pathChapter(level, ch), b = c && c.back;
+  if(!b) return '';
+  const m = /^(A1|A2|B1|B2|C1)\.ch([1-6])\.d([12])$/.exec(String(b.ref || ''));
+  let v = 'none';
+  if(m){
+    const p = pathState();
+    const prev = m[1] === p.level ? p.choices : (((pathHistoryFor(m[1]) || {}).choices) || []);
+    const o = String(prev[Number(m[2])] || '')[Number(m[3]) - 1];
+    if((o === 'a' || o === 'b') && b[o]) v = o;
+  }
+  return pathT(b[v]) || pathT(b.none);
+}
+// A new level starts a new arc: the one left behind goes to history (a finished arc is there already).
+function pathBeginArc(level){
+  const p = pathState();
+  if(p.level === level) return p;
+  if(p.level && p.choices.some(Boolean) && !p.history.some(h=>h && h.level === p.level && h.done)){
+    p.history = p.history.filter(h=>!(h && h.level === p.level && !h.done));
+    p.history.push({level:p.level, choices:p.choices.slice(), stance:Object.assign({}, p.stance), date:todayISO(), done:false});
+  }
+  p.level = level; p.chapter = 0; p.choices = []; p.stance = {warmth:0, candour:0};
+  return p;
+}
+// A finished chapter (roadmap play only; the Games shelf never saves choices).
+function pathCommit(round){
+  const p = pathBeginArc(round.level);
+  while(p.choices.length <= PATH_CH) p.choices.push('');
+  p.choices[round.ch] = round.picks.join('');
+  p.chapter = round.ch;
+  p.stance = pathStance(round.level, p.choices);
+  if(round.ch === PATH_CH){
+    p.history = p.history.filter(h=>!(h && h.level === round.level));
+    p.history.push({level:round.level, choices:p.choices.slice(), stance:Object.assign({}, p.stance), date:todayISO(), done:true});
+  }
+  // the souvenir word enters review at box 0 (never reset if it is there already)
+  const pr = state.progress, id = pathSrsId(round.level, round.ch);
+  if(!pr.srs) pr.srs = {};
+  if(!pr.srs[id]){ const e = pr.srs[id] = {kind:'vocab', box:0, hi:0, vi:0}; srsSetBox(e, 0); }
+}
+function pathRoundChoices(round){
+  const base = pathArcChoices(round.level).slice();
+  while(base.length <= PATH_CH) base.push('');
+  base[round.ch] = round.picks.join('');
+  return base;
+}
+function pathBuildRound(level, ch, free){
+  const c = pathChapter(level, ch);
+  if(!c) return null;
+  const done = pathArcChoices(level), recap = [];
+  if(!free) for(let k = 1; k < ch; k++){ if(!done[k]) recap.push(k); }
+  const beats = (recap.length ? ['recap'] : []).concat(['open', 'd1', 'o1', 'turn', 'd2', 'o2'], c.flip ? ['flip'] : [], ['close'], ch === PATH_CH ? ['end'] : []);
+  return {level, ch, beats, beat:0, picks:['', ''], recap, showTr:false, gloss:null, finished:false, startedAt:Date.now(), finishedAt:null};
+}
+function pathRoundForRef(refId){ const r = pathRefParts(refId); return r ? pathBuildRound(r.level, r.ch, false) : null; }
+// Games shelf: replay a chapter already played (latest arc), fresh choices, nothing saved.
+function pathShelfRound(){
+  const p = pathState();
+  const lv = (p.level && p.choices.some(Boolean)) ? p.level : ((p.history[p.history.length - 1] || {}).level || null);
+  if(!lv || !pathArc(lv)) return null;
+  const ch = pathArcChoices(lv), played = [];
+  for(let k = 1; k <= PATH_CH; k++) if(ch[k]) played.push(k);
+  if(!played.length) return null;
+  return pathBuildRound(lv, played[Math.floor(Math.random() * played.length)], true);
+}
+// Spelling forms of a gloss as it can appear in the text: "contento/-a" -> contento/contenta/...,
+// "la parada" -> also "parada", simple plurals.
+function pathGlossForms(word){
+  const out = new Set(), add = x=>{ x = String(x || '').trim(); if(x) out.add(x); };
+  const w = String(word || '').trim();
+  const m = /^(.*?)o\/-a$/.exec(w);
+  if(m) ['o', 'a', 'os', 'as'].forEach(s=>add(m[1] + s)); else add(w);
+  Array.from(out).forEach(x=>{ const a = /^(el|la|los|las|un|una|the|a|an)\s+(.+)$/i.exec(x); if(a) add(a[2]); });
+  Array.from(out).forEach(x=>{ if(!/\s/.test(x) && !/s$/i.test(x)) add(x + 's'); });
+  return Array.from(out).sort((a, b)=>b.length - a.length);
+}
+// Target text with the chapter's glossed words tappable; feelG marks the feeling word of a feel line.
+function pathGlossHtml(text, ch, feelG){
+  const s = String(text || ''), list = [];
+  for(let g = 1; g <= 7; g++){ const gl = ch && ch['g' + g]; if(gl && gl.word) pathGlossForms(gl.word).forEach(f=>list.push({f:f.toLowerCase(), g:'g' + g})); }
+  if(!list.length) return esc(s);
+  list.sort((a, b)=>b.f.length - a.f.length);
+  const re = new RegExp('(^|[^\\p{L}])(' + list.map(x=>reEsc(x.f)).join('|') + ')(?![\\p{L}])', 'giu');
+  let out = '', last = 0, m;
+  while((m = re.exec(s))){
+    const start = m.index + m[1].length, word = m[2], hit = list.find(x=>x.f === word.toLowerCase());
+    out += esc(s.slice(last, start)) + `<span class="sp-gloss${hit && hit.g === feelG ? ' sp-feelword' : ''}" data-action="sp-gloss" data-g="${hit ? hit.g : ''}">${esc(word)}</span>`;
+    last = start + word.length;
+  }
+  return out + esc(s.slice(last));
+}
+function pathMeaning(gl){ const o = {}; ['en', 'tr', 'fa', 'es'].forEach(k=>{ if(gl && gl[k] != null) o[k] = String(gl[k]); }); return o; }
+function pathGlossRowHtml(ch, g){
+  const gl = ch && ch[g];
+  if(!gl) return '';
+  return `<div><b dir="ltr">${esc(gl.word)}</b> — ${esc(svText(pathMeaning(gl)))}</div>`;
+}
+// The souvenir of a chapter node: its glossed feeling word.
+function pathSouvenirWord(node){
+  const r = node && pathRefParts(node.refId), c = r && pathChapter(r.level, r.ch), gl = c && c[c.souvenir];
+  return gl ? {id:pathSrsId(r.level, r.ch), word:String(gl.word), meaning:pathMeaning(gl), ch:r.ch} : null;
+}
+// Review source for an sp- id: the chapter's glosses as a small vocab set (srsSource / the Shuffle).
+const pathSetCache = {};
+function pathVocabSet(id){
+  if(typeof id !== 'string' || id.indexOf('sp-') !== 0) return null;
+  if(pathSetCache[id]) return pathSetCache[id];
+  const m = /^sp-(A1|A2|B1|B2|C1)-ch([1-6])$/.exec(id), c = m && pathChapter(m[1], Number(m[2]));
+  if(!c) return null;
+  const cards = [];
+  for(let g = 1; g <= 7; g++){ const gl = c['g' + g]; if(gl && gl.word) cards.push({word:String(gl.word), meaning:pathMeaning(gl)}); }
+  return (pathSetCache[id] = {id, level:m[1], category:'vocab', path:true, title:Object.assign({en:pathT(c.title)}, c.title), cards});
+}
+// The reflection a writing node should offer now (one per page; the arc-end one is the level's 100% journal prompt).
+function pathPendingReflection(){
+  const lv = companionLevelBase(roadmapLevelKey()), arc = pathArc(lv);
+  if(!arc || !arc.reflect) return null;
+  const p = pathState(), done = p.history.some(h=>h && h.level === lv && h.done);
+  let which = null;
+  if(done) which = p.reflect[lv + ':end'] ? null : 'end';
+  else if(p.level === lv && p.choices[2] && !p.reflect[lv + ':page1']) which = 'page1';
+  if(!which || !arc.reflect[which]) return null;
+  const r = arc.reflect[which];
+  return {levelBase:'path:' + lv + ':' + which, path:{level:lv, which}, text:pathT(r), translation:pathUiLine(r)};
+}
+function pathReflected(info, text){
+  if(!info || !info.level || !info.which) return;
+  pathState().reflect[info.level + ':' + info.which] = {date:todayISO(), text:String(text || '').slice(0, 400)};
+}
+function pathRibbonHtml(choices){
+  let dots = '';
+  for(let k = 1; k <= PATH_CH; k++){
+    const c = String((choices && choices[k]) || '');
+    dots += `<span class="sp-dot"><i class="${c[0] === 'a' || c[0] === 'b' ? c[0] : 'n'}"></i><i class="${c[1] === 'a' || c[1] === 'b' ? c[1] : 'n'}"></i></span>`;
+  }
+  return `<div class="sp-ribbon" aria-hidden="true">${dots}</div>`;
+}
+// The stage of the current beat: scene 1 until the turn, scene 2 after it; an outcome adds its swap layer.
+function pathBeatScene(round){
+  const b = round.beats[round.beat] || 'close';
+  const id = 'lane-ch' + round.ch + '-' + (['turn', 'd2', 'o2', 'flip', 'close', 'end'].includes(b) ? 2 : 1);
+  const swap = b === 'o1' ? 'lane-ch' + round.ch + '-d1' + round.picks[0] : (b === 'o2' ? 'lane-ch' + round.ch + '-d2' + round.picks[1] : null);
+  return {id, swap, painted:!!PATH_SCENES[id]};
+}
+function pathSceneData(round){
+  const sc = pathBeatScene(round), arc = pathArc(round.level) || {}, painted = PATH_SCENES[sc.id];
+  const layers = painted ? painted.layers.slice() : [{id:'sp-panel', fill:PATH_PANEL[(round.ch - 1) % PATH_PANEL.length], x:0, y:0, w:100, h:100, z:1}];
+  layers.push({id:'sp-grade', fill:PATH_GRADE[arc.grade] || PATH_GRADE.afternoon, x:0, y:0, w:100, h:100, z:30});
+  let swapIds = [];
+  if(sc.swap){
+    const ps = PATH_SCENES[sc.swap];
+    (ps ? ps.layers : [{id:sc.swap, x:0, y:0, w:100, z:20, html:'<div class="sp-swap"></div>'}]).forEach(x=>{ swapIds.push(x.id); layers.push(Object.assign({}, x, {hidden:true})); });
+  }
+  return {sc, swapIds, scene:{shape:(painted && painted.shape) || 'int', layers, atmos:(painted && painted.atmos) || []}};
+}
+function pathMountStage(){
+  const vp = state.viewParams, round = vp && vp.round, stage = document.getElementById('sp-stage');
+  if(!round || round.finished || !stage || stage.childElementCount) return;
+  const d = pathSceneData(round);
+  mountScene(stage, d.scene);
+  d.swapIds.forEach(id=>{ try{ VERB.appear(id); }catch(e){} });
+}
+function pathTr(o, show){ const u = pathUiLine(o); return show && u ? `<small class="sp-tr" dir="auto">${esc(u)}</small>` : ''; }
+function pathSayBtn(text){ return text ? `<button class="tts-btn sp-say" data-action="speak-sentence" data-text="${esc(text)}" aria-label="${esc(L('Listen','Dinle','گوش کن','Escuchar'))}">${ICONS.soundOn}</button>` : ''; }
+function renderGamePath(){
+  const vp = state.viewParams || {}, round = vp.round;
+  const title = gameDisplayName('path');
+  const c = round && pathChapter(round.level, round.ch);
+  if(!c) return `<div class="fade-in game-screen">${gameTopHtml(title)}<button class="btn btn-primary game-cta" data-action="back-to-roadmap">${L('Back to roadmap','Yol haritasına dön','بازگشت به نقشه راه','Volver a la hoja de ruta')}</button></div>`;
+  const arc = pathArc(round.level), n = round.ch;
+  const status = `<div class="game-status"><span class="game-status-text">${L(`Chapter ${n} of ${PATH_CH}`, `Bölüm ${n}/${PATH_CH}`, `فصل ${n} از ${PATH_CH}`, `Capítulo ${n} de ${PATH_CH}`)}</span><span class="game-status-end"><span class="game-chip">${esc(svText(c.title))}</span>${n === PATH_CH && arc.festival ? `<span class="game-chip" dir="ltr">${esc(arc.festival)}</span>` : ''}</span></div>`;
+  if(round.finished){
+    const said = [0, 1].map(d=>{ const opt = c['d' + (d + 1)][round.picks[d]]; return opt ? `<p class="sp-said" dir="ltr">${pathSayBtn(pathT(opt))}<span>“${esc(pathT(opt))}”</span></p>` : ''; }).join('');
+    return `<div class="fade-in game-screen sp-screen">
+      ${gameTopHtml(title)}
+      ${status}
+      <div class="game-card tight sp-card badge-unlock-shine">
+        <div class="game-result-title">${esc(svText(c.title))}</div>
+        <p class="game-result-line">${n === PATH_CH ? L('This summer is part of your story now.','Bu yaz artık hikâyenin bir parçası.','این تابستان حالا بخشی از داستان توست.','Este verano ya es parte de tu historia.') : L(`Chapter ${n} is part of your story now.`, `${n}. bölüm artık hikâyenin bir parçası.`, `فصل ${n} حالا بخشی از داستان توست.`, `El capítulo ${n} ya es parte de tu historia.`)}</p>
+        ${n === PATH_CH ? pathRibbonHtml(pathRoundChoices(round)) : ''}
+        <div class="sp-said-list">${said}</div>
+        ${gameDoneCta(true)}
+      </div>
+      ${renderBadgeUnlockCard(pullJustEarnedBadges())}
+    </div>`;
+  }
+  const beat = round.beats[round.beat];
+  const showTr = round.level === 'A1' || round.showTr;
+  const isLast = round.beat + 1 >= round.beats.length;
+  const decide = beat === 'd1' || beat === 'd2';
+  const sc = pathBeatScene(round);
+  queueFx(pathMountStage);
+  let body = '', opts = '', trSource = [];
+  if(beat === 'recap'){
+    body = `<div class="eyebrow" style="color:var(--cat-story);">${L('Previously…','Daha önce…','پیش‌تر…','Anteriormente…')}</div>`
+      + round.recap.map(k=>{ const r = (pathChapter(round.level, k) || {}).recap; trSource.push(r); return `<p class="sp-recap" dir="ltr">${esc(pathT(r))}</p>${pathTr(r, showTr)}`; }).join('');
+  } else if(beat === 'open'){
+    const back = pathBackLine(round.level, n);
+    body = `<p class="sp-text" dir="ltr">${pathGlossHtml(pathT(c.open), c)}</p>${back ? `<p class="sp-memory" dir="ltr">${esc(back)}</p>` : ''}`;
+  } else if(decide){
+    const d = c[beat];
+    trSource.push(d.prompt, d.a, d.b);
+    body = `<p class="sp-prompt" dir="ltr">${esc(pathT(d.prompt))}</p>${pathTr(d.prompt, showTr)}`;
+    opts = `<div class="game-opts">${['a', 'b'].map(o=>`<button class="game-opt long sp-opt" data-action="sp-pick" data-o="${o}" dir="ltr"><span>${esc(pathT(d[o]))}</span>${pathTr(d[o], showTr)}</button>`).join('')}</div>`;
+  } else if(beat === 'o1' || beat === 'o2'){
+    const dk = beat === 'o1' ? 'd1' : 'd2', opt = c[dk][round.picks[beat === 'o1' ? 0 : 1]] || c[dk].a;
+    body = `<p class="sp-said" dir="ltr">${pathSayBtn(pathT(opt))}<span>“${esc(pathT(opt))}”</span></p>
+      <p class="sp-text" dir="ltr">${pathGlossHtml(pathT(opt.out), c)}</p>
+      <div class="sp-feel" dir="ltr"><span class="sp-feel-ic" aria-hidden="true">♡</span><span>${pathGlossHtml(pathT(opt.feel), c, opt.feelgloss)}</span></div>`;
+  } else if(beat === 'flip'){
+    const who = String(c.flip.who || '');
+    body = `<div class="eyebrow" style="color:var(--cat-story);">${esc(L(`${who} tells it`, `${who} anlatıyor`, `${who} تعریف می‌کند`, `Lo cuenta ${who}`))}</div><p class="sp-text sp-flip" dir="ltr">${pathGlossHtml(pathT(c.flip), c)}</p>`;
+  } else if(beat === 'end'){
+    const ends = pathEndings(round.level, pathRoundChoices(round));
+    const asks = !vp.free && !pathState().reflect[round.level + ':end'];
+    body =`<div class="eyebrow" style="color:var(--cat-story);">${L('How they remember me','Beni nasıl hatırlıyorlar','آن‌ها مرا چطور به یاد می‌آورند','Cómo me recuerdan')}</div>
+      ${pathRibbonHtml(pathRoundChoices(round))}
+      ${['neighbour', 'friend', 'person'].map(s=>{ const line = arc.end[s][ends[s]]; trSource.push(line); return `<p class="sp-end-line" dir="ltr">${esc(pathT(line))}</p>${pathTr(line, showTr)}`; }).join('')}
+      ${asks ? `<p class="sp-note">${L('Your journal will ask you about this summer at your next writing practice.','Günlüğün bir sonraki yazma pratiğinde sana bu yazı soracak.','دفترت در تمرین نوشتن بعدی درباره این تابستان از تو می‌پرسد.','Tu diario te preguntará por este verano en tu próxima práctica de escritura.')}</p>` : ''}`;
+  } else {   // turn, close
+    body = `<p class="sp-text" dir="ltr">${pathGlossHtml(pathT(c[beat]), c)}</p>`;
+  }
+  const sayText = beat === 'open' ? pathT(c.open) : (['turn', 'close'].includes(beat) ? pathT(c[beat]) : (beat === 'flip' ? pathT(c.flip) : ''));
+  const hasTr = round.level !== 'A1' && trSource.some(o=>pathUiLine(o));
+  const trBtn = hasTr ? `<button class="btn btn-ghost btn-sm sp-trbtn" data-action="sp-tr">${round.showTr ? L('Hide translation','Çeviriyi gizle','ترجمه را پنهان کن','Ocultar traducción') : L('Show translation','Çeviriyi göster','ترجمه را نشان بده','Mostrar traducción')}</button>` : '';
+  const cta = decide ? '' : `<button class="btn btn-primary game-cta" data-action="sp-next">${isLast ? (n === PATH_CH ? L('Finish the story','Hikâyeyi bitir','داستان را تمام کن','Terminar la historia') : L('Finish the chapter','Bölümü bitir','فصل را تمام کن','Terminar el capítulo')) : L('Continue','Devam','ادامه','Seguir')}</button>`;
+  return `<div class="fade-in game-screen sp-screen">
+    ${gameTopHtml(title)}
+    ${status}
+    <div class="sp-stage-wrap"${decide ? '' : ' data-action="sp-next"'} dir="ltr"><div class="ch-stage ch-int" id="sp-stage"></div><span class="sp-tag">${esc(arc.town || '')}${sc.painted ? '' : ' · ' + esc(sc.id)}</span></div>
+    <div class="game-card tight sp-card">${sayText ? `<div class="sp-card-top">${pathSayBtn(sayText)}</div>` : ''}${body}
+      <div class="game-why sp-gloss-row" id="sp-gloss-row"${round.gloss ? '' : ' hidden'}>${round.gloss ? pathGlossRowHtml(c, round.gloss) : ''}</div>
+    </div>
+    ${opts}
+    ${trBtn}
+    ${cta}
+  </div>`;
+}
+function pathFinish(vp, round){
+  round.finished = true; round.finishedAt = Date.now();
+  if(!vp.free) pathCommit(round);
+  markGameComplete(vp.refId);
+  save(); render();
+}
+// One handler for the screen's taps: next beat, pick an option, translation toggle, a glossed word.
+function pathAct(kind, el){
+  const vp = state.viewParams, round = vp && vp.round;
+  if(state.view !== 'game-path' || !round || round.finished) return;
+  const beat = round.beats[round.beat], c = pathChapter(round.level, round.ch);
+  if(!c) return;
+  if(kind === 'next'){
+    if(beat === 'd1' || beat === 'd2') return;
+    if(round.beat + 1 >= round.beats.length){ pathFinish(vp, round); return; }
+    round.beat++; round.gloss = null;
+    save(); render();
+    return;
+  }
+  if(kind === 'pick'){
+    if(beat !== 'd1' && beat !== 'd2') return;
+    const o = el && el.dataset.o === 'b' ? 'b' : 'a', opt = c[beat][o];
+    round.picks[beat === 'd1' ? 0 : 1] = o;
+    round.beat++; round.gloss = null;
+    queueFx(()=>{ sfx('flip'); companionCheer(); const st = document.getElementById('sp-stage'); if(st){ const p = centerOf(st); sparkBurst(p.x, p.y, 8, 'var(--cat-story)', 70); } });
+    if(!sfxMuted && opt) speakTarget(pathT(opt));
+    save(); render();
+    return;
+  }
+  if(kind === 'tr'){ round.showTr = !round.showTr; save(); render(); return; }
+  if(kind === 'gloss'){
+    const g = el && el.dataset.g, gl = g && c[g];
+    if(!gl) return;
+    round.gloss = g;
+    const row = document.getElementById('sp-gloss-row');
+    if(row){ row.hidden = false; row.innerHTML = pathGlossRowHtml(c, g); }
+    document.querySelectorAll('.sp-gloss.on').forEach(x=>x.classList.remove('on'));
+    if(el.classList) el.classList.add('on');
+    sfx('tick');
+    if(!sfxMuted) speakTarget(String(gl.word).replace(/\/-a$/, ''));
+  }
+}
+// Arc completion is recognised once per level (only while Story Path is live, so a dormant game adds nothing to the trophy case).
+if(PATH_LIVE) Object.keys(STORY_PATH.lane).forEach(lv=>BADGES.push({id:'path-' + lv, icon:'book',
+  title:{en:'Story Path ' + lv, tr:'Hikâye Yolu ' + lv, fa:'مسیر داستان ' + lv, es:'Senda ' + lv},
+  desc:{en:'Finish the ' + lv + ' summer of Story Path.', tr:'Hikâye Yolu\'nun ' + lv + ' yazını bitir.', fa:'تابستانِ ' + lv + ' مسیر داستان را تمام کن.', es:'Termina el verano ' + lv + ' de la Senda.'},
+  check:(st)=>!!(st.progress.path && Array.isArray(st.progress.path.history) && st.progress.path.history.some(h=>h && h.level === lv && h.done))}));
 /* ---- Cozy Chores: game shell — building (pick a place) → room (look → plan → play → done) ----
    One place per card. All six places open at every level; difficulty lives in the chips:
    A1 = the 3 simplest chores (lv 1), A2 = 4, B1+ = 5 (+ the learner can cycle a middle
@@ -17448,6 +17856,11 @@ const HANDLERS = {
     if(kind === 'match') go('game-match', Object.assign({round: buildMatchRound(setObj)}, params));
     else go('game-dictation', Object.assign({round: buildDictationRound(setObj)}, params));
   },
+  // ---- Story Path (RzlovAPw) ----
+  'sp-next'(el){ pathAct('next', el); },
+  'sp-pick'(el){ pathAct('pick', el); },
+  'sp-tr'(el){ pathAct('tr', el); },
+  'sp-gloss'(el){ pathAct('gloss', el); },
   'echo-play'(el){
     const vp = state.viewParams, round = vp && vp.round;
     if(!round || round.finished) return;

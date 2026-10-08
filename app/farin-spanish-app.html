@@ -12746,6 +12746,323 @@ function crossOfferHtml(s){
   if(!s || s.category === 'slang' || !((state.progress && state.progress.completedVocabSets) || []).includes(s.id) || !crossSetOk(s)) return '';
   return `<button class="btn btn-ghost" style="margin-top:10px;" data-action="start-game" data-kind="cross" data-set-id="${esc(s.id)}" data-ref-id="${esc(s.id)}-cross" data-free="1">${ICONS.bolt} ${L('Mini Cross with these words','Bu kelimelerle Mini Bulmaca','جدول کوچک با همین کلمه‌ها','Minicrucigrama con estas palabras')}</button>`;
 }
+/* ============================= FIVE NEW GAMES WAVE A2 (Jq6f9OFv): ORDER UP! =============================
+   Spec: Claude/specs/games-5-new-cards-2026-10-04.md §3 (approved by Farin 2026-10-07; D3 = A, emoji
+   item art). Content: Claude/specs/games-content/order-en.md + order-es.md (farin-lxd, 2026-10-08).
+   Your companion runs a little cafe counter. Five customers (the four non-companion characters)
+   walk up and say their order (text-to-speech, rate 0.85 at A1 / 0.92 above); the learner builds it
+   on the tray from the shelf and serves. The checker compares the tray with the template's lines
+   (item + count + size + extras, an exact multiset), never with the spoken text - so a miss is
+   only ever a misheard or misunderstood word. Feedback repeats just the wrong part of the order;
+   after a second miss the full ticket is shown with that part highlighted. "Show the ticket" is a
+   hint (free when the phone has no voice for the language). Untimed, no lives, no XP, never falls
+   back, the round always finishes. Shelf labels are hidden from B1 (long-press peeks; the tray
+   always shows the word). Both apps carry the same data (en + es text per template); the spoken
+   language follows TTS_LANG. Roadmap rounds are seeded by refId (a replay = the same customers);
+   the Games shelf draws fresh orders. */
+const ORDER_MENU = [
+  {id:'coffee',    type:'drink', sized:true,  art:'☕', en:'coffee',        enPl:'coffees',         es:'café',               esPl:'cafés',                g:'m', tags:['hot','dairy-optional'], extras:['milk','sugar']},
+  {id:'tea',       type:'drink', sized:true,  art:'🍵', en:'tea',           enPl:'teas',            es:'té',                 esPl:'tés',                  g:'m', tags:['hot'],                  extras:['milk','sugar','lemon']},
+  {id:'juice',     type:'drink', sized:true,  art:'🧃', en:'juice',         enPl:'juices',          es:'zumo',               esPl:'zumos',                g:'m', tags:['cold','sweet'],         extras:['ice']},
+  {id:'water',     type:'drink', sized:true,  art:'💧', en:'water',         enPl:'waters',          es:'agua',               esPl:'aguas',                g:'f', tags:['cold'],                 extras:['ice','lemon'], esArt:'un'},
+  {id:'hotchoc',   type:'drink', sized:true,  art:'🍫', en:'hot chocolate', enPl:'hot chocolates',  es:'chocolate caliente', esPl:'chocolates calientes', g:'m', tags:['hot','dairy','sweet'],  extras:['sugar']},
+  {id:'sandwich',  type:'food',  sized:false, art:'🥪', en:'sandwich',      enPl:'sandwiches',      es:'bocadillo',          esPl:'bocadillos',           g:'m', tags:['cold'],                 extras:['cheese']},
+  {id:'croissant', type:'food',  sized:false, art:'🥐', en:'croissant',     enPl:'croissants',      es:'cruasán',            esPl:'cruasanes',            g:'m', tags:['dairy'],                extras:[]},
+  {id:'cookie',    type:'food',  sized:false, art:'🍪', en:'cookie',        enPl:'cookies',         es:'galleta',            esPl:'galletas',             g:'f', tags:['sweet','dairy'],        extras:[]},
+  {id:'cake',      type:'food',  sized:false, art:'🍰', en:'piece of cake', enPl:'pieces of cake',  es:'trozo de tarta',     esPl:'trozos de tarta',      g:'m', tags:['sweet','dairy'],        extras:[]},
+  {id:'apple',     type:'food',  sized:false, art:'🍎', en:'apple',         enPl:'apples',          es:'manzana',            esPl:'manzanas',             g:'f', tags:['cold','sweet'],         extras:[]},
+  {id:'soup',      type:'food',  sized:false, art:'🍲', en:'soup',          enPl:'soups',           es:'sopa',               esPl:'sopas',                g:'f', tags:['hot'],                  extras:[]},
+  {id:'salad',     type:'food',  sized:false, art:'🥗', en:'salad',         enPl:'salads',          es:'ensalada',           esPl:'ensaladas',            g:'f', tags:['cold'],                 extras:['cheese']},
+  {id:'pizza',     type:'food',  sized:false, art:'🍕', en:'pizza slice',   enPl:'pizza slices',    es:'trozo de pizza',     esPl:'trozos de pizza',      g:'m', tags:['hot','dairy'],          extras:['cheese']},
+  {id:'icecream',  type:'food',  sized:false, art:'🍨', en:'ice cream',     enPl:'ice creams',      es:'helado',             esPl:'helados',              g:'m', tags:['cold','sweet','dairy'], extras:[]}
+];
+const ORDER_EXTRAS = [
+  {id:'milk',   art:'🥛', en:'milk',   es:'leche'},
+  {id:'sugar',  art:'🧂', en:'sugar',  es:'azúcar'},
+  {id:'ice',    art:'🧊', en:'ice',    es:'hielo'},
+  {id:'lemon',  art:'🍋', en:'lemon',  es:'limón'},
+  {id:'cheese', art:'🧀', en:'cheese', es:'queso'}
+];
+/* Templates (order-en.md / order-es.md, 7 per level). lines = the order structure the checker uses
+   ({n, item, size?, extras?, not?}; item = an id or a class *drink *food *sized *hot *cold *sweet
+   *dairy *nodairy *sweet-food-not-cake *any; classes resolve to distinct items in one order; a
+   line with a size resolves to a drink). text = the spoken sentence per language with slots
+   {A1} {N1} {ITEM1} {SIZE1} {A1s} {ITEM1s} {AX} {ITEMX} {SIZEX} {UNO1} (see orderRenderText).
+   decoys = ids/classes that must also be on the shelf (an extra id goes to the extras row;
+   decoys[0] is {ITEMX}). B2 adds board (4 ids/classes shown on the menu board) and soldOut. */
+const ORDER_TEMPLATES = {
+  A1:[
+    {id:'A1-1', lines:[{n:1, item:'*drink'}], decoys:['*drink'],
+      text:{en:'{A1} {ITEM1}, please.', es:'{A1} {ITEM1}, por favor.'}},
+    {id:'A1-2', lines:[{n:2, item:'*food'}], decoys:['*food'],
+      text:{en:'{N1} {ITEM1}, please.', es:'{N1} {ITEM1}, por favor.'}},
+    {id:'A1-3', lines:[{n:2, item:'*drink'}, {n:1, item:'*food'}], decoys:['*food'],
+      text:{en:'{A1} {ITEM1} and {A2} {ITEM2}, please.', es:'{A1} {ITEM1} y {A2} {ITEM2}, por favor.'}},
+    {id:'A1-4', lines:[{n:1, item:'*food'}, {n:3, item:'*drink'}], decoys:['*drink'],
+      text:{en:'{A1} {ITEM1}, and {A2} {ITEM2}, please.', es:'{A1} {ITEM1}, y {A2} {ITEM2}, por favor.'}},
+    {id:'A1-5', lines:[{n:1, item:'juice'}], decoys:['water'],
+      text:{en:'A glass of juice, please.', es:'Un zumo, por favor.'}},
+    {id:'A1-6', lines:[{n:1, item:'cake'}, {n:1, item:'tea'}], decoys:['cookie','coffee'],
+      text:{en:'A piece of cake and a tea, please.', es:'Un trozo de tarta y un té, por favor.'}},
+    {id:'A1-7', lines:[{n:2, item:'*food'}, {n:2, item:'*drink'}], decoys:['*food','*drink'],
+      text:{en:'{N1} {ITEM1} and {N2} {ITEM2}, please. Thank you!', es:'{N1} {ITEM1} y {N2} {ITEM2}, por favor. ¡Gracias!'}}
+  ],
+  A2:[
+    {id:'A2-1', lines:[{n:1, item:'*sized', size:'L'}], decoys:['*drink'],
+      text:{en:'Can I have {A1} large {ITEM1}, please?', es:'¿Me pone {A1} {ITEM1} {SIZE1}, por favor?'}},
+    {id:'A2-2', lines:[{n:1, item:'coffee', size:'M', extras:['milk']}], decoys:['sugar','tea'],
+      text:{en:'Can I have a medium coffee with milk?', es:'¿Me pone un café mediano con leche?'}},
+    {id:'A2-3', lines:[{n:1, item:'tea', size:'L', extras:['lemon'], not:['sugar']}], decoys:['milk'],
+      text:{en:'A large tea with lemon, without sugar, please.', es:'Un té grande con limón, sin azúcar, por favor.'}},
+    {id:'A2-4', lines:[{n:2, item:'coffee', size:'S', not:['sugar']}, {n:1, item:'croissant'}], decoys:['milk','cookie'],
+      text:{en:'Two small coffees, no sugar, and a croissant, please.', es:'Dos cafés pequeños sin azúcar y un cruasán, por favor.'}},
+    {id:'A2-5', lines:[{n:1, item:'*hot', size:'M'}, {n:1, item:'*cold', size:'S'}, {n:1, item:'*food'}], decoys:['*food'],
+      text:{en:'Can I have {A1} medium {ITEM1}, {A2} small {ITEM2} and {A3} {ITEM3}, please?', es:'¿Me pone {A1} {ITEM1} {SIZE1}, {A2} {ITEM2} {SIZE2} y {A3} {ITEM3}, por favor?'}},
+    {id:'A2-6', lines:[{n:2, item:'juice', size:'L', extras:['ice']}], decoys:['water','lemon'],
+      text:{en:'Two large juices with ice, to go, please.', es:'Dos zumos grandes con hielo, para llevar, por favor.'}},
+    {id:'A2-7', lines:[{n:1, item:'sandwich', not:['cheese']}, {n:1, item:'water', size:'M', extras:['lemon']}], decoys:['ice','salad'],
+      text:{en:'A sandwich without cheese, and a water with lemon, please.', es:'Un bocadillo sin queso y un agua mediana con limón, por favor.'}}
+  ],
+  B1:[
+    {id:'B1-1', lines:[{n:3, item:'*sized', size:'M', extras:[]}], decoys:['*drink'],
+      text:{en:'Two {ITEM1}, please… actually, make it three.', es:'Dos {ITEM1}, por favor… bueno, mejor tres.'}},
+    {id:'B1-2', lines:[{n:1, item:'*hot', size:'L'}], decoys:['*hot','*food'],
+      text:{en:'A large {ITEMX}… no, sorry, a large {ITEM1}.', es:'{AX} {ITEMX} {SIZEX}… no, perdón, {A1} {ITEM1} {SIZE1}.'}},
+    {id:'B1-3', lines:[{n:2, item:'*drink', size:'M'}, {n:2, item:'*food'}], decoys:['*food'],
+      text:{en:'{A1s} {ITEM1s} and {A2s} {ITEM2s} — and the same for my friend, please.', es:'{A1s} {ITEM1s} y {A2s} {ITEM2s} — y lo mismo para mi amiga, por favor.'}},
+    {id:'B1-4', lines:[{n:3, item:'*food'}], decoys:['*food'],
+      text:{en:'Two {ITEM1}… and one more, please. So three.', es:'Dos {ITEM1}… y {UNO1} más, por favor. O sea, tres.'}},
+    {id:'B1-5', lines:[{n:1, item:'tea', size:'M', extras:['lemon']}], decoys:['milk','sugar','coffee'],
+      text:{en:'A medium tea with milk — with lemon instead of milk, I mean.', es:'Un té mediano con leche — con limón en vez de leche, quiero decir.'}},
+    {id:'B1-6', lines:[{n:1, item:'soup'}, {n:1, item:'*cold', size:'S'}], decoys:['salad','*cold'],
+      text:{en:'What do you recommend? … The soup? Great, the soup then, and a small {ITEM2}.', es:'¿Qué me recomienda? … ¿La sopa? Vale, pues la sopa, y {A2} {ITEM2} {SIZE2}.'}},
+    {id:'B1-7', lines:[{n:1, item:'coffee', size:'L', extras:['milk','sugar']}, {n:1, item:'cookie'}], decoys:['cake','tea'],
+      text:{en:'A small coffee with milk and sugar — actually, large — and a cookie.', es:'Un café pequeño con leche y azúcar — mejor grande — y una galleta.'}}
+  ],
+  B2:[
+    {id:'B2-1', lines:[{n:1, item:'croissant'}], board:['cake','croissant','coffee','juice'], soldOut:'cake', decoys:['cookie'],
+      text:{en:'If there’s any cake left I’ll have a piece, otherwise a croissant.', es:'Si queda tarta, póngame un trozo; si no, un cruasán.'}},
+    {id:'B2-2', lines:[{n:1, item:'cake'}], board:['cake','croissant','tea','water'], soldOut:'water', decoys:['croissant'],
+      text:{en:'If there’s any cake left I’ll have a piece, otherwise a croissant.', es:'Si queda tarta, póngame un trozo; si no, un cruasán.'}},
+    {id:'B2-3', lines:[{n:1, item:'juice', size:'M'}, {n:1, item:'water', size:'M'}], board:['juice','water','hotchoc','cookie'], soldOut:'cookie', decoys:['milk','icecream'],
+      text:{en:'Two cold drinks, one of each you’ve got — but nothing with dairy, please.', es:'Dos bebidas frías, una de cada una de las que tenga — pero nada con lácteos, por favor.'}},
+    {id:'B2-4', lines:[{n:1, item:'water', size:'L', extras:['lemon']}], board:['juice','water','croissant','soup'], soldOut:'juice', decoys:['ice'],
+      text:{en:'A large juice, unless the juice is what’s sold out — in that case a large water with lemon.', es:'Un zumo grande, a menos que el zumo sea lo que se ha agotado; en ese caso, un agua grande con limón.'}},
+    {id:'B2-5', lines:[{n:1, item:'*food'}, {n:1, item:'*food'}, {n:1, item:'*drink', size:'M'}], board:['*food','*food','*drink','*any'], soldOut:'board[3]', decoys:['*food'],
+      text:{en:'One of everything on the board except what you’ve run out of, please.', es:'Una de cada cosa de la pizarra menos lo que se le haya acabado, por favor.'}},
+    {id:'B2-6', lines:[{n:1, item:'*sweet-food-not-cake'}, {n:1, item:'water', size:'S'}], board:['cake','*sweet-food-not-cake','sandwich','water'], soldOut:'sandwich', decoys:['cake','juice'],
+      text:{en:'Something sweet that isn’t cake — just the one — and a small water, please.', es:'Algo dulce que no sea tarta — solo uno — y un agua pequeña, por favor.'}},
+    {id:'B2-7', lines:[{n:1, item:'soup'}, {n:1, item:'tea', size:'M', extras:['lemon']}], board:['soup','salad','tea','coffee'], soldOut:'salad', decoys:['milk'],
+      text:{en:'Is the soup spicy? … No? Then the soup, please, and if you do lemon, a tea with lemon.', es:'¿La sopa está picante? … ¿No? Pues la sopa, por favor, y si tiene limón, un té con limón.'}}
+  ],
+  C1:[
+    {id:'C1-1', lines:[{n:1, item:'coffee', size:'L', not:['milk']}], decoys:['sugar','tea'],
+      text:{en:'I’m running on empty: your biggest coffee, and go easy on the milk — actually, hold the milk.', es:'Estoy que no puedo más: el café más grande que tenga, y poca leche… mejor, sin leche.'}},
+    {id:'C1-2', lines:[{n:2, item:'croissant'}, {n:1, item:'tea', size:'L'}], decoys:['cookie','coffee'],
+      text:{en:'Could I possibly trouble you for a couple of croissants? And I wouldn’t say no to a tea — large, if it’s not too much bother.', es:'Si no es mucha molestia, ¿me pondría un par de cruasanes? Y no le diría que no a un té — grande, ya que estoy.'}},
+    {id:'C1-3', lines:[{n:1, item:'juice', size:'M'}], decoys:['sandwich','water'],
+      text:{en:'I’m in a bit of a rush, so skip the sandwich I asked about — just the juice, thanks.', es:'Voy con prisa, así que olvídese del bocadillo que le pregunté antes: solo el zumo, gracias.'}},
+    {id:'C1-4', lines:[{n:1, item:'water', size:'S'}], decoys:['icecream','juice'],
+      text:{en:'I’d kill for an ice cream, but I’m watching my sugar, so a small water will have to do.', es:'Me moriría por un helado, pero estoy controlando el azúcar, así que un agua pequeña y listo.'}},
+    {id:'C1-5', lines:[{n:1, item:'cake'}, {n:1, item:'tea', size:'M'}], decoys:['cookie','coffee'],
+      text:{en:'Go on then, twist my arm: a piece of cake. And a tea to wash it down.', es:'Venga, va, me ha convencido: un trozo de tarta. Y un té para acompañar.'}},
+    {id:'C1-6', lines:[{n:1, item:'cookie'}, {n:1, item:'water', size:'M'}], decoys:['juice','cake'],
+      text:{en:'A cookie for me, and whatever my friend’s having — she said a juice, I think? No — she said water. Yes, water.', es:'Una galleta para mí, y lo que haya pedido mi amiga… dijo un zumo, ¿no? No — dijo agua. Sí, agua.'}},
+    {id:'C1-7', lines:[{n:1, item:'tea', size:'M', extras:['milk'], not:['sugar']}, {n:1, item:'soup'}], decoys:['lemon','salad'],
+      text:{en:'I’m starving, so the soup — and a tea to go with it, milk in, but hold the sugar.', es:'Tengo un hambre que no veo, así que la sopa — y un té para acompañar, con leche pero sin azúcar.'}}
+  ]
+};
+const ORDER_TILES = {A1:6, A2:9, B1:12, B2:12, C1:12};   // shelf tiles per level (spec §3.3), extras included
+const ORDER_SAME_TYPE = {A1:1, A2:2, B1:3, B2:3, C1:3};  // at least this many decoys share a needed item's type
+const ORDER_CUSTOMERS = 5, ORDER_TRAY_MAX = 6;
+const ORDER_SIZES = ['S','M','L'];
+const ORDER_CHARS = ['career','everyday','exam','immigration','travel'];
+const ORDER_NUMS = {en:['zero','one','two','three','four','five','six'], es:['cero','un','dos','tres','cuatro','cinco','seis']};
+/* ---- Data helpers and the slot grammar (order-en.md "Slot grammar", order-es.md "Slot differences") ---- */
+function orderLang(){ return TTS_LANG.indexOf('es') === 0 ? 'es' : 'en'; }
+function orderItem(id){ return ORDER_MENU.find(m=>m.id === id) || null; }
+function orderExtra(id){ return ORDER_EXTRAS.find(x=>x.id === id) || null; }
+function orderRate(round){ return round.level === 'A1' ? 0.85 : 0.92; }
+// Does menu item m fit a class (or equal an id)? sized = the line carries a size, so a tagged class means a drink.
+function orderClassOk(m, cls, sized){
+  if(sized && !m.sized) return false;
+  const has = t => m.tags.indexOf(t) >= 0;
+  if(cls === '*any') return true;
+  if(cls === '*drink') return m.type === 'drink';
+  if(cls === '*food') return m.type === 'food';
+  if(cls === '*sized') return !!m.sized;
+  if(cls === '*hot') return has('hot');
+  if(cls === '*cold') return has('cold');
+  if(cls === '*sweet') return has('sweet');
+  if(cls === '*dairy') return has('dairy');
+  if(cls === '*nodairy') return !has('dairy') && !has('dairy-optional');
+  if(cls === '*sweet-food-not-cake') return m.type === 'food' && has('sweet') && m.id !== 'cake';
+  return m.id === cls;
+}
+// One item for an id/class, distinct from the ids already used in this order (null when none is left).
+function orderPick(cls, used, rnd, sized){
+  if(cls.charAt(0) !== '*') return orderItem(cls);
+  const pool = ORDER_MENU.filter(m=>!used.has(m.id) && orderClassOk(m, cls, sized));
+  return pool.length ? pool[Math.floor(rnd()*pool.length)] : null;
+}
+// a / an (vowel sound: apple, ice cream); Spanish un / una or the item's own esArt (un agua).
+function orderArt(item, lang){
+  if(lang === 'es') return item.esArt || (item.g === 'f' ? 'una' : 'un');
+  return /^[aeiou]/i.test(item.en) ? 'an' : 'a';
+}
+// {N}: the number word; Spanish says un / una for one (never "uno" before a noun).
+function orderNum(n, lang, item){ return (lang === 'es' && n === 1) ? orderArt(item, lang) : (ORDER_NUMS[lang][n] || String(n)); }
+// {A}: the article for one, the number word above one.
+function orderA(item, n, lang){ return n === 1 ? orderArt(item, lang) : orderNum(n, lang, item); }
+function orderName(item, n, lang){ return lang === 'es' ? (n === 1 ? item.es : item.esPl) : (n === 1 ? item.en : item.enPl); }
+// {SIZE}: small / medium / large; Spanish after the noun, agreeing in gender and number (un agua pequeña, dos zumos grandes).
+function orderSizeWord(size, lang, item, n){
+  if(lang !== 'es') return size === 'S' ? 'small' : (size === 'L' ? 'large' : 'medium');
+  let w = size === 'S' ? 'pequeñ' : (size === 'L' ? 'grande' : 'median');
+  if(size !== 'L') w += (item && item.g === 'f') ? 'a' : 'o';
+  return n > 1 ? w + 's' : w;
+}
+function orderUno(item, lang){ return lang === 'es' ? (item.g === 'f' ? 'una' : 'uno') : 'one'; }
+function orderCap(s){ return String(s).replace(/^(\*\*)?(\p{Ll})/u, (m, a, b)=>(a||'') + b.toUpperCase()); }
+function orderPlain(s){ return String(s||'').replace(/\*\*/g, ''); }
+// Fills the slots of a template text from the resolved lines (items, counts, sizes); decoyX stands in for {…X}.
+function orderRenderText(tpl, lines, decoyX, lang){
+  const t = (tpl.text[lang] || tpl.text.en).replace(/\{([A-Z]+)(\d|X)(s?)\}/g, (all, slot, idx, sing)=>{
+    const ln = idx === 'X' ? (decoyX ? {item:decoyX, n:lines[0].n, size:lines[0].size} : null) : lines[Number(idx) - 1];
+    if(!ln || !ln.item) return all;
+    const n = sing ? 1 : ln.n, it = ln.item;
+    if(slot === 'A') return orderA(it, n, lang);
+    if(slot === 'N') return orderNum(n, lang, it);
+    if(slot === 'ITEM') return orderName(it, n, lang);
+    if(slot === 'SIZE') return orderSizeWord(ln.size || 'M', lang, it, n);
+    if(slot === 'UNO') return orderUno(it, lang);
+    return all;
+  });
+  // a slot that opens a sentence is capitalised
+  return t.replace(/(^|[.?!]\s+)(\p{Ll})/gu, (m, a, b)=>a + b.toUpperCase());
+}
+/* ---- Generator: one customer's order from a template (content "Shelf and distractor rules") ---- */
+function orderMakeOrder(tpl, level, rnd){
+  const lang = orderLang(), used = new Set(), lines = [];
+  for(const ls of tpl.lines){
+    const it = orderPick(ls.item, used, rnd, !!ls.size);
+    if(!it || used.has(it.id)) return null;
+    used.add(it.id);
+    lines.push({spec:ls.item, item:it, n:ls.n, size:(level !== 'A1' && it.sized) ? (ls.size || 'M') : null, extras:(ls.extras || []).slice(), not:(ls.not || []).slice()});
+  }
+  if(lines.reduce((a, l)=>a + l.n, 0) > ORDER_TRAY_MAX) return null;
+  // decoys: an extra id joins the extras row; decoys[0] is {ITEMX} and resolves like line 1
+  const decoyItems = [], decoyExtras = [];
+  tpl.decoys.forEach((d, k)=>{
+    if(orderExtra(d)){ decoyExtras.push(d); return; }
+    const it = orderPick(d, used, rnd, k === 0 && !!lines[0].size && /\{[A-Z]+X\}/.test(tpl.text.en + tpl.text.es));
+    if(it && !used.has(it.id)){ used.add(it.id); decoyItems.push(it); }
+  });
+  const menuIds = lines.map(l=>l.item.id).concat(decoyItems.map(d=>d.id));
+  // B2: the menu board (a class entry is the line that used that class; a free class is a fresh item)
+  let board = null, soldOut = null;
+  if(tpl.board){
+    const queue = lines.slice();
+    board = tpl.board.map(b=>{
+      if(b.charAt(0) !== '*') return b;
+      const li = queue.findIndex(l=>l.spec === b);
+      if(li >= 0) return queue.splice(li, 1)[0].item.id;
+      const it = orderPick(b, used, rnd, false);
+      if(!it) return null;
+      used.add(it.id); return it.id;
+    });
+    if(board.some(x=>!x)) return null;
+    const bm = String(tpl.soldOut).match(/^board\[(\d)\]$/);
+    soldOut = bm ? board[Number(bm[1])] : tpl.soldOut;
+    board.forEach(id=>{ if(menuIds.indexOf(id) < 0){ menuIds.push(id); used.add(id); } });   // the struck item stays on the shelf: the trap
+  }
+  // extras row: A1 never; A2 only the extras the order mentions; from B1 all five whenever one is used
+  const usesExtras = lines.some(l=>l.extras.length || l.not.length) || decoyExtras.length > 0;
+  let extraIds = [];
+  if(level !== 'A1' && usesExtras){
+    if(level === 'A2'){ lines.forEach(l=>l.extras.concat(l.not).forEach(e=>{ if(extraIds.indexOf(e) < 0) extraIds.push(e); })); decoyExtras.forEach(e=>{ if(extraIds.indexOf(e) < 0) extraIds.push(e); }); }
+    else extraIds = ORDER_EXTRAS.map(x=>x.id);
+  }
+  // fill the shelf: same-type decoys first (1 / 2 / 3), then random; at B2 a random decoy never satisfies a narrow
+  // class a line used (so "something sweet that isn't cake" has one answer)
+  const total = ORDER_TILES[level] || 12, menuTarget = Math.max(menuIds.length, total - extraIds.length);
+  const needIds = lines.map(l=>l.item.id), needTypes = lines.map(l=>l.item.type);
+  const narrow = tpl.lines.map(l=>l.item).filter(c=>/^\*(hot|cold|sweet|dairy|nodairy|sweet-food-not-cake)$/.test(c));
+  const pool = crossShuffle(ORDER_MENU.filter(m=>!used.has(m.id) && !(level === 'B2' && narrow.some(c=>orderClassOk(m, c, false)))), rnd);
+  const sameCount = () => menuIds.filter(id=>needIds.indexOf(id) < 0 && needTypes.indexOf(orderItem(id).type) >= 0).length;
+  while(menuIds.length < menuTarget && pool.length){
+    let k = sameCount() < (ORDER_SAME_TYPE[level] || 3) ? pool.findIndex(m=>needTypes.indexOf(m.type) >= 0) : -1;
+    if(k < 0) k = 0;
+    const m = pool.splice(k, 1)[0]; menuIds.push(m.id); used.add(m.id);
+  }
+  const shelf = crossShuffle(menuIds.map(id=>({k:'item', id})), rnd).concat(extraIds.map(id=>({k:'extra', id})));
+  return {tpl:tpl.id, lines:lines.map(l=>({id:l.item.id, n:l.n, size:l.size, extras:l.extras})), shelf, board, soldOut,
+    text:orderRenderText(tpl, lines, decoyItems[0] || null, lang)};
+}
+// A round: five customers on distinct templates of the learner's level. refId seeds a roadmap round; null = fresh.
+function buildOrderRound(refId){
+  const lvl = (state.profile && state.profile.level) || 'A1';
+  const level = ORDER_TEMPLATES[lvl] ? lvl : 'A1';
+  const rnd = crossRng(refId ? crossHash(refId) : (Math.random()*4294967295) >>> 0);
+  const tpls = crossShuffle(ORDER_TEMPLATES[level], rnd);
+  const chars = crossShuffle(ORDER_CHARS.filter(k=>k !== learnerCharKey()), rnd);
+  const customers = [];
+  let ti = 0, guard = 0;
+  while(customers.length < ORDER_CUSTOMERS && guard++ < 80){
+    const o = orderMakeOrder(tpls[ti % tpls.length], level, rnd); ti++;
+    if(!o) continue;
+    o.ch = chars[customers.length % chars.length];
+    Object.assign(o, {serves:0, misses:0, ticket:false, full:false, fb:null, perfect:false, done:false});
+    customers.push(o);
+  }
+  return {level, customers, index:0, tray:[], sel:-1, right:0, tickets:0, combo:0, noVoice:ttsVoiceMissing(), greeted:false, finished:false, startedAt:Date.now(), finishedAt:null};
+}
+function orderCust(round){ return round.customers[round.index] || null; }
+// The order as tray lines in words ("☕ two coffees (large) + milk · 🍪 a cookie"): the souvenir's flip-side note.
+function orderTraySummary(cust){
+  const lang = orderLang();
+  return cust.lines.map(l=>{
+    const it = orderItem(l.id); if(!it) return '';
+    const ex = (l.extras || []).map(e=>{ const x = orderExtra(e); return x ? x[lang] : e; });
+    return it.art + ' ' + orderA(it, l.n, lang) + ' ' + orderName(it, l.n, lang) + (l.size ? ' (' + orderSizeWord(l.size, lang, it, l.n) + ')' : '') + (ex.length ? ' + ' + ex.join(' + ') : '');
+  }).filter(Boolean).join(' · ');
+}
+/* ---- Checker: the tray against the order (exact multiset; A1 ignores sizes). One mismatch at a time, in the
+   customer's words (feedback frames from the content). ---- */
+function orderFrame(m, lang){
+  const it = m.it, n = m.n || 1;
+  const A = orderA(it, n, lang), N = orderNum(n, lang, it), ITEM = orderName(it, n, lang);
+  const ex = m.extra ? (orderExtra(m.extra) || {})[lang] || m.extra : '';
+  let f, words;
+  if(m.kind === 'count'){ f = lang === 'es' ? `**${N} ${ITEM}**, por favor.` : `**${N} ${ITEM}**, please.`; words = [N, ITEM]; }
+  else if(m.kind === 'missing'){ f = lang === 'es' ? `Y **${A} ${ITEM}**, por favor.` : `And **${A} ${ITEM}**, please.`; words = [ITEM]; }
+  else if(m.kind === 'notOrdered'){ f = lang === 'es' ? `**${ITEM}** no he pedido.` : `I didn’t order **${A} ${ITEM}**.`; words = []; }
+  else if(m.kind === 'size'){ const S = orderSizeWord(m.size, lang, it, 1); f = lang === 'es' ? `**${orderCap(S)}**, por favor.` : `**${orderCap(S)}**, please.`; words = [S]; }
+  else if(m.kind === 'extraMissing'){ f = lang === 'es' ? `**Con ${ex}**, por favor.` : `**With ${ex}**, please.`; words = [ex]; }
+  else { f = lang === 'es' ? `He dicho **sin ${ex}**.` : `I said **no ${ex}**.`; words = [ex]; }
+  return {frame:orderCap(f), words};
+}
+function orderCheck(cust, tray, level){
+  const lang = orderLang(), byId = {}, miss = [];
+  tray.forEach((l, i)=>{ byId[l.id] = {l, i}; });
+  // something on the tray nobody asked for comes first (the trap items), then each ordered line in turn
+  tray.forEach((tl, i)=>{ if(!cust.lines.some(ol=>ol.id === tl.id)) miss.push({kind:'notOrdered', i, it:orderItem(tl.id), n:tl.n}); });
+  cust.lines.forEach(ol=>{
+    const it = orderItem(ol.id), t = byId[ol.id];
+    if(!t){ miss.push({kind:'missing', i:-1, it, n:ol.n}); return; }
+    const tl = t.l;
+    if(tl.n !== ol.n){ miss.push({kind:'count', i:t.i, it, n:ol.n}); return; }
+    if(level !== 'A1' && it.sized && ol.size && (tl.size || 'M') !== ol.size){ miss.push({kind:'size', i:t.i, it, n:ol.n, size:ol.size}); return; }
+    const want = ol.extras || [], have = tl.extras || [];
+    const lack = want.find(e=>have.indexOf(e) < 0);
+    if(lack){ miss.push({kind:'extraMissing', i:t.i, it, n:ol.n, extra:lack}); return; }
+    const over = have.find(e=>want.indexOf(e) < 0);
+    if(over) miss.push({kind:'extraUnwanted', i:t.i, it, n:ol.n, extra:over});
+  });
+  if(!miss.length) return {ok:true};
+  const m = miss[0], f = orderFrame(m, lang);
+  return {ok:false, kind:m.kind, i:m.i, frame:f.frame, words:f.words};
+}
 /* ============================= GAMIFICATION V3 BUILD 2: STORY HUNT =============================
    Games catalogue 4.3 + the LXD changes (approved 2026-10-04): a passage from the
    learner's story; find the word that matches each clue by tapping it in the text.

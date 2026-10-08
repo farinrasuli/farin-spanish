@@ -611,6 +611,16 @@
   .sh-deck .deck-ghost{border-radius:10px;}
   .sh-lit{display:inline-block; border-radius:14px;}
   .sh-sweep .sh-lit .sv-shine, .sh-sweep .sh-lit .sv-kept{opacity:0;}
+  /* Pack for class (FCgBqtei): the sheet under the next Club session */
+  .club-pack{margin-top:9px; background:var(--bg-elevated); border-radius:14px; padding:10px 12px; border:1.5px dashed color-mix(in srgb, var(--cat-lis) 50%, transparent);}
+  .club-pack-n{font-size:11px; font-weight:800; color:var(--cat-lis);}
+  .club-pack-sub{font-size:12px; color:var(--ink-soft); margin:4px 0 2px; line-height:1.45;}
+  .club-pack-item{display:flex; align-items:flex-start; gap:9px; width:100%; box-sizing:border-box; text-align:start; margin-top:6px; padding:8px 10px; border-radius:12px; border:1.5px solid var(--border-soft); background:var(--bg-sunken); color:var(--ink); font:inherit; cursor:pointer;}
+  .club-pack-item.packed{border-color:var(--cat-lis); background:var(--cat-lis-soft);}
+  .club-pack-ic{flex:0 0 auto; width:22px; height:22px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:900; font-size:13px; background:var(--bg-elevated); color:var(--cat-lis); box-shadow:var(--clay-shadow-soft);}
+  .club-pack-item.packed .club-pack-ic{background:var(--cat-lis); color:#fff;}
+  .club-pack-why{display:block; font-size:10.5px; font-weight:800; text-transform:uppercase; letter-spacing:.03em; color:var(--ink-faint);}
+  .club-pack-text{display:block; font-size:13.5px; font-weight:700; line-height:1.4; overflow-wrap:anywhere;}
   /* Completion sequence (§3): stat stickers, the souvenir flip, the caption. */
   .cel-stickers{display:flex; flex-wrap:wrap; justify-content:center; gap:6px; margin-top:10px;}
   .cel-sticker{display:inline-block; background:#fff; color:var(--clay-orange-deep); font-family:'Fredoka',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; font-weight:700; font-size:16px; padding:4px 12px; border-radius:999px; box-shadow:var(--clay-shadow-soft), 0 0 0 1.5px color-mix(in srgb, var(--cat-review) 60%, transparent); opacity:0;}
@@ -5958,7 +5968,7 @@ function freshState(){
   return {
     view:'diagnostic-intro', viewParams:{}, lang:'tr',
     profile:{name:'', motivationTag:null, goals:[], archetype:null, level:null, levelStage:1, topics:[], learnerType:null, priorityArea:null, completedDiagnostic:false, dashboardIntroShown:false, recoveryCode:null, wantsContact:false, contactPhone:'', clubCode:null},
-    progress:{sessionsExplored:0, streak:0, lastActiveDate:null, completedTraps:[], completedVocabSets:[], completedScenes:[], completedStories:[], completedGames:[], srs:{}, badgesEarnedAt:{}, reviewsCompleted:0, roadmapChecked:{}, dailyTasksDate:null, dailyTasksChecked:{}, writingRoundsDone:0, speakingRoundsDone:0, usedSpeakingTopics:[], xp:0, perfectGameRounds:0, souvenirs:[], gameBests:{}, roadmapGolden:null, lastWords:{}, mediaWatched:[], nodeScores:{}, storyAnswers:{}, journal:{cover:null, pagesKept:[]}, pinned:[], storyChoices:{}, chores:{}, storyPages:{}, storyCalls:{}, path:{level:null, chapter:0, choices:[], stance:{warmth:0, candour:0}, history:[], reflect:{}}},
+    progress:{sessionsExplored:0, streak:0, lastActiveDate:null, completedTraps:[], completedVocabSets:[], completedScenes:[], completedStories:[], completedGames:[], srs:{}, badgesEarnedAt:{}, reviewsCompleted:0, roadmapChecked:{}, dailyTasksDate:null, dailyTasksChecked:{}, writingRoundsDone:0, speakingRoundsDone:0, usedSpeakingTopics:[], xp:0, perfectGameRounds:0, souvenirs:[], gameBests:{}, roadmapGolden:null, lastWords:{}, mediaWatched:[], nodeScores:{}, storyAnswers:{}, journal:{cover:null, pagesKept:[]}, pinned:[], storyChoices:{}, chores:{}, storyPages:{}, storyCalls:{}, clubSeen:{}, clubArrival:0, path:{level:null, chapter:0, choices:[], stance:{warmth:0, candour:0}, history:[], reflect:{}}},
     diag:{step:0, goals:[], level:null, topics:[], learnerType:null, priorityArea:null, test:null},
     roadmap:null,
     quiz:null, studentPanelCache:null
@@ -6017,6 +6027,9 @@ function load(){
     if(!Array.isArray(merged.progress.journal.pagesKept)) merged.progress.journal.pagesKept = [];
     // Gamification v3 build 2 (M8): souvenirs pinned for the next lesson
     if(!Array.isArray(merged.progress.pinned)) merged.progress.pinned = [];
+    // Every card (FCgBqtei): Club sessions already turned into souvenirs (flat map) + the quiet-arrival count
+    if(!merged.progress.clubSeen || typeof merged.progress.clubSeen !== 'object' || Array.isArray(merged.progress.clubSeen)) merged.progress.clubSeen = {};
+    if(typeof merged.progress.clubArrival !== 'number') merged.progress.clubArrival = 0;
     // Gamification v3 build 2 (M6): the companion story's choices, keyed 'A1:0' etc.
     if(!merged.progress.storyChoices || typeof merged.progress.storyChoices !== 'object') merged.progress.storyChoices = {};
     if(merged.profile.levelStage===undefined) merged.profile.levelStage = 1;
@@ -6619,7 +6632,8 @@ function companionBubbleContent(){
           + `<div class="cb-btns"><button class="cb-btn" data-action="start-shuffle" data-mode="warm">${L('Warm up','Isın','گرم کنیم','Calentar')}</button></div>`
         : L('Your roadmap is right where you left it.','Yol haritan bıraktığın yerde.','نقشه راهت همان‌جایی است که رهایش کردی.','Tu hoja de ruta está donde la dejaste.'));
   }
-  return companionPlanHtml() || null;
+  // Pack for class (FCgBqtei): a new Club session souvenir is announced once, quietly, in the normal bubble.
+  return clubArrivalHtml() || companionPlanHtml() || null;
 }
 function checkBadges(){
   BADGES.forEach(b=>{
@@ -8880,7 +8894,7 @@ function souvenirFaceHtml(sv){
     ? `<img src="${art}" alt="" class="sv-art" style="width:${art==='studio-icon-cutout.png'?72:56}px; height:${art==='studio-icon-cutout.png'?72:56}px;">`
     : `<span class="sv-art sv-art-ic">${m.ic}</span>`;
   const label = sv.label === 'words' ? L('Your words','Senin sözlerin','حرف‌های تو','Tus palabras')
-    : '';
+    : (sv.label === 'teacher' ? L('From your teacher','Öğretmeninden','از طرف معلمت','De tu profe') : '');
   const isWord = sv.type === 'vocab' || sv.type === 'slang';
   return `<div class="sv-card ${sv.golden?'sv-gold':''}" style="--svc:${color};">
     ${sv.golden ? `<span class="sv-rare">${L('Rare find','Nadir buluntu','یافته کمیاب','Hallazgo raro')}</span>` : ''}
@@ -10221,6 +10235,123 @@ function adminPinsHtml(s){
     ${body}
   </div>`;
 }
+/* ============================= EVERY CARD: LIVE SESSION (Club) — PACK FOR CLASS + SESSION SOUVENIR =============================
+   FCgBqtei (spec gamify-every-card-type §4.9; LXD §B: Farin's option B, no admin field).
+   (1) Pack for class: under the next Club session in the panel, a small sheet with what the
+   learner already packed (progress.pinned, max 3; tap to unpack) and, while there is room, up to
+   three suggestions: a souvenir that slipped twice, the newest souvenir, the learner's own words.
+   A tap packs it with the same pin the journal's "Bring to class" makes, so the teacher sees it
+   in the admin student view.
+   (2) The session souvenir: when a Club session is done, it leaves a real 'session' souvenir on
+   the current journal page (--cat-lis, ICONS.chat, "From your teacher"): the first sentence of
+   the session's tip, else of its homework, else its title; the session date on the stamp. The
+   first time a pass is linked, earlier sessions are only marked as seen and just the latest one
+   becomes a souvenir (no flood). progress.clubSeen = {sessionKey: date}, a flat map (Firestore
+   takes no nested arrays). Never reviewed in the Shuffle (not SV_REVIEWABLE).
+   (3) Quiet arrival: the next Home bubble says "Your teacher left something in your {journal}"
+   once (progress.clubArrival), inside the normal 5-second bubble, as that real action's one
+   offer - never a takeover, nothing on the roadmap. The panel data is fetched on app open for a
+   learner with a Club pass (clubRefresh), and when the pass is entered. */
+function clubSessionKey(r){ return 's' + String(r && r.id != null ? r.id : '').replace(/[^A-Za-z0-9_-]/g, '_').slice(0, 80); }
+function clubFirstSentence(s){
+  let t = String(s || '').split(/\n+/).map(x=>x.trim()).filter(Boolean)[0] || '';
+  t = t.replace(/^(?:[-•*]\s+|\d+[.)]\s+)/, '').replace(/\s+/g, ' ').trim();
+  if(!t) return '';
+  const m = /^.+?[.!?…](?=\s|$)/.exec(t);
+  let x = (m ? m[0] : t).trim();
+  if(x.length > 90) x = x.slice(0, 90).replace(/\s+\S*$/, '') + '…';
+  return x;
+}
+function clubSessionTitle(r){ return String((r && (r.title || nodeTitle(r))) || '').trim(); }
+function clubSessionLine(r){ return clubFirstSentence(r && r.tips) || clubFirstSentence(r && r.homework) || clubFirstSentence(clubSessionTitle(r)); }
+function clubSessionSouvenir(r, level){
+  const d = String((r && r.date) || '');
+  return {nodeId:'club:' + clubSessionKey(r), level, type:'session', text:clubSessionLine(r) || svTypeMeta('session').label, meaning:clubSessionTitle(r),
+    art:'', label:'teacher', golden:false, date:/^\d{4}-\d{2}-\d{2}$/.test(d) ? d : todayISO()};
+}
+// Turns newly finished Club sessions into souvenirs. Returns how many were added.
+function clubAwardSessions(d){
+  const pr = state.progress, level = roadmapLevelKey();
+  if(!pr || !level || !d || !Array.isArray(d.roadmap)) return 0;
+  if(!pr.clubSeen || typeof pr.clubSeen !== 'object' || Array.isArray(pr.clubSeen)) pr.clubSeen = {};
+  if(!Array.isArray(pr.souvenirs)) pr.souvenirs = [];
+  const seen = pr.clubSeen, firstLink = !Object.keys(seen).length;
+  const done = d.roadmap.filter(r=>r && r.done && r.id != null && !seen[clubSessionKey(r)]);
+  if(!done.length) return 0;
+  const award = firstLink ? done.slice(-1) : done;
+  done.forEach(r=>{ seen[clubSessionKey(r)] = todayISO(); });
+  const have = new Set(pr.souvenirs.map(s=>s.nodeId));
+  let n = 0;
+  award.forEach(r=>{ const sv = clubSessionSouvenir(r, level); if(!have.has(sv.nodeId)){ pr.souvenirs.push(sv); have.add(sv.nodeId); n++; } });
+  if(n) pr.clubArrival = (Number(pr.clubArrival) || 0) + n;
+  return n;
+}
+// The Home bubble line, once per arrival (then cleared).
+function clubArrivalHtml(){
+  const pr = state.progress;
+  if(!pr || !(Number(pr.clubArrival) > 0)) return '';
+  pr.clubArrival = 0;
+  save();
+  const j = journalName();
+  return esc(L(`Your teacher left something in your ${j}.`, `Öğretmenin ${j} içine sana bir şey bıraktı.`, `معلمت یک چیزی برایت در ${j} گذاشته.`, `Tu profe te dejó algo en tu ${j}.`))
+    + `<div class="cb-btns"><button class="cb-btn" data-action="nav" data-view="journal">${L('Open','Aç','باز کن','Abrir')}</button></div>`;
+}
+function clubRefresh(){
+  const code = (studentPanelData && studentPanelData.code) || (state.profile && state.profile.clubCode);
+  if(!code || typeof firebase === 'undefined') return;
+  try{
+    firebase.firestore().collection(STUDENT_COLLECTION[LOGIN_APP] || STUDENT_COLLECTION.en).doc(code).get().then(doc=>{
+      if(!doc.exists) return;
+      studentPanelData = Object.assign({code}, doc.data());
+      ensureStudentCourses(studentPanelData);
+      state.studentPanelCache = studentPanelData;
+      clubAwardSessions(studentPanelData);
+      save();
+      if(state.view === 'student-panel' || state.view === 'course-view') render();
+    }).catch(()=>{});
+  }catch(e){}
+}
+// Up to (3 - packed) suggestions, each {sv, why}; never one that is already packed.
+function clubPackCandidates(){
+  const pr = state.progress || {}, room = PIN_MAX - pinnedList().length;
+  if(room <= 0) return [];
+  const taken = new Set(pinnedList().map(p=>p.key)), out = [];
+  const add = (sv, why)=>{ if(!sv) return; const k = pinKey(sv); if(taken.has(k)) return; taken.add(k); out.push({sv, why}); };
+  const recent = (pr.souvenirs || []).slice().reverse();
+  add(recent.find(sv=>pinSuggested(sv)), 'slipped');
+  add(recent.find(sv=>sv && !['start','game','session'].includes(sv.type) && sv.label !== 'words'), 'newest');
+  const words = recent.find(sv=>sv && sv.label === 'words');
+  const lw = pr.lastWords || {}, mode = lw.speaking ? 'speaking' : 'writing', own = String(lw[mode] || '').trim();
+  if(words) add(words, 'words');
+  else if(own) add({nodeId:'words:' + mode, level:roadmapLevelKey(), type:mode, text:own.length > 80 ? own.slice(0, 80).replace(/\s+\S*$/, '') + '…' : own, meaning:'', label:'words'}, 'words');
+  return out.slice(0, room);
+}
+function clubPackWhy(why){
+  if(why === 'slipped') return L('Slipped twice','İki kez kaçtı','دو بار از دستت رفت','Se te escapó dos veces');
+  if(why === 'words') return L('Your own words','Kendi sözlerin','حرف‌های خودت','Tus propias palabras');
+  return L('Newest souvenir','En yeni hatıran','تازه‌ترین یادگاری‌ات','Tu recuerdo más nuevo');
+}
+function clubPackHtml(){
+  const packed = pinnedList(), cands = clubPackCandidates();
+  if(!packed.length && !cands.length) return '';
+  const full = packed.length >= PIN_MAX;
+  return `<div class="club-pack" id="club-pack">
+    <div class="row between" style="align-items:center;">
+      <div class="eyebrow" style="color:var(--cat-lis); margin:0;">🎒 ${L('Pack for class','Derse götür','برای کلاس ببر','Para llevar a clase')}</div>
+      <span class="club-pack-n">${packed.length}/${PIN_MAX}</span>
+    </div>
+    <p class="club-pack-sub">${full ? L('All packed. Your teacher can see these.','Hepsi hazır. Öğretmenin bunları görebilir.','همه‌چیز آماده است. معلمت این‌ها را می‌بیند.','Todo listo. Tu profe puede verlos.') : L('Tap what you want to bring to your next lesson. Your teacher sees it too.','Bir sonraki derse götürmek istediğine dokun. Öğretmenin de görür.','روی چیزی که می‌خواهی به کلاس بعدی ببری بزن. معلمت هم می‌بیندش.','Toca lo que quieras llevar a tu próxima clase. Tu profe también lo ve.')}</p>
+    ${packed.map(p=>`<button class="club-pack-item packed" data-action="club-pack" data-op="remove" data-key="${esc(p.key)}" aria-label="${esc(L('Take it out of your bag','Çantandan çıkar','از کیفت دربیار','Sácalo de la mochila'))}"><span class="club-pack-ic">✓</span><span class="club-pack-text" dir="ltr">${esc(String(p.text || ''))}</span></button>`).join('')}
+    ${cands.map(c=>`<button class="club-pack-item" data-action="club-pack" data-op="add" data-key="${esc(pinKey(c.sv))}"><span class="club-pack-ic">+</span><span><span class="club-pack-why">${esc(clubPackWhy(c.why))}</span><span class="club-pack-text" dir="ltr">${esc(String(c.sv.text || ''))}</span></span></button>`).join('')}
+  </div>`;
+}
+function fxClubPacked(key){
+  const el = Array.from(document.querySelectorAll('.club-pack-item.packed')).find(b=>b.dataset && b.dataset.key === key);
+  if(!el) return;
+  anim(el, [{transform:'scale(.92)'}, {transform:'scale(1.04)', offset:.5}, {transform:'scale(1)'}], {duration:320, easing:SPRING});
+  const c = centerOf(el.querySelector('.club-pack-ic') || el);
+  sparkBurst(c.x, c.y, 7, 'var(--cat-lis)', 50);
+}
 /* ============================= GAMIFICATION V3 BUILD 2: BOOKSHELF (M2) =============================
    Each finished level closes into a volume on a shelf with its stamp on the spine;
    the current level is the open page; old volumes still feed the Shuffle (dueItems()
@@ -11014,6 +11145,7 @@ function renderRoadmapTimeline(items){
           ${r.homeworkLink ? `<a href="${esc(r.homeworkLink)}" target="_blank" rel="noopener" class="btn btn-ghost btn-sm" style="flex:1; text-align:center;">📝 ${L('Homework','Ödev','تکلیف', 'Tarea')}</a>` : ''}
         </div>` : ''}
       </div>
+      ${isCurrent ? clubPackHtml() : ''}
     </div>`; }).join(''); })()}
     <div style="position:relative; padding-left:40px;">
       <div style="position:absolute; left:2px; top:-4px; font-size:24px;">${done===items.length ? '🏆' : '🏁'}</div>
@@ -17942,6 +18074,18 @@ const HANDLERS = {
     render();
   },
   'studio-mic-toggle'(){ toggleStudioMic(); },
+  // Pack for class (FCgBqtei): pack a suggestion / unpack a packed item (the same pins as "Bring to class").
+  'club-pack'(el){
+    const key = el.dataset.key;
+    if(el.dataset.op === 'remove'){
+      const list = pinnedList(), i = list.findIndex(p=>p.key === key);
+      if(i >= 0){ list.splice(i, 1); sfx('flip'); }
+    } else {
+      const c = clubPackCandidates().find(x=>pinKey(x.sv) === key);
+      if(c && togglePin(c.sv) === 'on'){ sfx('reveal'); buzz(10); queueFx(()=>fxClubPacked(key)); }
+    }
+    save(); render();
+  },
   // See it (FCgBqtei): the second take, from A2. This tap starts the microphone straight away.
   'speak-take2'(){
     const vp = state.viewParams;
@@ -18894,6 +19038,7 @@ const HANDLERS = {
       if(state.profile && state.profile.clubCode !== code){ state.profile.clubCode = code; save(); }   // M8: lets the admin find this learner's pins
       ensureStudentCourses(studentPanelData); // in-memory only — persisting the migration happens admin-side
       state.studentPanelCache = studentPanelData;
+      clubAwardSessions(studentPanelData);   // FCgBqtei: a finished session leaves a souvenir
       go('student-panel');
     }).catch(err=>{
       state.viewParams = {code, error:true, errorDetail: err && err.message};
@@ -22055,17 +22200,7 @@ if(location.hash === '#admin'){
   // it (see showSplash()'s comment above miniSparkles()).
   showSplash();
   scheduleCharTips(6000);
-  if(state.view === 'student-panel' && studentPanelData && studentPanelData.code && typeof firebase !== 'undefined'){
-    firebase.firestore().collection('studentPanelsEs').doc(studentPanelData.code).get().then(doc=>{
-      if(doc.exists){
-        studentPanelData = Object.assign({code: studentPanelData.code}, doc.data());
-        ensureStudentCourses(studentPanelData);
-        state.studentPanelCache = studentPanelData;
-        save();
-        if(state.view === 'student-panel') render();
-      }
-    }).catch(()=>{});
-  }
+  clubRefresh();
 }
 
 /* Best-effort offline caching for "Add to Home Screen" use. A browser-security rule means a service

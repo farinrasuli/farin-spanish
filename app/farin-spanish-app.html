@@ -369,6 +369,28 @@
   .fill-pill.lit{background:var(--success-soft) !important; color:var(--success) !important;}
   .fill-text{margin:8px 0 0; font-size:15px; line-height:1.65; color:var(--ink); white-space:pre-wrap; overflow-wrap:anywhere;}
   .fill-structure{text-decoration:underline; text-decoration-color:var(--cat-gram); text-decoration-thickness:2px; text-underline-offset:3px;}
+  /* See it, then say it better (FCgBqtei): word chips while speaking, the mic's slow pulse ring, two takes */
+  .speak-panel{margin-top:14px; display:flex; flex-direction:column; gap:12px;}
+  .speak-chips{display:flex; flex-wrap:wrap; justify-content:center; align-items:center; gap:6px; min-height:36px; box-sizing:border-box; padding:10px; border-radius:18px; background:var(--bg-sunken); perspective:600px;}
+  .speak-chips.empty{display:none;}
+  .speak-chips:empty::before{content:attr(data-ph); font-size:13px; font-weight:600; color:var(--ink-faint);}
+  .speak-chip{display:inline-flex; align-items:center; padding:5px 11px; border-radius:999px; background:var(--bg-elevated); color:var(--ink); box-shadow:var(--clay-shadow-soft); font-family:'Fredoka',-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; font-weight:700; font-size:15px; line-height:1.2; transition:background .2s, color .2s;}
+  .speak-chip.hit{background:var(--success-soft); color:var(--success);}
+  .speak-chip.more{background:transparent; box-shadow:none; color:var(--ink-faint);}
+  .speak-mic{position:relative;}
+  .speak-mic.listening{animation:none;}
+  .speak-mic.listening::after{content:''; position:absolute; inset:-7px; border-radius:50%; border:3px solid color-mix(in srgb, var(--accent) 60%, transparent); animation:speak-ring 1.8s ease-out infinite; pointer-events:none;}
+  @keyframes speak-ring{0%{transform:scale(.92); opacity:.9;} 100%{transform:scale(1.35); opacity:0;}}
+  .speak-prev{font-size:12.5px; color:var(--ink-soft); line-height:1.45; text-align:center;}
+  .speak-note{font-size:13px; color:var(--ink-soft); line-height:1.5; margin:0;}
+  .speak-shadow, .speak-again{display:flex; flex-direction:column; align-items:center; gap:8px; text-align:center;}
+  .speak-again-line{font-size:15px; font-weight:700; color:var(--ink); margin:0;}
+  .speak-take{margin-top:10px; padding:10px 12px; border-radius:14px; border:2px solid var(--border-soft); background:var(--bg-elevated);}
+  .speak-take.kept{border-color:var(--success); box-shadow:0 0 0 3px var(--success-soft);}
+  .speak-take .fill-text{margin-top:6px;}
+  .speak-take-n{font-size:11px; font-weight:800; text-transform:uppercase; letter-spacing:.04em; color:var(--ink-faint);}
+  .speak-kept-tag{font-size:11px; font-weight:800; color:var(--success); text-transform:uppercase; letter-spacing:.04em;}
+  .speak-take-sum{font-size:12px; color:var(--ink-soft); margin-top:4px;}
   /* Gamification v3 build 2: Story Hunt */
   .hunt-card{text-align:start;}
   .hunt-text{font-size:16px; line-height:1.75; color:var(--ink);}
@@ -11725,14 +11747,18 @@ function stopStudioMic(){
 function toggleStudioMic(){
   if(studioRecognition){ studioRecognition.userStopped = true; studioRecognition.stop(); return; }
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-  if(!SR) return;
+  const vp0 = state.viewParams;
+  // See it (FCgBqtei): no speech recognition here is not a failure, the round becomes a shadow round.
+  if(!SR){ if(vp0){ vp0.speakShadow = true; save(); render(); } return; }
   const rec = new SR();
-  rec.lang = 'es-ES'; rec.interimResults = true; rec.continuous = false;
+  rec.lang = TTS_LANG; rec.interimResults = true; rec.continuous = false;
   rec.userStopped = false;
-  let finalText = state.viewParams.transcript || '';
+  // start from what is in the box, typed corrections included
+  const ta0 = document.getElementById('studio-answer-input');
+  let finalText = String((ta0 && ta0.value) || vp0.transcript || '').trim();
+  vp0.transcript = finalText;
   let seenFinals = new Set();
   studioRecognition = rec;
-  render();
   rec.onresult = (e)=>{
     let interim = '';
     for(let i=0; i<e.results.length; i++){
@@ -11746,21 +11772,26 @@ function toggleStudioMic(){
         }
       } else interim += r[0].transcript;
     }
-    const ta = document.getElementById('studio-answer-input');
-    if(ta) ta.value = (finalText + ' ' + interim).trim();
+    // See it (FCgBqtei): the words land as chips while the learner talks.
+    speakLive((finalText + ' ' + interim).trim());
   };
   rec.onerror = (e)=>{
-    if(e.error === 'not-allowed' || e.error === 'audio-capture' || e.error === 'service-not-allowed') rec.userStopped = true;
+    const code = e && e.error;
+    if(code === 'not-allowed' || code === 'audio-capture' || code === 'service-not-allowed' || code === 'network'){
+      rec.userStopped = true;
+      if(state.viewParams === vp0) vp0.speakShadow = true;   // no microphone: a shadow round, never an error
+    }
   };
   rec.onend = ()=>{
-    if(!rec.userStopped){
+    if(!rec.userStopped && state.view === 'studio-round' && state.viewParams === vp0){
       try{ rec.start(); return; }catch(err){}
     }
-    studioRecognition = null;
-    state.viewParams.transcript = finalText.trim();
+    if(studioRecognition === rec) studioRecognition = null;
+    if(state.viewParams === vp0) vp0.transcript = finalText.trim();
     save(); render();
   };
-  rec.start();
+  try{ rec.start(); }catch(err){ studioRecognition = null; vp0.speakShadow = true; save(); render(); return; }
+  render();
 }
 
 function renderStudioSetup(){
@@ -11907,6 +11938,192 @@ function studioResultHtml(result, round, mode, text){
         <div style="margin-top:10px;">${pills}</div>
       </div>`;
 }
+/* "See it, then say it better" (FCgBqtei; spec gamify-every-card-type §4.6 + LXD §B Q7) -
+   speaking rounds. (1) While the microphone listens, every recognised word lands as a chip
+   above the box (interim results only, no audio analyser that could fight the recogniser on
+   Android); words that count for a target word turn green, and so do the word pills; the mic
+   wears a slow pulse ring. The chips stay after speaking, so the learner sees what was heard.
+   (2) From A2 a round has two takes: after the first check, "Say it again" records a second
+   take and the stronger one is kept (vp.takes), by target-word coverage, then a full sentence
+   (hasStructure), then word count; the /100 score only breaks a tie, and a full tie keeps the
+   newer take. The kept take is what the result card, lastWords and the souvenir use.
+   A1 keeps the shadow path: after the check it says it once more out loud and taps "I said it"
+   (no second score). (3) With no speech recognition, or when the microphone is refused
+   (vp.speakShadow), the round is a shadow round: "Say it out loud", "I said it", typing still
+   possible - never a failure state. A speaking round counts once (vp.counted). Not timed. */
+const SPEAK_CHIP_CAP = 40;
+function speakMicMode(vp){ return studioSpeechSupported() && !(vp && vp.speakShadow); }
+function speakTwoTakes(){ return String((state.profile && state.profile.level) || '').toUpperCase().indexOf('A1') !== 0; }
+function speakWords(text){ return String(text || '').split(/\s+/).filter(Boolean); }
+function speakChipNorm(w){ return String(w || '').toLowerCase().replace(/[^\p{L}\p{N}']/gu, ''); }
+// Which chips light up: for every target word the text uses (checkPracticeAnswer's own rule
+// decides "uses"), a one-word target lights the chips that start with its stem; a phrase lights
+// only where the whole phrase was said, word after word - so "I" alone never lights for
+// "I don't understand". Slash alternatives ("caro / barato", "el / la") count one by one.
+function speakHitIdx(words, result){
+  const norm = words.map(speakChipNorm), out = new Set();
+  ((result && result.wordsHit) || []).forEach(w=>String(w).toLowerCase().split('/').forEach(alt=>{
+    const toks = alt.split(/\s+/).map(speakChipNorm).filter(Boolean);
+    if(!toks.length) return;
+    const first = toks[0], stems = [first];
+    const st = speakChipNorm(stemWord(first)); if(st.length >= 2) stems.push(st);
+    const vs = /^(.{2,}?)(ar|er|ir)$/.exec(first); if(vs && TTS_LANG.indexOf('es') === 0) stems.push(vs[1]);
+    const head = n => !!n && stems.some(s=>n === s || (s.length >= 3 && n.indexOf(s) === 0));
+    for(let i = 0; i < norm.length; i++){
+      if(toks.length === 1){ if(head(norm[i])) out.add(i); continue; }
+      if(norm[i] !== first) continue;
+      let j = 1;
+      while(j < toks.length && i + j < norm.length && norm[i + j] === toks[j]) j++;
+      if(j === toks.length) for(let k = 0; k < j; k++) out.add(i + k);
+    }
+  }));
+  return out;
+}
+function speakChipsHtml(text, round){
+  const words = speakWords(text), shown = words.slice(0, SPEAK_CHIP_CAP);
+  const hit = speakHitIdx(shown, words.length ? checkPracticeAnswer(round, text) : null);
+  return shown.map((w,k)=>`<span class="speak-chip${hit.has(k) ? ' hit' : ''}">${esc(w)}</span>`).join('')
+    + (words.length > shown.length ? `<span class="speak-chip more">+${words.length - shown.length}</span>` : '');
+}
+let speakTickAt = 0, speakTimer = null;
+// Live update on every recognition result (and on typing): the box, the chips, the word pills.
+function speakLive(text, fromInput){
+  const vp = state.viewParams;
+  if(state.view !== 'studio-round' || !vp || vp.mode !== 'speaking' || !vp.round) return;
+  const ta = document.getElementById('studio-answer-input');
+  if(ta && !fromInput) ta.value = text;
+  const round = vp.round, result = speakWords(text).length ? checkPracticeAnswer(round, text) : null;
+  const row = document.getElementById('speak-chips');
+  if(row){
+    const words = speakWords(text), shown = words.slice(0, SPEAK_CHIP_CAP), hit = speakHitIdx(shown, result);
+    let more = row.querySelector('.speak-chip.more');
+    const chips = Array.from(row.querySelectorAll('.speak-chip')).filter(c=>c !== more);
+    const fresh = [];
+    shown.forEach((w,k)=>{
+      let el = chips[k];
+      if(!el){ el = document.createElement('span'); row.insertBefore(el, more); fresh.push(el); }
+      if(el.textContent !== w) el.textContent = w;
+      el.className = 'speak-chip' + (hit.has(k) ? ' hit' : '');
+    });
+    for(let k = shown.length; k < chips.length; k++) chips[k].remove();
+    const extra = words.length - shown.length;
+    if(extra > 0){ if(!more){ more = document.createElement('span'); more.className = 'speak-chip more'; row.appendChild(more); } more.textContent = '+' + extra; }
+    else if(more) more.remove();
+    row.classList.toggle('empty', !words.length && !studioRecognition);
+    fresh.forEach((el,k)=>anim(el, [{transform:'rotateY(90deg) scale(.8)', opacity:0}, {transform:'rotateY(0deg) scale(1)', opacity:1}], {duration:200, delay:k*40, easing:'ease-out', fill:'backwards'}));
+    if(fresh.length && Date.now() - speakTickAt > 120){ speakTickAt = Date.now(); sfx('tick'); }
+  }
+  let newly = 0;
+  round.words.forEach((w,k)=>{
+    const pill = document.getElementById('fill-pill-' + k);
+    if(!pill) return;
+    const on = !!result && result.wordsHit.includes(w.word), was = pill.classList.contains('lit');
+    if(on && !was){ newly++; pill.classList.add('lit'); anim(pill, [{transform:'scale(1)'}, {transform:'scale(1.18)'}, {transform:'scale(1)'}], {duration:260, easing:SPRING}); }
+    else if(!on && was) pill.classList.remove('lit');
+  });
+  if(newly) sfx('hop');
+}
+function speakBind(){
+  const ta = document.getElementById('studio-answer-input');
+  if(!ta || ta.dataset.speakBound) return;
+  ta.dataset.speakBound = '1';
+  ta.addEventListener('input', ()=>{ clearTimeout(speakTimer); speakTimer = setTimeout(()=>{ if(!studioRecognition) speakLive(ta.value, true); }, 160); });
+}
+// LXD §B Q7: coverage of the target words, then a full sentence, then word count, then /100.
+function speakTakeRank(r){ r = r || {}; return [(r.wordsHit || []).length, r.hasStructure ? 1 : 0, r.wc || 0, r.score || 0]; }
+function speakBetterTake(takes){
+  if(!takes || takes.length < 2) return 0;
+  const a = speakTakeRank(takes[0].result), b = speakTakeRank(takes[1].result);
+  for(let i = 0; i < a.length; i++){ if(b[i] !== a[i]) return b[i] > a[i] ? 1 : 0; }
+  return 1;   // a full tie keeps the newer take
+}
+// Stores the take just checked (replacing it when the same take is checked again) and
+// returns the take to keep; count is true only the first time the round has a passing take.
+function speakKeepTake(vp, text, result){
+  const n = vp.take === 2 ? 2 : 1;
+  const takes = (Array.isArray(vp.takes) ? vp.takes : []).slice(0, n - 1);
+  takes[n - 1] = {text:String(text || ''), result};
+  vp.takes = takes;
+  const best = speakBetterTake(takes), kept = takes[best] || takes[takes.length - 1];
+  const count = !!kept.result.passed && !vp.counted;
+  if(count) vp.counted = true;
+  return {text:kept.text, result:kept.result, count, best};
+}
+function speakTakeLabel(i){ return i ? L('Take 2','2. deneme','بار دوم','Intento 2') : L('Take 1','1. deneme','بار اول','Intento 1'); }
+function speakPanelHtml(vp){
+  const round = vp.round, listening = !!studioRecognition, take2 = vp.take === 2;
+  if(!speakMicMode(vp)){
+    if(vp.said && !vp.checked) return `<div class="card-flat speak-shadow" style="margin-top:14px;">
+      <div class="echo-say speak-said-done">${L('Well spoken!','Güzel konuştun!','خوب گفتی!','¡Bien dicho!')}</div>
+      <p class="speak-note">${L('Want to see your words too? Type what you said below and check it.','Sözlerini görmek ister misin? Söylediğini aşağıya yaz ve kontrol et.','می‌خواهی حرف‌هایت را هم ببینی؟ چیزی را که گفتی پایین بنویس و بررسی کن.','¿Quieres ver tus palabras? Escribe abajo lo que dijiste y revísalo.')}</p>
+    </div>`;
+    if(vp.said) return '';
+    return `<div class="card-flat speak-shadow" style="margin-top:14px;">
+      <div class="echo-say">${L('Say it out loud','Yüksek sesle söyle','بلند بگو','Dilo en voz alta')}</div>
+      <p class="speak-note">${L('Use the words above, then tap the button. You can also type it below.','Yukarıdaki kelimeleri kullan, sonra butona dokun. İstersen aşağıya da yazabilirsin.','از کلمه‌های بالا استفاده کن، بعد دکمه را بزن. می‌توانی پایین هم بنویسی.','Usa las palabras de arriba y toca el botón. También puedes escribirlo abajo.')}</p>
+      <button class="btn btn-primary" data-action="speak-said">${L('I said it','Söyledim','گفتم','Ya lo dije')}</button>
+    </div>`;
+  }
+  const text = vp.transcript || '';
+  const prev = take2 && vp.takes && vp.takes[0] ? `<div class="speak-prev"><b>${speakTakeLabel(0)}:</b> <span dir="ltr">${esc(vp.takes[0].text)}</span></div>` : '';
+  return `<div class="speak-panel">
+    ${take2 ? `<div class="eyebrow" style="color:var(--cat-lis); text-align:center;">${speakTakeLabel(1)}</div>` : ''}
+    ${prev}
+    <div class="speak-chips${speakWords(text).length || listening ? '' : ' empty'}" id="speak-chips" dir="ltr" aria-live="polite" data-ph="${esc(L('Your words will appear here…','Sözlerin burada görünecek…','حرف‌هایت اینجا ظاهر می‌شوند…','Tus palabras aparecerán aquí…'))}">${speakChipsHtml(text, round)}</div>
+    <div class="echo-micwrap">
+      <button class="echo-mic speak-mic${listening ? ' listening' : ''}" id="speak-mic" data-action="studio-mic-toggle" aria-label="${esc(listening ? L('Stop','Durdur','توقف','Detener') : L('Start speaking','Konuşmaya başla','شروع صحبت','Empezar a hablar'))}">${ICONS.mic}</button>
+      <div class="game-play-label">${listening ? L('Listening… tap to stop','Dinliyorum… durdurmak için dokun','دارم گوش می‌دم… برای توقف بزن','Escuchando… toca para parar') : (speakWords(text).length ? L('Tap to keep talking','Devam etmek için dokun','برای ادامه بزن','Toca para seguir hablando') : L('Tap and speak','Dokun ve konuş','بزن و بگو','Toca y habla'))}</div>
+    </div>
+  </div>`;
+}
+function speakTakesHtml(takes, best, round){
+  if(!takes || takes.length < 2) return '';
+  const n = round.words.length;
+  return `<div class="card-flat speak-takes" style="margin-top:14px;">
+    <div class="eyebrow" style="color:var(--cat-lis);">${L('Your two takes','İki denemen','دو بار گفتنت','Tus dos intentos')}</div>
+    ${takes.map((t,i)=>{ const r = t.result || {}, h = (r.wordsHit || []).length, wc = r.wc || 0; return `<div class="speak-take${i === best ? ' kept' : ''}" id="speak-take-${i}">
+      <div class="row between" style="align-items:center;"><span class="speak-take-n">${speakTakeLabel(i)}</span>${i === best ? `<span class="speak-kept-tag">✦ ${L('Kept','Seçilen','نگهش داشتی','Guardado')}</span>` : ''}</div>
+      <p class="fill-text" dir="ltr">${t.text ? fillMarkedTextHtml(r, round, t.text) : '…'}</p>
+      <div class="speak-take-sum">${L(`${h} of ${n} target words · ${wc} words`, `Hedef kelimelerden ${h}/${n} · ${wc} kelime`, `${h} از ${n} کلمهٔ هدف · ${wc} کلمه`, `${h} de ${n} palabras clave · ${wc} palabras`)}</div>
+    </div>`; }).join('')}
+    <p class="speak-note" style="margin-top:10px;">${best === 1 ? L("Take 2 is stronger, so that's the one you keep.",'2. deneme daha güçlü, onu saklıyoruz.','بار دوم بهتر گفتی، همین را نگه می‌داریم.','El intento 2 es más fuerte: ese es el que guardas.') : L('Your first take stays. Saying it twice still counts.','İlk denemen kalıyor. İki kez söylemek yine de sayılır.','بار اولت می‌ماند. دو بار گفتنش هم تمرین حساب می‌شود.','Tu primer intento se queda. Decirlo dos veces también cuenta.')}</p>
+  </div>`;
+}
+// After a checked take: Take 2 (A2+), or the A1 shadow repeat.
+function speakNextHtml(vp){
+  if(!vp.checked || !vp.takes || !vp.takes.length || !speakMicMode(vp)) return '';
+  if(!speakTwoTakes()){
+    if(vp.said) return `<div class="card-flat speak-again" style="margin-top:14px;"><div class="echo-say speak-said-done">${L('Nice! Twice is how it sticks.','Güzel! İki kez söyleyince akılda kalır.','عالی! دو بار گفتن یعنی ماندگار شدن.','¡Bien! Dos veces es como se queda.')}</div></div>`;
+    return `<div class="card-flat speak-again" style="margin-top:14px;">
+      <div class="echo-say">${L('Say it once more, out loud','Bir kez daha, yüksek sesle söyle','یک بار دیگر بلند بگو','Dilo una vez más, en voz alta')}</div>
+      <button class="btn btn-primary" data-action="speak-said">${L('I said it','Söyledim','گفتم','Ya lo dije')}</button>
+    </div>`;
+  }
+  if(vp.takes.length >= 2) return '';
+  const r = vp.takes[0].result || {}, missed = r.wordsMissed || [];
+  const hint = missed.length ? L('Try to fit in: ','Şunları da katmayı dene: ','سعی کن این‌ها را هم بگویی: ','Intenta meter: ') + missed.join(', ')
+    : (!r.hasStructure ? L('Make it a full sentence this time.','Bu sefer tam bir cümle kur.','این بار یک جملهٔ کامل بگو.','Esta vez, haz una frase completa.') : L('Add one more detail this time.','Bu sefer bir detay daha ekle.','این بار یک جزئیات دیگر هم اضافه کن.','Esta vez, añade un detalle más.'));
+  return `<div class="card-flat speak-again" style="margin-top:14px;">
+    <div class="eyebrow" style="color:var(--cat-lis);">${speakTakeLabel(1)}</div>
+    <p class="speak-again-line">${L('Say it again, a little better.','Bir daha söyle, biraz daha iyi.','دوباره بگو، کمی بهتر.','Dilo otra vez, un poco mejor.')}</p>
+    <p class="speak-note">${esc(hint)}</p>
+    <button class="btn btn-primary" data-action="speak-take2">${ICONS.mic} ${L('Say it again','Tekrar söyle','دوباره بگو','Dilo otra vez')}</button>
+  </div>`;
+}
+function speakResultHtml(vp){
+  if(!vp.checked || !vp.result) return '';
+  const takes = Array.isArray(vp.takes) && vp.takes.length ? vp.takes : [{text:vp.transcript || '', result:vp.result}];
+  const best = speakBetterTake(takes), kept = takes[best] || takes[takes.length - 1];
+  return speakTakesHtml(takes, best, vp.round) + studioResultHtml(kept.result, vp.round, 'speaking', kept.text) + speakNextHtml(vp);
+}
+function fxSpeakKept(best){
+  const el = document.getElementById('speak-take-' + best);
+  if(!el) return;
+  anim(el, [{transform:'scale(1)'}, {transform:'scale(1.04)', offset:.4}, {transform:'scale(1)'}], {duration:420, easing:SPRING});
+  const c = centerOf(el);
+  sparkBurst(c.x, c.y, 8, 'var(--success)', 70);
+  sfx(best === 1 ? 'reveal' : 'flip');
+}
 function renderStudioRound(){
   const vp = state.viewParams;
   const round = vp.round;
@@ -11916,7 +12133,10 @@ function renderStudioRound(){
   const listening = !!studioRecognition;
   const dl = STUDIO_DIFFICULTY_LABEL[round.difficulty];
   if(mode==='writing') queueFx(fillBind);   // Fill it (tobT7nwI): live pills + endowed bar
-  const wordPills = round.words.map((w,k)=>`<span class="pill vocab-hl fill-pill${result && result.wordsHit.includes(w.word) ? ' lit' : ''}" id="fill-pill-${k}" data-action="show-word-meaning" data-word="${esc(w.word)}" data-meaning="${esc(w.meaning)}" style="background:var(--cat-voc-soft); color:var(--cat-voc); margin:3px 4px 3px 0;">${esc(w.word)}</span>`).join('');
+  else if(mode==='speaking') queueFx(speakBind);   // See it (FCgBqtei): typed corrections refresh the chips too
+  // See it: in a speaking round the word pills stay lit for the words already said, before the check too.
+  const litRes = result || (mode==='speaking' && vp.transcript ? checkPracticeAnswer(round, vp.transcript) : null);
+  const wordPills = round.words.map((w,k)=>`<span class="pill vocab-hl fill-pill${litRes && litRes.wordsHit.includes(w.word) ? ' lit' : ''}" id="fill-pill-${k}" data-action="show-word-meaning" data-word="${esc(w.word)}" data-meaning="${esc(w.meaning)}" style="background:var(--cat-voc-soft); color:var(--cat-voc); margin:3px 4px 3px 0;">${esc(w.word)}</span>`).join('');
   return `<div class="fade-in">
     ${sectionHead(
       mode==='writing' ? L('Writing Practice','Yazma Pratiği','تمرین نوشتن', 'Práctica de escritura') : L('Speaking Practice','Konuşma Pratiği','تمرین صحبت‌کردن', 'Práctica de conversación'),
@@ -11936,16 +12156,13 @@ function renderStudioRound(){
         ${mode==='writing' ? fillBarHtml(round, vp.transcript || '') : ''}
       </div>
 
-      ${mode==='speaking' ? (speechOk
-        ? `<button class="btn ${listening?'btn-primary':'btn-ghost'}" style="margin-top:14px;" data-action="studio-mic-toggle">${ICONS.mic} ${listening ? L('Stop','Durdur','توقف', 'Detener') : L('Start speaking','Konuşmaya başla','شروع صحبت', 'Empezar a hablar')}</button>`
-        : `<div class="card-flat" style="margin-top:14px; background:var(--error-soft);"><p style="font-size:13px; color:var(--error);">${L('Speech input needs Chrome — you can type your answer instead.','Ses girişi için Chrome gerekiyor — bunun yerine yazabilirsin.','برای ورودی صوتی به کروم نیاز است — می‌توانی به‌جایش تایپ کنی.', 'La entrada de voz necesita Chrome — puedes escribir tu respuesta en su lugar.')}</p></div>`
-      ) : ''}
+      ${mode==='speaking' ? speakPanelHtml(vp) : ''}
 
       <textarea id="studio-answer-input" rows="5" placeholder="${esc(L('Type your answer here...','Cevabını buraya yaz...','پاسخت را اینجا بنویس...', 'Escribe tu respuesta aquí...'))}" style="width:100%; box-sizing:border-box; margin-top:14px; padding:14px; border-radius:16px; border:1.5px solid var(--border); font-size:15px; font-family:inherit; background:var(--bg-elevated); color:var(--ink); resize:vertical;">${esc(vp.transcript||'')}</textarea>
 
       <button class="btn btn-primary${mode==='writing' && result && fillAllHit(result, round) ? ' badge-unlock-shine' : ''}" id="studio-check-btn" style="margin-top:12px;" data-action="studio-check-answer">${L('Check my answer','Cevabımı kontrol et','پاسخم را بررسی کن', 'Revisar mi respuesta')}</button>
 
-      ${result ? studioResultHtml(result, round, mode, vp.transcript || '') : ''}
+      ${mode==='speaking' ? speakResultHtml(vp) : (result ? studioResultHtml(result, round, mode, vp.transcript || '') : '')}
       ${(result && result.passed) ? renderBadgeUnlockCard(pullJustEarnedBadges()) : ''}
 
       <div class="row" style="gap:8px; margin-top:16px;">
@@ -17684,7 +17901,7 @@ const HANDLERS = {
     stopStudioMic();
     const vp = state.viewParams;
     const round = buildPracticeRound(vp.goal, state.profile.level, vp.difficulty);
-    state.viewParams = Object.assign({}, vp, {round, transcript:'', checked:false, result:null});
+    state.viewParams = Object.assign({}, vp, {round, transcript:'', checked:false, result:null, takes:[], take:1, counted:false, said:false});
     save(); render();
   },
   'studio-change-difficulty'(){
@@ -17694,13 +17911,18 @@ const HANDLERS = {
   },
   'studio-check-answer'(){
     const vp = state.viewParams;
+    if(vp.mode === 'speaking') stopStudioMic();
     const ta = document.getElementById('studio-answer-input');
-    const text = ta ? ta.value : (vp.transcript || '');
-    const result = checkPracticeAnswer(vp.round, text);
-    vp.transcript = text; vp.checked = true; vp.result = result;
+    const typed = ta ? ta.value : (vp.transcript || '');
+    const checked = checkPracticeAnswer(vp.round, typed);
+    vp.transcript = typed; vp.checked = true; vp.result = checked;
+    // See it / Take 2 (FCgBqtei): a speaking round keeps its stronger take and counts once.
+    const keep = vp.mode === 'speaking' ? speakKeepTake(vp, typed, checked) : {text:typed, result:checked, count:checked.passed};
+    const text = keep.text, result = keep.result;
+    if(vp.mode === 'speaking' && vp.takes.length === 2) queueFx(()=>fxSpeakKept(keep.best));
     if(result.passed){
       const key = vp.mode==='writing' ? 'writingRoundsDone' : 'speakingRoundsDone';
-      state.progress[key] = (state.progress[key]||0) + 1;
+      if(keep.count) state.progress[key] = (state.progress[key]||0) + 1;
       if(!state.progress.lastWords) state.progress.lastWords = {};
       state.progress.lastWords[vp.mode] = String(text||'').slice(0, 300);
       // Fill it (tobT7nwI): which target words landed, so the souvenir can lead with the best sentence.
@@ -17716,10 +17938,32 @@ const HANDLERS = {
     // markDailyVisit()/sessionsExplored — a passed Lab round didn't count toward
     // the streak the way every other node type's completion already did.
     // markActivity() covers checkBadges() too, so this closes that gap in one move.
-    if(result.passed){ markActivity(); }
+    if(keep.count){ markActivity(); }
     render();
   },
   'studio-mic-toggle'(){ toggleStudioMic(); },
+  // See it (FCgBqtei): the second take, from A2. This tap starts the microphone straight away.
+  'speak-take2'(){
+    const vp = state.viewParams;
+    if(!vp || vp.mode !== 'speaking' || !vp.checked || !Array.isArray(vp.takes) || !vp.takes.length || vp.take === 2 || !speakTwoTakes()) return;
+    stopStudioMic();
+    vp.take = 2; vp.transcript = ''; vp.checked = false; vp.result = null; vp.said = false;
+    save(); render();
+    if(speakMicMode(vp)) toggleStudioMic();
+  },
+  // A shadow round (no microphone) counts once, unscored, like Say It Back's shadow mode; the A1
+  // "say it once more" after a checked take only cheers.
+  'speak-said'(){
+    const vp = state.viewParams;
+    if(!vp || vp.mode !== 'speaking' || vp.said) return;
+    vp.said = true;
+    const counts = !speakMicMode(vp) && !vp.counted;
+    if(counts){ vp.counted = true; state.progress.speakingRoundsDone = (state.progress.speakingRoundsDone||0) + 1; }
+    queueFx(()=>{ sfx('correct'); buzz(12); const el = document.querySelector('.speak-said-done'); if(el){ anim(el, [{transform:'scale(.7)', opacity:0}, {transform:'scale(1)', opacity:1}], {duration:320, easing:SPRING}); const c = centerOf(el); sparkBurst(c.x, c.y, 8, 'var(--success)', 70); } });
+    save();
+    if(counts) markActivity();
+    render();
+  },
   'game-match-tap'(el, e){
     const vp = state.viewParams;
     const round = vp.round;

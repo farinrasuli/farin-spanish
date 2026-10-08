@@ -308,6 +308,52 @@
   .cross-key.wide{flex-basis:calc((100% - 27px) / 10 * 1.5 + 2px); max-width:66px; font-size:20px;}
   .cross-help{display:flex; justify-content:center; gap:8px; flex-wrap:wrap; margin-top:-6px;}
   @keyframes cross-pop{from{transform:scale(.6); opacity:0;} to{transform:scale(1); opacity:1;}}
+  /* Five new games wave A2 (Jq6f9OFv): Order Up! - counter card, customer + bubble, tray, shelf tiles, menu board (spec §3.6 tokens) */
+  .order-card{padding:16px 16px 14px; text-align:start;}
+  .order-counter{display:flex; align-items:flex-start; gap:12px; min-height:120px;}
+  .order-cust-wrap{position:relative; flex:0 0 auto; width:112px; height:120px;}
+  .order-cust{width:112px; height:120px; object-fit:contain; filter:drop-shadow(0 8px 12px rgba(0,0,0,.2)); transform-origin:50% 100%;}
+  .order-star{position:absolute; top:-8px; left:50%; transform:translate(-50%, 0); width:28px; height:28px; color:#fff; filter:drop-shadow(0 2px 4px rgba(0,0,0,.3)); opacity:0; pointer-events:none;}
+  .order-star.on{opacity:1;}
+  .order-star.gold{color:var(--cat-review);}
+  .order-star svg{width:28px; height:28px;}
+  .order-bubble{position:relative; flex:1 1 auto; min-width:0; min-height:52px; box-sizing:border-box; margin-top:14px; padding:12px 14px; border-radius:18px; background:var(--ink); color:var(--bg-elevated); font-size:15px; font-weight:800; line-height:1.4; text-align:start; overflow-wrap:anywhere;}
+  .order-bubble::before{content:''; position:absolute; top:18px; inset-inline-start:-9px; border:9px solid transparent; border-inline-end-color:var(--ink); border-inline-start-width:0;}
+  .order-bubble b{color:var(--cat-review);}
+  .order-bubble .order-fb{display:block; margin-top:8px; padding-top:8px; border-top:1px solid rgba(255,255,255,.18);}
+  .order-mark{background:var(--cat-gram-soft); color:var(--ink); border-radius:5px; padding:0 3px;}
+  .order-dots{display:inline-flex; gap:5px; align-items:center; height:21px;}
+  .order-dots i{width:7px; height:7px; border-radius:50%; background:currentColor; opacity:.45; animation:order-dot 1.2s ease-in-out infinite;}
+  .order-dots i:nth-child(2){animation-delay:.2s;} .order-dots i:nth-child(3){animation-delay:.4s;}
+  @keyframes order-dot{0%,100%{transform:translateY(0); opacity:.4;} 50%{transform:translateY(-4px); opacity:1;}}
+  .order-tools{display:flex; align-items:center; justify-content:center; gap:14px; margin-top:12px;}
+  .game-play.small{width:64px; height:64px; margin:0;}
+  .game-play.small svg{width:26px; height:26px;}
+  .order-board{display:flex; flex-wrap:wrap; justify-content:center; gap:6px; margin-top:-6px;}
+  .order-board .game-chip{font-size:13px; padding:5px 11px; background:var(--bg-elevated); box-shadow:var(--clay-shadow-soft);}
+  .order-board .game-chip.out{text-decoration:line-through; text-decoration-thickness:2px; text-decoration-color:var(--clay-coral); opacity:.6;}
+  .order-tray{margin-top:14px; min-height:120px; box-sizing:border-box; padding:10px; border-radius:18px; background:var(--bg-sunken); box-shadow:var(--clay-inset); display:flex; flex-direction:column; justify-content:center; gap:8px;}
+  .order-tray-empty{margin:0; text-align:center; font-size:13.5px; font-weight:700; color:var(--ink-faint);}
+  .order-line{display:flex; align-items:center; gap:8px; min-height:44px; box-sizing:border-box; padding:4px 4px 4px 10px; border-radius:14px; border:2px solid transparent; background:var(--bg-elevated); box-shadow:var(--clay-shadow-soft); font-weight:800; font-size:15px; color:var(--ink); cursor:pointer; text-align:start;}
+  .order-line.sel{border-color:var(--accent);}
+  .order-line-art{flex:0 0 auto; font-size:22px; line-height:1;}
+  .order-line-name{flex:1 1 auto; min-width:0; display:flex; align-items:center; flex-wrap:wrap; gap:6px;}
+  .order-count{font-size:12.5px; font-weight:900; padding:2px 8px; border-radius:999px; background:var(--accent-soft); color:var(--accent-strong);}
+  .order-sizes{display:inline-flex; gap:3px;}
+  .order-size{width:30px; height:30px; border-radius:50%; border:2px solid var(--border); background:var(--bg-elevated); color:var(--ink-soft); font-family:inherit; font-weight:900; font-size:12px; padding:0; cursor:pointer;}
+  .order-size.on{border-color:var(--cat-voc); background:var(--cat-voc-soft); color:var(--ink);}
+  .order-chip{border:0; border-radius:999px; padding:4px 9px; background:var(--cat-diag-soft); color:var(--ink); font-family:inherit; font-size:12.5px; font-weight:800; cursor:pointer;}
+  .order-x{position:relative; flex:0 0 auto; width:32px; height:32px; margin:4px; border:0; border-radius:50%; background:var(--bg-sunken); color:var(--ink-soft); font-size:15px; font-weight:900; display:flex; align-items:center; justify-content:center; cursor:pointer; padding:0;}
+  .order-x::after{content:''; position:absolute; inset:-6px;}
+  .order-shelf .game-tile{flex-direction:column; gap:4px; padding:10px 6px; border-color:transparent; -webkit-user-select:none; user-select:none; -webkit-touch-callout:none;}
+  .order-tile-art{font-size:30px; line-height:1;}
+  .order-tile-name{font-size:13px; font-weight:800; line-height:1.2;}
+  .game-tile.order-t-food{background:var(--cat-gram-soft);}
+  .game-tile.order-t-drink{background:var(--cat-voc-soft);}
+  .game-tile.order-t-extra{background:var(--cat-diag-soft);}
+  .game-tile.nolabel .order-tile-name{display:none;}
+  .game-tile.nolabel.peek .order-tile-name{display:block;}
+  .order-sign{display:inline-block; margin:0 auto 10px; padding:6px 18px; border-radius:12px; background:var(--ink); color:var(--bg-elevated); font-family:'Fredoka',-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; font-weight:700; font-size:16px; letter-spacing:.08em; text-transform:uppercase; transform:rotate(-4deg);}
   /* Gamify every card type (tobT7nwI): Catch these */
   .catch-tiles{margin-top:10px;}
   .catch-tiles.four{grid-template-columns:repeat(2, minmax(0, 1fr));}
@@ -7909,6 +7955,11 @@ function buildRoadmap(profile){
         title:L('Game','Oyun','بازی','Juego')+': '+gameDisplayName('chores')});
       return;
     }
+    if(kind === 'order'){   // own generated content, never falls back (spec §9); reached once GAME_ROTATION lists it (gt8gCNfu)
+      items.push({type:'game', gameKind:'order', slot, refId:'order-'+profile.level+'-s'+stage+(mid ? '-mid' : ''), setId:null, goal:g,
+        title:L('Game','Oyun','بازی','Juego')+': '+gameDisplayName('order')});
+      return;
+    }
     if(kind === 'build' || kind === 'trap') kind = 'match';
     let setObj = pickGameSet(kind);
     if(!setObj && kind !== 'match'){ kind = 'match'; setObj = pickGameSet('match'); }
@@ -8461,6 +8512,7 @@ function ensureGolden(roadmap){
 function gameDisplayName(kind){
   if(kind === 'build') return L('Build It','Cümle Kur','جمله بساز','Constrúyelo');
   if(kind === 'cross') return L('Mini Cross','Mini Bulmaca','جدول کوچک','Minicrucigrama');
+  if(kind === 'order') return L('Order Up!','Sipariş Hazır!','سفارش حاضر!','¡Marchando!');
   if(kind === 'bingo') return L('Word Bingo','Kelime Tombalası','بینگوی کلمات','Bingo de palabras');
   if(kind === 'hunt') return L('Story Hunt','Hikaye Avı','شکار داستان','Caza en la historia');
   if(kind === 'echo') return L('Say It Back','Tekrar Et','بگو ببینم','Repítelo');
@@ -8473,6 +8525,7 @@ function viewGameKind(view){
   if(view === 'game-build') return 'build';
   if(view === 'game-bingo') return 'bingo';
   if(view === 'game-cross') return 'cross';
+  if(view === 'game-order') return 'order';
   if(view === 'game-hunt') return 'hunt';
   if(view === 'game-echo') return 'echo';
   if(view === 'game-chores-room' || view === 'game-chores-building') return 'chores';
@@ -8480,6 +8533,7 @@ function viewGameKind(view){
 }
 // Stats of a finished round, in one shape for all three games.
 function gameRoundStats(kind, round){
+  if(kind === 'order'){ const total = round.customers.length, right = round.customers.filter(c=>c.perfect).length; return {right, total, tickets:round.tickets||0, perfect:total>0 && right===total}; }   // right = orders served perfectly (spec's per-customer "perfect" count); perfect = the whole round
   if(kind === 'cross'){ const total = round.words.length, clean = round.clean||0, time = Math.max(1, Math.round(((round.finishedAt||Date.now()) - round.startedAt)/1000)); return {clean, total, reveals:round.reveals||0, hints:round.hints||0, time, perfect:total>0 && clean===total && !(round.hints||0)}; }
   if(kind === 'bingo') return {first:round.first||0, total:BINGO_SCORED_CALLS, perfect:(round.first||0) === BINGO_SCORED_CALLS};
   if(kind === 'hunt'){ const total = round.targets.length; return {clean:round.clean||0, total, perfect:total>0 && round.clean===total}; }
@@ -8504,6 +8558,7 @@ function gameRecordText(kind, st){
   const name = gameDisplayName(kind);
   if(kind === 'build') return name+' · '+st.firstTry+'/'+st.total+' '+L('first try','ilk denemede','در اولین تلاش','a la primera');
   if(kind === 'cross') return name+' · '+st.clean+'/'+st.total+' '+L('clean','temiz','بی‌خطا','limpias');
+  if(kind === 'order') return name+' · '+st.right+'/'+st.total+' '+L('perfect','kusursuz','بی‌نقص','perfectos');
   if(kind === 'bingo') return name+' · '+st.first+'/'+st.total+' '+L('first tap','ilk dokunuşta','با اولین لمس','al primer toque');
   if(kind === 'hunt') return name+' · '+st.clean+'/'+st.total+' '+L('clean','temiz','بی‌خطا','limpias');
   if(kind === 'chores') return chFmt(chChrome('record'), {n:st.first, total:st.total});   // "Cozy Chores · 4/5 smooth"
@@ -8514,6 +8569,7 @@ function gameRecordText(kind, st){
 }
 function gameStatStickers(kind, st){
   if(kind === 'cross') return [st.clean+'/'+st.total+' '+L('clean','temiz','بی‌خطا','limpias')].concat(st.reveals ? [] : [L('No reveals','Harf açmadan','بدون فاش‌کردن حرف','Sin letras reveladas')]);
+  if(kind === 'order') return [L(`${st.right}/${st.total} perfect orders`, `${st.right}/${st.total} kusursuz sipariş`, `${st.right}/${st.total} سفارش بی‌نقص`, `${st.right}/${st.total} pedidos perfectos`)].concat(st.tickets ? [] : [L('No tickets','Fişsiz','بدون رسید','Sin mirar el pedido')]);
   if(kind === 'bingo') return [st.first+'/'+st.total+' '+L('first tap','ilk dokunuşta','با اولین لمس','al primer toque'), L('Full card','Tam kart','کارت کامل','Cartón lleno')];
   if(kind === 'hunt') return [st.clean+'/'+st.total+' '+L('clean','temiz','بی‌خطا','limpias')];
   if(kind === 'chores') return [st.perfect ? chChrome('stickerPerfect') : chFmt(chChrome('sticker'), {n:st.first, total:st.total})].concat(st.place ? [st.place] : []);
@@ -8534,9 +8590,9 @@ function updateGameBest(kind, st){
     pr.gameBests.cross = Object.assign({}, better ? {clean:st.clean, total:st.total} : prev, {time:isFinite(time) ? time : null});
     return !!prev && better;
   }
-  const metric = kind==='match' ? (b=>-(b.time||9999)) : (kind==='trap' ? (b=>b.score||0) : ((kind==='build' || kind==='bingo' || kind==='chores') ? (b=>b.first||0) : (kind==='hunt' ? (b=>b.clean||0) : (kind==='echo' ? (b=>b.clear||0) : (b=>b.pct||0)))));
+  const metric = kind==='match' ? (b=>-(b.time||9999)) : (kind==='trap' ? (b=>b.score||0) : ((kind==='build' || kind==='bingo' || kind==='chores') ? (b=>b.first||0) : (kind==='hunt' ? (b=>b.clean||0) : (kind==='echo' ? (b=>b.clear||0) : (kind==='order' ? (b=>b.right||0) : (b=>b.pct||0))))));
   const cur = {time:st.time||null, score:st.score!=null ? st.score : null, pct:st.pct!=null ? st.pct : null,
-    first:st.firstTry!=null ? st.firstTry : (st.first!=null ? st.first : null), clean:st.clean!=null ? st.clean : null, clear:st.clear!=null ? st.clear : null};
+    first:st.firstTry!=null ? st.firstTry : (st.first!=null ? st.first : null), clean:st.clean!=null ? st.clean : null, clear:st.clear!=null ? st.clear : null, right:st.right!=null ? st.right : null};
   if(!prev){ pr.gameBests[kind] = cur; return false; }
   if(metric(cur) > metric(prev)){ pr.gameBests[kind] = cur; return true; }
   return false;
@@ -8958,7 +9014,7 @@ function maybeCelebrate(){
     low = state.quiz.correct/state.quiz.questions.length < .5;
   } else if(v==='game-match' && vp.round && vp.round.matchedKeys && vp.round.matchedKeys.length === vp.round.pairCount){
     target = vp.round; kind = 'game';
-  } else if((v==='game-dictation' || v==='game-trap' || v==='game-build' || v==='game-bingo' || v==='game-cross' || v==='game-hunt' || v==='game-echo' || v==='game-chores-room') && vp.round && vp.round.finished){
+  } else if((v==='game-dictation' || v==='game-trap' || v==='game-build' || v==='game-bingo' || v==='game-cross' || v==='game-order' || v==='game-hunt' || v==='game-echo' || v==='game-chores-room') && vp.round && vp.round.finished){
     target = vp.round; kind = 'game';
   } else if(v==='studio-round' && vp.checked && vp.result && vp.result.passed){
     target = vp.result; kind = vp.mode;
@@ -11947,11 +12003,12 @@ function fallbackGameSet(minCards){
    fresh content). Shelf rounds are free play (viewParams.free + shelf): they count as activity and
    personal bests, never as a roadmap node, a scheduler review or a souvenir, and nothing is added
    to roadmap card faces. Mini Cross is not in the rotation yet, so it is listed (marked New) as
-   soon as a finished set can host a puzzle. */
-const SHELF_GAMES = ['cross','bingo','match','dictation','build','trap','hunt','echo','chores'];
-const SHELF_ART = {cross:{ic:'cards', c:'var(--cat-voc)'}, bingo:{ic:'headphones', c:'var(--cat-voc)'}, match:{ic:'cards', c:'var(--cat-review)'}, dictation:{ic:'headphones', c:'var(--cat-lis)'}, build:{ic:'dumbbell', c:'var(--cat-gram)'}, trap:{ic:'bolt', c:'var(--clay-coral)'}, hunt:{ic:'search', c:'var(--cat-story)'}, echo:{ic:'mic', c:'var(--cat-lis)'}, chores:{ic:'home', c:'var(--clay-sky)'}};
+   soon as a finished set can host a puzzle. Order Up! (own generated content, wave A2) is listed from the
+   start and marked New until the learner has met it; GAME_ROTATION is wired separately (gt8gCNfu). */
+const SHELF_GAMES = ['order','cross','bingo','match','dictation','build','trap','hunt','echo','chores'];
+const SHELF_ART = {order:{ic:'chat', c:'var(--cat-gram)'}, cross:{ic:'cards', c:'var(--cat-voc)'}, bingo:{ic:'headphones', c:'var(--cat-voc)'}, match:{ic:'cards', c:'var(--cat-review)'}, dictation:{ic:'headphones', c:'var(--cat-lis)'}, build:{ic:'dumbbell', c:'var(--cat-gram)'}, trap:{ic:'bolt', c:'var(--clay-coral)'}, hunt:{ic:'search', c:'var(--cat-story)'}, echo:{ic:'mic', c:'var(--cat-lis)'}, chores:{ic:'home', c:'var(--clay-sky)'}};
 // The game kind a completedGames refId stands for (vocab games end in -kind, the rest start with kind-).
-function gameKindOfRef(refId){ const s = String(refId||''); if(s.indexOf('shelf-') === 0) return null; let m = s.match(/-(match|dictation|bingo|echo|cross|hunt)$/); if(m) return m[1]; m = s.match(/^(build|trap|chores)-/); return m ? m[1] : null; }
+function gameKindOfRef(refId){ const s = String(refId||''); if(s.indexOf('shelf-') === 0) return null; let m = s.match(/-(match|dictation|bingo|echo|cross|hunt)$/); if(m) return m[1]; m = s.match(/^(build|trap|chores|order)-/); return m ? m[1] : null; }
 // Every kind the learner has met: finished game nodes (any roadmap, old saves included) and game souvenirs.
 function gamesMet(){
   const pr = state.progress || {}, met = new Set();
@@ -11967,7 +12024,7 @@ function shelfSets(kind){
 }
 function shelfGames(){
   const met = gamesMet();
-  return SHELF_GAMES.filter(k=>k === 'cross' ? (met.has('cross') || shelfSets('cross').length > 0) : met.has(k));
+  return SHELF_GAMES.filter(k=>k === 'order' ? true : (k === 'cross' ? (met.has('cross') || shelfSets('cross').length > 0) : met.has(k)));
 }
 function shelfSubLine(){
   const n = shelfGames().length;
@@ -11976,6 +12033,7 @@ function shelfSubLine(){
 }
 // One line of "what you do" per game, for the shelf list.
 function gameBlurb(kind){
+  if(kind === 'order') return L('Listen to each customer’s order and build it on the tray.','Her müşterinin siparişini dinle ve tepsiye hazırla.','سفارش هر مشتری را گوش کن و روی سینی بچین.','Escucha el pedido de cada cliente y prepáralo en la bandeja.');
   if(kind === 'cross') return L('Spell the words you learned into a pocket crossword.','Öğrendiğin kelimeleri mini bir bulmacaya yaz.','کلمه‌هایی که یاد گرفتی را در یک جدول کوچک بنویس.','Escribe las palabras que aprendiste en un minicrucigrama.');
   if(kind === 'bingo') return L('Listen to the clue and tap the word on your card.','İpucunu dinle, kartındaki kelimeye dokun.','سرنخ را گوش کن و روی کلمه در کارتت بزن.','Escucha la pista y toca la palabra en tu cartón.');
   if(kind === 'match') return L('Flip tiles and match each word with its meaning.','Karoları çevir, her kelimeyi anlamıyla eşleştir.','کاشی‌ها را برگردان و هر کلمه را با معنی‌اش جفت کن.','Gira las fichas y une cada palabra con su significado.');
@@ -12133,6 +12191,11 @@ function gameKeep(kind, round){
       const pick = round.words.map((w,wi)=>({w, c:cost(w, wi)})).sort((a,b)=>b.c - a.c || b.w.len - a.w.len)[0].w;
       const ui = L(pick.m.en, pick.m.tr, pick.m.fa, pick.m.es) || pick.m.en || '';
       return {text:pick.w, say:pick.w, note:[ui, pick.sentence].filter(Boolean).join(' · ')};
+    }
+    if(kind === 'order' && round.customers && round.customers.length){
+      // the order that took the most serves (the longest one on a perfect round); flip side = the whole order and its tray in words
+      const pick = round.customers.slice().sort((a,b)=>(b.serves - a.serves) || (b.text.length - a.text.length))[0];
+      return {text:pick.text, say:pick.text, note:orderTraySummary(pick)};
     }
     if(kind === 'bingo' && round.tiles){
       // a word missed on first tap, else the word that completed a line
@@ -13062,6 +13125,222 @@ function orderCheck(cust, tray, level){
   if(!miss.length) return {ok:true};
   const m = miss[0], f = orderFrame(m, lang);
   return {ok:false, kind:m.kind, i:m.i, frame:f.frame, words:f.words};
+}
+/* ---- Screen (spec §3.6: status row, counter card with customer + bubble + tray, B2 board, shelf, Serve) ---- */
+function orderBoldHtml(frame){ return esc(frame).replace(/\*\*(.+?)\*\*/g, '<b>$1</b>'); }
+// The ticket with the mismatching words highlighted (--cat-gram-soft, spec §3.2 step 6).
+function orderMarkHtml(text, words){
+  let html = esc(text);
+  (words || []).forEach(w=>{ if(!w) return; const re = new RegExp('(^|[^\\p{L}])(' + reEsc(esc(w)) + ')(?![\\p{L}])', 'giu'); html = html.replace(re, '$1<mark class="order-mark">$2</mark>'); });
+  return html;
+}
+function orderBubbleHtml(round, cust){
+  const shown = cust.ticket || cust.full || round.noVoice;
+  let inner;
+  if(cust.fb && shown) inner = `<span dir="ltr">${orderMarkHtml(cust.text, cust.fb.words)}</span><span class="order-fb" dir="ltr">${orderBoldHtml(cust.fb.frame)}</span>`;
+  else if(cust.fb) inner = `<span dir="ltr">${orderBoldHtml(cust.fb.frame)}</span>`;
+  else if(shown) inner = `<span dir="ltr">${esc(cust.text)}</span>`;
+  else inner = `<span class="order-dots" aria-label="…"><i></i><i></i><i></i></span>`;
+  return `<div class="order-bubble" id="order-bubble">${inner}</div>`;
+}
+function orderTrayHtml(round){
+  const lang = orderLang();
+  const lines = round.tray.map((l, i)=>{
+    const it = orderItem(l.id);
+    const sizes = (round.level !== 'A1' && it.sized) ? `<span class="order-sizes">${ORDER_SIZES.map(s=>`<button type="button" class="order-size${(l.size || 'M') === s ? ' on' : ''}" data-action="order-size" data-quiet="1" data-i="${i}" data-s="${s}" aria-label="${esc(orderSizeWord(s, lang, it, 1))}">${s}</button>`).join('')}</span>` : '';
+    const extras = (l.extras || []).map(e=>{ const x = orderExtra(e); return x ? `<button type="button" class="order-chip" data-action="order-extra-off" data-quiet="1" data-i="${i}" data-e="${e}" aria-label="${esc(L('Remove','Kaldır','حذف','Quitar') + ' ' + x[lang])}">+ ${x.art} ${esc(x[lang])}</button>` : ''; }).join('');
+    return `<div class="order-line${i === round.sel ? ' sel' : ''}" data-action="order-line" data-quiet="1" data-i="${i}" role="button" tabindex="0" dir="ltr">
+      <span class="order-line-art" aria-hidden="true">${it.art}</span>
+      <span class="order-line-name"><span>${esc(orderName(it, l.n, lang))}</span>${l.n > 1 ? `<span class="order-count">×${l.n}</span>` : ''}${sizes}${extras}</span>
+      <button type="button" class="order-x" data-action="order-x" data-quiet="1" data-i="${i}" aria-label="${esc(L('Remove one','Birini kaldır','یکی را بردار','Quitar uno'))}">✕</button>
+    </div>`;
+  }).join('');
+  return `<div class="order-tray" id="order-tray">${lines || `<div class="order-tray-empty">${L('Tap the shelf to build the order','Siparişi hazırlamak için rafa dokun','برای چیدن سفارش روی قفسه بزن','Toca la estantería para preparar el pedido')}</div>`}</div>`;
+}
+function orderCardHtml(round, cust){
+  const shown = cust.ticket || cust.full || round.noVoice;
+  return `<div class="game-card tight order-card" id="order-card">
+    <div class="order-counter">
+      <span class="order-cust-wrap"><img class="order-cust" id="order-cust" src="char-${cust.ch}.png" alt=""><span class="order-star" id="order-star" aria-hidden="true"></span></span>
+      ${orderBubbleHtml(round, cust)}
+    </div>
+    <div class="order-tools">
+      <button type="button" class="game-play small" data-action="order-play" data-quiet="1" aria-label="${esc(L('Listen again','Tekrar dinle','دوباره گوش کن','Escuchar otra vez'))}">${ICONS.soundOn}</button>
+      ${shown ? '' : `<button type="button" class="btn btn-ghost btn-sm" data-action="order-ticket" data-quiet="1">${L('Show the ticket','Fişi göster','رسید را نشان بده','Ver el pedido')}</button>`}
+    </div>
+    ${orderTrayHtml(round)}
+  </div>`;
+}
+function orderBoardHtml(round, cust){
+  if(!cust.board) return '';
+  const lang = orderLang(), so = L('sold out','bitti','تمام شده','agotado');
+  return `<div class="order-board" id="order-board" dir="ltr" role="list" aria-label="${esc(L('Menu board','Menü tahtası','تابلوی منو','Pizarra del menú'))}">${cust.board.map(id=>{ const it = orderItem(id), out = id === cust.soldOut; return `<span role="listitem" class="game-chip${out ? ' out' : ''}" title="${out ? esc(so) : ''}" aria-label="${esc(orderName(it, 1, lang) + (out ? ' – ' + so : ''))}">${it.art} ${esc(orderName(it, 1, lang))}</span>`; }).join('')}</div>`;
+}
+function orderShelfHtml(round, cust){
+  const lang = orderLang(), hide = round.level !== 'A1' && round.level !== 'A2';
+  return `<div class="game-tiles order-shelf" id="order-shelf">${cust.shelf.map(t=>{
+    const isX = t.k === 'extra', o = isX ? orderExtra(t.id) : orderItem(t.id);
+    if(!o) return '';
+    const name = isX ? o[lang] : orderName(o, 1, lang);
+    const cls = isX ? 'order-t-extra' : (o.type === 'drink' ? 'order-t-drink' : 'order-t-food');
+    return `<button type="button" class="game-tile ${cls}${hide ? ' nolabel' : ''}" data-action="order-tile" data-quiet="1" data-k="${t.k}" data-id="${t.id}" aria-label="${esc(name)}" dir="ltr"><span class="order-tile-art" aria-hidden="true">${o.art}</span><span class="order-tile-name">${esc(name)}</span></button>`;
+  }).join('')}</div>`;
+}
+function orderStatusHtml(round){
+  const n = Math.min(round.index + 1, ORDER_CUSTOMERS), c = round.combo || 0;
+  const streak = c >= 2 ? `<span class="game-status-end"><span class="game-streak${c >= 3 ? ' hot' : ''}">${ICONS.flame} ${L(`${c} in a row`, `Arka arkaya ${c}`, `${c} پشت سر هم`, `${c} seguidos`)}</span></span>` : '';
+  return `<div class="game-status" id="order-status"><span class="game-status-text">${round.finished ? L('Closed for today','Bugünlük kapalı','امروز بسته است','Cerrado por hoy') : L(`Customer ${n} of ${ORDER_CUSTOMERS}`, `Müşteri ${n} / ${ORDER_CUSTOMERS}`, `مشتری ${n} از ${ORDER_CUSTOMERS}`, `Cliente ${n} de ${ORDER_CUSTOMERS}`)}</span>${streak}</div>`;
+}
+function orderCtaHtml(round){
+  return `<button class="btn btn-primary game-cta" id="order-cta" data-action="order-serve"${round.tray.length ? '' : ' disabled'}>${L('Serve','Servis et','سرو کن','Servir')}</button>`;
+}
+function orderResultHtml(round){
+  const st = gameRoundStats('order', round), n = st.tickets;
+  const tick = n ? ' · ' + (n === 1 ? L('1 ticket shown','1 fiş gösterildi','۱ رسید دیده شد','1 pedido visto') : L(`${n} tickets shown`, `${n} fiş gösterildi`, `${n} رسید دیده شد`, `${n} pedidos vistos`)) : '';
+  return `<div class="game-card tight badge-unlock-shine">
+    <div class="order-sign" id="order-sign">${L('Closed','Kapalı','بسته','Cerrado')}</div>
+    <div class="game-result-title">${st.perfect ? L('Perfect service!','Kusursuz servis!','سرویس بی‌نقص!','¡Servicio perfecto!') : L('Closing time!','Kapanış vakti!','وقت بستنه!','¡Hora de cerrar!')}</div>
+    <p class="game-result-line">${L(`${st.right} of ${st.total} orders perfect`, `${st.total} siparişten ${st.right} tanesi kusursuz`, `${st.right} از ${st.total} سفارش بی‌نقص`, `${st.right} de ${st.total} pedidos perfectos`)}${tick}</p>
+    ${gameDoneCta()}
+  </div>`;
+}
+function renderGameOrder(){
+  const vp = state.viewParams, round = vp.round, cust = orderCust(round);
+  return `<div class="fade-in game-screen">
+    ${gameTopHtml(L('Order Up','Sipariş','سفارش','Marchando'))}
+    ${orderStatusHtml(round)}
+    ${(round.finished || !cust) ? orderResultHtml(round) + renderBadgeUnlockCard(pullJustEarnedBadges()) : orderCardHtml(round, cust) + orderBoardHtml(round, cust) + orderShelfHtml(round, cust) + orderCtaHtml(round)}
+  </div>`;
+}
+// Redraws parts of the screen in place (no fade-in on every tap). parts: 'status' 'card' 'tray' 'board' 'shelf' 'cta'.
+function orderRefresh(parts){
+  const vp = state.viewParams, round = vp && vp.round;
+  if(!round || state.view !== 'game-order' || round.finished) return;
+  const cust = orderCust(round); if(!cust) return;
+  const want = parts || ['status','card','board','shelf','cta'];
+  const swap = (id, html)=>{ const el = document.getElementById(id); if(el) el.outerHTML = html; };
+  if(want.indexOf('status') >= 0) swap('order-status', orderStatusHtml(round));
+  if(want.indexOf('card') >= 0) swap('order-card', orderCardHtml(round, cust));
+  else if(want.indexOf('tray') >= 0) swap('order-tray', orderTrayHtml(round));
+  if(want.indexOf('board') >= 0){ const el = document.getElementById('order-board'); const html = orderBoardHtml(round, cust); if(el){ if(html) el.outerHTML = html; else el.remove(); } else if(html){ const card = document.getElementById('order-card'); if(card) card.insertAdjacentHTML('afterend', html); } }
+  if(want.indexOf('shelf') >= 0) swap('order-shelf', orderShelfHtml(round, cust));
+  if(want.indexOf('cta') >= 0) swap('order-cta', orderCtaHtml(round));
+}
+/* ---- Flow and feel (spec §3.2, §3.7): arrival, speaking, serve, feedback, next customer, closing ---- */
+let orderBusy = false, orderPeeked = false, orderPeekTimer = null;
+function orderNoVoiceText(){
+  return orderLang() === 'es'
+    ? L('No Spanish voice on this phone, so I’ll write it down.','Bu telefonda İspanyolca ses yok, ben yazayım.','این گوشی صدای اسپانیایی ندارد، من می‌نویسم.','Este móvil no tiene voz en español, así que te lo escribo.')
+    : L('No English voice on this phone, so I’ll write it down.','Bu telefonda İngilizce ses yok, ben yazayım.','این گوشی صدای انگلیسی ندارد، من می‌نویسم.','Este móvil no tiene voz en inglés, así que te lo escribo.');
+}
+function orderSpeak(round, text){
+  const idx = round.index;
+  setTimeout(()=>{ if(state.viewParams && state.viewParams.round === round && round.index === idx && !round.finished) speakTarget(text, orderRate(round)); }, 60);
+}
+// A customer slides in from the inline-end edge, lands with a squash, and says their order.
+function orderArrive(round){
+  const cust = orderCust(round); if(!cust || round.finished) return;
+  const rtl = document.documentElement.dir === 'rtl';
+  anim(document.getElementById('order-cust'), [
+    {transform:`translateX(${rtl ? -80 : 80}px)`, opacity:0}, {transform:'translateX(0) scale(1)', opacity:1, offset:.75},
+    {transform:'translateX(0) scale(1.06, .94)', offset:.9}, {transform:'translateX(0) scale(1)'}
+  ], {duration:400, easing:SPRING});
+  sfx('hop');
+  if(round.index === 0 && !round.greeted){ round.greeted = true; companionSay(orderLang() === 'es' ? '¿Qué le pongo?' : 'What would you like?', 2200); }
+  if(round.noVoice && !round.noVoiceSaid){ round.noVoiceSaid = true; setTimeout(()=>{ if(state.view === 'game-order') companionSay(orderNoVoiceText(), 3400); }, 2300); }
+  const idx = round.index;
+  setTimeout(()=>{ if(state.viewParams && state.viewParams.round === round && round.index === idx && !round.finished) speakTarget(cust.text, orderRate(round)); }, 420);
+}
+function orderShake(el){
+  anim(el, [{transform:'translateX(0)'}, {transform:'translateX(-5px)'}, {transform:'translateX(5px)'}, {transform:'translateX(-5px)'}, {transform:'translateX(0)'}], {duration:260, easing:'linear'});
+}
+// An item drops onto the tray: the line hops in (translateY -40 -> 0, landing squash), sfx hop.
+function fxOrderDrop(i){
+  const el = document.querySelector('.order-line[data-i="' + i + '"]');
+  anim(el, [{transform:'translateY(-40px)', opacity:0}, {transform:'translateY(0) scale(1)', opacity:1, offset:.7}, {transform:'translateY(0) scale(1.04, .94)', offset:.85}, {transform:'translateY(0) scale(1)'}], {duration:260, easing:'ease-out'});
+  sfx('hop');
+}
+function fxOrderRight(round, cust){
+  const tray = document.getElementById('order-tray'), who = document.getElementById('order-cust');
+  const rtl = document.documentElement.dir === 'rtl';
+  anim(tray, [{transform:'translateX(0)'}, {transform:`translateX(${rtl ? 36 : -36}px)`, opacity:.85}], {duration:250, easing:'ease-in', fill:'forwards'});
+  setTimeout(()=>{
+    if(!document.getElementById('order-cust')) return;
+    anim(who, [{transform:'translateY(0)'}, {transform:'translateY(-14px)'}, {transform:'translateY(0)'}], {duration:420, easing:SPRING});
+    const star = document.getElementById('order-star');
+    if(star){ star.className = 'order-star on' + (cust.perfect ? ' gold' : ''); star.innerHTML = ICONS.star; anim(star, [{transform:'translate(-50%, 8px) scale(.3)', opacity:0}, {transform:'translate(-50%, -6px) scale(1.2)', opacity:1}, {transform:'translate(-50%, -4px) scale(1)', opacity:1}], {duration:420, easing:SPRING}); }
+    const p = centerOf(tray); sparkBurst(p.x, p.y, 8, 'var(--cat-review)', 60);
+    sfx('correct'); buzz([8,40,8]); companionCheer();
+    companionSay(Math.random() < .5 ? L('Perfect order!','Sipariş tam isabet!','سفارش بی‌نقص!','¡Pedido perfecto!') : L('They love it!','Bayıldılar!','عاشقش شدند!','¡Les ha encantado!'), 1400);
+    if(cust.perfect && (round.combo === 3 || round.combo === 5)) setTimeout(()=>comboCheck(round.combo), 500);
+    const st = document.getElementById('order-status'); if(st) st.outerHTML = orderStatusHtml(round);
+  }, 260);
+}
+function fxOrderWrong(round, cust, res){
+  const who = document.getElementById('order-cust'), tray = document.getElementById('order-tray');
+  const rtl = document.documentElement.dir === 'rtl';
+  anim(tray, [{transform:`translateX(${rtl ? 24 : -24}px)`}, {transform:'translateX(0)'}], {duration:250, easing:'ease-out'});   // the tray slides back
+  anim(who, [{transform:'rotate(0deg)'}, {transform:'rotate(-6deg)'}, {transform:'rotate(0deg)'}, {transform:'rotate(-6deg)'}, {transform:'rotate(0deg)'}], {duration:400, easing:'ease-in-out'});
+  sfx('flip'); companionOops();
+  if(res.i >= 0) orderShake(document.querySelector('.order-line[data-i="' + res.i + '"]'));
+  companionSay(L('Not quite — listen to the part they repeat.','Tam değil — tekrar ettikleri kısma kulak ver.','نه کاملاً — به بخشی که تکرار می‌کند گوش کن.','Casi — escucha la parte que repite.'), 2400);
+  const idx = round.index;
+  setTimeout(()=>{ if(state.viewParams && state.viewParams.round === round && round.index === idx) speakTarget(orderPlain(res.frame), orderRate(round)); }, 380);
+}
+function fxOrderClosed(){
+  const sign = document.getElementById('order-sign');
+  anim(sign, [{transform:'rotateX(90deg) rotate(-4deg)', opacity:0}, {transform:'rotateX(0deg) rotate(-4deg)', opacity:1}], {duration:360, easing:SPRING});
+  sfx('stamp'); buzz([12]);
+  setTimeout(()=>{ sfx('reveal'); const p = centerOf(sign); sparkBurst(p.x, p.y, 10, 'var(--cat-review)', 70); }, 420);
+}
+// The next customer, or the "Closed" sign after the fifth.
+function orderAdvance(vp, round){
+  round.index++; round.tray = []; round.sel = -1;
+  if(round.index >= round.customers.length){
+    round.finished = true; round.finishedAt = Date.now();
+    const st = gameRoundStats('order', round);
+    round.xpGain = scoreGameCompletion(vp.refId, st.perfect);
+    markGameComplete(vp.refId);
+    queueFx(fxOrderClosed);
+    save(); render();
+    return;
+  }
+  orderRefresh(); save(); orderArrive(round);
+}
+function orderServe(){
+  const vp = state.viewParams, round = vp && vp.round, cust = round && orderCust(round);
+  if(!cust || round.finished || orderBusy || !round.tray.length) return;
+  if(cust.done){ orderAdvance(vp, round); return; }   // a reload during the hand-over: just move on
+  const res = orderCheck(cust, round.tray, round.level);
+  cust.serves++;
+  if(res.ok){
+    cust.done = true; cust.fb = null;
+    cust.perfect = cust.serves === 1 && !cust.ticket;   // first serve, no ticket (an automatic no-voice ticket doesn't count)
+    if(cust.perfect){ round.right++; round.combo++; } else round.combo = 0;
+    orderBusy = true;
+    fxOrderRight(round, cust);
+    save();
+    setTimeout(()=>{ orderBusy = false; if(state.viewParams !== vp || state.view !== 'game-order') return; orderAdvance(vp, round); }, 1500);
+    return;
+  }
+  cust.misses++;
+  cust.fb = {kind:res.kind, frame:res.frame, words:res.words};
+  if(cust.misses >= 2) cust.full = true;   // second miss: the whole ticket, the wrong part highlighted
+  round.combo = 0;
+  orderRefresh(['status','card']);
+  fxOrderWrong(round, cust, res);
+  save();
+}
+// From B1 the shelf hides the word under each item; holding a tile (450ms) peeks at it without dropping it.
+function orderPeekStart(e){
+  const t = e.target && e.target.closest ? e.target.closest('.game-tile.nolabel') : null;
+  if(!t) return;
+  clearTimeout(orderPeekTimer);
+  orderPeekTimer = setTimeout(()=>{ t.classList.add('peek'); orderPeeked = true; }, 450);
+}
+function orderPeekEnd(){
+  clearTimeout(orderPeekTimer);
+  setTimeout(()=>{ document.querySelectorAll('.game-tile.nolabel.peek').forEach(t=>t.classList.remove('peek')); orderPeeked = false; }, 350);
 }
 /* ============================= GAMIFICATION V3 BUILD 2: STORY HUNT =============================
    Games catalogue 4.3 + the LXD changes (approved 2026-10-04): a passage from the
@@ -15669,6 +15948,7 @@ const screens = {
   'game-build': renderGameBuild,
   'game-bingo': renderGameBingo,
   'game-cross': renderGameCross,
+  'game-order': renderGameOrder,
   'game-hunt': renderGameHunt,
   'game-echo': renderGameEcho,
   'game-chores-building': renderGameChoresBuilding,
@@ -16908,6 +17188,44 @@ const HANDLERS = {
       trapAdvance(capturedVp.refId);
     }, 900);
   },
+  // ---- Order Up! (Jq6f9OFv wave A2): shelf taps build the tray, Serve checks it against the order ----
+  'order-play'(){ const r = state.viewParams && state.viewParams.round, c = r && orderCust(r); if(c && !r.finished) speakTarget(c.text, orderRate(r)); },
+  'order-ticket'(){
+    const r = state.viewParams && state.viewParams.round, c = r && orderCust(r); if(!c || r.finished) return;
+    if(!c.ticket && !r.noVoice){ c.ticket = true; r.tickets++; }   // a hint for this customer (free when the phone has no voice)
+    sfx('flip'); orderRefresh(['card']); save();
+  },
+  'order-tile'(el){
+    if(orderPeeked){ orderPeeked = false; return; }   // the tap that ends a long-press peek
+    const r = state.viewParams && state.viewParams.round, c = r && orderCust(r); if(!c || r.finished || orderBusy) return;
+    const id = el.dataset.id;
+    if(el.dataset.k === 'extra'){
+      // an extra attaches to the selected tray line (the last placed one by default); tapping it again takes it off
+      const li = (r.sel >= 0 && r.sel < r.tray.length) ? r.sel : r.tray.length - 1;
+      if(li < 0){ orderShake(el); sfx('tick'); companionSay(L('Put something on the tray first','Önce tepsiye bir şey koy','اول چیزی روی سینی بگذار','Pon algo en la bandeja primero'), 1500); return; }
+      const l = r.tray[li]; r.sel = li;
+      const k = l.extras.indexOf(id);
+      if(k >= 0) l.extras.splice(k, 1); else l.extras.push(id);
+      sfx('tick'); orderRefresh(['tray']); save(); return;
+    }
+    const it = orderItem(id); if(!it) return;
+    if(r.tray.reduce((a, l)=>a + l.n, 0) >= ORDER_TRAY_MAX){ orderShake(el); sfx('tick'); companionSay(L('The tray is full','Tepsi dolu','سینی پر است','La bandeja está llena'), 1400); return; }
+    let li = r.tray.findIndex(l=>l.id === id);
+    if(li < 0){ r.tray.push({id, n:1, size:(r.level !== 'A1' && it.sized) ? 'M' : null, extras:[]}); li = r.tray.length - 1; }
+    else r.tray[li].n++;   // the same item again: the line's count goes up (the checker merges duplicates anyway)
+    r.sel = li;
+    orderRefresh(['tray','cta']); fxOrderDrop(li); save();
+  },
+  'order-line'(el){ const r = state.viewParams && state.viewParams.round; if(!r || r.finished) return; r.sel = Number(el.dataset.i); orderRefresh(['tray']); },
+  'order-size'(el){ const r = state.viewParams && state.viewParams.round, l = r && r.tray[Number(el.dataset.i)]; if(!l || r.finished) return; l.size = el.dataset.s; r.sel = Number(el.dataset.i); sfx('tick'); orderRefresh(['tray']); save(); },
+  'order-x'(el){
+    const r = state.viewParams && state.viewParams.round, i = Number(el.dataset.i), l = r && r.tray[i]; if(!l || r.finished || orderBusy) return;
+    if(l.n > 1) l.n--; else r.tray.splice(i, 1);   // one item hops back to the shelf
+    if(r.sel >= r.tray.length) r.sel = r.tray.length - 1;
+    sfx('hop'); orderRefresh(['tray','cta']); save();
+  },
+  'order-extra-off'(el){ const r = state.viewParams && state.viewParams.round, l = r && r.tray[Number(el.dataset.i)]; if(!l || r.finished) return; const k = l.extras.indexOf(el.dataset.e); if(k >= 0) l.extras.splice(k, 1); r.sel = Number(el.dataset.i); sfx('tick'); orderRefresh(['tray']); save(); },
+  'order-serve'(){ orderServe(); },
   // ---- Games shelf (Jq6f9OFv, D4 = A): one tap replays a game the learner has met, with fresh content ----
   'shelf-play'(el){
     const kind = el.dataset.kind;
@@ -16973,6 +17291,14 @@ const HANDLERS = {
       return;
     }
     if(kind === 'chores'){ go('game-chores-building', params); return; }   // the learner picks the place inside
+    if(kind === 'order'){
+      // Order Up!: own generated content, never falls back. A roadmap node is seeded by its refId (a replay = the
+      // same five customers); free play (Games shelf) draws fresh orders. The first customer walks in after the render.
+      const orderRound = buildOrderRound(params.free ? null : params.refId);
+      queueFx(()=>orderArrive(orderRound));
+      go('game-order', Object.assign({round: orderRound}, params));
+      return;
+    }
     const setObj = VOCAB_SETS.find(x=>x.id===el.dataset.setId);
     if(!setObj) return;
     if(kind === 'cross'){
@@ -20845,6 +21171,9 @@ try{ document.addEventListener('keydown', function(e){
   if(e.key === 'ArrowLeft' || e.key === 'ArrowUp'){ e.preventDefault(); HANDLERS['cross-prev'](); return; }
   if(e.key && e.key.length === 1 && /^[a-zñ]$/.test(crossFold(e.key))){ e.preventDefault(); HANDLERS['cross-key']({dataset:{k:crossFold(e.key)}}); }
 }); }catch(e){}
+
+// Order Up!: from B1 the shelf hides the word under each item; holding a tile peeks at it (the tap that follows doesn't drop it).
+try{ document.addEventListener('pointerdown', orderPeekStart); document.addEventListener('pointerup', orderPeekEnd); document.addEventListener('pointercancel', orderPeekEnd); }catch(e){}
 
 try{ window.addEventListener('popstate', function(){ goBack(); }); }catch(e){}
 

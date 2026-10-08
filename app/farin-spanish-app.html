@@ -457,6 +457,7 @@
   .sp-gloss{border-bottom:2px dotted var(--cat-story); cursor:pointer; border-radius:4px; padding:0 1px;}
   .sp-gloss.on{background:var(--cat-story-soft);}
   .sp-gloss.sp-feelword{border-bottom-style:solid;}
+  .sp-feelchip{display:inline-block; margin-inline-start:4px; padding:1px 8px; border-radius:999px; border:0; background:var(--bg-elevated); font-size:13.5px;}
   .sp-gloss-row{margin-top:12px;}
   .sp-gloss-row[hidden]{display:none;}
   .sp-feel{margin-top:14px; display:flex; gap:10px; align-items:flex-start; background:var(--cat-story-soft); border-radius:18px; padding:12px 14px; font-size:15.5px; font-weight:700; line-height:1.5; color:var(--ink);}
@@ -5930,7 +5931,7 @@ function freshState(){
   return {
     view:'diagnostic-intro', viewParams:{}, lang:'tr',
     profile:{name:'', motivationTag:null, goals:[], archetype:null, level:null, levelStage:1, topics:[], learnerType:null, priorityArea:null, completedDiagnostic:false, dashboardIntroShown:false, recoveryCode:null, wantsContact:false, contactPhone:'', clubCode:null},
-    progress:{sessionsExplored:0, streak:0, lastActiveDate:null, completedTraps:[], completedVocabSets:[], completedScenes:[], completedStories:[], completedGames:[], srs:{}, badgesEarnedAt:{}, reviewsCompleted:0, roadmapChecked:{}, dailyTasksDate:null, dailyTasksChecked:{}, writingRoundsDone:0, speakingRoundsDone:0, usedSpeakingTopics:[], xp:0, perfectGameRounds:0, souvenirs:[], gameBests:{}, roadmapGolden:null, lastWords:{}, mediaWatched:[], nodeScores:{}, storyAnswers:{}, journal:{cover:null, pagesKept:[]}, pinned:[], storyChoices:{}, chores:{}, storyPages:{}, storyCalls:{}},
+    progress:{sessionsExplored:0, streak:0, lastActiveDate:null, completedTraps:[], completedVocabSets:[], completedScenes:[], completedStories:[], completedGames:[], srs:{}, badgesEarnedAt:{}, reviewsCompleted:0, roadmapChecked:{}, dailyTasksDate:null, dailyTasksChecked:{}, writingRoundsDone:0, speakingRoundsDone:0, usedSpeakingTopics:[], xp:0, perfectGameRounds:0, souvenirs:[], gameBests:{}, roadmapGolden:null, lastWords:{}, mediaWatched:[], nodeScores:{}, storyAnswers:{}, journal:{cover:null, pagesKept:[]}, pinned:[], storyChoices:{}, chores:{}, storyPages:{}, storyCalls:{}, path:{level:null, chapter:0, choices:[], stance:{warmth:0, candour:0}, history:[], reflect:{}}},
     diag:{step:0, goals:[], level:null, topics:[], learnerType:null, priorityArea:null, test:null},
     roadmap:null,
     quiz:null, studentPanelCache:null
@@ -5982,6 +5983,8 @@ function load(){
     // Every-card wave 2 (uVzMAAGg): story pages read so far and turning-point calls
     if(!merged.progress.storyPages || typeof merged.progress.storyPages !== 'object') merged.progress.storyPages = {};
     if(!merged.progress.storyCalls || typeof merged.progress.storyCalls !== 'object') merged.progress.storyCalls = {};
+    // Story Path (RzlovAPw): {level, chapter, choices[], stance, history[], reflect{}} — saves from before it get an empty one
+    if(!merged.progress.path || typeof merged.progress.path !== 'object') merged.progress.path = {level:null, chapter:0, choices:[], stance:{warmth:0, candour:0}, history:[], reflect:{}};
     // Gamification v3 build 2 (M2): journal cover + kept pages
     if(!merged.progress.journal || typeof merged.progress.journal !== 'object') merged.progress.journal = {cover:null, pagesKept:[]};
     if(!Array.isArray(merged.progress.journal.pagesKept)) merged.progress.journal.pagesKept = [];
@@ -6709,7 +6712,7 @@ function srsGameReview(setId, good){
 }
 function srsSource(id, kind){
   if(kind === 'grammar') return GRAMMAR_ITEMS.find(x=>x.id===id) || null;
-  if(kind === 'vocab') return VOCAB_SETS.find(x=>x.id===id) || null;
+  if(kind === 'vocab') return VOCAB_SETS.find(x=>x.id===id) || pathVocabSet(id) || null;
   if(kind === 'story') return STORY_LIBRARY.find(x=>x.id===id) || null;
   return null;
 }
@@ -7067,6 +7070,7 @@ function nodeTitle(it){
     else if(it.type==='writing' || it.type==='speaking'){ const dl = STUDIO_DIFFICULTY_LABEL[it.difficulty]; if(dl) tail = L(dl.en, dl.tr, dl.fa, dl.es); }
     else if(it.type==='game'){
       tail = gameDisplayName(it.gameKind);
+      if(it.gameKind === 'path'){ const pc = pathNodeChapter(it); if(pc) tail += ' — ' + svText(pc.title); }
       const sv = it.setId ? set(it.setId) : null; if(sv) tail += ' — ' + setTitle(sv);
     }
     if(p && tail) return p + ': ' + tail;
@@ -8350,6 +8354,7 @@ function celebrationText(kind, low){
     vocab:[L('Word power unlocked, {name}!','Kelime gücü açıldı, {name}!','قدرت کلمات باز شد، {name}!','¡Poder de palabras desbloqueado, {name}!'), L('Those words are yours now, {name}!','Bu kelimeler artık senin, {name}!','این کلمه‌ها حالا مال تو هستند، {name}!','¡Esas palabras ya son tuyas, {name}!')],
     story:[L('What a reader, {name}! Story done!','Ne okuyucu, {name}! Hikaye bitti!','چه خواننده‌ای، {name}! داستان تمام شد!','¡Qué gran lector, {name}! ¡Historia terminada!')],
     review:[L('Memory refreshed, {name}!','Hafıza tazelendi, {name}!','حافظه تازه شد، {name}!','¡Memoria renovada, {name}!')],
+    path:[L('Chapter done, {name}! The story goes on.','Bölüm bitti, {name}! Hikâye devam ediyor.','فصل تمام شد، {name}! داستان ادامه دارد.','¡Capítulo terminado, {name}! La historia sigue.')],
     game:[L('Game won, {name}! You rock!','Oyunu kazandın, {name}! Harikasın!','بازی را بردی، {name}! فوق‌العاده‌ای!','¡Juego ganado, {name}! ¡Eres genial!')],
     writing:[L('Beautiful writing, {name}!','Harika yazdın, {name}!','عالی نوشتی، {name}!','¡Qué bien escribes, {name}!')],
     speaking:[L('You sounded great, {name}!','Harika konuştun, {name}!','عالی صحبت کردی، {name}!','¡Sonaste genial, {name}!')]
@@ -8572,6 +8577,7 @@ function ensureGolden(roadmap){
   return pr.roadmapGolden;
 }
 function gameDisplayName(kind){
+  if(kind === 'path') return L('Story Path','Hikâye Yolu','مسیر داستان','Senda');
   if(kind === 'build') return L('Build It','Cümle Kur','جمله بساز','Constrúyelo');
   if(kind === 'cross') return L('Mini Cross','Mini Bulmaca','جدول کوچک','Minicrucigrama');
   if(kind === 'order') return L('Order Up!','Sipariş Hazır!','سفارش حاضر!','¡Marchando!');
@@ -8588,6 +8594,7 @@ function viewGameKind(view){
   if(view === 'game-bingo') return 'bingo';
   if(view === 'game-cross') return 'cross';
   if(view === 'game-order') return 'order';
+  if(view === 'game-path') return 'path';
   if(view === 'game-hunt') return 'hunt';
   if(view === 'game-echo') return 'echo';
   if(view === 'game-chores-room' || view === 'game-chores-building') return 'chores';
@@ -8595,6 +8602,7 @@ function viewGameKind(view){
 }
 // Stats of a finished round, in one shape for all three games.
 function gameRoundStats(kind, round){
+  if(kind === 'path') return {chapter:round.ch, total:PATH_CH, perfect:false};   // Story Path: no score, no perfect round
   if(kind === 'order'){ const total = round.customers.length, right = round.customers.filter(c=>c.perfect).length; return {right, total, tickets:round.tickets||0, perfect:total>0 && right===total}; }   // right = orders served perfectly (spec's per-customer "perfect" count); perfect = the whole round
   if(kind === 'cross'){ const total = round.words.length, clean = round.clean||0, time = Math.max(1, Math.round(((round.finishedAt||Date.now()) - round.startedAt)/1000)); return {clean, total, reveals:round.reveals||0, hints:round.hints||0, time, perfect:total>0 && clean===total && !(round.hints||0)}; }
   if(kind === 'bingo') return {first:round.first||0, total:BINGO_SCORED_CALLS, perfect:(round.first||0) === BINGO_SCORED_CALLS};
@@ -8618,6 +8626,7 @@ function gameRoundStats(kind, round){
 }
 function gameRecordText(kind, st){
   const name = gameDisplayName(kind);
+  if(kind === 'path') return name+' · '+L('Chapter','Bölüm','فصل','Capítulo')+' '+st.chapter;
   if(kind === 'build') return name+' · '+st.firstTry+'/'+st.total+' '+L('first try','ilk denemede','در اولین تلاش','a la primera');
   if(kind === 'cross') return name+' · '+st.clean+'/'+st.total+' '+L('clean','temiz','بی‌خطا','limpias');
   if(kind === 'order') return name+' · '+st.right+'/'+st.total+' '+L('perfect','kusursuz','بی‌نقص','perfectos');
@@ -8630,6 +8639,7 @@ function gameRecordText(kind, st){
   return name+' · '+st.pct+'%';
 }
 function gameStatStickers(kind, st){
+  if(kind === 'path') return [L(`Chapter ${st.chapter} of ${st.total}`, `Bölüm ${st.chapter}/${st.total}`, `فصل ${st.chapter} از ${st.total}`, `Capítulo ${st.chapter} de ${st.total}`)];
   if(kind === 'cross') return [st.clean+'/'+st.total+' '+L('clean','temiz','بی‌خطا','limpias')].concat(st.reveals ? [] : [L('No reveals','Harf açmadan','بدون فاش‌کردن حرف','Sin letras reveladas')]);
   if(kind === 'order') return [L(`${st.right}/${st.total} perfect orders`, `${st.right}/${st.total} kusursuz sipariş`, `${st.right}/${st.total} سفارش بی‌نقص`, `${st.right}/${st.total} pedidos perfectos`)].concat(st.tickets ? [] : [L('No tickets','Fişsiz','بدون رسید','Sin mirar el pedido')]);
   if(kind === 'bingo') return [st.first+'/'+st.total+' '+L('first tap','ilk dokunuşta','با اولین لمس','al primer toque'), L('Full card','Tam kart','کارت کامل','Cartón lleno')];
@@ -8643,6 +8653,7 @@ function gameStatStickers(kind, st){
 }
 // Personal bests per game kind. Returns true only when an earlier best was beaten.
 function updateGameBest(kind, st){
+  if(kind === 'path') return false;   // Story Path keeps no best
   const pr = state.progress; if(!pr.gameBests) pr.gameBests = {};
   const prev = pr.gameBests[kind];
   if(kind === 'cross'){
@@ -8723,6 +8734,10 @@ function souvenirContent(node, ctx){
       if(best) words = best;
     }
     if(words){ out.text = words.length > 80 ? words.slice(0,80).replace(/\s+\S*$/,'')+'…' : words; out.label = 'words'; }
+  } else if(t === 'game' && (ctx.kind || node.gameKind) === 'path'){
+    // Story Path: the chapter's glossed feeling word, reviewed like a vocab card from box 0 (never the plot); the arc's last chapter is golden
+    const w = pathSouvenirWord(node);
+    if(w){ out.text = w.word; out.meaning = w.meaning; out.svType = 'vocab'; out.refId = w.id; out.golden = w.ch === PATH_CH; }
   } else if(t === 'game'){
     const kind = ctx.kind || node.gameKind || 'match';
     const st = ctx.stats || null;
@@ -8774,6 +8789,8 @@ function awardSouvenirs(ctx){
     if(node.type === 'game') sv.gameKind = (isCtx && ctx.kind) || node.gameKind || 'match';
     if(c.keep) sv.keep = c.keep;
     if(c.emblem) sv.emblem = c.emblem;
+    if(c.svType){ sv.type = c.svType; sv.refId = c.refId; }   // Story Path: its word souvenir is reviewed under its own srs id
+    if(c.golden) sv.golden = true;
     pr.souvenirs.push(sv); fresh.push(sv); have.add(id);
   });
   if(ctxId) fresh.sort((a,b)=>(b.nodeId===ctxId) - (a.nodeId===ctxId));
@@ -9078,7 +9095,7 @@ function maybeCelebrate(){
     low = state.quiz.correct/state.quiz.questions.length < .5;
   } else if(v==='game-match' && vp.round && vp.round.matchedKeys && vp.round.matchedKeys.length === vp.round.pairCount){
     target = vp.round; kind = 'game';
-  } else if((v==='game-dictation' || v==='game-trap' || v==='game-build' || v==='game-bingo' || v==='game-cross' || v==='game-order' || v==='game-hunt' || v==='game-echo' || v==='game-chores-room') && vp.round && vp.round.finished){
+  } else if((v==='game-dictation' || v==='game-trap' || v==='game-build' || v==='game-bingo' || v==='game-cross' || v==='game-order' || v==='game-hunt' || v==='game-echo' || v==='game-chores-room' || v==='game-path') && vp.round && vp.round.finished){
     target = vp.round; kind = 'game';
   } else if(v==='studio-round' && vp.checked && vp.result && vp.result.passed){
     target = vp.result; kind = vp.mode;
@@ -9088,7 +9105,7 @@ function maybeCelebrate(){
   // Gamification v2: award the souvenir now (saved with the round), reveal it in the sequence
   const extra = celebrationExtras(v, vp, kind);
   save();
-  setTimeout(()=>{ if(state.view===v) showCelebration(kind, detail, low, extra); }, 900);
+  setTimeout(()=>{ if(state.view===v) showCelebration(v === 'game-path' ? 'path' : kind, detail, low, extra); }, 900);
 }
 
 /* ============================= RENDER: SHELL ============================= */
@@ -10058,7 +10075,7 @@ function companionEntryHtml(levelBase, i){
     ${d.translation ? (open ? `<p class="jr-entry-trans">${esc(d.translation)}</p>` : `<p class="jr-entry-tap" data-action="story-entry-toggle" data-key="${esc(key)}">${L('Tap for the translation','Çeviri için dokun','برای ترجمه بزن','Toca para ver la traducción')}</p>`) : ''}
     ${needsChoice ? `<div class="jr-entry-choices">${choiceBtn(d.choiceA, 'A')}${choiceBtn(d.choiceB, 'B')}</div>` : ''}
     ${chosen ? `<p class="jr-entry-chosen" dir="ltr">✓ ${esc(companionPick(chosen))}</p>` : ''}
-    ${i === 4 && d.reflection ? `<div class="jr-entry-reflect">
+    ${i === 4 && d.reflection && !pathLevelLive(levelBase) ? `<div class="jr-entry-reflect">
       <div class="eyebrow" style="margin:0 0 4px; color:var(--cat-story);">${L('Write about it','Bunun hakkında yaz','درباره‌اش بنویس','Escribe sobre esto')}</div>
       <p dir="ltr">${esc(companionPick(d.reflection))}</p>
       ${svText(d.reflection) && svText(d.reflection) !== companionPick(d.reflection) ? `<p class="jr-entry-trans" style="margin-top:4px;">${esc(svText(d.reflection))}</p>` : ''}
@@ -10069,10 +10086,14 @@ function companionEntryHtml(levelBase, i){
 // The reflection the writing node should show instead of its own topic: the latest
 // level whose 100% entry is unlocked and not yet answered.
 function pendingReflection(){
+  // Story Path's reflection (page 1 after chapter 2, the arc-end 100% prompt after chapter 6) comes first
+  const spr = pathPendingReflection();
+  if(spr) return spr;
   const cur = companionLevelBase(roadmapLevelKey());
   const upto = LEVELS.indexOf(cur);
   for(let k = upto; k >= 0; k--){
     const lv = LEVELS[k];
+    if(pathLevelLive(lv)) continue;   // one reflection per level: Story Path's arc-end prompt replaces the 100% entry's
     const st = companionStory(lv);
     if(!st || !st.entries[4] || !st.entries[4].reflection) continue;
     if(!companionEntryUnlocked(lv, 4) || storyChoices()[lv + ':reflected']) continue;
@@ -12073,8 +12094,8 @@ function fallbackGameSet(minCards){
    to roadmap card faces. Mini Cross is not in the rotation yet, so it is listed (marked New) as
    soon as a finished set can host a puzzle. Order Up! (own generated content, wave A2) is listed from the
    start and marked New until the learner has met it; GAME_ROTATION is wired separately (gt8gCNfu). */
-const SHELF_GAMES = ['order','cross','bingo','match','dictation','build','trap','hunt','echo','chores'];
-const SHELF_ART = {order:{ic:'chat', c:'var(--cat-gram)'}, cross:{ic:'cards', c:'var(--cat-voc)'}, bingo:{ic:'headphones', c:'var(--cat-voc)'}, match:{ic:'cards', c:'var(--cat-review)'}, dictation:{ic:'headphones', c:'var(--cat-lis)'}, build:{ic:'dumbbell', c:'var(--cat-gram)'}, trap:{ic:'bolt', c:'var(--clay-coral)'}, hunt:{ic:'search', c:'var(--cat-story)'}, echo:{ic:'mic', c:'var(--cat-lis)'}, chores:{ic:'home', c:'var(--clay-sky)'}};
+const SHELF_GAMES = ['path','order','cross','bingo','match','dictation','build','trap','hunt','echo','chores'];
+const SHELF_ART = {path:{ic:'book', c:'var(--cat-story)'}, order:{ic:'chat', c:'var(--cat-gram)'}, cross:{ic:'cards', c:'var(--cat-voc)'}, bingo:{ic:'headphones', c:'var(--cat-voc)'}, match:{ic:'cards', c:'var(--cat-review)'}, dictation:{ic:'headphones', c:'var(--cat-lis)'}, build:{ic:'dumbbell', c:'var(--cat-gram)'}, trap:{ic:'bolt', c:'var(--clay-coral)'}, hunt:{ic:'search', c:'var(--cat-story)'}, echo:{ic:'mic', c:'var(--cat-lis)'}, chores:{ic:'home', c:'var(--clay-sky)'}};
 // The game kind a completedGames refId stands for (vocab games end in -kind, the rest start with kind-).
 function gameKindOfRef(refId){ const s = String(refId||''); if(s.indexOf('shelf-') === 0) return null; let m = s.match(/-(match|dictation|bingo|echo|cross|hunt)$/); if(m) return m[1]; m = s.match(/^(build|trap|chores|order|path)-/); return m ? m[1] : null; }
 // Every kind the learner has met: finished game nodes (any roadmap, old saves included) and game souvenirs.
@@ -12092,7 +12113,8 @@ function shelfSets(kind){
 }
 function shelfGames(){
   const met = gamesMet();
-  return SHELF_GAMES.filter(k=>k === 'order' ? true : (k === 'cross' ? (met.has('cross') || shelfSets('cross').length > 0) : met.has(k)));
+  // Story Path stays off the shelf while it is dormant (PATH_LIVE), then appears once a chapter has been played.
+  return SHELF_GAMES.filter(k=>k === 'path' ? (PATH_LIVE && met.has('path')) : (k === 'order' ? true : (k === 'cross' ? (met.has('cross') || shelfSets('cross').length > 0) : met.has(k))));
 }
 function shelfSubLine(){
   const n = shelfGames().length;
@@ -12101,6 +12123,7 @@ function shelfSubLine(){
 }
 // One line of "what you do" per game, for the shelf list.
 function gameBlurb(kind){
+  if(kind === 'path'){ const town = (pathArc('A1') || {}).town || ''; return L(`A summer in ${town}, one choice at a time.`, `${town}: bir yaz, her seferinde bir seçim.`, `یک تابستان در ${town}، هر بار یک انتخاب.`, `Un verano en ${town}, una decisión cada vez.`); }
   if(kind === 'order') return L('Listen to each customer’s order and build it on the tray.','Her müşterinin siparişini dinle ve tepsiye hazırla.','سفارش هر مشتری را گوش کن و روی سینی بچین.','Escucha el pedido de cada cliente y prepáralo en la bandeja.');
   if(kind === 'cross') return L('Spell the words you learned into a pocket crossword.','Öğrendiğin kelimeleri mini bir bulmacaya yaz.','کلمه‌هایی که یاد گرفتی را در یک جدول کوچک بنویس.','Escribe las palabras que aprendiste en un minicrucigrama.');
   if(kind === 'bingo') return L('Listen to the clue and tap the word on your card.','İpucunu dinle, kartındaki kelimeye dokun.','سرنخ را گوش کن و روی کلمه در کارتت بزن.','Escucha la pista y toca la palabra en tu cartón.');
@@ -14240,19 +14263,36 @@ function pathGlossForms(word){
   return Array.from(out).sort((a, b)=>b.length - a.length);
 }
 // Target text with the chapter's glossed words tappable; feelG marks the feeling word of a feel line.
+// A Spanish verb-phrase gloss also matches its conjugated forms (hacer gracia -> le hace gracia, echar de menos -> echaba de menos).
+function pathGlossPatterns(word){
+  const out = pathGlossForms(word).map(reEsc);
+  const w = String(word || '').trim().replace(/^(el|la|los|las|un|una)\s+/i, '');
+  const m = /^(\p{L}{3,}?)(ar|er|ir)(se)?(\s+.+)$/u.exec(w);
+  if(m) out.push(reEsc(m[1]) + '\\p{L}*' + reEsc(m[4]));
+  return out;
+}
 function pathGlossHtml(text, ch, feelG){
   const s = String(text || ''), list = [];
-  for(let g = 1; g <= 7; g++){ const gl = ch && ch['g' + g]; if(gl && gl.word) pathGlossForms(gl.word).forEach(f=>list.push({f:f.toLowerCase(), g:'g' + g})); }
-  if(!list.length) return esc(s);
-  list.sort((a, b)=>b.f.length - a.f.length);
-  const re = new RegExp('(^|[^\\p{L}])(' + list.map(x=>reEsc(x.f)).join('|') + ')(?![\\p{L}])', 'giu');
+  for(let g = 1; g <= 7; g++){
+    const gl = ch && ch['g' + g];
+    if(gl && gl.word){ const src = pathGlossPatterns(gl.word); list.push({g:'g' + g, src, re:new RegExp('^(?:' + src.join('|') + ')$', 'iu')}); }
+  }
+  const alts = list.flatMap(x=>x.src).sort((a, b)=>b.length - a.length);
+  if(!alts.length) return esc(s);
+  const re = new RegExp('(^|[^\\p{L}])(' + alts.join('|') + ')(?![\\p{L}])', 'giu');
   let out = '', last = 0, m;
   while((m = re.exec(s))){
-    const start = m.index + m[1].length, word = m[2], hit = list.find(x=>x.f === word.toLowerCase());
+    const start = m.index + m[1].length, word = m[2], hit = list.find(x=>x.re.test(word));
     out += esc(s.slice(last, start)) + `<span class="sp-gloss${hit && hit.g === feelG ? ' sp-feelword' : ''}" data-action="sp-gloss" data-g="${hit ? hit.g : ''}">${esc(word)}</span>`;
     last = start + word.length;
   }
   return out + esc(s.slice(last));
+}
+// The feel row: the feeling word is always tappable — a chip after the line when the line words it differently.
+function pathFeelHtml(opt, ch){
+  const fg = opt && opt.feelgloss, html = pathGlossHtml(pathT(opt && opt.feel), ch, fg), gl = fg && fg !== 'none' && ch[fg];
+  if(!gl || html.indexOf('sp-feelword') >= 0) return html;
+  return html + ` <span class="sp-gloss sp-feelword sp-feelchip" data-action="sp-gloss" data-g="${fg}">${esc(gl.word)}</span>`;
 }
 function pathMeaning(gl){ const o = {}; ['en', 'tr', 'fa', 'es'].forEach(k=>{ if(gl && gl[k] != null) o[k] = String(gl[k]); }); return o; }
 function pathGlossRowHtml(ch, g){
@@ -14371,7 +14411,7 @@ function renderGamePath(){
     const dk = beat === 'o1' ? 'd1' : 'd2', opt = c[dk][round.picks[beat === 'o1' ? 0 : 1]] || c[dk].a;
     body = `<p class="sp-said" dir="ltr">${pathSayBtn(pathT(opt))}<span>“${esc(pathT(opt))}”</span></p>
       <p class="sp-text" dir="ltr">${pathGlossHtml(pathT(opt.out), c)}</p>
-      <div class="sp-feel" dir="ltr"><span class="sp-feel-ic" aria-hidden="true">♡</span><span>${pathGlossHtml(pathT(opt.feel), c, opt.feelgloss)}</span></div>`;
+      <div class="sp-feel" dir="ltr"><span class="sp-feel-ic" aria-hidden="true">♡</span><span>${pathFeelHtml(opt, c)}</span></div>`;
   } else if(beat === 'flip'){
     const who = String(c.flip.who || '');
     body = `<div class="eyebrow" style="color:var(--cat-story);">${esc(L(`${who} tells it`, `${who} anlatıyor`, `${who} تعریف می‌کند`, `Lo cuenta ${who}`))}</div><p class="sp-text sp-flip" dir="ltr">${pathGlossHtml(pathT(c.flip), c)}</p>`;
@@ -16467,6 +16507,7 @@ const screens = {
   'game-bingo': renderGameBingo,
   'game-cross': renderGameCross,
   'game-order': renderGameOrder,
+  'game-path': renderGamePath,
   'game-hunt': renderGameHunt,
   'game-echo': renderGameEcho,
   'game-chores-building': renderGameChoresBuilding,
@@ -17581,7 +17622,7 @@ const HANDLERS = {
       state.progress.lastWordsHit[vp.mode] = result.wordsHit.slice();
       // Gamification v3 build 2 (M6): a passed writing round answers the pending journal reflection.
       const rf = studioReflection(vp);
-      if(rf){ storyChoices()[rf.levelBase + ':reflected'] = todayISO(); storyChoices()[rf.levelBase + ':reflection'] = String(text||'').slice(0, 400); }
+      if(rf){ if(rf.path) pathReflected(rf.path, text); else { storyChoices()[rf.levelBase + ':reflected'] = todayISO(); storyChoices()[rf.levelBase + ':reflection'] = String(text||'').slice(0, 400); } }
       // Gamification v3 (M7): no XP is added here any more.
     }
     save();
@@ -17749,6 +17790,12 @@ const HANDLERS = {
     const kind = el.dataset.kind;
     hideCharTip(true); gcBubble = null;
     const ds = {kind, refId:'shelf-'+kind, goal:'', free:'1', shelf:'1', setId:''};
+    if(kind === 'path'){
+      // a chapter already played, fresh choices, nothing saved; none yet -> Word Rush
+      const pr = pathShelfRound();
+      if(pr){ go('game-path', {round:pr, refId:ds.refId, goal:'', free:true, shelf:true}); return; }
+      ds.kind = 'match';
+    }
     if(kind === 'hunt'){
       // a random finished story that can be hunted; none yet -> Word Rush
       const pool = ((state.progress.completedStories||[]).map(id=>STORY_LIBRARY_FREE.find(s=>s.id===id))).filter(huntable);
@@ -17811,6 +17858,15 @@ const HANDLERS = {
       const fbh = fallbackGameSet();
       if(!fbh) return;
       go('game-match', Object.assign({round: buildMatchRound(fbh), fallbackFrom:'hunt'}, params));
+      return;
+    }
+    if(kind === 'path'){
+      // Story Path: one chapter per node (refId path-lane-<level>-e<n>); no score, no timer, no right answer.
+      const pathRound = pathRoundForRef(params.refId);
+      if(pathRound){ go('game-path', Object.assign({round: pathRound}, params)); return; }
+      const fbp = fallbackGameSet();
+      if(!fbp) return;
+      go('game-match', Object.assign({round: buildMatchRound(fbp)}, params));
       return;
     }
     if(kind === 'chores'){ go('game-chores-building', params); return; }   // the learner picks the place inside

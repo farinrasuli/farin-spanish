@@ -7900,85 +7900,96 @@ function buildRoadmap(profile){
   // refId is synthesized from the source set + which mini-game, since a "game"
   // isn't catalog content with its own id.
   const gamePool = vPool.length ? vPool : vPoolAll;
-  /* Gamification v3 build 1: four game slots per level — slot 0 = stage 1 mid
-     (after the 4th grammar item), 1 = stage 1 end, 2 = stage 2 mid, 3 = stage 2
-     end — kinds from GAME_ROTATION. Game nodes carry .slot (legacy ones don't).
-     A vocab game uses a set from this stage's own vocab nodes (most recent
-     first) that no other game in this roadmap uses and no earlier game has
-     played, so the stage-2 game never reuses a stage-1 set. Build It falls back
-     when the grammar taught so far gives fewer than 4 sentences: Trap Dash from
-     B1, Word Rush below; Bingo needs 9 words, Listen & Type 3 sentences. */
+  /* Game positions (games-content/rotation.md, Trello gt8gCNfu): five per stage — 0 opener (first
+     node of the page, after a driller's vocab warm-up), 1 right after the speaking-practice node,
+     2 mid (end of the 4th grammar item's iteration), 3 end (after writing; Story Hunt splices
+     itself in right after the story node and its media node), 4 closer (last node of the page).
+     Kinds come from gameKindForPosition(); node.slot = (stage-1)*5 + pos and node.pos marks this
+     scheme (roadmaps saved before it keep their own game nodes, see mergeRoadmapForGoalChange).
+     A game only ever uses content the page has already taught: a vocab game takes the most recent
+     vocab node before it in this stage (stage 2: then the stage-1 vocab nodes), preferring a set no
+     other game in this roadmap or the stage-1 games uses and that was not played before; when no
+     taught set fits, the kind falls back (Mini Cross / Magic Words -> Word Bingo -> Word Rush,
+     Listen & Type / Say It Back -> Word Rush; a thin goal pool with no taught set left for another
+     game -> Build It, else Order Up!). Build It needs 4 taught sentences, else Word Rush (A1-A2) or
+     Order Up! (B1+); Order Up! never falls back; Trap Dash is shelf-only now. */
   const playedSetIds = new Set(((state.progress && state.progress.completedGames) || []).map(r=>String(r).replace(/-(match|dictation|bingo|echo|cross)$/, '')));
-  // the sets the stage-1 games of this level use (stage-1 roadmap rebuilt to find them)
-  let stage1Sets = new Set();
+  // the sets the stage-1 games of this level use, and the stage-1 vocab nodes (taught before this page)
+  let stage1Sets = new Set(), stage1Vocab = [];
   if(stage === 2){
-    try{ stage1Sets = new Set(buildRoadmap(Object.assign({}, profile, {levelStage:1})).filter(n=>n.type==='game' && n.setId).map(n=>n.setId)); }catch(e){}
+    try{
+      const s1 = buildRoadmap(Object.assign({}, profile, {levelStage:1}));
+      stage1Sets = new Set(s1.filter(n=>n.type==='game' && n.setId).map(n=>n.setId));
+      stage1Vocab = s1.filter(n=>n.type==='vocab').map(n=>VOCAB_SETS.find(s=>s.id===n.refId)).filter(Boolean).reverse();
+    }catch(e){}
   }
-  const pickGameSet = (kind) => {
+  const GAME_SET_FALLBACK = {cross:'bingo', spell:'bingo', bingo:'match', dictation:'match', echo:'match'};
+  const pickGameSet = (kind, reuse) => {
     const usedByGames = items.filter(it=>it.type==='game' && it.setId).map(it=>it.setId);
-    const fits = s => !!s && (kind !== 'bingo' || s.cards.length >= 9) && (kind !== 'cross' || crossSetOk(s)) && ((kind !== 'dictation' && kind !== 'echo') || s.cards.filter(c=>c.sentence).length >= 3);
-    const recent = items.filter(it=>it.type==='vocab').map(it=>VOCAB_SETS.find(s=>s.id===it.refId)).reverse();
-    const half = Math.ceil(gamePool.length/2);
-    const stagePool = stage===2 ? gamePool.slice(half) : gamePool.slice(0, half);
-    const tiers = [recent, stagePool, gamePool, vPoolAll];
-    for(const tier of tiers){ const s = tier.find(x=>fits(x) && !usedByGames.includes(x.id) && !stage1Sets.has(x.id) && !playedSetIds.has(x.id)); if(s) return s; }
-    for(const tier of tiers){ const s = tier.find(x=>fits(x) && !usedByGames.includes(x.id) && !stage1Sets.has(x.id)); if(s) return s; }
-    for(const tier of tiers){ const s = tier.find(x=>fits(x) && !stage1Sets.has(x.id)); if(s) return s; }
+    const usedRefs = new Set(items.filter(it=>it.type==='game').map(it=>it.refId));
+    const fits = s => !!s && !usedRefs.has(s.id+'-'+kind) && (kind !== 'bingo' || s.cards.length >= 9) && (kind !== 'cross' || crossSetOk(s)) && ((kind !== 'dictation' && kind !== 'echo') || s.cards.filter(c=>c.sentence).length >= 3);
+    const taught = items.filter(it=>it.type==='vocab').map(it=>VOCAB_SETS.find(s=>s.id===it.refId)).filter(Boolean).reverse().concat(stage1Vocab);
+    const passes = [s=>!usedByGames.includes(s.id) && !stage1Sets.has(s.id) && !playedSetIds.has(s.id), s=>!usedByGames.includes(s.id) && !stage1Sets.has(s.id), s=>!usedByGames.includes(s.id)];
+    if(reuse) passes.push(()=>true);
+    for(const pass of passes){ const s = taught.find(x=>fits(x) && pass(x)); if(s) return s; }
     return null;
   };
-  const pushGame = (kind, slot) => {
+  const pushGame = (kind, pos) => {
+    if(!kind) return;
     const g = primaryGoal || 'everyday';
     const low = profile.level === 'A1' || profile.level === 'A2';
-    const mid = slot % 2 === 0;
-    if(kind === 'build'){
-      const taught = (stage===2 ? gPool.slice(0, gHalf) : []).concat(items.filter(it=>it.type==='grammar').map(it=>GRAMMAR_ITEMS.find(x=>x.id===it.refId)).filter(Boolean));
-      if(buildCandidates(profile, taught).length < BUILD_MIN) kind = low ? 'match' : 'trap';
+    const slot = (stage - 1) * 5 + pos;
+    const gameNode = (k, refId, setId, name) => ({type:'game', gameKind:k, slot, pos, refId, setId:setId || null, goal:g,
+      title:L('Game','Oyun','بازی','Juego')+': '+(name || gameDisplayName(k))});
+    if(kind === 'path'){   // Story Path: chapters 1-3 on stage 1, 4-6 on stage 2 (only reached while PATH_LIVE)
+      const ep = (stage - 1) * 3 + [0, 1, 4].indexOf(pos) + 1;
+      const pc = typeof pathChapter === 'function' ? pathChapter(profile.level, ep) : null;
+      if(pc){ items.push(Object.assign(gameNode('path', 'path-lane-'+profile.level+'-e'+ep, null, gameDisplayName('path')+' — '+svText(pc.title)), {pathEp:ep})); return; }
+      return;
     }
-    if(kind === 'trap' && low) kind = 'match';
-    /* Gamification v3 build 2: Story Hunt plays the stage's story, so its node goes
-       directly after the story node (and the "Watch or listen" node that follows
-       it), before the writing node - not at the slot's usual position. The slot
-       number and refId (storyId-hunt) are unchanged. No story node yet, or a story
-       with fewer than 4 findable words: Word Rush in the slot's own position. */
+    // Build It plays the grammar taught so far (stage 2: all of stage 1 too) and needs 4 sentences.
+    const buildOk = () => {
+      if(!gPoolAll.length) return false;
+      const taught = (stage===2 ? gPool.slice(0, gHalf) : []).concat(items.filter(it=>it.type==='grammar').map(it=>GRAMMAR_ITEMS.find(x=>x.id===it.refId)).filter(Boolean));
+      return buildCandidates(profile, taught).length >= BUILD_MIN;
+    };
+    if(kind === 'trap') kind = low ? 'match' : 'order';
+    if(kind === 'build' && !buildOk()) kind = low ? 'match' : 'order';
     if(kind === 'hunt'){
       const si = items.findIndex(it=>it.type==='story');
       const hs = si >= 0 ? STORY_LIBRARY_FREE.find(s=>s.id===items[si].refId) : null;
       if(hs && huntable(hs)){
         let at = si + 1;
         if(items[at] && items[at].type === 'media') at++;
-        items.splice(at, 0, {type:'game', gameKind:'hunt', slot, refId:hs.id+'-hunt', setId:null, goal:g,
-          title:L('Game','Oyun','بازی','Juego')+': '+gameDisplayName('hunt')+' — '+L(hs.title.en, hs.title.tr, hs.title.fa, hs.title.es)});
+        items.splice(at, 0, gameNode('hunt', hs.id+'-hunt', null, gameDisplayName('hunt')+' — '+L(hs.title.en, hs.title.tr, hs.title.fa, hs.title.es)));
         return;
       }
       kind = 'match';
     }
-    if((kind === 'build' || kind === 'trap') && gPoolAll.length){
-      items.push({type:'game', gameKind:kind, slot, refId:kind+'-'+profile.level+'-s'+stage+(mid ? '-mid' : ''), setId:null, goal:g,
-        title:L('Game','Oyun','بازی','Juego')+': '+gameDisplayName(kind)});
+    // own content, no set: Build It (taught grammar), Order Up! (never falls back), Cozy Chores (once CHORES_LIVE)
+    if(kind === 'build' || kind === 'order' || kind === 'chores'){
+      items.push(gameNode(kind, kind+'-'+profile.level+'-s'+stage+'-'+slot));
       return;
     }
-    if(kind === 'chores'){   // only reachable when CHORES_LIVE is true (see GAME_ROTATION)
-      items.push({type:'game', gameKind:'chores', slot, refId:'chores-'+profile.level+'-s'+stage+(mid ? '-mid' : ''), setId:null, goal:g,
-        title:L('Game','Oyun','بازی','Juego')+': '+gameDisplayName('chores')});
+    let k = kind, setObj = null;
+    while(k && !(setObj = pickGameSet(k))) k = GAME_SET_FALLBACK[k];
+    if(!setObj){ k = 'match'; setObj = pickGameSet('match', true); }
+    if(!setObj){
+      // a thin goal pool (one set for the whole level) has no taught set left for another game: own content instead
+      const own = buildOk() ? 'build' : 'order';
+      items.push(gameNode(own, own+'-'+profile.level+'-s'+stage+'-'+slot));
       return;
     }
-    if(kind === 'order'){   // own generated content, never falls back (spec §9); reached once GAME_ROTATION lists it (gt8gCNfu)
-      items.push({type:'game', gameKind:'order', slot, refId:'order-'+profile.level+'-s'+stage+(mid ? '-mid' : ''), setId:null, goal:g,
-        title:L('Game','Oyun','بازی','Juego')+': '+gameDisplayName('order')});
-      return;
-    }
-    if(kind === 'build' || kind === 'trap') kind = 'match';
-    let setObj = pickGameSet(kind);
-    if(!setObj && kind !== 'match'){ kind = 'match'; setObj = pickGameSet('match'); }
-    if(!setObj) return;
-    items.push({type:'game', gameKind:kind, slot, refId:setObj.id+'-'+kind, setId:setObj.id, goal:g,
-      title:L('Game','Oyun','بازی','Juego')+': '+gameDisplayName(kind)+' — '+setTitle(setObj)});
+    items.push(gameNode(k, setObj.id+'-'+k, setObj.id, gameDisplayName(k)+' — '+setTitle(setObj)));
   };
   // Drillers repeat-to-learn, and anyone who flagged vocab as their weak spot gets a warm-up rep first.
   const gaveVocabWarmup = stage===1 && (profile.priorityArea==='vocab' || profile.learnerType==='driller') && vPool.length;
   if(gaveVocabWarmup){
     items.push({type:'vocab', refId:vPool[0].id, goal:(vPool[0].goals&&vPool[0].goals.find(gk=>goals.includes(gk)))||primaryGoal, title:L('Vocab warm-up','Kelime ısınması','گرم‌کردن با کلمات', 'Calentamiento de vocabulario')+': '+setTitle(vPool[0])});
   }
+  // Position 0 (opener): the first node of the page, after the warm-up. Empty on stage 1 until
+  // Story Path is live (a page never opens with a game on content it has not taught yet).
+  pushGame(gameKindForPosition(profile.level, stage, 0), 0);
   // Pre-existing bug fixed in passing (found via Phase 2 script-testing): when a
   // warm-up rep is given, the main loop below used to start at the same vPool[0]
   // it just showed, producing a same-id duplicate roadmap node (harmless before
@@ -8004,9 +8015,10 @@ function buildRoadmap(profile){
     }
     if(i === Math.max(Math.floor(gSlice.length/2)-1, 0)){
       pushPractice('speaking');
+      pushGame(gameKindForPosition(profile.level, stage, 1), 1);   // position 1: right after speaking
     }
-    // Gamification v3: the mid-stage game, after the 4th grammar item (and its vocab node).
-    if(i === Math.min(3, gSlice.length-1)) pushGame(gameKindForSlot(profile.level, stage, true), (stage===2 ? 2 : 0));
+    // Position 2 (mid): after the 4th grammar item (and its vocab node).
+    if(i === Math.min(3, gSlice.length-1)) pushGame(gameKindForPosition(profile.level, stage, 2), 2);
   });
   if(slPool.length){
     const sl = slPool[sli % slPool.length];
@@ -8018,13 +8030,15 @@ function buildRoadmap(profile){
     pushStory();
   }
   pushPractice('writing');
-  // Gamification v3: the end-of-stage game (slots 1 and 3 — see gameKindForSlot()).
-  pushGame(gameKindForSlot(profile.level, stage, false), (stage===2 ? 3 : 1));
+  // Position 3 (end): after writing (Story Hunt places itself right after the story node).
+  pushGame(gameKindForPosition(profile.level, stage, 3), 3);
   // Talkers (and anyone who said listening/speaking is their weak spot) get an extra
   // self-practice speaking rep, now that the live-session version of this is gone.
   if((profile.learnerType==='talker' || profile.priorityArea==='listening') && stage===1){
     pushPractice('speaking');
   }
+  // Position 4 (closer): the last node of the page (Story Path episode C once it is live).
+  pushGame(gameKindForPosition(profile.level, stage, 4), 4);
   // Some content (vocab/slang especially, via the vi/sli modulo wraparound above,
   // and drillers deliberately repeat vocab more) can legitimately appear twice in
   // one roadmap — repetition is the point for a driller. That's fine for display,
@@ -8036,7 +8050,9 @@ function buildRoadmap(profile){
   // speaking practice (which lands mid-stage), away from both game slots.
   if(mediaPick && !items.some(it=>it.type==='media')){
     const sp = items.findIndex(it=>it.type==='speaking');
-    items.splice(sp >= 0 ? sp+1 : Math.floor(items.length/2), 0, mediaRoadmapNode(profile, mediaPick, primaryGoal));
+    let mAt = sp >= 0 ? sp+1 : Math.floor(items.length/2);
+    if(items[mAt] && items[mAt].type === 'game' && items[mAt].pos === 1) mAt++;   // the position-1 game stays right after speaking
+    items.splice(mAt, 0, mediaRoadmapNode(profile, mediaPick, primaryGoal));
   }
   const seenNodeKeys = {};
   items.forEach(it=>{
@@ -8057,43 +8073,48 @@ function buildRoadmap(profile){
    pool cycling back around) — without it, checking one repeat would silently
    mark the other done too. */
 function roadmapNodeId(item){ return item.type+':'+item.refId+(item.occ?('#'+item.occ):''); }
-/* Gamification (Trello 4bDl1BS3, ported from the English app): sequencing
-   call for the 3rd game kind (Trap Dash). A full level only ever has 2 game
-   slots (stage 1 + stage 2 of buildRoadmap), so a straight 2-kind alternation
-   used to guarantee both Word Rush and Listen & Type once per level. With 3
-   kinds, cycling per level+stage instead (0=match,1=dictation,2=trap, then
-   wraps) means across a full course (5 levels x 2 stages = 10 slots) a
-   student meets all 3 kinds repeatedly and evenly. */
-/* Gamification v3 build 2 (approved 2026-10-04): the LXD four-slot table,
-   [stage 1 mid, stage 1 end, stage 2 mid, stage 2 end]. Rules: recognition
-   before production within a level; Say It Back at A2-B2 only; Trap Dash from
-   B1 (timed); Listen & Type from A2. Story Hunt slots are end-of-stage slots and
-   the node is placed directly after the story node (see pushGame). Fallbacks:
-   Build It -> Trap Dash (B1+) or Word Rush with fewer than 4 taught sentences;
-   Bingo needs 9 words and Listen & Type / Say It Back 3 sentences, else Word
-   Rush; Story Hunt with no huntable story -> Word Rush; Say It Back never falls
-   back for missing speech recognition (shadow mode). New roadmaps only:
-   existing game nodes keep their kind and refId. */
+/* Final rotation (games-content/rotation.md by farin-lxd, 2026-10-08, Trello gt8gCNfu; Farin
+   Q1 A = Story Path episode C closes the page, Q2 A = Build It falls back to Order Up! from B1).
+   Five game positions per stage: 0 opener · 1 after speaking · 2 mid · 3 end · 4 closer. Story
+   Path ('path') holds 0/1/4 and is replaced by PATH_FALLBACK while it is dormant or has no
+   content at that level (null = no node: a page never opens with a game on content it has not
+   taught yet). Cozy Chores has real positions (A1·s2, A2·s1, B1·s1) and plays Word Bingo (A1-A2)
+   or Build It (B1+) until CHORES_LIVE. Kinds not built yet play a stand-in (GAME_STANDIN) until
+   they ship: Passport Desk -> Order Up! (the other own-content listening game that never falls
+   back), Case Closed -> Build It and Magic Words -> Word Bingo (their own fallback rules). Trap
+   Dash is no longer on new roadmaps (Games shelf only). New roadmaps only: game nodes already
+   saved keep their kind and refId. */
 const GAME_ROTATION = {
-  A1:['match','hunt','build','bingo'],
-  A2:['build','echo','dictation','hunt'],
-  B1:['trap','hunt','build','echo'],
-  B2:['build','hunt','bingo','echo'],
-  C1:['trap','hunt','build','dictation']
+  A1:{ s1:['path','path','order', 'hunt','path'], s2:['path','path','chores', 'desk', 'path'] },
+  A2:{ s1:['path','path','chores','hunt','path'], s2:['path','path','desk',   'echo', 'path'] },
+  B1:{ s1:['path','path','chores','hunt','path'], s2:['path','path','mystery','cross','path'] },
+  B2:{ s1:['path','path','order', 'hunt','path'], s2:['path','path','mystery','spell','path'] },
+  C1:{ s1:['path','path','desk',  'hunt','path'], s2:['path','path','mystery','cross','path'] }
 };
-/* Cozy Chores (Trello 1m2Y0zdU) is built in but NOT in the rotation yet: Farin chose painted art
-   and the painted plates don't exist, so the game plays with stand-in SVG art. Flipping
-   CHORES_LIVE to true puts 'chores' into slot CHORES_SLOT of every level's rotation (0 = stage-1
-   mid, 1 = stage-1 end, 2 = stage-2 mid, 3 = stage-2 end), so NEW roadmaps get one Cozy Chores
-   card per stage-1 (the displaced kind drops out of that slot; existing roadmaps keep their game
-   nodes). While false, buildRoadmap output is unchanged and the game is reachable only through
-   a game node of kind 'chores' (none exist) — i.e. dormant. */
+// While Story Path is dormant. Index = [pos 0, pos 1, pos 4].
+const PATH_FALLBACK = {
+  A1:{ s1:[null,'bingo',    'build'], s2:['cross','bingo','build'] },
+  A2:{ s1:[null,'dictation','order'], s2:['mystery','bingo','build'] },
+  B1:{ s1:[null,'dictation','order'], s2:['desk','echo','build'] },
+  B2:{ s1:[null,'cross',    'build'], s2:['desk','echo','bingo'] },
+  C1:{ s1:[null,'dictation','order'], s2:['build','spell','dictation'] }
+};
+/* Story Path (Trello RzlovAPw) is built but dormant: Farin chose to wait for the painted scenes
+   (story-path-DRAFT.md §12 E). PATH_LIVE = true puts its chapters into positions 0/1/4 of NEW
+   roadmaps at every level that has STORY_PATH content (A1, A2) and lists it on the Games shelf.
+   Cozy Chores (Trello 8JAiLuV7) likewise waits for its painted plates: CHORES_LIVE = true gives it
+   its own positions above. While both are false, nothing a learner sees depends on either game. */
+const PATH_LIVE = false;
 const CHORES_LIVE = false;
-const CHORES_SLOT = 0;
-if(CHORES_LIVE) Object.keys(GAME_ROTATION).forEach(l=>{ GAME_ROTATION[l][CHORES_SLOT] = 'chores'; });
-function gameKindForSlot(level, stage, mid){
-  const r = GAME_ROTATION[level] || GAME_ROTATION.A1;
-  return r[(stage===2 ? 2 : 0) + (mid ? 0 : 1)];
+const GAME_STANDIN = {desk:'order', mystery:'build', spell:'bingo'};
+function pathLevelLive(level){ return PATH_LIVE && typeof STORY_PATH !== 'undefined' && !!(STORY_PATH.lane && STORY_PATH.lane[level]); }
+function gameKindForPosition(level, stage, pos){
+  const s = 's' + (stage === 2 ? 2 : 1);
+  let kind = (GAME_ROTATION[level] || GAME_ROTATION.A1)[s][pos];
+  if(kind === 'path' && !pathLevelLive(level)) kind = (PATH_FALLBACK[level] || PATH_FALLBACK.A1)[s][[0, 1, 4].indexOf(pos)];
+  if(kind === 'chores' && !CHORES_LIVE) kind = (level === 'A1' || level === 'A2') ? 'bingo' : 'build';
+  if(kind && GAME_STANDIN[kind]) kind = GAME_STANDIN[kind];
+  return kind || null;
 }
 /* Roadmap 2.0 Phase 4 (ported from the English app): grammar/vocab/slang/story
    quiz completion was already tracked by stable content id (completedTraps/
@@ -8215,9 +8236,9 @@ function mergeRoadmapForGoalChange(){
   const existing = (state.roadmap && state.roadmap.length) ? state.roadmap : currentRoadmap();
   if(!existing.length){ regenerateRoadmap(); return; }
   const currentGoals = state.profile.goals || [];
-  // Gamification v3: a roadmap built before the four game slots (game nodes
-  // without .slot) keeps its own game nodes and gets no new ones.
-  const legacyGames = existing.some(it=>it.type==='game' && it.slot === undefined);
+  // A roadmap built before the five game positions (game nodes without .pos, i.e. the four-slot
+  // scheme or older) keeps its own game nodes and gets no new ones (rotation.md: new roadmaps only).
+  const legacyGames = existing.some(it=>it.type==='game' && (it.slot === undefined || it.pos === undefined));
   const kept = existing.filter(it=>
     isRoadmapNodeDone(it) || currentGoals.includes(it.goal) || !GOAL_ORDER.includes(it.goal) || (legacyGames && it.type==='game')
   );
@@ -12021,7 +12042,7 @@ function fallbackGameSet(minCards){
 const SHELF_GAMES = ['order','cross','bingo','match','dictation','build','trap','hunt','echo','chores'];
 const SHELF_ART = {order:{ic:'chat', c:'var(--cat-gram)'}, cross:{ic:'cards', c:'var(--cat-voc)'}, bingo:{ic:'headphones', c:'var(--cat-voc)'}, match:{ic:'cards', c:'var(--cat-review)'}, dictation:{ic:'headphones', c:'var(--cat-lis)'}, build:{ic:'dumbbell', c:'var(--cat-gram)'}, trap:{ic:'bolt', c:'var(--clay-coral)'}, hunt:{ic:'search', c:'var(--cat-story)'}, echo:{ic:'mic', c:'var(--cat-lis)'}, chores:{ic:'home', c:'var(--clay-sky)'}};
 // The game kind a completedGames refId stands for (vocab games end in -kind, the rest start with kind-).
-function gameKindOfRef(refId){ const s = String(refId||''); if(s.indexOf('shelf-') === 0) return null; let m = s.match(/-(match|dictation|bingo|echo|cross|hunt)$/); if(m) return m[1]; m = s.match(/^(build|trap|chores|order)-/); return m ? m[1] : null; }
+function gameKindOfRef(refId){ const s = String(refId||''); if(s.indexOf('shelf-') === 0) return null; let m = s.match(/-(match|dictation|bingo|echo|cross|hunt)$/); if(m) return m[1]; m = s.match(/^(build|trap|chores|order|path)-/); return m ? m[1] : null; }
 // Every kind the learner has met: finished game nodes (any roadmap, old saves included) and game souvenirs.
 function gamesMet(){
   const pr = state.progress || {}, met = new Set();
@@ -17315,10 +17336,15 @@ const HANDLERS = {
     if(kind === 'build'){
       const buildRound = buildBuildRound(state.profile);
       if(buildRound){ go('game-build', Object.assign({round: buildRound}, params)); return; }
-      // Too few finished grammar items for Build It: Trap Dash from B1, else Word Rush.
+      // Too few finished grammar items for Build It: Order Up! from B1 (rotation.md Q2 A: it replaces the
+      // timed Trap Dash fallback), else Word Rush.
       const lvl = state.profile.level;
-      const tr = (lvl === 'A1' || lvl === 'A2') ? null : buildTrapRound(state.profile);
-      if(tr){ go('game-trap', Object.assign({round: tr, fallbackFrom:'build'}, params)); return; }
+      if(lvl !== 'A1' && lvl !== 'A2'){
+        const obr = buildOrderRound(params.free ? null : params.refId);
+        queueFx(()=>orderArrive(obr));
+        go('game-order', Object.assign({round: obr, fallbackFrom:'build'}, params));
+        return;
+      }
       const fbb = fallbackGameSet();
       if(!fbb) return;
       go('game-match', Object.assign({round: buildMatchRound(fbb), fallbackFrom:'build'}, params));

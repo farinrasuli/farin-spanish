@@ -5903,6 +5903,8 @@ function migrateProgressV3(pr){
   Object.keys(pr.srs).forEach(id=>{
     const e = pr.srs[id];
     if(!e || typeof e !== 'object'){ delete pr.srs[id]; return; }
+    // Courses step 6: course items (ids c-...) leaked in through updateSRS; they never belong in the free deck.
+    if(id.indexOf('c-') === 0){ delete pr.srs[id]; return; }
     let b = Number(e.box); if(!isFinite(b)) b = 0;
     e.box = Math.max(0, Math.min(7, Math.round(b)));   // 8 boxes now (0-7)
     if(typeof e.hi !== 'number') e.hi = e.box;          // highest box reached: shine never drops
@@ -6543,9 +6545,17 @@ function srsOutcome(e, good){
   else if(good === 1) srsSetBox(e, e.box, 2);
   else { srsSetBox(e, e.box - 1, 1); e.lapses = (e.lapses||0) + 1; }   // lapses: M8 suggests pinning after two
 }
+// Courses step 6: a course item (course field set, or an id starting with c-) never enters the free
+// progress.srs, so it stays out of Souvenir Shuffle and free review. Course review uses progress.courses[cid].srs.
+function srsIsCourseItem(id){
+  if(typeof id !== 'string') return false;
+  if(id.indexOf('c-') === 0) return true;
+  try{ return [GRAMMAR_ITEMS, VOCAB_SETS, STORY_LIBRARY].some(a=>a.some(x=>x && x.id===id && x.course)); }catch(e){ return false; }
+}
 // A lesson quiz finished: the first pass creates the entry; a later pass only
 // counts when the item is due (then 80%+ = up, under 50% = down, else stays).
 function updateSRS(itemId, kind, pct){
+  if(srsIsCourseItem(itemId)) return;
   const srs = state.progress.srs;
   let entry = srs[itemId];
   if(!entry){
@@ -14465,7 +14475,7 @@ function completeLessonQuiz(q){
   if(!arr.includes(q.contextId)) arr.push(q.contextId);
   if(lesson) pr.nodeScores[nodeScoreKey(q.kind, q.contextId)] = {first:Math.round(first*100)/100, tries:round, weak};
   updateSRS(q.contextId, q.kind, first);
-  if(weak){ const e = pr.srs[q.contextId]; if(e) srsSetBox(e, 0, 1); }
+  if(weak && !srsIsCourseItem(q.contextId)){ const e = pr.srs[q.contextId]; if(e) srsSetBox(e, 0, 1); }
   q.retryOffered = false; q.weak = weak;
   if(q.kind === 'vocab') notePlayed(q.contextId);
 }

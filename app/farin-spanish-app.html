@@ -8143,8 +8143,10 @@ function learnerCharKey(){
   const p = state.profile || {};
   return (p.motivationTag && ARCHETYPES[p.motivationTag]) ? p.motivationTag : 'everyday';
 }
-// Home tip bubble — 30s visible, then 60s of nothing, then the next sentence.
-const CHAR_TIP_SHOW_MS = 30000, CHAR_TIP_GAP_MS = 60000;
+// Home tip bubble (Farin 2026-10-08): 5s on screen, the 2/3/5-days question 10s. A plan/offer
+// bubble shows once per real action (opening the app, finishing a lesson, a bubble button), then
+// nothing until the next action; in between only a motivational line, at most once every 5 min.
+const CHAR_TIP_SHOW_MS = 5000, CHAR_TIP_ASK_MS = 10000, CHAR_TIP_MOTIV_GAP_MS = 300000;
 let charTipTimer = null, charTipRot = Math.floor(Math.random()*10);
 function hideCharTip(instant){
   const el = document.getElementById('char-tip');
@@ -8153,11 +8155,12 @@ function hideCharTip(instant){
   el.classList.add('leaving');
   setTimeout(()=>el.remove(), 450);
 }
-function showCharTip(){
+function showCharTip(motivOnly){
   if(state.view !== 'dashboard' || !state.profile || !state.profile.completedDiagnostic) return false;
   if(document.getElementById('char-tip') || document.querySelector('.celebrate-overlay')) return false;
   // Gamification v3: the bubble also carries the comeback greeting and today's plan (with buttons).
-  const offer = companionBubbleContent();
+  const offer = motivOnly ? null : companionBubbleContent();
+  const asksWeekGoal = !!offer && !isComeback() && !state.progress.goalChosen;
   const text = offer || pickGreeting(state.profile, dueItems().length, charTipRot++);
   const el = document.createElement('div');
   el.className = 'char-tip'; el.id = 'char-tip';
@@ -8177,15 +8180,18 @@ function showCharTip(){
     hideCharTip();
   });
   document.body.appendChild(el);
-  return true;
+  return asksWeekGoal ? CHAR_TIP_ASK_MS : CHAR_TIP_SHOW_MS;
 }
-function scheduleCharTips(delay){
+// Called on a real action (app open, lesson finished, bubble button). After that bubble
+// hides, only motivational lines follow, one per CHAR_TIP_MOTIV_GAP_MS.
+function scheduleCharTips(delay, motivOnly){
   clearTimeout(charTipTimer);
   charTipTimer = setTimeout(()=>{
-    if(showCharTip()){
-      charTipTimer = setTimeout(()=>{ hideCharTip(); scheduleCharTips(CHAR_TIP_GAP_MS); }, CHAR_TIP_SHOW_MS);
+    const ms = showCharTip(motivOnly);
+    if(ms){
+      charTipTimer = setTimeout(()=>{ hideCharTip(); scheduleCharTips(CHAR_TIP_MOTIV_GAP_MS, true); }, ms);
     } else {
-      scheduleCharTips(5000); // not on home right now — check again shortly
+      scheduleCharTips(5000, motivOnly); // not on home right now — check again shortly
     }
   }, delay);
 }
@@ -9707,18 +9713,7 @@ function runRoadmapAdvance(currentIndex, fromIdx, oldFill, newFill){
   }
   // Start the scene where the learner left off: the finished node, centred.
   if(finished && finished.scrollIntoView) finished.scrollIntoView({block:'center', behavior:'auto'});
-  // FLIP: the companion is already drawn at its new seam; offset it back to the old one.
-  let dx = 0, dy = 0;
-  if(comp && finished){
-    const a = finished.getBoundingClientRect();
-    const target = currentIndex >= 0 ? pins[currentIndex] : document.querySelector('.rm2-cap-end img');
-    if(target){
-      const b = target.getBoundingClientRect();
-      dx = (a.left + a.width/2) - (b.left + b.width/2);
-      dy = (a.top + a.height/2) - (b.top + b.height/2);
-    }
-    comp.style.transform = `translate(${dx}px, ${dy}px)`;
-  }
+  // No hop down the roadmap (Farin 2026-10-08): the companion is simply drawn at the new seam.
   setTimeout(()=>{
     if(!finished) return;
     const fill = anim(finished, [{'--rm2-fill':oldFill+'%'}, {'--rm2-fill':newFill+'%'}], {duration:600, easing:'ease-out'});
@@ -9730,23 +9725,8 @@ function runRoadmapAdvance(currentIndex, fromIdx, oldFill, newFill){
     if(fill) fill.onfinish = pop; else pop();
   }, 250);
   setTimeout(()=>{
-    if(!comp) return;
-    comp.style.transform = '';
-    const frames = [];
-    for(let k=0;k<3;k++){
-      const x0 = dx*(1-k/3), y0 = dy*(1-k/3), x1 = dx*(1-(k+1)/3), y1 = dy*(1-(k+1)/3);
-      frames.push({offset:k/3, transform:`translate(${x0}px, ${y0}px) scale(1,1)`});
-      frames.push({offset:(k+.5)/3, transform:`translate(${(x0+x1)/2}px, ${(y0+y1)/2 - 16}px) scale(1,1)`});
-      frames.push({offset:(k+.9)/3, transform:`translate(${x1}px, ${y1}px) scale(1.08,.92)`});
-    }
-    frames.push({offset:1, transform:'translate(0px, 0px) scale(1,1)'});
-    anim(comp, frames, {duration:900, easing:'linear'});
-    [0,300,600].forEach(t=>setTimeout(()=>sfx('hop'), t));
-  }, 500);
-  setTimeout(()=>{
     const cur = document.querySelector('.rm2-node-current') || document.querySelector('.rm2-cap-end');
     if(cur && cur.scrollIntoView) cur.scrollIntoView({block:'center', behavior:'smooth'});
-    if(comp) anim(comp, [{transform:'translateY(0)'}, {transform:'translateY(-10px)', offset:.45}, {transform:'translateY(0) scale(1.08,.92)', offset:.8}, {transform:'translateY(0)'}], {duration:360, easing:'ease-out'});
   }, 1400);
 }
 // End goal warms up with progress p (0..1).

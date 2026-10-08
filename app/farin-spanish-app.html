@@ -8844,7 +8844,7 @@ function showCelebration(kind, detail, low, extra){
       </div></div>
       ${alt ? `<button class="cel-alt" id="cel-alt" type="button">↻ ${L('Take the other one','Diğerini al','آن یکی را بردار','Toma la otra')}</button>` : ''}
       <div class="celebrate-hint cel-caption" id="cel-caption">${esc(L('Added to your '+journalName(), journalName()+' koleksiyonuna eklendi', 'به '+journalName()+' تو اضافه شد', 'Añadido a tu '+journalName()))}</div>` : ''}
-    <div class="celebrate-hint">${state.courseReturn ? L('Back to your unit in a moment…','Birazdan ünitene dönüyorsun…','تا چند لحظه دیگر به واحدت برمی‌گردی…','En un momento vuelves a tu unidad…') : L('Back to your roadmap in a moment…','Birazdan yol haritana dönüyorsun…','تا چند لحظه دیگر به نقشه راهت برمی‌گردی…','En un momento vuelves a tu hoja de ruta…')}</div>
+    <div class="celebrate-hint">${(state.viewParams && state.viewParams.shelf) ? L('Back to your games in a moment…','Birazdan oyunlarına dönüyorsun…','تا چند لحظه دیگر به بازی‌هات برمی‌گردی…','En un momento vuelves a tus juegos…') : state.courseReturn ? L('Back to your unit in a moment…','Birazdan ünitene dönüyorsun…','تا چند لحظه دیگر به واحدت برمی‌گردی…','En un momento vuelves a tu unidad…') : L('Back to your roadmap in a moment…','Birazdan yol haritana dönüyorsun…','تا چند لحظه دیگر به نقشه راهت برمی‌گردی…','En un momento vuelves a tu hoja de ruta…')}</div>
   </div>`;
   document.body.appendChild(el);
   playFinishJingle(low);
@@ -8933,6 +8933,12 @@ function backToRoadmap(){
   clearTimeout(celebrateTimer); celebrateTimer = null;
   clearCelebrateSeq(); celebrateSeq = null;
   document.querySelectorAll('.celebrate-overlay').forEach(n=>n.remove());
+  // Games shelf (Jq6f9OFv): a shelf game ends back on the shelf (its history entry), not on the roadmap.
+  if(state.viewParams && state.viewParams.shelf){
+    while(navHistory.length && navHistory[navHistory.length-1].view !== 'games-shelf') navHistory.pop();
+    if(navHistory.length) goBack(); else go('games-shelf', {});
+    return;
+  }
   // Course steps (Trello yNFXBq6k): a step opened from a course unit finishes on that unit's step list, not the roadmap.
   if(state.courseReturn && state.view !== 'dashboard'){ ui.holdAdvance = false; if(courseReturnGo()) return; }
   const held = ui.holdAdvance; ui.holdAdvance = false;
@@ -9528,7 +9534,15 @@ function renderProfile(){
         }).join('')}
       </div>
 
-      <button class="item-row" data-action="nav" data-view="studio-lab" style="margin-top:20px; cursor:pointer;">
+      <button class="item-row" data-action="nav" data-view="games-shelf" style="margin-top:20px; cursor:pointer;">
+        <span class="item-ic" style="background:var(--cat-review); color:#fff;">${ICONS.bolt}</span>
+        <div class="item-body">
+          <div class="item-title">${L('Games','Oyunlar','بازی‌ها','Juegos')}</div>
+          <div class="item-sub">${shelfSubLine()}</div>
+        </div>
+        <span class="chevron">${ICONS.chev}</span>
+      </button>
+      <button class="item-row" data-action="nav" data-view="studio-lab" style="margin-top:10px; cursor:pointer;">
         <span class="item-ic" style="background:var(--clay-sky); color:#fff;">${ICONS.mic}</span>
         <div class="item-body">
           <div class="item-title">${L('Studio Lab','Stüdyo Lab','آزمایشگاه استودیو', 'Laboratorio del Estudio')}</div>
@@ -11926,6 +11940,75 @@ function fallbackGameSet(minCards){
 }
 // Results-card buttons shared by the games: back to the roadmap (or the unit, via courseResultCta). From the
 // Games shelf (viewParams.shelf) it is "Back to games" + "Play again" instead. noCourse = the plain button only.
+/* ============================= GAMES SHELF (Jq6f9OFv, Farin D4 = A) =============================
+   Free-play replay of every game the learner has met on the roadmap, reached from one place: the
+   Games row on the Profile screen (next to Studio Lab). A plain list - name, one line of "what you
+   do", one tap to play with fresh content (a random finished set / story; generated games draw
+   fresh content). Shelf rounds are free play (viewParams.free + shelf): they count as activity and
+   personal bests, never as a roadmap node, a scheduler review or a souvenir, and nothing is added
+   to roadmap card faces. Mini Cross is not in the rotation yet, so it is listed (marked New) as
+   soon as a finished set can host a puzzle. */
+const SHELF_GAMES = ['cross','bingo','match','dictation','build','trap','hunt','echo','chores'];
+const SHELF_ART = {cross:{ic:'cards', c:'var(--cat-voc)'}, bingo:{ic:'headphones', c:'var(--cat-voc)'}, match:{ic:'cards', c:'var(--cat-review)'}, dictation:{ic:'headphones', c:'var(--cat-lis)'}, build:{ic:'dumbbell', c:'var(--cat-gram)'}, trap:{ic:'bolt', c:'var(--clay-coral)'}, hunt:{ic:'search', c:'var(--cat-story)'}, echo:{ic:'mic', c:'var(--cat-lis)'}, chores:{ic:'home', c:'var(--clay-sky)'}};
+// The game kind a completedGames refId stands for (vocab games end in -kind, the rest start with kind-).
+function gameKindOfRef(refId){ const s = String(refId||''); if(s.indexOf('shelf-') === 0) return null; let m = s.match(/-(match|dictation|bingo|echo|cross|hunt)$/); if(m) return m[1]; m = s.match(/^(build|trap|chores)-/); return m ? m[1] : null; }
+// Every kind the learner has met: finished game nodes (any roadmap, old saves included) and game souvenirs.
+function gamesMet(){
+  const pr = state.progress || {}, met = new Set();
+  (pr.completedGames||[]).forEach(r=>{ const k = gameKindOfRef(r); if(k) met.add(k); });
+  (pr.souvenirs||[]).forEach(s=>{ if(s.type === 'game' && s.gameKind) met.add(s.gameKind); });
+  return met;
+}
+// Finished free sets a vocab game can use from the shelf.
+function shelfSets(kind){
+  const done = (state.progress && state.progress.completedVocabSets) || [];
+  const fits = s => kind === 'cross' ? (s.category !== 'slang' && crossSetOk(s)) : (kind === 'bingo' ? s.cards.length >= 9 : ((kind === 'dictation' || kind === 'echo') ? s.cards.filter(c=>c.sentence).length >= 3 : s.cards.length >= 4));
+  return done.map(id=>VOCAB_SETS_FREE.find(s=>s.id===id)).filter(s=>s && fits(s));
+}
+function shelfGames(){
+  const met = gamesMet();
+  return SHELF_GAMES.filter(k=>k === 'cross' ? (met.has('cross') || shelfSets('cross').length > 0) : met.has(k));
+}
+function shelfSubLine(){
+  const n = shelfGames().length;
+  return n ? L(`${n} game${n===1?'':'s'} to play any time`, `${n} oyun, istediğin zaman oyna`, `${n} بازی برای هر وقت که بخواهی`, `${n} juego${n===1?'':'s'} para jugar cuando quieras`)
+    : L('Games from your roadmap come here','Yol haritandaki oyunlar buraya gelir','بازی‌های نقشه راهت اینجا جمع می‌شوند','Los juegos de tu hoja de ruta aparecen aquí');
+}
+// One line of "what you do" per game, for the shelf list.
+function gameBlurb(kind){
+  if(kind === 'cross') return L('Spell the words you learned into a pocket crossword.','Öğrendiğin kelimeleri mini bir bulmacaya yaz.','کلمه‌هایی که یاد گرفتی را در یک جدول کوچک بنویس.','Escribe las palabras que aprendiste en un minicrucigrama.');
+  if(kind === 'bingo') return L('Listen to the clue and tap the word on your card.','İpucunu dinle, kartındaki kelimeye dokun.','سرنخ را گوش کن و روی کلمه در کارتت بزن.','Escucha la pista y toca la palabra en tu cartón.');
+  if(kind === 'match') return L('Flip tiles and match each word with its meaning.','Karoları çevir, her kelimeyi anlamıyla eşleştir.','کاشی‌ها را برگردان و هر کلمه را با معنی‌اش جفت کن.','Gira las fichas y une cada palabra con su significado.');
+  if(kind === 'dictation') return L('Listen to a sentence and type what you hear.','Bir cümle dinle, duyduğunu yaz.','یک جمله گوش کن و همان را تایپ کن.','Escucha una frase y escribe lo que oyes.');
+  if(kind === 'build') return L('Tap the word tiles to build the sentence.','Kelime karolarına dokunarak cümleyi kur.','روی کاشی‌های کلمه بزن و جمله را بساز.','Toca las fichas de palabras para construir la frase.');
+  if(kind === 'trap') return L('Pick the right form quickly, the traps are waiting.','Doğru şekli hızla seç, tuzaklar bekliyor.','سریع شکل درست را انتخاب کن، تله‌ها منتظرند.','Elige la forma correcta rápido, las trampas esperan.');
+  if(kind === 'hunt') return L('Find the words hidden in a passage from your story.','Hikayenden bir bölümde gizli kelimeleri bul.','کلمه‌ها را در بخشی از داستانت پیدا کن.','Encuentra las palabras en un pasaje de tu historia.');
+  if(kind === 'echo') return L('Listen to a line and say it back.','Bir cümle dinle ve tekrar et.','یک جمله گوش کن و همان را بگو.','Escucha una frase y repítela.');
+  if(kind === 'chores') return L('Tidy a room by following the sentences.','Cümleleri takip ederek bir odayı topla.','با دنبال‌کردن جمله‌ها یک اتاق را مرتب کن.','Ordena una habitación siguiendo las frases.');
+  return '';
+}
+function renderGamesShelf(){
+  const kinds = shelfGames(), met = gamesMet();
+  const sub = L('Replay any game you have met, as often as you like. Scores here are just for fun.','Tanıştığın her oyunu istediğin kadar tekrar oyna. Buradaki skorlar sadece eğlence için.','هر بازی‌ای که دیده‌ای را هر چند بار که بخواهی دوباره بازی کن. امتیازهای اینجا فقط برای تفریح است.','Vuelve a jugar cualquier juego que ya conozcas, tantas veces como quieras. Aquí los puntos son solo por diversión.');
+  const rows = kinds.map(k=>{
+    const a = SHELF_ART[k] || SHELF_ART.match;
+    const isNew = !met.has(k);
+    return `<button class="item-row" data-action="shelf-play" data-kind="${k}">
+      <span class="item-ic" style="background:${a.c}; color:#fff;">${ICONS[a.ic]}</span>
+      <div class="item-body">
+        <div class="item-title">${esc(gameDisplayName(k))}${isNew ? ` <span class="pill" style="background:var(--cat-review-soft); color:color-mix(in srgb, var(--cat-review) 55%, var(--ink)); vertical-align:middle;">${L('New','Yeni','جدید','Nuevo')}</span>` : ''}</div>
+        <div class="item-sub" style="color:var(--ink-soft);">${esc(gameBlurb(k))}</div>
+      </div>
+      <span class="chevron">${ICONS.play}</span>
+    </button>`;
+  }).join('');
+  return `<div class="fade-in">
+    ${sectionHead(L('Games','Oyunlar','بازی‌ها','Juegos'), sub)}
+    <div class="screen" style="padding-top:0;">
+      ${kinds.length ? `<div class="stack" style="gap:10px;">${rows}</div>` : `<div class="card-flat" style="text-align:center;"><p style="margin:0; font-size:14.5px; line-height:1.6; color:var(--ink-soft);">${L('Finish a game on your roadmap and it appears here to play again.','Yol haritandaki bir oyunu bitir, tekrar oynamak için burada görünsün.','یک بازی از نقشه راهت را تمام کن تا برای بازی دوباره اینجا بیاید.','Termina un juego de tu hoja de ruta y aparecerá aquí para jugarlo otra vez.')}</p></div>`}
+    </div>
+  </div>`;
+}
 function gameDoneCta(noCourse){
   const vp = state.viewParams || {};
   const back = `<button class="btn btn-primary game-cta" data-action="back-to-roadmap">${vp.shelf ? L('Back to games','Oyunlara dön','بازگشت به بازی‌ها','Volver a los juegos') : L('Back to roadmap','Yol haritasına dön','بازگشت به نقشه راه','Volver a la hoja de ruta')}</button>`;
@@ -12081,7 +12164,7 @@ function renderGameBuild(){
       <div class="game-card tight badge-unlock-shine">
         <div class="game-result-title">${flawless ? L('Flawless!','Kusursuz!','بی‌نقص!','¡Perfecto!') : L('All built!','Hepsi kuruldu!','همه ساخته شد!','¡Todo construido!')}</div>
         <p class="game-result-line">${L(`${round.firstTry} of ${total} built on the first try`, `${total} cümleden ${round.firstTry} tanesi ilk denemede`, `${round.firstTry} از ${total} در اولین تلاش`, `${round.firstTry} de ${total} a la primera`)}</p>
-        <button class="btn btn-primary game-cta" data-action="back-to-roadmap">${L('Back to roadmap','Yol haritasına dön','بازگشت به نقشه راه','Volver a la hoja de ruta')}</button>
+        ${gameDoneCta(true)}
       </div>
       ${renderBadgeUnlockCard(pullJustEarnedBadges())}
     </div>`;
@@ -12227,7 +12310,7 @@ function renderGameBingo(){
     ${round.finished ? `<div class="game-card tight badge-unlock-shine">
       <div class="game-result-title">${round.first === BINGO_SCORED_CALLS ? L('Flawless!','Kusursuz!','بی‌نقص!','¡Perfecto!') : L('Bingo!','Tombala!','بینگو!','¡Bingo!')}</div>
       <p class="game-result-line">${L(`${round.first} of ${BINGO_SCORED_CALLS} on the first tap`, `${BINGO_SCORED_CALLS} çağrıdan ${round.first} tanesi ilk dokunuşta`, `${round.first} از ${BINGO_SCORED_CALLS} با اولین لمس`, `${round.first} de ${BINGO_SCORED_CALLS} al primer toque`)}</p>
-      ${courseResultCta(`<button class="btn btn-primary game-cta" data-action="back-to-roadmap">${L('Back to roadmap','Yol haritasına dön','بازگشت به نقشه راه','Volver a la hoja de ruta')}</button>`)}
+      ${gameDoneCta()}
     </div>${renderBadgeUnlockCard(pullJustEarnedBadges())}` : ''}
   </div>`;
 }
@@ -12784,7 +12867,7 @@ function renderGameHunt(){
       <div class="game-card tight badge-unlock-shine">
         <div class="game-result-title">${flawless ? L('Flawless!','Kusursuz!','بی‌نقص!','¡Perfecto!') : L('All found!','Hepsi bulundu!','همه پیدا شد!','¡Todas encontradas!')}</div>
         <p class="game-result-line">${L(`${round.clean} of ${total} found clean`, `${total} kelimeden ${round.clean} tanesi temiz bulundu`, `${round.clean} از ${total} بدون خطا پیدا شد`, `${round.clean} de ${total} encontradas limpias`)}</p>
-        <button class="btn btn-primary game-cta" data-action="back-to-roadmap">${L('Back to roadmap','Yol haritasına dön','بازگشت به نقشه راه','Volver a la hoja de ruta')}</button>
+        ${gameDoneCta(true)}
       </div>
       ${renderBadgeUnlockCard(pullJustEarnedBadges())}
     </div>`;
@@ -13009,7 +13092,7 @@ function renderGameEcho(){
         <p class="game-result-line">${round.shadow
           ? L(`${total} lines spoken`, `${total} cümle söylendi`, `${total} جمله گفته شد`, `${total} frases dichas`)
           : L(`${round.clear} of ${total} lines clear`, `${total} cümleden ${round.clear} tanesi net`, `${round.clear} از ${total} جمله واضح`, `${round.clear} de ${total} frases claras`)}</p>
-        <button class="btn btn-primary game-cta" data-action="back-to-roadmap">${L('Back to roadmap','Yol haritasına dön','بازگشت به نقشه راه','Volver a la hoja de ruta')}</button>
+        ${gameDoneCta(true)}
       </div>
       ${renderBadgeUnlockCard(pullJustEarnedBadges())}
     </div>`;
@@ -13372,7 +13455,7 @@ function renderGameChoresBuilding(){
     </div>
     <p class="game-hint">${esc(line)}</p>
     <div class="ch-stage ch-ext" id="ch-stage" dir="ltr"></div>
-    ${just ? `<button class="btn btn-primary game-cta" data-action="back-to-roadmap">${L('Back to roadmap','Yol haritasına dön','بازگشت به نقشه راه','Volver a la hoja de ruta')}</button>` : ''}
+    ${just ? gameDoneCta(true) : ''}
   </div>`;
 }
 function renderGameChoresRoom(){
@@ -13569,7 +13652,7 @@ function renderGameMatch(){
     ${done ? `<div class="game-card tight badge-unlock-shine">
       <div class="game-result-title">${L('Matched!','Eşleştirdin!','جفت شد!','¡Emparejado!')}</div>
       <p class="game-result-line">${L(`Finished in ${elapsed}s with ${round.mistakes} mistake${round.mistakes===1?'':'s'}.`, `${elapsed} saniyede ${round.mistakes} hatayla bitirdin.`, `در ${elapsed} ثانیه با ${round.mistakes} اشتباه تمام کردی.`, `Terminaste en ${elapsed}s con ${round.mistakes} error${round.mistakes===1?'':'es'}.`)}</p>
-      ${courseResultCta(`<button class="btn btn-primary game-cta" data-action="back-to-roadmap">${L('Back to roadmap','Yol haritasına dön','بازگشت به نقشه راه','Volver a la hoja de ruta')}</button>`)}
+      ${gameDoneCta()}
     </div>${renderBadgeUnlockCard(pullJustEarnedBadges())}` : ''}
   </div>`;
 }
@@ -13584,7 +13667,7 @@ function renderGameDictation(){
       <div class="game-card tight badge-unlock-shine">
         <div class="game-result-title">${L('Done!','Bitti!','تمام شد!','¡Listo!')}</div>
         <p class="game-result-line">${L(`Average match: ${avgPct}%`,`Ortalama eşleşme: %${avgPct}`,`میانگین تطابق: ${avgPct}%`,`Coincidencia promedio: ${avgPct}%`)}</p>
-        <button class="btn btn-primary game-cta" data-action="back-to-roadmap">${L('Back to roadmap','Yol haritasına dön','بازگشت به نقشه راه','Volver a la hoja de ruta')}</button>
+        ${gameDoneCta(true)}
       </div>
       ${renderBadgeUnlockCard(pullJustEarnedBadges())}
     </div>`;
@@ -13648,7 +13731,7 @@ function renderGameTrap(){
       <div class="game-card tight badge-unlock-shine">
         <div class="game-result-title">${flawless ? L('Flawless!','Kusursuz!','بی‌نقص!','¡Perfecto!') : L('Done!','Bitti!','تمام شد!','¡Listo!')}</div>
         <p class="game-result-line">${L(`Score: ${round.score} · ${accuracy}% accuracy`,`Skor: ${round.score} · %${accuracy} doğruluk`,`امتیاز: ${round.score} · ${accuracy}% دقت`,`Puntuación: ${round.score} · ${accuracy}% de precisión`)}</p>
-        ${courseResultCta(`<button class="btn btn-primary game-cta" data-action="back-to-roadmap">${L('Back to roadmap','Yol haritasına dön','بازگشت به نقشه راه','Volver a la hoja de ruta')}</button>`)}
+        ${gameDoneCta()}
       </div>
       ${renderBadgeUnlockCard(pullJustEarnedBadges())}
     </div>`;
@@ -15244,6 +15327,7 @@ const screens = {
   'session-prep': ()=>renderSessionPrep(state.viewParams.idx),
   'review-home': renderReviewHome,
   'profile': renderProfile,
+  'games-shelf': renderGamesShelf,
   'settings': renderSettings,
   'student-club': renderStudentClub,
   'student-club-login': renderStudentClubLogin,
@@ -16506,6 +16590,33 @@ const HANDLERS = {
       if(state.viewParams !== capturedVp) return;
       trapAdvance(capturedVp.refId);
     }, 900);
+  },
+  // ---- Games shelf (Jq6f9OFv, D4 = A): one tap replays a game the learner has met, with fresh content ----
+  'shelf-play'(el){
+    const kind = el.dataset.kind;
+    hideCharTip(true); gcBubble = null;
+    const ds = {kind, refId:'shelf-'+kind, goal:'', free:'1', shelf:'1', setId:''};
+    if(kind === 'hunt'){
+      // a random finished story that can be hunted; none yet -> Word Rush
+      const pool = ((state.progress.completedStories||[]).map(id=>STORY_LIBRARY_FREE.find(s=>s.id===id))).filter(huntable);
+      const story = pool.length ? pool[Math.floor(Math.random()*pool.length)] : null;
+      const round = story ? buildHuntRound(story) : null;
+      if(round){ go('game-hunt', {round, refId:ds.refId, goal:'', free:true, shelf:true}); return; }
+      ds.kind = 'match';
+    }
+    if(ds.kind === 'cross'){
+      // up to three finished sets that can host a puzzle, a fresh grid every time; none -> Word Bingo
+      const tries = shuffle(shelfSets('cross')).slice(0, 3);
+      for(const s of tries){ const r = buildCrossRound(s, null); if(r){ queueFx(()=>{ sfx('tick'); r.popped = true; }); go('game-cross', {round:r, refId:ds.refId, goal:'', free:true, shelf:true}); return; } }
+      ds.kind = 'bingo';
+    }
+    if(['bingo','match','dictation','echo'].includes(ds.kind)){
+      const pool = shelfSets(ds.kind);
+      const s = pool.length ? pool[Math.floor(Math.random()*pool.length)] : fallbackGameSet();
+      if(!s) return;
+      ds.setId = s.id;
+    }
+    HANDLERS['start-game']({dataset:ds});
   },
   'start-game'(el){
     const kind = el.dataset.kind;

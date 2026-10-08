@@ -18518,14 +18518,11 @@ const COURSE_LOCK_SVG = '<svg viewBox="0 0 24 24" width="16" height="16" fill="n
 const COURSE_HERO_BG = 'background-color:var(--clay-lavender-deep); background-image:radial-gradient(circle at 88% -18%, rgba(255,255,255,.5), transparent 55%), linear-gradient(135deg, var(--clay-lavender), var(--clay-lavender-deep));';
 
 /* ---------- entry point + course list ---------- */
-// Dashboard tile: once a course has progress it shows the next step and opens that course directly.
+// Dashboard tile (Farin 2026-10-08): always just "Premium courses", no course names or next
+// step under it, even with a course in progress; it always opens the course list.
 function coursesDashTile(){
-  const live = COURSES.filter(c=>(c.status==='live' || c.status==='shell') && courseStarted(c.id));
-  const c = live.sort((a,b)=>(courseProg(b.id).lastAt||0) - (courseProg(a.id).lastAt||0))[0] || null;
-  const nx = c ? courseNext(c.id) : null;
-  const sub = c ? (nx ? courseNextText(c.id, nx, true) : cl(c.title)+' · '+CL('Course complete','Kurs tamamlandı','دوره تمام شد','Curso completado'))
-    : '';
-  const act = c ? `data-action="course-open" data-view="course-detail" data-cid="${c.id}"` : `data-action="nav" data-view="courses-home"`;
+  const c = null, sub = '';
+  const act = `data-action="nav" data-view="courses-home"`;
   return `<button class="hero-card" ${act} style="${COURSE_HERO_BG} margin-top:12px; padding:16px 18px;">
     ${claySparkles()}
     <div class="row between" style="align-items:center; gap:12px;">

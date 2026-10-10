@@ -456,6 +456,49 @@
   .case-wrap{text-align:center;}
   .case-wrap-line{margin:0 0 12px; font-family:'Fredoka',-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; font-weight:700; font-size:19px; color:var(--ink);}
   @media (prefers-reduced-motion: reduce){ .case-file, .case-pol, .case-pol:nth-child(2), .case-pol:nth-child(3){transform:none;} }
+  /* Five new games wave B (Jq6f9OFv): Magic Words - arched door, rune tiles, light behind, clue dots, mic (spec §6.7 tokens) */
+  .spell-body{display:flex; flex-direction:column; gap:14px; align-items:stretch;}
+  .spell-card{display:flex; flex-direction:column; align-items:center; gap:14px;}
+  .spell-stage{position:relative; width:180px; height:230px; perspective:700px;}
+  .spell-light{position:absolute; inset:6px; border-radius:90px 90px 18px 18px; background:radial-gradient(circle, var(--cat-review) 0%, color-mix(in srgb, var(--cat-review) 30%, transparent) 60%, transparent 70%); opacity:0; transition:opacity .5s ease;}
+  .spell-light.gold, .spell-light.bright{opacity:1;}
+  .spell-light.glow{opacity:.5;}
+  .spell-door{position:absolute; inset:0; box-sizing:border-box; border-radius:90px 90px 18px 18px; background:linear-gradient(150deg, var(--clay-lavender), var(--clay-lavender-deep)); box-shadow:var(--clay-shadow); display:flex; align-items:center; justify-content:center; padding:0 12px; transform-origin:0 50%; transition:transform .5s cubic-bezier(.34,1.2,.64,1), box-shadow .4s ease;}
+  [dir="rtl"] .spell-door{transform-origin:100% 50%;}
+  .spell-door.open{transform:rotateY(-75deg);}
+  [dir="rtl"] .spell-door.open{transform:rotateY(75deg);}
+  .spell-door.gold{box-shadow:var(--glow-game), var(--clay-shadow);}
+  .spell-door .sparkle{color:#fff;}
+  .spell-knob{position:absolute; top:58%; inset-inline-end:18px; width:14px; height:14px; border-radius:50%; background:var(--cat-review); box-shadow:inset 0 -2px 3px rgba(0,0,0,.25);}
+  .spell-runes{display:flex; flex-wrap:wrap; justify-content:center; gap:4px; max-width:156px;}
+  .spell-rune{width:26px; height:32px; border-radius:8px; background:rgba(255,255,255,.18); color:#fff; display:flex; align-items:center; justify-content:center; font-family:'Fredoka',-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; font-weight:700; font-size:18px;}
+  .spell-rune.first{background:rgba(255,255,255,.34);}
+  .spell-rune.lit{background:var(--cat-review); color:var(--ink); animation:spell-rune .32s ease-out both;}
+  .spell-gap{width:10px;}
+  .spell-bar{display:block; width:128px; height:32px; border-radius:10px; background:rgba(255,255,255,.18);}
+  @keyframes spell-rune{from{transform:scale(.6); opacity:.3;} 60%{transform:scale(1.15); opacity:1;} to{transform:scale(1);}}
+  .spell-cluebox{width:100%; text-align:center;}
+  .spell-clue{margin:0;}
+  .spell-ui{font-family:'Fredoka',-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; font-weight:700; font-size:20px; line-height:1.35; color:var(--ink);}
+  .spell-letters{margin:8px 0 0; font-family:'Fredoka',-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; font-weight:700; font-size:22px; letter-spacing:.12em; color:var(--clay-lavender-deep); white-space:pre-wrap;}
+  .spell-dots{display:flex; justify-content:center; gap:6px; margin-top:12px;}
+  .spell-dots i{width:10px; height:10px; border-radius:50%; background:var(--border);}
+  .spell-dots i.on{background:var(--clay-lavender-deep);}
+  .spell-heard{margin:0; min-height:20px; text-align:center; font-size:14px; font-weight:700; color:var(--ink-soft);}
+  .spell-mic{position:relative; width:72px; height:72px; border-radius:50%; border:0; margin:0 auto; display:flex; align-items:center; justify-content:center; color:#fff; background:linear-gradient(150deg, var(--clay-coral), var(--clay-coral-deep)); box-shadow:var(--clay-shadow); cursor:pointer;}
+  .spell-mic svg{width:30px; height:30px;}
+  .spell-mic:active{transform:scale(.96);}
+  .spell-mic.on::after{content:''; position:absolute; inset:-3px; border-radius:50%; border:3px solid color-mix(in srgb, var(--clay-coral) 40%, transparent); animation:spell-ring .9s ease-out infinite;}
+  @keyframes spell-ring{from{transform:scale(1); opacity:1;} to{transform:scale(1.25); opacity:0;}}
+  .spell-hear{align-self:center;}
+  .spell-hear svg{width:18px; height:18px; vertical-align:-3px;}
+  .spell-ghosts{display:flex; justify-content:center; gap:8px; flex-wrap:wrap;}
+  .spell-word{margin:0; text-align:center; font-family:'Fredoka',-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; font-weight:700; font-size:30px; color:var(--ink);}
+  .spell-row{display:flex; flex-wrap:wrap; justify-content:center; gap:6px; margin-bottom:12px;}
+  .spell-mini{width:46px; height:60px; border-radius:23px 23px 8px 8px; display:flex; align-items:flex-end; justify-content:center; padding-bottom:4px; box-sizing:border-box; background:linear-gradient(150deg, var(--clay-lavender), var(--clay-lavender-deep)); color:#fff; font-size:8.5px; font-weight:800; overflow:hidden;}
+  .spell-mini span{max-width:42px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+  .spell-mini.gold{background:linear-gradient(150deg, var(--cat-review), var(--clay-orange)); color:var(--ink); box-shadow:var(--glow-game);}
+  .spell-mini.bright{background:linear-gradient(150deg, color-mix(in srgb, var(--cat-review) 60%, var(--clay-lavender)), var(--clay-lavender-deep));}
   /* Gamify every card type (tobT7nwI): Catch these */
   .catch-tiles{margin-top:10px;}
   .catch-tiles.four{grid-template-columns:repeat(2, minmax(0, 1fr));}
@@ -8542,7 +8585,7 @@ function buildRoadmap(profile){
      Listen & Type / Say It Back -> Word Rush; a thin goal pool with no taught set left for another
      game -> Build It, else Order Up!). Build It needs 4 taught sentences, else Word Rush (A1-A2) or
      Order Up! (B1+); Order Up! never falls back; Trap Dash is shelf-only now. */
-  const playedSetIds = new Set(((state.progress && state.progress.completedGames) || []).map(r=>String(r).replace(/-(match|dictation|bingo|echo|cross)$/, '')));
+  const playedSetIds = new Set(((state.progress && state.progress.completedGames) || []).map(r=>String(r).replace(/-(match|dictation|bingo|echo|cross|spell)$/, '')));
   // the sets the stage-1 games of this level use, and the stage-1 vocab nodes (taught before this page)
   let stage1Sets = new Set(), stage1Vocab = [];
   if(stage === 2){
@@ -8556,7 +8599,7 @@ function buildRoadmap(profile){
   const pickGameSet = (kind, reuse) => {
     const usedByGames = items.filter(it=>it.type==='game' && it.setId).map(it=>it.setId);
     const usedRefs = new Set(items.filter(it=>it.type==='game').map(it=>it.refId));
-    const fits = s => !!s && !usedRefs.has(s.id+'-'+kind) && (kind !== 'bingo' || s.cards.length >= 9) && (kind !== 'cross' || crossSetOk(s)) && ((kind !== 'dictation' && kind !== 'echo') || s.cards.filter(c=>c.sentence).length >= 3);
+    const fits = s => !!s && !usedRefs.has(s.id+'-'+kind) && (kind !== 'bingo' || s.cards.length >= 9) && (kind !== 'cross' || crossSetOk(s)) && (kind !== 'spell' || spellSetOk(s)) && ((kind !== 'dictation' && kind !== 'echo') || s.cards.filter(c=>c.sentence).length >= 3);
     const taught = items.filter(it=>it.type==='vocab').map(it=>VOCAB_SETS.find(s=>s.id===it.refId)).filter(Boolean).reverse().concat(stage1Vocab);
     const passes = [s=>!usedByGames.includes(s.id) && !stage1Sets.has(s.id) && !playedSetIds.has(s.id), s=>!usedByGames.includes(s.id) && !stage1Sets.has(s.id), s=>!usedByGames.includes(s.id)];
     if(reuse) passes.push(()=>true);
@@ -8716,8 +8759,7 @@ function roadmapNodeId(item){ return item.type+':'+item.refId+(item.occ?('#'+ite
    content at that level (null = no node: a page never opens with a game on content it has not
    taught yet). Cozy Chores has real positions (A1·s2, A2·s1, B1·s1) and plays Word Bingo (A1-A2)
    or Build It (B1+) until CHORES_LIVE. Kinds not built yet play a stand-in (GAME_STANDIN) until
-   they ship: Magic Words -> Word Bingo (its own fallback rule); Passport Desk and Case Closed play
-   themselves since 2026-10-11. Trap
+   they ship (empty since 2026-10-11: Passport Desk, Case Closed and Magic Words all play themselves). Trap
    Dash is no longer on new roadmaps (Games shelf only). New roadmaps only: game nodes already
    saved keep their kind and refId. */
 const GAME_ROTATION = {
@@ -8746,7 +8788,7 @@ const PATH_FALLBACK = {
 const PATH_LIVE = false;
 const CHORES_LIVE = true;
 const CHORES_OPEN = ['home1'];
-const GAME_STANDIN = {spell:'bingo'};
+const GAME_STANDIN = {};
 function pathLevelLive(level){ return PATH_LIVE && typeof STORY_PATH !== 'undefined' && !!(STORY_PATH.lane && STORY_PATH.lane[level]); }
 function gameKindForPosition(level, stage, pos){
   const s = 's' + (stage === 2 ? 2 : 1);
@@ -9187,6 +9229,7 @@ function gameDisplayName(kind){
   if(kind === 'order') return L('Order Up!','Sipariş Hazır!','سفارش حاضر!','¡Marchando!');
   if(kind === 'desk') return L('Passport Desk','Pasaport Masası','میز گذرنامه','Control de pasaportes');
   if(kind === 'mystery') return L('Case Closed','Dava Kapandı','پرونده مختومه','Caso cerrado');
+  if(kind === 'spell') return L('Magic Words','Sihirli Kelimeler','کلمات جادویی','Palabras mágicas');
   if(kind === 'bingo') return L('Word Bingo','Kelime Tombalası','بینگوی کلمات','Bingo de palabras');
   if(kind === 'hunt') return L('Story Hunt','Hikaye Avı','شکار داستان','Caza en la historia');
   if(kind === 'echo') return L('Say It Back','Tekrar Et','بگو ببینم','Repítelo');
@@ -9202,6 +9245,7 @@ function viewGameKind(view){
   if(view === 'game-order') return 'order';
   if(view === 'game-desk') return 'desk';
   if(view === 'game-mystery') return 'mystery';
+  if(view === 'game-spell') return 'spell';
   if(view === 'game-path') return 'path';
   if(view === 'game-hunt') return 'hunt';
   if(view === 'game-echo') return 'echo';
@@ -9212,6 +9256,7 @@ function viewGameKind(view){
 function gameRoundStats(kind, round){
   if(kind === 'path') return {chapter:round.ch, total:PATH_CH, perfect:false};   // Story Path: no score, no perfect round
   if(kind === 'order'){ const total = round.customers.length, right = round.customers.filter(c=>c.perfect).length; return {right, total, tickets:round.tickets||0, perfect:total>0 && right===total}; }   // right = orders served perfectly (spec's per-customer "perfect" count); perfect = the whole round
+  if(kind === 'spell'){ const ds = round.doors, total = ds.length; return {gold:ds.filter(d=>d.open && !d.tried && d.at === 1).length, bright:ds.filter(d=>d.open && !d.tried && d.at === 2).length, total, voice:ds.filter(d=>d.by === 'voice').length, typed:total > 0 && ds.every(d=>d.by === 'typed'), perfect:total > 0 && ds.every(d=>d.open && !d.tried && d.at <= 2 && (d.by === 'voice' || round.noMic))}; }   // perfect = every door on clue 1-2, by voice (typing counts when the phone has no microphone)
   if(kind === 'mystery'){ const total = round.cases.length, clean = round.cases.filter(c=>c.clean).length, hints = round.cases.reduce((n, c)=>n + (c.hints||0), 0); return {clean, total, hints, perfect:total>0 && clean===total}; }   // clean = right on the first accusation, no hint
   if(kind === 'desk'){ const total = round.travellers.length, clean = round.travellers.filter(t=>t.clean).length; return {clean, total, said:round.said||0, perfect:total>0 && clean===total}; }   // clean = no transcript, no wrong tap, no bounced stamp, fix right first time
   if(kind === 'cross'){ const total = round.words.length, clean = round.clean||0, time = Math.max(1, Math.round(((round.finishedAt||Date.now()) - round.startedAt)/1000)); return {clean, total, reveals:round.reveals||0, hints:round.hints||0, time, perfect:total>0 && clean===total && !(round.hints||0)}; }
@@ -9242,6 +9287,7 @@ function gameRecordText(kind, st){
   if(kind === 'order') return name+' · '+st.right+'/'+st.total+' '+L('perfect','kusursuz','بی‌نقص','perfectos');
   if(kind === 'desk') return name+' · '+st.clean+'/'+st.total+' '+L('clean','temiz','بی‌خطا','limpios');
   if(kind === 'mystery') return name+' · '+st.clean+'/'+st.total+' '+L('clean','temiz','بی‌خطا','limpios');
+  if(kind === 'spell') return name+' · '+(st.typed ? L('typed','yazarak','تایپی','escrito') : st.gold+' '+L('golden doors','altın kapı','در طلایی','puertas de oro'));
   if(kind === 'bingo') return name+' · '+st.first+'/'+st.total+' '+L('first tap','ilk dokunuşta','با اولین لمس','al primer toque');
   if(kind === 'hunt') return name+' · '+st.clean+'/'+st.total+' '+L('clean','temiz','بی‌خطا','limpias');
   if(kind === 'chores') return chFmt(chChrome('record'), {n:st.first, total:st.total});   // "Cozy Chores · 4/5 smooth"
@@ -9254,6 +9300,7 @@ function gameStatStickers(kind, st){
   if(kind === 'path') return [L(`Chapter ${st.chapter} of ${st.total}`, `Bölüm ${st.chapter}/${st.total}`, `فصل ${st.chapter} از ${st.total}`, `Capítulo ${st.chapter} de ${st.total}`)];
   if(kind === 'cross') return [st.clean+'/'+st.total+' '+L('clean','temiz','بی‌خطا','limpias')].concat(st.reveals ? [] : [L('No reveals','Harf açmadan','بدون فاش‌کردن حرف','Sin letras reveladas')]);
   if(kind === 'order') return [L(`${st.right}/${st.total} perfect orders`, `${st.right}/${st.total} kusursuz sipariş`, `${st.right}/${st.total} سفارش بی‌نقص`, `${st.right}/${st.total} pedidos perfectos`)].concat(st.tickets ? [] : [L('No tickets','Fişsiz','بدون رسید','Sin mirar el pedido')]);
+  if(kind === 'spell') return [L(`${st.gold} golden doors`, `${st.gold} altın kapı`, `${st.gold} در طلایی`, `${st.gold} puertas de oro`)].concat(st.voice === st.total ? [L(`${st.total}/${st.total} by voice`, `${st.total}/${st.total} sesle`, `${st.total}/${st.total} با صدا`, `${st.total}/${st.total} con la voz`)] : []);
   if(kind === 'mystery') return [L(`${st.clean}/${st.total} cases clean`, `${st.clean}/${st.total} temiz dava`, `${st.clean}/${st.total} پرونده بی‌خطا`, `${st.clean}/${st.total} casos limpios`)].concat(st.hints ? [] : [L('No hints','İpucusuz','بدون کمک','Sin ayudas')]);
   if(kind === 'desk') return [st.clean+'/'+st.total+' '+L('clean','temiz','بی‌خطا','limpios')].concat(st.said ? [] : [L('Sharp ears','Keskin kulak','گوش تیز','Oído fino')]);
   if(kind === 'bingo') return [st.first+'/'+st.total+' '+L('first tap','ilk dokunuşta','با اولین لمس','al primer toque'), L('Full card','Tam kart','کارت کامل','Cartón lleno')];
@@ -9277,9 +9324,9 @@ function updateGameBest(kind, st){
     pr.gameBests.cross = Object.assign({}, better ? {clean:st.clean, total:st.total} : prev, {time:isFinite(time) ? time : null});
     return !!prev && better;
   }
-  const metric = kind==='match' ? (b=>-(b.time||9999)) : (kind==='trap' ? (b=>b.score||0) : ((kind==='build' || kind==='bingo' || kind==='chores') ? (b=>b.first||0) : ((kind==='hunt' || kind==='desk' || kind==='mystery') ? (b=>b.clean||0) : (kind==='echo' ? (b=>b.clear||0) : (kind==='order' ? (b=>b.right||0) : (b=>b.pct||0))))));
+  const metric = kind==='match' ? (b=>-(b.time||9999)) : (kind==='trap' ? (b=>b.score||0) : ((kind==='build' || kind==='bingo' || kind==='chores') ? (b=>b.first||0) : ((kind==='hunt' || kind==='desk' || kind==='mystery') ? (b=>b.clean||0) : (kind==='echo' ? (b=>b.clear||0) : (kind==='order' ? (b=>b.right||0) : (kind==='spell' ? (b=>b.gold||0) : (b=>b.pct||0)))))));
   const cur = {time:st.time||null, score:st.score!=null ? st.score : null, pct:st.pct!=null ? st.pct : null,
-    first:st.firstTry!=null ? st.firstTry : (st.first!=null ? st.first : null), clean:st.clean!=null ? st.clean : null, clear:st.clear!=null ? st.clear : null, right:st.right!=null ? st.right : null};
+    first:st.firstTry!=null ? st.firstTry : (st.first!=null ? st.first : null), clean:st.clean!=null ? st.clean : null, clear:st.clear!=null ? st.clear : null, right:st.right!=null ? st.right : null, gold:st.gold!=null ? st.gold : null};
   if(!prev){ pr.gameBests[kind] = cur; return false; }
   if(metric(cur) > metric(prev)){ pr.gameBests[kind] = cur; return true; }
   return false;
@@ -9713,7 +9760,7 @@ function maybeCelebrate(){
     low = state.quiz.correct/state.quiz.questions.length < .5;
   } else if(v==='game-match' && vp.round && vp.round.matchedKeys && vp.round.matchedKeys.length === vp.round.pairCount){
     target = vp.round; kind = 'game';
-  } else if((v==='game-dictation' || v==='game-trap' || v==='game-build' || v==='game-bingo' || v==='game-cross' || v==='game-order' || v==='game-desk' || v==='game-mystery' || v==='game-hunt' || v==='game-echo' || v==='game-chores-room' || v==='game-path') && vp.round && vp.round.finished){
+  } else if((v==='game-dictation' || v==='game-trap' || v==='game-build' || v==='game-bingo' || v==='game-cross' || v==='game-order' || v==='game-desk' || v==='game-mystery' || v==='game-spell' || v==='game-hunt' || v==='game-echo' || v==='game-chores-room' || v==='game-path') && vp.round && vp.round.finished){
     target = vp.round; kind = 'game';
   } else if(v==='studio-round' && vp.checked && vp.result && vp.result.passed){
     target = vp.result; kind = vp.mode;
@@ -9757,6 +9804,8 @@ function render(){
   if(state.view !== 'studio-round' && studioRecognition){
     stopStudioMic();
   }
+  // Magic Words: leaving the doors closes the microphone
+  if(state.view !== 'game-spell'){ try{ spellStopRec(); }catch(e){} }
   bindEvents(root);
   if(state.view !== 'dashboard') hideCharTip(true);
   runPendingFx();
@@ -13238,10 +13287,10 @@ function fallbackGameSet(minCards){
    to roadmap card faces. Mini Cross is not in the rotation yet, so it is listed (marked New) as
    soon as a finished set can host a puzzle. Order Up! (own generated content, wave A2) is listed from the
    start and marked New until the learner has met it; GAME_ROTATION is wired separately (gt8gCNfu). */
-const SHELF_GAMES = ['path','order','desk','mystery','cross','bingo','match','dictation','build','trap','hunt','echo','chores'];
-const SHELF_ART = {path:{ic:'book', c:'var(--cat-story)'}, order:{ic:'chat', c:'var(--cat-gram)'}, desk:{ic:'suitcase', c:'var(--clay-sky)'}, mystery:{ic:'search', c:'var(--cat-story)'}, cross:{ic:'cards', c:'var(--cat-voc)'}, bingo:{ic:'headphones', c:'var(--cat-voc)'}, match:{ic:'cards', c:'var(--cat-review)'}, dictation:{ic:'headphones', c:'var(--cat-lis)'}, build:{ic:'dumbbell', c:'var(--cat-gram)'}, trap:{ic:'bolt', c:'var(--clay-coral)'}, hunt:{ic:'search', c:'var(--cat-story)'}, echo:{ic:'mic', c:'var(--cat-lis)'}, chores:{ic:'home', c:'var(--clay-sky)'}};
+const SHELF_GAMES = ['path','order','desk','mystery','cross','spell','bingo','match','dictation','build','trap','hunt','echo','chores'];
+const SHELF_ART = {path:{ic:'book', c:'var(--cat-story)'}, order:{ic:'chat', c:'var(--cat-gram)'}, desk:{ic:'suitcase', c:'var(--clay-sky)'}, mystery:{ic:'search', c:'var(--cat-story)'}, cross:{ic:'cards', c:'var(--cat-voc)'}, spell:{ic:'mic', c:'var(--clay-lavender-deep)'}, bingo:{ic:'headphones', c:'var(--cat-voc)'}, match:{ic:'cards', c:'var(--cat-review)'}, dictation:{ic:'headphones', c:'var(--cat-lis)'}, build:{ic:'dumbbell', c:'var(--cat-gram)'}, trap:{ic:'bolt', c:'var(--clay-coral)'}, hunt:{ic:'search', c:'var(--cat-story)'}, echo:{ic:'mic', c:'var(--cat-lis)'}, chores:{ic:'home', c:'var(--clay-sky)'}};
 // The game kind a completedGames refId stands for (vocab games end in -kind, the rest start with kind-).
-function gameKindOfRef(refId){ const s = String(refId||''); if(s.indexOf('shelf-') === 0) return null; let m = s.match(/-(match|dictation|bingo|echo|cross|hunt)$/); if(m) return m[1]; m = s.match(/^(build|trap|chores|order|desk|mystery|path)-/); return m ? m[1] : null; }
+function gameKindOfRef(refId){ const s = String(refId||''); if(s.indexOf('shelf-') === 0) return null; let m = s.match(/-(match|dictation|bingo|echo|cross|spell|hunt)$/); if(m) return m[1]; m = s.match(/^(build|trap|chores|order|desk|mystery|path)-/); return m ? m[1] : null; }
 // Every kind the learner has met: finished game nodes (any roadmap, old saves included) and game souvenirs.
 function gamesMet(){
   const pr = state.progress || {}, met = new Set();
@@ -13252,14 +13301,14 @@ function gamesMet(){
 // Finished free sets a vocab game can use from the shelf.
 function shelfSets(kind){
   const done = (state.progress && state.progress.completedVocabSets) || [];
-  const fits = s => kind === 'cross' ? (s.category !== 'slang' && crossSetOk(s)) : (kind === 'bingo' ? s.cards.length >= 9 : ((kind === 'dictation' || kind === 'echo') ? s.cards.filter(c=>c.sentence).length >= 3 : s.cards.length >= 4));
+  const fits = s => kind === 'spell' ? spellSetOk(s) : kind === 'cross' ? (s.category !== 'slang' && crossSetOk(s)) : (kind === 'bingo' ? s.cards.length >= 9 : ((kind === 'dictation' || kind === 'echo') ? s.cards.filter(c=>c.sentence).length >= 3 : s.cards.length >= 4));
   return done.map(id=>VOCAB_SETS_FREE.find(s=>s.id===id)).filter(s=>s && fits(s));
 }
 function shelfGames(){
   const met = gamesMet();
   // Story Path stays off the shelf while it is dormant (PATH_LIVE), then appears once a chapter has been played.
   // Cozy Chores is listed from go-live (own content, like Order Up!), marked New until the learner has met it.
-  return SHELF_GAMES.filter(k=>k === 'path' ? (PATH_LIVE && met.has('path')) : ((k === 'order' || k === 'desk' || k === 'mystery') ? true : (k === 'chores' ? ((CHORES_LIVE && CHORES_OPEN.length > 0) || met.has('chores')) : (k === 'cross' ? (met.has('cross') || shelfSets('cross').length > 0) : met.has(k)))));
+  return SHELF_GAMES.filter(k=>k === 'path' ? (PATH_LIVE && met.has('path')) : ((k === 'order' || k === 'desk' || k === 'mystery') ? true : (k === 'chores' ? ((CHORES_LIVE && CHORES_OPEN.length > 0) || met.has('chores')) : ((k === 'cross' || k === 'spell') ? (met.has(k) || shelfSets(k).length > 0) : met.has(k)))));
 }
 function shelfSubLine(){
   const n = shelfGames().length;
@@ -13272,6 +13321,7 @@ function gameBlurb(kind){
   if(kind === 'order') return L('Listen to each customer’s order and build it on the tray.','Her müşterinin siparişini dinle ve tepsiye hazırla.','سفارش هر مشتری را گوش کن و روی سینی بچین.','Escucha el pedido de cada cliente y prepáralo en la bandeja.');
   if(kind === 'mystery') return L('Read the clues carefully and find who did it.','İpuçlarını dikkatle oku ve kimin yaptığını bul.','سرنخ‌ها را با دقت بخوان و پیدا کن کار چه کسی بوده.','Lee las pistas con atención y descubre quién fue.');
   if(kind === 'desk') return L('Listen to each traveller and fix the mistake on their card.','Her yolcuyu dinle ve kartındaki hatayı düzelt.','به هر مسافر گوش کن و اشتباه کارتش را درست کن.','Escucha a cada viajero y corrige el error de su tarjeta.');
+  if(kind === 'spell') return L('Say the word out loud to open each magic door.','Her sihirli kapıyı açmak için kelimeyi yüksek sesle söyle.','برای باز کردن هر در جادویی، کلمه را بلند بگو.','Di la palabra en voz alta para abrir cada puerta mágica.');
   if(kind === 'cross') return L('Spell the words you learned into a pocket crossword.','Öğrendiğin kelimeleri mini bir bulmacaya yaz.','کلمه‌هایی که یاد گرفتی را در یک جدول کوچک بنویس.','Escribe las palabras que aprendiste en un minicrucigrama.');
   if(kind === 'bingo') return L('Listen to the clue and tap the word on your card.','İpucunu dinle, kartındaki kelimeye dokun.','سرنخ را گوش کن و روی کلمه در کارتت بزن.','Escucha la pista y toca la palabra en tu cartón.');
   if(kind === 'match') return L('Flip tiles and match each word with its meaning.','Karoları çevir, her kelimeyi anlamıyla eşleştir.','کاشی‌ها را برگردان و هر کلمه را با معنی‌اش جفت کن.','Gira las fichas y une cada palabra con su significado.');
@@ -13315,7 +13365,7 @@ function gameFallbackNote(vp){
   if(!vp || !vp.fallbackFrom) return '';
   const name = gameDisplayName(vp.fallbackFrom);
   if(vp.fallbackFrom === 'hunt') return L(`${name} opens once you have finished a story. `, `${name} bir hikaye bitirdiğinde açılır. `, `${name} وقتی یک داستان را تمام کنی باز می‌شود. `, `${name} se abre cuando termines una historia. `);
-  if(vp.fallbackFrom === 'cross') return L(`${name} needs more words than this set has. `, `${name} için bu sette yeterli kelime yok. `, `${name} به کلمه‌های بیشتری از این مجموعه نیاز دارد. `, `${name} necesita más palabras de las que tiene este conjunto. `);
+  if(vp.fallbackFrom === 'cross' || vp.fallbackFrom === 'spell') return L(`${name} needs more words than this set has. `, `${name} için bu sette yeterli kelime yok. `, `${name} به کلمه‌های بیشتری از این مجموعه نیاز دارد. `, `${name} necesita más palabras de las que tiene este conjunto. `);
   return L(`${name} opens after a few more grammar steps. `, `${name} birkaç dilbilgisi adımından sonra açılır. `, `${name} بعد از چند قدم گرامر دیگر باز می‌شود. `, `${name} se abre tras unos pasos más de gramática. `);
 }
 /* ============================= GAMIFICATION V3: BUILD IT =============================
@@ -13434,6 +13484,10 @@ function gameKeep(kind, round){
       // the order that took the most serves (the longest one on a perfect round); flip side = the whole order and its tray in words
       const pick = round.customers.slice().sort((a,b)=>(b.serves - a.serves) || (b.text.length - a.text.length))[0];
       return {text:pick.text, say:pick.text, note:orderTraySummary(pick)};
+    }
+    if(kind === 'spell' && round.doors && round.doors.length){
+      // the word that took the most attempts (finally retrieved); flip side = its meaning and sentence
+      const k = spellSouvenir(round); if(k) return k;
     }
     if(kind === 'mystery' && round.cases && round.cases.length){
       // the clue that cleared a wrongly accused suspect (the hardest clue on a clean round); flip side = what it told you
@@ -15973,6 +16027,332 @@ function caseSouvenir(round){
     cs = best.c; clue = best.x;
   }
   return {text:clue.text, say:clue.text, note:caseFrame(clue, cs)};
+}
+/* ============================= FIVE NEW GAMES WAVE B (Jq6f9OFv): MAGIC WORDS =============================
+   Spec: Claude/specs/games-5-new-cards-2026-10-04.md §6 (approved by Farin 2026-10-07). Content:
+   Claude/specs/games-content/spell-homophones.md (farin-lxd, 2026-10-08). A row of enchanted doors, one per
+   word of the node's vocab set: read the clue and say the word out loud (spoken recall from memory); when the
+   phone understands, the runes light up and the door swings open - brighter the fewer clues it took.
+   Recognition is the browser's, on the same path as Say It Back and the speaking takes (SpeechRecognition,
+   lang = TTS_LANG; Chrome sends the audio to Google, see the privacy policy), here with interim text and up
+   to 5 alternatives. Matching folds case, accents, punctuation, the Spanish article and anything after "/";
+   a door opens when any alternative holds the target's words in order (one letter of slack for one-word
+   targets of 6+ letters, a plural -s/-es accepted, and the other members of a SPELL_HOMOPHONES sound group
+   count as the word). Clue ladder: A1-A2 gapped sentence -> meaning in your language -> first letter, the
+   letter count shown from clue 1; B1-C1 target-language definition (spoken) -> gapped sentence -> meaning +
+   first letter, the letter count only from clue 3. A miss shows what the phone heard, never "wrong"; two
+   misses bring the next clue; after clue 3 "Hear it" plays the word and the next try always opens the door.
+   No microphone (unsupported, refused, network, no audio, or silence twice) = typing mode with the same
+   rules, never a fallback; "Type instead" is always one tap away. Untimed, no lives, no XP. Counts as the
+   set's review when due. Fewer than 4 cards a door can use -> Word Bingo (start-game). */
+const SPELL_DOORS = 6, SPELL_MIN = 4;
+const SPELL_HOMOPHONES = {
+  en:[['right','write'],['flour','flower'],['see','sea'],['two','too','to'],['there','their','they are'],['hear','here'],['wear','where'],['night','knight'],['meet','meat'],['week','weak'],['buy','by','bye'],['son','sun'],['whole','hole'],['piece','peace'],['pair','pear'],['plane','plain'],['mail','male'],['break','brake'],['know','no'],['one','won'],['sale','sail'],['weather','whether'],['wait','weight'],['hour','our']],
+  es:[['hola','ola'],['vaca','baca'],['tubo','tuvo'],['hecho','echo'],['haber','a ver'],['hay','ahí','ay'],['vaya','valla','baya'],['hierba','hierva'],['botar','votar'],['bello','vello'],['sabia','savia'],['hasta','asta'],['hora','ora'],['honda','onda'],['rebelar','revelar'],['callado','cayado'],['rallar','rayar'],['halla','haya','aya'],['bienes','vienes'],['casa','caza'],['cocer','coser'],['cima','sima']]
+};
+let spellRec = null;
+function spellLang(){ return orderLang(); }
+// One char in, one char out (keeps indexes aligned with the original text): lower case, accents off, ñ -> n.
+function spellFoldCh(c){ const f = String(c).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, ''); return f.charAt(0) || c; }
+function spellFold(s){ return Array.from(String(s || '')).map(spellFoldCh).join(''); }
+function spellNorm(s){
+  let t = spellFold(String(s || '').split('/')[0]).replace(/[’']/g, '').replace(/[^\p{L}\p{N}]+/gu, ' ').trim().replace(/\s+/g, ' ');
+  if(spellLang() === 'es') t = t.replace(/^(el|la|los|las|un|una|unos|unas) /, '');
+  return t;
+}
+// The word as the door shows it: the card's word before "/", Spanish article dropped, accents kept.
+function spellTarget(word){
+  let t = String(word || '').split('/')[0].trim();
+  if(spellLang() === 'es') t = t.replace(/^(el|la|los|las|un|una|unos|unas)\s+/i, '');
+  return t.replace(/[.!?¡¿]+$/g, '').trim();
+}
+// The sentence with the target gapped ('' when the sentence doesn't hold it); matched without accents or case.
+function spellGap(sentence, target){
+  const s = String(sentence || ''), fs = spellFold(s), ft = spellFold(target);
+  if(!s || !ft) return '';
+  let i = -1, from = 0;
+  while((i = fs.indexOf(ft, from)) >= 0){
+    const before = i > 0 ? fs.charAt(i - 1) : ' ', after = fs.charAt(i + ft.length) || ' ';
+    if(!/[\p{L}\p{N}]/u.test(before) && !/[\p{L}\p{N}]/u.test(after)) break;
+    from = i + 1;
+  }
+  if(i < 0) return '';
+  return s.slice(0, i) + '____' + s.slice(i + ft.length);
+}
+function spellMeaning(c){ const m = (c && c.meaning && typeof c.meaning === 'object') ? c.meaning : {en:String((c && c.meaning) || '')}; return {en:m.en || '', tr:m.tr || '', fa:m.fa || '', es:m.es || ''}; }
+function spellHas(text, n){ const t = ' ' + spellNorm(text) + ' '; return !!n && t.indexOf(' ' + n + ' ') >= 0; }
+// Cards a door can use (spec §6.3): <= 3 words and <= 20 letters, not a name, the sentence holds the word,
+// and no meaning (in any language) gives it away.
+function spellCards(setObj){
+  if(!setObj || !setObj.cards || setObj.category === 'slang') return [];
+  const out = [], seen = new Set();
+  setObj.cards.forEach(c=>{
+    const t = spellTarget(c.word), n = spellNorm(t);
+    if(!n || n.length < 2 || n.length > 20 || n.split(' ').length > 3 || seen.has(n)) return;
+    if(/^\p{Lu}/u.test(t) && !/^\p{Lu}+$/u.test(t) && !(spellLang() === 'en' && t === 'I')) return;   // proper nouns (Monday, London) are not targets
+    const gap = spellGap(c.sentence, t); if(!gap) return;
+    const m = spellMeaning(c);
+    if(['en','tr','fa','es'].some(k=>spellHas(m[k], n))) return;
+    seen.add(n);
+    out.push({word:t, n, sentence:c.sentence, gap, m});
+  });
+  return out;
+}
+function spellSetOk(setObj){ return spellCards(setObj).length >= SPELL_MIN; }
+function spellMicOk(){ return !!(window.SpeechRecognition || window.webkitSpeechRecognition); }
+function spellLow(level){ return level === 'A1' || level === 'A2'; }
+// The clue ladder for one door at this level (spell-homophones.md Decision 1). kind: gap / ui / def / letter.
+function spellClues(card, level){
+  const ui = L(card.m.en, card.m.tr, card.m.fa, card.m.es) || card.m.en;
+  const def = card.m[spellLang()] || '';
+  if(spellLow(level)) return [{k:'gap', text:card.gap}, {k:'ui', text:ui}, {k:'letter', text:ui}];
+  if(def && !spellHas(def, card.n)) return [{k:'def', text:def, say:true}, {k:'gap', text:card.gap}, {k:'letter', text:ui}];
+  return [{k:'gap', text:card.gap}, {k:'ui', text:ui}, {k:'letter', text:ui}];
+}
+// A round: up to 6 doors on the node's set (seeded by refId on the roadmap, fresh on the Games shelf).
+function buildSpellRound(setObj, refId){
+  const cards = spellCards(setObj);
+  if(cards.length < SPELL_MIN) return null;
+  const level = (state.profile && state.profile.level) || 'A1';
+  const rnd = crossRng(refId ? crossHash('spell|' + refId) : (Math.random()*4294967295) >>> 0);
+  const pick = crossShuffle(cards, rnd).slice(0, SPELL_DOORS);
+  const noMic = !spellMicOk();
+  return {setId:setObj.id, level, doors:pick.map(c=>({word:c.word, n:c.n, sentence:c.sentence, m:c.m, gap:c.gap, clue:1, misses:0, tries:0, heard:'', hear:false, heardIt:false, open:false, at:0, by:'', tried:false, homo:false})),
+    index:0, gold:0, combo:0, typing:noMic, noMic, listening:false, interim:'', silent:0, homoSaid:false, finished:false, startedAt:Date.now(), finishedAt:null};
+}
+function spellCur(round){ return round.doors[round.index] || null; }
+/* ---- Matching (spec §6.2 step 3, spell-homophones.md "Matching rule") ---- */
+function spellEdit1(a, b){
+  if(a === b) return true;
+  const la = a.length, lb = b.length; if(Math.abs(la - lb) > 1) return false;
+  let i = 0, j = 0, d = 0;
+  while(i < la && j < lb){ if(a[i] === b[j]){ i++; j++; continue; } if(++d > 1) return false; if(la > lb) i++; else if(lb > la) j++; else { i++; j++; } }
+  return d + (la - i) + (lb - j) <= 1;
+}
+function spellSeqIn(hay, needle){
+  const h = hay.split(' '), n = needle.split(' ');
+  for(let i = 0; i + n.length <= h.length; i++) if(n.every((w, k)=>h[i + k] === w)) return true;
+  return false;
+}
+// 'word' (heard as said), 'homo' (a homophone of it), or null.
+function spellMatch(target, alts){
+  const t = spellNorm(target); if(!t) return null;
+  const forms = [t];
+  if(t.indexOf(' ') < 0){ forms.push(t + 's', t + 'es'); }
+  const group = (SPELL_HOMOPHONES[spellLang()] || []).find(gp=>gp.some(w=>spellNorm(w) === t));
+  const homos = group ? group.map(spellNorm).filter(w=>w !== t) : [];
+  for(const raw of alts){
+    const a = spellNorm(raw); if(!a) continue;
+    if(forms.some(f=>spellSeqIn(a, f))) return 'word';
+    if(t.indexOf(' ') < 0 && t.length >= 6 && a.split(' ').some(w=>spellEdit1(w, t))) return 'word';
+    if(homos.some(f=>spellSeqIn(a, f))) return 'homo';
+  }
+  return null;
+}
+/* ---- Screen (spec §6.7: the door with rune tiles, clue + dots, "I hear", mic, ghost buttons) ---- */
+function spellStatusHtml(round){
+  const n = Math.min(round.index + 1, round.doors.length), c = round.combo || 0;
+  const streak = c >= 2 ? `<span class="game-status-end"><span class="game-streak${c >= 3 ? ' hot' : ''}">${ICONS.star} ${L(`${c} in a row`, `Arka arkaya ${c}`, `${c} پشت سر هم`, `${c} seguidas`)}</span></span>` : '';
+  return `<div class="game-status" id="spell-status"><span class="game-status-text">${round.finished ? L('Every door is open','Bütün kapılar açık','همه درها باز شد','Todas las puertas abiertas') : L(`Door ${n} of ${round.doors.length}`, `Kapı ${n} / ${round.doors.length}`, `در ${n} از ${round.doors.length}`, `Puerta ${n} de ${round.doors.length}`)}</span>${streak}</div>`;
+}
+function spellGlow(d){ return d.tried || d.at >= 3 ? 'glow' : (d.at === 2 ? 'bright' : 'gold'); }
+function spellRunesHtml(round, d){
+  const chars = Array.from(d.word);
+  const showCount = spellLow(round.level) || d.clue >= 3 || d.open;
+  if(!showCount) return `<div class="spell-runes" dir="ltr"><span class="spell-bar" aria-hidden="true"></span></div>`;
+  let k = 0;
+  return `<div class="spell-runes" dir="ltr" aria-label="${esc(L(`${chars.filter(c=>c !== ' ').length} letters`, `${chars.filter(c=>c !== ' ').length} harf`, `${chars.filter(c=>c !== ' ').length} حرف`, `${chars.filter(c=>c !== ' ').length} letras`))}">${chars.map((c, i)=>{
+    if(c === ' ') return '<span class="spell-gap"></span>';
+    const first = i === 0 && d.clue >= 3;
+    const lit = d.open;
+    return `<span class="spell-rune${lit ? ' lit' : ''}${first && !lit ? ' first' : ''}"${lit ? ` style="animation-delay:${(k++) * 60}ms"` : ''}>${lit || first ? esc(c.toUpperCase()) : '·'}</span>`;
+  }).join('')}</div>`;
+}
+function spellClueHtml(round, d){
+  const clues = spellClues(d, round.level), c = clues[Math.min(d.clue, 3) - 1];
+  const dots = [1, 2, 3].map(i=>`<i class="${i <= d.clue ? 'on' : ''}"></i>`).join('');
+  let body;
+  if(c.k === 'gap') body = `<p class="game-sentence long spell-clue" dir="ltr">${esc(c.text).replace('____', '<span class="trap-gap"></span>')}</p>`;
+  else if(c.k === 'def') body = `<p class="game-sentence long spell-clue" dir="ltr">${esc(c.text)}</p>`;
+  else if(c.k === 'letter'){
+    const slots = Array.from(d.word).map((ch, i)=>ch === ' ' ? '  ' : (i === 0 ? ch.toLowerCase() : '_')).join(' ');
+    body = `<p class="spell-clue spell-ui">${esc(c.text)}</p><p class="spell-letters" dir="ltr">${esc(slots)}</p>`;
+  }
+  else body = `<p class="spell-clue spell-ui">${esc(c.text)}</p>`;
+  return `<div class="spell-cluebox">${body}<div class="spell-dots" aria-label="${esc(L(`Clue ${d.clue} of 3`, `İpucu ${d.clue} / 3`, `راهنمایی ${d.clue} از ۳`, `Pista ${d.clue} de 3`))}">${dots}</div></div>`;
+}
+function spellDoorHtml(round, d){
+  return `<div class="spell-stage"><div class="spell-light ${d.open ? spellGlow(d) : ''}" aria-hidden="true"></div><div class="spell-door${d.open ? (d.swung ? ' open ' : ' ') + spellGlow(d) : ''}" id="spell-door">${spellRunesHtml(round, d)}<span class="spell-knob" aria-hidden="true"></span>${d.open && spellGlow(d) === 'gold' ? '<span class="sparkle sparkle-1"></span><span class="sparkle sparkle-2"></span><span class="sparkle sparkle-3"></span>' : ''}</div></div>`;
+}
+function spellControlsHtml(round, d){
+  if(d.open){
+    const last = round.index + 1 >= round.doors.length;
+    return `<p class="spell-word" dir="ltr">${esc(d.word)}</p><button class="btn btn-primary game-cta" data-action="spell-next">${last ? L('See every door','Bütün kapıları gör','همه درها را ببین','Ver todas las puertas') : L('Next door','Sonraki kapı','در بعدی','Siguiente puerta')}</button>`;
+  }
+  const heard = round.listening ? `<p class="spell-heard" id="spell-heard">${esc(round.interim ? L(`I hear: “${round.interim}”`, `Duyduğum: “${round.interim}”`, `می‌شنوم: «${round.interim}»`, `Oigo: «${round.interim}»`) : L('I’m listening…','Dinliyorum…','گوش می‌دهم…','Te escucho…'))}</p>`
+    : (d.heard ? `<p class="spell-heard" id="spell-heard">${esc(L(`I heard: “${d.heard}”`, `Duyduğum: “${d.heard}”`, `شنیدم: «${d.heard}»`, `He oído: «${d.heard}»`))}</p>` : `<p class="spell-heard" id="spell-heard"></p>`);
+  const hear = d.hear ? `<button class="btn btn-primary spell-hear" data-action="spell-hear">${ICONS.soundOn} ${L('Hear it','Dinle','بشنو','Escúchala')}</button>` : '';
+  const main = round.typing
+    ? `<div class="desk-input-row spell-type"><input id="spell-input" class="game-input" type="text" dir="ltr" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="${esc(L('Type the magic word','Sihirli kelimeyi yaz','کلمه جادویی را بنویس','Escribe la palabra mágica'))}"><button class="btn btn-primary desk-go" data-action="spell-cast">${L('Cast','Büyüle','طلسم کن','Lanzar')}</button></div>`
+    : `<button type="button" class="spell-mic${round.listening ? ' on' : ''}" data-action="spell-mic" data-quiet="1" aria-label="${esc(round.listening ? L('Stop','Durdur','توقف','Parar') : L('Say the word','Kelimeyi söyle','کلمه را بگو','Di la palabra'))}">${ICONS.mic}</button>`;
+  const more = d.clue < 3 ? `<button class="btn btn-ghost btn-sm" data-action="spell-clue">${L('Another clue','Başka ipucu','یک راهنمایی دیگر','Otra pista')}</button>` : '';
+  const sw = round.typing ? (round.noMic ? '' : `<button class="btn btn-ghost btn-sm" data-action="spell-voice">${L('Use my voice','Sesimi kullan','با صدایم','Usar mi voz')}</button>`) : `<button class="btn btn-ghost btn-sm" data-action="spell-type">${L('Type instead','Yazarak dene','به‌جایش تایپ کن','Escribir en su lugar')}</button>`;
+  return heard + hear + main + `<div class="spell-ghosts">${more}${sw}</div>`;
+}
+function spellBodyHtml(round, d){
+  return `<div class="game-card tight spell-card">${spellDoorHtml(round, d)}${spellClueHtml(round, d)}</div>${spellControlsHtml(round, d)}`;
+}
+function spellResultHtml(round){
+  const st = gameRoundStats('spell', round);
+  const row = round.doors.map(d=>`<span class="spell-mini ${spellGlow(d)}" title="${esc(d.word)}"><span dir="ltr">${esc(d.word)}</span></span>`).join('');
+  return `<div class="game-card tight badge-unlock-shine">
+    <div class="spell-row">${row}</div>
+    <div class="game-result-title">${st.perfect ? L('Pure magic!','Saf büyü!','جادوی ناب!','¡Pura magia!') : L('Every door is open!','Bütün kapılar açık!','همه درها باز شد!','¡Todas las puertas abiertas!')}</div>
+    <p class="game-result-line">${L(`${st.gold} golden ${st.gold === 1 ? 'door' : 'doors'}`, `${st.gold} altın kapı`, `${st.gold} در طلایی`, `${st.gold} ${st.gold === 1 ? 'puerta de oro' : 'puertas de oro'}`)}${st.voice === st.total ? ' · ' + L(`${st.total}/${st.total} by voice`, `${st.total}/${st.total} sesle`, `${st.total}/${st.total} با صدا`, `${st.total}/${st.total} con la voz`) : (st.typed ? ' · ' + L('typed','yazarak','تایپی','escrito') : '')}</p>
+    ${gameDoneCta()}
+  </div>`;
+}
+function renderGameSpell(){
+  const vp = state.viewParams, round = vp.round, d = spellCur(round);
+  return `<div class="fade-in game-screen">
+    ${gameTopHtml(L('Magic','Sihir','جادو','Magia'))}
+    ${spellStatusHtml(round)}
+    <div class="spell-body" id="spell-body">${(round.finished || !d) ? spellResultHtml(round) + renderBadgeUnlockCard(pullJustEarnedBadges()) : spellBodyHtml(round, d)}</div>
+  </div>`;
+}
+function spellRefresh(){
+  const vp = state.viewParams, round = vp && vp.round;
+  if(!round || state.view !== 'game-spell' || round.finished) return;
+  const d = spellCur(round); if(!d) return;
+  const st = document.getElementById('spell-status'); if(st) st.outerHTML = spellStatusHtml(round);
+  const body = document.getElementById('spell-body'); if(body) body.innerHTML = spellBodyHtml(round, d);
+}
+/* ---- Flow (spec §6.2, §6.6, §6.8) ---- */
+function spellSayClue(round){
+  const d = spellCur(round); if(!d || d.open) return;
+  const c = spellClues(d, round.level)[d.clue - 1];
+  if(c && c.say){ const idx = round.index; setTimeout(()=>{ if(state.viewParams && state.viewParams.round === round && round.index === idx && !round.listening) speakTarget(c.text, 0.92); }, 300); }
+}
+function spellArrive(round){
+  const d = spellCur(round); if(!d || round.finished) return;
+  anim(document.getElementById('spell-door'), [{transform:'translateY(16px) scale(.94)', opacity:0}, {transform:'translateY(0) scale(1)', opacity:1}], {duration:320, easing:SPRING});
+  sfx('flip');
+  if(round.index === 0 && round.noMic && !round.noMicSaid){ round.noMicSaid = true; setTimeout(()=>{ if(state.view === 'game-spell') companionSay(L('No microphone here, so type the magic word.','Burada mikrofon yok, sihirli kelimeyi yaz.','اینجا میکروفون نیست، کلمه جادویی را تایپ کن.','Aquí no hay micrófono: escribe la palabra mágica.'), 3200); }, 600); }
+  spellSayClue(round);
+}
+function spellStopRec(){
+  if(spellRec){ const r = spellRec; spellRec = null; try{ r.onend = null; r.onresult = null; r.onerror = null; r.stop(); }catch(e){} }
+}
+// Typing mode: forced (no recogniser, refused, no network, no microphone, silence twice) or chosen.
+function spellToTyping(round, forced, msg){
+  spellStopRec();
+  round.typing = true; round.listening = false; round.interim = '';
+  if(forced) round.noMic = true;
+  spellRefresh(); save();
+  if(msg) companionSay(msg, 3000);
+  const inp = document.getElementById('spell-input'); if(inp && !forced) try{ inp.focus({preventScroll:true}); }catch(e){}
+}
+function spellListen(round){
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if(!SR){ spellToTyping(round, true, L('No microphone here, so type the magic word.','Burada mikrofon yok, sihirli kelimeyi yaz.','اینجا میکروفون نیست، کلمه جادویی را تایپ کن.','Aquí no hay micrófono: escribe la palabra mágica.')); return; }
+  spellStopRec(); ttsStop();
+  const d = spellCur(round);
+  const rec = new SR();
+  rec.lang = TTS_LANG; rec.interimResults = true; rec.continuous = false; rec.maxAlternatives = 5;
+  const alts = []; let failed = false;
+  spellRec = rec;
+  round.listening = true; round.interim = '';
+  rec.onresult = (e)=>{
+    let interim = '';
+    for(let i = 0; i < e.results.length; i++){
+      const r = e.results[i];
+      if(r.isFinal){ for(let k = 0; k < r.length; k++){ const t = String(r[k].transcript || '').trim(); if(t && alts.indexOf(t) < 0) alts.push(t); } }
+      else interim += r[0].transcript;
+    }
+    round.interim = String(interim || alts[0] || '').trim();
+    const el = document.getElementById('spell-heard');
+    if(el) el.textContent = round.interim ? L(`I hear: “${round.interim}”`, `Duyduğum: “${round.interim}”`, `می‌شنوم: «${round.interim}»`, `Oigo: «${round.interim}»`) : '';
+  };
+  rec.onerror = (e)=>{
+    const code = e && e.error;
+    if(code === 'not-allowed' || code === 'service-not-allowed' || code === 'network' || code === 'audio-capture'){
+      failed = true; spellToTyping(round, true, L('The microphone isn’t available, so type the magic word.','Mikrofon kullanılamıyor, sihirli kelimeyi yaz.','میکروفون در دسترس نیست، کلمه جادویی را تایپ کن.','El micrófono no está disponible: escribe la palabra mágica.'));
+    }
+  };
+  rec.onend = ()=>{
+    if(spellRec === rec) spellRec = null;
+    if(failed || round.typing) return;
+    round.listening = false; round.interim = '';
+    if(!alts.length){
+      round.silent++;
+      if(round.silent >= 2){ spellToTyping(round, true, L('I couldn’t hear anything, so let’s type the magic word.','Hiçbir şey duyamadım, sihirli kelimeyi yazalım.','چیزی نشنیدم، بیا کلمه جادویی را تایپ کنیم.','No he oído nada, así que escribe la palabra mágica.')); return; }
+      spellRefresh(); save();
+      companionSay(L('I couldn’t hear anything. Try again closer to the phone.','Hiçbir şey duyamadım. Telefona daha yakın dene.','چیزی نشنیدم. نزدیک‌تر به گوشی دوباره بگو.','No he oído nada. Prueba otra vez más cerca del móvil.'), 2600);
+      return;   // silence is never an attempt
+    }
+    round.silent = 0;
+    spellAttempt(round, alts, 'voice');
+  };
+  try{ rec.start(); }catch(err){ spellRec = null; spellToTyping(round, true, ''); return; }
+  sfx('tick');
+  spellRefresh(); save();
+}
+function spellAttempt(round, alts, by){
+  const d = spellCur(round); if(!d || d.open || round.finished) return;
+  d.tries++;
+  const res = spellMatch(d.word, alts);
+  if(res || d.heardIt){ spellOpen(round, d, by, res === 'homo', !res); return; }
+  d.misses++; d.heard = String(alts[0] || '').trim();
+  round.combo = 0;
+  if(d.misses >= 2){
+    if(d.clue < 3){ d.clue++; d.misses = 0; }
+    else d.hear = true;
+  }
+  spellRefresh(); save();
+  anim(document.getElementById('spell-door'), [{transform:'translateX(0)'}, {transform:'translateX(-3px)'}, {transform:'translateX(3px)'}, {transform:'translateX(-3px)'}, {transform:'translateX(3px)'}, {transform:'translateX(0)'}], {duration:240, easing:'linear'});
+  sfx('tick'); companionOops();
+  if(d.misses === 0) spellSayClue(round);   // a new clue arrived
+}
+function spellOpen(round, d, by, homo, tried){
+  d.open = true; d.at = d.clue; d.by = by; d.homo = !!homo; d.tried = !!tried; d.hear = false;
+  const glow = spellGlow(d);
+  if(glow === 'gold'){ round.gold++; round.combo++; } else round.combo = 0;
+  spellRefresh(); save();
+  const door = document.getElementById('spell-door'), p = centerOf(door);
+  sfx('reveal'); buzz([8,40,8]); companionCheer();
+  if(glow === 'gold') sparkBurst(p.x, p.y, 14, 'var(--cat-review)', 110);
+  else if(glow === 'bright') sparkBurst(p.x, p.y, 8, 'var(--cat-review)', 80);
+  if(tried) companionSay(L('The door heard you trying.','Kapı denediğini duydu.','در تلاش تو را شنید.','La puerta te ha oído intentarlo.'), 2200);
+  else if(homo && !round.homoSaid){ round.homoSaid = true; companionSay(L(`Sounds the same — the word was ${d.word}.`, `Aynı sesleniyor — kelime ${d.word} idi.`, `هم‌صدا بود — کلمه ${d.word} بود.`, `Suena igual — la palabra era ${d.word}.`), 2600); }
+  else if(glow === 'gold' && (round.combo === 3 || round.combo === 5)) setTimeout(()=>comboCheck(round.combo), 400);
+  const idx = round.index, letters = Array.from(d.word).filter(c=>c !== ' ').length;
+  // the runes light left to right (60ms apart), then the door swings open onto the light
+  const swing = ()=>{ d.swung = true; const el = document.getElementById('spell-door'); if(el && state.viewParams && state.viewParams.round === round && round.index === idx) el.classList.add('open'); save(); };
+  if(reducedMotion()) swing(); else setTimeout(swing, letters * 60 + 320);
+  setTimeout(()=>{ if(state.viewParams && state.viewParams.round === round && round.index === idx) speakTarget(d.word, 0.92); }, 650 + letters * 30);   // a model right after the learner's own attempt
+}
+function spellAdvance(vp, round){
+  spellStopRec();
+  round.index++; round.listening = false; round.interim = '';
+  if(round.index >= round.doors.length){
+    round.finished = true; round.finishedAt = Date.now();
+    const st = gameRoundStats('spell', round);
+    round.xpGain = scoreGameCompletion(vp.refId, st.perfect);
+    markGameComplete(vp.refId);
+    const early = round.doors.filter(x=>x.at <= 2 && !x.tried).length, n = round.doors.length;
+    srsGameReview(round.setId, early === n ? 2 : (early >= n - 1 ? 1 : 0));
+    queueFx(()=>sfx('combo'));
+    save(); render();
+    return;
+  }
+  spellRefresh(); save(); spellArrive(round);
+}
+// Souvenir: the word that took the most attempts (finally retrieved); flip side = meaning + sentence.
+function spellSouvenir(round){
+  const d = round.doors.slice().sort((a, b)=>(b.tries + b.at) - (a.tries + a.at) || b.word.length - a.word.length)[0];
+  if(!d) return null;
+  const ui = L(d.m.en, d.m.tr, d.m.fa, d.m.es) || d.m.en;
+  return {text:d.word, say:d.word, note:[ui, d.sentence].filter(Boolean).join(' · ')};
 }
 /* ============================= GAMIFICATION V3 BUILD 2: STORY HUNT =============================
    Games catalogue 4.3 + the LXD changes (approved 2026-10-04): a passage from the
@@ -19254,6 +19634,7 @@ const screens = {
   'game-order': renderGameOrder,
   'game-desk': renderGameDesk,
   'game-mystery': renderGameMystery,
+  'game-spell': renderGameSpell,
   'game-path': renderGamePath,
   'game-hunt': renderGameHunt,
   'game-echo': renderGameEcho,
@@ -20725,6 +21106,35 @@ const HANDLERS = {
     save();
   },
   'case-next'(){ const vp = state.viewParams, r = vp && vp.round, cs = r && caseCur(r); if(!cs || r.finished || !cs.solved) return; caseAdvance(vp, r); },
+  // ---- Magic Words (Jq6f9OFv wave B): say (or type) the word to open each door ----
+  'spell-mic'(){
+    const r = state.viewParams && state.viewParams.round, d = r && spellCur(r); if(!d || r.finished || d.open || r.typing) return;
+    if(r.listening){ const rec = spellRec; if(rec){ try{ rec.stop(); }catch(e){} } return; }   // tap again = done speaking
+    spellListen(r);
+  },
+  'spell-cast'(){
+    const r = state.viewParams && state.viewParams.round, d = r && spellCur(r); if(!d || r.finished || d.open) return;
+    const inp = document.getElementById('spell-input'); const v = inp ? String(inp.value || '').trim() : '';
+    if(!v){ if(inp) anim(inp, [{transform:'translateX(0)'}, {transform:'translateX(-5px)'}, {transform:'translateX(5px)'}, {transform:'translateX(0)'}], {duration:200, easing:'linear'}); return; }
+    spellAttempt(r, [v], 'typed');
+    const again = document.getElementById('spell-input'); if(again && !spellCur(r).open) try{ again.focus({preventScroll:true}); }catch(e){}
+  },
+  'spell-clue'(){
+    const r = state.viewParams && state.viewParams.round, d = r && spellCur(r); if(!d || r.finished || d.open || d.clue >= 3) return;
+    spellStopRec(); r.listening = false;
+    d.clue++; d.misses = 0; r.combo = 0;
+    sfx('flip'); spellRefresh(); save(); spellSayClue(r);
+  },
+  'spell-hear'(){
+    const r = state.viewParams && state.viewParams.round, d = r && spellCur(r); if(!d || r.finished || d.open) return;
+    d.heardIt = true; spellStopRec(); r.listening = false;
+    speakTarget(d.word, 0.92);
+    companionSay(L('Now you say it.','Şimdi sen söyle.','حالا تو بگو.','Ahora dila tú.'), 1800);
+    spellRefresh(); save();
+  },
+  'spell-type'(){ const r = state.viewParams && state.viewParams.round; if(!r || r.finished) return; spellToTyping(r, false, ''); },
+  'spell-voice'(){ const r = state.viewParams && state.viewParams.round; if(!r || r.finished || r.noMic || !spellMicOk()) return; r.typing = false; spellRefresh(); save(); },
+  'spell-next'(){ const vp = state.viewParams, r = vp && vp.round, d = r && spellCur(r); if(!d || r.finished || !d.open) return; spellAdvance(vp, r); },
   // ---- Games shelf (Jq6f9OFv, D4 = A): one tap replays a game the learner has met, with fresh content ----
   'shelf-play'(el){
     const kind = el.dataset.kind;
@@ -20750,7 +21160,7 @@ const HANDLERS = {
       for(const s of tries){ const r = buildCrossRound(s, null); if(r){ queueFx(()=>{ sfx('tick'); r.popped = true; }); go('game-cross', {round:r, refId:ds.refId, goal:'', free:true, shelf:true}); return; } }
       ds.kind = 'bingo';
     }
-    if(['bingo','match','dictation','echo'].includes(ds.kind)){
+    if(['bingo','match','dictation','echo','spell'].includes(ds.kind)){
       const pool = shelfSets(ds.kind);
       const s = pool.length ? pool[Math.floor(Math.random()*pool.length)] : fallbackGameSet();
       if(!s) return;
@@ -20842,6 +21252,16 @@ const HANDLERS = {
       const crossFb = buildBingoRound(setObj);
       if(crossFb){ queueFx(()=>bingoSpeak(crossFb)); go('game-bingo', Object.assign({round: crossFb, fallbackFrom:'cross'}, params)); return; }
       go('game-match', Object.assign({round: buildMatchRound(setObj), fallbackFrom:'cross'}, params));
+      return;
+    }
+    if(kind === 'spell'){
+      // Magic Words: up to six doors on this set (a seeded row for a roadmap node, a fresh one on the shelf). No microphone
+      // is typing mode inside the game, never a fallback; fewer than 4 cards a door can use (spec §9): Word Bingo, else Word Rush.
+      const spellRound = buildSpellRound(setObj, params.free ? null : params.refId);
+      if(spellRound){ queueFx(()=>spellArrive(spellRound)); go('game-spell', Object.assign({round: spellRound}, params)); return; }
+      const spellFb = buildBingoRound(setObj);
+      if(spellFb){ queueFx(()=>bingoSpeak(spellFb)); go('game-bingo', Object.assign({round: spellFb, fallbackFrom:'spell'}, params)); return; }
+      go('game-match', Object.assign({round: buildMatchRound(setObj), fallbackFrom:'spell'}, params));
       return;
     }
     if(kind === 'bingo'){
@@ -24976,10 +25396,11 @@ try{ document.addEventListener('keydown', function(e){
 // Order Up!: from B1 the shelf hides the word under each item; holding a tile peeks at it (the tap that follows doesn't drop it).
 try{ document.addEventListener('pointerdown', orderPeekStart); document.addEventListener('pointerup', orderPeekEnd); document.addEventListener('pointercancel', orderPeekEnd); }catch(e){}
 
-// Passport Desk: Enter in the typing box confirms the fix.
+// Passport Desk / Magic Words: Enter in the typing box confirms.
 try{ document.addEventListener('keydown', function(e){
   if(e.key !== 'Enter' || !e.target || !e.target.id) return;
   if(state.view === 'game-desk' && e.target.id === 'desk-input'){ e.preventDefault(); HANDLERS['desk-fix-go'](); }
+  if(state.view === 'game-spell' && e.target.id === 'spell-input'){ e.preventDefault(); HANDLERS['spell-cast'](); }
 }); }catch(e){}
 
 try{ window.addEventListener('popstate', function(){ goBack(); }); }catch(e){}

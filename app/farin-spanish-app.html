@@ -105,7 +105,14 @@
     font-family:'Plus Jakarta Sans',-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
     line-height:1.45; -webkit-font-smoothing:antialiased;
   }
-  #app{max-width:480px; margin:0 auto; min-height:100vh; background:var(--diorama-bg), var(--bg); background-attachment:fixed; position:relative; padding-bottom:98px;}
+  /* Room under the floating Home button (Farin 2026-10-10: "don't change the home button place"). The button stays
+     where it is (.home-fab: 50px, 20px above the safe area); every screen scrolls inside #app, so one bottom padding
+     here (button + its 20px offset + 28px of air + the phone's safe area) lets the last item always scroll clear of
+     it. Was a flat 98px with no safe area. The same room keeps focused or scrolled-to elements clear (scroll-padding).
+     Screens with their own fixed bar (course Continue) add their own room on top of this. */
+  :root{--home-fab-room:calc(50px + 20px + 28px + env(safe-area-inset-bottom, 0px));}
+  html{scroll-padding-bottom:var(--home-fab-room);}
+  #app{max-width:480px; margin:0 auto; min-height:100vh; background:var(--diorama-bg), var(--bg); background-attachment:fixed; position:relative; padding-bottom:var(--home-fab-room);}
   @media (min-width:481px){
     body{background:var(--diorama-bg), var(--bg-sunken);}
     #app{min-height:100dvh; box-shadow:var(--shadow); border-left:1px solid var(--border); border-right:1px solid var(--border);}

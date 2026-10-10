@@ -3815,17 +3815,27 @@ const VOCAB_PHASE1_A1A2 = {
   }
  }
 };
-Object.keys(VOCAB_PHASE1_A1A2).forEach(id=>{
-  const set = VOCAB_SETS.find(x=>x.id===id); if(!set) return;
-  const m = VOCAB_PHASE1_A1A2[id];
-  if(m.useTask) set.useTask = m.useTask;
-  if(m.replaceCards){ set.cards = m.replaceCards; return; }
-  set.cards.forEach(c=>{
-    const u = m.cards && m.cards[c.word]; if(!u) return;
-    if(u.meaning) c.meaning = Object.assign({}, c.meaning, u.meaning);
-    ['accept','gap','sentence','note','word'].forEach(k=>{ if(u[k] !== undefined) c[k] = u[k]; });
+function applyVocabPatch(patch){
+  Object.keys(patch).forEach(id=>{
+    const set = VOCAB_SETS.find(x=>x.id===id); if(!set) return;
+    const m = patch[id];
+    if(m.useTask) set.useTask = m.useTask;
+    if(m.replaceCards){ set.cards = m.replaceCards; return; }
+    set.cards.forEach(c=>{
+      const u = m.cards && m.cards[c.word]; if(!u) return;
+      if(u.meaning) c.meaning = Object.assign({}, c.meaning, u.meaning);
+      ['accept','gap','sentence','note','word'].forEach(k=>{ if(u[k] !== undefined) c[k] = u[k]; });
+    });
   });
-});
+}
+applyVocabPatch(VOCAB_PHASE1_A1A2);
+/* Trello Zuq1fEjy, the hook for farin-lxd's B1-C1 card fixes. Same shape as VOCAB_PHASE1_A1A2, keyed by set id, then by
+   the card's current headword: {"v-B1-1":{cards:{weaknesses:{gap:"weakness", accept:["weakness"]}}}}. Paste the entries
+   inside the braces; nothing else changes. A card whose gap (cardGap) does not start a word in its sentence gets no fill
+   question: the quiz and the Shuffle ask for its meaning instead (cardHasGap), so a pasted gap brings its blank back. */
+const VOCAB_GAPS_B1C1 = {
+};
+applyVocabPatch(VOCAB_GAPS_B1C1);
 
 /* ============================= GOALS: 4th-tab content (Exam Strategy, Immigration Culture Guide) ============================= */
 const EXAM_STRATEGY = [
@@ -7184,13 +7194,13 @@ function srsGrammarQ(item, field, goal){
 }
 function srsVocabQ(set, card){
   const meaning = L(card.meaning.en, card.meaning.tr, card.meaning.fa, card.meaning.es) || card.meaning.en || '';
-  const re = new RegExp(reEsc(cardGap(card)), 'i');
   const others = shuffle(set.cards.filter(c=>c.word.toLowerCase() !== card.word.toLowerCase())).slice(0, 3).map(c=>c.word);
   const opts = shuffle([card.word].concat(others));
-  const inSentence = card.sentence && re.test(card.sentence);
-  const prompt = inSentence ? meaning + '\n' + card.sentence.replace(re, '___')
+  // Zuq1fEjy: a card whose gap is not in its sentence is asked by its meaning, never as a fill-in with no blank.
+  const inSentence = cardHasGap(card);
+  const prompt = inSentence ? meaning + '\n' + cardBlank(card, '___')
     : L('Which word means this?','Hangi kelime bu anlama geliyor?','کدام کلمه این معنی را دارد؟','¿Qué palabra significa esto?') + '\n' + meaning;
-  return {prompt, options:opts, correct:opts.indexOf(card.word), why:'"'+card.word+'" — '+meaning+(card.sentence ? ' · '+card.sentence : ''), answerText:card.sentence || card.word, answerTr:'"'+card.word+'" = '+meaning};
+  return {qt:inSentence ? 'fill' : 'meaning', prompt, options:opts, correct:opts.indexOf(card.word), why:'"'+card.word+'" — '+meaning+(card.sentence ? ' · '+card.sentence : ''), answerText:card.sentence || card.word, answerTr:'"'+card.word+'" = '+meaning};
 }
 function srsStoryQ(story, v){
   const meaning = L(v.en, v.tr, v.fa, v.es) || v.en || '';
@@ -7320,6 +7330,11 @@ function errorWatchHits(text, item){
 }
 // S4: the text to mark/blank in a card's sentence — the inflected `gap` when the sentence does not use the headword as is.
 function cardGap(c){ return (c && c.gap) || c.word; }
+// Trello Zuq1fEjy: where the gap sits in the sentence. It must start a word (an ending may follow: "sibling" blanks
+// "_____s"), so "el acantilado" never blanks inside "del acantilado". No such place = no fill question for the card.
+function cardGapRe(c){ return new RegExp('(^|[^\\p{L}\\p{N}])(' + reEsc(cardGap(c)) + ')', 'iu'); }
+function cardHasGap(c){ return !!(c && c.sentence && cardGap(c) && cardGapRe(c).test(c.sentence)); }
+function cardBlank(c, gap){ return String(c.sentence).replace(cardGapRe(c), (m, pre)=>pre + (gap || '_____')); }
 function highlightWord(sentence, word, meaning){
   const re = new RegExp(word.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'), 'i');
   const m = sentence.match(re);
@@ -16848,31 +16863,43 @@ function grammarQuizQuestions(item){
 }
 function vocabQuizQuestions(s){
   const sibling = VOCAB_SETS_FREE.filter(x=>x.level===s.level && x.category===s.category).flatMap(x=>x.cards);
-  const blankOf = (c) => {
-    const re = new RegExp(cardGap(c).replace(/[.*+?^${}()|[\]\\]/g,'\\$&'), 'i');
-    return c.sentence.replace(re, '_____');
-  };
+  const blankOf = (c) => cardBlank(c);
   const whyOf = (c) => L(
     '"'+c.word+'" means: '+c.meaning.en+'. Example: '+c.sentence,
     '"'+c.word+'" anlamı: '+c.meaning.tr+'. Örnek: '+c.sentence,
     c.meaning.fa ? ('"'+c.word+'" یعنی: '+c.meaning.fa+'. مثال: '+c.sentence) : undefined,
-    '"'+c.word+'": '+c.meaning.es+'. Ejemplo: '+c.sentence
+    c.meaning.es ? ('"'+c.word+'": '+c.meaning.es+'. Ejemplo: '+c.sentence) : undefined
   );
   const ansFor = (c) => ({answerText:c.sentence, answerTr:'"'+c.word+'" = '+(L(c.meaning.en, c.meaning.tr, c.meaning.fa, c.meaning.es) || c.meaning.en || '')});
+  // n other words for the options: never the answer, never the same word twice
+  const otherWords = (c, pools, n) => {
+    const seen = new Set([c.word.toLowerCase()]), out = [];
+    pools.forEach(p=>shuffle(p).forEach(x=>{ const k = x.word.toLowerCase(); if(out.length < n && !seen.has(k)){ seen.add(k); out.push(x.word); } }));
+    return out;
+  };
   const fillQ = (c) => {
-    const pool = sibling.filter(x=>x.word.toLowerCase()!==c.word.toLowerCase());
-    const distractors = shuffle(pool).slice(0,3).map(x=>x.word);
+    const distractors = otherWords(c, [sibling], 3);
     const options = shuffle([c.word, ...distractors]);
-    return Object.assign({prompt: blankOf(c), options, correct: options.indexOf(c.word), why: whyOf(c)}, ansFor(c));
+    return Object.assign({qt:'fill', prompt: blankOf(c), options, correct: options.indexOf(c.word), why: whyOf(c)}, ansFor(c));
+  };
+  // Trello Zuq1fEjy: a card whose gap is not in its sentence (cardHasGap false) is asked by its meaning instead.
+  const meaningLabel = L('Which word means this?','Hangi kelime bu anlama geliyor?','کدام کلمه این معنی را دارد؟','¿Qué palabra significa esto?');
+  const meaningQ = (c) => {
+    const options = shuffle([c.word, ...otherWords(c, [s.cards, sibling], 3)]);
+    const meaning = L(c.meaning.en, c.meaning.tr, c.meaning.fa, c.meaning.es) || c.meaning.en || '';
+    return Object.assign({qt:'meaning', prompt: meaningLabel + '\n' + meaning, options, correct: options.indexOf(c.word), why: whyOf(c)}, ansFor(c));
   };
   const reverseLabel = L('Which sentence uses this word?','Bu kelimeyi hangi cümle kullanıyor?','کدام جمله از این کلمه استفاده می‌کند؟','¿Qué oración usa esta palabra?');
   const reverseQ = (c) => {
-    const others = s.cards.filter(x=>x.word.toLowerCase()!==c.word.toLowerCase());
-    const pool = others.length>=2 ? others : sibling.filter(x=>x.word.toLowerCase()!==c.word.toLowerCase());
-    const distractorCards = shuffle(pool).slice(0,2);
     const correctOpt = blankOf(c);
-    const options = shuffle([correctOpt, ...distractorCards.map(blankOf)]);
-    return Object.assign({prompt: reverseLabel + '\n"' + c.word + '"', options, correct: options.indexOf(correctOpt), why: whyOf(c)}, ansFor(c));
+    // other gapped sentences only, and never one that reads the same as the answer once blanked ("_____, please?")
+    const ok = x => x.word.toLowerCase()!==c.word.toLowerCase() && cardHasGap(x) && blankOf(x) !== correctOpt;
+    const pick = p => { const out = []; shuffle(p).forEach(x=>{ const b = blankOf(x); if(out.length < 2 && !out.includes(b)) out.push(b); }); return out; };
+    let wrongs = pick(s.cards.filter(ok));
+    if(wrongs.length < 2) wrongs = pick(sibling.filter(ok));
+    if(wrongs.length < 2) return meaningQ(c);
+    const options = shuffle([correctOpt, ...wrongs]);
+    return Object.assign({qt:'reverse', prompt: reverseLabel + '\n"' + c.word + '"', options, correct: options.indexOf(correctOpt), why: whyOf(c)}, ansFor(c));
   };
   const tfLabel = L('True or false: this word fits the sentence.','Doğru mu yanlış mı: bu kelime cümleye uyuyor.','درست یا نادرست: این کلمه با جمله مطابقت دارد.','Verdadero o falso: esta palabra encaja en la oración.');
   const tfQ = (c, i) => {
@@ -16888,11 +16915,11 @@ function vocabQuizQuestions(s){
     }
     const opts = shuffle([L('True','Doğru','درست','Verdadero'), L('False','Yanlış','نادرست','Falso')]);
     const answer = isTrue ? L('True','Doğru','درست','Verdadero') : L('False','Yanlış','نادرست','Falso');
-    return Object.assign({prompt: tfLabel+'\n"'+filled+'"', options: opts, correct: opts.indexOf(answer), why: whyOf(c)}, ansFor(c));
+    return Object.assign({qt:'tf', prompt: tfLabel+'\n"'+filled+'"', options: opts, correct: opts.indexOf(answer), why: whyOf(c)}, ansFor(c));
   };
   const generators = [fillQ, reverseQ, tfQ];
   const chosenCards = shuffle(s.cards).slice(0, 10);
-  const questions = chosenCards.map((c,i)=> generators[i % generators.length](c, i));
+  const questions = chosenCards.map((c,i)=> cardHasGap(c) ? generators[i % generators.length](c, i) : meaningQ(c));
   return shuffle(questions);
 }
 // Teaching redesign phase 1 (B1): the story data keeps the right answer at index 0
@@ -17248,7 +17275,8 @@ function quizPromptHtml(item, q){
       ? `${before}<span class="trap-fill"${q.selected===item.correct ? ' id="trap-fill"' : ''}>${esc(item.options[item.correct])}</span>${after}`
       : `${before}<span class="trap-gap"></span>${after}`;
   }
-  return `${label ? `<p class="game-hint" style="margin:0 0 10px;">${esc(label)}</p>` : ''}<p class="${cls}" dir="ltr">${inner}</p>`;
+  // a meaning question (Zuq1fEjy) shows the meaning in the UI language, so its direction follows the text
+  return `${label ? `<p class="game-hint" style="margin:0 0 10px;">${esc(label)}</p>` : ''}<p class="${cls}" dir="${item.qt === 'meaning' ? 'auto' : 'ltr'}">${inner}</p>`;
 }
 // Left of the status row: the countdown ring while the question is open, then
 // a tick or a cross once it is answered. No ring when the round has no timer.

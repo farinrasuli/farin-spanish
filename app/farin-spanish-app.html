@@ -716,6 +716,78 @@
   .course-strip{font-size:12px; font-weight:800; color:var(--cat-diag); margin:0 0 10px; letter-spacing:.02em;}
   .course-row-current{border:2px solid var(--accent) !important; box-shadow:0 10px 22px -12px rgba(232,92,59,.55), var(--clay-shadow-soft);}
   .course-sticky{position:fixed; left:0; right:0; bottom:0; max-width:480px; margin:0 auto; padding:10px 16px calc(12px + env(safe-area-inset-bottom)); background:linear-gradient(to top, var(--bg) 72%, transparent); z-index:30;}
+  /* Premium course Phase 0 "Guided lesson" (Trello ffD7KEAp, spec course-ux-simplify/v2/SPEC-v2-final.md). The floating
+     Home stays where it is (Farin 2026-10-10): the sticky lesson button stops short of it, sits under it (z-index 24 < 25)
+     and the shared --home-fab-room padding on #app keeps the last content clear of both. */
+  .cs-top{position:sticky; top:0; z-index:20; display:flex; align-items:center; gap:10px; padding:calc(8px + env(safe-area-inset-top, 0px)) 14px 6px; background:var(--bg);}
+  .cs-x{flex:0 0 auto; width:40px; height:40px; border:none; background:transparent; color:var(--ink); display:flex; align-items:center; justify-content:center; border-radius:50%; cursor:pointer; padding:0;}
+  .cs-x:active{background:var(--bg-sunken);}
+  .cs-bar{flex:1; min-width:0; display:flex; gap:8px; align-items:center; border:none; background:transparent; padding:14px 2px; cursor:pointer;}
+  .cs-seg{flex:1; min-width:0; display:flex; gap:3px;}
+  .cs-seg i{flex:1; height:8px; border-radius:99px; background:var(--border-soft);}
+  .cs-seg i.cur{background:var(--accent);}
+  .cs-head{padding:0 20px 4px;}
+  .cs-part{text-align:center; font-size:12.5px; font-weight:800; color:var(--clay-lavender-deep); margin:0 0 10px;}
+  .cs-eyebrow{font-size:12px; font-weight:900; letter-spacing:.08em;}
+  .cs-title{font-size:23px; margin:3px 0 0; line-height:1.25;}
+  .cs-sub{font-size:13.5px; color:var(--ink-soft); margin:4px 0 0;}
+  .cs-reread{border:none; background:none; padding:0; margin-top:6px; color:var(--clay-lavender-deep); font-weight:800; font-size:13.5px; text-decoration:underline; cursor:pointer; font-family:inherit;}
+  .cs-foot{position:fixed; left:0; right:0; bottom:0; max-width:480px; margin:0 auto; z-index:24; padding:12px calc(20px + 50px + 12px) calc(20px + env(safe-area-inset-bottom, 0px)) 16px; background:linear-gradient(to top, var(--bg) 70%, transparent);}
+  html[dir="rtl"] .cs-foot{padding-left:calc(20px + 50px + 12px); padding-right:16px;}
+  .cs-foot .btn{min-height:50px; padding-top:12px; padding-bottom:12px;}
+  .cs-foot .btn + .btn{margin-top:8px;}
+  #app.cs-in .section-head, #app.cs-in .game-top, #app.cs-in .course-strip, #app.cs-in .game-status-text, #app.cs-in .game-status-end, #app.cs-in .game-hint, #app.cs-in .gx-hint{display:none;}
+  .cs-chip{display:inline-flex; align-items:center; padding:4px 9px; border-radius:99px; color:#fff; font-size:11.5px; font-weight:800; line-height:1.2; margin:0 5px 5px 0;}
+  html[dir="rtl"] .cs-chip{margin:0 0 5px 5px;}
+  .cs-pick{display:block; width:100%; text-align:start; border:2px solid var(--border-soft); background:var(--bg-elevated); border-radius:18px; padding:12px 16px; cursor:pointer; color:var(--ink); font-family:inherit; box-shadow:var(--clay-shadow-soft);}
+  .cs-pick b{display:block; font-size:15.5px; font-weight:800;}
+  .cs-pick span{display:block; font-size:12.5px; color:var(--ink-soft); margin-top:3px; line-height:1.35;}
+  .cs-pick.rec{border-color:var(--accent); background:var(--accent-soft);}
+  .cs-sheet-wrap{position:fixed; inset:0; z-index:40; background:rgba(20,32,30,.42); display:flex; align-items:flex-end; justify-content:center;}
+  .cs-sheet{width:100%; max-width:480px; max-height:86vh; overflow:auto; background:var(--bg); border-radius:24px 24px 0 0; padding:10px 18px calc(18px + env(safe-area-inset-bottom, 0px)); box-shadow:0 -10px 30px -10px rgba(0,0,0,.3);}
+  .cs-grab{width:44px; height:5px; border-radius:99px; background:var(--border); margin:0 auto 12px;}
+  .cs-pbox{border:2px solid var(--border-soft); border-radius:16px; padding:10px 12px 6px; margin-top:10px; background:var(--bg-elevated);}
+  .cs-pbox.done{background:var(--cat-diag-soft); border-color:transparent;}
+  .cs-pbox.cur{border-color:var(--accent);}
+  .cs-pname{font-size:13.5px; font-weight:800; margin-bottom:7px; display:flex; justify-content:space-between; align-items:center; gap:8px;}
+  .cs-redo{border:none; background:none; color:var(--clay-lavender-deep); font-weight:800; font-size:13px; cursor:pointer; padding:0; font-family:inherit;}
+  .cs-story p{font-size:15px; line-height:1.65; margin:0 0 12px;}
+  .cs-model{background:var(--accent-soft); border-radius:16px; padding:12px 14px; margin-top:10px;}
+  .cs-model summary{cursor:pointer; font-weight:900; font-size:12px; letter-spacing:.06em; color:var(--accent-strong); list-style:none;}
+  .cs-model summary::-webkit-details-marker{display:none;}
+  .cs-wchip{display:inline-block; padding:5px 10px; border-radius:99px; background:var(--bg-sunken); font-size:12.5px; font-weight:700; margin:6px 6px 0 0;}
+  .cs-wchip.on{background:var(--success-soft); color:var(--success);}
+  .cs-center{text-align:center;}
+  .cs-big{font-size:46px; line-height:1; margin:10px 0 8px;}
+  .cs-h1{font-size:24px; margin:0;}
+  .cs-card-green{background:var(--cat-voc-soft); border-color:transparent;}
+  .cs-card-lav{background-color:var(--clay-lavender-deep); background-image:radial-gradient(circle at 88% -18%, rgba(255,255,255,.45), transparent 55%), linear-gradient(135deg, var(--clay-lavender), var(--clay-lavender-deep)); color:#fff; border:none;}
+  .cs-card-lav .eyebrow{color:rgba(255,255,255,.9);}
+  .cp-head{display:flex; align-items:center; padding:calc(14px + env(safe-area-inset-top, 0px)) 20px 2px;}
+  .cp-back{border:none; background:none; padding:6px 0; font-weight:700; font-size:15px; color:var(--ink-soft); cursor:pointer; font-family:inherit;}
+  .cp-title{font-size:26px; padding:8px 20px 14px; margin:0;}
+  .cp-band{display:block; width:100%; text-align:start; border:none; border-radius:18px; padding:12px 16px; margin-top:16px; color:#fff; font-family:inherit; background-color:var(--clay-lavender-deep); background-image:radial-gradient(circle at 90% -20%, rgba(255,255,255,.4), transparent 55%), linear-gradient(135deg, var(--clay-lavender), var(--clay-lavender-deep)); box-shadow:0 10px 20px -12px rgba(124,104,214,.7);}
+  button.cp-band{cursor:pointer;}
+  .cp-band b{display:flex; align-items:center; gap:6px; font-size:14.5px; font-weight:800;}
+  .cp-band span{display:block; font-size:12.5px; opacity:.95; margin-top:3px; line-height:1.4;}
+  .cp-nodes{position:relative; padding-top:6px;}
+  .cp-nodes::before{content:''; position:absolute; inset-inline-start:21px; top:24px; bottom:24px; width:3px; border-radius:3px; background:var(--cat-diag-soft);}
+  .cp-node{position:relative; display:flex; gap:12px; align-items:flex-start; width:100%; border:none; background:none; text-align:start; padding:8px 0; color:var(--ink); font-family:inherit; cursor:pointer;}
+  .cp-node[disabled]{cursor:default;}
+  .cp-dot{flex:0 0 auto; width:44px; height:44px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:900; font-size:13px; position:relative; z-index:1;}
+  .cp-dot.done{background:var(--clay-lavender-deep); color:#fff;}
+  .cp-dot.cur{background:var(--accent); color:#fff; box-shadow:0 0 0 6px var(--accent-soft);}
+  .cp-dot.later{background:var(--bg-elevated); border:3px solid var(--clay-lavender); color:var(--clay-lavender-deep);}
+  .cp-dot.gold{background:linear-gradient(135deg,#FFE08A,#F5B92E); color:#7a4a00; border:3px solid #fff; box-shadow:0 6px 14px -6px rgba(200,140,0,.7);}
+  .cp-dot.gold.cur{box-shadow:0 0 0 6px var(--accent-soft);}
+  .cp-tick{position:absolute; bottom:-3px; inset-inline-end:-3px; width:18px; height:18px; border-radius:50%; background:var(--clay-lavender-deep); color:#fff; display:flex; align-items:center; justify-content:center; border:2px solid var(--bg);}
+  .cp-tick svg{width:10px; height:10px;}
+  .cp-body{flex:1; min-width:0; padding-top:10px;}
+  .cp-ntitle{font-weight:800; font-size:15px; line-height:1.3;}
+  .cp-nsub{font-size:13px; color:var(--ink-soft); margin-top:3px; line-height:1.4;}
+  .cp-cur{flex:1; min-width:0; border:2px solid var(--accent); border-radius:18px; padding:10px 14px 14px; background:var(--bg-elevated); box-shadow:0 10px 22px -12px rgba(232,92,59,.5);}
+  .cp-tag{display:inline-block; background:var(--accent); color:#fff; font-size:10.5px; font-weight:900; letter-spacing:.06em; padding:3px 9px; border-radius:99px; margin-bottom:6px;}
+  .cp-foot{display:flex; flex-wrap:wrap; justify-content:center; gap:4px 8px; margin-top:16px; font-size:13px; color:var(--ink-soft);}
   .course-chapter.current{border-color:var(--accent);}
   .cj-part.miss{border-color:var(--clay-orange-deep); background:var(--cat-gram-soft); color:var(--ink); border-style:dashed;}
   .card-flat{background:var(--bg-elevated); border:1px solid var(--border-soft); border-radius:var(--radius); padding:18px; box-shadow:var(--clay-shadow-soft);}
@@ -12006,40 +12078,143 @@ function stageDoneIds(nodeType, completedIds){
   const inRoadmap = currentRoadmap().filter(n=>n.type === nodeType).map(n=>n.refId);
   return (completedIds || []).slice().reverse().filter((id, i, a)=>inRoadmap.includes(id) && a.indexOf(id) === i);
 }
+/* Studio Lab: useful starting sentences for each round topic (2026-10-10, Farin: the round's
+   "Use these words" pills were random vocab unrelated to the topic; suggest topic-related
+   starters instead). Keyed by the topic's .en text: PRACTICE_TOPICS items and
+   SPEAKING_TOPICS questions. Read by studioStartersFor(). */
+const STUDIO_STARTERS = {
+  // PRACTICE_TOPICS: career
+  "Introduce yourself to a new coworker in Spanish — your name, your job, and where you're from.": ["¡Hola! Me llamo ...", "Trabajo aquí como ...", "Soy de ..., ¿y tú?"],
+  "Tell a coworker in Spanish that you'll be a few minutes late today.": ["Hola, te escribo para decirte que hoy llego un poco tarde.", "Llego en unos diez minutos.", "Lo siento, es que el autobús ..."],
+  "Ask a colleague in Spanish what time the meeting starts.": ["Perdona, ¿tienes un momento?", "¿A qué hora empieza la reunión?", "¿Y dónde es, en la sala ...?"],
+  "Explain in Spanish what your job involves on a typical day.": ["En un día normal, empiezo a trabajar a las ...", "Primero, ... y después ...", "Por la tarde, normalmente ..."],
+  "Write an email in Spanish asking your boss for a day off.": ["Hola, ..., te escribo para pedirte un favor.", "¿Podría tomarme el día libre el ...?", "Antes de irme, me aseguraré de ..."],
+  "Describe in Spanish a project you're currently working on.": ["Ahora mismo estoy trabajando en un proyecto sobre ...", "Mi papel en el proyecto es ...", "Lo más interesante es que ..."],
+  "In Spanish, explain a disagreement you had with a coworker and how you resolved it.": ["Hace poco tuve un desacuerdo con un compañero sobre ...", "Él pensaba que ..., pero yo creía que ...", "Al final, lo resolvimos cuando ..."],
+  "Give a short spoken update in Spanish as if presenting your weekly progress to a team.": ["Buenos días a todos. Esta semana he avanzado en ...", "Hemos terminado ... y ahora estamos con ...", "La semana que viene vamos a ..."],
+  "Negotiate a deadline extension in Spanish, explaining why you need more time.": ["Quería hablar contigo sobre el plazo de ...", "Necesito un poco más de tiempo porque ...", "¿Sería posible entregarlo el ...?"],
+  // PRACTICE_TOPICS: travel
+  "Ask in Spanish where the nearest train station is.": ["Perdone, ¿me puede ayudar?", "¿Dónde está la estación de tren más cercana?", "¿Está lejos de aquí?"],
+  "Order a coffee and a croissant in Spanish at a café.": ["¡Hola! Buenos días.", "Me pone un café con leche y un cruasán, por favor.", "¿Cuánto es?"],
+  "Tell a taxi driver your destination in Spanish.": ["Hola, buenas tardes.", "Quería ir a ..., por favor.", "¿Cuánto tiempo tardamos más o menos?"],
+  "Describe your ideal vacation in Spanish — where, when, and with whom.": ["Mis vacaciones ideales serían en ...", "Me gustaría ir en ... porque ...", "Iría con ... y juntos ..."],
+  "In Spanish, explain to a hotel receptionist that there's a problem with your room.": ["Perdone, estoy en la habitación ...", "Hay un problema con mi habitación.", "El/La ... no funciona. ¿Podrían arreglarlo, por favor?"],
+  "Ask for recommendations in Spanish for things to do in a new city.": ["Hola, es mi primera vez en esta ciudad.", "¿Qué me recomienda visitar?", "¿Y conoce algún buen sitio para comer ...?"],
+  "In Spanish, tell the story of the most memorable trip you've ever taken.": ["El viaje más memorable que he hecho fue a ...", "Fui con ... y nos quedamos ...", "Lo que nunca olvidaré es cuando ..."],
+  "Explain in Spanish what happened after you missed a flight and how you solved it.": ["Una vez perdí un vuelo a ... porque ...", "Cuando llegué al aeropuerto, ...", "Al final, lo solucioné ..."],
+  "Compare in Spanish two cities or countries you have visited or want to visit.": ["Me gustaría comparar ... y ...", "... es más ... que ..., pero ...", "En general, prefiero ... porque ..."],
+  // PRACTICE_TOPICS: exam
+  "In Spanish, give your opinion on whether it's better to live in a big city or a small town.": ["En mi opinión, es mejor vivir en ...", "Por un lado, en una gran ciudad ...", "Por otro lado, en un pueblo pequeño ..."],
+  "Describe your daily routine in Spanish using at least five verbs.": ["Normalmente me despierto a las ...", "Después, desayuno y ...", "Por la noche, ..."],
+  "Write three sentences in Spanish describing your family.": ["Mi familia es ...", "Tengo ... hermanos / Soy hijo/a único/a.", "Mi madre / Mi padre es ..."],
+  "In Spanish, argue for or against the statement: technology makes life easier.": ["Estoy a favor / en contra de esta afirmación.", "En primer lugar, la tecnología ...", "Sin embargo, también hay que tener en cuenta que ..."],
+  "Summarize in Spanish a book or movie you know well.": ["La película / El libro que voy a resumir es ...", "Cuenta la historia de ...", "Al final, ..."],
+  "In Spanish, describe the advantages and disadvantages of working from home.": ["Trabajar desde casa tiene muchas ventajas.", "Por ejemplo, no tienes que ...", "La desventaja principal es que ..."],
+  "In Spanish, write a formal paragraph giving your opinion on climate change and possible solutions.": ["El cambio climático es uno de los mayores problemas de nuestro tiempo.", "En mi opinión, es fundamental que ...", "Una posible solución sería ..."],
+  "Present in Spanish both sides of a debate about whether university should be free.": ["Hay argumentos a favor y en contra de la universidad gratuita.", "Quienes la defienden dicen que ...", "En cambio, sus críticos sostienen que ..."],
+  "In Spanish, describe a challenge you overcame and what you learned from it.": ["Uno de los mayores retos de mi vida fue ...", "Al principio, ...", "De esa experiencia aprendí que ..."],
+  // PRACTICE_TOPICS: immigration
+  "In Spanish, introduce yourself and say where you are originally from.": ["Hola, me llamo ...", "Soy de ..., pero ahora vivo en ...", "Llevo aquí ..."],
+  "Ask in Spanish where the immigration office is located.": ["Perdone, ¿me puede ayudar?", "¿Dónde está la oficina de inmigración?", "¿A qué hora abre?"],
+  "In Spanish, say what documents you have with you (passport, ID, etc.).": ["Tengo aquí mi pasaporte y ...", "También traigo ...", "Me falta ..., ¿es necesario?"],
+  "In Spanish, explain why you moved (or want to move) to a Spanish-speaking country.": ["Me mudé / Quiero mudarme a ... porque ...", "Lo que más me atrae es ...", "Además, ..."],
+  "Describe in Spanish the process of renting an apartment in a new country.": ["Para alquilar un piso, primero hay que ...", "Después, normalmente te piden ...", "Por último, firmas el contrato y ..."],
+  "In Spanish, explain what documents are needed to open a bank account.": ["Para abrir una cuenta bancaria necesitas ...", "También te pueden pedir ...", "Es buena idea llevar ..."],
+  "In Spanish, describe the biggest cultural difference you've noticed since moving somewhere new.": ["La mayor diferencia cultural que he notado es ...", "En mi país, ..., pero aquí ...", "Al principio me sorprendió, pero ahora ..."],
+  "In Spanish, explain a bureaucratic problem you had to solve (a permit, a form, an appointment) and how you handled it.": ["Hace poco tuve un problema con ...", "El problema era que ...", "Al final, lo resolví ..."],
+  "In Spanish, give advice to someone who is about to move to a new country for the first time.": ["Mi primer consejo es que ...", "También te recomiendo ...", "Y sobre todo, no tengas miedo de ..."],
+  // PRACTICE_TOPICS: everyday
+  "In Spanish, order your favorite meal at a restaurant.": ["Hola, buenas noches.", "De primero, quiero ..., y de segundo ...", "Para beber, ..., por favor."],
+  "Describe the weather today in Spanish.": ["Hoy hace ...", "Por la mañana ..., y por la tarde ...", "Creo que mañana va a ..."],
+  "In Spanish, ask a friend what they did this weekend.": ["¡Hola! ¿Qué tal el fin de semana?", "¿Qué hiciste?", "¿Saliste a algún sitio?"],
+  "In Spanish, describe your morning routine from waking up to leaving the house.": ["Me levanto a las ...", "Primero, me ducho y luego ...", "Salgo de casa a las ..."],
+  "In Spanish, invite a friend to do something this weekend and suggest a time and place.": ["¡Oye! ¿Tienes planes este fin de semana?", "¿Te apetece ... conmigo?", "¿Quedamos el sábado a las ... en ...?"],
+  "Describe in Spanish your neighborhood and what you like about it.": ["Vivo en un barrio ...", "Cerca de mi casa hay ...", "Lo que más me gusta de mi barrio es ..."],
+  "In Spanish, tell a story about something funny or unexpected that happened to you recently.": ["¡No te vas a creer lo que me pasó la semana pasada!", "Estaba ... cuando de repente ...", "Al final, todos nos reímos porque ..."],
+  "In Spanish, explain how you would resolve a disagreement with a friend over plans.": ["Si no estuviera de acuerdo con un amigo, primero ...", "Le diría algo como: \"Entiendo lo que dices, pero ...\"", "Al final, podríamos ..."],
+  "In Spanish, describe how your life has changed over the past five years.": ["En los últimos cinco años, mi vida ha cambiado mucho.", "Antes ..., pero ahora ...", "El cambio más grande ha sido ..."],
+  // SPEAKING_TOPICS questions: career
+  "¿Qué haces en un día normal de trabajo?": ["En un día normal, empiezo a las ...", "Primero, normalmente ...", "Por la tarde, ..."],
+  "¿Qué te gusta de tu trabajo?": ["Lo que más me gusta de mi trabajo es ...", "También me gusta ...", "Me hace sentir ..."],
+  "¿Tu trabajo es fácil o difícil? ¿Por qué?": ["Creo que mi trabajo es bastante ...", "Lo fácil es ...", "Lo difícil es ... porque ..."],
+  "¿Qué preguntas suelen hacer en una entrevista?": ["Normalmente empiezan preguntando ...", "Suelen querer saber ...", "Otra pregunta muy común es ..."],
+  "¿Cómo hablas de tus puntos fuertes sin parecer arrogante?": ["Creo que la clave es dar ejemplos, como ...", "En vez de decir \"soy el mejor\", puedes decir ...", "Por ejemplo, yo diría: \"Uno de mis puntos fuertes es ...\""],
+  "¿Qué punto débil podrías mencionar y cómo lo explicarías?": ["Un punto débil que podría mencionar es ...", "Explicaría que estoy trabajando en ello ...", "Por ejemplo, he empezado a ..."],
+  "¿Cómo le dices a un compañero que no estás de acuerdo, con educación, en una reunión?": ["Empezaría con algo como: \"Entiendo tu punto de vista, pero ...\"", "Luego explicaría por qué: \"Lo que me preocupa es que ...\"", "Y propondría: \"¿Y si ...?\""],
+  "Describe una vez en que el trabajo en equipo resolvió un problema que no podías resolver solo.": ["Hace un tiempo tuvimos un problema con ...", "Yo solo no podía resolverlo porque ...", "Entre todos, conseguimos ..."],
+  "¿Cómo informas sobre un proyecto que va con retraso?": ["Sería sincero desde el principio: \"Vamos un poco retrasados con ...\"", "El motivo principal es que ...", "Para recuperar el tiempo, vamos a ..."],
+  "Describe una negociación difícil en el trabajo: ¿cómo la abordaste?": ["Una negociación difícil que recuerdo fue sobre ...", "Antes de la reunión, me aseguré de ...", "Al final, llegamos a un acuerdo en el que ..."],
+  "¿Cómo das una crítica sin dañar la relación de trabajo?": ["Siempre intento empezar por lo que funciona bien, por ejemplo ...", "Después me centro en el problema, no en la persona: \"He notado que ...\"", "Y termino preguntando: \"¿Cómo puedo ayudarte con esto?\""],
+  "¿Cuándo es mejor ceder y cuándo mantener tu postura?": ["Yo diría que es mejor ceder cuando ...", "En cambio, mantendría mi postura si ...", "Por ejemplo, ..."],
+  // SPEAKING_TOPICS questions: travel
+  "¿Cómo le preguntas el camino a una persona que no conoces?": ["Diría: \"Perdone, ¿le puedo hacer una pregunta?\"", "Luego: \"¿Cómo llego a ...?\"", "Y al final: \"¡Muchas gracias!\""],
+  "¿Qué dices si no entiendes las indicaciones?": ["Diría: \"Perdone, ¿me lo puede repetir?\"", "O: \"¿Puede hablar un poco más despacio?\"", "También podría preguntar: \"¿Me lo enseña en el mapa?\""],
+  "¿Cómo compras un billete en una estación de tren o de autobús?": ["Iría a la taquilla y diría: \"Hola, quería un billete para ...\"", "Luego preguntaría: \"¿Cuánto cuesta?\" / \"¿Es de ida y vuelta?\"", "Y por último: \"¿De qué andén sale?\""],
+  "¿Cómo eliges entre varios hoteles o vuelos?": ["Primero, normalmente comparo los precios de ...", "También miro ...", "Al final, suelo elegir el que ..."],
+  "¿Qué llevas siempre en la maleta que otras personas olvidan?": ["Siempre llevo ..., y casi todo el mundo lo olvida.", "Es muy útil porque ...", "Una vez me salvó cuando ..."],
+  "¿Prefieres planear cada detalle o viajar de forma más espontánea? ¿Por qué?": ["Prefiero ...", "Lo bueno de hacerlo así es que ...", "Una vez, en un viaje a ..., ..."],
+  "¿Cómo reclamarías una maleta perdida en el mostrador, con educación pero con firmeza?": ["Empezaría así: \"Hola, mi maleta no ha llegado en el vuelo ...\"", "Luego diría con firmeza: \"Necesito saber cuándo me la van a entregar.\"", "Y preguntaría: \"¿Tengo derecho a alguna compensación por ...?\""],
+  "¿Qué diferencia hay entre explicar un problema y exigir una solución?": ["Cuando explicas un problema, ...", "Cuando exiges una solución, ...", "Según mi experiencia, funciona mejor ..."],
+  "¿Cómo mantienes la calma en una situación estresante de viaje?": ["Cuando algo sale mal en un viaje, intento ...", "Me ayuda recordar que ...", "Por ejemplo, una vez que cancelaron mi vuelo, ..."],
+  "Juego de rol: te han dejado en tierra por sobreventa y has perdido una reunión de trabajo. Negocia una compensación con la aerolínea.": ["No me dejaron embarcar en el vuelo ... porque estaba sobrevendido.", "Por eso, perdí una reunión de trabajo muy importante en ...", "Dadas las circunstancias, espero una compensación en forma de ..."],
+  "¿Cómo escalas una queja de forma profesional sin parecer agresivo?": ["Empezaría diciendo: \"Entiendo que no es culpa suya, pero ...\"", "Si no se soluciona, pediría: \"¿Podría hablar con un responsable, por favor?\"", "Y siempre lo dejaría por escrito, indicando que ..."],
+  "¿Qué valor tiene dejar constancia por escrito en una disputa así?": ["Dejarlo por escrito es importante porque ...", "Por ejemplo, si luego la aerolínea dice que ..., puedes ...", "Por eso siempre pido ... por escrito."],
+  // SPEAKING_TOPICS questions: exam
+  "¿Cuál es tu asignatura favorita y por qué?": ["Mi asignatura favorita es ...", "Me gusta porque ...", "Lo que más me interesa es ..."],
+  "¿Cómo te preparas normalmente para un examen?": ["Antes de un examen, normalmente empiezo por ...", "Luego ...", "La noche anterior, intento ..."],
+  "¿Qué haces si estás nervioso antes de un examen?": ["Cuando estoy nervioso antes de un examen, ...", "Me ayuda ...", "También me digo a mí mismo que ..."],
+  "¿Prefieres estudiar solo o con otras personas? ¿Por qué?": ["Prefiero estudiar ...", "La razón principal es que ...", "Sin embargo, estudiar ... es útil cuando ..."],
+  "¿Cómo organizas el tiempo cuando tienes mucho que estudiar?": ["Cuando tengo mucho que estudiar, hago un plan para ...", "Normalmente estudio ... y luego descanso.", "Intento empezar por ..."],
+  "¿Qué método de estudio te ha funcionado mejor?": ["El método que mejor me ha funcionado es ...", "Funciona porque ...", "Por ejemplo, cuando estudié para ..., ..."],
+  "Algunos dicen que la tecnología ha hecho más fácil estudiar. ¿Estás de acuerdo?": ["Estoy en parte de acuerdo con esta idea.", "Por un lado, la tecnología hace más fácil ...", "Por otro lado, también puede ..."],
+  "¿Qué ventajas y desventajas tienen los exámenes estandarizados?": ["Una ventaja clara de los exámenes estandarizados es que ...", "Sin embargo, una gran desventaja es ...", "En general, creo que ..."],
+  "¿Cómo apoyarías tu opinión con un ejemplo concreto?": ["Empezaría dando mi opinión claramente: \"Creo que ...\"", "Luego pondría un ejemplo: \"Por ejemplo, ...\"", "Y terminaría: \"Esto demuestra que ...\""],
+  "¿Hasta qué punto debería el Estado regular la educación en lugar de dejarla al sector privado?": ["Yo diría que el Estado debería tener un papel ..., porque ...", "Dicho esto, el sector privado puede ...", "En definitiva, creo que lo mejor sería ..."],
+  "¿La competencia en la educación beneficia o perjudica a la sociedad? Justifica tu postura desde más de un ángulo.": ["Desde un punto de vista económico, la competencia ...", "Desde una perspectiva social, en cambio, ...", "Teniendo en cuenta ambos lados, concluiría que ..."],
+  "¿Cómo tendrán que evolucionar los métodos de evaluación a medida que la tecnología cambia lo que significa saber?": ["Ahora que la información está a un clic, ...", "Las evaluaciones tendrán que centrarse menos en ... y más en ...", "Un ejemplo podría ser ..."],
+  // SPEAKING_TOPICS questions: immigration
+  "¿Cómo preguntas por un piso en alquiler?": ["Diría: \"Hola, llamo por el piso en alquiler de la calle ...\"", "Luego preguntaría: \"¿Cuánto es el alquiler?\"", "Y: \"¿Cuándo puedo ir a verlo?\""],
+  "¿Qué dices cuando abres una cuenta en el banco?": ["Diría: \"Hola, quería abrir una cuenta, por favor.\"", "Luego preguntaría: \"¿Qué documentos necesito?\"", "Y: \"¿Hay alguna comisión mensual?\""],
+  "¿Cómo le explicas un problema de salud al médico con palabras sencillas?": ["Diría: \"No me encuentro bien. Me duele ...\"", "Luego: \"Empezó hace ... días.\"", "Y: \"Me duele más cuando ...\""],
+  "¿Qué es lo que más echas de menos de tu país?": ["Lo que más echo de menos de mi país es ...", "Allí solíamos ...", "Aquí intento ..."],
+  "¿Cómo hiciste tus primeros amigos aquí?": ["Hice mis primeros amigos aquí cuando ...", "Nos conocimos en ...", "Lo que más me ayudó fue ..."],
+  "¿Qué consejo le darías a alguien que acaba de llegar?": ["Mi primer consejo sería ...", "También es buena idea ...", "Y no tengas miedo de ..."],
+  "¿Cómo le explicas un problema con claridad a un funcionario que tiene poco tiempo?": ["Iría directo al grano: \"Vengo porque ...\"", "Luego daría los datos clave: \"Mi número de expediente es ...\"", "Y preguntaría claramente: \"¿Qué tengo que hacer ahora?\""],
+  "¿Qué haces si un formulario te pide un documento que no tienes?": ["Primero preguntaría: \"¿Puedo presentar otro documento en su lugar?\"", "Si no, averiguaría cómo conseguir ...", "También explicaría por escrito que ..."],
+  "¿Cómo pides con educación una prórroga o una excepción a una norma?": ["Empezaría así: \"Entiendo las normas, pero quería pedirle ...\"", "Luego explicaría mi situación: \"Lamentablemente, ...\"", "Y por último: \"¿Sería posible ...?\""],
+  "¿Cómo se recurre formalmente una decisión que crees que es un error?": ["Escribiría: \"Me dirijo a ustedes para recurrir la resolución del ...\"", "Luego expondría los motivos: \"Considero que se ha cometido un error porque ...\"", "Y terminaría: \"Por todo ello, solicito que ...\""],
+  "¿Qué diferencia hay entre ser asertivo y ser agresivo con una institución?": ["Ser asertivo significa ..., mientras que ser agresivo significa ...", "Por ejemplo, una persona asertiva diría ...", "Según mi experiencia, la asertividad funciona mejor porque ..."],
+  "¿Cómo influye la cultura de origen en la comodidad de cada persona para cuestionar a la autoridad?": ["En algunas culturas, cuestionar a un funcionario se ve como ...", "En mi país, la gente suele ...", "Por eso, quien acaba de llegar puede sentirse ..."],
+  // SPEAKING_TOPICS questions: everyday
+  "¿Cómo invitas a un amigo a hacer algo?": ["Diría: \"Oye, ¿estás libre el ...?\"", "Luego: \"¿Te apetece ... conmigo?\"", "Y: \"¿Quedamos en ...?\""],
+  "¿Qué dices si no puedes ir a un plan?": ["Diría: \"Lo siento mucho, pero no puedo ir.\"", "Luego explicaría: \"Es que tengo que ...\"", "Y: \"¿Lo dejamos para otro día?\""],
+  "¿Qué te gusta hacer con tus amigos?": ["Con mis amigos, me encanta ...", "A menudo ...", "La última vez, ..."],
+  "¿Qué pequeña costumbre mejora tu día?": ["Una pequeña costumbre que mejora mi día es ...", "Empecé a hacerlo cuando ...", "Me ayuda a sentirme ..."],
+  "¿En qué se diferencian tus costumbres de las de tus amigos o tu familia?": ["Comparado con mis amigos, yo ...", "Por ejemplo, mi ... normalmente ..., pero yo ...", "Creo que es porque ..."],
+  "¿Qué has empezado a hacer últimamente que antes no hacías?": ["Últimamente he empezado a ...", "Antes no ..., pero ahora ...", "Decidí empezar porque ..."],
+  "¿Qué opinas del equilibrio entre trabajo y vida personal hoy en día?": ["En mi opinión, el equilibrio entre trabajo y vida personal es ...", "Hoy en día, mucha gente ...", "Personalmente, intento ..."],
+  "¿Dependemos demasiado de la tecnología en la vida diaria?": ["Creo que sí dependemos bastante de la tecnología.", "Por ejemplo, la mayoría de la gente no puede ... sin el móvil.", "Aun así, la tecnología también nos ayuda a ..."],
+  "¿Cómo manejas un desacuerdo con un amigo sobre algo que os importa a los dos?": ["Cuando no estoy de acuerdo con un amigo, intento ...", "Suelo decir algo como: \"Entiendo por qué lo piensas, pero ...\"", "Al final, lo más importante es ..."],
+  "Si tuvieras que explicar tus valores a alguien que apenas te conoce, ¿qué dirías?": ["Si tuviera que resumir mis valores, empezaría por ...", "Esto es importante para mí porque ...", "Se nota en la forma en que ..."],
+  "¿Qué idea muy aceptada no compartes tú personalmente?": ["Una idea que casi todo el mundo acepta, pero yo no, es ...", "No estoy de acuerdo porque ...", "Según mi experiencia, ..."],
+  "¿En qué se diferencia el humor entre los idiomas o culturas que conoces?": ["En mi cultura, la gente suele bromear sobre ...", "En español, el humor muchas veces se basa en ...", "Algo que no se traduce bien es ..."]
+};
+function studioStartersFor(item){ return (item && STUDIO_STARTERS[item.en]) || []; }
 /* goal is one goal key, or 'all' to draw on every goal the learner chose. */
 function buildPracticeRound(goal, level, difficulty){
   const goalKeys = goal==='all' ? profileGoalKeys(state.profile) : [goal];
   if(!goalKeys.length) goalKeys.push('everyday');
-  const vPoolAll = VOCAB_SETS_FREE.filter(s=>s.level===level && s.category==='vocab');
   const slPoolAll = VOCAB_SETS_FREE.filter(s=>s.level===level && s.category==='slang');
   const gPoolAll = GRAMMAR_ITEMS_FREE.filter(g=>g.level===level);
-  const vTagged = vPoolAll.filter(s=>s.goals.some(gk=>goalKeys.includes(gk)));
   const slTagged = slPoolAll.filter(s=>s.goals.some(gk=>goalKeys.includes(gk)));
-  const vSets = vTagged.length ? vTagged : vPoolAll;
   const slSets = slTagged.length ? slTagged : slPoolAll;
   const flattenCards = sets => sets.reduce((acc,s)=>acc.concat(s.cards), []);
-  // Words: from the vocab sets completed on this stage's roadmap, newest set first (a second set
-  // is added until there are about 6 cards to choose from). No completed set yet: the level pool.
-  const stageSets = stageDoneIds('vocab', state.progress.completedVocabSets).map(id=>VOCAB_SETS.find(x=>x.id===id)).filter(x=>x && x.category === 'vocab');
-  let vCards = flattenCards(vSets);
-  if(stageSets.length){
-    const pool = [];
-    for(const st of stageSets){ st.cards.forEach(c=>pool.push(c)); if(pool.length >= 6) break; }
-    if(pool.length) vCards = pool;
-  }
   const slCards = flattenCards(slSets);
   const pick = (arr, n) => {
     const pool = arr.slice(), out = [];
     while(out.length < n && pool.length) out.push(pool.splice(Math.floor(Math.random()*pool.length), 1)[0]);
     return out;
   };
-  const wordCount = difficulty==='easy' ? 1 : difficulty==='medium' ? 2 : 3;
-  const words = pick(vCards, wordCount).map(c=>({
-    word: c.word,
-    meaning: L(c.meaning.en, c.meaning.tr, c.meaning.fa, c.meaning.es),
-    note: c.note ? L(c.note.en, c.note.tr, c.note.fa, c.note.es) : null,
-    sentence: c.sentence || null
-  }));
   let grammar = null;
   if(difficulty !== 'easy' && gPoolAll.length){
     const withVariant = gPoolAll.filter(g=>g.goalVariant && goalKeys.some(gk=>g.goalVariant[gk]));
@@ -12056,13 +12231,15 @@ function buildPracticeRound(goal, level, difficulty){
   }
   const minWords = difficulty==='easy' ? 4 : difficulty==='medium' ? 12 : 30;
   const minSentences = difficulty==='easy' ? 1 : difficulty==='medium' ? 2 : 3;
-  // With several goals, the topic comes from a randomly chosen one of them (words/grammar above
+  // With several goals, the topic comes from a randomly chosen one of them (grammar/slang above
   // already draw from all), so repeat rounds cover every goal.
   const topicGoal = goalKeys[Math.floor(Math.random()*goalKeys.length)];
   const topicPool = (PRACTICE_TOPICS[topicGoal] && PRACTICE_TOPICS[topicGoal][difficulty]) || [];
   const topicItem = topicPool.length ? topicPool[Math.floor(Math.random()*topicPool.length)] : null;
   const topic = topicItem ? L(topicItem.en, topicItem.tr, topicItem.fa, topicItem.es) : null;
-  return {difficulty, goal, level, words, grammar, slang, minWords, minSentences, topic};
+  // No target words (2026-10-10, Farin: random vocab had nothing to do with the topic);
+  // the round offers starting sentences for its topic instead (STUDIO_STARTERS).
+  return {difficulty, goal, level, words:[], starters:studioStartersFor(topicItem), grammar, slang, minWords, minSentences, topic};
 }
 function stemWord(w){ return w.toLowerCase().replace(/[^a-záéíóúñü']/g,'').replace(/(es|s)$/,''); }
 const COMMON_SPANISH_WORDS = new Set(['yo','tú','tu','vos','él','el','ella','usted','nosotros','nosotras','vosotros','vosotras','ellos','ellas','ustedes','me','te','se','nos','os','le','les','lo','la','los','las','mi','mis','su','sus','nuestro','nuestra','nuestros','nuestras','vuestro','vuestra','este','esta','estos','estas','ese','esa','esos','esas','aquel','aquella','soy','eres','es','somos','sois','son','era','eras','fui','fue','fuimos','fueron','estoy','estás','estas','está','estamos','estáis','están','estaba','estuvo','hay','había','tengo','tienes','tiene','tenemos','tenéis','tienen','tenía','tuvo','hago','haces','hace','hacemos','hacéis','hacen','hizo','voy','vas','va','vamos','vais','van','fue','iba','doy','das','da','damos','dan','sé','sabes','sabe','sabemos','saben','quiero','quieres','quiere','queremos','quieren','puedo','puedes','puede','podemos','pueden','digo','dices','dice','decimos','dicen','hablo','hablas','habla','hablamos','hablan','como','comes','come','comemos','comen','vivo','vives','vive','vivimos','viven','trabajo','trabajas','trabaja','trabajamos','trabajan','y','o','u','e','ni','pero','porque','si','aunque','cuando','mientras','como','que','a','ante','bajo','con','contra','de','desde','en','entre','hacia','hasta','para','por','según','sin','sobre','tras','el','la','los','las','un','una','unos','unas','no','sí','muy','más','menos','también','tampoco','ya','todavía','aquí','allí','ahí','hoy','ayer','mañana','siempre','nunca','ahora','luego','después','antes','bien','mal','bueno','buena','malo','mala','grande','pequeño','pequeña','nuevo','nueva','viejo','vieja','mismo','misma','otro','otra','todo','toda','todos','todas','algo','alguien','nada','nadie','alguno','alguna','ninguno','ninguna','mucho','mucha','muchos','muchas','poco','poca','pocos','pocas','qué','quién','cuál','dónde','cuándo','cómo','cuánto','por qué','día','tiempo','año','vez','casa','vida','persona','gente','trabajo','mundo','mano','parte','cosa','hombre','mujer','niño','niña','amigo','amiga','familia','ciudad','país','agua','comida']);
@@ -12139,6 +12316,7 @@ function checkPracticeAnswer(round, text){
   const weights = round.difficulty==='easy' ? {vocab:70, length:30, grammar:0, slang:0}
     : round.difficulty==='medium' ? {vocab:50, length:30, grammar:20, slang:0}
     : {vocab:40, length:20, grammar:20, slang:20};
+  if(!round.words.length){ weights.length += weights.vocab; weights.vocab = 0; }
   const vocabPct = round.words.length ? wordsHit.length/round.words.length : 1;
   const wcPct = round.minWords ? Math.min(wc/round.minWords, 1) : 1;
   const scPct = round.minSentences ? Math.min(sc/round.minSentences, 1) : 1;
@@ -12167,13 +12345,13 @@ function practiceFeedback(result, round){
       'این هنوز مثل یک جمله واقعی خوانده نمی‌شود — مطمئن شو یک فاعل و فعل واضح دارد، مثل «Yo ...» یا «Mi amigo ...».', "Esto todavía no se lee como una oración real — asegúrate de que tenga un sujeto y un verbo claros, como \"Yo ...\" o \"Mi amigo ...\"."
     )});
   }
-  if(result.wordsMissed.length===0){
+  if(round.words.length && result.wordsMissed.length===0){
     lines.push({ok:true, text: L(
       `All ${round.words.length} target word${round.words.length>1?'s':''} used — nice!`,
       `Hedeflenen ${round.words.length} kelimenin tümünü kullandın — harika!`,
       `همه ${round.words.length} کلمه هدف را استفاده کردی — عالی!`, `¡Usaste las ${round.words.length} palabra${round.words.length>1?'s':''} objetivo — genial!`
     )});
-  } else {
+  } else if(round.words.length){
     lines.push({ok:false, text: L(
       `Missing: ${result.wordsMissed.join(', ')}. Try working ${result.wordsMissed.length>1?'them':'it'} into your ${round.words.length>1?'sentences':'sentence'}.`,
       `Eksik: ${result.wordsMissed.join(', ')}. Bunları cümlelerine eklemeyi dene.`,
@@ -12304,7 +12482,7 @@ function withWritingTask(round, vp){
   const ids = task.grammar || [];
   const recent = stageDoneIds('grammar', state.progress.completedTraps).filter(id=>ids.includes(id));
   const gItem = GRAMMAR_ITEMS.find(g=>g.id === (recent[0] || ids[0]));
-  const out = Object.assign({}, round, {topic:trLine(task.prompt), minWords:task.minWords || round.minWords, task:{stage, goal:gk}});
+  const out = Object.assign({}, round, {topic:trLine(task.prompt), starters:[], minWords:task.minWords || round.minWords, task:{stage, goal:gk}});
   if(gItem && gItem.blank && gItem.blank.word) out.grammar = {id:gItem.id, title:grammarTitle(gItem), markerWord:gItem.blank.word, exp:trLine(gItem.exp)};
   return out;
 }
@@ -12356,7 +12534,7 @@ function withSpeakingTopic(round, vp){
   const tp = ((SPEAKING_TOPICS[gk] && SPEAKING_TOPICS[gk][lv]) || []).find(x=>Array.isArray(x.models) && x.models.length && x.questions && x.questions.length);
   if(!tp) return round;
   const qi = Math.floor(n / Math.max(goals.length, 1)) % Math.min(tp.questions.length, tp.models.length);
-  return Object.assign({}, round, {topic:trLine(tp.questions[qi]), speak:{topicId:tp.id, goal:gk, level:lv, qi}});
+  return Object.assign({}, round, {topic:trLine(tp.questions[qi]), starters:studioStartersFor(tp.questions[qi]), speak:{topicId:tp.id, goal:gk, level:lv, qi}});
 }
 function speakingModelHtml(round){
   const tp = speakingTopicOf(round), m = tp && tp.models && tp.models[round.speak.qi];
@@ -12631,7 +12809,7 @@ function speakPanelHtml(vp){
     if(vp.said) return '';
     return `<div class="card-flat speak-shadow" style="margin-top:14px;">
       <div class="echo-say">${L('Say it out loud','Yüksek sesle söyle','بلند بگو','Dilo en voz alta')}</div>
-      <p class="speak-note">${L('Use the words above, then tap the button. You can also type it below.','Yukarıdaki kelimeleri kullan, sonra butona dokun. İstersen aşağıya da yazabilirsin.','از کلمه‌های بالا استفاده کن، بعد دکمه را بزن. می‌توانی پایین هم بنویسی.','Usa las palabras de arriba y toca el botón. También puedes escribirlo abajo.')}</p>
+      <p class="speak-note">${L('Use a starter above if it helps, then tap the button. You can also type it below.','İstersen yukarıdaki cümlelerden biriyle başla, sonra butona dokun. İstersen aşağıya da yazabilirsin.','اگر کمکت می‌کند با یکی از جمله‌های بالا شروع کن، بعد دکمه را بزن. می‌توانی پایین هم بنویسی.','Si te ayuda, empieza con una frase de arriba y toca el botón. También puedes escribirlo abajo.')}</p>
       <button class="btn btn-primary" data-action="speak-said">${L('I said it','Söyledim','گفتم','Ya lo dije')}</button>
     </div>`;
   }
@@ -12655,7 +12833,7 @@ function speakTakesHtml(takes, best, round){
     ${takes.map((t,i)=>{ const r = t.result || {}, h = (r.wordsHit || []).length, wc = r.wc || 0; return `<div class="speak-take${i === best ? ' kept' : ''}" id="speak-take-${i}">
       <div class="row between" style="align-items:center;"><span class="speak-take-n">${speakTakeLabel(i)}</span>${i === best ? `<span class="speak-kept-tag">✦ ${L('Kept','Seçilen','نگهش داشتی','Guardado')}</span>` : ''}</div>
       <p class="fill-text" dir="ltr">${t.text ? fillMarkedTextHtml(r, round, t.text) : '…'}</p>
-      <div class="speak-take-sum">${L(`${h} of ${n} target words · ${wc} words`, `Hedef kelimelerden ${h}/${n} · ${wc} kelime`, `${h} از ${n} کلمهٔ هدف · ${wc} کلمه`, `${h} de ${n} palabras clave · ${wc} palabras`)}</div>
+      <div class="speak-take-sum">${n ? L(`${h} of ${n} target words · ${wc} words`, `Hedef kelimelerden ${h}/${n} · ${wc} kelime`, `${h} از ${n} کلمهٔ هدف · ${wc} کلمه`, `${h} de ${n} palabras clave · ${wc} palabras`) : L(`${wc} words`, `${wc} kelime`, `${wc} کلمه`, `${wc} palabras`)}</div>
     </div>`; }).join('')}
     <p class="speak-note" style="margin-top:10px;">${best === 1 ? L("Take 2 is stronger, so that's the one you keep.",'2. deneme daha güçlü, onu saklıyoruz.','بار دوم بهتر گفتی، همین را نگه می‌داریم.','El intento 2 es más fuerte: ese es el que guardas.') : L('Your first take stays. Saying it twice still counts.','İlk denemen kalıyor. İki kez söylemek yine de sayılır.','بار اولت می‌ماند. دو بار گفتنش هم تمرین حساب می‌شود.','Tu primer intento se queda. Decirlo dos veces también cuenta.')}</p>
   </div>`;
@@ -12708,6 +12886,8 @@ function renderStudioRound(){
   // See it: in a speaking round the word pills stay lit for the words already said, before the check too.
   const litRes = result || (mode==='speaking' && vp.transcript ? checkPracticeAnswer(round, vp.transcript) : null);
   const wordPills = round.words.map((w,k)=>`<span class="pill vocab-hl fill-pill${litRes && litRes.wordsHit.includes(w.word) ? ' lit' : ''}" id="fill-pill-${k}" data-action="show-word-meaning" data-word="${esc(w.word)}" data-meaning="${esc(w.meaning)}" style="background:var(--cat-voc-soft); color:var(--cat-voc); margin:3px 4px 3px 0;">${esc(w.word)}</span>`).join('');
+  const starters = studioReflection(vp) ? [] : (round.starters || []);
+  const starterRows = starters.map(t=>`<div class="row" style="gap:8px; align-items:center;"><button type="button" class="icon-btn" data-action="speak-sentence" data-text="${esc(t)}" aria-label="${esc(L('Listen','Dinle','گوش بده','Escuchar'))}" style="flex:0 0 auto; background:var(--accent-soft); color:var(--accent-strong); border-radius:50%; width:28px; height:28px; display:flex; align-items:center; justify-content:center; border:none;">${ICONS.soundOn}</button><span dir="ltr" style="font-size:14px; line-height:1.5;">${esc(t)}</span></div>`).join('');
   return `<div class="fade-in">
     ${sectionHead(
       mode==='writing' ? L('Writing Practice','Yazma Pratiği','تمرین نوشتن', 'Práctica de escritura') : L('Speaking Practice','Konuşma Pratiği','تمرین صحبت‌کردن', 'Práctica de conversación'),
@@ -12720,8 +12900,10 @@ function renderStudioRound(){
       </div>` : ''; })()}
       ${writingTaskPlanHtml(round, vp)}
       <div class="card-flat">
-        <div class="eyebrow">${L('Use these words','Bu kelimeleri kullan','از این کلمات استفاده کن', 'Usa estas palabras')}</div>
-        <div style="margin-top:6px;">${wordPills}</div>
+        ${starters.length ? `<div class="eyebrow">${L('Useful ways to start','Başlamak için işe yarar cümleler','جمله‌های مفید برای شروع','Frases útiles para empezar')}</div>
+        <div class="stack" style="gap:8px; margin-top:8px;">${starterRows}</div>` : ''}
+        ${round.words.length ? `<div class="eyebrow"${starters.length ? ' style="margin-top:12px;"' : ''}>${L('Use these words','Bu kelimeleri kullan','از این کلمات استفاده کن','Usa estas palabras')}</div>
+        <div style="margin-top:6px;">${wordPills}</div>` : ''}
         ${round.grammar ? `<div style="margin-top:12px; font-size:13px; color:var(--ink-soft);"><b>${L('Try this grammar:','Bu yapıyı dene:','این ساختار را امتحان کن:', 'Prueba esta gramática:')}</b> ${esc(round.grammar.title)}</div>` : ''}
         ${round.slang ? `<div style="margin-top:6px; font-size:13px; color:var(--ink-soft);"><b>${L('Bonus slang:','Bonus argo:','اصطلاح اضافه:', 'Argot extra:')}</b> ${esc(round.slang.word)} — ${esc(round.slang.meaning)}</div>` : ''}
         <div style="margin-top:10px; font-size:12px; color:var(--ink-soft);">${L(`Aim for at least ${round.minWords} words.`,`En az ${round.minWords} kelime hedefle.`,`حداقل ${round.minWords} کلمه هدف بگیر.`, `Apunta a escribir al menos ${round.minWords} palabras.`)}</div>
@@ -15658,7 +15840,7 @@ function renderGameMatch(){
     <div class="game-status">
       <span class="game-status-text">${L(`${left} pair${left===1?'':'s'} to go`, `${left} çift kaldı`, `${left} جفت مانده`, left===1 ? 'Falta 1 pareja' : `Faltan ${left} parejas`)}</span>
       <span class="game-status-end">
-        <span class="game-chip">${L('Time','Süre','زمان','Tiempo')}: ${elapsed}s</span>
+        <span class="game-chip">${L('Time','Süre','زمان','Tiempo')}: ${elapsed}${L('s','sn','s','s')}</span>
         <span class="game-chip">${L('Mistakes','Hatalar','اشتباهات','Errores')}: ${round.mistakes}</span>
       </span>
     </div>
@@ -15973,13 +16155,13 @@ function renderGrammarTrap(id){
   const right = (variant && variant.right) ? variant.right : t.right;
   const wrong2 = (variant && variant.wrong2) ? variant.wrong2 : t.wrong2;
   const right2 = (variant && variant.right2) ? variant.right2 : t.right2;
-  const exampleBadge = (n) => `<span style="display:inline-flex; align-items:center; justify-content:center; width:20px; height:20px; border-radius:50%; background:var(--cat-gram); color:#fff; font-size:11px; font-weight:800; flex:0 0 auto;">${n}</span>`;
+  const exampleBadge = (n) => inCourseStep() ? '' : `<span style="display:inline-flex; align-items:center; justify-content:center; width:20px; height:20px; border-radius:50%; background:var(--cat-gram); color:#fff; font-size:11px; font-weight:800; flex:0 0 auto;">${n}</span>`;
   return courseGrammarOrder(t, `<div class="fade-in">
     ${sectionHead('', '')}
     <div class="screen" style="padding-top:0;">
       ${courseStripHtml()}${grammarContextHtml(t)}
       <div class="tip-card" style="position:relative; overflow:hidden; background:radial-gradient(circle at 16% 8%, rgba(255,255,255,.35), transparent 55%), linear-gradient(150deg, var(--cat-gram), color-mix(in srgb, var(--cat-gram) 78%, #000 18%)); border-radius:26px; padding:22px 20px 20px; box-shadow:0 16px 30px -14px color-mix(in srgb, var(--cat-gram) 55%, transparent);">
-        <div class="eyebrow" style="color:rgba(255,255,255,.85);">${inCourseStep() ? esc(courseUnitLabel(state.courseReturn.cid, state.courseReturn.uid)+' · '+courseStepShort(state.courseReturn.type)) : L('TIP','İPUCU','نکته','CONSEJO')}</div>
+        <div class="eyebrow" style="color:rgba(255,255,255,.85);">${inCourseStep() ? '' : L('TIP','İPUCU','نکته','CONSEJO')}</div>
         <h1 class="display" style="font-size:24px; margin-top:8px; line-height:1.3; color:#fff;">${esc(grammarTitle(t))}</h1>
         ${(() => { const st = structureExplanation(L(t.exp.en,t.exp.tr,t.exp.fa, t.exp.es)); const ft = t.formsTable; const how = st.rest ? renderLessonText(st.rest, '--cat-gram', {noPatterns: !!ft}) : ''; return `
         ${st.hook ? `<p style="margin-top:12px; font-size:15px; line-height:1.6; color:rgba(255,255,255,.95);">${esc(st.hook)}</p>` : ''}
@@ -16033,7 +16215,7 @@ function renderGrammarTrap(id){
         <div class="contrast-line right"><b>✓</b><span class="txt">${glossify(right2)}</span></div>
       </div>` : ''}
 
-      <p style="margin-top:18px; font-size:12.5px; color:var(--ink-faint); text-align:center;">${L('💬 Tap any word above to see what it means.','💬 Anlamını görmek için yukarıdaki bir kelimeye dokun.','💬 برای دیدن معنی، روی هر کلمه بالا لمس کن.', '💬 Toca cualquier palabra de arriba para ver su significado.')}</p>
+      <p class="gx-hint" style="margin-top:18px; font-size:12.5px; color:var(--ink-faint); text-align:center;">${L('💬 Tap any word above to see what it means.','💬 Anlamını görmek için yukarıdaki bir kelimeye dokun.','💬 برای دیدن معنی، روی هر کلمه بالا لمس کن.', '💬 Toca cualquier palabra de arriba para ver su significado.')}</p>
 
       <button class="btn btn-primary" style="margin-top:14px;" data-action="start-grammar-quiz" data-id="${t.id}">${inCourseStep() ? L('Practise: the quiz','Alıştırma: test','تمرین: آزمون','Practica: el test') : L("Got it — let's practice!","Anladım — hadi pratik yapalım!","فهمیدم — بریم تمرین کنیم!","¡Entendido — a practicar!")}</button>
       ${state.progress.completedTraps.includes(t.id) ? yourTurnHtml(t) : ''}
@@ -16777,7 +16959,7 @@ function renderStoryDetail(id){
         <div class="eyebrow" style="color:var(--cat-story);">${L('Story message','Hikayenin mesajı','پیام داستان', 'Mensaje de la historia')}</div>
         <p style="margin:6px 0 0; font-style:italic; color:var(--cat-story);">${esc(s.message.en)}</p>
       </div>` : ''}
-      <button class="btn btn-primary" style="margin-top:16px;" data-action="start-story-quiz" data-id="${s.id}">${inCourseStep() ? L('Check what you noticed','Fark ettiklerini kontrol et','آنچه را متوجه شدی بررسی کن','Comprueba lo que notaste') : L('Play Game!','Oyunu Oyna!','بازی کن!','¡Juega!')}</button>
+      <button class="btn btn-primary" style="margin-top:16px;" data-action="start-story-quiz" data-id="${s.id}">${inCourseStep() ? L('Check what you noticed','Ne fark ettiğini kontrol et','ببین چه چیزهایی را متوجه شدی','Comprueba lo que notaste') : L('Play Game!','Oyunu Oyna!','بازی کن!','¡Juega!')}</button>
       ` : ''}
     </div>
   </div>`;
@@ -19754,35 +19936,27 @@ const HANDLERS = {
    Claude/specs/course-experience-redesign.md 4.2): courseNext(), sequential unit path, labels v2
    with minutes, Next on every step, collapsible chapters, portfolio slots, 3-card intro. */
 const COURSE_TYPE_META = {
-  review:{en:'Warm-up: 3 questions from earlier units', tr:'Isınma: önceki ünitelerden 3 soru', fa:'دست‌گرمی: ۳ سؤال از واحدهای قبلی', es:'Calentamiento: 3 preguntas de unidades anteriores', min:2, cat:'review', ic:'repeat'},
-  story:{en:'Read the episode', tr:'Bölümü oku', fa:'قسمت را بخوان', es:'Lee el episodio', min:5, cat:'story', ic:'book'},
-  grammar:{en:'See how it works', tr:'Nasıl çalıştığını gör', fa:'ببین چطور کار می‌کند', es:'Mira cómo funciona', min:5, cat:'gram', ic:'dumbbell'},
-  b2:{en:'B2 extra: one step further', tr:'B2 ek: bir adım ileri', fa:'B2 اضافه: یک قدم جلوتر', es:'Extra B2: un paso más', min:4, cat:'gram', ic:'dumbbell'},
-  vocab:{en:'Learn the 10 words', tr:'10 kelimeyi öğren', fa:'۱۰ واژه را یاد بگیر', es:'Aprende las 10 palabras', min:5, cat:'voc', ic:'cards'},
-  game:{en:'Play: Word Rush', tr:'Oyna: Kelime Yarışı', fa:'بازی: مسابقه‌ی واژه‌ها', es:'Juega: Word Rush', min:3, cat:'review', ic:'play'},
-  trap:{en:'Play: Trap Dash', tr:'Oyna: Tuzak Kaçışı', fa:'بازی: فرار از تله‌ها', es:'Juega: Trap Dash', min:2, cat:'gram', ic:'bolt'},
-  speaking:{en:'Say it: 90 / 60 / 45 seconds', tr:'Söyle: 90 / 60 / 45 saniye', fa:'بگو: ۹۰ / ۶۰ / ۴۵ ثانیه', es:'Dilo: 90 / 60 / 45 segundos', min:6, cat:'lis', ic:'mic'},
+  review:{en:'From last time', tr:'Önceki dersten', fa:'از درس قبل', es:'De la lección anterior', min:2, cat:'review', ic:'repeat'},
+  story:{en:'Story', tr:'Hikaye', fa:'داستان', es:'Historia', min:5, cat:'story', ic:'book'},
+  grammar:{en:'Grammar', tr:'Dilbilgisi', fa:'گرامر', es:'Gramática', min:5, cat:'gram', ic:'dumbbell'},
+  b2:{en:'B2 grammar', tr:'B2 dilbilgisi', fa:'گرامر B2', es:'Gramática B2', min:4, cat:'gram', ic:'dumbbell'},
+  vocab:{en:'Words', tr:'Kelime', fa:'واژه‌ها', es:'Palabras', min:5, cat:'voc', ic:'cards'},
+  game:{en:'Word Rush', tr:'Kelime Yarışı', fa:'مسابقه‌ی واژه‌ها', es:'Carrera de palabras', min:3, cat:'review', ic:'play'},
+  trap:{en:'Trap Dash', tr:'Tuzak Kaçışı', fa:'فرار از تله‌ها', es:'Escape de trampas', min:2, cat:'gram', ic:'bolt'},
+  speaking:{en:'Speaking', tr:'Konuşma', fa:'صحبت', es:'Conversación', min:6, cat:'lis', ic:'mic'},
   judge:{en:'Judge the answers', tr:'Cevapları değerlendir', fa:'پاسخ‌ها را داوری کن', es:'Juzga las respuestas', min:3, cat:'diag', ic:'search'},
-  branch:{en:'Live the scene', tr:'Sahneyi yaşa', fa:'صحنه را زندگی کن', es:'Vive la escena', min:5, cat:'lis', ic:'chat'},
-  writing:{en:'Write it', tr:'Yaz', fa:'بنویس', es:'Escríbelo', min:7, cat:'gram', ic:'pen'},
-  perspective:{en:'Step into their shoes', tr:'Onun yerine geç', fa:'خودت را جای او بگذار', es:'Ponte en su lugar', min:2, cat:'lis', ic:'heart'},
-  exit:{en:'Lock it in: 6 questions', tr:'Pekiştir: 6 soru', fa:'تثبیتش کن: ۶ سؤال', es:'Fíjalo: 6 preguntas', min:3, cat:'story', ic:'check'},
+  branch:{en:'Speaking', tr:'Konuşma', fa:'صحبت', es:'Conversación', min:5, cat:'lis', ic:'chat'},
+  writing:{en:'Writing', tr:'Yazma', fa:'نوشتن', es:'Escritura', min:7, cat:'gram', ic:'pen'},
+  perspective:{en:'Empathy', tr:'Empati', fa:'همدلی', es:'Empatía', min:2, cat:'lis', ic:'heart'},
+  exit:{en:'Test', tr:'Test', fa:'آزمون', es:'Prueba', min:3, cat:'story', ic:'check'},
   mock:{en:'Mock test', tr:'Deneme sınavı', fa:'آزمون آزمایشی', es:'Simulacro', min:40, cat:'diag', ic:'pen'},
   project:{en:'Build your portfolio', tr:'Portföyünü oluştur', fa:'پرونده‌ی کاری‌ات را بساز', es:'Construye tu portafolio', min:15, cat:'diag', ic:'star'}
 };
-// Short names for the places where the long verb label does not fit (course strip, final project rows).
-const COURSE_TYPE_SHORT = {
-  review:{en:'Warm-up', tr:'Isınma', fa:'دست‌گرمی', es:'Calentamiento'}, story:{en:'Episode', tr:'Bölüm', fa:'قسمت', es:'Episodio'},
-  grammar:{en:'Grammar', tr:'Dilbilgisi', fa:'گرامر', es:'Gramática'}, b2:{en:'B2 extra', tr:'B2 ek', fa:'B2 اضافه', es:'Extra B2'},
-  vocab:{en:'Words', tr:'Kelimeler', fa:'واژه‌ها', es:'Palabras'}, game:{en:'Word Rush', tr:'Kelime Yarışı', fa:'مسابقه‌ی واژه‌ها', es:'Word Rush'},
-  trap:{en:'Trap Dash', tr:'Tuzak Kaçışı', fa:'فرار از تله‌ها', es:'Trap Dash'}, speaking:{en:'Speaking', tr:'Konuşma', fa:'گفتار', es:'Habla'},
-  judge:{en:'Judge', tr:'Değerlendir', fa:'داوری', es:'Juzga'}, branch:{en:'Scene', tr:'Sahne', fa:'صحنه', es:'Escena'},
-  writing:{en:'Writing', tr:'Yazma', fa:'نوشتن', es:'Escritura'}, perspective:{en:'Their shoes', tr:'Onun yerine', fa:'جای او', es:'Su lugar'},
-  exit:{en:'Lock it in', tr:'Pekiştir', fa:'تثبیت', es:'Fíjalo'}, mock:{en:'Mock test', tr:'Deneme', fa:'آزمون', es:'Simulacro'},
-  project:{en:'Portfolio', tr:'Portföy', fa:'پرونده‌ی کاری', es:'Portafolio'}
-};
-const COURSE_SESSION_NAMES = [{en:'Learn', tr:'Öğren', fa:'یادگیری', es:'Aprende'}, {en:'Practise', tr:'Alıştır', fa:'تمرین', es:'Practica'}, {en:'Do', tr:'Yap', fa:'به کار بستن', es:'Hazlo'}];
-const COURSE_CP_SESSION_NAMES = [{en:'Check', tr:'Kontrol et', fa:'سنجش', es:'Comprueba'}, {en:'Show it', tr:'Göster', fa:'نشان دادن مهارت', es:'Demuéstralo'}];
+// Short names (same as the card types since Phase 0; kept for the final project rows).
+const COURSE_TYPE_SHORT = COURSE_TYPE_META;
+// The parts of a lesson (its sessions) and of a chapter finale (spec v2 section 5; A17).
+const COURSE_SESSION_NAMES = [{en:'Learn', tr:'Öğren', fa:'یاد بگیر', es:'Aprende'}, {en:'Practise', tr:'Alıştır', fa:'تمرین کن', es:'Practica'}, {en:'Do', tr:'Yap', fa:'انجام بده', es:'Hazlo'}];
+const COURSE_CP_SESSION_NAMES = [{en:'Test', tr:'Test', fa:'آزمون', es:'Prueba'}, {en:'Show it', tr:'Göster', fa:'نشانش بده', es:'Demuéstralo'}];
 // Screen-only state (never saved): quiz cursors, open chapter, password box, intro, try-one pick.
 const courseUi = {judge:null, exit:null, wres:null, review:null, branch:null, fres:null, star:null, chapter:null, pwOpen:false, pwStatus:null, pwBusy:false, introOpen:null, trackOpen:false, nameOpen:false, tryPick:null, tryKey:null};
 function cl(o){ return o ? L(o.en, o.tr, o.fa, o.es) : ''; }
@@ -20207,11 +20381,11 @@ function courseUnitNo(cid, uid){
   for(let mi=0; mi<c.modules.length; mi++){
     const m = c.modules[mi], ui = m.units.findIndex(u=>u.id===uid);
     if(ui >= 0) return (mi+1)+'.'+(ui+1);
-    if(m.checkpoint && m.checkpoint.id===uid) return CL('Checkpoint','Kontrol','ایستگاه ارزیابی','Control')+' '+(mi+1);
+    if(m.checkpoint && m.checkpoint.id===uid) return CL('Chapter finale','Bölüm finali','پایان فصل','Final del capítulo')+' '+(mi+1);
   }
   return '';
 }
-function courseUnitLabel(cid, uid){ const f = courseFindUnit(cid, uid); if(!f) return ''; const isCp = !!(f.m.checkpoint && f.m.checkpoint.id===uid); return isCp ? courseUnitNo(cid, uid) : CL('Unit','Ünite','واحد','Unidad')+' '+courseUnitNo(cid, uid)+' '+cl(f.u.title); }
+function courseUnitLabel(cid, uid){ const f = courseFindUnit(cid, uid); if(!f) return ''; const isCp = !!(f.m.checkpoint && f.m.checkpoint.id===uid); return isCp ? courseUnitNo(cid, uid) : CL('Lesson','Ders','درس','Lección')+' '+courseUnitNo(cid, uid)+' · '+cl(f.u.title); }
 // Step k of a unit is open when every earlier step is done (done steps stay open; preview opens all).
 function courseStepOpen(cid, uid, k){
   if(coursePreviewOn() || k <= 0) return true;
@@ -20301,7 +20475,7 @@ function courseGrammarOrder(t, html){
   const i1 = html.indexOf('<div class="tip-card"'), i2 = html.indexOf(rowMark);
   if(i1 < 0 || i2 < 0 || i2 < i1) return html;
   let i3 = html.indexOf(rowMark, i2 + rowMark.length);
-  const hint = html.indexOf('<p style="margin-top:18px; font-size:12.5px; color:var(--ink-faint); text-align:center;">');
+  const hint = html.indexOf('<p class="gx-hint"');
   if(i3 < 0 || (hint >= 0 && hint < i3)) i3 = hint;
   if(i3 < 0) return html;
   const ex1 = html.slice(i2, i3).replace(/<h3 class="display"[^>]*>[^<]*<\/h3>/, '<h3 class="display" style="font-size:13.5px; color:var(--ink-faint); text-transform:uppercase; letter-spacing:.05em;">' + CL('From the story','Hikayeden','از داستان','De la historia') + '</h3>').replace('margin:22px 0 10px;', 'margin:4px 0 10px;');
@@ -20330,14 +20504,16 @@ function coursesDashTile(){
     </div>
   </button>`;
 }
+// unlock.lead (spec v2 section 5): "Chapter 1 is free. The full course has 24 lessons, 6 chapter finales and the final project."
 function courseFreeUnitsText(c){
   const free = (c.freeUnits || []).filter(uid=>courseFindUnit(c.id, uid)), total = courseUnitsTotal(c), cps = c.modules.filter(m=>m.checkpoint).length;
-  const freeUnits = free.filter(uid=>{ const f = courseFindUnit(c.id, uid); return !(f.m.checkpoint && f.m.checkpoint.id===uid); }).length;
-  const freeCps = free.length - freeUnits;
-  const what = !free.length ? '' : freeUnits === 1 ? CL('Unit '+courseUnitNo(c.id, free[0])+' is free.','Ünite '+courseUnitNo(c.id, free[0])+' ücretsiz.','واحد '+courseUnitNo(c.id, free[0])+' رایگان است.','La unidad '+courseUnitNo(c.id, free[0])+' es gratis.')
-    : CL('Chapter 1 ('+freeUnits+' units'+(freeCps ? ' + Checkpoint 1' : '')+') is free.','1. Bölüm ('+freeUnits+' ünite'+(freeCps ? ' + Kontrol 1' : '')+') ücretsiz.','فصل ۱ ('+freeUnits+' واحد'+(freeCps ? ' + ایستگاه ارزیابی ۱' : '')+') رایگان است.','El capítulo 1 ('+freeUnits+' unidades'+(freeCps ? ' + Control 1' : '')+') es gratis.');
-  const full = c.final ? CL('The full course has '+total+' units, '+cps+' checkpoints and the final project.','Tam kursta '+total+' ünite, '+cps+' kontrol ve final projesi var.','دوره‌ی کامل '+total+' واحد، '+cps+' ایستگاه ارزیابی و پروژه‌ی پایانی دارد.','El curso completo tiene '+total+' unidades, '+cps+' controles y el proyecto final.')
-    : CL('The full course has '+total+' units'+(cps ? ' and '+cps+' checkpoints' : '')+'.','Tam kursta '+total+' ünite'+(cps ? ' ve '+cps+' kontrol' : '')+' var.','دوره‌ی کامل '+total+' واحد'+(cps ? ' و '+cps+' ایستگاه ارزیابی' : '')+' دارد.','El curso completo tiene '+total+' unidades'+(cps ? ' y '+cps+' controles' : '')+'.');
+  const what = !free.length ? '' : free.length > 1 ? CL('Chapter 1 is free.','1. Bölüm ücretsiz.','فصل ۱ رایگان است.','El capítulo 1 es gratis.')
+    : CL('Lesson '+courseUnitNo(c.id, free[0])+' is free.','Ders '+courseUnitNo(c.id, free[0])+' ücretsiz.','درس '+courseUnitNo(c.id, free[0])+' رایگان است.','La lección '+courseUnitNo(c.id, free[0])+' es gratis.');
+  const en = [total+' lessons'], tr = [total+' ders'], fa = [total+' درس'], es = [total+' lecciones'];
+  if(cps){ en.push(cps+' chapter finales'); tr.push(cps+' bölüm finali'); fa.push(cps+' پایان فصل'); es.push(cps+' finales de capítulo'); }
+  if(c.final){ en.push('the final project'); tr.push('final projesi'); fa.push('پروژه‌ی پایانی'); es.push('el proyecto final'); }
+  const join = (a, and, sep)=>a.length > 1 ? a.slice(0, -1).join(sep) + and + a[a.length-1] : a[0];
+  const full = CL('The full course has '+join(en, ' and ', ', ')+'.', 'Tam kursta '+join(tr, ' ve ', ', ')+' var.', 'دوره‌ی کامل '+join(fa, ' و ', '، ')+' دارد.', 'El curso completo tiene '+join(es, ' y ', ', ')+'.');
   return (what ? what + ' ' : '') + full;
 }
 function courseCardHtml(c){
@@ -20372,9 +20548,9 @@ function renderCoursesHome(){
 }
 
 /* ---------- unlock box: "I want this course" + "I have a password" (Hr03Iu6C) ---------- */
-function courseRequestBtnHtml(c){
+function courseRequestBtnHtml(c, full){
   const hasName = !!(state.profile && state.profile.name);
-  const label = `${ICONS.whatsapp} ${CL('I want this course','Bu kursu istiyorum','این دوره را می‌خواهم','Quiero este curso')}`;
+  const label = `${ICONS.whatsapp} ${full ? CL('I want the full course','Tam kursu istiyorum','دوره‌ی کامل را می‌خواهم','Quiero el curso completo') : CL('I want this course','Bu kursu istiyorum','این دوره را می‌خواهم','Quiero este curso')}`;
   if(hasName) return `<a class="btn btn-whatsapp" target="_top" rel="noopener" href="${esc(courseRequestLink(c))}">${label}</a>`;
   if(!courseUi.nameOpen) return `<button class="btn btn-whatsapp" data-action="course-request-name">${label}</button>`;
   return `<div class="card-flat" style="padding:12px;">
@@ -20394,9 +20570,9 @@ function coursePwStatusText(st){
 }
 function coursePasswordBoxHtml(c){
   const st = courseUi.pwStatus && courseUi.pwStatus.cid===c.id ? courseUi.pwStatus : null;
-  if(!courseUi.pwOpen && !st) return `<button class="btn btn-ghost" data-action="course-pw-toggle">${CL('I have a password','Şifrem var','رمز دارم','Tengo una contraseña')}</button>`;
+  if(!courseUi.pwOpen && !st) return `<button class="btn btn-ghost" data-action="course-pw-toggle">${CL('I have a course password','Kurs şifrem var','رمز دوره دارم','Tengo una contraseña del curso')}</button>`;
   return `<div class="card-flat" style="padding:12px;">
-    <div class="eyebrow">${CL('I have a password','Şifrem var','رمز دارم','Tengo una contraseña')}</div>
+    <div class="eyebrow">${CL('Course password','Kurs şifresi','رمز دوره','Contraseña del curso')}</div>
     <input id="course-pw" class="name-input" type="text" autocomplete="off" autocapitalize="characters" spellcheck="false" dir="ltr" placeholder="HR-AYSE-7K3Q" value="${esc(courseUi.pwDraft||'')}" style="margin-top:8px; text-transform:uppercase; letter-spacing:.06em;" />
     ${st ? `<p style="margin:8px 0 0; font-size:13px; font-weight:700; color:${st.status==='ok' ? 'var(--success)' : 'var(--error)'};">${esc(coursePwStatusText(st))}</p>` : ''}
     ${st && st.status==='ok' ? '' : `<button class="btn btn-primary" style="margin-top:8px;" data-action="course-pw-unlock" data-cid="${c.id}" ${courseUi.pwBusy ? 'disabled' : ''}>${courseUi.pwBusy ? '…' : CL('Unlock','Kilidi aç','باز کردن','Desbloquear')}</button>`}
@@ -20414,16 +20590,19 @@ function courseAccessLineHtml(c){
   </div>`;
 }
 // The unlock box on the course page and the gate. `lead` is the one-line reason it is shown.
-function courseUnlockBoxHtml(c, lead){
+// `bare` (chapter-done screen): the two buttons and the who-sends-it line only, the button saying "the full course".
+function courseUnlockBoxHtml(c, lead, bare){
   if(courseUnlocked(c.id) || coursePreviewOn() || !courseHasContent(c.id)) return '';
-  return `<div class="card-flat" style="margin-top:14px; background:var(--cat-diag-soft); border-color:var(--cat-diag-soft);">
-    <div class="eyebrow" style="color:var(--cat-diag);">${CL('Full course','Tam kurs','دوره‌ی کامل','Curso completo')}</div>
-    <p style="font-size:13.5px; margin:4px 0 12px; line-height:1.45;">${esc(lead || courseFreeUnitsText(c))}</p>
-    <div class="stack" style="gap:8px;">
-      ${courseRequestBtnHtml(c)}
+  const inner = `<div class="stack" style="gap:8px;">
+      ${courseRequestBtnHtml(c, bare)}
       ${coursePasswordBoxHtml(c)}
     </div>
-    <p style="font-size:11.5px; color:var(--ink-faint); margin:10px 0 0;">${CL('Farin replies on WhatsApp and sends you a password. It works on every device where you log in with your name and password.','Farin WhatsApp\'tan yanıt verir ve sana bir şifre gönderir. Adın ve şifrenle giriş yaptığın her cihazda çalışır.','Farin در واتساپ جواب می‌دهد و برایت رمز می‌فرستد. این رمز روی هر دستگاهی که با اسم و رمزت وارد شوی کار می‌کند.','Farin responde por WhatsApp y te envía una contraseña. Funciona en todos los dispositivos donde inicies sesión con tu nombre y contraseña.')}</p>
+    <p style="font-size:12px; color:var(--ink-soft); margin:10px 0 0; line-height:1.45;${bare ? ' text-align:center;' : ''}">${CL('Your teacher Farin sends you a course password on WhatsApp. It works on every device you log in on.','Öğretmenin Farin, WhatsApp\'tan sana özel bir kurs şifresi gönderir. Giriş yaptığın her cihazda çalışır.','معلمت، Farin، رمز دوره را در واتساپ برایت می‌فرستد. روی هر دستگاهی که با آن وارد شوی کار می‌کند.','Tu profesor Farin te envía una contraseña del curso por WhatsApp. Funciona en todos los dispositivos donde inicies sesión.')}</p>`;
+  if(bare) return `<div class="course-unlock" style="margin-top:14px;">${inner}</div>`;
+  return `<div class="card-flat course-unlock" style="margin-top:16px; background:var(--cat-diag-soft); border-color:transparent;">
+    <div class="eyebrow" style="color:var(--clay-lavender-deep);">${CL('Full course','Tam kurs','دوره‌ی کامل','Curso completo')}</div>
+    <p style="font-size:13.5px; margin:4px 0 12px; line-height:1.45;">${esc(lead || courseFreeUnitsText(c))}</p>
+    ${inner}
   </div>`;
 }
 
@@ -20436,20 +20615,21 @@ const COURSE_INTRO = {
 };
 function courseIntroSeen(cid){ const m = state.progress.courseIntroSeen; return !!(m && m[cid]); }
 function courseIntroMark(cid){ const pr = state.progress; if(!pr.courseIntroSeen || typeof pr.courseIntroSeen !== 'object') pr.courseIntroSeen = {}; pr.courseIntroSeen[cid] = Date.now(); courseUi.introOpen = null; save(); }
+// The course level answers (spec v2 S1 intro.b1 / intro.b2), shared by the first-open intro and the "Course level" footer link.
+// `mark` gets the recommended style (orange outline + tint): the placement level on first open, the saved level later.
+function courseTrackPicksHtml(c, mark, action){
+  const chev = LANG==='fa' ? '‹' : '›';
+  const names = {B1:[CL('Examples first','Önce örnekler','اول نمونه‌ها','Primero ejemplos'), CL('Model texts and sentence starters when you write.','Yazarken örnek metin ve cümle başlangıçları.','موقع نوشتن، متن نمونه و شروع جمله داری.','Textos modelo y comienzos de frase cuando escribes.')],
+    B2:[CL('The harder version','Daha zor versiyon','نسخه‌ی سخت‌تر','La versión más difícil'), CL('Extra B2 grammar, no sentence starters.','Ek B2 dilbilgisi, cümle başlangıcı yok.','گرامر اضافه‌ی B2، بدون شروع جمله.','Gramática B2 extra, sin comienzos de frase.')],
+    full:[CL('Every lesson','Her ders','همه‌ی درس‌ها','Todas las lecciones'), ''], express:[CL('The essentials','Temel olanlar','نکته‌های اصلی','Lo esencial'), '']};
+  return (c.tracks || []).map(t=>{ const n = names[t] || [t, ''];
+    return `<button class="cs-pick${mark===t ? ' rec' : ''}" data-action="${action}" data-cid="${c.id}" data-track="${t}"><b>${esc(n[0])} ${chev}</b>${n[1] ? `<span>${esc(n[1])}</span>` : ''}</button>`; }).join('');
+}
 function courseTrackQuestionHtml(c){
   const tracks = c.tracks || []; if(!tracks.length) return '';
-  const track = courseTrack(c.id);
-  if(tracks.includes('B1')){
-    const opts = [['B1', CL('Not yet. I want examples and frames first','Henüz değil. Önce örnekler ve kalıplar istiyorum','هنوز نه. اول نمونه و قالب می‌خواهم','Todavía no. Primero quiero ejemplos y plantillas')], ['B2', CL('Yes. I want the extra B2 grammar and no frames','Evet. Ek B2 dilbilgisi istiyorum, kalıp istemiyorum','بله. گرامر اضافه‌ی B2 را می‌خواهم و قالب لازم ندارم','Sí. Quiero la gramática extra de B2 y sin plantillas')]];
-    return `<div class="card-flat" style="margin-top:12px;"><div class="eyebrow">${CL('One question','Tek bir soru','یک سؤال','Una pregunta')}</div>
-      <p style="margin:4px 0 10px; font-size:14.5px; font-weight:700;">${CL('Do you already write work emails in English without a template?','İş e-postalarını şablon olmadan İngilizce yazabiliyor musun?','همین حالا ایمیل‌های کاری را بدون الگو به انگلیسی می‌نویسی؟','¿Ya escribes correos de trabajo en inglés sin plantilla?')}</p>
-      <div class="stack" style="gap:8px;">${opts.filter(o=>tracks.includes(o[0])).map(o=>`<button class="cj-part wide${track===o[0] ? ' on' : ''}" data-action="course-track" data-cid="${c.id}" data-track="${o[0]}">${esc(o[1])} <span style="color:var(--ink-faint); font-weight:700;">· ${o[0]}</span></button>`).join('')}</div>
-      <p style="margin:8px 0 0; font-size:12px; color:var(--ink-faint);">${CL('You can change this later under "Change track".','Bunu daha sonra "Parkuru değiştir" altından değiştirebilirsin.','بعداً می‌توانی این را از «تغییر مسیر» عوض کنی.','Puedes cambiarlo más tarde en "Cambiar ruta".')}</p></div>`;
-  }
-  const names = {full:CL('Full: every unit','Tam: her ünite','کامل: همه‌ی واحدها','Completa: todas las unidades'), express:CL('Express: the essentials','Ekspres: temel olanlar','سریع: نکات اصلی','Exprés: lo esencial')};
-  return `<div class="card-flat" style="margin-top:12px;"><div class="eyebrow">${CL('One question','Tek bir soru','یک سؤال','Una pregunta')}</div>
-    <p style="margin:4px 0 10px; font-size:14.5px; font-weight:700;">${CL('Which pace do you want?','Hangi tempoyu istersin?','چه سرعتی می‌خواهی؟','¿Qué ritmo quieres?')}</p>
-    <div class="stack" style="gap:8px;">${tracks.map(t=>`<button class="cj-part wide${track===t ? ' on' : ''}" data-action="course-track" data-cid="${c.id}" data-track="${t}">${esc(names[t] || t)}</button>`).join('')}</div></div>`;
+  return `<div class="card-flat" style="margin-top:12px;"><div class="eyebrow">${CL('Course level','Kurs seviyesi','سطح دوره','Nivel del curso')}</div>
+    <div class="stack" style="gap:8px; margin-top:8px;">${courseTrackPicksHtml(c, courseTrack(c.id), 'course-track')}</div>
+    <p style="margin:8px 0 0; font-size:12px; color:var(--ink-faint);">${CL('You can change this later.','Bunu sonra değiştirebilirsin.','بعداً می‌توانی عوضش کنی.','Puedes cambiarlo más tarde.')}</p></div>`;
 }
 function renderCourseIntro(c){
   const pd = courseFinalData(c), intro = COURSE_INTRO[c.id] || {}, total = courseUnitsTotal(c), mods = c.modules.length;
@@ -20606,7 +20786,7 @@ function renderCourseDetail(cid){
       ${!(nx && nx.locked && !nx.final) ? courseUnlockBoxHtml(c) : ''}
       <div class="row" style="gap:6px; flex-wrap:wrap; justify-content:center; margin-top:18px;">
         <button class="link-btn" data-action="course-intro-open" data-cid="${c.id}">${CL('How this course works','Bu kurs nasıl işler','این دوره چطور کار می‌کند','Cómo funciona este curso')}</button>
-        ${(c.tracks||[]).length ? `<button class="link-btn" data-action="course-track-toggle">${CL('Change track','Parkuru değiştir','تغییر مسیر','Cambiar ruta')} · ${esc(track)}</button>` : ''}
+        ${(c.tracks||[]).length ? `<button class="link-btn" data-action="course-track-toggle">${CL('Course level','Kurs seviyesi','سطح دوره','Nivel del curso')}: ${esc(track)}</button>` : ''}
       </div>
       ${courseUi.trackOpen && (c.tracks||[]).length ? courseTrackQuestionHtml(c) : ''}
     </div>

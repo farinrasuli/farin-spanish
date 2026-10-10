@@ -1,4 +1,4 @@
-const CACHE = 'farin-spanish-v4';
+const CACHE = 'farin-spanish-v5';
 const PAGE_URL = self.registration.scope;
 /* Cozy Chores painted art (Trello 1m2Y0zdU, 8JAiLuV7): the game's plates and cut-outs are sibling files
    under chores/ (chores/plate-<id>.webp, chores/co-<id>.webp), precached with the page so the room

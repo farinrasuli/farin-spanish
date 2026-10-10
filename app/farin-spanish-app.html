@@ -6707,10 +6707,15 @@ function ttsStop(){
   if(ttsAudio){ const a = ttsAudio; ttsAudio = null; try{ a.onended = a.onerror = null; a.pause(); }catch(e){} ttsBadge(null); }
   try{ if(typeof speechSynthesis !== 'undefined'){ speechSynthesis.cancel(); } }catch(e){}
 }
+// Beginners: the device voice is capped slower at A1 / A2, like the clips (explicit slow replays stay as asked).
+function ttsDeviceRate(rate){
+  let lv = null; try{ lv = state.profile.level; }catch(e){}
+  return Math.min(rate || 0.92, lv === 'A1' ? 0.75 : lv === 'A2' ? 0.83 : 1);
+}
 function ttsSpeakDevice(text, rate, cb){
   try{
     if(typeof speechSynthesis === 'undefined' || typeof SpeechSynthesisUtterance === 'undefined'){ if(cb.error) cb.error(); return; }
-    const u = ttsUtter(text, rate);
+    const u = ttsUtter(text, ttsDeviceRate(rate));
     u.onend = ()=>{ if(cb.end) cb.end(); };
     u.onerror = ()=>{ if(cb.error) cb.error(); };
     speechSynthesis.speak(u);
@@ -6728,7 +6733,8 @@ function ttsSpeak(text, rate, cb){
   const want = ttsAccent(), alt = !!(want && want !== main && ttsAlt && ttsAlt[key] === want), code = alt ? want : main;
   ttsLast = {text, rate, cb};
   const a = new Audio(TTS_AUDIO_BASE + (alt ? 'alt/' : '') + key + '.mp3');
-  a.playbackRate = Math.min(1, (rate || 0.92) / 0.92); a.preservesPitch = true;
+  // clips are recorded at their level's pace (A1 / A2 slower), so only an explicit slow replay stretches them
+  a.playbackRate = (rate && rate <= 0.75) ? rate / 0.92 : 1; a.preservesPitch = true;
   ttsAudio = a; ttsBadge(code);
   const fail = ()=>{ if(ttsAudio !== a) return; ttsAudio = null; ttsBadge(null); ttsSpeakDevice(text, rate, cb); };
   a.onended = ()=>{ if(ttsAudio !== a) return; ttsAudio = null; ttsBadge(null); if(cb.end) cb.end(); };

@@ -19430,6 +19430,121 @@ function courseAccessRefresh(cid){
     if(before !== a.status + '|' + a.expiresAt && ['course-detail','course-unit','course-gate','courses-home'].includes(state.view)) render();
   }).catch(()=>{}).then(()=>{ courseAccessChecking[cid] = false; });
 }
+/* ---------- Send for review (Trello ezkJrF5X; business/farin-monetization/07-ielts-writing-review-spec.md) ----------
+   A course with teacherReview:true (today only 'ielts') shows "Send to Farin for review" under each writing
+   step, for learners with real access (a course password; not the free sample, not ?coursePreview).
+   Firestore rules only open 'progress', so each submission is progress/wr-<22 random base62 characters>:
+   {kind:'writingReview', v:1, app, course, unit, taskId, track, prompt, text, wordCount, learner:{name, uiLang,
+   level, accountHash (SHA-256 of the recovery code, the way admin › Users hashes it), phone, accessId},
+   submittedAt, status:'sent'|'reviewed', readAt, feedback:null|{note, reviewedAt}, test}. It has no profile
+   field and a wr- prefix, so admin › Users never lists it. The learner keeps progress.reviewRequests[taskId] =
+   {id, cid, uid, sentAt, status, feedback, checkedAt, seenAt}: it travels with progress (backup, login restore)
+   and the feedback is fetched from the wr- doc by id; the admin never writes the learner's progress doc.
+   One send per task; the text locks after sending. No WhatsApp: the feedback is an in-app note under the task.
+   Test hook: ?reviewTest=1 (or localStorage farinReviewTest=1) turns it on for every course on this device
+   with the normal unit access rule; those docs carry test:true. ?reviewTest=0 turns it off. */
+const REVIEW_DOC_PREFIX = 'wr-';
+const REVIEW_TEXT_MAX = 15000;
+const REVIEW_RECHECK_MS = 10 * 60 * 1000;          // a sent task re-reads its wr- doc at most every 10 min
+const REVIEW_RECHECK_DONE_MS = 6 * 3600 * 1000;    // a reviewed one every 6 h (Farin may edit the note)
+function courseReviewTestOn(){ try{ if(/[?&]reviewTest=1/.test(location.search)) localStorage.setItem('farinReviewTest','1'); if(/[?&]reviewTest=0/.test(location.search)) localStorage.removeItem('farinReviewTest'); return localStorage.getItem('farinReviewTest') === '1'; }catch(e){ return false; } }
+function courseReviewMap(){ const pr = state.progress; if(!pr.reviewRequests || typeof pr.reviewRequests !== 'object') pr.reviewRequests = {}; return pr.reviewRequests; }
+function courseReviewReq(w){ const r = w && w.id ? courseReviewMap()[w.id] : null; return r && typeof r === 'object' ? r : null; }
+function courseReviewOn(cid, uid){ const c = courseGet(cid); if(!c) return false; if(courseReviewTestOn()) return courseUnitAccess(c, uid); return !!c.teacherReview && courseUnlocked(cid); }
+function courseReviewLocked(cid, uid, w){ return !!courseReviewReq(w); }
+function courseReviewText(cid, uid){ const a = courseProg(cid).answers[uid+':writing']; return (a && a.text) || ''; }
+function courseReviewUnseen(r){ return !!(r && r.feedback && r.feedback.note && !r.seenAt); }
+function courseReviewNewId(){
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789', rnd = new Uint32Array(22);
+  crypto.getRandomValues(rnd); let s = ''; for(let i=0;i<22;i++) s += chars[rnd[i] % 62]; return REVIEW_DOC_PREFIX + s;
+}
+function courseReviewDate(ms){ try{ return new Date(Number(ms)).toLocaleDateString(LANG==='fa' ? 'fa-IR' : LANG==='tr' ? 'tr-TR' : LANG==='es' ? 'es-ES' : 'en-GB', {day:'numeric', month:'short'}); }catch(e){ return ''; } }
+// Sends the saved text of one writing step. Resolves true when the wr- doc is written.
+function courseReviewSend(cid, uid){
+  const w = courseUnitItems(uid).writing;
+  if(!w || courseReviewReq(w) || courseUi.reviewBusy) return Promise.resolve(false);
+  const text = courseReviewText(cid, uid).slice(0, REVIEW_TEXT_MAX), wc = courseWordCount(text);
+  if(!courseReviewOn(cid, uid) || !courseStepDone(uid, 'writing') || wc < (w.minWords || 0)) return Promise.resolve(false);
+  if(typeof firebase === 'undefined' || !(window.crypto && crypto.getRandomValues)){ courseUi.reviewErr = 'offline'; render(); return Promise.resolve(false); }
+  courseUi.reviewBusy = true; courseUi.reviewErr = null; render();
+  const p = state.profile || {}, id = courseReviewNewId(), now = Date.now(), code = p.recoveryCode || '';
+  return (code ? courseSha256Hex(code).catch(()=>null) : Promise.resolve(null)).then(hash=>{
+    const doc = {kind:'writingReview', v:1, app:LOGIN_APP, course:cid, unit:uid, taskId:w.id, track:courseTrack(cid),
+      prompt:(w.prompt && w.prompt.en) || '', text, wordCount:wc,
+      learner:{name:p.name || '', uiLang:LANG, level:p.level || '', accountHash:hash, phone:p.contactPhone || null, accessId:(courseAccessInfo(cid) || {}).id || null},
+      submittedAt:now, status:'sent', readAt:null, feedback:null, test:courseReviewTestOn()};
+    return firebase.firestore().collection('progress').doc(id).set(doc);
+  }).then(()=>{
+    courseReviewMap()[w.id] = {id, cid, uid, sentAt:now, status:'sent', feedback:null, checkedAt:now, seenAt:null};
+    courseUi.reviewBusy = false; courseUi.reviewAsk = null; markActivity(); save(); render(); return true;
+  }).catch(()=>{ courseUi.reviewBusy = false; courseUi.reviewErr = 'failed'; render(); return false; });
+}
+// Re-reads the wr- docs of one course (throttled); a new or changed note shows the "Feedback ready" badge again.
+const courseReviewChecking = {};
+function courseReviewRefresh(cid){
+  if(typeof firebase === 'undefined') return;
+  const map = courseReviewMap();
+  Object.keys(map).forEach(tid=>{
+    const r = map[tid]; if(!r || typeof r !== 'object' || r.cid !== cid || !r.id || courseReviewChecking[r.id]) return;
+    if(r.checkedAt && Date.now() - r.checkedAt < (r.feedback ? REVIEW_RECHECK_DONE_MS : REVIEW_RECHECK_MS)) return;
+    courseReviewChecking[r.id] = true;
+    firebase.firestore().collection('progress').doc(r.id).get().then(doc=>{
+      const d = doc.exists ? (doc.data() || {}) : {};
+      r.checkedAt = Date.now();
+      const fb = d.feedback && d.feedback.note ? {note:String(d.feedback.note), reviewedAt:Number(d.feedback.reviewedAt) || Date.now()} : null;
+      const changed = !!fb && (!r.feedback || r.feedback.note !== fb.note);
+      if(fb){ r.feedback = fb; r.status = 'reviewed'; if(changed) r.seenAt = null; }
+      save();
+      if(changed && ['course-detail','course-unit','course-step'].includes(state.view)) render();
+    }).catch(()=>{}).then(()=>{ courseReviewChecking[r.id] = false; });
+  });
+}
+function courseReviewReadyPill(){ return `<span class="pill review-ready" style="background:var(--success-soft); color:var(--success); font-size:11px; margin-inline-start:6px;">${CL('Feedback ready','Geri bildirim hazır','بازخورد آماده است','Comentarios listos')}</span>`; }
+// Unit step list: a pill on the writing row ("Sent for review" / "Feedback ready").
+function courseReviewBadgeHtml(cid, uid){
+  const r = courseReviewReq(courseUnitItems(uid).writing); if(!r) return '';
+  courseReviewRefresh(cid);
+  if(courseReviewUnseen(r)) return ' '+courseReviewReadyPill();
+  return r.feedback ? '' : ` <span class="pill" style="background:var(--bg-sunken); color:var(--ink-faint); font-size:11px; margin-inline-start:6px;">${CL('Sent for review','İncelemeye gönderildi','برای بررسی فرستاده شد','Enviado para revisión')}</span>`;
+}
+// Course page: one row when feedback is waiting, opening that writing step.
+function courseReviewNoticeHtml(c){
+  if(!c || !Object.keys(courseReviewMap()).length) return '';
+  courseReviewRefresh(c.id);
+  const ready = Object.keys(courseReviewMap()).map(k=>courseReviewMap()[k]).filter(r=>r && r.cid===c.id && courseReviewUnseen(r) && courseFindUnit(c.id, r.uid));
+  if(!ready.length) return '';
+  const r = ready[0];
+  return `<button class="item-row course-review-notice" data-action="course-step" data-cid="${c.id}" data-uid="${esc(r.uid)}" data-type="writing" style="margin-top:10px; border-color:var(--success);">
+      <span class="item-ic" style="background:var(--success-soft); color:var(--success);">${ICONS.pen}</span>
+      <div class="item-body"><div class="item-title">${CL('Feedback from Farin is ready','Farin\'in geri bildirimi hazır','بازخورد فرین آماده است','Los comentarios de Farin están listos')}</div><div style="font-size:12px; color:var(--ink-soft); margin-top:2px;">${esc(courseUnitLabel(c.id, r.uid))}${ready.length > 1 ? ' +'+(ready.length-1) : ''}</div></div>
+      <span class="chevron">${ICONS.chev}</span>
+    </button>`;
+}
+// Writing step: the send button, the "Sent!" state, then the in-app feedback note.
+function courseReviewHtml(cid, uid, w){
+  const r = courseReviewReq(w);
+  if(!r && !courseReviewOn(cid, uid)) return '';
+  const wrap = inner=>`<div class="card-flat course-review" style="margin-top:14px;">${inner}</div>`;
+  if(r){
+    courseReviewRefresh(cid);
+    if(!r.feedback || !r.feedback.note) return wrap(`<button class="btn course-review-sent" disabled style="width:100%; background:var(--success); color:#fff; opacity:1;">${CL('Sent!','Gönderildi!','ارسال شد!','¡Enviado!')}</button>
+      <p style="font-size:13px; color:var(--ink-soft); margin:8px 0 0;">${CL('Farin will send your feedback within 2–3 days. It will appear here.','Farin geri bildirimini 2–3 gün içinde gönderecek. Burada görünecek.','فرین ظرف ۲ تا ۳ روز بازخوردش را برایت می‌فرستد. همین‌جا نشان داده می‌شود.','Farin te enviará sus comentarios en 2–3 días. Aparecerán aquí.')}</p>`);
+    const fresh = courseReviewUnseen(r);
+    if(fresh){ r.seenAt = Date.now(); save(); }   // opening the step = seen; the badge shows on this visit only
+    return wrap(`<div class="row between" style="align-items:center; gap:8px;"><div class="eyebrow" style="color:var(--success);">${CL('Feedback from Farin','Farin\'den geri bildirim','بازخورد فرین','Comentarios de Farin')}</div>${fresh ? courseReviewReadyPill() : ''}</div>
+      <p class="course-review-note" dir="auto" style="margin:8px 0 0; font-size:14px; line-height:1.55; white-space:pre-wrap;">${esc(r.feedback.note)}</p>
+      <p style="font-size:12px; color:var(--ink-faint); margin:8px 0 0;">${CL('Sent','Gönderildi','ارسال','Enviado')} ${esc(courseReviewDate(r.sentAt))} · ${CL('Reviewed','İncelendi','بررسی','Revisado')} ${esc(courseReviewDate(r.feedback.reviewedAt))}</p>`);
+  }
+  const text = courseReviewText(cid, uid), wc = courseWordCount(text), need = w.minWords || 0, done = courseStepDone(uid, 'writing'), ready = done && wc >= need;
+  const err = courseUi.reviewErr ? `<p style="color:var(--error); font-size:12.5px; margin:8px 0 0;">${CL('Couldn\'t send. Check your connection and try again.','Gönderilemedi. Bağlantını kontrol edip tekrar dene.','ارسال نشد. اتصالت را بررسی کن و دوباره امتحان کن.','No se pudo enviar. Revisa tu conexión e inténtalo de nuevo.')}</p>` : '';
+  if(courseUi.reviewAsk === w.id) return wrap(`<p style="margin:0; font-size:13.5px; font-weight:700;">${CL('Send this text to Farin? You can\'t change it after sending.','Bu metni Farin\'e gönderelim mi? Gönderdikten sonra değiştiremezsin.','این متن را برای فرین بفرستی؟ بعد از ارسال دیگر نمی‌توانی تغییرش بدهی.','¿Enviar este texto a Farin? No podrás cambiarlo después.')}</p>
+      <div class="row" style="gap:8px; margin-top:10px;"><button class="btn btn-primary" style="flex:1;" data-action="course-review-send" data-cid="${cid}" data-uid="${uid}" ${courseUi.reviewBusy ? 'disabled' : ''}>${courseUi.reviewBusy ? CL('Sending…','Gönderiliyor…','در حال ارسال…','Enviando…') : CL('Send','Gönder','ارسال','Enviar')}</button>
+      <button class="btn btn-ghost" style="flex:1;" data-action="course-review-cancel" ${courseUi.reviewBusy ? 'disabled' : ''}>${CL('Cancel','İptal','لغو','Cancelar')}</button></div>${err}`);
+  return wrap(`<div class="eyebrow">${CL('Teacher review','Öğretmen incelemesi','بررسی معلم','Revisión del profesor')}</div>
+      <p style="font-size:13px; color:var(--ink-soft); margin:4px 0 10px;">${CL('Farin reads your text and sends feedback within 2–3 days.','Farin metnini okur ve 2–3 gün içinde geri bildirim gönderir.','فرین متنت را می‌خواند و ظرف ۲ تا ۳ روز بازخورد می‌فرستد.','Farin lee tu texto y te envía comentarios en 2–3 días.')}</p>
+      <button class="btn btn-primary course-review-send-btn" style="width:100%;" data-action="course-review-ask" data-cid="${cid}" data-uid="${uid}" ${ready ? '' : 'disabled'}>${CL('Send to Farin for review','Farin\'e incelemeye gönder','ارسال برای بررسی فرین','Enviar a Farin para revisión')}</button>
+      ${ready ? '' : `<p style="font-size:12px; color:var(--ink-faint); margin:6px 0 0;">${done ? L('Write at least '+need+' words to send.','Göndermek için en az '+need+' kelime yaz.','برای ارسال دست‌کم '+need+' کلمه بنویس.','Escribe al menos '+need+' palabras para enviar.') : CL('Check and save your text first.','Önce metnini kontrol edip kaydet.','اول متنت را بررسی و ذخیره کن.','Primero comprueba y guarda tu texto.')}</p>`}${err}`);
+}
 // "I want this course": a WhatsApp message to Farin with name, course id + title, app side and UI language.
 // Shown everywhere, including the Play build (Farin's decision 2026-10-07, card 8WiLr472).
 function courseRequestLink(c){
@@ -19995,6 +20110,7 @@ function renderCourseDetail(cid){
       ${nx && nx.locked && !nx.final ? courseUnlockBoxHtml(c, lockedLead) : ''}
       ${courseProgressLineHtml(c, nx)}
       ${courseAccessLineHtml(c)}
+      ${courseReviewNoticeHtml(c)}
       ${coursePortfolioHtml(c)}
       <div class="eyebrow" style="margin:16px 0 0;">${CL('Chapters','Bölümler','فصل‌ها','Capítulos')}</div>
       ${c.modules.map((m,mi)=>courseChapterHtml(c, m, mi, nx, mi===openMi)).join('')}
@@ -20083,7 +20199,7 @@ function renderCourseUnit(cid, uid){
     const open = s.done || courseStepOpen(cid, uid, k), current = !!(nx && nx.k===k);
     return `<button class="item-row${current ? ' course-row-current' : ''}" ${open ? `data-action="course-step" data-cid="${cid}" data-uid="${uid}" data-type="${s.type}"` : 'disabled'} style="${open ? '' : 'opacity:.55;'}">
       <span class="item-ic" style="background:${s.done ? 'var(--success-soft)' : current ? 'var(--accent)' : 'var(--cat-'+m.cat+'-soft)'}; color:${s.done ? 'var(--success)' : current ? '#fff' : 'var(--cat-'+m.cat+')'}; font-weight:900; font-size:13px;">${s.done ? ICONS.check : (k+1)}</span>
-      <div class="item-body"><div class="item-title">${esc(courseStepLabel(s.type))}</div>${tail ? `<div style="font-size:12px; color:var(--ink-soft); margin-top:2px;">${esc(tail)}</div>` : ''}</div>
+      <div class="item-body"><div class="item-title">${esc(courseStepLabel(s.type))}${s.type==='writing' ? courseReviewBadgeHtml(cid, uid) : ''}</div>${tail ? `<div style="font-size:12px; color:var(--ink-soft); margin-top:2px;">${esc(tail)}</div>` : ''}</div>
       <span class="pill" style="background:${current ? 'var(--accent-soft)' : 'var(--bg-sunken)'}; color:${current ? 'var(--accent-strong)' : 'var(--ink-faint)'}; flex:0 0 auto;">${esc(courseMinText(courseStepMin(s.type)))}</span>
     </button>`;
   };
@@ -20254,7 +20370,7 @@ function renderCourseWriting(cid, uid, w){
     ${courseUseInHtml(cid, uid)}
     ${showModelFirst ? `<div class="card-flat" dir="ltr" style="margin-top:10px; background:var(--cat-story-soft); border-color:var(--cat-story-soft);"><div class="eyebrow" style="color:var(--cat-story);">${CL('Model','Örnek','نمونه')}</div><p style="margin:4px 0 0; font-size:13.5px;">${esc(w.model)}</p></div>` : ''}
     ${track==='B1' && w.frame ? `<div class="card-flat" dir="ltr" style="margin-top:10px;"><div class="eyebrow">${CL('Frame','Kalıp','قالب جمله')}</div><p style="margin:4px 0 0; font-size:13.5px;">${esc(w.frame)}</p></div>` : ''}
-    <textarea id="cw-text" class="game-input" dir="ltr" rows="7" style="margin-top:12px; font-weight:500; min-height:150px;" placeholder="${esc(CL('Write here','Buraya yaz','اینجا بنویس'))}">${esc(saved)}</textarea>
+    <textarea id="cw-text" class="game-input" dir="ltr" rows="7" ${courseReviewLocked(cid, uid, w) ? 'readonly ' : ''}style="margin-top:12px; font-weight:500; min-height:150px;" placeholder="${esc(CL('Write here','Buraya yaz','اینجا بنویس'))}">${esc(saved)}</textarea>
     <p style="font-size:12px; color:var(--ink-faint); margin:6px 0 0;">${CL('Use','Kullan','از این‌ها استفاده کن')}: ${w.words.map(x=>esc(x.word)).join(', ')} · ${w.minWords}+ ${CL('words','kelime','کلمه')}</p>
     ${res ? `<div class="card-flat" style="margin-top:12px; background:${res.lengthOk && !res.wordsMissed.length ? 'var(--cat-voc-soft)' : 'var(--cat-gram-soft)'}; border-color:transparent;">
       <p style="margin:0; font-size:13.5px;">${res.wc} ${CL('words','kelime','کلمه')} · ${res.sc} ${CL('sentences','cümle','جمله')}${res.wordsMissed.length ? ' · '+CL('Not used yet','Henüz kullanılmadı','هنوز استفاده نشده')+': '+esc(res.wordsMissed.join(', ')) : ''}</p>
@@ -20263,7 +20379,7 @@ function renderCourseWriting(cid, uid, w){
       <ul style="margin:6px 0 0; padding-inline-start:18px; font-size:13px; color:var(--ink-soft);">${w.rubric.map((r,ri)=>`<li style="margin-bottom:4px;"><span dir="ltr">${esc(r)}</span>${b2 && b2.useIn && /^Language\b/i.test(r) ? ` <b>+ ${CL('B2 extra (above)','B2 ek şartı (yukarıda)','شرط اضافه‌ی B2 (بالای صفحه)','extra B2 (arriba)')}</b>` : ''}${courseRubricSubHtml(w, ri)}</li>`).join('')}</ul></div>
     ${res && courseStepDone(uid, 'writing') ? `<button class="btn btn-primary" style="margin-top:14px;" data-action="course-advance" data-cid="${cid}" data-uid="${uid}">${esc(courseNextBtnLabel(cid, uid))}</button>
     <button class="btn btn-ghost" style="margin-top:8px;" data-action="course-write-check" data-cid="${cid}" data-uid="${uid}">${CL('Check again','Tekrar kontrol et','دوباره بررسی کن','Comprobar otra vez')}</button>`
-    : `<button class="btn btn-primary" style="margin-top:14px;" data-action="course-write-check" data-cid="${cid}" data-uid="${uid}">${CL('Check and save','Kontrol et ve kaydet','بررسی و ذخیره','Comprobar y guardar')}</button>`}`;
+    : `<button class="btn btn-primary" style="margin-top:14px;" data-action="course-write-check" data-cid="${cid}" data-uid="${uid}">${CL('Check and save','Kontrol et ve kaydet','بررسی و ذخیره','Comprobar y guardar')}</button>`}${courseReviewHtml(cid, uid, w)}`;
 }
 function renderCoursePerspective(cid, uid, p){
   const cp = courseProg(cid), key = uid+':perspective';
@@ -20547,6 +20663,15 @@ Object.assign(HANDLERS, {
     if(res.lengthOk && res.looksReal) courseMarkDone(el.dataset.cid, el.dataset.uid, 'writing'); else save();
     render();
   },
+  'course-review-ask'(el){
+    const cid = el.dataset.cid, uid = el.dataset.uid, w = courseUnitItems(uid).writing, ta = document.getElementById('cw-text');
+    if(!w || courseReviewReq(w)) return;
+    if(ta && !ta.readOnly && ta.value !== courseReviewText(cid, uid)) HANDLERS['course-write-check'](el);   // send what is on screen
+    if(!courseStepDone(uid, 'writing') || courseWordCount(courseReviewText(cid, uid)) < (w.minWords || 0)) return;
+    courseUi.reviewErr = null; courseUi.reviewAsk = w.id; render();
+  },
+  'course-review-cancel'(){ courseUi.reviewAsk = null; courseUi.reviewErr = null; render(); },
+  'course-review-send'(el){ courseReviewSend(el.dataset.cid, el.dataset.uid); },
   'course-persp-save'(el){
     const ta = document.getElementById('cw-text'), text = ta ? ta.value.trim() : '';
     const pp = courseUnitItems(el.dataset.uid).perspective, minS = (pp && pp.minSentences) || 2;
@@ -20720,6 +20845,99 @@ function renderAdminAccessTab(){
     ${adminAccessLoading && !adminAccessList ? `<p style="text-align:center; padding:20px; color:var(--ink-faint);">Loading…</p>` : (rows || `<p style="padding:20px; text-align:center; color:var(--ink-faint);">No passwords issued yet.</p>`)}
   </div>`;
 }
+/* ============================= ADMIN: WRITING REVIEWS (Trello ezkJrF5X) =============================
+   Course writing sent with "Send for review" (progress/wr-… docs, kind:'writingReview'; see the learner side
+   at REVIEW_DOC_PREFIX). Newest first. New = not opened yet, Read = opened here, Reviewed = feedback sent.
+   The age pill turns amber at 48 h and red at 72 h (the 2–3 day promise). The feedback note is written into
+   the wr- doc only (merge); the learner's app fetches it by id and shows it under the task. */
+let adminReviews = null;
+let adminReviewsLoading = false;
+let adminReviewsError = '';
+let adminReviewsInfo = '';
+let adminReviewOpen = null;
+let adminReviewFilter = 'open';   // open (new + read) | new | reviewed | all
+let adminReviewBusy = false;
+let adminReviewNote = '';         // the note being sent, kept across a re-render
+function adminReviewState(d){ return d.status === 'reviewed' && d.feedback ? 'reviewed' : d.readAt ? 'read' : 'new'; }
+function adminReviewNewCount(){ return (adminReviews || []).filter(d=>adminReviewState(d) === 'new').length; }
+function adminReviewsLoad(){
+  adminReviewsLoading = true; adminReviewsError = ''; renderAdminPage();
+  firebase.firestore().collection('progress').where('kind', '==', 'writingReview').get().then(snap=>{
+    adminReviews = snap.docs.map(d=>Object.assign({id:d.id}, d.data())).filter(d=>d.id.indexOf(REVIEW_DOC_PREFIX) === 0)
+      .sort((a,b)=>(Number(b.submittedAt) || 0) - (Number(a.submittedAt) || 0));
+    adminReviewsLoading = false; renderAdminPage();
+  }).catch(err=>{ adminReviewsError = err.message || String(err); adminReviewsLoading = false; renderAdminPage(); });
+}
+function adminReviewTask(d){ const c = COURSE_CATALOG_ALL.find(x=>x.id === d.course) || {title:d.course || '?'}; return c.title + (d.unit ? ' · ' + d.unit : '') + (d.taskId ? ' · ' + d.taskId : ''); }
+function adminReviewOpenItem(id){
+  adminReviewOpen = adminReviewOpen === id ? null : id; adminReviewNote = ''; adminReviewsInfo = '';
+  const d = (adminReviews || []).find(x=>x.id === id);
+  if(adminReviewOpen && d && !d.readAt){ d.readAt = Date.now(); firebase.firestore().collection('progress').doc(id).set({readAt:d.readAt}, {merge:true}).catch(()=>{}); }
+  renderAdminPage();
+}
+function adminReviewSendFeedback(id){
+  const d = (adminReviews || []).find(x=>x.id === id), ta = document.getElementById('wr-note'), note = ta ? ta.value.trim() : '';
+  if(!d || adminReviewBusy) return;
+  if(!note){ if(ta) ta.focus(); return; }
+  adminReviewNote = note; adminReviewBusy = true; adminReviewsError = ''; adminReviewsInfo = ''; renderAdminPage();
+  const fb = {note, reviewedAt:Date.now()};
+  firebase.firestore().collection('progress').doc(id).set({feedback:fb, status:'reviewed', readAt:d.readAt || Date.now()}, {merge:true}).then(()=>{
+    d.feedback = fb; d.status = 'reviewed'; d.readAt = d.readAt || Date.now();
+    adminReviewBusy = false; adminReviewNote = ''; adminReviewsInfo = 'Feedback saved. The learner sees it under the task the next time they open the course.';
+    renderAdminPage();
+  }).catch(err=>{ adminReviewBusy = false; adminReviewsError = err.message || String(err); renderAdminPage(); });
+}
+function adminReviewAction(action, el){
+  if(action === 'tab-reviews'){ adminTab = 'reviews'; renderAdminPage(); if(adminReviews === null) adminReviewsLoad(); return; }
+  if(action === 'review-reload'){ adminReviewsLoad(); return; }
+  if(action === 'review-filter'){ adminReviewFilter = el.dataset.filter; adminReviewOpen = null; renderAdminPage(); return; }
+  if(action === 'review-open'){ adminReviewOpenItem(el.dataset.id); return; }
+  if(action === 'review-send'){ adminReviewSendFeedback(el.dataset.id); return; }
+}
+function adminReviewDetailHtml(d){
+  const who = d.learner || {}, user = (adminUsers || []).find(u=>u.hash && who.accountHash && u.hash === who.accountHash);
+  return `<div class="admin-review-detail" style="width:100%; margin-top:10px;">
+      <div class="item-sub">Level ${esc(who.level || '?')} · track ${esc(d.track || '?')} · app UI ${esc(who.uiLang || '?')}${who.phone ? ' · ' + esc(who.phone) : ''}</div>
+      <div class="item-sub" dir="ltr">Account ${who.accountHash ? esc(String(who.accountHash).slice(0, 12)) + '…' : '(no cloud backup yet)'}${user ? ' · in Users as ' + esc((user.profile && user.profile.name) || '') : ''}${who.accessId ? ' · course password ' + esc(String(who.accessId).slice(0, 11)) + '…' : ''}</div>
+      ${d.prompt ? `<p dir="ltr" style="font-size:13px; font-weight:700; margin:10px 0 0;">${esc(d.prompt)}</p>` : ''}
+      <div class="card-flat" dir="ltr" style="margin-top:8px; white-space:pre-wrap; font-size:14px; line-height:1.55; user-select:text;">${esc(d.text || '')}</div>
+      <div class="eyebrow" style="margin-top:12px;">Feedback note · the learner sees it under the task</div>
+      <textarea id="wr-note" rows="6" dir="auto" style="width:100%; box-sizing:border-box; margin-top:6px; padding:10px 13px; border-radius:12px; border:1.5px solid var(--border); font-size:14px; background:var(--bg-elevated); color:var(--ink); font-family:inherit;">${esc(adminReviewNote || (d.feedback && d.feedback.note) || '')}</textarea>
+      <div class="row" style="gap:6px; margin-top:8px; align-items:center; flex-wrap:wrap;">
+        <button class="btn btn-sm btn-primary" data-admin-action="review-send" data-id="${esc(d.id)}" ${adminReviewBusy ? 'disabled' : ''}>${adminReviewBusy ? 'Saving…' : d.feedback ? 'Update feedback' : 'Send feedback'}</button>
+        ${d.feedback ? `<span class="item-sub">Sent ${adminDate(d.feedback.reviewedAt)}</span>` : ''}
+      </div>
+    </div>`;
+}
+function renderAdminReviewsTab(){
+  const all = adminReviews || [], f = adminReviewFilter;
+  const list = all.filter(d=>{ const st = adminReviewState(d); return f === 'all' ? true : f === 'open' ? st !== 'reviewed' : st === f; });
+  const pill = st=>st === 'new' ? '<span class="pill" style="background:var(--accent-soft); color:var(--accent-strong);">New</span>'
+    : st === 'read' ? '<span class="pill" style="background:var(--bg-sunken); color:var(--ink-soft);">Read</span>'
+    : '<span class="pill" style="background:var(--success-soft); color:var(--success);">Reviewed</span>';
+  const age = d=>{ if(adminReviewState(d) === 'reviewed') return ''; const h = (Date.now() - (Number(d.submittedAt) || 0)) / 3600000;
+    const c = h < 48 ? 'var(--success)' : h < 72 ? 'var(--cat-gram)' : 'var(--error)';
+    return `<span class="pill" style="background:var(--bg-sunken); color:${c};">${Math.floor(h / 24)}d ${Math.floor(h % 24)}h</span>`; };
+  const rows = list.map(d=>{ const who = d.learner || {}, st = adminReviewState(d), open = adminReviewOpen === d.id;
+    return `<div class="item-row admin-review-row" style="align-items:flex-start; flex-wrap:wrap; cursor:default;">
+      <button type="button" class="item-body" data-admin-action="review-open" data-id="${esc(d.id)}" style="min-width:0; text-align:start; background:none; border:none; padding:0; color:inherit; cursor:pointer;">
+        <div class="item-title">${esc(who.name || '—')} ${pill(st)} ${age(d)} ${d.test ? '<span class="pill" style="background:var(--bg-sunken); color:var(--ink-faint);">TEST</span>' : ''}</div>
+        <div class="item-sub" dir="ltr">${esc(adminReviewTask(d))} · ${esc(String(d.app || '').toUpperCase())} · ${Number(d.wordCount) || 0} words · ${adminDate(d.submittedAt)} (${adminAgo(d.submittedAt)})</div>
+      </button>
+      ${open ? adminReviewDetailHtml(d) : ''}
+    </div>`; }).join('');
+  const fbtn = (k, label)=>`<button class="btn btn-sm ${f === k ? 'btn-primary' : 'btn-ghost'}" data-admin-action="review-filter" data-filter="${k}">${label}</button>`;
+  return `<div class="stack" style="gap:10px;">
+    <p style="font-size:12px; color:var(--ink-faint); margin:0;">Course writing that learners sent with "Send to Farin for review" (courses with teacher review: IELTS). Newest first. Promise to the learner: feedback within 2–3 days.</p>
+    <div class="row between" style="align-items:center; gap:6px; flex-wrap:wrap;">
+      <div class="row" style="gap:6px; flex-wrap:wrap;">${fbtn('open', 'To do')}${fbtn('new', 'New')}${fbtn('reviewed', 'Reviewed')}${fbtn('all', 'All')}</div>
+      <button class="btn btn-sm btn-ghost" data-admin-action="review-reload">${adminReviewsLoading ? '…' : '↻'}</button>
+    </div>
+    ${adminReviewsError ? `<p style="color:var(--error); font-size:12.5px; margin:0;">${esc(adminReviewsError)}</p>` : ''}
+    ${adminReviewsInfo ? `<p style="color:var(--success); font-size:12.5px; margin:0;">${esc(adminReviewsInfo)}</p>` : ''}
+    ${adminReviewsLoading && !adminReviews ? `<p style="text-align:center; padding:20px; color:var(--ink-faint);">Loading…</p>` : (rows || `<p style="padding:20px; text-align:center; color:var(--ink-faint);">Nothing here yet.</p>`)}
+  </div>`;
+}
 /* ============================= ADMIN PAGE (hidden, reachable via #admin) ============================= */
 function waLinkTo(phone, message){
   const clean = String(phone||'').replace(/[^\d]/g, '');
@@ -20789,8 +21007,9 @@ function renderAdminPage(){
       <button class="btn btn-sm ${adminTab==='contacts'?'btn-primary':'btn-ghost'}" data-admin-action="tab-contacts">Contacts (${(adminContacts||[]).length})</button>
       <button class="btn btn-sm ${adminTab==='students'?'btn-primary':'btn-ghost'}" data-admin-action="tab-students">Student Panels (${(adminStudents||[]).length})</button>
       <button class="btn btn-sm ${adminTab==='access'?'btn-primary':'btn-ghost'}" data-admin-action="tab-access">Course access${adminAccessList ? ` (${adminAccessList.length})` : ''}</button>
+      <button class="btn btn-sm ${adminTab==='reviews'?'btn-primary':'btn-ghost'}" data-admin-action="tab-reviews">Writing reviews${adminReviews ? ` (${adminReviewNewCount()} new)` : ''}</button>
     </div>`;
-    const body = adminTab === 'contacts' ? renderAdminContactsTab() : adminTab === 'users' ? renderAdminUsersTab() : adminTab === 'access' ? renderAdminAccessTab() : renderAdminStudentsTab();
+    const body = adminTab === 'reviews' ? renderAdminReviewsTab() : adminTab === 'contacts' ? renderAdminContactsTab() : adminTab === 'users' ? renderAdminUsersTab() : adminTab === 'access' ? renderAdminAccessTab() : renderAdminStudentsTab();
     html = `<div class="screen" style="padding-top:24px; max-width:480px; margin:0 auto;">
       <div class="row between" style="margin-bottom:14px;">
         <h1 class="display" style="font-size:20px;">Admin</h1>
@@ -21518,7 +21737,7 @@ function bindAdminActions(root){
         });
       } else if(action === 'signout'){
         firebase.auth().signOut().then(()=>{
-          adminContacts = null; adminStudents = null; adminTab = 'users'; adminEditingStudent = null; adminUsers = null; adminUserOpen = null; adminUsersShowHidden = false; adminAccessList = null; adminAccessLast = null;
+          adminContacts = null; adminStudents = null; adminTab = 'users'; adminEditingStudent = null; adminUsers = null; adminUserOpen = null; adminUsersShowHidden = false; adminAccessList = null; adminAccessLast = null; adminReviews = null; adminReviewOpen = null; adminReviewNote = '';
           renderAdminPage();
         });
       } else if(action === 'tab-users'){
@@ -21550,6 +21769,8 @@ function bindAdminActions(root){
         adminToggleUserHidden(el.dataset.id);
       } else if(action === 'users-csv'){
         downloadAdminUsersCsv();
+      } else if(action === 'tab-reviews' || action.indexOf('review-') === 0){
+        adminReviewAction(action, el);
       } else if(action === 'tab-access' || action.indexOf('access-') === 0){
         adminAccessAction(action, el);
       } else if(action === 'tab-contacts'){
@@ -21940,7 +22161,7 @@ function loadAdminUsers(){
   Promise.all([db.get(), db.doc(ADMIN_HIDDEN_DOC).get()]).then(([snap, hiddenDoc])=>{
     adminUsersHidden = (hiddenDoc.exists && (hiddenDoc.data() || {}).hidden) || [];
     const users = snap.docs.map(d=>Object.assign({id:d.id}, d.data()))
-      .filter(u=>u.id.indexOf(LOGIN_DOC_PREFIX) !== 0 && u.kind !== 'login' && u.profile)
+      .filter(u=>u.id.indexOf(LOGIN_DOC_PREFIX) !== 0 && u.id.indexOf(REVIEW_DOC_PREFIX) !== 0 && u.kind !== 'login' && u.profile)
       .map(u=>{
         u.app = u.app === 'es' ? 'es' : 'en';
         u.progress = u.progress || {};

@@ -942,10 +942,25 @@
   .gc-body{flex:1 1 auto; min-width:0;}
   .gc-text{font-size:15px; line-height:1.6; font-weight:600; color:var(--ink);}
   .gc-tr{font-size:12.5px; color:var(--ink-faint); margin-top:2px; line-height:1.45;}
-  .gc-w{cursor:pointer; border-radius:6px; padding:0 2px; transition:background .18s, color .18s;}
+  .gc-w{border-radius:6px; padding:0 2px;}
   .gc-w.lit{background:var(--cat-gram-soft); color:var(--cat-gram); font-weight:800; box-shadow:0 0 0 1.5px var(--cat-gram-soft);}
-  .gc-foot{display:flex; align-items:center; justify-content:space-between; gap:10px; margin-top:10px; font-size:12.5px; font-weight:600; color:var(--ink-soft);}
-  .gc-show{padding:6px 12px; font-size:12.5px; flex:0 0 auto;}
+  .gc-foot{display:flex; align-items:center; gap:8px; margin-top:10px; font-size:12.5px; font-weight:600; color:var(--ink-soft); line-height:1.4;}
+  .gc-swatch{flex:0 0 auto; display:inline-block; width:22px; height:14px; border-radius:5px; background:var(--cat-gram-soft); box-shadow:0 0 0 1.5px var(--cat-gram-soft);}
+  /* Grammar explanation panel (Farin 2026-10-10: "more well designed, more well organised"): one labelled section per job. */
+  .gx-panel{margin-top:16px; background:var(--bg-elevated); border-radius:18px; padding:2px 14px;}
+  .gx-sec{padding:14px 0; border-bottom:1px solid var(--border-soft);}
+  .gx-sec:last-child{border-bottom:none;}
+  .gx-label{display:flex; align-items:center; gap:7px; font-size:11px; font-weight:800; letter-spacing:.06em; text-transform:uppercase; color:var(--cat-gram); margin-bottom:9px;}
+  .gx-label::before{content:''; width:7px; height:7px; border-radius:50%; background:var(--cat-gram); flex:0 0 auto;}
+  .gx-body > :first-child{margin-top:0 !important;}
+  .gx-body p{font-size:15px !important; line-height:1.65 !important;}
+  .gx-table{border-radius:14px; overflow:hidden; border:1.5px solid var(--cat-gram-soft);}
+  .gx-table table{width:100%; border-collapse:collapse; font-size:14px;}
+  .gx-table th{text-align:start; padding:9px 12px; font-weight:800; color:var(--ink); background:var(--cat-gram-soft);}
+  .gx-table td{padding:9px 12px; color:var(--ink);}
+  .gx-table tr + tr td{border-top:1px solid var(--border-soft);}
+  .gx-table td + td{font-weight:800; color:var(--cat-gram);}
+  .gx-tip{display:flex; gap:10px; align-items:flex-start; padding:12px 14px; border-radius:14px; background:var(--bg-sunken);}
   .phrase-row{display:flex; flex-direction:column; gap:3px; padding:12px 0; border-bottom:1px solid var(--border-soft);}
   .phrase-row:last-child{border-bottom:none;}
   .phrase-term{font-weight:800; font-size:16px; letter-spacing:-.01em;}
@@ -2361,6 +2376,94 @@ const GRAMMAR_PRACTICE_A1A2 = {
  }
 };
 Object.keys(GRAMMAR_PRACTICE_A1A2).forEach(id=>{ const it = GRAMMAR_ITEMS.find(g=>g.id===id); if(it) Object.assign(it, GRAMMAR_PRACTICE_A1A2[id]); });
+/* Forms tables for the ten A1 items (farin-lxd, Claude/specs/lxd-phase2-content/es-grammar-formsTable-A1.js;
+   Farin approved 2026-10-08 and again 2026-10-10: "give spanish pronouns a table"). Each person table lists every
+   subject pronoun with its form, Spain standard (vosotros included). Rows stay Spanish in every UI language. */
+const GRAMMAR_FORMS_ES = {
+ "g-A1-1": {headers:{en:["Subject","ser"], tr:["Özne","ser"], fa:["فاعل","ser"], es:["Sujeto","ser"]},
+  rows:[
+   ["yo","soy"],
+   ["tú","eres"],
+   ["él / ella / usted","es"],
+   ["nosotros / nosotras","somos"],
+   ["vosotros / vosotras","sois"],
+   ["ellos / ellas / ustedes","son"]]},
+ "g-A1-2": {headers:{en:["Subject","estar"], tr:["Özne","estar"], fa:["فاعل","estar"], es:["Sujeto","estar"]},
+  rows:[
+   ["yo","estoy"],
+   ["tú","estás"],
+   ["él / ella / usted","está"],
+   ["nosotros / nosotras","estamos"],
+   ["vosotros / vosotras","estáis"],
+   ["ellos / ellas / ustedes","están"]]},
+ "g-A1-3": {headers:{en:["Noun ending","el / la · un / una"], tr:["İsmin sonu","el / la · un / una"], fa:["پایان اسم","el / la · un / una"], es:["Terminación","el / la · un / una"]},
+  rows:[
+   ["-o (masculino): libro, coche","el libro · un coche"],
+   ["-a (femenino): mesa, casa","la mesa · una casa"],
+   ["-os (plural masculino)","los libros · unos coches"],
+   ["-as (plural femenino)","las mesas · unas casas"],
+   ["excepciones","el día, el problema, la mano, la foto"]]},
+ "g-A1-4": {headers:{en:["Singular","Plural"], tr:["Tekil","Çoğul"], fa:["مفرد","جمع"], es:["Singular","Plural"]},
+  rows:[
+   ["el libro, la casa, el estudiante","los libros, las casas, los estudiantes (+ -s)"],
+   ["la flor, la ciudad, el profesor","las flores, las ciudades, los profesores (+ -es)"],
+   ["el lápiz, la vez","los lápices, las veces (-z → -ces)"],
+   ["la casa grande","las casas grandes"]]},
+ "g-A1-5": {headers:{en:["Subject","hablar (-ar)"], tr:["Özne","hablar (-ar)"], fa:["فاعل","hablar (-ar)"], es:["Sujeto","hablar (-ar)"]},
+  rows:[
+   ["yo","hablo"],
+   ["tú","hablas"],
+   ["él / ella / usted","habla"],
+   ["nosotros / nosotras","hablamos"],
+   ["vosotros / vosotras","habláis"],
+   ["ellos / ellas / ustedes","hablan"]]},
+ "g-A1-6": {headers:{en:["Subject","comer (-er) · vivir (-ir)"], tr:["Özne","comer (-er) · vivir (-ir)"], fa:["فاعل","comer (-er) · vivir (-ir)"], es:["Sujeto","comer (-er) · vivir (-ir)"]},
+  rows:[
+   ["yo","como · vivo"],
+   ["tú","comes · vives"],
+   ["él / ella / usted","come · vive"],
+   ["nosotros / nosotras","comemos · vivimos"],
+   ["vosotros / vosotras","coméis · vivís"],
+   ["ellos / ellas / ustedes","comen · viven"]]},
+ "g-A1-7": {headers:{en:["Subject","tener"], tr:["Özne","tener"], fa:["فاعل","tener"], es:["Sujeto","tener"]},
+  rows:[
+   ["yo","tengo"],
+   ["tú","tienes"],
+   ["él / ella / usted","tiene"],
+   ["nosotros / nosotras","tenemos"],
+   ["vosotros / vosotras","tenéis"],
+   ["ellos / ellas / ustedes","tienen"]]},
+ "g-A1-8": {headers:{en:["Who likes it","gustar"], tr:["Kim seviyor","gustar"], fa:["کی دوست دارد","gustar"], es:["A quién","gustar"]},
+  rows:[
+   ["(a mí) me","me gusta el café"],
+   ["(a ti) te","te gusta la música"],
+   ["(a él / ella / usted) le","le gusta bailar"],
+   ["(a nosotros / nosotras) nos","nos gusta el cine"],
+   ["(a vosotros / vosotras) os","os gusta viajar"],
+   ["(a ellos / ellas / ustedes) les","les gusta el fútbol"],
+   ["singular o infinitivo → gusta","me gusta el café · me gusta bailar"],
+   ["plural → gustan","me gustan los perros"]]},
+ "g-A1-9": {headers:{en:["Question word","Example"], tr:["Soru sözcüğü","Örnek"], fa:["کلمه‌ی پرسشی","مثال"], es:["Interrogativo","Ejemplo"]},
+  rows:[
+   ["¿Qué…?","¿Qué estudias?"],
+   ["¿Quién…? / ¿Quiénes…?","¿Quién es ella?"],
+   ["¿Dónde…?","¿Dónde vives?"],
+   ["¿Cuándo…?","¿Cuándo llegas?"],
+   ["¿Cómo…?","¿Cómo te llamas?"],
+   ["¿Cuánto / Cuánta / Cuántos / Cuántas…?","¿Cuánto cuesta el billete?"],
+   ["¿Por qué…?","¿Por qué estudias español?"],
+   ["¿Cuál…? / ¿Cuáles…?","¿Cuál es tu número?"]]},
+ "g-A1-10": {headers:{en:["Owner","Possessive (singular / plural)"], tr:["Sahip","İyelik (tekil / çoğul)"], fa:["مالک","ملکی (مفرد / جمع)"], es:["Poseedor","Posesivo (singular / plural)"]},
+  rows:[
+   ["yo","mi / mis"],
+   ["tú","tu / tus"],
+   ["él / ella / usted","su / sus"],
+   ["nosotros / nosotras","nuestro, nuestra / nuestros, nuestras"],
+   ["vosotros / vosotras","vuestro, vuestra / vuestros, vuestras"],
+   ["ellos / ellas / ustedes","su / sus"],
+   ["negación: no + verbo","no tengo · no hablo"]]}
+};
+Object.keys(GRAMMAR_FORMS_ES).forEach(id=>{ const it = GRAMMAR_ITEMS.find(g=>g.id===id); if(it) it.formsTable = GRAMMAR_FORMS_ES[id]; });
 /* Teaching redesign phase 1, X6: distractorWhy for the A1-A2 grammar items (farin-lxd, Claude/specs/lxd-phase1-content/es-distractorWhy-A1-A2.js).
    Item-level map: wrong-option text -> {en,tr,fa}. Looked up on a first miss by the tapped option's text (the same
    strings are used by the base blanks and every goalVariant blank); a per-blank blank.distractorWhy still wins. */
@@ -6904,7 +7007,7 @@ function progressArrForKind(kind){
 }
 /* ============================= HELPERS ============================= */
 function esc(s){ return String(s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
-function renderLessonText(text, accentVar){
+function renderLessonText(text, accentVar, opts){
   const color = accentVar || '--cat-gram';
   // splitSentences keeps a quoted question ("'¿Has comido?' — not …") inside its
   // sentence; the old regex dropped the text before it and started the hook at "' — …".
@@ -6922,7 +7025,8 @@ function renderLessonText(text, accentVar){
       const clean = !/[()]/.test(after) && label.length <= 60 && items.every(it=>it.length<=40 && it.length>0);
       if(commaCount >= 2 && clean){
         flush();
-        blocks.push({type:'pattern', label, items});
+        // noPatterns: the item has a forms table, so a "Forms: a, b, c" chip row would only repeat it.
+        if(!(opts && opts.noPatterns)) blocks.push({type:'pattern', label, items});
         return;
       }
     }
@@ -15473,36 +15577,27 @@ function renderGrammarList(){
   </div>`;
 }
 /* Teaching redesign S3, Meet + Notice: the item's context dialogue at the top of the grammar page. Each line
-   has a play button; at A1-A2 a Turkish/Farsi UI shows the translation under the line. "Tap the words that
-   show the rule": a target token lights up in the grammar colour, a wrong tap only shakes; after 2 taps or
-   "Show me" every target lights up. No score. Tap state lives in viewParams.notice (gone on navigation). */
+   has a play button; at A1-A2 a Turkish/Farsi UI shows the translation under the line. The words that show the
+   rule are highlighted in the grammar colour from the start (Farin 2026-10-10 removed the old "Tap the words
+   that show the rule" step: it cluttered the card and added nothing). */
 function grammarContextHtml(t){
   const c = t.context;
   if(!c || !c.lines || !c.lines.length) return '';
-  const n = state.viewParams.notice || {lit:[], taps:0, all:false};
-  const targets = c.targets || [];
-  const all = n.all || n.taps >= 2;
+  const targets = (c.targets || []).map(x=>String(x).toLowerCase());
   const showTr = (t.level === 'A1' || t.level === 'A2') && (LANG === 'tr' || LANG === 'fa');
-  const core = w => w.replace(/^[^\p{L}\p{N}']+|[^\p{L}\p{N}']+$/gu, '');
-  const word = (w, li, wi) => {
-    const isT = targets.includes(core(w));
-    const lit = isT && (all || n.lit.includes(li + ':' + wi));
-    return `<span class="gc-w${lit ? ' lit' : ''}" data-action="notice-tap" data-li="${li}" data-wi="${wi}" data-t="${isT ? 1 : 0}">${esc(w)}</span>`;
-  };
+  const core = w => w.replace(/^[^\p{L}\p{N}']+|[^\p{L}\p{N}']+$/gu, '').toLowerCase();
+  const word = w => targets.includes(core(w)) ? `<span class="gc-w lit">${esc(w)}</span>` : esc(w);
   return `<div class="card-flat gc-card">
     <div class="eyebrow" style="color:var(--cat-gram);">${L('Hear it first','Önce dinle','اول بشنو','Escúchalo primero')}</div>
-    ${c.lines.map((ln, li)=>`<div class="gc-line" dir="ltr">
+    ${c.lines.map(ln=>`<div class="gc-line" dir="ltr">
       <span class="gc-who">${esc(ln.who || '')}</span>
       <div class="gc-body">
-        <div class="gc-text">${String(ln.text || '').split(/(\s+)/).map((w, wi)=>(!w || /^\s+$/.test(w)) ? w : word(w, li, wi)).join('')}</div>
+        <div class="gc-text">${String(ln.text || '').split(/(\s+)/).map(w=>(!w || /^\s+$/.test(w)) ? w : word(w)).join('')}</div>
         ${showTr && (ln.tr || ln.fa) ? `<div class="gc-tr" dir="auto">${esc(L('', ln.tr, ln.fa) || '')}</div>` : ''}
       </div>
       ${ttsButton(ln.text || '', '')}
     </div>`).join('')}
-    <div class="gc-foot">
-      <span>${all ? L('These are the words that show the rule.','Kuralı gösteren kelimeler bunlar.','این‌ها کلمه‌هایی هستند که قاعده را نشان می‌دهند.','Estas son las palabras que muestran la regla.') : L('Tap the words that show the rule.','Kuralı gösteren kelimelere dokun.','روی کلمه‌هایی بزن که قاعده را نشان می‌دهند.','Toca las palabras que muestran la regla.')}</span>
-      ${all ? '' : `<button type="button" class="btn btn-ghost gc-show" data-action="notice-show">${L('Show me','Göster','نشانم بده','Muéstramelo')}</button>`}
-    </div>
+    ${targets.length ? `<div class="gc-foot"><span class="gc-swatch"></span><span>${L('The coloured words show the rule.','Renkli kelimeler kuralı gösteriyor.','کلمه‌های رنگی قاعده را نشان می‌دهند.','Las palabras en color muestran la regla.')}</span></div>` : ''}
   </div>`;
 }
 function renderGrammarTrap(id){
@@ -15522,38 +15617,36 @@ function renderGrammarTrap(id){
       <div class="tip-card" style="position:relative; overflow:hidden; background:radial-gradient(circle at 16% 8%, rgba(255,255,255,.35), transparent 55%), linear-gradient(150deg, var(--cat-gram), color-mix(in srgb, var(--cat-gram) 78%, #000 18%)); border-radius:26px; padding:22px 20px 20px; box-shadow:0 16px 30px -14px color-mix(in srgb, var(--cat-gram) 55%, transparent);">
         <div class="eyebrow" style="color:rgba(255,255,255,.85);">${inCourseStep() ? esc(courseUnitLabel(state.courseReturn.cid, state.courseReturn.uid)+' · '+courseStepShort(state.courseReturn.type)) : L('TIP','İPUCU','نکته','CONSEJO')}</div>
         <h1 class="display" style="font-size:24px; margin-top:8px; line-height:1.3; color:#fff;">${esc(grammarTitle(t))}</h1>
-        ${(() => { const st = structureExplanation(L(t.exp.en,t.exp.tr,t.exp.fa, t.exp.es)); return `
-        ${st.hook ? `<p style="margin-top:16px; font-size:15px; line-height:1.65; color:rgba(255,255,255,.95);">${esc(st.hook)}</p>` : ''}
-        <!-- The colored band above is the "header"; everything below (reading
-             text/table/tip generated by shared helpers that assume dark-on-
-             light) sits in a nested white panel so it stays readable — same
-             split the SELIF culture card avoided needing only because all of
-             its text was custom-authored for a solid background; this one
-             reuses generic renderLessonText()/formsTable markup instead. -->
-        <div style="margin-top:16px; background:var(--bg-elevated); border-radius:18px; padding:14px 14px 6px;">
-        <div style="background:var(--bg-sunken); border-radius:16px; padding:13px 14px; display:flex; gap:11px; align-items:flex-start;">
-          <button type="button" class="icon-btn" data-action="speak-sentence" data-text="${esc(right)}" style="flex:0 0 auto; background:var(--cat-gram-soft); color:var(--cat-gram); border-radius:50%; width:34px; height:34px; display:flex; align-items:center; justify-content:center; border:none;">${ICONS.soundOn}</button>
-          <div style="min-width:0;">
-            <div style="font-weight:700; font-size:15px; line-height:1.5; padding-top:5px;" dir="ltr">${glossify(right)}</div>
-            ${(() => { const trText = t.rightTranslation ? L(null,t.rightTranslation.tr,t.rightTranslation.fa) : null; return trText ? `<div style="font-size:13px; color:var(--ink-faint); margin-top:3px;">${esc(trText)}</div>` : ''; })()}
+        ${(() => { const st = structureExplanation(L(t.exp.en,t.exp.tr,t.exp.fa, t.exp.es)); const ft = t.formsTable; const how = st.rest ? renderLessonText(st.rest, '--cat-gram', {noPatterns: !!ft}) : ''; return `
+        ${st.hook ? `<p style="margin-top:12px; font-size:15px; line-height:1.6; color:rgba(255,255,255,.95);">${esc(st.hook)}</p>` : ''}
+        <!-- White panel under the coloured header, one labelled section per job (Farin 2026-10-10):
+             Example -> How it works -> The forms (table) -> Remember. -->
+        <div class="gx-panel">
+          <div class="gx-sec">
+            <div class="gx-label">${L('Example','Örnek','مثال','Ejemplo')}</div>
+            <div style="display:flex; gap:11px; align-items:flex-start;">
+              <button type="button" class="icon-btn" data-action="speak-sentence" data-text="${esc(right)}" style="flex:0 0 auto; background:var(--cat-gram-soft); color:var(--cat-gram); border-radius:50%; width:34px; height:34px; display:flex; align-items:center; justify-content:center; border:none;">${ICONS.soundOn}</button>
+              <div style="min-width:0;">
+                <div style="font-weight:700; font-size:16px; line-height:1.5; padding-top:4px;" dir="ltr">${glossify(right)}</div>
+                ${(() => { const trText = t.rightTranslation ? L(null,t.rightTranslation.tr,t.rightTranslation.fa) : null; return trText ? `<div style="font-size:13px; color:var(--ink-faint); margin-top:3px;">${esc(trText)}</div>` : ''; })()}
+              </div>
+            </div>
           </div>
-        </div>
-        ${renderLessonText(st.rest, '--cat-gram')}
-        ${t.formsTable ? `
-        <div style="margin-top:16px; border-radius:14px; overflow:hidden; border:1.5px solid var(--cat-gram-soft);">
-          <table style="width:100%; border-collapse:collapse; font-size:13.5px;">
-            <thead><tr style="background:var(--cat-gram-soft);">
-              ${L(t.formsTable.headers.en,t.formsTable.headers.tr,t.formsTable.headers.fa, t.formsTable.headers.es).map(h=>`<th style="text-align:start; padding:9px 12px; font-weight:800; color:var(--ink);">${esc(h)}</th>`).join('')}
-            </tr></thead>
-            <tbody>
-              ${t.formsTable.rows.map((row,i)=>`<tr style="${i<t.formsTable.rows.length-1?'border-bottom:1px solid var(--border-soft);':''}">${row.map((cell,ci)=>`<td dir="ltr" style="padding:9px 12px; color:var(--ink); ${ci===1?'font-weight:700; color:var(--cat-gram);':''}">${esc(cell)}</td>`).join('')}</tr>`).join('')}
-            </tbody>
-          </table>
-        </div>` : ''}
-        ${st.tip ? `<div style="margin:16px 0 8px; padding:12px 14px; border-radius:14px; background:var(--bg-sunken); display:flex; gap:10px; align-items:flex-start;">
-          <span style="display:inline-flex; align-items:center; justify-content:center; width:26px; height:26px; border-radius:50%; background:var(--cat-gram-soft); flex:0 0 auto; font-size:13px;">💡</span>
-          <div style="font-size:13.5px; font-weight:600; color:var(--ink); line-height:1.5; padding-top:3px;">${esc(st.tip)}</div>
-        </div>` : ''}
+          ${how ? `<div class="gx-sec">
+            <div class="gx-label">${L('How it works','Nasıl çalışır','چطور کار می‌کند','Cómo funciona')}</div>
+            <div class="gx-body">${how}</div>
+          </div>` : ''}
+          ${ft ? `<div class="gx-sec">
+            <div class="gx-label">${L('The forms','Biçimler','شکل‌ها','Las formas')}</div>
+            <div class="gx-table"><table>
+              <thead><tr>${L(ft.headers.en,ft.headers.tr,ft.headers.fa, ft.headers.es).map(h=>`<th>${esc(h)}</th>`).join('')}</tr></thead>
+              <tbody>${ft.rows.map(row=>`<tr>${row.map(cell=>`<td dir="ltr">${esc(cell)}</td>`).join('')}</tr>`).join('')}</tbody>
+            </table></div>
+          </div>` : ''}
+          ${st.tip ? `<div class="gx-sec">
+            <div class="gx-label">${L('Remember','Unutma','یادت باشد','Recuerda')}</div>
+            <div class="gx-tip"><span style="font-size:15px; line-height:1.4;">💡</span><div style="font-size:14px; font-weight:600; color:var(--ink); line-height:1.5;">${esc(st.tip)}</div></div>
+          </div>` : ''}
         </div>`; })()}
       </div>
 
@@ -18735,19 +18828,6 @@ const HANDLERS = {
   'deck-again'(el){ deckSortTap(el.dataset.id, false); },
   'vocab-next'(el){ const i = +el.dataset.i; go('vocab-set', {id: el.dataset.id, cardIndex: i+1, flipped:false, level:state.viewParams.level, cat:state.viewParams.cat, goal:state.viewParams.goal}); },
   'vocab-prev'(el){ const i = +el.dataset.i; go('vocab-set', {id: el.dataset.id, cardIndex: i-1, flipped:false, level:state.viewParams.level, cat:state.viewParams.cat, goal:state.viewParams.goal}); },
-  // Teaching redesign S3, Notice step on the grammar page (see grammarContextHtml).
-  'notice-tap'(el){
-    const n = state.viewParams.notice || (state.viewParams.notice = {lit:[], taps:0, all:false});
-    if(n.all || n.taps >= 2) return;
-    n.taps++;
-    if(el.dataset.t === '1'){ n.lit.push(el.dataset.li + ':' + el.dataset.wi); render(); return; }
-    anim(el, [{transform:'translateX(0)'},{transform:'translateX(-4px)'},{transform:'translateX(4px)'},{transform:'translateX(0)'}], {duration:240});
-    if(n.taps >= 2) setTimeout(render, 260);
-  },
-  'notice-show'(){
-    const n = state.viewParams.notice || (state.viewParams.notice = {lit:[], taps:0, all:false});
-    n.all = true; render();
-  },
   'start-grammar-quiz'(el){
     const t = GRAMMAR_ITEMS.find(x=>x.id===el.dataset.id);
     const goal = state.viewParams.goal;

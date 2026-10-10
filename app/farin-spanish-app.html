@@ -364,6 +364,48 @@
   .game-tile.nolabel .order-tile-name{display:none;}
   .game-tile.nolabel.peek .order-tile-name{display:block;}
   .order-sign{display:inline-block; margin:0 auto 10px; padding:6px 18px; border-radius:12px; background:var(--ink); color:var(--bg-elevated); font-family:'Fredoka',-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; font-weight:700; font-size:16px; letter-spacing:.08em; text-transform:uppercase; transform:rotate(-4deg);}
+  /* Five new games wave B (Jq6f9OFv): Passport Desk - traveller + bubble, arrival card, pencil circle, APPROVED stamp (spec §5.6 tokens) */
+  .desk-body{position:relative; display:flex; flex-direction:column; gap:14px;}
+  .desk-trav{display:flex; align-items:flex-start; gap:12px; min-height:100px;}
+  .desk-who-wrap{flex:0 0 auto; width:96px; height:100px;}
+  .desk-who{width:96px; height:100px; object-fit:contain; filter:drop-shadow(0 8px 12px rgba(0,0,0,.2)); transform-origin:50% 100%;}
+  .desk-bubble{margin-top:8px;}
+  .desk-bubble .desk-line{display:block;}
+  .desk-bubble .desk-line + .desk-line{margin-top:4px;}
+  .desk-tools{margin-top:-4px;}
+  .desk-card{position:relative; overflow:hidden; padding:0 0 12px; text-align:start; border-radius:22px; background:repeating-radial-gradient(circle at 0 100%, color-mix(in srgb, var(--clay-sky) 6%, transparent) 0 2px, transparent 2px 9px), repeating-radial-gradient(circle at 100% 0, color-mix(in srgb, var(--clay-sky) 6%, transparent) 0 2px, transparent 2px 9px), var(--bg-elevated);}
+  .desk-band{min-height:10px; padding:6px 16px; background:var(--clay-sky); color:#fff; font-size:11px; font-weight:900; letter-spacing:.08em;}
+  .desk-rows{display:flex; flex-direction:column; padding:6px 10px 0;}
+  .desk-row{position:relative; display:flex; align-items:center; gap:10px; min-height:48px; width:100%; box-sizing:border-box; padding:6px 8px; border:0; border-bottom:1px dashed var(--border); background:transparent; color:var(--ink); text-align:start; cursor:pointer; font:inherit; -webkit-tap-highlight-color:transparent;}
+  .desk-row:last-child{border-bottom:0;}
+  .desk-row:disabled{cursor:default;}
+  .desk-label{flex:0 0 38%; font-size:11px; font-weight:900; text-transform:uppercase; letter-spacing:.05em; color:var(--ink-faint);}
+  .desk-val{flex:1 1 auto; min-width:0; font-family:'Fredoka',-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; font-weight:700; font-size:18px; line-height:1.2; color:var(--ink); font-variant-numeric:tabular-nums; overflow-wrap:anywhere;}
+  .desk-old{color:var(--ink-faint); text-decoration-thickness:2px; font-size:15px;}
+  .desk-pen{color:var(--cat-story);}
+  .desk-blank{display:inline-block; width:110px; height:1em; vertical-align:-.15em; border-bottom:3px dashed var(--ink-faint);}
+  .desk-ring{position:absolute; inset:2px 0; width:100%; height:calc(100% - 4px); pointer-events:none; overflow:visible;}
+  .desk-ring ellipse{fill:none; stroke:var(--clay-coral-deep); stroke-width:2.4; vector-effect:non-scaling-stroke; stroke-dasharray:320; stroke-dashoffset:320; animation:desk-ring .3s ease-out forwards;}
+  @keyframes desk-ring{to{stroke-dashoffset:0;}}
+  .desk-today{margin:8px 18px 0; text-align:end; font-size:12.5px; font-weight:800; color:var(--ink-soft);}
+  .desk-today b{font-variant-numeric:tabular-nums; color:var(--ink);}
+  .desk-stamped{position:absolute; top:46%; inset-inline-end:14px; padding:6px 14px; border:3px solid var(--success); border-radius:12px; color:var(--success); font-family:'Fredoka',-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; font-weight:700; font-size:22px; letter-spacing:.06em; text-transform:uppercase; transform:rotate(-10deg); background:color-mix(in srgb, var(--bg-elevated) 70%, transparent); pointer-events:none;}
+  .desk-fix{display:flex; flex-direction:column; gap:10px;}
+  .desk-ask-q{margin:0;}
+  .desk-chips{display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); gap:8px;}
+  .desk-chip{min-height:54px; font-size:16px; padding:6px 8px; display:flex; flex-direction:column; align-items:center; justify-content:center; font-variant-numeric:tabular-nums;}
+  .desk-chips .desk-chip:nth-child(4){grid-column:span 3;}
+  .desk-chip-ui{display:block; font-family:inherit; font-size:11.5px; font-weight:700; color:var(--ink-soft);}
+  .desk-input-row{display:flex; gap:8px; align-items:stretch;}
+  .desk-input-row .game-input{flex:1 1 auto; min-width:0;}
+  .desk-go{flex:0 0 auto; border-radius:18px; padding:0 18px;}
+  .desk-stampbtn{width:96px; height:96px; border-radius:50%; border:0; margin:2px auto 0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px; color:#fff; background:linear-gradient(150deg, var(--success), color-mix(in srgb, var(--success) 74%, #000 26%)); box-shadow:var(--clay-shadow); cursor:pointer;}
+  .desk-stampbtn svg{width:30px; height:30px;}
+  .desk-stampbtn span{font-size:13px; font-weight:900; letter-spacing:.04em;}
+  .desk-stampbtn:active{transform:scale(.96);}
+  .desk-stampbtn:disabled{opacity:.55; cursor:default;}
+  .desk-skip{position:absolute; inset:0; z-index:5; border:0; background:transparent; cursor:pointer;}
+  .desk-lamp{width:46px; height:46px; margin:0 auto 10px; border-radius:50%; background:radial-gradient(circle, var(--cat-review) 0 45%, color-mix(in srgb, var(--cat-review) 30%, transparent) 60%, transparent 72%);}
   /* Gamify every card type (tobT7nwI): Catch these */
   .catch-tiles{margin-top:10px;}
   .catch-tiles.four{grid-template-columns:repeat(2, minmax(0, 1fr));}
@@ -8498,7 +8540,7 @@ function buildRoadmap(profile){
       kind = 'match';
     }
     // own content, no set: Build It (taught grammar), Order Up! (never falls back), Cozy Chores (once CHORES_LIVE)
-    if(kind === 'build' || kind === 'order' || kind === 'chores'){
+    if(kind === 'build' || kind === 'order' || kind === 'chores' || kind === 'desk'){
       items.push(gameNode(kind, kind+'-'+profile.level+'-s'+stage+'-'+slot));
       return;
     }
@@ -8613,8 +8655,8 @@ function roadmapNodeId(item){ return item.type+':'+item.refId+(item.occ?('#'+ite
    content at that level (null = no node: a page never opens with a game on content it has not
    taught yet). Cozy Chores has real positions (A1·s2, A2·s1, B1·s1) and plays Word Bingo (A1-A2)
    or Build It (B1+) until CHORES_LIVE. Kinds not built yet play a stand-in (GAME_STANDIN) until
-   they ship: Passport Desk -> Order Up! (the other own-content listening game that never falls
-   back), Case Closed -> Build It and Magic Words -> Word Bingo (their own fallback rules). Trap
+   they ship: Case Closed -> Build It and Magic Words -> Word Bingo (their own fallback rules); Passport
+   Desk plays itself since 2026-10-11. Trap
    Dash is no longer on new roadmaps (Games shelf only). New roadmaps only: game nodes already
    saved keep their kind and refId. */
 const GAME_ROTATION = {
@@ -8643,7 +8685,7 @@ const PATH_FALLBACK = {
 const PATH_LIVE = false;
 const CHORES_LIVE = true;
 const CHORES_OPEN = ['home1'];
-const GAME_STANDIN = {desk:'order', mystery:'build', spell:'bingo'};
+const GAME_STANDIN = {mystery:'build', spell:'bingo'};
 function pathLevelLive(level){ return PATH_LIVE && typeof STORY_PATH !== 'undefined' && !!(STORY_PATH.lane && STORY_PATH.lane[level]); }
 function gameKindForPosition(level, stage, pos){
   const s = 's' + (stage === 2 ? 2 : 1);
@@ -9082,6 +9124,7 @@ function gameDisplayName(kind){
   if(kind === 'build') return L('Build It','Cümle Kur','جمله بساز','Constrúyelo');
   if(kind === 'cross') return L('Mini Cross','Mini Bulmaca','جدول کوچک','Minicrucigrama');
   if(kind === 'order') return L('Order Up!','Sipariş Hazır!','سفارش حاضر!','¡Marchando!');
+  if(kind === 'desk') return L('Passport Desk','Pasaport Masası','میز گذرنامه','Control de pasaportes');
   if(kind === 'bingo') return L('Word Bingo','Kelime Tombalası','بینگوی کلمات','Bingo de palabras');
   if(kind === 'hunt') return L('Story Hunt','Hikaye Avı','شکار داستان','Caza en la historia');
   if(kind === 'echo') return L('Say It Back','Tekrar Et','بگو ببینم','Repítelo');
@@ -9095,6 +9138,7 @@ function viewGameKind(view){
   if(view === 'game-bingo') return 'bingo';
   if(view === 'game-cross') return 'cross';
   if(view === 'game-order') return 'order';
+  if(view === 'game-desk') return 'desk';
   if(view === 'game-path') return 'path';
   if(view === 'game-hunt') return 'hunt';
   if(view === 'game-echo') return 'echo';
@@ -9105,6 +9149,7 @@ function viewGameKind(view){
 function gameRoundStats(kind, round){
   if(kind === 'path') return {chapter:round.ch, total:PATH_CH, perfect:false};   // Story Path: no score, no perfect round
   if(kind === 'order'){ const total = round.customers.length, right = round.customers.filter(c=>c.perfect).length; return {right, total, tickets:round.tickets||0, perfect:total>0 && right===total}; }   // right = orders served perfectly (spec's per-customer "perfect" count); perfect = the whole round
+  if(kind === 'desk'){ const total = round.travellers.length, clean = round.travellers.filter(t=>t.clean).length; return {clean, total, said:round.said||0, perfect:total>0 && clean===total}; }   // clean = no transcript, no wrong tap, no bounced stamp, fix right first time
   if(kind === 'cross'){ const total = round.words.length, clean = round.clean||0, time = Math.max(1, Math.round(((round.finishedAt||Date.now()) - round.startedAt)/1000)); return {clean, total, reveals:round.reveals||0, hints:round.hints||0, time, perfect:total>0 && clean===total && !(round.hints||0)}; }
   if(kind === 'bingo') return {first:round.first||0, total:BINGO_SCORED_CALLS, perfect:(round.first||0) === BINGO_SCORED_CALLS};
   if(kind === 'hunt'){ const total = round.targets.length; return {clean:round.clean||0, total, perfect:total>0 && round.clean===total}; }
@@ -9131,6 +9176,7 @@ function gameRecordText(kind, st){
   if(kind === 'build') return name+' · '+st.firstTry+'/'+st.total+' '+L('first try','ilk denemede','در اولین تلاش','a la primera');
   if(kind === 'cross') return name+' · '+st.clean+'/'+st.total+' '+L('clean','temiz','بی‌خطا','limpias');
   if(kind === 'order') return name+' · '+st.right+'/'+st.total+' '+L('perfect','kusursuz','بی‌نقص','perfectos');
+  if(kind === 'desk') return name+' · '+st.clean+'/'+st.total+' '+L('clean','temiz','بی‌خطا','limpios');
   if(kind === 'bingo') return name+' · '+st.first+'/'+st.total+' '+L('first tap','ilk dokunuşta','با اولین لمس','al primer toque');
   if(kind === 'hunt') return name+' · '+st.clean+'/'+st.total+' '+L('clean','temiz','بی‌خطا','limpias');
   if(kind === 'chores') return chFmt(chChrome('record'), {n:st.first, total:st.total});   // "Cozy Chores · 4/5 smooth"
@@ -9143,6 +9189,7 @@ function gameStatStickers(kind, st){
   if(kind === 'path') return [L(`Chapter ${st.chapter} of ${st.total}`, `Bölüm ${st.chapter}/${st.total}`, `فصل ${st.chapter} از ${st.total}`, `Capítulo ${st.chapter} de ${st.total}`)];
   if(kind === 'cross') return [st.clean+'/'+st.total+' '+L('clean','temiz','بی‌خطا','limpias')].concat(st.reveals ? [] : [L('No reveals','Harf açmadan','بدون فاش‌کردن حرف','Sin letras reveladas')]);
   if(kind === 'order') return [L(`${st.right}/${st.total} perfect orders`, `${st.right}/${st.total} kusursuz sipariş`, `${st.right}/${st.total} سفارش بی‌نقص`, `${st.right}/${st.total} pedidos perfectos`)].concat(st.tickets ? [] : [L('No tickets','Fişsiz','بدون رسید','Sin mirar el pedido')]);
+  if(kind === 'desk') return [st.clean+'/'+st.total+' '+L('clean','temiz','بی‌خطا','limpios')].concat(st.said ? [] : [L('Sharp ears','Keskin kulak','گوش تیز','Oído fino')]);
   if(kind === 'bingo') return [st.first+'/'+st.total+' '+L('first tap','ilk dokunuşta','با اولین لمس','al primer toque'), L('Full card','Tam kart','کارت کامل','Cartón lleno')];
   if(kind === 'hunt') return [st.clean+'/'+st.total+' '+L('clean','temiz','بی‌خطا','limpias')];
   if(kind === 'chores') return [st.perfect ? chChrome('stickerPerfect') : chFmt(chChrome('sticker'), {n:st.first, total:st.total})].concat(st.place ? [st.place] : []);
@@ -9164,7 +9211,7 @@ function updateGameBest(kind, st){
     pr.gameBests.cross = Object.assign({}, better ? {clean:st.clean, total:st.total} : prev, {time:isFinite(time) ? time : null});
     return !!prev && better;
   }
-  const metric = kind==='match' ? (b=>-(b.time||9999)) : (kind==='trap' ? (b=>b.score||0) : ((kind==='build' || kind==='bingo' || kind==='chores') ? (b=>b.first||0) : (kind==='hunt' ? (b=>b.clean||0) : (kind==='echo' ? (b=>b.clear||0) : (kind==='order' ? (b=>b.right||0) : (b=>b.pct||0))))));
+  const metric = kind==='match' ? (b=>-(b.time||9999)) : (kind==='trap' ? (b=>b.score||0) : ((kind==='build' || kind==='bingo' || kind==='chores') ? (b=>b.first||0) : ((kind==='hunt' || kind==='desk') ? (b=>b.clean||0) : (kind==='echo' ? (b=>b.clear||0) : (kind==='order' ? (b=>b.right||0) : (b=>b.pct||0))))));
   const cur = {time:st.time||null, score:st.score!=null ? st.score : null, pct:st.pct!=null ? st.pct : null,
     first:st.firstTry!=null ? st.firstTry : (st.first!=null ? st.first : null), clean:st.clean!=null ? st.clean : null, clear:st.clear!=null ? st.clear : null, right:st.right!=null ? st.right : null};
   if(!prev){ pr.gameBests[kind] = cur; return false; }
@@ -9600,7 +9647,7 @@ function maybeCelebrate(){
     low = state.quiz.correct/state.quiz.questions.length < .5;
   } else if(v==='game-match' && vp.round && vp.round.matchedKeys && vp.round.matchedKeys.length === vp.round.pairCount){
     target = vp.round; kind = 'game';
-  } else if((v==='game-dictation' || v==='game-trap' || v==='game-build' || v==='game-bingo' || v==='game-cross' || v==='game-order' || v==='game-hunt' || v==='game-echo' || v==='game-chores-room' || v==='game-path') && vp.round && vp.round.finished){
+  } else if((v==='game-dictation' || v==='game-trap' || v==='game-build' || v==='game-bingo' || v==='game-cross' || v==='game-order' || v==='game-desk' || v==='game-hunt' || v==='game-echo' || v==='game-chores-room' || v==='game-path') && vp.round && vp.round.finished){
     target = vp.round; kind = 'game';
   } else if(v==='studio-round' && vp.checked && vp.result && vp.result.passed){
     target = vp.result; kind = vp.mode;
@@ -13125,10 +13172,10 @@ function fallbackGameSet(minCards){
    to roadmap card faces. Mini Cross is not in the rotation yet, so it is listed (marked New) as
    soon as a finished set can host a puzzle. Order Up! (own generated content, wave A2) is listed from the
    start and marked New until the learner has met it; GAME_ROTATION is wired separately (gt8gCNfu). */
-const SHELF_GAMES = ['path','order','cross','bingo','match','dictation','build','trap','hunt','echo','chores'];
-const SHELF_ART = {path:{ic:'book', c:'var(--cat-story)'}, order:{ic:'chat', c:'var(--cat-gram)'}, cross:{ic:'cards', c:'var(--cat-voc)'}, bingo:{ic:'headphones', c:'var(--cat-voc)'}, match:{ic:'cards', c:'var(--cat-review)'}, dictation:{ic:'headphones', c:'var(--cat-lis)'}, build:{ic:'dumbbell', c:'var(--cat-gram)'}, trap:{ic:'bolt', c:'var(--clay-coral)'}, hunt:{ic:'search', c:'var(--cat-story)'}, echo:{ic:'mic', c:'var(--cat-lis)'}, chores:{ic:'home', c:'var(--clay-sky)'}};
+const SHELF_GAMES = ['path','order','desk','cross','bingo','match','dictation','build','trap','hunt','echo','chores'];
+const SHELF_ART = {path:{ic:'book', c:'var(--cat-story)'}, order:{ic:'chat', c:'var(--cat-gram)'}, desk:{ic:'suitcase', c:'var(--clay-sky)'}, cross:{ic:'cards', c:'var(--cat-voc)'}, bingo:{ic:'headphones', c:'var(--cat-voc)'}, match:{ic:'cards', c:'var(--cat-review)'}, dictation:{ic:'headphones', c:'var(--cat-lis)'}, build:{ic:'dumbbell', c:'var(--cat-gram)'}, trap:{ic:'bolt', c:'var(--clay-coral)'}, hunt:{ic:'search', c:'var(--cat-story)'}, echo:{ic:'mic', c:'var(--cat-lis)'}, chores:{ic:'home', c:'var(--clay-sky)'}};
 // The game kind a completedGames refId stands for (vocab games end in -kind, the rest start with kind-).
-function gameKindOfRef(refId){ const s = String(refId||''); if(s.indexOf('shelf-') === 0) return null; let m = s.match(/-(match|dictation|bingo|echo|cross|hunt)$/); if(m) return m[1]; m = s.match(/^(build|trap|chores|order|path)-/); return m ? m[1] : null; }
+function gameKindOfRef(refId){ const s = String(refId||''); if(s.indexOf('shelf-') === 0) return null; let m = s.match(/-(match|dictation|bingo|echo|cross|hunt)$/); if(m) return m[1]; m = s.match(/^(build|trap|chores|order|desk|path)-/); return m ? m[1] : null; }
 // Every kind the learner has met: finished game nodes (any roadmap, old saves included) and game souvenirs.
 function gamesMet(){
   const pr = state.progress || {}, met = new Set();
@@ -13146,7 +13193,7 @@ function shelfGames(){
   const met = gamesMet();
   // Story Path stays off the shelf while it is dormant (PATH_LIVE), then appears once a chapter has been played.
   // Cozy Chores is listed from go-live (own content, like Order Up!), marked New until the learner has met it.
-  return SHELF_GAMES.filter(k=>k === 'path' ? (PATH_LIVE && met.has('path')) : (k === 'order' ? true : (k === 'chores' ? ((CHORES_LIVE && CHORES_OPEN.length > 0) || met.has('chores')) : (k === 'cross' ? (met.has('cross') || shelfSets('cross').length > 0) : met.has(k)))));
+  return SHELF_GAMES.filter(k=>k === 'path' ? (PATH_LIVE && met.has('path')) : ((k === 'order' || k === 'desk') ? true : (k === 'chores' ? ((CHORES_LIVE && CHORES_OPEN.length > 0) || met.has('chores')) : (k === 'cross' ? (met.has('cross') || shelfSets('cross').length > 0) : met.has(k)))));
 }
 function shelfSubLine(){
   const n = shelfGames().length;
@@ -13157,6 +13204,7 @@ function shelfSubLine(){
 function gameBlurb(kind){
   if(kind === 'path'){ const town = (pathArc('A1') || {}).town || ''; return L(`A summer in ${town}, one choice at a time.`, `${town}: bir yaz, her seferinde bir seçim.`, `یک تابستان در ${town}، هر بار یک انتخاب.`, `Un verano en ${town}, una decisión cada vez.`); }
   if(kind === 'order') return L('Listen to each customer’s order and build it on the tray.','Her müşterinin siparişini dinle ve tepsiye hazırla.','سفارش هر مشتری را گوش کن و روی سینی بچین.','Escucha el pedido de cada cliente y prepáralo en la bandeja.');
+  if(kind === 'desk') return L('Listen to each traveller and fix the mistake on their card.','Her yolcuyu dinle ve kartındaki hatayı düzelt.','به هر مسافر گوش کن و اشتباه کارتش را درست کن.','Escucha a cada viajero y corrige el error de su tarjeta.');
   if(kind === 'cross') return L('Spell the words you learned into a pocket crossword.','Öğrendiğin kelimeleri mini bir bulmacaya yaz.','کلمه‌هایی که یاد گرفتی را در یک جدول کوچک بنویس.','Escribe las palabras que aprendiste en un minicrucigrama.');
   if(kind === 'bingo') return L('Listen to the clue and tap the word on your card.','İpucunu dinle, kartındaki kelimeye dokun.','سرنخ را گوش کن و روی کلمه در کارتت بزن.','Escucha la pista y toca la palabra en tu cartón.');
   if(kind === 'match') return L('Flip tiles and match each word with its meaning.','Karoları çevir, her kelimeyi anlamıyla eşleştir.','کاشی‌ها را برگردان و هر کلمه را با معنی‌اش جفت کن.','Gira las fichas y une cada palabra con su significado.');
@@ -13319,6 +13367,10 @@ function gameKeep(kind, round){
       // the order that took the most serves (the longest one on a perfect round); flip side = the whole order and its tray in words
       const pick = round.customers.slice().sort((a,b)=>(b.serves - a.serves) || (b.text.length - a.text.length))[0];
       return {text:pick.text, say:pick.text, note:orderTraySummary(pick)};
+    }
+    if(kind === 'desk' && round.travellers && round.travellers.length){
+      // the value the learner had to catch ("thirteen, not thirty"); flip side = the traveller's line
+      const k = deskSouvenir(round); if(k) return k;
     }
     if(kind === 'bingo' && round.tiles){
       // a word missed on first tap, else the word that completed a line
@@ -14504,6 +14556,814 @@ function orderPeekStart(e){
 function orderPeekEnd(){
   clearTimeout(orderPeekTimer);
   setTimeout(()=>{ document.querySelectorAll('.game-tile.nolabel.peek').forEach(t=>t.classList.remove('peek')); orderPeeked = false; }, 350);
+}
+/* ============================= FIVE NEW GAMES WAVE B (Jq6f9OFv): PASSPORT DESK =============================
+   Spec: Claude/specs/games-5-new-cards-2026-10-04.md §5 (approved by Farin 2026-10-07). Content:
+   Claude/specs/games-content/desk-en.md + desk-es.md (farin-lxd, 2026-10-08). You run the arrivals desk:
+   five travellers (the four non-companion characters) say who they are; their arrival card has at most one
+   typo (or, from A2, one blank box) and the learner fixes it, then brings the APPROVED stamp down. Nobody
+   is ever refused. Traveller 1 is always clean; 2-3 of the 5 have one issue. A1 fixes with 3 chips, A2+
+   types the value (digits or number words, any date format; chips after two misses or when the text
+   can't be read), B1 fills its blank box by picking the right question of three, B2 keeps the last
+   value of a self-correction, C1 hears fast natural speech and implied dates (a fortnight = 14, una
+   quincena = 15). Spoken by ttsSpeak (device voice for these generated lines); "Show what they said" is
+   a hint, free when the phone has no voice for the language. Untimed, no lives, no XP, never falls back.
+   Card values are a target-language document (labels follow the UI language). Roadmap rounds are seeded
+   by refId (a replay = the same travellers); the Games shelf draws fresh ones. */
+const DESK_TRAVELLERS = 5;
+const DESK_NAMES = {
+  en:[{first:'Elif', last:'Kaya', g:'f', near:['Kaia','Kayah']}, {first:'Deniz', last:'Arslan', g:'m', near:['Aslan','Arslam']}, {first:'Omar', last:'Haddad', g:'m', near:['Hadad','Haddat']},
+    {first:'Mia', last:'Brown', g:'f', near:['Braun','Browne']}, {first:'Tom', last:'Reed', g:'m', near:['Reid','Read']}, {first:'Nina', last:'Petrov', g:'f', near:['Petrof','Petrow']},
+    {first:'Leo', last:'Costa', g:'m', near:['Kosta','Coste']}, {first:'Zara', last:'Khan', g:'f', near:['Kahn','Kan']}, {first:'Sam', last:'Fisher', g:'m', near:['Fischer','Fishar']},
+    {first:'Ali', last:'Rahimi', g:'m', near:['Rahemi','Rahimy']}, {first:'Sara', last:'Lopez', g:'f', near:['Lopes','Lopaz']}, {first:'Emma', last:'Weber', g:'f', near:['Webber','Veber']},
+    {first:'Noah', last:'Miller', g:'m', near:['Millar','Mueller']}, {first:'Lina', last:'Novak', g:'f', near:['Nowak','Novac']}, {first:'Kemal', last:'Demir', g:'m', near:['Temir','Demer']},
+    {first:'Hana', last:'Sato', g:'f', near:['Saito','Satto']}, {first:'Max', last:'Berg', g:'m', near:['Burg','Bergh']}, {first:'Ava', last:'Murphy', g:'f', near:['Murfy','Murphey']},
+    {first:'Yusuf', last:'Aydin', g:'m', near:['Aidin','Aydan']}, {first:'Rosa', last:'Marin', g:'f', near:['Maren','Marine']}, {first:'Ben', last:'Carter', g:'m', near:['Karter','Cartar']},
+    {first:'Maya', last:'Singh', g:'f', near:['Sing','Sinha']}],
+  es:[{first:'Lucía', last:'Ruiz', g:'f', near:['Ruis','Rois']}, {first:'Mateo', last:'García', g:'m', near:['Garza','Garcés']}, {first:'Sara', last:'López', g:'f', near:['Lopes','Lobez']},
+    {first:'Ana', last:'Martín', g:'f', near:['Martí','Marín']}, {first:'Tomás', last:'Ortega', g:'m', near:['Ortiga','Orteja']}, {first:'Deniz', last:'Kaya', g:'m', near:['Kaia','Caya']},
+    {first:'Elif', last:'Demir', g:'f', near:['Temir','Demín']}, {first:'Omar', last:'Haddad', g:'m', near:['Hadad','Jadad']}, {first:'Mía', last:'Rossi', g:'f', near:['Rosi','Rosso']},
+    {first:'Leo', last:'Costa', g:'m', near:['Acosta','Cuesta']}, {first:'Nora', last:'Vidal', g:'f', near:['Bidal','Vidar']}, {first:'Hugo', last:'Navarro', g:'m', near:['Nabarro','Navaro']},
+    {first:'Paula', last:'Serrano', g:'f', near:['Cerrano','Serano']}, {first:'Diego', last:'Molina', g:'m', near:['Morina','Medina']}, {first:'Carla', last:'Vega', g:'f', near:['Bega','Veiga']},
+    {first:'Iván', last:'Castro', g:'m', near:['Kastro','Casto']}, {first:'Ali', last:'Rahimi', g:'m', near:['Rajimi','Raimi']}, {first:'Nina', last:'Petrov', g:'f', near:['Petrof','Petrob']},
+    {first:'Emma', last:'Weber', g:'f', near:['Beber','Veber']}, {first:'Yusuf', last:'Aydin', g:'m', near:['Aidin','Aydan']}, {first:'Hana', last:'Sato', g:'f', near:['Satto','Zato']},
+    {first:'Marta', last:'Gil', g:'f', near:['Jil','Guil']}]
+};
+// natEs = [m, f]; near = confusable by sound or geography (Iran / Ireland, Austria / Australia); jp is never the wrong field.
+const DESK_COUNTRIES = [
+  {id:'tr', en:'Turkey', es:'Turquía', natEn:'Turkish', natEs:['turco','turca'], tr:'Türkiye', fa:'ترکیه', cardEn:'TURKEY', cardEs:'TURQUÍA', near:['gr','ir']},
+  {id:'ir', en:'Iran', es:'Irán', natEn:'Iranian', natEs:['iraní','iraní'], tr:'İran', fa:'ایران', cardEn:'IRAN', cardEs:'IRÁN', near:['ie','tr']},
+  {id:'ie', en:'Ireland', es:'Irlanda', natEn:'Irish', natEs:['irlandés','irlandesa'], tr:'İrlanda', fa:'ایرلند', cardEn:'IRELAND', cardEs:'IRLANDA', near:['ir','gb']},
+  {id:'gb', en:'the UK', es:'el Reino Unido', natEn:'British', natEs:['británico','británica'], tr:'Birleşik Krallık', fa:'بریتانیا', cardEn:'UNITED KINGDOM', cardEs:'REINO UNIDO', near:['ie']},
+  {id:'es', en:'Spain', es:'España', natEn:'Spanish', natEs:['español','española'], tr:'İspanya', fa:'اسپانیا', cardEn:'SPAIN', cardEs:'ESPAÑA', near:['pt','ma']},
+  {id:'pt', en:'Portugal', es:'Portugal', natEn:'Portuguese', natEs:['portugués','portuguesa'], tr:'Portekiz', fa:'پرتغال', cardEn:'PORTUGAL', cardEs:'PORTUGAL', near:['es','br']},
+  {id:'mx', en:'Mexico', es:'México', natEn:'Mexican', natEs:['mexicano','mexicana'], tr:'Meksika', fa:'مکزیک', cardEn:'MEXICO', cardEs:'MÉXICO', near:['co','ar']},
+  {id:'co', en:'Colombia', es:'Colombia', natEn:'Colombian', natEs:['colombiano','colombiana'], tr:'Kolombiya', fa:'کلمبیا', cardEn:'COLOMBIA', cardEs:'COLOMBIA', near:['mx','br']},
+  {id:'ar', en:'Argentina', es:'Argentina', natEn:'Argentinian', natEs:['argentino','argentina'], tr:'Arjantin', fa:'آرژانتین', cardEn:'ARGENTINA', cardEs:'ARGENTINA', near:['br','mx']},
+  {id:'br', en:'Brazil', es:'Brasil', natEn:'Brazilian', natEs:['brasileño','brasileña'], tr:'Brezilya', fa:'برزیل', cardEn:'BRAZIL', cardEs:'BRASIL', near:['ar','pt']},
+  {id:'it', en:'Italy', es:'Italia', natEn:'Italian', natEs:['italiano','italiana'], tr:'İtalya', fa:'ایتالیا', cardEn:'ITALY', cardEs:'ITALIA', near:['fr','es']},
+  {id:'fr', en:'France', es:'Francia', natEn:'French', natEs:['francés','francesa'], tr:'Fransa', fa:'فرانسه', cardEn:'FRANCE', cardEs:'FRANCIA', near:['it','de']},
+  {id:'de', en:'Germany', es:'Alemania', natEn:'German', natEs:['alemán','alemana'], tr:'Almanya', fa:'آلمان', cardEn:'GERMANY', cardEs:'ALEMANIA', near:['fr','at']},
+  {id:'at', en:'Austria', es:'Austria', natEn:'Austrian', natEs:['austriaco','austriaca'], tr:'Avusturya', fa:'اتریش', cardEn:'AUSTRIA', cardEs:'AUSTRIA', near:['au','de']},
+  {id:'au', en:'Australia', es:'Australia', natEn:'Australian', natEs:['australiano','australiana'], tr:'Avustralya', fa:'استرالیا', cardEn:'AUSTRALIA', cardEs:'AUSTRALIA', near:['at']},
+  {id:'gr', en:'Greece', es:'Grecia', natEn:'Greek', natEs:['griego','griega'], tr:'Yunanistan', fa:'یونان', cardEn:'GREECE', cardEs:'GRECIA', near:['tr','it']},
+  {id:'ma', en:'Morocco', es:'Marruecos', natEn:'Moroccan', natEs:['marroquí','marroquí'], tr:'Fas', fa:'مراکش', cardEn:'MOROCCO', cardEs:'MARRUECOS', near:['es']},
+  {id:'jp', en:'Japan', es:'Japón', natEn:'Japanese', natEs:['japonés','japonesa'], tr:'Japonya', fa:'ژاپن', cardEn:'JAPAN', cardEs:'JAPÓN', near:[]}
+];
+/* Templates (desk-en.md / desk-es.md, 7 per level; one id = one structure in both languages). f = the card
+   fields each spoken line covers; mk = [field, mistake kind]; en/es = the lines; ask (B1) = [right question,
+   wrong, wrong, the traveller's answer]; blank (A2) = the answer after "Ask"; purpose = the true purpose;
+   wp = the purpose a purpose-wrong card shows; lv = how the leaving date is set (w weeks 2-4 · wt weeks
+   8-12 · d days 3-12 · abs any date · thu a Thursday · w4 four weeks · dat the day after tomorrow · fn a
+   fortnight (14) / una quincena (15) · wof a week on Friday · m3 three months · ord a day the card can
+   miss by 10 · d10 ten days); dob4 = born on the 4th (the repaired value); mon = born in a month of a
+   confusable pair. Slots: {FIRST} {LAST} {SPELL} {COUNTRY} {NAT} {AGE} {NIGHTS} {DOB} {TIME} {DAYS}
+   {WEEKS} {LEAVING_DATE} {LEAVING_DAY} {MONTH} {YEAR} {MONTHX} (= the month the card wrongly shows). */
+const DESK_TEMPLATES = {
+  A1:[
+    {id:'A1-1', f:[['name'],['from'],['age','nights']], mk:['age','teen-ty'],
+      en:['Hi! I’m {FIRST} {LAST}. {SPELL}.', 'I’m from {COUNTRY}.', 'I’m {AGE}. {NIGHTS} nights, please.'],
+      es:['¡Hola! Soy {FIRST} {LAST}. {SPELL}.', 'Soy de {COUNTRY}.', 'Tengo {AGE} años. {NIGHTS} noches, por favor.']},
+    {id:'A1-2', f:[['name'],['from','age'],['nights']], mk:['nights','teen-ty'],
+      en:['Hello. My name is {FIRST} {LAST}, that’s {SPELL}.', 'I come from {COUNTRY}, and I’m {AGE} years old.', 'I’m staying {NIGHTS} nights.'],
+      es:['Hola. Me llamo {FIRST} {LAST}, se escribe {SPELL}.', 'Vengo de {COUNTRY} y tengo {AGE} años.', 'Me quedo {NIGHTS} noches.']},
+    {id:'A1-3', f:[['name'],['from'],['age','nights']], mk:['from','country-near'],
+      en:['Good morning! {FIRST} {LAST}. {SPELL}.', 'I’m {NAT}.', 'I’m {AGE}, and I’m here for {NIGHTS} nights.'],
+      es:['¡Buenos días! {FIRST} {LAST}. {SPELL}.', 'Soy {NAT}.', 'Tengo {AGE} años y estoy aquí {NIGHTS} noches.']},
+    {id:'A1-4', f:[['name'],['from','age'],['nights']], mk:['age','±1'],
+      en:['Hi there. I’m {FIRST} {LAST} — {SPELL}.', 'From {COUNTRY}. I’m {AGE}.', 'Just {NIGHTS} nights.'],
+      es:['Hola, ¿qué tal? Soy {FIRST} {LAST} — {SPELL}.', 'De {COUNTRY}. Tengo {AGE} años.', 'Solo {NIGHTS} noches.']},
+    {id:'A1-5', f:[['name'],['from'],['age','nights']], mk:['nights','±1'],
+      en:['Hello! {FIRST} {LAST}. I spell it {SPELL}.', 'I’m from {COUNTRY}.', 'I’m {AGE} years old. I’m staying {NIGHTS} nights.'],
+      es:['¡Hola! {FIRST} {LAST}. Se deletrea {SPELL}.', 'Soy de {COUNTRY}.', 'Tengo {AGE} años. Me quedo {NIGHTS} noches.']},
+    {id:'A1-6', f:[['name'],['from'],['age','nights']], mk:['age','teen-ty'],
+      en:['Hi, I’m {FIRST} {LAST}, {SPELL}.', 'I’m {NAT}, from {COUNTRY}.', 'I’m {AGE}. {NIGHTS} nights.'],
+      es:['Hola, soy {FIRST} {LAST}, {SPELL}.', 'Soy {NAT}, de {COUNTRY}.', 'Tengo {AGE} años. {NIGHTS} noches.']},
+    {id:'A1-7', f:[['name'],['from','age'],['nights']], mk:['from','country-near'],
+      en:['Good afternoon. {FIRST} {LAST}. {SPELL}.', '{COUNTRY}. {AGE} years old.', '{NIGHTS} nights, then I go home.'],
+      es:['Buenas tardes. {FIRST} {LAST}. {SPELL}.', '{COUNTRY}. {AGE} años.', '{NIGHTS} noches, y luego a casa.']}
+  ],
+  A2:[
+    {id:'A2-1', f:[['name'],['dob'],['from','time']], mk:['dob','teen-ty'],
+      en:['Hi, I’m {FIRST} {LAST}.', 'I was born on {DOB}.', 'I’m from {COUNTRY}. My flight was at {TIME}.'],
+      es:['Hola, soy {FIRST} {LAST}.', 'Nací el {DOB}.', 'Soy de {COUNTRY}. Mi vuelo era a las {TIME}.']},
+    {id:'A2-2', f:[['name'],['dob'],['from','time']], mk:['time','minutes-near'],
+      en:['Hello! {FIRST} {LAST}, {SPELL}.', 'Date of birth: {DOB}.', 'I’m {NAT}. I landed at {TIME}.'],
+      es:['¡Hola! {FIRST} {LAST}, {SPELL}.', 'Fecha de nacimiento: {DOB}.', 'Soy {NAT}. He aterrizado a las {TIME}.']},
+    {id:'A2-3', f:[['name'],['dob','from'],['time']], mk:['name','name-near'],
+      en:['Good evening. My name’s {FIRST} {LAST}.', 'Born {DOB}, in {COUNTRY}.', 'The flight got in at {TIME}.'],
+      es:['Buenas noches. Me llamo {FIRST} {LAST}.', 'Nací el {DOB}, en {COUNTRY}.', 'El vuelo ha llegado a las {TIME}.']},
+    {id:'A2-4', f:[['name'],['dob'],['from','time']], mk:['dob','date-swap'],
+      en:['Hi. {FIRST} {LAST}.', 'I was born on {DOB}.', 'From {COUNTRY}. We landed at {TIME}, a bit late.'],
+      es:['Hola. {FIRST} {LAST}.', 'Nací el {DOB}.', 'De {COUNTRY}. Hemos aterrizado a las {TIME}, un poco tarde.']},
+    {id:'A2-5', f:[['name'],['from'],['time']], mk:['dob','blank'], blank:{en:'Oh, sorry — {DOB}.', es:'Ay, perdón: nací el {DOB}.'},
+      en:['Hello, {FIRST} {LAST} here. {SPELL}.', 'I’m from {COUNTRY}.', 'My flight was at {TIME}.'],
+      es:['Hola, soy {FIRST} {LAST}. {SPELL}.', 'Soy de {COUNTRY}.', 'Mi vuelo era a las {TIME}.']},
+    {id:'A2-6', f:[['name'],['dob'],['from','time']], mk:['time','±1'],
+      en:['Hi! {FIRST} {LAST}.', 'I was born on {DOB}.', 'I’m {NAT}. The plane landed at {TIME}.'],
+      es:['¡Hola! {FIRST} {LAST}.', 'Nací el {DOB}.', 'Soy {NAT}. El avión ha aterrizado a las {TIME}.']},
+    {id:'A2-7', f:[['name'],['dob','from'],['time']], mk:['dob','year-near'],
+      en:['Good morning. {FIRST} {LAST}, that’s {SPELL}.', 'Date of birth {DOB}. I’m from {COUNTRY}.', 'I arrived at {TIME}.'],
+      es:['Buenos días. {FIRST} {LAST}, se escribe {SPELL}.', 'Fecha de nacimiento {DOB}. Soy de {COUNTRY}.', 'He llegado a las {TIME}.']}
+  ],
+  B1:[
+    {id:'B1-1', f:[['name','dob'],['purpose','leaving']], mk:['leaving','leaving-miscalc'], purpose:'work', lv:'w',
+      en:['Hi, {FIRST} {LAST}. Born {DOB}.', 'I’m here for {WEEKS} weeks, for a conference.'],
+      es:['Hola, {FIRST} {LAST}. Nací el {DOB}.', 'Vengo {WEEKS} semanas, a un congreso.'],
+      ask:{field:'leaving', en:['When are you leaving?','When you are leaving?','When leaving are you?','In {WEEKS} weeks — on {LEAVING_DATE}.'], es:['¿Cuándo se marcha usted?','¿Cuándo se marchar usted?','¿Cuándo te marchas usted?','En {WEEKS} semanas, el {LEAVING_DATE}.']}},
+    {id:'B1-2', f:[['name','dob'],['purpose','leaving']], mk:['purpose','purpose-wrong'], purpose:'family', wp:'holiday', lv:'d',
+      en:['Hello. I’m {FIRST} {LAST}, date of birth {DOB}.', 'I’m visiting my sister — I fly home in {DAYS} days.'],
+      es:['Hola. Soy {FIRST} {LAST}, fecha de nacimiento {DOB}.', 'Vengo a ver a mi hermana; vuelvo a casa en {DAYS} días.'],
+      ask:{field:'purpose', en:['What’s the purpose of your visit?','What the purpose of your visit is?','What is purpose your visit?','Family — I’m visiting my sister.'], es:['¿Cuál es el motivo de su viaje?','¿Cuál son el motivo de su viaje?','¿Cuál es el motivo de tu viaje usted?','Familia: vengo a ver a mi hermana.']}},
+    {id:'B1-3', f:[['name'],['purpose','leaving']], mk:['dob','ordinal-near'], purpose:'study', lv:'abs',
+      en:['Good morning. {FIRST} {LAST}.', 'I’m doing a language course here. I leave on {LEAVING_DATE}.'],
+      es:['Buenos días. {FIRST} {LAST}.', 'Estoy haciendo un curso de español. Me voy el {LEAVING_DATE}.'],
+      ask:{field:'dob', en:['When were you born?','When you were born?','When born were you?','On {DOB}.'], es:['¿Cuándo nació usted?','¿Cuándo nacido usted?','¿Cuándo naciste usted?','El {DOB}.']}},
+    {id:'B1-4', f:[['name','dob'],['purpose','leaving']], mk:['leaving','±1'], purpose:'holiday', lv:'d',
+      en:['Hi! {FIRST} {LAST}, {SPELL}. Born on {DOB}.', 'Just a holiday. {DAYS} days, then back to work.'],
+      es:['¡Hola! {FIRST} {LAST}, {SPELL}. Nací el {DOB}.', 'Vacaciones, nada más. {DAYS} días y vuelta al trabajo.'],
+      ask:{field:'leaving', en:['How long are you staying?','How long you are staying?','How long staying are you?','{DAYS} days — so I leave on {LEAVING_DATE}.'], es:['¿Cuánto tiempo se queda?','¿Cuánto tiempo se quedar?','¿Cuánto tiempo os quedáis usted?','{DAYS} días, así que me voy el {LEAVING_DATE}.']}},
+    {id:'B1-5', f:[['name'],['dob','purpose','leaving']], mk:['name','name-near'], purpose:'work', lv:'w',
+      en:['Hello, {FIRST} {LAST} here.', 'I was born on {DOB}. I’m here to work — a {WEEKS}-week contract.'],
+      es:['Hola, soy {FIRST} {LAST}.', 'Nací el {DOB}. Vengo a trabajar: un contrato de {WEEKS} semanas.'],
+      ask:{field:'name', en:['Could you spell your surname, please?','Could you spell please your surname?','Could spell you your surname, please?','{SPELL}.'], es:['¿Me deletrea su apellido, por favor?','¿Me deletrear su apellido, por favor?','¿Me deletreas su apellido, por favor?','{SPELL}.']}},
+    {id:'B1-6', f:[['name','dob'],['purpose','leaving']], mk:['leaving','leaving-miscalc'], purpose:'study', lv:'wt',
+      en:['Hi. {FIRST} {LAST}, born {DOB}.', 'I’m studying here for a term — I go back in {WEEKS} weeks.'],
+      es:['Hola. {FIRST} {LAST}, nací el {DOB}.', 'Estudio aquí un cuatrimestre; vuelvo en {WEEKS} semanas.'],
+      ask:{field:'leaving', en:['When do you go back?','When you go back?','When go you back?','In {WEEKS} weeks, on {LEAVING_DATE}.'], es:['¿Cuándo vuelve usted?','¿Cuándo volver usted?','¿Cuándo vuelves usted?','En {WEEKS} semanas, el {LEAVING_DATE}.']}},
+    {id:'B1-7', f:[['name'],['dob','purpose','leaving']], mk:['dob','date-swap'], purpose:'family', lv:'abs',
+      en:['Good evening. {FIRST} {LAST}.', 'Date of birth {DOB}. I’m here for my son’s wedding; I leave {DAYS} days after it, on {LEAVING_DATE}.'],
+      es:['Buenas noches. {FIRST} {LAST}.', 'Fecha de nacimiento {DOB}. Vengo a la boda de mi hijo; me marcho {DAYS} días después, el {LEAVING_DATE}.'],
+      ask:{field:'purpose', en:['Why are you visiting?','Why you are visiting?','Why visiting are you?','Family — my son is getting married here.'], es:['¿Por qué viene usted?','¿Por qué venir usted?','¿Por qué vienes usted?','Familia: mi hijo se casa aquí.']}}
+  ],
+  B2:[
+    {id:'B2-1', f:[['name'],['dob'],['purpose','leaving']], mk:['dob','repair-first-value'], purpose:'holiday', lv:'abs', dob4:true,
+      en:['Hi, {FIRST} {LAST}.', 'I was born on the fourteenth — sorry, the fourth — of {MONTH}, {YEAR}.', 'Holiday. Leaving on {LEAVING_DATE}.'],
+      es:['Hola, {FIRST} {LAST}.', 'Nací el catorce… perdón, el cuatro de {MONTH} de {YEAR}.', 'Vacaciones. Me marcho el {LEAVING_DATE}.']},
+    {id:'B2-2', f:[['name','dob'],['purpose','leaving']], mk:['purpose','purpose-wrong'], purpose:'work', wp:'holiday', lv:'abs',
+      en:['Hello. {FIRST} {LAST}, born {DOB}.', 'I’m here for work — well, a work trip with a couple of days off. So: work. I fly out on {LEAVING_DATE}.'],
+      es:['Hola. {FIRST} {LAST}, nací el {DOB}.', 'Vengo por trabajo… bueno, un viaje de trabajo con un par de días libres. O sea: trabajo. Salgo el {LEAVING_DATE}.']},
+    {id:'B2-3', f:[['name'],['dob','leaving'],['purpose']], mk:['leaving','repair-first-value'], purpose:'family', lv:'thu',
+      en:['Hi! {FIRST} {LAST}.', 'Born {DOB}. I leave on Tuesday the — no, Thursday the {LEAVING_DAY}.', 'Family visit.'],
+      es:['¡Hola! {FIRST} {LAST}.', 'Nací el {DOB}. Me voy el martes… no, el jueves {LEAVING_DAY}.', 'Visita familiar.']},
+    {id:'B2-4', f:[['name','dob'],['purpose','leaving']], mk:['dob','year-near'], purpose:'study', lv:'abs',
+      en:['Good afternoon. {FIRST} {LAST}. I think it’s… yes, I was born on {DOB}.', 'Studying — a semester. Back home on {LEAVING_DATE}.'],
+      es:['Buenas tardes. {FIRST} {LAST}. Creo que es… sí, nací el {DOB}.', 'Estudios, un semestre. Vuelvo a casa el {LEAVING_DATE}.']},
+    {id:'B2-5', f:[['name'],['dob'],['leaving','purpose']], mk:['leaving','repair-first-value'], purpose:'work', lv:'w4',
+      en:['Hi, I’m {FIRST} {LAST}.', 'Date of birth {DOB}.', 'I’m staying three — actually, make that four — weeks. Work.'],
+      es:['Hola, soy {FIRST} {LAST}.', 'Fecha de nacimiento {DOB}.', 'Me quedo tres… mejor dicho, cuatro semanas. Trabajo.']},
+    {id:'B2-6', f:[['name'],['dob','purpose'],['leaving']], mk:['purpose','repair-first-value'], purpose:'holiday', wp:'work', lv:'abs',
+      en:['Hello, {FIRST} {LAST}, {SPELL}.', 'Born {DOB}. Here on holiday, I mean — I was going to say work, old habit. Holiday.', 'Leaving {LEAVING_DATE}.'],
+      es:['Hola, {FIRST} {LAST}, {SPELL}.', 'Nací el {DOB}. Vengo de vacaciones, quiero decir — iba a decir trabajo, costumbre. Vacaciones.', 'Salgo el {LEAVING_DATE}.']},
+    {id:'B2-7', f:[['name'],['dob'],['purpose','leaving']], mk:['dob','month-near'], purpose:'family', lv:'w', mon:true,
+      en:['Hi. {FIRST} {LAST}.', 'I was born on {DOB} — {MONTH}, not {MONTHX}, people always mishear that.', 'Family. Flying back in {WEEKS} weeks.'],
+      es:['Hola. {FIRST} {LAST}.', 'Nací el {DOB} — de {MONTH}, no de {MONTHX}; siempre lo oyen mal.', 'Familia. Vuelvo en {WEEKS} semanas.']}
+  ],
+  C1:[
+    {id:'C1-1', f:[['name','dob'],['leaving','purpose']], mk:['leaving','±1'], purpose:'holiday', lv:'dat',
+      en:['Hiya — {FIRST} {LAST}, born {DOB}, if that’s what you need.', 'I’ll be off the day after tomorrow, first thing. Just a bit of a break.'],
+      es:['Hola, ¿qué tal? {FIRST} {LAST}, nací el {DOB}, si le hace falta.', 'Me marcho pasado mañana a primera hora. Un descansito, nada más.']},
+    {id:'C1-2', f:[['name','dob'],['leaving','purpose']], mk:['leaving','leaving-miscalc'], purpose:'work', lv:'fn',
+      en:['Right, so, {FIRST} {LAST}. Date of birth, um, {DOB}.', 'I’m here a fortnight, give or take — well, exactly a fortnight, the ticket says. Speaking at a conference.'],
+      es:['A ver, {FIRST} {LAST}. Fecha de nacimiento, eh… {DOB}.', 'Estoy una quincena, más o menos… bueno, justo quince días, según el billete. Doy una ponencia en un congreso.']},
+    {id:'C1-3', f:[['name','dob'],['purpose','leaving']], mk:['dob','repair-first-value'], purpose:'family', lv:'abs', dob4:true,
+      en:['{FIRST} {LAST} — yes, that’s me. Born on the fourteenth — sorry, the fortieth… no, the fourth — of {MONTH}, {YEAR}.', 'Visiting the in-laws, heaven help me. Back home on {LEAVING_DATE}.'],
+      es:['{FIRST} {LAST}, sí, soy yo. Nací el catorce… perdón, el cuarenta… no, el cuatro de {MONTH} de {YEAR}.', 'Vengo a ver a mis suegros, que Dios me asista. Vuelvo el {LEAVING_DATE}.']},
+    {id:'C1-4', f:[['name'],['dob','purpose','leaving']], mk:['purpose','purpose-wrong'], purpose:'family', wp:'study', lv:'wof',
+      en:['Hi, {FIRST} {LAST}.', 'Born {DOB}. I’m over for my daughter’s graduation, then I fly out a week on Friday.'],
+      es:['Hola, {FIRST} {LAST}.', 'Nací el {DOB}. Vengo a la graduación de mi hija, y me voy el viernes de la semana que viene.']},
+    {id:'C1-5', f:[['name','dob'],['purpose','leaving']], mk:['dob','year-near'], purpose:'study', lv:'m3',
+      en:['Afternoon. {FIRST} {LAST}. {DOB} — yes, I know, I don’t look it.', 'Three-month research stay, so I’m out of your hair on {LEAVING_DATE}.'],
+      es:['Buenas. {FIRST} {LAST}. {DOB} — sí, ya sé, no lo aparento.', 'Una estancia de investigación de tres meses, así que no le doy más la lata hasta el {LEAVING_DATE}.']},
+    {id:'C1-6', f:[['name','dob','purpose'],['leaving']], mk:['leaving','ordinal-near'], purpose:'work', lv:'ord',
+      en:['{FIRST} {LAST}, born {DOB}. Here on business, strictly speaking — a client thing.', 'Leaving, let me think… the {LEAVING_DAY}. No — that’s my flight out of here, yes, the {LEAVING_DAY}.'],
+      es:['{FIRST} {LAST}, nací el {DOB}. Vengo por negocios, estrictamente: una cosa de un cliente.', 'Me voy… déjeme pensar… el {LEAVING_DAY}. No… ese es mi vuelo de vuelta, sí: el {LEAVING_DAY}.']},
+    {id:'C1-7', f:[['name'],['dob','purpose','leaving']], mk:['leaving','±1'], purpose:'family', lv:'d10',
+      en:['Hello hello. {FIRST} {LAST}.', 'Born on {DOB}. I’m here to see the grandkids — ten days, so I head back on {LEAVING_DATE}, unless they talk me into staying, which they won’t, the ticket’s booked.'],
+      es:['Hola, hola. {FIRST} {LAST}.', 'Nací el {DOB}. Vengo a ver a los nietos: diez días, así que vuelvo el {LEAVING_DATE}, a menos que me convenzan de quedarme, que no lo harán, el billete ya está comprado.']}
+  ]
+};
+const DESK_FIELDS = {A1:['name','from','age','nights'], A2:['name','dob','from','time'], B1:['name','dob','purpose','leaving']};
+const DESK_PURPOSES = ['holiday','work','study','family'];
+const DESK_PURPOSE_WORD = {en:{holiday:'HOLIDAY', work:'WORK', study:'STUDY', family:'FAMILY'}, es:{holiday:'VACACIONES', work:'TRABAJO', study:'ESTUDIOS', family:'FAMILIA'}};
+const DESK_MONTHS = {en:['January','February','March','April','May','June','July','August','September','October','November','December'], es:['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre']};
+const DESK_MON3 = {en:['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'], es:['ENE','FEB','MAR','ABR','MAY','JUN','JUL','AGO','SEP','OCT','NOV','DIC']};
+// Month pairs a listener confuses (desk-en.md B2-7: June / July, March / May; desk-es.md adds septiembre / noviembre).
+const DESK_MONTH_PAIRS = {en:[[6,7],[3,5]], es:[[6,7],[3,5],[9,11]]};
+// -teen/-ty pairs (desk-en.md "Decisions"); Spanish uses its own near-misses (trece / treinta, seis / siete, quince / cincuenta ...).
+const DESK_TEENTY = {en:{13:30, 30:13, 14:40, 40:14, 15:50, 50:15, 16:60, 60:16, 17:70, 70:17, 18:80, 80:18, 19:90, 90:19}, es:{13:30, 30:13, 14:40, 40:14, 15:50, 50:15, 60:70, 70:60, 2:12, 12:2, 6:7, 7:6}};
+const DESK_EN_UNITS = ['zero','one','two','three','four','five','six','seven','eight','nine','ten','eleven','twelve','thirteen','fourteen','fifteen','sixteen','seventeen','eighteen','nineteen'];
+const DESK_EN_TENS = ['','','twenty','thirty','forty','fifty','sixty','seventy','eighty','ninety'];
+const DESK_EN_ORD = ['','first','second','third','fourth','fifth','sixth','seventh','eighth','ninth','tenth','eleventh','twelfth','thirteenth','fourteenth','fifteenth','sixteenth','seventeenth','eighteenth','nineteenth','twentieth'];
+const DESK_ES_UNITS = ['cero','uno','dos','tres','cuatro','cinco','seis','siete','ocho','nueve','diez','once','doce','trece','catorce','quince','dieciséis','diecisiete','dieciocho','diecinueve','veinte','veintiuno','veintidós','veintitrés','veinticuatro','veinticinco','veintiséis','veintisiete','veintiocho','veintinueve'];
+const DESK_ES_TENS = ['','','','treinta','cuarenta','cincuenta','sesenta','setenta','ochenta','noventa'];
+// Spanish letter names for a spelled surname (desk-es.md: uve, i griega - not ve, ye); an accented vowel is "a con tilde".
+const DESK_ES_LETTERS = {a:'a', b:'be', c:'ce', d:'de', e:'e', f:'efe', g:'ge', h:'hache', i:'i', j:'jota', k:'ka', l:'ele', m:'eme', n:'ene', 'ñ':'eñe', o:'o', p:'pe', q:'cu', r:'erre', s:'ese', t:'te', u:'u', v:'uve', w:'uve doble', x:'equis', y:'i griega', z:'zeta'};
+/* ---- Words for numbers, dates and times (spoken) ---- */
+function deskFold(s){ return String(s||'').toLowerCase().replace(/ñ/g, '\u0001').normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/\u0001/g, 'ñ'); }
+function deskNum(n, lang){
+  if(lang === 'es'){ if(n < 30) return DESK_ES_UNITS[n]; const t = Math.floor(n/10), u = n % 10; return DESK_ES_TENS[t] + (u ? ' y ' + DESK_ES_UNITS[u] : ''); }
+  if(n < 20) return DESK_EN_UNITS[n];
+  const t = Math.floor(n/10), u = n % 10; return DESK_EN_TENS[t] + (u ? '-' + DESK_EN_UNITS[u] : '');
+}
+// English ordinal day ("the twenty-third"); Spanish days are cardinals ("el veintitrés").
+function deskDayWord(d, lang){
+  if(lang === 'es') return deskNum(d, 'es');
+  if(d <= 20) return DESK_EN_ORD[d];
+  const t = Math.floor(d/10), u = d % 10;
+  return u ? DESK_EN_TENS[t] + '-' + DESK_EN_ORD[u] : DESK_EN_TENS[t].replace(/y$/, 'ieth');
+}
+// Years the British way (nineteen ninety; two thousand and four) / Spanish (mil novecientos noventa).
+function deskYearWord(y, lang){
+  if(lang === 'es'){ const lo = y % 100; return (y < 2000 ? 'mil novecientos' : 'dos mil') + (lo ? ' ' + deskNum(lo, 'es') : ''); }
+  if(y >= 2000 && y < 2010) return y === 2000 ? 'two thousand' : 'two thousand and ' + DESK_EN_UNITS[y - 2000];
+  if(y >= 2010) return 'twenty ' + deskNum(y - 2000, 'en');
+  const hi = Math.floor(y/100), lo = y % 100;
+  return deskNum(hi, 'en') + ' ' + (lo === 0 ? 'hundred' : (lo < 10 ? 'oh ' + DESK_EN_UNITS[lo] : deskNum(lo, 'en')));
+}
+// "the thirteenth of May" / "trece de mayo" (+ the year when asked).
+function deskDateWords(d, m, y, lang){
+  if(lang === 'es') return deskNum(d, 'es') + ' de ' + DESK_MONTHS.es[m-1] + (y ? ' de ' + deskYearWord(y, 'es') : '');
+  return 'the ' + deskDayWord(d, 'en') + ' of ' + DESK_MONTHS.en[m-1] + (y ? ', ' + deskYearWord(y, 'en') : '');
+}
+// A clock time as the traveller says it. form: half / qto / qpast / hm (six fifteen) / tento / 24 (eighteen thirty).
+function deskTimeWords(t, lang){
+  const h12 = x => ((x + 11) % 12) + 1, N = n => deskNum(n, lang);
+  if(t.form === '24') return N(t.h) + ' ' + (lang === 'es' ? (t.mi ? N(t.mi) : 'en punto') : (t.mi === 0 ? 'hundred' : (t.mi < 10 ? 'oh ' + DESK_EN_UNITS[t.mi] : N(t.mi))));
+  const h = h12(t.h), nx = h12(t.h + 1);
+  if(lang === 'es'){
+    if(t.mi === 0) return N(h) + ' en punto';
+    if(t.mi === 30) return N(h) + ' y media';
+    if(t.mi === 15) return N(h) + ' y cuarto';
+    if(t.mi === 45) return N(nx) + ' menos cuarto';
+    if(t.mi === 50) return N(nx) + ' menos diez';
+    return N(h) + ' y ' + N(t.mi);
+  }
+  if(t.mi === 0) return N(h) + ' o’clock';
+  if(t.mi === 30) return 'half past ' + N(h);
+  if(t.mi === 15) return t.form === 'hm' ? N(h) + ' fifteen' : 'quarter past ' + N(h);
+  if(t.mi === 45) return 'quarter to ' + N(nx);
+  if(t.mi === 50) return 'ten to ' + N(nx);
+  return N(h) + ' ' + (t.mi < 10 ? 'oh ' + DESK_EN_UNITS[t.mi] : N(t.mi));
+}
+// The surname letter by letter: "K, A, Y, A" (English) / "ka, a, i griega, a" (Spanish voice); show = the letters.
+function deskSpell(last, lang){
+  const chars = Array.from(String(last));
+  const show = chars.map(c=>c.toUpperCase()).join(', ');
+  if(lang !== 'es') return {say:show, show};
+  const say = chars.map(c=>{ const lc = c.toLowerCase(); if(DESK_ES_LETTERS[lc]) return DESK_ES_LETTERS[lc]; const base = deskFold(lc); return (DESK_ES_LETTERS[base] || base) + ' con tilde'; }).join(', ');
+  return {say, show};
+}
+/* ---- Dates (local calendar, todayISO(): spec §5.8) ---- */
+function deskDt(iso){ const p = String(iso).split('-').map(Number); return new Date(p[0], p[1]-1, p[2], 12); }
+function deskIso(dt){ return dt.getFullYear() + '-' + String(dt.getMonth()+1).padStart(2,'0') + '-' + String(dt.getDate()).padStart(2,'0'); }
+function deskAddDays(iso, n){ const d = deskDt(iso); d.setDate(d.getDate() + n); return deskIso(d); }
+function deskDim(y, m){ return new Date(y, m, 0).getDate(); }
+function deskYmd(iso){ const p = String(iso).split('-').map(Number); return {y:p[0], m:p[1], d:p[2]}; }
+/* ---- Card values: one shape per field; null = a blank box ---- */
+function deskCountry(id){ return DESK_COUNTRIES.find(c=>c.id === id) || DESK_COUNTRIES[0]; }
+function deskPad(n){ return String(n).padStart(2, '0'); }
+function deskShow(field, v, lang){
+  if(v == null) return '';
+  if(field === 'name') return (v.first + ' ' + v.last).toUpperCase();
+  if(field === 'from'){ const c = deskCountry(v); return lang === 'es' ? c.cardEs : c.cardEn; }
+  if(field === 'age' || field === 'nights') return String(v);
+  if(field === 'dob') return deskPad(v.d) + ' ' + DESK_MON3[lang][v.m-1] + ' ' + v.y;
+  if(field === 'time') return deskPad(v.h) + ':' + deskPad(v.mi);
+  if(field === 'purpose') return DESK_PURPOSE_WORD[lang][v] || String(v).toUpperCase();
+  if(field === 'leaving'){ const t = deskYmd(v); return deskPad(t.d) + ' ' + DESK_MON3[lang][t.m-1] + ' ' + t.y; }
+  return String(v);
+}
+function deskSame(field, a, b){
+  if(a == null || b == null) return a == null && b == null;
+  if(field === 'name') return deskFold(a.last) === deskFold(b.last) && deskFold(a.first) === deskFold(b.first);
+  if(field === 'dob') return a.d === b.d && a.m === b.m && a.y === b.y;
+  if(field === 'time') return a.h === b.h && a.mi === b.mi;
+  return a === b;
+}
+function deskCopy(v){ return (v && typeof v === 'object') ? Object.assign({}, v) : v; }
+// The value as words in the target language (souvenir "thirteen, not thirty").
+function deskSpoken(field, v, lang, kind){
+  if(v == null) return '';
+  if(field === 'name') return v.last;
+  if(field === 'from') return deskCountry(v)[lang === 'es' ? 'es' : 'en'];
+  if(field === 'age' || field === 'nights') return deskNum(v, lang);
+  if(field === 'dob'){
+    if(kind === 'year-near') return deskYearWord(v.y, lang);
+    if(kind === 'month-near') return DESK_MONTHS[lang][v.m-1];
+    return deskDateWords(v.d, v.m, 0, lang);
+  }
+  if(field === 'time') return deskTimeWords(v, lang);
+  if(field === 'purpose') return (DESK_PURPOSE_WORD[lang][v] || '').toLowerCase();
+  if(field === 'leaving'){ const t = deskYmd(v); return deskDateWords(t.d, t.m, 0, lang); }
+  return String(v);
+}
+/* ---- Generator (desk-en.md "Mistake kinds"; one wrong or blank field per traveller, never two) ---- */
+function deskPick(arr, rnd){ return arr[Math.floor(rnd() * arr.length)]; }
+function deskInt(a, b, rnd){ return a + Math.floor(rnd() * (b - a + 1)); }
+// Fills the slots of one line; returns {say, show} (the spelled surname is letter names for the voice, letters on screen).
+function deskFill(text, v, lang){
+  const sp = deskSpell(v.name.last, lang), c = deskCountry(v.from);
+  const map = {FIRST:v.name.first, LAST:v.name.last, COUNTRY:lang === 'es' ? c.es : c.en, NAT:lang === 'es' ? c.natEs[v.name.g === 'f' ? 1 : 0] : c.natEn,
+    AGE:v.age != null ? deskNum(v.age, lang) : '', NIGHTS:v.nights != null ? deskNum(v.nights, lang) : '',
+    DOB:v.dob ? deskDateWords(v.dob.d, v.dob.m, v.dob.y, lang) : '', MONTH:v.dob ? DESK_MONTHS[lang][v.dob.m-1] : '', YEAR:v.dob ? deskYearWord(v.dob.y, lang) : '',
+    MONTHX:v.monthX ? DESK_MONTHS[lang][v.monthX-1] : '', TIME:v.time ? deskTimeWords(v.time, lang) : '',
+    DAYS:v.days != null ? deskNum(v.days, lang) : '', WEEKS:v.weeks != null ? deskNum(v.weeks, lang) : '',
+    LEAVING_DATE:v.leaving ? (t=>deskDateWords(t.d, t.m, 0, lang))(deskYmd(v.leaving)) : '', LEAVING_DAY:v.leaving ? deskDayWord(deskYmd(v.leaving).d, lang) : ''};
+  const fill = spell => {
+    let s = String(text).replace(/\{([A-Z_]+)\}/g, (all, k)=>k === 'SPELL' ? spell : (map[k] != null ? map[k] : all));
+    if(lang === 'es') s = s.replace(/\b([Dd])e el\b/g, '$1el').replace(/\b([Aa]) el\b/g, '$1l');   // de el Reino Unido -> del Reino Unido
+    return s.replace(/(^|[.!?]\s+)(\p{Ll})/gu, (m, a, b)=>a + b.toUpperCase());   // a slot that opens a sentence is capitalised
+  };
+  return {say:fill(sp.say), show:fill(sp.show)};
+}
+// True values for one traveller from its template (the mistake kind decides which values are plausible near-misses).
+function deskTruth(tpl, level, lang, mode, rnd, usedNames, today){
+  const kind = mode === 'mistake' ? tpl.mk[1] : null, field = tpl.mk[0];
+  const names = DESK_NAMES[lang].filter(n=>!usedNames.has(n.last));
+  const name = deskPick(names.length ? names : DESK_NAMES[lang], rnd);
+  usedNames.add(name.last);
+  const v = {name:{first:name.first, last:name.last, g:name.g}, near:name.near.slice()};
+  const pairs = DESK_TEENTY[lang];
+  // from
+  const cpool = (kind === 'country-near') ? DESK_COUNTRIES.filter(c=>c.near.length >= 1) : DESK_COUNTRIES;
+  v.from = deskPick(cpool, rnd).id;
+  // age 18-80, never ending in 1 (Spanish "veintiún años" agreement)
+  if(kind === 'teen-ty' && field === 'age'){ v.age = deskPick(Object.keys(pairs).map(Number).filter(n=>n >= 18 && n <= 80 && n % 10 !== 1), rnd); }
+  else { do { v.age = deskInt(18, 80, rnd); } while(v.age % 10 === 1); }
+  // nights 2-14
+  if(kind === 'teen-ty' && field === 'nights'){ const ok = Object.keys(pairs).map(Number).filter(n=>n >= 2 && n <= 14); v.nights = ok.length ? deskPick(ok, rnd) : deskInt(2, 14, rnd); }
+  else v.nights = deskInt(2, 14, rnd);
+  // date of birth: year = this year - age
+  const ty = deskYmd(today).y;
+  let d = deskInt(2, 28, rnd), m = deskInt(1, 12, rnd);
+  if(kind === 'teen-ty' && field === 'dob'){ d = deskPick(Object.keys(pairs).map(Number).filter(n=>n >= 2 && n <= 30 && pairs[n] <= 30 && pairs[n] >= 2), rnd); if(d === 30 || pairs[d] === 30){ while(m === 2) m = deskInt(1, 12, rnd); } }
+  if(kind === 'date-swap'){ d = deskInt(2, 12, rnd); while(m === d) m = deskInt(1, 12, rnd); }
+  if(tpl.dob4) d = 4;
+  if(tpl.mon){ const pr = deskPick(DESK_MONTH_PAIRS[lang], rnd), k = rnd() < .5 ? 0 : 1; m = pr[k]; v.monthX = pr[1-k]; }
+  if(kind === 'ordinal-near' && field === 'dob') d = deskInt(3, 18, rnd);
+  v.dob = {d, m, y:ty - v.age};
+  // clock time (hours 2-11 on the 12-hour forms: no "la una", 14-22 on the 24-hour one)
+  const forms = (kind === 'minutes-near') ? ['half','qpast','qto','24'] : ['half','qto','qpast','hm','24'];
+  const form = deskPick(forms, rnd);
+  const tm = {form};
+  if(form === '24'){ tm.h = deskInt(14, 22, rnd); tm.mi = deskPick([30, 15], rnd); }
+  else { tm.h = deskInt(2, 10, rnd); tm.mi = form === 'half' ? 30 : (form === 'qto' ? 45 : 15); }
+  v.time = tm;
+  // purpose and leaving date
+  v.purpose = tpl.purpose || 'holiday';
+  const lv = tpl.lv || 'abs';
+  if(lv === 'w'){ v.weeks = deskInt(2, 4, rnd); v.leaving = deskAddDays(today, 7 * v.weeks); }
+  else if(lv === 'wt'){ v.weeks = deskInt(8, 12, rnd); v.leaving = deskAddDays(today, 7 * v.weeks); }
+  else if(lv === 'd'){ v.days = deskInt(3, 12, rnd); v.leaving = deskAddDays(today, v.days); }
+  else if(lv === 'w4'){ v.leaving = deskAddDays(today, 28); }
+  else if(lv === 'dat'){ v.leaving = deskAddDays(today, 2); }
+  else if(lv === 'fn'){ v.leaving = deskAddDays(today, lang === 'es' ? 15 : 14); }
+  else if(lv === 'd10'){ v.leaving = deskAddDays(today, 10); }
+  else if(lv === 'thu'){ let n = deskInt(3, 9, rnd); while(deskDt(deskAddDays(today, n)).getDay() !== 4) n++; v.leaving = deskAddDays(today, n); }
+  else if(lv === 'wof'){
+    const wd = deskDt(today).getDay();
+    if(lang === 'es'){ const toMon = ((8 - wd) % 7) || 7; v.leaving = deskAddDays(today, toMon + 4); }   // el viernes de la semana que viene
+    else { const toFri = ((5 - wd + 7) % 7) || 7; v.leaving = deskAddDays(today, toFri + 7); }        // a week on Friday (UK)
+  }
+  else if(lv === 'm3'){ const t = deskYmd(today); const mm = t.m + 3, yy = t.y + (mm > 12 ? 1 : 0), m3 = ((mm - 1) % 12) + 1; v.leaving = yy + '-' + deskPad(m3) + '-' + deskPad(Math.min(t.d, deskDim(yy, m3))); }
+  else if(lv === 'ord'){ let n = deskInt(8, 30, rnd), g = 0; while(g++ < 60){ const dd = deskYmd(deskAddDays(today, n)).d; if(dd >= 13 && dd <= 28) break; n++; } v.leaving = deskAddDays(today, n); }
+  else { v.leaving = deskAddDays(today, deskInt(5, 40, rnd)); v.days = deskInt(2, 5, rnd); }
+  if(v.days == null) v.days = deskInt(3, 12, rnd);
+  if(v.weeks == null) v.weeks = deskInt(2, 4, rnd);
+  return v;
+}
+// The wrong card value for a mistake kind (or null when the kind can't apply to these values).
+function deskWrong(tpl, v, lang, rnd, today){
+  const field = tpl.mk[0], kind = tpl.mk[1], pairs = DESK_TEENTY[lang];
+  const sign = () => rnd() < .5 ? -1 : 1;
+  if(field === 'age'){ if(kind === 'teen-ty' && pairs[v.age]) return pairs[v.age]; return v.age + sign(); }
+  if(field === 'nights'){ if(kind === 'teen-ty' && pairs[v.nights]) return pairs[v.nights]; return v.nights > 2 ? v.nights + sign() : v.nights + 1; }
+  if(field === 'name'){ return {first:v.name.first, last:deskPick(v.near, rnd)}; }
+  if(field === 'from'){ const c = deskCountry(v.from); return c.near.length ? deskPick(c.near, rnd) : null; }
+  if(field === 'dob'){
+    const b = Object.assign({}, v.dob);
+    if(kind === 'teen-ty' && pairs[b.d] && pairs[b.d] <= 30){ b.d = pairs[b.d]; return b; }
+    if(kind === 'date-swap'){ if(b.d <= 12 && b.d !== b.m){ const x = b.d; b.d = b.m; b.m = x; return b; } if(pairs[b.d] && pairs[b.d] <= 28){ b.d = pairs[b.d]; return b; } return null; }
+    if(kind === 'ordinal-near'){ const opts = [b.d + 10, b.d - 10, b.d + 20, b.d - 20].filter(x=>x >= 1 && x <= deskDim(b.y, b.m)); if(!opts.length) return null; b.d = deskPick(opts, rnd); return b; }
+    if(kind === 'year-near'){ b.y += 10 * sign(); return b; }
+    if(kind === 'repair-first-value'){ b.d = 14; return b; }
+    if(kind === 'month-near'){ if(!v.monthX) return null; b.m = v.monthX; return b; }
+    b.d = b.d > 2 ? b.d - 1 : b.d + 1; return b;
+  }
+  if(field === 'time'){
+    const t = Object.assign({}, v.time);
+    if(kind === 'minutes-near'){ t.mi = ({15:50, 30:t.form === '24' ? 13 : 50, 45:15, 50:15})[t.mi]; if(t.mi == null) return null; return t; }
+    t.h = t.h + sign(); return t;
+  }
+  if(field === 'purpose'){ if(tpl.wp) return tpl.wp; const o = DESK_PURPOSES.filter(p=>p !== v.purpose); return deskPick(o, rnd); }
+  if(field === 'leaving'){
+    if(kind === 'leaving-miscalc') return tpl.lv === 'fn' ? deskAddDays(today, 7) : deskAddDays(v.leaving, -7);
+    if(kind === '±1') return tpl.lv === 'dat' ? deskAddDays(today, 1) : deskAddDays(v.leaving, sign());
+    if(kind === 'repair-first-value') return tpl.lv === 'thu' ? deskAddDays(v.leaving, -2) : (tpl.lv === 'w4' ? deskAddDays(today, 21) : deskAddDays(v.leaving, -7));
+    if(kind === 'ordinal-near'){ const t = deskYmd(v.leaving), dim = deskDim(t.y, t.m); const opts = [t.d - 10, t.d - 20, t.d + 10].filter(x=>x >= 1 && x <= dim); if(!opts.length) return null; return t.y + '-' + deskPad(t.m) + '-' + deskPad(deskPick(opts, rnd)); }
+    return deskAddDays(v.leaving, -1);
+  }
+  return null;
+}
+// A mistake only works when the traveller actually says that field (B1-3 never says its date of birth: ask or clean only).
+function deskMistakeOk(tpl){ return tpl.mk[1] !== 'blank' && tpl.f.some(fs=>fs.indexOf(tpl.mk[0]) >= 0); }
+function deskLevelKey(level){ return (level === 'A1' || level === 'A2') ? level : 'B1'; }
+// Three chips: the right value + two near-misses (the card's wrong value is one of them when there is one).
+function deskChipValues(t, field, lang, rnd){
+  const right = deskCopy(t.truth[field]), out = [right];
+  const add = x => { if(x != null && !out.some(o=>deskSame(field, o, x))) out.push(x); };
+  if(field === 'purpose'){ DESK_PURPOSES.forEach(p=>add(p)); return out; }
+  if(t.wrong != null && t.issue && t.issue.field === field) add(deskCopy(t.wrong));
+  const pairs = DESK_TEENTY[lang];
+  if(field === 'age' || field === 'nights'){ const n = right; if(pairs[n]) add(pairs[n]); add(n + 1); add(n - 1); add(n + 2); }
+  else if(field === 'from'){ deskCountry(right).near.forEach(add); DESK_COUNTRIES.forEach(c=>{ if(out.length < 3) add(c.id); }); }
+  else if(field === 'name'){ t.near.forEach(x=>add({first:right.first, last:x})); }
+  else if(field === 'dob'){ if(right.d <= 12 && right.d !== right.m) add({d:right.m, m:right.d, y:right.y}); add({d:right.d, m:right.m, y:right.y + 10}); add({d:right.d > 2 ? right.d - 1 : right.d + 1, m:right.m, y:right.y}); }
+  else if(field === 'time'){ add({h:right.h + 1, mi:right.mi}); add({h:right.h, mi:right.mi === 15 ? 50 : 15}); add({h:right.h - 1, mi:right.mi}); }
+  else if(field === 'leaving'){ add(deskAddDays(right, 1)); add(deskAddDays(right, -7)); add(deskAddDays(right, -1)); }
+  return crossShuffle(out.slice(0, 3), rnd);
+}
+function deskMakeTraveller(tpl, level, lang, mode, rnd, usedNames, today){
+  for(let g = 0; g < 12; g++){
+    const v = deskTruth(tpl, level, lang, mode, rnd, usedNames, today);
+    const lk = deskLevelKey(level), fields = DESK_FIELDS[lk];
+    const card = {}; fields.forEach(f=>{ card[f] = deskCopy(f === 'name' ? {first:v.name.first, last:v.name.last} : v[f]); });
+    const truth = {}; fields.forEach(f=>{ truth[f] = deskCopy(card[f]); });
+    let issue = null, wrong = null, ask = null, blank = null;
+    if(mode === 'mistake'){
+      wrong = deskWrong(tpl, v, lang, rnd, today);
+      if(wrong == null || deskSame(tpl.mk[0], wrong, truth[tpl.mk[0]])){ usedNames.delete(v.name.last); continue; }
+      card[tpl.mk[0]] = deskCopy(wrong); issue = {field:tpl.mk[0], kind:tpl.mk[1]};
+    } else if(mode === 'blank'){
+      card[tpl.mk[0]] = null; issue = {field:tpl.mk[0], kind:'blank'}; blank = deskFill(tpl.blank[lang], v, lang);
+    } else if(mode === 'ask'){
+      const a = tpl.ask; card[a.field] = null; issue = {field:a.field, kind:'ask'};
+      const opts = a[lang].slice(0, 3).map((q, i)=>({q, ok:i === 0}));
+      ask = {opts:crossShuffle(opts, rnd), answer:deskFill(a[lang][3], v, lang)};
+    }
+    const lines = tpl[lang].map((tx, i)=>Object.assign(deskFill(tx, v, lang), {f:tpl.f[i]}));
+    const trav = {tpl:tpl.id, mode, lines, truth, card, issue, wrong, ask, blank, near:v.near, g:v.name.g,
+      open:null, chips:null, tries:0, slips:0, said:false, asked:false, reply:null, fixed:{}, done:false, clean:false};
+    if(issue) trav.chipVals = deskChipValues(trav, issue.field, lang, rnd);
+    return trav;
+  }
+  return null;
+}
+// A round: five travellers on distinct templates; traveller 1 clean, 2-3 of the rest with one issue (A2: at most
+// one blank; B1: at most one "ask"). refId seeds a roadmap round; null = fresh (Games shelf).
+function buildDeskRound(refId){
+  const lvl = (state.profile && state.profile.level) || 'A1';
+  const level = DESK_TEMPLATES[lvl] ? lvl : 'A1', lang = orderLang();
+  const rnd = crossRng(refId ? crossHash('desk|' + refId) : (Math.random()*4294967295) >>> 0);
+  const today = todayISO();
+  for(let attempt = 0; attempt < 20; attempt++){
+    const tpls = crossShuffle(DESK_TEMPLATES[level], rnd).slice(0, DESK_TRAVELLERS);
+    const want = rnd() < .5 ? 2 : 3;
+    const modes = tpls.map(()=>'clean');
+    let askUsed = false, n = 0;
+    // the B1 template that never says its date of birth takes the "ask" turn first
+    const order = crossShuffle([1, 2, 3, 4], rnd).sort((a, b)=>(tpls[b].id === 'B1-3') - (tpls[a].id === 'B1-3'));
+    for(const i of order){
+      if(n >= want) break;
+      const tp = tpls[i], opts = [];
+      if(tp.mk[1] === 'blank') opts.push('blank');
+      if(tp.ask && !askUsed) opts.push('ask');
+      if(deskMistakeOk(tp)) opts.push('mistake');
+      if(!opts.length) continue;
+      const mode = (opts.indexOf('ask') >= 0 && (tp.id === 'B1-3' || !deskMistakeOk(tp) || rnd() < .4)) ? 'ask' : opts[opts.length - 1];
+      if(mode === 'ask') askUsed = true;
+      modes[i] = mode; n++;
+    }
+    if(n < 2) continue;
+    const used = new Set(), chars = crossShuffle(ORDER_CHARS.filter(k=>k !== learnerCharKey()), rnd);
+    const travellers = [];
+    for(let i = 0; i < tpls.length; i++){
+      const t = deskMakeTraveller(tpls[i], level, lang, modes[i], rnd, used, today);
+      if(!t) break;
+      t.ch = chars[i % chars.length];
+      travellers.push(t);
+    }
+    if(travellers.length < DESK_TRAVELLERS) continue;
+    return {level, lang, today, travellers, index:0, clean:0, combo:0, said:0, noVoice:ttsVoiceMissing(), greeted:false, finished:false, startedAt:Date.now(), finishedAt:null};
+  }
+  return null;
+}
+function deskCur(round){ return round.travellers[round.index] || null; }
+function deskRate(round){ return round.level === 'A1' ? 0.85 : 0.92; }
+function deskFieldsOf(round){ return DESK_FIELDS[deskLevelKey(round.level)]; }
+function deskLineFor(t, field){ return t.lines.find(l=>l.f.indexOf(field) >= 0) || null; }
+// The first field whose card value still differs from what the traveller said (a blank box counts).
+function deskMismatch(round, t){ return deskFieldsOf(round).find(f=>!deskSame(f, t.card[f], t.truth[f])) || null; }
+/* ---- Reading what the learner typed (spec §5.3: digits or number words, any common date format) ---- */
+function deskWordNum(tok, lang){
+  const w = deskFold(tok).replace(/[^a-zñ\- ]/g, '').trim();
+  if(!w) return null;
+  for(let n = 0; n < 100; n++) if(deskFold(deskNum(n, lang)) === w || deskFold(deskNum(n, lang)).replace(/[- ]/g, '') === w.replace(/[- ]/g, '')) return n;
+  if(lang !== 'es') for(let d = 1; d <= 31; d++) if(deskFold(deskDayWord(d, 'en')).replace(/[- ]/g, '') === w.replace(/[- ]/g, '')) return d;
+  return null;
+}
+function deskParseNum(s, lang){
+  const t = deskFold(s).trim();
+  const m = t.match(/^\d{1,3}$/); if(m) return Number(t);
+  return deskWordNum(t, lang);
+}
+function deskMonthOf(tok){
+  const w = deskFold(tok).replace(/\./g, '');
+  if(w.length < 3) return null;
+  for(const lg of ['en','es']){ const i = DESK_MONTHS[lg].findIndex(mn=>deskFold(mn) === w || deskFold(mn).slice(0, 3) === w.slice(0, 3) && deskFold(mn).indexOf(w) === 0); if(i >= 0) return i + 1; }
+  return null;
+}
+function deskParseDate(s, lang){
+  let t = deskFold(s).replace(/(\d+)(st|nd|rd|th|º|ª)\b/g, '$1').trim();
+  let m = t.match(/^(\d{1,2})\s*[\/.\-]\s*(\d{1,2})(?:\s*[\/.\-]\s*(\d{2,4}))?$/);
+  if(m){ const y = m[3] ? (m[3].length === 2 ? 1900 + Number(m[3]) + (Number(m[3]) < 30 ? 100 : 0) : Number(m[3])) : null; return {d:Number(m[1]), m:Number(m[2]), y}; }
+  const toks = t.replace(/,/g, ' ').split(/[\s\/.\-]+/).filter(Boolean).filter(x=>['the','of','on','de','del','el','dia'].indexOf(x) < 0);
+  let d = null, mo = null, y = null; const words = [];
+  toks.forEach(x=>{
+    if(/^\d{4}$/.test(x)){ y = Number(x); return; }
+    if(/^\d{1,2}$/.test(x)){ if(d == null) d = Number(x); else if(mo == null) mo = Number(x); return; }
+    const mm = deskMonthOf(x); if(mm && mo == null){ mo = mm; return; }
+    words.push(x);
+  });
+  if(words.length && d == null){ const n = deskWordNum(words.join(' '), lang) != null ? deskWordNum(words.join(' '), lang) : deskWordNum(words.join('-'), lang); if(n != null) d = n; else return null; }
+  else if(words.length) return null;
+  if(d == null && mo == null && y != null) return {d:null, m:null, y};
+  if(d == null || mo == null || d < 1 || d > 31 || mo < 1 || mo > 12) return null;
+  return {d, m:mo, y};
+}
+function deskParseTime(s, lang){
+  const t = deskFold(s).replace(/\s+/g, ' ').trim();
+  let m = t.match(/^(\d{1,2})\s*[:.h]\s*(\d{2})$/) || t.match(/^(\d{1,2}) (\d{2})$/);
+  if(m) return {h:Number(m[1]), mi:Number(m[2])};
+  m = t.match(/^(\d{1,2})$/); if(m) return {h:Number(m[1]), mi:0};
+  const num = x => /^\d+$/.test(x) ? Number(x) : deskWordNum(x, lang);
+  const pats = lang === 'es'
+    ? [[/^(?:las |la )?(.+?) y media$/, 30, 0], [/^(?:las |la )?(.+?) y cuarto$/, 15, 0], [/^(?:las |la )?(.+?) menos cuarto$/, 45, -1], [/^(?:las |la )?(.+?) menos diez$/, 50, -1], [/^(?:las |la )?(.+?) en punto$/, 0, 0]]
+    : [[/^half past (.+)$/, 30, 0], [/^quarter past (.+)$/, 15, 0], [/^quarter to (.+)$/, 45, -1], [/^ten to (.+)$/, 50, -1], [/^(.+?) o ?clock$/, 0, 0], [/^(.+?) o’clock$/, 0, 0], [/^(.+?) hundred$/, 0, 0]];
+  for(const [re, mi, dh] of pats){ const x = t.match(re); if(x){ const h = num(x[1]); if(h != null) return {h:h + dh, mi}; } }
+  const parts = t.split(/[ \-]/);
+  for(let k = 1; k < parts.length; k++){ const h = num(parts.slice(0, k).join(' ')), mi = num(parts.slice(k).join(' ')) != null ? num(parts.slice(k).join(' ')) : num(parts.slice(k).join('-')); if(h != null && mi != null && mi < 60) return {h, mi}; }
+  return null;
+}
+// Checks a typed fix: true / false, or null when the text can't be read (then chips appear, never a "wrong").
+function deskTypedOk(t, field, raw, lang){
+  const s = String(raw || '').trim(); if(!s) return null;
+  const want = t.truth[field];
+  if(field === 'name'){ const f = deskFold(s).replace(/[^a-zñ ]/g, ' ').split(/\s+/).filter(Boolean); return f.indexOf(deskFold(want.last)) >= 0; }
+  if(field === 'age' || field === 'nights'){ const n = deskParseNum(s, lang); return n == null ? null : n === want; }
+  if(field === 'time'){
+    const p = deskParseTime(s, lang); if(!p) return null;
+    if(p.mi !== want.mi) return false;
+    return want.form === '24' ? p.h === want.h : (p.h % 12) === (want.h % 12);
+  }
+  if(field === 'dob' || field === 'leaving'){
+    const p = deskParseDate(s, lang); if(!p) return null;
+    const w = field === 'dob' ? want : deskYmd(want);
+    const kind = t.issue && t.issue.kind;
+    if(field === 'dob' && kind === 'year-near' && p.d == null) return p.y === w.y;
+    if(p.d == null) return null;
+    if(p.d !== w.d || p.m !== w.m) return false;
+    if(p.y != null && p.y !== w.y) return false;
+    if(field === 'dob' && kind === 'year-near' && p.y == null) return null;
+    return true;
+  }
+  return null;
+}
+function deskInputKind(field){ return (field === 'age' || field === 'nights') ? 'number' : (field === 'dob' || field === 'leaving' ? 'date' : (field === 'time' ? 'time' : (field === 'name' ? 'name' : 'chips'))); }
+/* ---- Screen (spec §5.6: status row, traveller + bubble, arrival card, fix control, APPROVED stamp) ---- */
+function deskLabel(field){
+  if(field === 'name') return L('NAME','AD SOYAD','نام','NOMBRE');
+  if(field === 'from') return L('FROM','ÜLKE','کشور','PAÍS');
+  if(field === 'age') return L('AGE','YAŞ','سن','EDAD');
+  if(field === 'nights') return L('NIGHTS','GECE','شب','NOCHES');
+  if(field === 'dob') return L('DATE OF BIRTH','DOĞUM TARİHİ','تاریخ تولد','FECHA DE NACIMIENTO');
+  if(field === 'time') return L('FLIGHT TIME','UÇUŞ SAATİ','ساعت پرواز','HORA DEL VUELO');
+  if(field === 'purpose') return L('PURPOSE','AMAÇ','هدف سفر','MOTIVO');
+  return L('LEAVING ON','ÇIKIŞ TARİHİ','تاریخ خروج','FECHA DE SALIDA');
+}
+function deskPurposeUi(p){
+  if(p === 'work') return L('work','iş','کار','trabajo');
+  if(p === 'study') return L('study','eğitim','تحصیل','estudios');
+  if(p === 'family') return L('family','aile','خانواده','familia');
+  return L('holiday','tatil','تعطیلات','vacaciones');
+}
+function deskStatusHtml(round){
+  const n = Math.min(round.index + 1, DESK_TRAVELLERS), c = round.combo || 0;
+  const streak = c >= 2 ? `<span class="game-status-end"><span class="game-streak${c >= 3 ? ' hot' : ''}">${ICONS.flame} ${L(`${c} in a row`, `Arka arkaya ${c}`, `${c} پشت سر هم`, `${c} seguidos`)}</span></span>` : '';
+  return `<div class="game-status" id="desk-status"><span class="game-status-text">${round.finished ? L('Desk closed','Masa kapandı','میز بسته شد','Control cerrado') : L(`Traveller ${n} of ${DESK_TRAVELLERS}`, `Yolcu ${n} / ${DESK_TRAVELLERS}`, `مسافر ${n} از ${DESK_TRAVELLERS}`, `Viajero ${n} de ${DESK_TRAVELLERS}`)}</span>${streak}</div>`;
+}
+function deskBubbleHtml(round, t){
+  const shown = t.said || round.noVoice;
+  let inner;
+  if(t.reply && (t.mode === 'ask' || shown)) inner = `<span dir="ltr">${esc(t.reply)}</span>`;
+  else if(shown) inner = t.lines.map(l=>`<span class="desk-line" dir="ltr">${esc(l.show)}</span>`).join('');
+  else inner = `<span class="order-dots" aria-label="…"><i></i><i></i><i></i></span>`;
+  return `<div class="order-bubble desk-bubble" id="desk-bubble">${inner}</div>`;
+}
+function deskValHtml(round, t, f){
+  const lang = round.lang, v = t.card[f], fx = t.fixed[f];
+  if(fx) return `${fx.old ? `<s class="desk-old">${esc(fx.old)}</s> ` : ''}<span class="desk-pen">${esc(deskShow(f, v, lang))}</span>`;
+  if(v == null) return `<span class="desk-blank" aria-label="${esc(L('empty','boş','خالی','vacío'))}"></span>`;
+  return esc(deskShow(f, v, lang));
+}
+function deskCardHtml(round, t){
+  const lang = round.lang;
+  const rows = deskFieldsOf(round).map(f=>{
+    const cls = ['desk-row'];
+    if(t.open === f) cls.push('open');
+    if(t.fixed[f]) cls.push('fixed');
+    const val = t.card[f] == null ? L('empty','boş','خالی','vacío') : deskShow(f, t.card[f], lang);
+    return `<button type="button" class="${cls.join(' ')}" data-action="desk-field" data-quiet="1" data-f="${f}" aria-label="${esc(deskLabel(f) + ': ' + val)}"${t.done ? ' disabled' : ''}>
+      <span class="desk-label">${esc(deskLabel(f))}</span><span class="desk-val" dir="ltr">${deskValHtml(round, t, f)}</span>${t.open === f ? '<svg class="desk-ring" viewBox="0 0 100 40" preserveAspectRatio="none" aria-hidden="true"><ellipse cx="50" cy="20" rx="47" ry="17"/></svg>' : ''}
+    </button>`;
+  }).join('');
+  const today = deskLevelKey(round.level) === 'B1' ? `<div class="desk-today">${esc(L('Today','Bugün','امروز','Hoy'))}: <b dir="ltr">${esc(deskShow('leaving', round.today, lang))}</b></div>` : '';
+  return `<div class="game-card tight desk-card" id="desk-card">
+    <div class="desk-band">${esc(L('ARRIVAL CARD','GİRİŞ KARTI','کارت ورود','TARJETA DE LLEGADA'))}</div>
+    <div class="desk-rows">${rows}</div>
+    ${today}
+    ${t.done ? `<div class="desk-stamped" id="desk-stamped">${esc(L('APPROVED','ONAYLANDI','تأیید شد','APROBADO'))}</div>` : ''}
+  </div>`;
+}
+function deskChipLabel(round, f, v){
+  if(f === 'purpose') return `<span dir="ltr">${esc(deskShow(f, v, round.lang))}</span><small class="desk-chip-ui">${esc(deskPurposeUi(v))}</small>`;
+  return `<span dir="ltr">${esc(deskShow(f, v, round.lang))}</span>`;
+}
+function deskFixHtml(round, t){
+  if(t.done || !t.open) return '';
+  const f = t.open;
+  if(t.mode === 'ask' && !t.fixed[f]){
+    return `<div class="desk-fix" id="desk-fix"><p class="game-hint desk-ask-q">${esc(L('Which question?','Hangi soru?','کدام سؤال؟','¿Qué pregunta?'))}</p>
+      <div class="game-opts">${t.ask.opts.map((o, i)=>`<button class="game-opt long" data-action="desk-q" data-quiet="1" data-i="${i}" dir="ltr">${esc(o.q)}</button>`).join('')}</div></div>`;
+  }
+  if(t.mode === 'blank' && !t.asked){
+    return `<div class="desk-fix" id="desk-fix"><button class="btn btn-primary game-cta" data-action="desk-ask">${esc(L('Ask','Sor','بپرس','Preguntar'))}</button></div>`;
+  }
+  const kind = deskInputKind(f);
+  if(round.level === 'A1' || t.chips || kind === 'chips'){
+    return `<div class="desk-fix" id="desk-fix"><div class="desk-chips">${t.chipVals.map((v, i)=>`<button class="game-opt desk-chip" data-action="desk-chip" data-quiet="1" data-i="${i}">${deskChipLabel(round, f, v)}</button>`).join('')}</div></div>`;
+  }
+  const hint = kind === 'date' ? L('day month year','gün ay yıl','روز ماه سال','día mes año') : (kind === 'time' ? L('hh:mm','ss:dd','ساعت:دقیقه','hh:mm') : (kind === 'number' ? L('a number','sayı','عدد','un número') : L('surname','soyadı','نام خانوادگی','apellido')));
+  return `<div class="desk-fix" id="desk-fix"><div class="desk-input-row">
+    <input id="desk-input" class="game-input" type="text" dir="ltr" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="${esc(deskLabel(f) + ' · ' + hint)}"${kind === 'number' ? ' inputmode="numeric"' : ''}>
+    <button class="btn btn-primary desk-go" data-action="desk-fix-go">${esc(L('Fix','Düzelt','درست کن','Corregir'))}</button>
+  </div></div>`;
+}
+function deskBodyHtml(round, t){
+  const shown = t.said || round.noVoice;
+  return `<div class="desk-trav" id="desk-trav">
+      <span class="desk-who-wrap"><img class="desk-who" id="desk-who" src="char-${t.ch}.png" alt=""></span>
+      ${deskBubbleHtml(round, t)}
+    </div>
+    <div class="order-tools desk-tools">
+      <button type="button" class="game-play small" data-action="desk-play" data-quiet="1" aria-label="${esc(L('Listen again','Tekrar dinle','دوباره گوش کن','Escuchar otra vez'))}">${ICONS.soundOn}</button>
+      ${shown ? '' : `<button type="button" class="btn btn-ghost btn-sm" data-action="desk-said" data-quiet="1">${esc(L('Show what they said','Söylediğini göster','گفته‌اش را نشان بده','Ver lo que ha dicho'))}</button>`}
+    </div>
+    ${deskCardHtml(round, t)}
+    ${deskFixHtml(round, t)}
+    <button type="button" class="desk-stampbtn" id="desk-stampbtn" data-action="desk-stamp" data-quiet="1"${t.done ? ' disabled' : ''}>${ICONS.check}<span>${esc(L('APPROVED','ONAYLANDI','تأیید شد','APROBADO'))}</span></button>
+    ${t.done ? `<button type="button" class="desk-skip" data-action="desk-skip" data-quiet="1" aria-label="${esc(L('Next traveller','Sonraki yolcu','مسافر بعدی','Siguiente viajero'))}"></button>` : ''}`;
+}
+function deskResultHtml(round){
+  const st = gameRoundStats('desk', round);
+  return `<div class="game-card tight badge-unlock-shine">
+    <div class="desk-lamp" id="desk-lamp" aria-hidden="true"></div>
+    <div class="game-result-title">${st.perfect ? L('All clear!','Hepsi temiz!','همه بی‌خطا!','¡Todo en orden!') : L('Desk closed!','Masa kapandı!','میز بسته شد!','¡Control cerrado!')}</div>
+    <p class="game-result-line">${L(`${st.clean} of ${st.total} travellers clean`, `${st.total} yolcudan ${st.clean} tanesi temiz`, `${st.clean} از ${st.total} مسافر بی‌خطا`, `${st.clean} de ${st.total} viajeros limpios`)}${st.said ? '' : ' · ' + L('Sharp ears','Keskin kulak','گوش تیز','Oído fino')}</p>
+    ${gameDoneCta()}
+  </div>`;
+}
+function renderGameDesk(){
+  const vp = state.viewParams, round = vp.round, t = deskCur(round);
+  return `<div class="fade-in game-screen">
+    ${gameTopHtml(L('Passport','Pasaport','گذرنامه','Pasaporte'))}
+    ${deskStatusHtml(round)}
+    <div class="desk-body" id="desk-body">${(round.finished || !t) ? deskResultHtml(round) + renderBadgeUnlockCard(pullJustEarnedBadges()) : deskBodyHtml(round, t)}</div>
+  </div>`;
+}
+function deskRefresh(){
+  const vp = state.viewParams, round = vp && vp.round;
+  if(!round || state.view !== 'game-desk' || round.finished) return;
+  const t = deskCur(round); if(!t) return;
+  const st = document.getElementById('desk-status'); if(st) st.outerHTML = deskStatusHtml(round);
+  const body = document.getElementById('desk-body'); if(body) body.innerHTML = deskBodyHtml(round, t);
+}
+/* ---- Flow and feel (spec §5.2, §5.7) ---- */
+let deskBusy = false, deskTimer = null;
+function deskSpeak(round, text, delay){
+  const idx = round.index;
+  setTimeout(()=>{ if(state.viewParams && state.viewParams.round === round && round.index === idx && !round.finished) speakTarget(text, deskRate(round)); }, delay || 60);
+}
+function deskAllSaid(t){ return t.lines.map(l=>l.say).join(' '); }
+function deskArrive(round){
+  const t = deskCur(round); if(!t || round.finished) return;
+  const rtl = document.documentElement.dir === 'rtl';
+  anim(document.getElementById('desk-who'), [{transform:`translateX(${rtl ? -80 : 80}px)`, opacity:0}, {transform:'translateX(0)', opacity:1, offset:.75}, {transform:'translateX(0) scale(1.06, .94)', offset:.9}, {transform:'translateX(0) scale(1)'}], {duration:400, easing:SPRING});
+  anim(document.getElementById('desk-card'), [{transform:'rotate(4deg) translateY(12px)', opacity:0}, {transform:'rotate(0) translateY(0)', opacity:1}], {duration:250, easing:'ease-out'});
+  sfx('hop');
+  if(round.index === 0 && !round.greeted){ round.greeted = true; companionSay(round.lang === 'es' ? '¡Pasaporte, por favor!' : 'Passport, please!', 2200); }
+  if(round.noVoice && !round.noVoiceSaid){ round.noVoiceSaid = true; setTimeout(()=>{ if(state.view === 'game-desk') companionSay(orderNoVoiceText(), 3400); }, 2300); }
+  deskSpeak(round, deskAllSaid(t), 420);
+}
+function deskRowEl(f){ return document.querySelector('.desk-row[data-f="' + f + '"]'); }
+function fxDeskWiggle(el){ anim(el, [{transform:'rotate(0)'}, {transform:'rotate(-1.5deg)'}, {transform:'rotate(1.5deg)'}, {transform:'rotate(0)'}], {duration:260, easing:'ease-in-out'}); }
+function deskShake(el){ anim(el, [{transform:'translateX(0)'}, {transform:'translateX(-6px)'}, {transform:'translateX(6px)'}, {transform:'translateX(-6px)'}, {transform:'translateX(0)'}], {duration:260, easing:'linear'}); }
+// The traveller repeats only the line with this field (spec §5.2 step 4).
+function deskRepeat(round, t, field){ const ln = deskLineFor(t, field); if(ln) deskSpeak(round, ln.say, 380); }
+function deskFieldTap(f){
+  const vp = state.viewParams, round = vp && vp.round, t = round && deskCur(round);
+  if(!t || round.finished || t.done || deskBusy) return;
+  if(t.open === f) return;
+  if(t.issue && t.issue.field === f && !t.fixed[f]){
+    t.open = f; sfx('tick'); deskRefresh(); save();
+    const inp = document.getElementById('desk-input'); if(inp) try{ inp.focus({preventScroll:true}); }catch(e){}
+    return;
+  }
+  if(t.fixed[f]) return;
+  t.slips++; round.combo = 0;
+  sfx('tick'); fxDeskWiggle(deskRowEl(f)); companionOops();
+  companionSay(L('That one matches.','Bu doğru görünüyor.','این یکی درست است.','Esa coincide.'), 1600);
+  save();
+}
+function deskApplyFix(round, t, f){
+  const old = t.card[f] == null ? '' : deskShow(f, t.card[f], round.lang);
+  t.card[f] = deskCopy(t.truth[f]); t.fixed[f] = {old}; t.open = null;
+  deskRefresh();
+  const el = deskRowEl(f), p = centerOf(el);
+  anim(el, [{transform:'scale(1)'}, {transform:'scale(1.03)'}, {transform:'scale(1)'}], {duration:220, easing:'ease-out'});
+  sparkBurst(p.x, p.y, 6, 'var(--cat-story)', 50);
+  sfx('correct'); buzz(12); companionCheer();
+  save();
+}
+function deskMiss(round, t, f, el){
+  t.tries++; round.combo = 0;
+  sfx('tick'); companionOops(); deskShake(el);
+  companionSay(L('Listen to that part again.','O kısmı tekrar dinle.','آن قسمت را دوباره گوش کن.','Escucha otra vez esa parte.'), 1800);
+  if(t.mode === 'blank'){ if(t.blank) deskSpeak(round, t.blank.say, 380); }
+  else deskRepeat(round, t, f);
+  if(t.tries >= 2 && !t.chips){ t.chips = true; setTimeout(()=>{ if(state.viewParams && state.viewParams.round === round && deskCur(round) === t){ deskRefresh(); } }, 700); }
+  save();
+}
+function deskStamp(){
+  const vp = state.viewParams, round = vp && vp.round, t = round && deskCur(round);
+  if(!t || round.finished || t.done || deskBusy) return;
+  const bad = deskMismatch(round, t), btn = document.getElementById('desk-stampbtn');
+  if(bad){
+    t.slips++; round.combo = 0;
+    anim(btn, [{transform:'translateY(0)'}, {transform:'translateY(-20px)'}, {transform:'translateY(0)'}], {duration:380, easing:SPRING});
+    sfx('tick'); companionOops();
+    companionSay(L('Hmm, something doesn’t match.','Hmm, bir şey uyuşmuyor.','هوم، چیزی جور درنمی‌آید.','Mmm, algo no cuadra.'), 2000);
+    deskRepeat(round, t, bad);
+    save();
+    return;
+  }
+  t.done = true; t.open = null;
+  t.clean = !t.said && !t.slips && !t.tries;
+  if(t.clean){ round.clean++; round.combo++; } else round.combo = 0;
+  deskRefresh();
+  const mark = document.getElementById('desk-stamped');
+  anim(mark, [{transform:'rotate(-10deg) scale(1.5)', opacity:0}, {transform:'rotate(-10deg) scale(1)', opacity:1}], {duration:200, easing:'ease-out'});
+  sfx('stamp'); buzz([14]);
+  const p = centerOf(mark); sparkBurst(p.x, p.y, 6, 'var(--success)', 50);
+  anim(document.getElementById('desk-who'), [{transform:'rotate(0)'}, {transform:'rotate(-5deg)'}, {transform:'rotate(5deg)'}, {transform:'rotate(0)'}], {duration:500, easing:'ease-in-out'});
+  companionCheer();
+  if(t.clean && (round.combo === 3 || round.combo === 5)) setTimeout(()=>comboCheck(round.combo), 300);
+  deskBusy = true;
+  save();
+  clearTimeout(deskTimer);
+  deskTimer = setTimeout(()=>{ deskBusy = false; if(state.viewParams !== vp || state.view !== 'game-desk') return; deskAdvance(vp, round); }, 1500);
+}
+function fxDeskClosed(){
+  const lamp = document.getElementById('desk-lamp');
+  anim(lamp, [{opacity:1, transform:'scale(1)'}, {opacity:.25, transform:'scale(.92)'}], {duration:420, easing:'ease-out', fill:'forwards'});
+  sfx('tick');
+  setTimeout(()=>{ sfx('reveal'); const p = centerOf(lamp); sparkBurst(p.x, p.y, 10, 'var(--cat-review)', 70); }, 380);
+}
+function deskAdvance(vp, round){
+  clearTimeout(deskTimer); deskBusy = false;
+  round.index++;
+  if(round.index >= round.travellers.length){
+    round.finished = true; round.finishedAt = Date.now();
+    const st = gameRoundStats('desk', round);
+    round.xpGain = scoreGameCompletion(vp.refId, st.perfect);
+    markGameComplete(vp.refId);
+    queueFx(fxDeskClosed);
+    save(); render();
+    return;
+  }
+  deskRefresh(); save(); deskArrive(round);
+}
+// Souvenir text: "thirteen, not thirty" (the value the learner had to catch) in the target language.
+function deskSouvenir(round){
+  const lang = round.lang, pool = round.travellers.filter(t=>t.issue);
+  if(!pool.length) return null;
+  const cost = t => t.slips + t.tries + (t.said ? 1 : 0);
+  const pick = pool.slice().sort((a, b)=>cost(b) - cost(a) || ((b.mode === 'mistake') - (a.mode === 'mistake')) || ((b.issue.kind === 'teen-ty') - (a.issue.kind === 'teen-ty')))[0];
+  const f = pick.issue.field, heard = deskSpoken(f, pick.truth[f], lang, pick.issue.kind);
+  const text = (pick.mode === 'mistake' && pick.wrong != null) ? heard + (lang === 'es' ? ', no ' : ', not ') + deskSpoken(f, pick.wrong, lang, pick.issue.kind) : heard;
+  const ln = pick.mode === 'ask' ? pick.ask.answer : (pick.mode === 'blank' ? pick.blank : (deskLineFor(pick, f) || pick.lines[0]));
+  return {text, say:ln.say, note:ln.show};
 }
 /* ============================= GAMIFICATION V3 BUILD 2: STORY HUNT =============================
    Games catalogue 4.3 + the LXD changes (approved 2026-10-04): a passage from the
@@ -17783,6 +18643,7 @@ const screens = {
   'game-bingo': renderGameBingo,
   'game-cross': renderGameCross,
   'game-order': renderGameOrder,
+  'game-desk': renderGameDesk,
   'game-path': renderGamePath,
   'game-hunt': renderGameHunt,
   'game-echo': renderGameEcho,
@@ -19175,6 +20036,52 @@ const HANDLERS = {
   },
   'order-extra-off'(el){ const r = state.viewParams && state.viewParams.round, l = r && r.tray[Number(el.dataset.i)]; if(!l || r.finished) return; const k = l.extras.indexOf(el.dataset.e); if(k >= 0) l.extras.splice(k, 1); r.sel = Number(el.dataset.i); sfx('tick'); orderRefresh(['tray']); save(); },
   'order-serve'(){ orderServe(); },
+  // ---- Passport Desk (Jq6f9OFv wave B): tap the wrong field, fix it, bring the APPROVED stamp down ----
+  'desk-play'(){ const r = state.viewParams && state.viewParams.round, t = r && deskCur(r); if(!t || r.finished) return; speakTarget(t.reply && t.mode === 'ask' ? t.reply : deskAllSaid(t), deskRate(r)); },
+  'desk-said'(){
+    const r = state.viewParams && state.viewParams.round, t = r && deskCur(r); if(!t || r.finished || t.said) return;
+    t.said = true; if(!r.noVoice) r.said++;   // a hint for this traveller (free when the phone has no voice)
+    sfx('flip'); deskRefresh(); save();
+  },
+  'desk-field'(el){ deskFieldTap(el.dataset.f); },
+  'desk-chip'(el){
+    const r = state.viewParams && state.viewParams.round, t = r && deskCur(r); if(!t || r.finished || t.done || !t.open) return;
+    const f = t.open, v = t.chipVals[Number(el.dataset.i)];
+    if(deskSame(f, v, t.truth[f])){ if(t.mode === 'blank') t.reply = t.blank ? t.blank.show : null; deskApplyFix(r, t, f); return; }
+    deskMiss(r, t, f, el);
+  },
+  'desk-fix-go'(){
+    const r = state.viewParams && state.viewParams.round, t = r && deskCur(r); if(!t || r.finished || t.done || !t.open) return;
+    const inp = document.getElementById('desk-input'); if(!inp) return;
+    const f = t.open, ok = deskTypedOk(t, f, inp.value, r.lang);
+    if(ok === null){
+      if(!String(inp.value || '').trim()){ deskShake(inp); return; }
+      t.chips = true; deskRefresh(); save();   // can't read it: chips instead, never marked wrong
+      companionSay(L('Pick the one you heard.','Duyduğunu seç.','همان که شنیدی را انتخاب کن.','Elige la que has oído.'), 1800);
+      return;
+    }
+    if(ok){ deskApplyFix(r, t, f); return; }
+    deskMiss(r, t, f, inp);
+  },
+  'desk-ask'(){
+    const r = state.viewParams && state.viewParams.round, t = r && deskCur(r); if(!t || r.finished || t.done || t.mode !== 'blank' || t.asked) return;
+    t.asked = true; t.reply = t.blank.show;
+    sfx('tick'); deskRefresh(); save();
+    deskSpeak(r, t.blank.say, 120);
+    const inp = document.getElementById('desk-input'); if(inp) try{ inp.focus({preventScroll:true}); }catch(e){}
+  },
+  'desk-q'(el){
+    const r = state.viewParams && state.viewParams.round, t = r && deskCur(r); if(!t || r.finished || t.done || t.mode !== 'ask' || !t.open) return;
+    const o = t.ask.opts[Number(el.dataset.i)]; if(!o) return;
+    if(o.ok){ t.reply = t.ask.answer.show; deskApplyFix(r, t, t.open); deskSpeak(r, t.ask.answer.say, 200); return; }
+    t.tries++; r.combo = 0;
+    deskShake(el); sfx('tick'); companionOops();
+    anim(document.getElementById('desk-who'), [{transform:'rotate(0)'}, {transform:'rotate(-6deg)'}, {transform:'rotate(0)'}], {duration:360, easing:'ease-in-out'});
+    companionSay(L('Hmm, that question sounds odd. Try another.','Hmm, bu soru tuhaf geldi. Başkasını dene.','هوم، این سؤال عجیب است. یکی دیگر را امتحان کن.','Mmm, esa pregunta suena rara. Prueba otra.'), 2200);
+    save();
+  },
+  'desk-stamp'(){ deskStamp(); },
+  'desk-skip'(){ const vp = state.viewParams, r = vp && vp.round, t = r && deskCur(r); if(!t || !t.done || r.finished) return; deskAdvance(vp, r); },
   // ---- Games shelf (Jq6f9OFv, D4 = A): one tap replays a game the learner has met, with fresh content ----
   'shelf-play'(el){
     const kind = el.dataset.kind;
@@ -19267,6 +20174,12 @@ const HANDLERS = {
       queueFx(()=>orderArrive(orderRound));
       go('game-order', Object.assign({round: orderRound}, params));
       return;
+    }
+    if(kind === 'desk'){
+      // Passport Desk: own generated content, never falls back. A roadmap node is seeded by its refId (a replay = the
+      // same five travellers); free play (Games shelf) draws fresh ones. The first traveller steps up after the render.
+      const deskRound = buildDeskRound(params.free ? null : params.refId);
+      if(deskRound){ queueFx(()=>deskArrive(deskRound)); go('game-desk', Object.assign({round: deskRound}, params)); return; }
     }
     const setObj = VOCAB_SETS.find(x=>x.id===el.dataset.setId);
     if(!setObj) return;
@@ -23411,6 +24324,12 @@ try{ document.addEventListener('keydown', function(e){
 
 // Order Up!: from B1 the shelf hides the word under each item; holding a tile peeks at it (the tap that follows doesn't drop it).
 try{ document.addEventListener('pointerdown', orderPeekStart); document.addEventListener('pointerup', orderPeekEnd); document.addEventListener('pointercancel', orderPeekEnd); }catch(e){}
+
+// Passport Desk: Enter in the typing box confirms the fix.
+try{ document.addEventListener('keydown', function(e){
+  if(e.key !== 'Enter' || !e.target || !e.target.id) return;
+  if(state.view === 'game-desk' && e.target.id === 'desk-input'){ e.preventDefault(); HANDLERS['desk-fix-go'](); }
+}); }catch(e){}
 
 try{ window.addEventListener('popstate', function(){ goBack(); }); }catch(e){}
 

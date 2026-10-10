@@ -541,6 +541,11 @@
   .ch-frame span{flex:1 1 auto; min-width:0;}
   .ch-frame .game-chip{flex:0 0 auto; border:0; cursor:pointer;}
   .ch-end{margin:-8px 0 14px; font-size:14px; font-weight:600; line-height:1.5; color:var(--ink);}
+  .ch-done-line{margin:0 0 16px; font-size:15px; font-weight:700; line-height:1.45; color:var(--ink); text-align:start;}
+  .ch-recap-more{margin-top:14px; display:flex; flex-direction:column; gap:18px;}
+  .ch-chip:disabled{cursor:default;}
+  .ch-chips.ch-locked .ch-chip:not(.ch-picked){opacity:.55;}
+  .ch-chip.ch-now{border-color:var(--accent); background:var(--cat-review-soft);}
   .ch-keep{margin:0 0 16px; padding:12px 14px; border-radius:16px; background:var(--cat-review-soft); text-align:start;}
   .ch-keep-t{font-size:11px; font-weight:800; letter-spacing:.5px; text-transform:uppercase; color:var(--ink-soft);}
   .ch-keep-s{margin:4px 0 10px; font-size:15px; font-weight:600; line-height:1.45; color:var(--ink);}
@@ -6017,7 +6022,7 @@ function load(){
     if(!Array.isArray(merged.progress.souvenirs)) merged.progress.souvenirs = [];
     if(!merged.progress.gameBests) merged.progress.gameBests = {};
     // Cozy Chores: tidied places per level, {home1:{'1':{smooth, of, date}}, ...} — keyed by scene ids since wave 2 phase 4 (uVzMAAGg);
-    // the old content keys are mapped once (nothing was live under them, CHORES_LIVE is still false).
+    // the old content keys are mapped once (nothing was live under them; Cozy Chores went live 2026-10-10).
     if(!merged.progress.chores || typeof merged.progress.chores !== 'object') merged.progress.chores = {};
     { const old = {flat1:'home1', flat2:'home2', flat3:'home3', flat4:'home4', flowershop:'flowers'}; Object.keys(old).forEach(o=>{ const v = merged.progress.chores[o]; if(v){ if(!merged.progress.chores[old[o]]) merged.progress.chores[old[o]] = v; delete merged.progress.chores[o]; } }); }
     if(merged.progress.roadmapGolden===undefined) merged.progress.roadmapGolden = null;
@@ -8189,17 +8194,21 @@ const PATH_FALLBACK = {
 /* Story Path (Trello RzlovAPw) is built but dormant: Farin chose to wait for the painted scenes
    (story-path-DRAFT.md §12 E). PATH_LIVE = true puts its chapters into positions 0/1/4 of NEW
    roadmaps at every level that has STORY_PATH content (A1, A2) and lists it on the Games shelf.
-   Cozy Chores (Trello 8JAiLuV7) likewise waits for its painted plates: CHORES_LIVE = true gives it
-   its own positions above. While both are false, nothing a learner sees depends on either game. */
+   Cozy Chores (Trello 8JAiLuV7) is live since 2026-10-10 (Farin: "yes" to the painted kitchen,
+   card w2xFYHot; "open one completed section and then build the next room", card nAy64bBS D2):
+   NEW roadmaps get its own positions above, saved roadmaps keep their nodes. CHORES_OPEN lists the
+   places that can be played; the others show on the building as a soft "Soon" and are never
+   picked. Add a place id there once its painted files are in chores/ (and in farin-sw.js). */
 const PATH_LIVE = false;
-const CHORES_LIVE = false;
+const CHORES_LIVE = true;
+const CHORES_OPEN = ['home1'];
 const GAME_STANDIN = {desk:'order', mystery:'build', spell:'bingo'};
 function pathLevelLive(level){ return PATH_LIVE && typeof STORY_PATH !== 'undefined' && !!(STORY_PATH.lane && STORY_PATH.lane[level]); }
 function gameKindForPosition(level, stage, pos){
   const s = 's' + (stage === 2 ? 2 : 1);
   let kind = (GAME_ROTATION[level] || GAME_ROTATION.A1)[s][pos];
   if(kind === 'path' && !pathLevelLive(level)) kind = (PATH_FALLBACK[level] || PATH_FALLBACK.A1)[s][[0, 1, 4].indexOf(pos)];
-  if(kind === 'chores' && !CHORES_LIVE) kind = (level === 'A1' || level === 'A2') ? 'bingo' : 'build';
+  if(kind === 'chores' && !(CHORES_LIVE && CHORES_OPEN.length)) kind = (level === 'A1' || level === 'A2') ? 'bingo' : 'build';
   if(kind && GAME_STANDIN[kind]) kind = GAME_STANDIN[kind];
   return kind || null;
 }
@@ -9597,6 +9606,7 @@ function renderPrivacyPolicy(){
         <h3 class="display" style="font-size:15px; margin:18px 0 8px;">10. Voices and Credits</h3>
         <p>Words, sentences and stories are read aloud by recorded clips made with free, open-source text-to-speech. The clips are downloaded from the App's own website; nothing you type or say is sent anywhere to make them.</p>
         <p>English voices "Bella" and "George": Kokoro-82M (Apache License 2.0). Spanish voice "Daniela": Piper voice es_AR-daniela-high, trained on Google's crowdsourced Argentinian Spanish recordings (OpenSLR 61), licensed CC BY-SA 4.0; the Daniela audio clips are shared under the same licence (creativecommons.org/licenses/by-sa/4.0). Spanish voice "Dave": Piper voice es_ES-davefx-medium (CC0). Piper is open-source software by Rhasspy / the Open Home Foundation.</p>
+        <p>Cozy Chores artwork: Carl Larsson, "The Kitchen" (from "Ett hem"), 1898, and August Macke, "Little Walter's Toys", 1912, both in the public domain, re-composed and recoloured for the game. Everything else in the rooms is painted for the game.</p>
 
         <h3 class="display" style="font-size:15px; margin:18px 0 8px;">11. Contact</h3>
         <p>If you have questions about this Privacy Policy, please contact the designated teacher through the WhatsApp contact option provided in the App.</p>
@@ -12476,7 +12486,8 @@ function shelfSets(kind){
 function shelfGames(){
   const met = gamesMet();
   // Story Path stays off the shelf while it is dormant (PATH_LIVE), then appears once a chapter has been played.
-  return SHELF_GAMES.filter(k=>k === 'path' ? (PATH_LIVE && met.has('path')) : (k === 'order' ? true : (k === 'cross' ? (met.has('cross') || shelfSets('cross').length > 0) : met.has(k))));
+  // Cozy Chores is listed from go-live (own content, like Order Up!), marked New until the learner has met it.
+  return SHELF_GAMES.filter(k=>k === 'path' ? (PATH_LIVE && met.has('path')) : (k === 'order' ? true : (k === 'chores' ? ((CHORES_LIVE && CHORES_OPEN.length > 0) || met.has('chores')) : (k === 'cross' ? (met.has('cross') || shelfSets('cross').length > 0) : met.has(k)))));
 }
 function shelfSubLine(){
   const n = shelfGames().length;
@@ -14265,6 +14276,16 @@ const CHORES_CONTENT = {"chrome":{"title":{"en":"Chores","tr":"Ev İşleri","fa"
    waits are 0, so a round still completes. The stage element is always dir="ltr". */
 let chStage = null;        // the mounted stage element (set by mountScene)
 let chSayTimer = null;
+// Skip: while chSkipping is set, one-shots jump to their end state and waits are 0 (like reduced
+// motion); chSkip() also finishes the ones already running. The game shell sets and clears it.
+let chSkipping = false;
+const chLiveAnims = new Set(), chLiveWaits = new Set();
+function chSkip(){
+  if(chSkipping) return;
+  chSkipping = true;
+  chLiveAnims.forEach(a=>{ try{ a.finish(); }catch(e){ try{ a.cancel(); }catch(e2){} } });
+  chLiveWaits.forEach(f=>f());
+}
 function choresArt(id, plate){
   const a = CHORES_ART[id];
   if(a) return a;
@@ -14354,10 +14375,11 @@ function mountScene(stage, scene, onTapLayer){
 function chRun(node, frames, opts){
   return new Promise(res=>{
     if(!node) return res();
-    if(reducedMotion() || !node.animate) return res();
+    if(reducedMotion() || chSkipping || !node.animate) return res();
     let a;
     try{ a = node.animate(frames, Object.assign({easing:'ease-out', fill:'none'}, opts)); }catch(e){ return res(); }
-    a.onfinish = a.oncancel = ()=>res();
+    chLiveAnims.add(a);
+    a.onfinish = a.oncancel = ()=>{ chLiveAnims.delete(a); res(); };
   });
 }
 const VERB = {
@@ -14371,7 +14393,7 @@ const VERB = {
   },
   async work(id, beats){
     const n = layer(id); if(!n) return;
-    if(reducedMotion()) return;
+    if(reducedMotion() || chSkipping) return;
     n.classList.remove('ch-a-bob');
     await chRun(n, [{transform:'rotate(0) translateY(0)'},{transform:'rotate(6deg) translateY(1.6%)', offset:.5},{transform:'rotate(0) translateY(0)'}],
       {duration:440, iterations:beats||3});
@@ -14415,7 +14437,13 @@ const VERB = {
   },
   async lightUp(id){ const n = layer(id); if(!n) return; n.classList.remove('ch-gone');
     await chRun(n, [{opacity:0},{opacity:1}], {duration:600}); n.style.opacity = 1; },
-  wait(ms){ return new Promise(r=>setTimeout(r, reducedMotion() ? 0 : ms)); }
+  wait(ms){
+    return new Promise(r=>{
+      if(reducedMotion() || chSkipping) return setTimeout(r, 0);
+      const done = ()=>{ clearTimeout(t); chLiveWaits.delete(done); r(); }, t = setTimeout(done, ms);
+      chLiveWaits.add(done);
+    });
+  }
 };
 /* The step interpreter: a chore, a consequence or a finale is an array of verb steps.
    "&verb" runs in the background; ["join"] waits for them; ["loop",n,[...]] repeats;
@@ -14862,11 +14890,16 @@ if(PATH_LIVE) Object.keys(STORY_PATH.lane).forEach(lv=>BADGES.push({id:'path-' +
   title:{en:'Story Path ' + lv, tr:'Hikâye Yolu ' + lv, fa:'مسیر داستان ' + lv, es:'Senda ' + lv},
   desc:{en:'Finish the ' + lv + ' summer of Story Path.', tr:'Hikâye Yolu\'nun ' + lv + ' yazını bitir.', fa:'تابستانِ ' + lv + ' مسیر داستان را تمام کن.', es:'Termina el verano ' + lv + ' de la Senda.'},
   check:(st)=>!!(st.progress.path && Array.isArray(st.progress.path.history) && st.progress.path.history.some(h=>h && h.level === lv && h.done))}));
-/* ---- Cozy Chores: game shell — building (pick a place) → room (look → plan → play → done) ----
-   One place per card. All six places open at every level; difficulty lives in the chips:
-   A1 = the 3 simplest chores (lv 1), A2 = 4, B1+ = 5 (+ the learner can cycle a middle
-   slot's connector and pick a before/after connector for a model line). Soft rules only:
-   a bumpy order replays the chore with a visible consequence; smooth = chores − rules fired.
+/* ---- Cozy Chores: game shell — building (pick a place) → room (look → do → done) ----
+   One place per card; only the places in CHORES_OPEN can be played. Difficulty lives in the
+   chips: A1 = the 3 simplest chores (lv 1), A2 = 4, B1+ = 5. One chore per tap (Farin
+   2026-10-10: "the user clicks on the chore and the character does it, then again another
+   chore"): the learner taps one chip, the chips lock, the helper does it with its narration
+   (a tap anywhere skips the animation), the chips unlock for the next. Soft rules only: a chore
+   done before its prerequisite plays its consequence; smooth = chores − rules fired. When all
+   are done: the place's done line and a recap of the learner's order with the scene's
+   ordinals (B1+ can cycle a middle connector and pick a before/after connector for a model
+   line), then at A2+ "Say what we did" (unscored). The souvenir is that recap.
    Strings come from CHORES_CONTENT (farin-lxd), keyed by the scene ids of CHORES_SCENES: place, chore
    and rule ids are identical since the 2026-10-07 reconciliation, so there is no alias layer. If a scene
    chore ever lacks content, the scene's own English label/narration is the fallback. */
@@ -14943,16 +14976,27 @@ function chSceneFor(round){
     atmos: loc.atmos.map(a => a.id && show.has(a.id) ? Object.assign({}, a, {hidden:false}) : a)
   });
 }
+let chBusy = null;   // the round whose chore (or finale) is playing right now
+// A round saved mid-chore (a reload, or Back after leaving) or by the plan-then-watch version
+// (phase 'plan' / 'play') starts fresh, so it can always be finished.
+function chFreshIfStale(vp){
+  const r = vp && vp.round;
+  if(!r || r.finished || chBusy === r) return;
+  if(r.phase === 'plan' || r.phase === 'play' || r.playing || (r.phase === 'done' && !r.say)) vp.round = chNewRound(r.placeId);
+}
 function chMountRoom(){
   const vp = state.viewParams, round = vp && vp.round, stage = document.getElementById('ch-stage');
   if(!round || !stage || stage.childElementCount) return;
   mountScene(stage, chSceneFor(round), chTapLayer);
   const loc = chLoc(round.placeId), ch = loc && loc.layers.find(x=>x.id === 'char'), c = layer('char');
   if(c) c.dataset.x = ch ? ch.x : 46;
+  // while the helper works, a tap anywhere on the game screen skips to the end of that chore
+  const scr = stage.closest('.ch-screen');
+  if(scr) scr.addEventListener('pointerdown', ()=>{ if(round.playing && chBusy === round) chSkip(); });
 }
 // Look phase: tap a mess object to hear and see its name (free vocabulary, unscored).
 function chTapLayer(Lr){
-  const vp = state.viewParams, round = vp && vp.round; if(!round || round.phase === 'play' || round.finished) return;
+  const vp = state.viewParams, round = vp && vp.round; if(!round || round.playing || round.finished) return;
   const n = layer(Lr.id); if(!n || n.classList.contains('ch-gone')) return;
   const o = chObjectText(chLoc(round.placeId), Lr);
   VERB.say(o.text + (o.gloss ? ' · ' + o.gloss : ''), 1600, Math.min(Lr.x, 60), Math.max(2, Lr.y - 10));
@@ -14962,17 +15006,34 @@ function chTapLayer(Lr){
   if(!round.seen[Lr.name]){ round.seen[Lr.name] = true; save(); }
   if(round.phase === 'look') chRefresh();
 }
+// Open places (CHORES_OPEN): only these can be played; a closed place stays visible as a soft "Soon".
+function chOpen(id){ return CHORES_OPEN.includes(id) && !!chLoc(id); }
+function chOpenLocs(){ return CHORES_SCENES.locations.filter(l=>chOpen(l.id)); }
+// Every open place is tidied at this level, so a lit window can be played again.
+function chAllOpenLit(lit){ const open = chOpenLocs(); return open.length > 0 && open.every(l=>lit.has(l.id)); }
+// The params a chores screen hands on (free play from the Games shelf stays free play).
+function chCarry(vp){ const p = {refId:vp.refId, goal:vp.goal}; if(vp.free) p.free = true; if(vp.shelf) p.shelf = true; return p; }
+// A chores node or the Games shelf: while one place is open, straight into it at the learner's
+// level; with more open, the building, where the learner picks an open window.
+function chStart(params){
+  const open = chOpenLocs();
+  if(open.length === 1){ go('game-chores-room', Object.assign(chCarry(params), {round:chNewRound(open[0].id)})); return; }
+  go('game-chores-building', params);
+}
 function chBuildingScene(){
-  const E = CHORES_SCENES.exterior, lv = chLevel(), lit = chLitAt(lv), all = lit.size >= CHORES_SCENES.locations.length;
+  const E = CHORES_SCENES.exterior, lv = chLevel(), lit = chLitAt(lv), allOpen = chAllOpenLit(lit), soon = L('Soon','Yakında','به‌زودی','Pronto');
   return { shape:E.shape, atmos:E.atmos,
     layers: E.layers.map(x => Object.assign({}, x, {hidden: x.litFor ? !lit.has(x.litFor) : !!x.hidden})),
     hots: E.hots.map(h => { const loc = chLoc(h.id), isLit = lit.has(h.id);
-      return Object.assign({}, h, {label:chPlaceShort(loc), cap:chPlaceShort(loc) + (isLit ? ' ✓' : ''), lit:isLit, disabled:isLit && !all, action:'chores-enter', data:{place:h.id}}); })
+      if(!chOpen(h.id)) return Object.assign({}, h, {label:chPlaceShort(loc) + ' · ' + soon, cap:chPlaceShort(loc) + ' · ' + soon, soon:true, disabled:true});
+      return Object.assign({}, h, {label:chPlaceShort(loc), cap:chPlaceShort(loc) + (isLit ? ' ✓' : ''), lit:isLit, disabled:isLit && !allOpen, action:'chores-enter', data:{place:h.id}}); })
   };
 }
 function chMountBuilding(){ const stage = document.getElementById('ch-stage'); if(!stage || stage.childElementCount) return; mountScene(stage, chBuildingScene()); }
 function renderGameChoresBuilding(){
-  const vp = state.viewParams, lv = chLevel(), lit = chLitAt(lv), total = CHORES_SCENES.locations.length, all = lit.size >= total;
+  const vp = state.viewParams, lv = chLevel(), lit = chLitAt(lv), open = chOpenLocs(), litOpen = open.filter(l=>lit.has(l.id)).length;
+  // "the whole building is glowing" only once every place is open and tidied; the count shows once there is a choice
+  const all = chAllOpenLit(lit) && open.length >= CHORES_SCENES.locations.length;
   const just = vp.justLit ? chLoc(vp.justLit) : null;
   queueFx(chMountBuilding);
   const line = just ? (all ? chChrome('allLit') : chFmt(chChrome('lit'), {place:chPlaceShort(just)})) : chChrome('pickPlace');
@@ -14980,7 +15041,7 @@ function renderGameChoresBuilding(){
     ${gameTopHtml(chChrome('title'))}
     <div class="game-status">
       <span class="game-status-text">${esc(chChrome('name'))} · ${esc(CHORES_SCENES.levels[String(lv)].code)}</span>
-      <span class="game-status-end"><span class="game-chip">${lit.size}/${total}</span></span>
+      ${open.length > 1 ? `<span class="game-status-end"><span class="game-chip">${litOpen}/${open.length}</span></span>` : ''}
     </div>
     <p class="game-hint">${esc(line)}</p>
     <div class="ch-stage ch-ext" id="ch-stage" dir="ltr"></div>
@@ -14988,6 +15049,7 @@ function renderGameChoresBuilding(){
   </div>`;
 }
 function renderGameChoresRoom(){
+  chFreshIfStale(state.viewParams);
   const vp = state.viewParams, round = vp.round;
   queueFx(chMountRoom);
   return `<div class="fade-in game-screen ch-screen">
@@ -15001,23 +15063,36 @@ function chRefresh(){ const u = document.getElementById('ch-ui'), vp = state.vie
 function chUiHtml(round){
   const loc = chLoc(round.placeId), lv = round.level, cs = chChoresFor(loc, lv), n = cs.length, ords = chOrdinals(n);
   const T = c => chChoreText(loc, c, lv);
-  const playing = round.phase === 'play';
-  const status = `<div class="game-status"><span class="game-status-text">${esc(chPlaceName(loc))}</span>${(playing || round.phase === 'done') ? `<span class="game-status-end"><span class="game-chip">${ICONS.check} ${round.done.length}/${n}</span></span>` : ''}</div>`;
+  const playing = !!round.playing;
+  const status = `<div class="game-status"><span class="game-status-text">${esc(chPlaceName(loc))}</span>${round.phase !== 'look' ? `<span class="game-status-end"><span class="game-chip">${ICONS.check} ${round.done.length}/${n}</span></span>` : ''}</div>`;
   if(round.phase === 'look'){
     const hidden = new Set(loc.chores.filter(c=>c.lv > lv).flatMap(c=>c.mess));
     const names = loc.layers.filter(x=>x.name && !hidden.has(x.id));
     return status + `<p class="game-hint">${esc(chChrome('look'))}</p>
       <div class="ch-names" dir="ltr">${names.map(x=>{ const o = chObjectText(loc, x); return `<span class="${round.seen[x.name] ? 'ch-seen' : ''}">${esc(o.text)}${o.gloss ? `<small>${esc(o.gloss)}</small>` : ''}</span>`; }).join('')}</div>
-      <button class="btn btn-primary game-cta" data-action="chores-plan">${esc(chChrome('lookDone'))}</button>`;
+      <button class="btn btn-primary game-cta" data-action="chores-start">${L('Start tidying','Toplamaya başla','مرتب‌کردن را شروع کن','Empieza a ordenar')}</button>`;
   }
   if(round.finished) return status + chResultHtml(round, loc, cs);
-  if(round.phase === 'done' && round.say === 'offer'){
-    // A2+: say the plan out loud — Say It Back's shadow mode (unscored, skippable), LXD §C
-    return status + `<p class="game-hint">${esc(chChrome('sayPlan'))}</p>
+  // the order so far, one slot per ordinal (B1+ can cycle a middle connector on the recap)
+  const canCycle = lv === 3 && round.phase === 'done' && round.say !== 'said';
+  const queue = `<div class="ch-queue" dir="ltr">${ords.map((w,i)=>{
+    const c = round.picked[i] ? cs.find(x=>x.id===round.picked[i]) : null;
+    const canPick = canCycle && !!c && i > 0 && i < n-1;
+    const landed = !!c && round.done.includes(c.id);
+    return `<div class="ch-slot${c ? ' ch-filled' : ''}${playing && round.playIdx === i ? ' ch-active' : ''}${round.bumped[i] ? ' ch-bumped' : ''}${landed ? ' ch-landed' : ''}">
+      <button type="button" class="ch-word${canPick ? ' ch-pick' : ''}" data-action="chores-cycle" data-i="${i}" ${canPick ? '' : 'disabled'}>${esc(chConnector(round, i, n).replace(/,$/, ''))}</button>
+      <span class="ch-what">${c ? esc(T(c).chip) : '…'}</span>${landed ? `<span class="ch-after">${esc(T(c).done)}</span>` : ''}</div>`; }).join('')}</div>`;
+  if(round.phase === 'done'){
+    // every chore done: the place's done line, the recap of the learner's order, then (A2+) "Say what we did"
+    const p = chPlace(loc), offer = round.say === 'offer';
+    let h = status + (p && p.end ? `<p class="ch-done-line">${esc(chUi(p.end))}</p>` : '');
+    h += `<p class="game-hint">${offer ? L('Say what we did, out loud? I’ll listen.','Ne yaptığımızı yüksek sesle söyler misin? Dinliyorum.','کارهایی که کردیم را بلند می‌گویی؟ گوش می‌دهم.','¿Dices en voz alta lo que hicimos? Te escucho.') : L('What we did, in your order:','Yaptıklarımız, senin sıranla:','کارهایی که کردیم، به ترتیب تو:','Lo que hicimos, en tu orden:')}</p>
       <div class="game-card tight">
         <button class="game-play" data-action="chores-say-play" aria-label="${esc(L('Play','Çal','پخش','Reproducir'))}">${ICONS.soundOn}</button>
         <p class="game-sentence long ch-plan-line" dir="ltr">${esc(round.plan)}</p>
-      </div>
+      </div>`;
+    if(lv === 3) h += `<div class="ch-recap-more">${queue}${chConnectorHtml(round, loc, cs)}</div>`;
+    if(offer) h += `
       <div class="echo-shadow">
         <div class="echo-say">${L('Say it out loud','Yüksek sesle söyle','بلند بگو','Dilo en voz alta')}</div>
         <div class="echo-btns">
@@ -15025,31 +15100,19 @@ function chUiHtml(round){
           <button class="btn btn-primary" data-action="chores-said">${L('I said it','Söyledim','گفتم','Ya lo dije')}</button>
         </div>
       </div>`;
+    return h;
   }
-  const queue = `<div class="ch-queue" dir="ltr">${ords.map((w,i)=>{
-    const c = round.picked[i] ? cs.find(x=>x.id===round.picked[i]) : null;
-    const canPick = lv === 3 && !!c && i > 0 && i < n-1 && round.phase === 'plan';
-    const landed = !!c && round.done.includes(c.id);
-    return `<div class="ch-slot${c ? ' ch-filled' : ''}${playing && round.playIdx === i ? ' ch-active' : ''}${round.bumped[i] ? ' ch-bumped' : ''}${landed ? ' ch-landed' : ''}">
-      <button type="button" class="ch-word${canPick ? ' ch-pick' : ''}" data-action="chores-cycle" data-i="${i}" ${canPick ? '' : 'disabled'}>${esc(chConnector(round, i, n).replace(/,$/, ''))}</button>
-      <span class="ch-what">${c ? esc(T(c).chip) : '…'}</span>${landed ? `<span class="ch-after">${esc(T(c).done)}</span>` : ''}</div>`; }).join('')}</div>`;
+  // the chore phase: one chore per tap; the chips lock while the helper works
   const sentence = round.picked.length ? round.picked.map((id,i)=>{ const txt = chConnector(round, i, n) + ' ' + chLowerFirst(T(cs.find(x=>x.id===id)).imp); return (playing && round.playIdx === i) ? `<span class="ch-now">${esc(txt)}</span>` : esc(txt); }).join(' ') : '<span class="ch-faint">…</span>';
-  let h = status;
-  if(round.phase === 'plan') h += `<p class="game-hint">${esc(chChrome('plan'))}</p>`;
-  else if(playing) h += `<p class="game-hint">${L('Watch…','İzle…','تماشا کن…','Mira…')}</p>`;
+  let h = status + `<p class="game-hint">${playing ? L('Watch… tap to skip','İzle… geçmek için dokun','تماشا کن… برای رد شدن بزن','Mira… toca para saltar') : (round.done.length ? L('What next? Tap a chore.','Sırada ne var? Bir işe dokun.','بعدش چی؟ روی یک کار بزن.','¿Y ahora? Toca una tarea.') : esc(chChrome('plan')))}</p>`;
   h += queue + `<div class="game-card tight ch-say" dir="ltr">${sentence}</div>`;
-  if(round.phase === 'plan'){
-    h += `<div class="ch-chips" dir="ltr">${cs.map(c=>{ const t = T(c), on = round.picked.includes(c.id);
-      return `<button type="button" class="ch-chip${on ? ' ch-picked' : ''}" data-action="chores-pick" data-id="${c.id}">${on ? '✓ ' : ''}${esc(t.chip)}${(lv === 1 || round.glossOpen) && t.gloss ? `<small>${esc(t.gloss)}</small>` : ''}</button>`; }).join('')}</div>`;
-    // A2+: chip meanings behind a tap; the soft rule as a before/after reading chip
-    const hintRules = lv >= 2 ? chHintRules(loc, lv) : [], hintOpen = (round.hintOpen && typeof round.hintOpen === 'object') ? round.hintOpen : {}, anyGloss = cs.some(c=>T(c).gloss);
-    if(lv >= 2 && (anyGloss || hintRules.length)){
+  h += `<div class="ch-chips${playing ? ' ch-locked' : ''}" dir="ltr">${cs.map(c=>{ const t = T(c), done = round.done.includes(c.id), now = playing && round.picked[round.playIdx] === c.id;
+    return `<button type="button" class="ch-chip${done ? ' ch-picked' : ''}${now ? ' ch-now' : ''}" data-action="chores-do" data-id="${c.id}" ${(done || playing) ? 'disabled' : ''}>${done ? '✓ ' : ''}${esc(t.chip)}${(lv === 1 || round.glossOpen) && t.gloss ? `<small>${esc(t.gloss)}</small>` : ''}</button>`; }).join('')}</div>`;
+  // A2+: chip meanings behind a tap; the soft rule as a before/after reading chip
+  const hintRules = lv >= 2 ? chHintRules(loc, lv) : [], hintOpen = (round.hintOpen && typeof round.hintOpen === 'object') ? round.hintOpen : {}, anyGloss = cs.some(c=>T(c).gloss);
+  if(lv >= 2 && (anyGloss || hintRules.length)){
       h += `<div class="ch-tools">${anyGloss ? `<button type="button" class="game-chip${round.glossOpen ? ' ch-on' : ''}" data-action="chores-gloss">${L('Meanings','Anlamlar','معنی‌ها','Significados')}</button>` : ''}${hintRules.map(hr=>{ const r = chContentRule(loc, hr), on = !!hintOpen[hr.id]; return `<button type="button" class="game-chip ch-hint${on ? ' ch-on' : ''}" data-action="chores-hint" data-rule="${esc(hr.id)}">${on ? esc(chTg(r.hint)) : L('Tip','İpucu','راهنما','Pista')}</button>`; }).join('')}</div>`;
       hintRules.forEach(hr=>{ const r = chContentRule(loc, hr); if(hintOpen[hr.id] && chGloss(r.hint)) h += `<p class="game-hint ch-hint-gloss">${esc(chGloss(r.hint))}</p>`; });
-    }
-    // B1+: the learner's own connector (before / after / as soon as / once) — a model line, never scored
-    if(lv === 3 && round.picked.length === n) h += chConnectorHtml(round, loc, cs);
-    h += `<button class="btn btn-primary game-cta" data-action="chores-go" ${round.picked.length < n ? 'disabled' : ''}>${esc(chChrome('go'))}</button>`;
   }
   return h;
 }
@@ -15102,16 +15165,22 @@ function chCheckRules(loc, round, k, cs){
   }
   return hits;
 }
-async function chPlay(vp){
+// One chore per tap: the helper does it with its narration, then the rules check it (a chore done
+// before its prerequisite plays its consequence now). After the last one: the recap, the finale, the record.
+async function chDo(vp, id){
   const round = vp.round, loc = chLoc(round.placeId), cs = chChoresFor(loc, round.level), n = cs.length;
-  const alive = () => state.viewParams === vp && !!document.getElementById('ch-stage');
-  round.playing = true; round.phase = 'play'; chRefresh();
-  for(let i=0;i<round.picked.length;i++){
-    if(!alive()) return;
-    round.playIdx = i; chRefresh();
-    const c = cs.find(x=>x.id===round.picked[i]), t = chChoreText(loc, c, round.level);
+  const c = cs.find(x=>x.id === id);
+  if(!c || chBusy || round.playing || round.phase !== 'do' || round.done.includes(id)) return;
+  const alive = () => state.viewParams === vp && vp.round === round && !!document.getElementById('ch-stage');
+  chBusy = round;
+  try{
+    const i = round.picked.length;
+    round.picked.push(id); round.playing = true; round.playIdx = i; chSkipping = false;
+    chRefresh();
+    const t = chChoreText(loc, c, round.level);
     if(!sfxMuted) speakTarget(t.narr);
     await runSteps(c.steps, {narr:t.narr});
+    if(!alive()) return;
     round.done.push(c.id);
     sfx('correct');
     for(const r of chCheckRules(loc, round, i, cs)){
@@ -15121,20 +15190,23 @@ async function chPlay(vp){
       if(!alive()) return;
       await runSteps(r.fx, {line:chRuleLine(loc, r)});
     }
-    chRefresh();
-    await VERB.wait(160);
+    if(!alive()) return;
+    chSkipping = false;
+    round.playIdx = -1; round.playing = false;
+    if(round.done.length < n){ save(); chRefresh(); return; }
+    round.phase = 'done'; round.smooth = n - round.fired.length; round.plan = chPlanText(round);
+    save(); chRefresh();
+    await runSteps(loc.finale, {});
+    if(!alive()) return;
+    sfx(round.smooth === n ? 'combo' : 'reveal');
+    companionSay(round.smooth === n ? chChrome('smooth') : chFmt(chChrome('sticker'), {n:round.smooth, total:n}), 2200);
+    companionCheer();
+    chRecord(vp, round);
+    chAfterWatch(vp, round);
+  } finally {
+    chSkipping = false;
+    if(chBusy === round) chBusy = null;
   }
-  if(!alive()) return;
-  round.playIdx = -1; round.playing = false; round.phase = 'done';
-  round.smooth = n - round.fired.length; round.plan = chPlanText(round);
-  chRefresh();
-  await runSteps(loc.finale, {});
-  if(!alive()) return;
-  sfx(round.smooth === n ? 'combo' : 'reveal');
-  companionSay(round.smooth === n ? chChrome('smooth') : chFmt(chChrome('sticker'), {n:round.smooth, total:n}), 2200);
-  companionCheer();
-  chRecord(vp, round);
-  chAfterWatch(vp, round);
 }
 function chRecord(vp, round){
   const pc = chProgress(), rec = pc[round.place] || (pc[round.place] = {}), prev = rec[String(round.level)];
@@ -15143,7 +15215,7 @@ function chRecord(vp, round){
   markGameComplete(vp.refId);
 }
 function chAfterWatch(vp, round){
-  // A2 and up: offer "Say the plan" once (unscored, skippable); A1 finishes straight away.
+  // A2 and up: offer "Say what we did" once (unscored, skippable); A1 finishes straight away.
   if(round.level >= 2 && !round.say){ round.say = 'offer'; save(); render(); return; }
   chFinish(vp, round);
 }
@@ -18364,7 +18436,7 @@ const HANDLERS = {
       go('game-match', Object.assign({round: buildMatchRound(fbp)}, params));
       return;
     }
-    if(kind === 'chores'){ go('game-chores-building', params); return; }   // the learner picks the place inside
+    if(kind === 'chores'){ chStart(params); return; }   // one open place: straight in; more: the learner picks one on the building
     if(kind === 'order'){
       // Order Up!: own generated content, never falls back. A roadmap node is seeded by its refId (a replay = the
       // same five customers); free play (Games shelf) draws fresh orders. The first customer walks in after the render.
@@ -18451,33 +18523,27 @@ const HANDLERS = {
   },
   // ---- Cozy Chores ----
   'chores-enter'(el){
-    const id = el.dataset.place, vp = state.viewParams || {}; if(!chLoc(id)) return;
+    const id = el.dataset.place, vp = state.viewParams || {}; if(!chOpen(id)) return;   // a "Soon" place is not playable yet
     const lit = chLitAt(chLevel());
-    if(lit.has(id) && lit.size < CHORES_SCENES.locations.length) return;   // tidied at this level: pick a dark window
+    if(lit.has(id) && !chAllOpenLit(lit)) return;   // tidied at this level: pick another open window
     sfx('hop');
-    go('game-chores-room', {refId:vp.refId, goal:vp.goal, round:chNewRound(id)});
+    go('game-chores-room', Object.assign(chCarry(vp), {round:chNewRound(id)}));
   },
-  'chores-plan'(){ const vp = state.viewParams, round = vp && vp.round; if(!round || round.phase !== 'look') return; round.phase = 'plan'; save(); chRefresh(); },
-  'chores-pick'(el){
-    const vp = state.viewParams, round = vp && vp.round; if(!round || round.phase !== 'plan') return;
-    const id = el.dataset.id, i = round.picked.indexOf(id);
-    if(i >= 0){ round.picked.splice(i, 1); round.connector = null; } else if(round.picked.length < round.total) round.picked.push(id); else return;
-    sfx('hop'); save(); chRefresh();
+  'chores-start'(){ const vp = state.viewParams, round = vp && vp.round; if(!round || round.phase !== 'look') return; round.phase = 'do'; save(); chRefresh(); },
+  'chores-do'(el){
+    const vp = state.viewParams, round = vp && vp.round; if(!round || round.phase !== 'do' || round.playing || chBusy) return;
+    const id = el.dataset.id; if(round.done.includes(id)) return;
+    gcBubble = null; sfx('hop');
+    chPlayP = chDo(vp, id);
   },
   'chores-cycle'(el){
-    const vp = state.viewParams, round = vp && vp.round; if(!round || round.phase !== 'plan' || round.level !== 3) return;
+    const vp = state.viewParams, round = vp && vp.round; if(!round || round.phase !== 'done' || round.finished || round.say === 'said' || round.level !== 3) return;
     const i = Number(el.dataset.i), ch = chB1Choices(), cur = chConnector(round, i, round.total);
-    round.conn[i] = ch[(ch.indexOf(cur) + 1) % ch.length]; sfx('flip'); save(); chRefresh();
+    round.conn[i] = ch[(ch.indexOf(cur) + 1) % ch.length]; round.plan = chPlanText(round); sfx('flip'); save(); chRefresh();
   },
   'chores-gloss'(){ const vp = state.viewParams, round = vp && vp.round; if(!round) return; round.glossOpen = !round.glossOpen; chRefresh(); },
   'chores-hint'(el){ const vp = state.viewParams, round = vp && vp.round; if(!round) return; const id = (el && el.dataset && el.dataset.rule) || ''; if(!round.hintOpen || typeof round.hintOpen !== 'object') round.hintOpen = {}; round.hintOpen[id] = !round.hintOpen[id]; sfx('flip'); chRefresh(); },
-  'chores-connector'(el){ const vp = state.viewParams, round = vp && vp.round; if(!round || round.phase !== 'plan') return; const k = el.dataset.k; round.connector = round.connector === k ? null : k; sfx('flip'); chRefresh(); },
-  'chores-go'(){
-    const vp = state.viewParams, round = vp && vp.round;
-    if(!round || round.phase !== 'plan' || round.picked.length < round.total) return;
-    gcBubble = null; save();
-    chPlayP = chPlay(vp);
-  },
+  'chores-connector'(el){ const vp = state.viewParams, round = vp && vp.round; if(!round || round.phase !== 'done' || round.finished) return; const k = el.dataset.k; round.connector = round.connector === k ? null : k; sfx('flip'); chRefresh(); },
   'chores-say-play'(){ const vp = state.viewParams, round = vp && vp.round; if(!round || !round.plan) return; speakTarget(round.plan, 0.92); },
   'chores-said'(){
     const vp = state.viewParams, round = vp && vp.round; if(!round || round.say !== 'offer') return;
@@ -18487,7 +18553,7 @@ const HANDLERS = {
   'chores-say-skip'(){ const vp = state.viewParams, round = vp && vp.round; if(!round || round.say !== 'offer') return; round.say = 'skipped'; chFinish(vp, round); },
   'chores-building'(){
     const vp = state.viewParams || {}, round = vp.round;
-    go('game-chores-building', {refId:vp.refId, goal:vp.goal, justLit:round ? round.placeId : null});
+    go('game-chores-building', Object.assign(chCarry(vp), {justLit:round ? round.placeId : null}));
     navHistory.length = 0;   // the finished room isn't reachable with Back
   },
   'echo-meaning'(){

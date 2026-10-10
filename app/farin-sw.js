@@ -1,10 +1,27 @@
-const CACHE = 'farin-spanish-v2';
+const CACHE = 'farin-spanish-v3';
 const PAGE_URL = self.registration.scope;
-/* Cozy Chores painted art (Trello 1m2Y0zdU): the game's plates and cut-outs are sibling files
-   under chores/ (chores/plate-<id>.webp, chores/co-<id>.webp). List them here when they land so
-   they are precached with the page; until then the list is empty and the fetch rule below still
+/* Cozy Chores painted art (Trello 1m2Y0zdU, 8JAiLuV7): the game's plates and cut-outs are sibling files
+   under chores/ (chores/plate-<id>.webp, chores/co-<id>.webp), precached with the page so the room
+   opens offline. home1 (the family kitchen, live 2026-10-10) + the helper and steam puff every place
+   shares. Add each next room's files here when it opens (and bump CACHE); the fetch rule below still
    caches any chores/*.webp on first use. */
-const ART_PRECACHE = [];
+const ART_PRECACHE = [
+  'chores/plate-home1.webp',
+  'chores/co-char.webp',
+  'chores/co-f1-chairFront.webp',
+  'chores/co-f1-dishesClean.webp',
+  'chores/co-f1-dishesDirty.webp',
+  'chores/co-f1-lamp.webp',
+  'chores/co-f1-plantHappy.webp',
+  'chores/co-f1-plantSad.webp',
+  'chores/co-f1-shopping.webp',
+  'chores/co-f1-tableMess.webp',
+  'chores/co-f1-toys.webp',
+  'chores/co-f1-toysBasket.webp',
+  'chores/co-f1-valance.webp',
+  'chores/co-f1-view.webp',
+  'chores/co-puff.webp'
+];
 const ART_RE = /\/chores\/[^/?#]+\.webp$/;
 // Natural voice clips (Claude/tts): audio/<lang>/<key>.mp3 never change under one name -> cache-first;
 // audio/<lang>/manifest.json changes when clips are added -> network-first, cached copy offline.

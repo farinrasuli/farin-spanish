@@ -562,6 +562,12 @@
   #tts-badge{position:fixed; left:50%; top:calc(10px + env(safe-area-inset-top, 0px)); z-index:9000; display:flex; align-items:center; gap:7px; padding:6px 12px 6px 9px; border-radius:999px; background:var(--bg-elevated); color:var(--ink); border:1px solid var(--border); box-shadow:var(--shadow); font-size:12.5px; font-weight:700; line-height:1; white-space:nowrap; opacity:0; transform:translate(-50%,-6px); transition:opacity .2s ease, transform .2s ease; pointer-events:none;}
   #tts-badge.on{opacity:1; transform:translate(-50%,0);}
   #tts-badge svg{border-radius:2px; flex:0 0 auto; box-shadow:0 0 0 1px var(--border);}
+  /* Accent switch (2026-10-10): tap the pill to hear the other accent; Settings has the same choice. */
+  #tts-badge.swap.on{pointer-events:auto; cursor:pointer; font-family:inherit;}
+  #tts-badge .tts-swap{display:inline-flex; align-items:center; gap:4px; margin-inline-start:2px; padding:3px 8px; border-radius:999px; background:var(--accent-soft); color:var(--accent-strong); font-weight:800; font-size:11.5px;}
+  .accent-pick{display:flex; gap:8px;}
+  .accent-pick .btn{flex:1; padding-left:6px; padding-right:6px; gap:6px;}
+  .accent-pick svg{border-radius:2px; box-shadow:0 0 0 1px var(--border); flex:0 0 auto;}
   /* Full prefers-reduced-motion support: every animation collapses to its end state. */
   @media (prefers-reduced-motion: reduce){ *, *::before, *::after{animation-duration:.001ms !important; animation-delay:0s !important; animation-iteration-count:1 !important; transition-duration:.001ms !important;} }
   /* Gamification v2 (Journey Journal §4): souvenir cards. One 180x232 design;
@@ -6603,6 +6609,17 @@ const TTS_FLAGS = {
   ar:'<svg viewBox="0 0 19 13" width="19" height="13" aria-hidden="true"><rect width="19" height="13" fill="#74acdf"/><rect y="4.33" width="19" height="4.34" fill="#fff"/><circle cx="9.5" cy="6.5" r="1.4" fill="#f6b40e"/></svg>'
 };
 let ttsClips = null, ttsAudio = null, ttsBadgeTimer = 0;
+/* Accent switch (2026-10-10, Farin: "there is no accent button switch"). Every line also has a clip in the
+   other voice under audio/<lang>/alt/ (alt/manifest.json = {key: code}). state.profile.accent = 'b'|'g'
+   (or 'd'|'v' in Spanish) plays every line in that voice; '' keeps the mixed narrators. */
+let ttsAlt = null, ttsLast = null;
+const TTS_ACCENTS = TTS_LANG.slice(0, 2) === 'es' ? ['d','v'] : ['b','g'];
+function ttsAccent(){ const a = state.profile && state.profile.accent; return TTS_ACCENTS.includes(a) ? a : ''; }
+function ttsAccentReady(){ return !!ttsAlt; }
+function ttsSetAccent(code){
+  state.profile.accent = TTS_ACCENTS.includes(code) ? code : '';
+  save();
+}
 function ttsNorm(t){
   return String(t||'').toLowerCase().replace(/[‘’ʼ`]/g,"'").replace(/[^a-z0-9áéíóúüñ']+/g,' ').trim();
 }
@@ -6614,14 +6631,32 @@ function ttsKey(t){
   return (h2>>>0).toString(16).padStart(8,'0') + (h1>>>0).toString(16).padStart(8,'0');
 }
 try{ fetch(TTS_AUDIO_BASE + 'manifest.json').then(r=>r.ok ? r.json() : null).then(m=>{ ttsClips = m; }).catch(()=>{}); }catch(e){}
+try{ fetch(TTS_AUDIO_BASE + 'alt/manifest.json').then(r=>r.ok ? r.json() : null).then(m=>{ if(m && Object.keys(m).length){ ttsAlt = m; if(state.view === 'settings') render(); } }).catch(()=>{}); }catch(e){}
 function ttsHasClip(text){ return !!(ttsClips && ttsClips[ttsKey(text)]); }
 function ttsBadge(code){
   clearTimeout(ttsBadgeTimer);
   let el = document.getElementById('tts-badge');
-  if(!code){ if(el) ttsBadgeTimer = setTimeout(()=>el.classList.remove('on'), 500); return; }
+  // with the switch the pill stays a moment after the line ends, so there is time to tap it
+  if(!code){ if(el) ttsBadgeTimer = setTimeout(()=>el.classList.remove('on'), ttsAccentReady() ? 2500 : 500); return; }
   const v = TTS_AUDIO_VOICES[code]; if(!v) return;
-  if(!el){ el = document.createElement('div'); el.id = 'tts-badge'; el.setAttribute('aria-hidden','true'); document.body.appendChild(el); }
-  el.innerHTML = TTS_FLAGS[v.flag] + '<span>' + v.name + ' · ' + v.label() + '</span>';
+  if(!el){
+    el = document.createElement('button'); el.id = 'tts-badge'; el.type = 'button'; document.body.appendChild(el);
+    el.addEventListener('click', ()=>{
+      const cur = el.dataset.code, other = TTS_ACCENTS.find(c=>c !== cur);
+      if(!ttsAccentReady() || !other) return;
+      ttsSetAccent(other);
+      // replay the line in the other voice; a line that already ended replays alone (its story/echo chain is over)
+      if(ttsLast) ttsSpeak(ttsLast.text, ttsLast.rate, ttsAudio ? ttsLast.cb : null); else { ttsBadge(other); ttsBadge(null); }
+      if(state.view === 'settings') render();
+    });
+  }
+  const o = ttsAccentReady() && TTS_AUDIO_VOICES[TTS_ACCENTS.find(c=>c !== code)];
+  el.dataset.code = code;
+  el.classList.toggle('swap', !!o);
+  el.tabIndex = o ? 0 : -1;
+  if(o){ el.removeAttribute('aria-hidden'); el.setAttribute('aria-label', v.name + ' · ' + v.label() + '. ' + L('Switch to','Şuna geç:','تغییر به','Cambiar a') + ' ' + o.label()); }
+  else el.setAttribute('aria-hidden','true');
+  el.innerHTML = TTS_FLAGS[v.flag] + '<span>' + v.name + ' · ' + v.label() + '</span>' + (o ? '<span class="tts-swap">⇄ ' + TTS_FLAGS[o.flag] + '</span>' : '');
   el.classList.add('on');
 }
 // Stops whatever is speaking (clip or device voice).
@@ -6644,9 +6679,12 @@ function ttsSpeak(text, rate, cb){
   cb = cb || {};
   ttsStop();
   if(!text) return;
-  const code = ttsClips && ttsClips[ttsKey(text)];
-  if(!code){ ttsSpeakDevice(text, rate, cb); return; }
-  const a = new Audio(TTS_AUDIO_BASE + ttsKey(text) + '.mp3');
+  const key = ttsKey(text), main = ttsClips && ttsClips[key];
+  if(!main){ ttsLast = null; ttsSpeakDevice(text, rate, cb); return; }
+  // the learner's accent: the other voice's clip when this line's narrator is not the one they chose
+  const want = ttsAccent(), alt = !!(want && want !== main && ttsAlt && ttsAlt[key] === want), code = alt ? want : main;
+  ttsLast = {text, rate, cb};
+  const a = new Audio(TTS_AUDIO_BASE + (alt ? 'alt/' : '') + key + '.mp3');
   a.playbackRate = Math.min(1, (rate || 0.92) / 0.92); a.preservesPitch = true;
   ttsAudio = a; ttsBadge(code);
   const fail = ()=>{ if(ttsAudio !== a) return; ttsAudio = null; ttsBadge(null); ttsSpeakDevice(text, rate, cb); };
@@ -11421,6 +11459,7 @@ function renderSettings(){
         </div>
         <button class="btn btn-ghost" data-action="retake-diagnostic">${L('Redo my diagnostic','Testimi yeniden yap','دوباره انجام‌دادن آزمون', 'Rehacer mi diagnóstico')}</button>
         <button class="btn btn-ghost" data-action="toggle-sfx" aria-pressed="${sfxMuted?'false':'true'}">${sfxMuted ? ICONS.soundOff : ICONS.soundOn} ${sfxMuted ? L('Sound effects: off','Ses efektleri: kapalı','جلوه‌های صوتی: خاموش','Efectos de sonido: apagados') : L('Sound effects: on','Ses efektleri: açık','جلوه‌های صوتی: روشن','Efectos de sonido: encendidos')}</button>
+        ${renderAccentSetting()}
         <button class="btn btn-ghost" data-action="nav" data-view="privacy-policy">${L('Privacy Policy','Gizlilik Politikası','حریم خصوصی', 'Política de Privacidad')}</button>
         ${state.profile.recoveryCode ? `<button class="btn btn-ghost" data-action="logout" ${farinPwBusy?'disabled':''}>${farinPwBusy && farinLogoutPending ? L('Logging out…', 'Çıkış yapılıyor…', 'در حال خروج…', 'Cerrando sesión…') : farinLogoutPending ? L('Tap again to log out', 'Çıkış yapmak için tekrar dokun', 'برای خروج دوباره لمس کن', 'Toca otra vez para cerrar sesión') : L('Log out', 'Çıkış yap', 'خروج', 'Cerrar sesión')}</button>
         ${farinLogoutPending && !state.profile.loginId ? `<p class="field-hint" style="margin-top:0; text-align:center;">${L("You haven't set a password. Write down your recovery code first, then tap again to log out.", 'Henüz şifre belirlemedin. Önce kurtarma kodunu not et, sonra çıkış yapmak için tekrar dokun.', 'هنوز رمز نگذاشته‌ای. اول کد بازیابی‌ات را یادداشت کن، بعد برای خروج دوباره لمس کن.', 'Aún no tienes contraseña. Anota primero tu código de recuperación y luego toca otra vez para cerrar sesión.')}</p>` : ''}
@@ -11439,6 +11478,21 @@ function renderSettings(){
         </div>
       </div>` : ''}
       <p style="font-size:12px; color:var(--ink-faint); margin-top:14px;">${L('Your profile and progress are saved on this device and backed up to your account so you can pick up where you left off elsewhere.','Profilin ve ilerlemen bu cihazda saklanır ve hesabına yedeklenir; böylece başka bir yerden devam edebilirsin.','پروفایل و پیشرفتت روی این دستگاه ذخیره می‌شود و در حسابت پشتیبان‌گیری می‌شود تا بتوانی جای دیگری ادامه بدهی.','Tu perfil y tu progreso se guardan en este dispositivo y se respaldan en tu cuenta para que puedas seguir donde lo dejaste en otro lugar.')}</p>
+    </div>
+  </div>`;
+}
+// Voice accent: one narrator for everything, or the mixed narrators (default).
+function renderAccentSetting(){
+  if(!ttsAccentReady()) return '';
+  const cur = ttsAccent();
+  const opt = (c, label) => `<button class="btn ${cur===c?'btn-primary':'btn-ghost'}" data-action="set-accent" data-accent="${c}" aria-pressed="${cur===c}">${c ? TTS_FLAGS[TTS_AUDIO_VOICES[c].flag] : ''}${label}</button>`;
+  return `<div class="card-flat">
+    <div class="eyebrow">${L('Voice accent','Ses aksanı','لهجه‌ی صدا','Acento de la voz')}</div>
+    <p style="font-size:12px; color:var(--ink-faint); margin:4px 0 10px;">${L('Pick the accent you hear in lessons and stories. You can also tap the voice sign while it speaks.','Derslerde ve hikâyelerde duyduğun aksanı seç. Konuşurken ses işaretine dokunarak da değiştirebilirsin.','لهجه‌ای را که در درس‌ها و داستان‌ها می‌شنوی انتخاب کن. وقتی صدا پخش می‌شود هم می‌توانی روی نشانش بزنی.','Elige el acento que oyes en las lecciones y las historias. También puedes tocar la señal de la voz mientras habla.')}</p>
+    <div class="accent-pick">
+      ${opt(TTS_ACCENTS[0], TTS_AUDIO_VOICES[TTS_ACCENTS[0]].name)}
+      ${opt(TTS_ACCENTS[1], TTS_AUDIO_VOICES[TTS_ACCENTS[1]].name)}
+      ${opt('', L('Mixed','Karışık','ترکیبی','Mixto'))}
     </div>
   </div>`;
 }
@@ -18527,6 +18581,11 @@ const HANDLERS = {
   },
   'toggle-lang'(){ LANG = LANG==='tr' ? 'fa' : LANG==='fa' ? 'en' : LANG==='en' ? 'es' : 'tr'; save(); render(); },
   'set-lang'(el){ LANG = el.dataset.lang; save(); render(); },
+  'set-accent'(el){
+    ttsSetAccent(el.dataset.accent || ''); render();
+    const sample = TTS_ACCENTS[0] === 'd' ? 'Hola' : 'Hi';
+    if(ttsHasClip(sample)) ttsSpeak(sample, 0.92);
+  },
   'restore-submit'(){
     const input = document.getElementById('restore-code-input');
     const code = (input && input.value || '').trim().toUpperCase();

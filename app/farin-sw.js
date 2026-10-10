@@ -34,8 +34,9 @@ const APP_ART_PRECACHE = [
 ];
 // Natural voice clips (Claude/tts): audio/<lang>/<key>.mp3 never change under one name -> cache-first;
 // audio/<lang>/manifest.json changes when clips are added -> network-first, cached copy offline.
-const AUDIO_RE = /\/audio\/[a-z]{2}\/[0-9a-f]{16}\.mp3$/;
-const MANIFEST_RE = /\/audio\/[a-z]{2}\/manifest\.json$/;
+// audio/<lang>/alt/ holds the same lines in the other accent (accent switch).
+const AUDIO_RE = /\/audio\/[a-z]{2}\/(alt\/)?[0-9a-f]{16}\.mp3$/;
+const MANIFEST_RE = /\/audio\/[a-z]{2}\/(alt\/)?manifest\.json$/;
 /* Offline: the app's own images, the Google Fonts files and the pinned Firebase SDK are
    cache-first, filled on first use, so a learner who has opened the app once can open it again
    with no connection. Bump CACHE whenever an image is replaced under the same name. */

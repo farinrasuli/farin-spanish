@@ -406,6 +406,56 @@
   .desk-stampbtn:disabled{opacity:.55; cursor:default;}
   .desk-skip{position:absolute; inset:0; z-index:5; border:0; background:transparent; cursor:pointer;}
   .desk-lamp{width:46px; height:46px; margin:0 auto 10px; border-radius:50%; background:radial-gradient(circle, var(--cat-review) 0 45%, color-mix(in srgb, var(--cat-review) 30%, transparent) 60%, transparent 72%);}
+  /* Five new games wave B (Jq6f9OFv): Case Closed - case file, polaroids, place chips, clue cards, notebook, CASE CLOSED stamp (spec §4.6 tokens) */
+  .case-body{display:flex; flex-direction:column; gap:14px;}
+  .case-file{position:relative; overflow:hidden; text-align:start; padding:16px 14px 14px; background:var(--cat-review-soft); border-top:4px dashed color-mix(in srgb, var(--cat-review) 70%, transparent); transform:rotate(-.6deg);}
+  .case-setting{display:flex; align-items:flex-start; gap:8px; font-family:'Fredoka',-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; font-weight:700; font-size:17px; line-height:1.4; color:var(--ink);}
+  .case-setting span{flex:1 1 auto;}
+  .case-pols{display:flex; justify-content:center; gap:10px; margin:14px 0 10px;}
+  .case-pol{flex:0 0 auto; width:86px; box-sizing:border-box; padding:6px 6px 4px; border:0; border-radius:6px; background:var(--bg-elevated); box-shadow:var(--clay-shadow-soft); display:flex; flex-direction:column; align-items:center; gap:4px; cursor:pointer; transform:rotate(-3deg); transition:transform .18s ease, box-shadow .18s ease, background .2s ease;}
+  .case-pol:nth-child(2){transform:rotate(2deg);}
+  .case-pol:nth-child(3){transform:rotate(-1deg);}
+  .case-pol img{width:72px; height:72px; object-fit:contain; background:var(--bg-sunken); border-radius:3px;}
+  .case-pol span{font-size:14px; font-weight:800; color:var(--ink); min-height:18px;}
+  .case-pol.pick{transform:translateY(-6px) scale(1.06); box-shadow:var(--clay-shadow);}
+  .case-pol.wrong{background:var(--error-soft);}
+  .case-pol.caught{box-shadow:0 0 0 3px var(--clay-coral-deep);}
+  .case-pol:disabled{cursor:default;}
+  .case-chips{display:flex; flex-wrap:wrap; justify-content:center; gap:6px; margin-top:6px;}
+  .case-chip{font-size:13px; padding:5px 11px; background:var(--bg-elevated);}
+  .case-chip.obj{background:color-mix(in srgb, var(--bg-elevated) 70%, var(--cat-diag-soft));}
+  .case-stamp{position:absolute; top:38%; left:50%; padding:6px 14px; border:3px solid var(--clay-coral-deep); border-radius:10px; color:var(--clay-coral-deep); font-family:'Fredoka',-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; font-weight:700; font-size:22px; letter-spacing:.06em; text-transform:uppercase; white-space:nowrap; transform:translateX(-50%) rotate(-12deg); pointer-events:none; mix-blend-mode:multiply;}
+  .case-stamp.still{position:static; display:inline-block; transform:rotate(-8deg); margin:0 auto 10px;}
+  @media (prefers-color-scheme: dark){ .case-stamp{mix-blend-mode:normal;} }
+  .case-clues{list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:8px;}
+  .case-clue{display:flex; align-items:center; gap:10px; padding:10px 10px 10px 12px; border-radius:16px; border:2px solid transparent; background:var(--bg-elevated); box-shadow:var(--clay-shadow-soft); transition:background .2s ease, border-color .2s ease;}
+  .case-clue.hl{background:var(--cat-story-soft); border-color:var(--cat-story);}
+  .case-num{flex:0 0 28px; height:28px; border-radius:50%; background:var(--cat-story); color:#fff; display:flex; align-items:center; justify-content:center; font-weight:900; font-size:14px;}
+  .case-text{flex:1 1 auto; min-width:0; font-size:17px; font-weight:700; line-height:1.4; color:var(--ink); overflow-wrap:anywhere;}
+  .case-clue .tts-btn{margin:0; width:44px; height:44px;}
+  .case-nb{border-radius:18px; background:var(--bg-elevated); box-shadow:var(--clay-shadow-soft); padding:10px 12px;}
+  .case-nb-top{display:flex; align-items:center; gap:8px; flex-wrap:wrap;}
+  .case-nb-toggle{border:0; background:transparent; color:var(--ink); font-family:'Fredoka',-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; font-weight:700; font-size:16px; padding:6px 2px; cursor:pointer;}
+  .case-tabs{margin-inline-start:auto; display:inline-flex; gap:4px; padding:3px; border-radius:999px; background:var(--bg-sunken);}
+  .case-tab{border:0; border-radius:999px; padding:6px 12px; background:transparent; color:var(--ink-soft); font:inherit; font-size:13px; font-weight:800; cursor:pointer;}
+  .case-tab.on{background:var(--bg-elevated); color:var(--ink); box-shadow:var(--clay-shadow-soft);}
+  .case-nb-grid{display:grid; grid-template-columns:minmax(64px, auto) repeat(3, 44px); justify-content:center; align-items:center; gap:6px 8px; margin-top:8px;}
+  .case-nb-h{display:flex; flex-direction:column; align-items:center; font-size:20px; line-height:1.1;}
+  .case-nb-h small{font-size:10.5px; font-weight:800; color:var(--ink-faint); max-width:60px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+  .case-nb-name{font-size:14px; font-weight:800; color:var(--ink); text-align:end;}
+  .case-cell{width:44px; height:44px; border:0; border-radius:10px; background:var(--bg-sunken); box-shadow:var(--clay-inset); color:var(--ink-faint); font-size:20px; font-weight:900; display:flex; align-items:center; justify-content:center; padding:0; cursor:pointer;}
+  .case-cell.ok{color:var(--success);}
+  .case-cell.auto{opacity:.5;}
+  .case-cell.pencil{outline:2px dashed var(--cat-story); outline-offset:-4px; color:var(--cat-story);}
+  .case-cell:disabled{cursor:default;}
+  .case-confirm{border-radius:18px; background:var(--bg-elevated); box-shadow:var(--clay-shadow); padding:14px; text-align:center;}
+  .case-confirm p{margin:0 0 10px; font-family:'Fredoka',-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; font-weight:700; font-size:19px; color:var(--ink);}
+  .case-confirm-btns{display:flex; gap:8px; justify-content:center;}
+  .case-tip{margin:0; text-align:center;}
+  .case-help{align-self:center;}
+  .case-wrap{text-align:center;}
+  .case-wrap-line{margin:0 0 12px; font-family:'Fredoka',-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; font-weight:700; font-size:19px; color:var(--ink);}
+  @media (prefers-reduced-motion: reduce){ .case-file, .case-pol, .case-pol:nth-child(2), .case-pol:nth-child(3){transform:none;} }
   /* Gamify every card type (tobT7nwI): Catch these */
   .catch-tiles{margin-top:10px;}
   .catch-tiles.four{grid-template-columns:repeat(2, minmax(0, 1fr));}
@@ -8533,6 +8583,11 @@ function buildRoadmap(profile){
       return buildCandidates(profile, taught).length >= BUILD_MIN;
     };
     if(kind === 'trap') kind = low ? 'match' : 'order';
+    // Case Closed needs 3 clue types from the grammar taught by this point (basic + stage 1 + this page), else Build It (spec §9)
+    if(kind === 'mystery'){
+      const taughtIds = new Set(gStage1.concat(items.filter(it=>it.type==='grammar').map(it=>GRAMMAR_ITEMS.find(x=>x.id===it.refId)).filter(Boolean)).map(x=>x.id));
+      if(caseTypeCount(profile.level, orderLang(), taughtIds) < 3) kind = 'build';
+    }
     if(kind === 'build' && !buildOk()) kind = low ? 'match' : 'order';
     if(kind === 'hunt'){
       const si = items.findIndex(it=>it.type==='story');
@@ -8546,7 +8601,7 @@ function buildRoadmap(profile){
       kind = 'match';
     }
     // own content, no set: Build It (taught grammar), Order Up! (never falls back), Cozy Chores (once CHORES_LIVE)
-    if(kind === 'build' || kind === 'order' || kind === 'chores' || kind === 'desk'){
+    if(kind === 'build' || kind === 'order' || kind === 'chores' || kind === 'desk' || kind === 'mystery'){
       items.push(gameNode(kind, kind+'-'+profile.level+'-s'+stage+'-'+slot));
       return;
     }
@@ -8661,8 +8716,8 @@ function roadmapNodeId(item){ return item.type+':'+item.refId+(item.occ?('#'+ite
    content at that level (null = no node: a page never opens with a game on content it has not
    taught yet). Cozy Chores has real positions (A1·s2, A2·s1, B1·s1) and plays Word Bingo (A1-A2)
    or Build It (B1+) until CHORES_LIVE. Kinds not built yet play a stand-in (GAME_STANDIN) until
-   they ship: Case Closed -> Build It and Magic Words -> Word Bingo (their own fallback rules); Passport
-   Desk plays itself since 2026-10-11. Trap
+   they ship: Magic Words -> Word Bingo (its own fallback rule); Passport Desk and Case Closed play
+   themselves since 2026-10-11. Trap
    Dash is no longer on new roadmaps (Games shelf only). New roadmaps only: game nodes already
    saved keep their kind and refId. */
 const GAME_ROTATION = {
@@ -8691,7 +8746,7 @@ const PATH_FALLBACK = {
 const PATH_LIVE = false;
 const CHORES_LIVE = true;
 const CHORES_OPEN = ['home1'];
-const GAME_STANDIN = {mystery:'build', spell:'bingo'};
+const GAME_STANDIN = {spell:'bingo'};
 function pathLevelLive(level){ return PATH_LIVE && typeof STORY_PATH !== 'undefined' && !!(STORY_PATH.lane && STORY_PATH.lane[level]); }
 function gameKindForPosition(level, stage, pos){
   const s = 's' + (stage === 2 ? 2 : 1);
@@ -9131,6 +9186,7 @@ function gameDisplayName(kind){
   if(kind === 'cross') return L('Mini Cross','Mini Bulmaca','جدول کوچک','Minicrucigrama');
   if(kind === 'order') return L('Order Up!','Sipariş Hazır!','سفارش حاضر!','¡Marchando!');
   if(kind === 'desk') return L('Passport Desk','Pasaport Masası','میز گذرنامه','Control de pasaportes');
+  if(kind === 'mystery') return L('Case Closed','Dava Kapandı','پرونده مختومه','Caso cerrado');
   if(kind === 'bingo') return L('Word Bingo','Kelime Tombalası','بینگوی کلمات','Bingo de palabras');
   if(kind === 'hunt') return L('Story Hunt','Hikaye Avı','شکار داستان','Caza en la historia');
   if(kind === 'echo') return L('Say It Back','Tekrar Et','بگو ببینم','Repítelo');
@@ -9145,6 +9201,7 @@ function viewGameKind(view){
   if(view === 'game-cross') return 'cross';
   if(view === 'game-order') return 'order';
   if(view === 'game-desk') return 'desk';
+  if(view === 'game-mystery') return 'mystery';
   if(view === 'game-path') return 'path';
   if(view === 'game-hunt') return 'hunt';
   if(view === 'game-echo') return 'echo';
@@ -9155,6 +9212,7 @@ function viewGameKind(view){
 function gameRoundStats(kind, round){
   if(kind === 'path') return {chapter:round.ch, total:PATH_CH, perfect:false};   // Story Path: no score, no perfect round
   if(kind === 'order'){ const total = round.customers.length, right = round.customers.filter(c=>c.perfect).length; return {right, total, tickets:round.tickets||0, perfect:total>0 && right===total}; }   // right = orders served perfectly (spec's per-customer "perfect" count); perfect = the whole round
+  if(kind === 'mystery'){ const total = round.cases.length, clean = round.cases.filter(c=>c.clean).length, hints = round.cases.reduce((n, c)=>n + (c.hints||0), 0); return {clean, total, hints, perfect:total>0 && clean===total}; }   // clean = right on the first accusation, no hint
   if(kind === 'desk'){ const total = round.travellers.length, clean = round.travellers.filter(t=>t.clean).length; return {clean, total, said:round.said||0, perfect:total>0 && clean===total}; }   // clean = no transcript, no wrong tap, no bounced stamp, fix right first time
   if(kind === 'cross'){ const total = round.words.length, clean = round.clean||0, time = Math.max(1, Math.round(((round.finishedAt||Date.now()) - round.startedAt)/1000)); return {clean, total, reveals:round.reveals||0, hints:round.hints||0, time, perfect:total>0 && clean===total && !(round.hints||0)}; }
   if(kind === 'bingo') return {first:round.first||0, total:BINGO_SCORED_CALLS, perfect:(round.first||0) === BINGO_SCORED_CALLS};
@@ -9183,6 +9241,7 @@ function gameRecordText(kind, st){
   if(kind === 'cross') return name+' · '+st.clean+'/'+st.total+' '+L('clean','temiz','بی‌خطا','limpias');
   if(kind === 'order') return name+' · '+st.right+'/'+st.total+' '+L('perfect','kusursuz','بی‌نقص','perfectos');
   if(kind === 'desk') return name+' · '+st.clean+'/'+st.total+' '+L('clean','temiz','بی‌خطا','limpios');
+  if(kind === 'mystery') return name+' · '+st.clean+'/'+st.total+' '+L('clean','temiz','بی‌خطا','limpios');
   if(kind === 'bingo') return name+' · '+st.first+'/'+st.total+' '+L('first tap','ilk dokunuşta','با اولین لمس','al primer toque');
   if(kind === 'hunt') return name+' · '+st.clean+'/'+st.total+' '+L('clean','temiz','بی‌خطا','limpias');
   if(kind === 'chores') return chFmt(chChrome('record'), {n:st.first, total:st.total});   // "Cozy Chores · 4/5 smooth"
@@ -9195,6 +9254,7 @@ function gameStatStickers(kind, st){
   if(kind === 'path') return [L(`Chapter ${st.chapter} of ${st.total}`, `Bölüm ${st.chapter}/${st.total}`, `فصل ${st.chapter} از ${st.total}`, `Capítulo ${st.chapter} de ${st.total}`)];
   if(kind === 'cross') return [st.clean+'/'+st.total+' '+L('clean','temiz','بی‌خطا','limpias')].concat(st.reveals ? [] : [L('No reveals','Harf açmadan','بدون فاش‌کردن حرف','Sin letras reveladas')]);
   if(kind === 'order') return [L(`${st.right}/${st.total} perfect orders`, `${st.right}/${st.total} kusursuz sipariş`, `${st.right}/${st.total} سفارش بی‌نقص`, `${st.right}/${st.total} pedidos perfectos`)].concat(st.tickets ? [] : [L('No tickets','Fişsiz','بدون رسید','Sin mirar el pedido')]);
+  if(kind === 'mystery') return [L(`${st.clean}/${st.total} cases clean`, `${st.clean}/${st.total} temiz dava`, `${st.clean}/${st.total} پرونده بی‌خطا`, `${st.clean}/${st.total} casos limpios`)].concat(st.hints ? [] : [L('No hints','İpucusuz','بدون کمک','Sin ayudas')]);
   if(kind === 'desk') return [st.clean+'/'+st.total+' '+L('clean','temiz','بی‌خطا','limpios')].concat(st.said ? [] : [L('Sharp ears','Keskin kulak','گوش تیز','Oído fino')]);
   if(kind === 'bingo') return [st.first+'/'+st.total+' '+L('first tap','ilk dokunuşta','با اولین لمس','al primer toque'), L('Full card','Tam kart','کارت کامل','Cartón lleno')];
   if(kind === 'hunt') return [st.clean+'/'+st.total+' '+L('clean','temiz','بی‌خطا','limpias')];
@@ -9217,7 +9277,7 @@ function updateGameBest(kind, st){
     pr.gameBests.cross = Object.assign({}, better ? {clean:st.clean, total:st.total} : prev, {time:isFinite(time) ? time : null});
     return !!prev && better;
   }
-  const metric = kind==='match' ? (b=>-(b.time||9999)) : (kind==='trap' ? (b=>b.score||0) : ((kind==='build' || kind==='bingo' || kind==='chores') ? (b=>b.first||0) : ((kind==='hunt' || kind==='desk') ? (b=>b.clean||0) : (kind==='echo' ? (b=>b.clear||0) : (kind==='order' ? (b=>b.right||0) : (b=>b.pct||0))))));
+  const metric = kind==='match' ? (b=>-(b.time||9999)) : (kind==='trap' ? (b=>b.score||0) : ((kind==='build' || kind==='bingo' || kind==='chores') ? (b=>b.first||0) : ((kind==='hunt' || kind==='desk' || kind==='mystery') ? (b=>b.clean||0) : (kind==='echo' ? (b=>b.clear||0) : (kind==='order' ? (b=>b.right||0) : (b=>b.pct||0))))));
   const cur = {time:st.time||null, score:st.score!=null ? st.score : null, pct:st.pct!=null ? st.pct : null,
     first:st.firstTry!=null ? st.firstTry : (st.first!=null ? st.first : null), clean:st.clean!=null ? st.clean : null, clear:st.clear!=null ? st.clear : null, right:st.right!=null ? st.right : null};
   if(!prev){ pr.gameBests[kind] = cur; return false; }
@@ -9653,7 +9713,7 @@ function maybeCelebrate(){
     low = state.quiz.correct/state.quiz.questions.length < .5;
   } else if(v==='game-match' && vp.round && vp.round.matchedKeys && vp.round.matchedKeys.length === vp.round.pairCount){
     target = vp.round; kind = 'game';
-  } else if((v==='game-dictation' || v==='game-trap' || v==='game-build' || v==='game-bingo' || v==='game-cross' || v==='game-order' || v==='game-desk' || v==='game-hunt' || v==='game-echo' || v==='game-chores-room' || v==='game-path') && vp.round && vp.round.finished){
+  } else if((v==='game-dictation' || v==='game-trap' || v==='game-build' || v==='game-bingo' || v==='game-cross' || v==='game-order' || v==='game-desk' || v==='game-mystery' || v==='game-hunt' || v==='game-echo' || v==='game-chores-room' || v==='game-path') && vp.round && vp.round.finished){
     target = vp.round; kind = 'game';
   } else if(v==='studio-round' && vp.checked && vp.result && vp.result.passed){
     target = vp.result; kind = vp.mode;
@@ -13178,10 +13238,10 @@ function fallbackGameSet(minCards){
    to roadmap card faces. Mini Cross is not in the rotation yet, so it is listed (marked New) as
    soon as a finished set can host a puzzle. Order Up! (own generated content, wave A2) is listed from the
    start and marked New until the learner has met it; GAME_ROTATION is wired separately (gt8gCNfu). */
-const SHELF_GAMES = ['path','order','desk','cross','bingo','match','dictation','build','trap','hunt','echo','chores'];
-const SHELF_ART = {path:{ic:'book', c:'var(--cat-story)'}, order:{ic:'chat', c:'var(--cat-gram)'}, desk:{ic:'suitcase', c:'var(--clay-sky)'}, cross:{ic:'cards', c:'var(--cat-voc)'}, bingo:{ic:'headphones', c:'var(--cat-voc)'}, match:{ic:'cards', c:'var(--cat-review)'}, dictation:{ic:'headphones', c:'var(--cat-lis)'}, build:{ic:'dumbbell', c:'var(--cat-gram)'}, trap:{ic:'bolt', c:'var(--clay-coral)'}, hunt:{ic:'search', c:'var(--cat-story)'}, echo:{ic:'mic', c:'var(--cat-lis)'}, chores:{ic:'home', c:'var(--clay-sky)'}};
+const SHELF_GAMES = ['path','order','desk','mystery','cross','bingo','match','dictation','build','trap','hunt','echo','chores'];
+const SHELF_ART = {path:{ic:'book', c:'var(--cat-story)'}, order:{ic:'chat', c:'var(--cat-gram)'}, desk:{ic:'suitcase', c:'var(--clay-sky)'}, mystery:{ic:'search', c:'var(--cat-story)'}, cross:{ic:'cards', c:'var(--cat-voc)'}, bingo:{ic:'headphones', c:'var(--cat-voc)'}, match:{ic:'cards', c:'var(--cat-review)'}, dictation:{ic:'headphones', c:'var(--cat-lis)'}, build:{ic:'dumbbell', c:'var(--cat-gram)'}, trap:{ic:'bolt', c:'var(--clay-coral)'}, hunt:{ic:'search', c:'var(--cat-story)'}, echo:{ic:'mic', c:'var(--cat-lis)'}, chores:{ic:'home', c:'var(--clay-sky)'}};
 // The game kind a completedGames refId stands for (vocab games end in -kind, the rest start with kind-).
-function gameKindOfRef(refId){ const s = String(refId||''); if(s.indexOf('shelf-') === 0) return null; let m = s.match(/-(match|dictation|bingo|echo|cross|hunt)$/); if(m) return m[1]; m = s.match(/^(build|trap|chores|order|desk|path)-/); return m ? m[1] : null; }
+function gameKindOfRef(refId){ const s = String(refId||''); if(s.indexOf('shelf-') === 0) return null; let m = s.match(/-(match|dictation|bingo|echo|cross|hunt)$/); if(m) return m[1]; m = s.match(/^(build|trap|chores|order|desk|mystery|path)-/); return m ? m[1] : null; }
 // Every kind the learner has met: finished game nodes (any roadmap, old saves included) and game souvenirs.
 function gamesMet(){
   const pr = state.progress || {}, met = new Set();
@@ -13199,7 +13259,7 @@ function shelfGames(){
   const met = gamesMet();
   // Story Path stays off the shelf while it is dormant (PATH_LIVE), then appears once a chapter has been played.
   // Cozy Chores is listed from go-live (own content, like Order Up!), marked New until the learner has met it.
-  return SHELF_GAMES.filter(k=>k === 'path' ? (PATH_LIVE && met.has('path')) : ((k === 'order' || k === 'desk') ? true : (k === 'chores' ? ((CHORES_LIVE && CHORES_OPEN.length > 0) || met.has('chores')) : (k === 'cross' ? (met.has('cross') || shelfSets('cross').length > 0) : met.has(k)))));
+  return SHELF_GAMES.filter(k=>k === 'path' ? (PATH_LIVE && met.has('path')) : ((k === 'order' || k === 'desk' || k === 'mystery') ? true : (k === 'chores' ? ((CHORES_LIVE && CHORES_OPEN.length > 0) || met.has('chores')) : (k === 'cross' ? (met.has('cross') || shelfSets('cross').length > 0) : met.has(k)))));
 }
 function shelfSubLine(){
   const n = shelfGames().length;
@@ -13210,6 +13270,7 @@ function shelfSubLine(){
 function gameBlurb(kind){
   if(kind === 'path'){ const town = (pathArc('A1') || {}).town || ''; return L(`A summer in ${town}, one choice at a time.`, `${town}: bir yaz, her seferinde bir seçim.`, `یک تابستان در ${town}، هر بار یک انتخاب.`, `Un verano en ${town}, una decisión cada vez.`); }
   if(kind === 'order') return L('Listen to each customer’s order and build it on the tray.','Her müşterinin siparişini dinle ve tepsiye hazırla.','سفارش هر مشتری را گوش کن و روی سینی بچین.','Escucha el pedido de cada cliente y prepáralo en la bandeja.');
+  if(kind === 'mystery') return L('Read the clues carefully and find who did it.','İpuçlarını dikkatle oku ve kimin yaptığını bul.','سرنخ‌ها را با دقت بخوان و پیدا کن کار چه کسی بوده.','Lee las pistas con atención y descubre quién fue.');
   if(kind === 'desk') return L('Listen to each traveller and fix the mistake on their card.','Her yolcuyu dinle ve kartındaki hatayı düzelt.','به هر مسافر گوش کن و اشتباه کارتش را درست کن.','Escucha a cada viajero y corrige el error de su tarjeta.');
   if(kind === 'cross') return L('Spell the words you learned into a pocket crossword.','Öğrendiğin kelimeleri mini bir bulmacaya yaz.','کلمه‌هایی که یاد گرفتی را در یک جدول کوچک بنویس.','Escribe las palabras que aprendiste en un minicrucigrama.');
   if(kind === 'bingo') return L('Listen to the clue and tap the word on your card.','İpucunu dinle, kartındaki kelimeye dokun.','سرنخ را گوش کن و روی کلمه در کارتت بزن.','Escucha la pista y toca la palabra en tu cartón.');
@@ -13373,6 +13434,10 @@ function gameKeep(kind, round){
       // the order that took the most serves (the longest one on a perfect round); flip side = the whole order and its tray in words
       const pick = round.customers.slice().sort((a,b)=>(b.serves - a.serves) || (b.text.length - a.text.length))[0];
       return {text:pick.text, say:pick.text, note:orderTraySummary(pick)};
+    }
+    if(kind === 'mystery' && round.cases && round.cases.length){
+      // the clue that cleared a wrongly accused suspect (the hardest clue on a clean round); flip side = what it told you
+      const k = caseSouvenir(round); if(k) return k;
     }
     if(kind === 'desk' && round.travellers && round.travellers.length){
       // the value the learner had to catch ("thirteen, not thirty"); flip side = the traveller's line
@@ -14878,7 +14943,7 @@ function deskFill(text, v, lang){
     LEAVING_DATE:v.leaving ? (t=>deskDateWords(t.d, t.m, 0, lang))(deskYmd(v.leaving)) : '', LEAVING_DAY:v.leaving ? deskDayWord(deskYmd(v.leaving).d, lang) : ''};
   const fill = spell => {
     let s = String(text).replace(/\{([A-Z_]+)\}/g, (all, k)=>k === 'SPELL' ? spell : (map[k] != null ? map[k] : all));
-    if(lang === 'es') s = s.replace(/\b([Dd])e el\b/g, '$1el').replace(/\b([Aa]) el\b/g, '$1l');   // de el Reino Unido -> del Reino Unido
+    if(lang === 'es') s = s.replace(/(^|[^\p{L}])([Dd])e el(?=[^\p{L}]|$)/gu, '$1$2el').replace(/(^|[^\p{L}])([Aa]) el(?=[^\p{L}]|$)/gu, '$1$2l');   // de el Reino Unido -> del Reino Unido
     return s.replace(/(^|[.!?]\s+)(\p{Ll})/gu, (m, a, b)=>a + b.toUpperCase());   // a slot that opens a sentence is capitalised
   };
   return {say:fill(sp.say), show:fill(sp.show)};
@@ -15370,6 +15435,544 @@ function deskSouvenir(round){
   const text = (pick.mode === 'mistake' && pick.wrong != null) ? heard + (lang === 'es' ? ', no ' : ', not ') + deskSpoken(f, pick.wrong, lang, pick.issue.kind) : heard;
   const ln = pick.mode === 'ask' ? pick.ask.answer : (pick.mode === 'blank' ? pick.blank : (deskLineFor(pick, f) || pick.lines[0]));
   return {text, say:ln.say, note:ln.show};
+}
+/* ============================= FIVE NEW GAMES WAVE B (Jq6f9OFv): CASE CLOSED =============================
+   Spec: Claude/specs/games-5-new-cards-2026-10-04.md §4 (approved by Farin 2026-10-07). Content:
+   Claude/specs/games-content/mystery-en.md + mystery-es.md (farin-lxd, 2026-10-08). Something went missing:
+   three suspects, three places (from B1 three objects too), 3-4 clues at A1-A2 and 4-5 from B1. Every clue
+   is a grammar point doing real work: the case is only solvable by processing the form (structured input).
+   The engine enumerates every assignment (6, or 36 with objects), builds every clue that is TRUE in the
+   secret solution from the templates the learner may see (basic + completed grammar items, level <= the
+   learner's), and picks clues greedily (negatives and the level's own grammar first, each clue must
+   remove at least one assignment) until exactly one assignment is left: one solution, proved by
+   construction and re-checked by caseSolutions(). Never AT(culprit, crime place) directly; at most one
+   template per grammar id and one IF/UNLESS per case; an IF at B2 never alone fixes the culprit; the
+   whole case stays under 60/80/100 words. Clue types AT NOT_AT EITHER NEITHER HAS NOT_HAS OBJ_AT IF
+   UNLESS (EITHER and UNLESS are the content's two engine additions). The notebook is optional; "Ask your
+   partner" pencils one consequence of the first clue the notebook doesn't show yet (never the culprit);
+   a wrong accusation highlights the clue that clears that suspect. Untimed, no lives, no XP. Roadmap
+   cases are seeded by refId (a replay = the same two cases); the Games shelf draws fresh ones. */
+const CASE_LEVELS = ['A1','A2','B1','B2','C1'];
+const CASE_COUNT = 2;
+const SUSPECT_NAMES = {
+  en:[{name:'Elif', g:'f'}, {name:'Mia', g:'f'}, {name:'Zara', g:'f'}, {name:'Nina', g:'f'}, {name:'Rosa', g:'f'}, {name:'Omar', g:'m'}, {name:'Leo', g:'m'}, {name:'Tom', g:'m'}, {name:'Sam', g:'m'}, {name:'Kemal', g:'m'}],
+  es:[{name:'Lucía', g:'f'}, {name:'Sara', g:'f'}, {name:'Ana', g:'f'}, {name:'Paula', g:'f'}, {name:'Nora', g:'f'}, {name:'Mateo', g:'m'}, {name:'Tomás', g:'m'}, {name:'Hugo', g:'m'}, {name:'Diego', g:'m'}, {name:'Iván', g:'m'}]
+};
+const CASE_PLACES = [
+  {id:'kitchen', art:'🍳', en:'the kitchen', enAt:'in the kitchen', es:'la cocina', esAt:'en la cocina', tr:'mutfak', trAt:'mutfakta', fa:'آشپزخانه', faAt:'در آشپزخانه'},
+  {id:'garden', art:'🌳', en:'the garden', enAt:'in the garden', es:'el jardín', esAt:'en el jardín', tr:'bahçe', trAt:'bahçede', fa:'باغ', faAt:'در باغ'},
+  {id:'office', art:'💼', en:'the office', enAt:'in the office', es:'la oficina', esAt:'en la oficina', tr:'ofis', trAt:'ofiste', fa:'دفتر', faAt:'در دفتر'},
+  {id:'garage', art:'🚗', en:'the garage', enAt:'in the garage', es:'el garaje', esAt:'en el garaje', tr:'garaj', trAt:'garajda', fa:'گاراژ', faAt:'در گاراژ'},
+  {id:'balcony', art:'🪴', en:'the balcony', enAt:'on the balcony', es:'el balcón', esAt:'en el balcón', tr:'balkon', trAt:'balkonda', fa:'بالکن', faAt:'در بالکن'},
+  {id:'library', art:'📚', en:'the library', enAt:'in the library', es:'la biblioteca', esAt:'en la biblioteca', tr:'kütüphane', trAt:'kütüphanede', fa:'کتابخانه', faAt:'در کتابخانه'}
+];
+// g = the Spanish noun's gender (encontrado / encontrada, llevarlo / llevarla).
+const CASE_OBJECTS = [
+  {id:'umbrella', art:'☂️', en:'the umbrella', es:'el paraguas', g:'m', tr:'şemsiye', fa:'چتر'},
+  {id:'camera', art:'📷', en:'the camera', es:'la cámara', g:'f', tr:'fotoğraf makinesi', fa:'دوربین'},
+  {id:'map', art:'🗺️', en:'the map', es:'el mapa', g:'m', tr:'harita', fa:'نقشه'},
+  {id:'key', art:'🔑', en:'the key', es:'la llave', g:'f', tr:'anahtar', fa:'کلید'},
+  {id:'book', art:'📖', en:'the book', es:'el libro', g:'m', tr:'kitap', fa:'کتاب'},
+  {id:'phone', art:'📱', en:'the phone', es:'el teléfono', g:'m', tr:'telefon', fa:'تلفن'}
+];
+// One line, spoken once; the thing taken is never one of the six objects. From B1 "Everyone is telling the truth." follows.
+const CASE_SETTINGS = {
+  en:['Someone took the cake from {P_CRIME}.', 'Someone ate the last cookie {P_CRIME_AT}.', 'Someone took the letter that was {P_CRIME_AT}.', 'The flowers {P_CRIME_AT} are gone — someone took them.', 'Someone hid the chocolate box {P_CRIME_AT}.', 'The concert tickets were {P_CRIME_AT}. Now they aren’t.'],
+  es:['Alguien se llevó la tarta de {P_CRIME}.', 'Alguien se comió la última galleta {P_CRIME_AT}.', 'Alguien se llevó la carta que estaba {P_CRIME_AT}.', 'Las flores que había {P_CRIME_AT} han desaparecido: alguien se las llevó.', 'Alguien escondió la caja de bombones {P_CRIME_AT}.', 'Las entradas del concierto estaban {P_CRIME_AT}. Ya no están.']
+};
+/* Clue templates (t = logic type, g = 'basic' or the live GRAMMAR_ITEMS id the form needs, lv = the lowest level).
+   Slots: {S1} {S2} names, {P1AT} {P2AT} place with preposition, {P1} {P2} bare place, {O1} object with article,
+   {PRO1} he/she, {POSS1} his/her, {OBJ1} him/her (by the suspect's g), {G1:m|f} a Spanish word agreeing with S1,
+   {GO:m|f} agreeing with the object. crime = P1 is always the crime place (es B2-1: only there one sees the thief). */
+const CASE_CLUES = {
+  en:[
+    {id:'A1-1', t:'AT', g:'basic', lv:'A1', x:'{S1} is {P1AT}.'},
+    {id:'A1-2', t:'NOT_AT', g:'basic', lv:'A1', x:'{S1} is not {P1AT}.'},
+    {id:'A1-3', t:'NOT_AT', g:'basic', lv:'A1', x:'{S1} isn’t {P1AT}.'},
+    {id:'A1-4', t:'AT', g:'g-A1-8', lv:'A1', x:'{S1} is {P1AT}, not {P2AT}.'},
+    {id:'A1-5', t:'AT', g:'g-A1-7', lv:'A1', x:'There is one person {P1AT}: it is {S1}.'},
+    {id:'A1-6', t:'NOT_AT', g:'g-A1-10', lv:'A1', x:'Where is {S1}? Not {P1AT}.'},
+    {id:'A1-7', t:'NOT_AT', g:'g-A1-4', lv:'A1', x:'That person {P1AT}? That is not {S1}.'},
+    {id:'A2-1', t:'NOT_AT', g:'basic', lv:'A2', x:'{S1} wasn’t {P1AT}.'},
+    {id:'A2-2', t:'AT', g:'basic', lv:'A2', x:'{S1} was {P1AT} all afternoon.'},
+    {id:'A2-3', t:'EITHER', g:'g-A2-1', lv:'A2', x:'{S1} was either {P1AT} or {P2AT}.'},
+    {id:'A2-4', t:'AT', g:'g-A2-1', lv:'A2', x:'Only {S1} was {P1AT}.'},
+    {id:'A2-5', t:'AT', g:'g-A2-1', lv:'A2', x:'{S1} went to {P1} and stayed there.'},
+    {id:'A2-6', t:'NOT_AT', g:'g-A2-7', lv:'A2', x:'{S1} is never {P1AT}.'},
+    {id:'A2-7', t:'AT', g:'g-A2-8', lv:'A2', x:'Right now {S1} is standing {P1AT}.'},
+    {id:'A2-8', t:'AT', g:'g-A2-9', lv:'A2', x:'{S2} saw {S1} {P1AT} and waved at {OBJ1} — I mean, at {S1}.'},
+    {id:'B1-1', t:'NEITHER', g:'basic', lv:'B1', x:'Neither {S1} nor {S2} was {P1AT}.'},
+    {id:'B1-2', t:'HAS', g:'basic', lv:'B1', x:'{S1} had {O1}.'},
+    {id:'B1-3', t:'NOT_HAS', g:'basic', lv:'B1', x:'{S1} didn’t have {O1}.'},
+    {id:'B1-4', t:'OBJ_AT', g:'g-B1-6', lv:'B1', x:'The person who had {O1} was {P1AT}.'},
+    {id:'B1-5', t:'OBJ_AT', g:'g-B1-6', lv:'B1', x:'{O1} belongs to the person who was {P1AT}.'},
+    {id:'B1-6', t:'HAS', g:'g-B1-6', lv:'B1', x:'{S1} is the one who had {O1}.'},
+    {id:'B1-7', t:'NOT_AT', g:'g-B1-1', lv:'B1', x:'{S1} hasn’t been {P1AT} today.'},
+    {id:'B1-8', t:'AT', g:'g-B1-2', lv:'B1', x:'{S1} has been {P1AT} for two hours.'},
+    {id:'B1-9', t:'HAS', g:'g-B1-5', lv:'B1', x:'{O1} was given to {S1} this morning, and {PRO1} still has it.'},
+    {id:'B1-10', t:'AT', g:'g-B1-10', lv:'B1', x:'{S2} said that {S1} was {P1AT}.'},
+    {id:'B2-1', t:'NOT_AT', g:'g-B2-5', lv:'B2', x:'{S1} can’t have been {P1AT}.'},
+    {id:'B2-2', t:'AT', g:'g-B2-5', lv:'B2', x:'{S1} must have been {P1AT} the whole time.'},
+    {id:'B2-3', t:'OBJ_AT', g:'g-B2-5', lv:'B2', x:'{O1} must have been {P1AT} — that’s where its owner was.'},
+    {id:'B2-4', t:'NOT_HAS', g:'g-B2-5', lv:'B2', x:'{S1} can’t have had {O1}.'},
+    {id:'B2-5', t:'IF', g:'g-B1-3', lv:'B2', x:'If {S1} was {P1AT}, then {S2} was {P2AT}.'},
+    {id:'B2-6', t:'NOT_AT', g:'g-B2-6', lv:'B2', x:'Not once was {S1} {P1AT}.'},
+    {id:'B2-7', t:'AT', g:'g-B2-8', lv:'B2', x:'{S1} wishes {PRO1} had been {P2AT}, but {PRO1} was {P1AT}.'},
+    {id:'B2-8', t:'AT', g:'g-B2-4', lv:'B2', x:'{S2} claimed that {S1} had been {P1AT} the entire afternoon.'},
+    {id:'B2-9', t:'AT', g:'g-B2-3', lv:'B2', x:'{S1} was seen {P1AT} by two people.'},
+    {id:'B2-10', t:'AT', g:'g-B2-10', lv:'B2', x:'Although {S1} wanted to be {P2AT}, {PRO1} was in fact {P1AT}.'},
+    {id:'C1-1', t:'NOT_AT', g:'g-C1-2', lv:'C1', x:'It wasn’t {S1} who was {P1AT}.'},
+    {id:'C1-2', t:'AT', g:'g-C1-2', lv:'C1', x:'It was {P1} where {S1} spent the whole afternoon.'},
+    {id:'C1-3', t:'HAS', g:'g-C1-2', lv:'C1', x:'What {S1} had with {POSS1} was {O1}.'},
+    {id:'C1-4', t:'AT', g:'g-C1-1', lv:'C1', x:'Not once did {S1} leave {P1}.'},
+    {id:'C1-5', t:'NOT_AT', g:'g-C1-1', lv:'C1', x:'Never had {S1} set foot {P1AT} that day.'},
+    {id:'C1-6', t:'UNLESS', g:'g-C1-5', lv:'C1', x:'Unless {S1} was {P1AT}, {S2} was {P2AT}.'},
+    {id:'C1-7', t:'NOT_AT', g:'g-C1-4', lv:'C1', x:'{S1} couldn’t possibly have been {P1AT}.'},
+    {id:'C1-8', t:'OBJ_AT', g:'g-C1-6', lv:'C1', x:'The person holding {O1} was {P1AT}.'},
+    {id:'C1-9', t:'HAS', g:'g-C1-9', lv:'C1', x:'{S1} did have {O1} — whatever anyone says.'},
+    {id:'C1-10', t:'NEITHER', g:'g-C1-8', lv:'C1', x:'{S1} wasn’t {P1AT}, and neither was {S2}.'}
+  ],
+  es:[
+    {id:'A1-1', t:'AT', g:'basic', lv:'A1', x:'{S1} está {P1AT}.'},
+    {id:'A1-2', t:'NOT_AT', g:'basic', lv:'A1', x:'{S1} no está {P1AT}.'},
+    {id:'A1-3', t:'AT', g:'g-A1-2', lv:'A1', x:'{S1} está {P1AT}, no {P2AT}.'},
+    {id:'A1-4', t:'NOT_AT', g:'g-A1-9', lv:'A1', x:'¿Dónde está {S1}? {P1AT}, no.'},
+    {id:'A1-5', t:'AT', g:'g-A1-7', lv:'A1', x:'{P1AT} hay una persona: es {S1}.'},
+    {id:'A1-6', t:'NOT_AT', g:'g-A1-10', lv:'A1', x:'{S1} no está {P1AT} nunca.'},
+    {id:'A1-7', t:'AT', g:'g-A1-5', lv:'A1', x:'{S1} trabaja {P1AT} toda la tarde y no sale.'},
+    {id:'A2-1', t:'NOT_AT', g:'basic', lv:'A2', x:'{S1} no estaba {P1AT}.'},
+    {id:'A2-2', t:'AT', g:'g-A2-4', lv:'A2', x:'{S1} estuvo {P1AT} toda la tarde.'},
+    {id:'A2-3', t:'EITHER', g:'g-A2-3', lv:'A2', x:'{S1} estaba o {P1AT} o {P2AT}.'},
+    {id:'A2-4', t:'AT', g:'g-A2-3', lv:'A2', x:'Solo {S1} estaba {P1AT}.'},
+    {id:'A2-5', t:'AT', g:'g-A2-2', lv:'A2', x:'{S1} fue a {P1} y se quedó allí.'},
+    {id:'A2-6', t:'AT', g:'g-A2-7', lv:'A2', x:'{S2} vio a {S1} {P1AT} y {G1:lo|la} saludó — quiero decir, saludó a {S1}.'},
+    {id:'A2-7', t:'NOT_AT', g:'g-A2-5', lv:'A2', x:'{S1} no se acercó {P1AT} en ningún momento.'},
+    {id:'A2-8', t:'AT', g:'g-A2-9', lv:'A2', x:'{S1} va a quedarse {P1AT} toda la tarde, y así fue.'},
+    {id:'B1-1', t:'NEITHER', g:'basic', lv:'B1', x:'Ni {S1} ni {S2} estaban {P1AT}.'},
+    {id:'B1-2', t:'HAS', g:'basic', lv:'B1', x:'{S1} tenía {O1}.'},
+    {id:'B1-3', t:'NOT_HAS', g:'basic', lv:'B1', x:'{S1} no tenía {O1}.'},
+    {id:'B1-4', t:'OBJ_AT', g:'g-B1-6', lv:'B1', x:'La persona que llevaba {O1} estaba {P1AT}.'},
+    {id:'B1-5', t:'OBJ_AT', g:'g-B1-6', lv:'B1', x:'{O1} es de la persona que estaba {P1AT}.'},
+    {id:'B1-6', t:'AT', g:'g-B1-6', lv:'B1', x:'{P1} es el lugar donde {S1} pasó toda la tarde.'},
+    {id:'B1-7', t:'NOT_AT', g:'g-B1-1', lv:'B1', x:'{S1} no ha estado {P1AT} hoy.'},
+    {id:'B1-8', t:'AT', g:'g-B1-8', lv:'B1', x:'{S1} estuvo trabajando {P1AT} toda la tarde.'},
+    {id:'B1-9', t:'OBJ_AT', g:'g-B1-9', lv:'B1', x:'{O1} se encontró {P1AT}, junto a su dueño.'},
+    {id:'B1-10', t:'NOT_HAS', g:'g-B1-4', lv:'B1', x:'No es verdad que {S1} tuviera {O1}.'},
+    {id:'B2-1', t:'NOT_AT', g:'g-B2-3', lv:'B2', crime:true, x:'Si {S1} hubiera estado {P1AT}, habría visto al ladrón — y no vio nada.'},
+    {id:'B2-2', t:'IF', g:'g-B1-10', lv:'B2', x:'Si {S1} estaba {P1AT}, entonces {S2} estaba {P2AT}.'},
+    {id:'B2-3', t:'AT', g:'g-B2-5', lv:'B2', x:'{S2} dijo que {S1} había estado {P1AT} toda la tarde.'},
+    {id:'B2-4', t:'NOT_HAS', g:'g-B2-5', lv:'B2', x:'{S2} aseguró que {S1} no había tenido {O1} en ningún momento.'},
+    {id:'B2-5', t:'AT', g:'g-B2-4', lv:'B2', x:'{S1} fue {G1:visto|vista} {P1AT} por dos personas.'},
+    {id:'B2-6', t:'OBJ_AT', g:'g-B2-4', lv:'B2', x:'{O1} fue {GO:encontrado|encontrada} {P1AT}, en manos de su dueño.'},
+    {id:'B2-7', t:'AT', g:'g-B2-9', lv:'B2', x:'A pesar de que {S1} quería estar {P2AT}, en realidad estaba {P1AT}.'},
+    {id:'B2-8', t:'NOT_AT', g:'g-B2-10', lv:'B2', x:'{S1} no estuvo {P1AT} ni un minuto.'},
+    {id:'B2-9', t:'HAS', g:'g-B2-7', lv:'B2', x:'{S1} llevaba {O1} encima desde el mediodía.'},
+    {id:'B2-10', t:'NOT_AT', g:'g-B2-6', lv:'B2', x:'Para las cinco, {S1} ya se había ido a casa, y en toda la tarde no había pasado por {P1}.'},
+    {id:'C1-1', t:'NOT_AT', g:'g-C1-5', lv:'C1', x:'No fue {S1} quien estuvo {P1AT}.'},
+    {id:'C1-2', t:'AT', g:'g-C1-5', lv:'C1', x:'El hecho es que {S1} pasó toda la tarde {P1AT}.'},
+    {id:'C1-3', t:'AT', g:'g-C1-6', lv:'C1', x:'{S1} no salió de {P1} ni una sola vez; de ahí que nadie {G1:lo|la} viera en otro sitio.'},
+    {id:'C1-4', t:'NEITHER', g:'g-C1-6', lv:'C1', x:'{S1} no estaba {P1AT}; {S2}, tampoco.'},
+    {id:'C1-5', t:'UNLESS', g:'g-C1-7', lv:'C1', x:'A menos que {S1} estuviera {P1AT}, {S2} estaba {P2AT}.'},
+    {id:'C1-6', t:'NOT_AT', g:'g-C1-7', lv:'C1', x:'Por mucho que lo intentara, {S1} no habría podido estar {P1AT}: la puerta estaba cerrada con llave.'},
+    {id:'C1-7', t:'HAS', g:'g-C1-2', lv:'C1', x:'{S1} llevaba horas con {O1} en la mano; no dejó de {GO:llevarlo|llevarla} en toda la tarde.'},
+    {id:'C1-8', t:'OBJ_AT', g:'g-C1-9', lv:'C1', x:'Quien tenía {O1} prestaba atención a lo que pasaba {P1AT} — desde dentro.'},
+    {id:'C1-9', t:'NOT_AT', g:'g-C1-10', lv:'C1', x:'Cuando llegó la policía, {S1} llevaba horas fuera de {P1}, adonde no había vuelto desde la mañana.'},
+    {id:'C1-10', t:'NOT_HAS', g:'g-C1-3', lv:'C1', x:'Le aseguro, señor inspector, que {S1} en ningún momento tuvo {O1}.'}
+  ]
+};
+const CASE_NEG = {NOT_AT:1, NEITHER:1, NOT_HAS:1};
+const CASE_PERMS = [[0,1,2],[0,2,1],[1,0,2],[1,2,0],[2,0,1],[2,1,0]];
+// Every assignment: P[s] = place index of suspect s, O[s] = object index (null without objects).
+function caseAssignments(withObj){
+  const out = [];
+  CASE_PERMS.forEach(P=>{ if(withObj) CASE_PERMS.forEach(O=>out.push({P, O})); else out.push({P, O:null}); });
+  return out;
+}
+// Truth functions (mystery-en.md): either...or is inclusive; UNLESS(s1,p1,s2,p2) = AT(s1,p1) or AT(s2,p2).
+function caseEval(c, a){
+  const x = c.a;
+  switch(c.t){
+    case 'AT': return a.P[x.s1] === x.p1;
+    case 'NOT_AT': return a.P[x.s1] !== x.p1;
+    case 'EITHER': return a.P[x.s1] === x.p1 || a.P[x.s1] === x.p2;
+    case 'NEITHER': return a.P[x.s1] !== x.p1 && a.P[x.s2] !== x.p1;
+    case 'HAS': return a.O[x.s1] === x.o1;
+    case 'NOT_HAS': return a.O[x.s1] !== x.o1;
+    case 'OBJ_AT': return a.P[a.O.indexOf(x.o1)] === x.p1;
+    case 'IF': return a.P[x.s1] !== x.p1 || a.P[x.s2] === x.p2;
+    case 'UNLESS': return a.P[x.s1] === x.p1 || a.P[x.s2] === x.p2;
+  }
+  return false;
+}
+function caseUses(tpl, slot){ return tpl.x.indexOf('{' + slot) >= 0; }
+// Every TRUE instance of every allowed template in this solution (args are indexes into the case's entities).
+function caseInstances(tpls, sol, crime, culprit, withObj){
+  const out = [], S = [0,1,2], Pi = [0,1,2];
+  const push = (tpl, a) => { const c = {tpl:tpl.id, t:tpl.t, g:tpl.g, lv:tpl.lv, a}; if(caseEval(c, sol)) out.push(c); };
+  tpls.forEach(tpl=>{
+    const t = tpl.t;
+    S.forEach(s1=>{
+      const others = S.filter(s=>s !== s1);
+      if(t === 'AT'){
+        const p1 = sol.P[s1];
+        if(s1 === culprit && p1 === crime) return;   // never the answer handed over directly
+        const s2s = caseUses(tpl, 'S2') ? others : [null], p2s = caseUses(tpl, 'P2') ? Pi.filter(p=>p !== p1) : [null];
+        s2s.forEach(s2=>p2s.forEach(p2=>push(tpl, {s1, s2, p1, p2})));
+      } else if(t === 'NOT_AT'){
+        Pi.forEach(p1=>{ if(tpl.crime && p1 !== crime) return; const s2s = caseUses(tpl, 'S2') ? others : [null]; s2s.forEach(s2=>push(tpl, {s1, s2, p1})); });
+      } else if(t === 'EITHER'){
+        Pi.forEach(p1=>Pi.forEach(p2=>{ if(p1 !== p2) push(tpl, {s1, p1, p2}); }));
+      } else if(t === 'NEITHER'){
+        others.forEach(s2=>{ if(s2 > s1 || true) Pi.forEach(p1=>push(tpl, {s1, s2, p1})); });
+      } else if(t === 'HAS' || t === 'NOT_HAS'){
+        if(!withObj) return;
+        [0,1,2].forEach(o1=>{ const s2s = caseUses(tpl, 'S2') ? others : [null]; s2s.forEach(s2=>push(tpl, {s1, s2, o1})); });
+      } else if(t === 'IF' || t === 'UNLESS'){
+        others.forEach(s2=>Pi.forEach(p1=>Pi.forEach(p2=>{ if(p1 !== p2) push(tpl, {s1, s2, p1, p2}); })));
+      }
+    });
+    if(t === 'OBJ_AT' && withObj) [0,1,2].forEach(o1=>Pi.forEach(p1=>push(tpl, {o1, p1})));
+  });
+  return out;
+}
+// The grammar ids the learner has completed (play time) - the generator's "only completed grammar" rule.
+function caseCompleted(){ return new Set((state.progress && state.progress.completedTraps) || []); }
+function caseTemplates(level, lang, done){
+  const li = CASE_LEVELS.indexOf(level), withObj = li >= 2;
+  return CASE_CLUES[lang].filter(c=>CASE_LEVELS.indexOf(c.lv) <= li && (c.g === 'basic' || done.has(c.g)) && (withObj || c.t === 'AT' || c.t === 'NOT_AT' || c.t === 'EITHER'));
+}
+// Distinct clue types available (spec §9: fewer than 3 -> the node plays Build It).
+function caseTypeCount(level, lang, done){ return new Set(caseTemplates(level, lang, done).map(c=>c.t)).size; }
+/* ---- Rendering a clue / setting in the target language ---- */
+function casePlace(id){ return CASE_PLACES.find(p=>p.id === id) || CASE_PLACES[0]; }
+function caseObject(id){ return CASE_OBJECTS.find(o=>o.id === id) || CASE_OBJECTS[0]; }
+function caseCap(s){ return String(s).replace(/(^|[.!?]\s+)(\p{Ll})/gu, (m, a, b)=>a + b.toUpperCase()); }
+function caseText(x, cs, a, lang){
+  const es = lang === 'es';
+  const nm = i => cs.names[i];
+  const pl = i => casePlace(cs.places[i]);
+  const ob = i => caseObject(cs.objs[i]);
+  let s = String(x).replace(/\{(G1|GO):([^|}]*)\|([^}]*)\}/g, (all, who, m, f)=>{
+    const g = who === 'G1' ? nm(a.s1).g : ob(a.o1).g;
+    return g === 'f' ? f : m;
+  }).replace(/\{([A-Z_]+[12]?(?:AT)?)\}/g, (all, k)=>{
+    if(k === 'S1') return nm(a.s1).name;
+    if(k === 'S2') return nm(a.s2).name;
+    if(k === 'P1AT') return es ? pl(a.p1).esAt : pl(a.p1).enAt;
+    if(k === 'P2AT') return es ? pl(a.p2).esAt : pl(a.p2).enAt;
+    if(k === 'P1') return es ? pl(a.p1).es : pl(a.p1).en;
+    if(k === 'P2') return es ? pl(a.p2).es : pl(a.p2).en;
+    if(k === 'O1') return es ? ob(a.o1).es : ob(a.o1).en;
+    if(k === 'PRO1') return es ? (nm(a.s1).g === 'f' ? 'ella' : 'él') : (nm(a.s1).g === 'f' ? 'she' : 'he');
+    if(k === 'POSS1') return nm(a.s1).g === 'f' ? 'her' : 'his';
+    if(k === 'OBJ1') return nm(a.s1).g === 'f' ? 'her' : 'him';
+    if(k === 'P_CRIME') return es ? pl(cs.crime).es : pl(cs.crime).en;
+    if(k === 'P_CRIME_AT') return es ? pl(cs.crime).esAt : pl(cs.crime).enAt;
+    return all;
+  });
+  if(es) s = s.replace(/(^|[^\p{L}])([Dd])e el(?=[^\p{L}]|$)/gu, '$1$2el').replace(/(^|[^\p{L}])([Aa]) el(?=[^\p{L}]|$)/gu, '$1$2l');   // de el -> del, a el -> al
+  return caseCap(s);
+}
+// The flip side of a clue, built from its logic in the UI language (spec §4.5, mystery-en.md frames).
+function trLocName(name){
+  const n = String(name), lower = n.toLocaleLowerCase('tr');
+  const vs = lower.match(/[aeıioöuü]/g) || ['e'];
+  const back = 'aıou'.indexOf(vs[vs.length - 1]) >= 0;
+  const hard = /[çfhkpsşt]$/.test(lower);
+  return n + '’' + (hard ? 't' : 'd') + (back ? 'a' : 'e');
+}
+function caseFrame(c, cs){
+  const a = c.a, nm = i => cs.names[i].name, pl = i => casePlace(cs.places[i]), ob = i => caseObject(cs.objs[i]);
+  const P = (i, lg) => { const p = pl(i); return lg === 'en' ? p.enAt : (lg === 'tr' ? p.trAt : (lg === 'fa' ? p.faAt : p.esAt)); };
+  const O = (i, lg) => { const o = ob(i); return o[lg]; };
+  const pre = {en:'This told you: ', tr:'Bu ipucu şunu söyledi: ', fa:'این راهنمایی گفت: ', es:'Esta pista decía: '};
+  const f = lg => {
+    const S1 = a.s1 != null ? nm(a.s1) : '', S2 = a.s2 != null ? nm(a.s2) : '';
+    const P1 = a.p1 != null ? P(a.p1, lg) : '', P2 = a.p2 != null ? P(a.p2, lg) : '', O1 = a.o1 != null ? O(a.o1, lg) : '';
+    const trDe = s => { const l = trLocName(s); return l; };
+    const trCop = s => /a$/.test(trLocName(s)) ? 'ydı' : 'ydi';
+    const T = {
+      AT:{en:`${S1} was ${P1}.`, tr:`${S1} ${P1} idi.`, fa:`${S1} ${P1} بود.`, es:`${S1} estaba ${P1}.`},
+      NOT_AT:{en:`${S1} was not ${P1}.`, tr:`${S1} ${P1} değildi.`, fa:`${S1} ${P1} نبود.`, es:`${S1} no estaba ${P1}.`},
+      EITHER:{en:`${S1} was ${P1} or ${P2}.`, tr:`${S1} ya ${P1} ya ${P2} idi.`, fa:`${S1} یا ${P1} بود یا ${P2}.`, es:`${S1} estaba ${P1} o ${P2}.`},
+      NEITHER:{en:`${S1} and ${S2} were both not ${P1}.`, tr:`ne ${S1} ne ${S2} ${P1} idi.`, fa:`نه ${S1} و نه ${S2} ${P1} بودند.`, es:`ni ${S1} ni ${S2} estaban ${P1}.`},
+      HAS:{en:`${S1} had ${O1}.`, tr:`${O1} ${S1 ? trDe(S1) + trCop(S1) : ''}.`, fa:`${O1} دست ${S1} بود.`, es:`${S1} tenía ${O1}.`},
+      NOT_HAS:{en:`${S1} did not have ${O1}.`, tr:`${O1} ${S1 ? trDe(S1) : ''} değildi.`, fa:`${O1} دست ${S1} نبود.`, es:`${S1} no tenía ${O1}.`},
+      OBJ_AT:{en:`whoever had ${O1} was ${P1}.`, tr:`${O1} kimdeyse o kişi ${P1} idi.`, fa:`هر کس ${O1} را داشت ${P1} بود.`, es:`quien tenía ${O1} estaba ${P1}.`},
+      IF:{en:`if ${S1} was ${P1}, ${S2} was ${P2}.`, tr:`${S1} ${P1} idiyse, ${S2} ${P2} idi.`, fa:`اگر ${S1} ${P1} بود، ${S2} ${P2} بود.`, es:`si ${S1} estaba ${P1}, ${S2} estaba ${P2}.`},
+      UNLESS:{en:`${S1} was ${P1}, or ${S2} was ${P2}.`, tr:`ya ${S1} ${P1} idi ya ${S2} ${P2}.`, fa:`یا ${S1} ${P1} بود یا ${S2} ${P2}.`, es:`o ${S1} estaba ${P1} o ${S2} estaba ${P2}.`}
+    };
+    return pre[lg] + (T[c.t] || T.AT)[lg];
+  };
+  return L(f('en'), f('tr'), f('fa'), f('es'));
+}
+/* ---- Generator + solver ---- */
+function caseWords(s){ return String(s).trim().split(/\s+/).filter(Boolean).length; }
+function caseSolutions(cs){ return caseAssignments(!!cs.objs).filter(a=>cs.clues.every(c=>caseEval(c, a))); }
+function buildCase(level, lang, done, rnd){
+  const li = Math.max(0, CASE_LEVELS.indexOf(level)), withObj = li >= 2;
+  const tpls = caseTemplates(CASE_LEVELS[li], lang, done);
+  const byId = {}; tpls.forEach(t=>{ byId[t.id] = t; });
+  const minC = li <= 1 ? 3 : 4, maxC = li <= 1 ? 4 : 5;
+  const budget = li === 0 ? 60 : (li === 1 ? 80 : 100);
+  const all = caseAssignments(withObj);
+  for(let attempt = 0; attempt < 60; attempt++){
+    // three suspects with different initials, three places, (B1+) three objects; the secret solution
+    const names = [];
+    crossShuffle(SUSPECT_NAMES[lang], rnd).forEach(n=>{ if(names.length < 3 && !names.some(m=>m.name.charAt(0) === n.name.charAt(0))) names.push({name:n.name, g:n.g}); });
+    const places = crossShuffle(CASE_PLACES, rnd).slice(0, 3).map(p=>p.id);
+    const objs = withObj ? crossShuffle(CASE_OBJECTS, rnd).slice(0, 3).map(o=>o.id) : null;
+    const sol = {P:crossShuffle([0,1,2], rnd), O:withObj ? crossShuffle([0,1,2], rnd) : null};
+    const crime = Math.floor(rnd() * 3), culprit = sol.P.indexOf(crime);
+    const inst = caseInstances(tpls, sol, crime, culprit, withObj);
+    let rem = all, cond = 0;
+    const chosen = [], usedG = new Set(), usedKey = new Set();
+    while(rem.length > 1 && chosen.length < maxC){
+      let best = null, bestScore = -Infinity;
+      for(const c of inst){
+        const key = c.tpl + JSON.stringify(c.a);
+        if(usedKey.has(key)) continue;
+        if(c.g !== 'basic' && usedG.has(c.g)) continue;
+        if((c.t === 'IF' || c.t === 'UNLESS') && cond >= 1) continue;
+        const after = rem.filter(a=>caseEval(c, a)), elim = rem.length - after.length;
+        if(!elim) continue;
+        // most removed + negatives + the level's own grammar, with variety (a type or template new to this case) and some luck
+        let score = 2 * elim / rem.length + (CASE_NEG[c.t] ? 0.6 : 0) + (c.lv === CASE_LEVELS[li] ? 1.5 : 0)
+          + (chosen.some(x=>x.t === c.t) ? 0 : 1) + (chosen.some(x=>x.tpl === c.tpl) ? -1.5 : 0) + ((c.t === 'IF' || c.t === 'UNLESS') ? 0.8 : 0) + 2.5 * rnd();
+        if(after.length === 1 && chosen.length + 1 < minC) score -= 8;
+        if(score > bestScore){ bestScore = score; best = {c, after, key}; }
+      }
+      if(!best) break;
+      chosen.push(best.c); usedKey.add(best.key);
+      if(best.c.g !== 'basic') usedG.add(best.c.g);
+      if(best.c.t === 'IF' || best.c.t === 'UNLESS') cond++;
+      rem = best.after;
+    }
+    if(rem.length !== 1 || chosen.length < minC) continue;
+    // B2: an IF is never the only clue that fixes the culprit (mystery-en.md, spec §4.8)
+    if(li === 3 && chosen.some(c=>c.t === 'IF')){
+      const r2 = all.filter(a=>chosen.every(c=>c.t === 'IF' || caseEval(c, a)));
+      if(new Set(r2.map(a=>a.P.indexOf(crime))).size > 1) continue;
+    }
+    const cs = {names, places, objs, sol, crime, culprit};
+    const settings = CASE_SETTINGS[lang];
+    cs.setting = caseText(settings[Math.floor(rnd() * settings.length)], cs, {}, lang) + (withObj ? (lang === 'es' ? ' Todos dicen la verdad.' : ' Everyone is telling the truth.') : '');
+    cs.clues = crossShuffle(chosen, rnd).map(c=>Object.assign({}, c, {text:caseText(byId[c.tpl].x, cs, c.a, lang)}));
+    if(caseWords(cs.setting) + cs.clues.reduce((n, c)=>n + caseWords(c.text), 0) > budget) continue;
+    if(caseSolutions(cs).length !== 1) continue;
+    return cs;
+  }
+  return null;
+}
+// A round: two cases. refId seeds a roadmap round (a replay = the same cases); null = fresh (Games shelf).
+function buildCaseRound(refId){
+  const lvl = (state.profile && state.profile.level) || 'A1';
+  const level = CASE_LEVELS.indexOf(lvl) >= 0 ? lvl : 'A1', lang = orderLang(), done = caseCompleted();
+  const chars = crossShuffle(ORDER_CHARS.filter(k=>k !== learnerCharKey()), crossRng(refId ? crossHash('case|' + refId) : (Math.random()*4294967295) >>> 0));
+  const cases = [];
+  for(let i = 0; i < CASE_COUNT; i++){
+    const rnd = crossRng(refId ? crossHash(refId + '#' + i) : (Math.random()*4294967295) >>> 0);
+    const cs = buildCase(level, lang, done, rnd);
+    if(!cs) return null;
+    cs.chars = crossShuffle(chars, rnd).slice(0, 3);
+    Object.assign(cs, {marks:{}, pencil:{}, tab:'p', nb:true, pick:null, wrong:0, hints:0, hl:-1, solved:false, clean:false, cleared:null});
+    cases.push(cs);
+  }
+  return {level, lang, cases, index:0, clean:0, hints:0, finished:false, startedAt:Date.now(), finishedAt:null};
+}
+function caseCur(round){ return round.cases[round.index] || null; }
+// Cells every assignment left by these clues agrees on: {key: 'ok' | 'x'} (key 'p:s:i' places, 'o:s:i' objects).
+function caseFixed(cs, clues){
+  const rem = caseAssignments(!!cs.objs).filter(a=>clues.every(c=>caseEval(c, a)));
+  const out = {};
+  [0,1,2].forEach(s=>[0,1,2].forEach(i=>{
+    const inP = rem.filter(a=>a.P[s] === i).length;
+    if(inP === rem.length) out['p:' + s + ':' + i] = 'ok'; else if(!inP) out['p:' + s + ':' + i] = 'x';
+    if(cs.objs){ const inO = rem.filter(a=>a.O[s] === i).length; if(inO === rem.length) out['o:' + s + ':' + i] = 'ok'; else if(!inO) out['o:' + s + ':' + i] = 'x'; }
+  }));
+  return out;
+}
+// The clue that clears suspect s (not at the crime place): a single clue when one does it alone, else the
+// first clue after which the clues so far rule s out.
+function caseClearingClue(cs, s){
+  const all = caseAssignments(!!cs.objs);
+  const single = cs.clues.findIndex(c=>all.filter(a=>caseEval(c, a)).every(a=>a.P[s] !== cs.crime));
+  if(single >= 0) return single;
+  for(let k = 1; k <= cs.clues.length; k++){
+    const rem = all.filter(a=>cs.clues.slice(0, k).every(c=>caseEval(c, a)));
+    if(rem.every(a=>a.P[s] !== cs.crime)) return k - 1;
+  }
+  return cs.clues.length - 1;
+}
+// "Ask your partner": the first clue whose consequence the notebook doesn't show yet; one cell pencilled
+// (crossed-out cells first, never the culprit's confirmed cell).
+function caseHint(cs){
+  const shown = k => cs.marks[k] || cs.pencil[k];
+  const crimeKey = 'p:' + cs.culprit + ':' + cs.crime;
+  for(let k = 1; k <= cs.clues.length; k++){
+    const fx = caseFixed(cs, cs.clues.slice(0, k));
+    const fresh = Object.keys(fx).filter(key=>!shown(key) && key !== crimeKey);
+    const rank = key => (fx[key] === 'x' ? 0 : 2) + (key.indexOf('p:') === 0 && Number(key.split(':')[2]) === cs.crime ? 1 : 0);
+    fresh.sort((a, b)=>rank(a) - rank(b));
+    if(fresh.length) return {clue:k - 1, key:fresh[0], v:fx[fresh[0]]};
+  }
+  return {clue:cs.clues.length - 1, key:null, v:null};
+}
+/* ---- Screen (spec §4.6: case file with polaroids and place chips, clue cards, notebook, accuse) ---- */
+function caseBare(id, lang, kind){
+  const o = kind === 'o' ? caseObject(id) : casePlace(id);
+  return String(lang === 'es' ? o.es : o.en).replace(/^(the|el|la|los|las)\s+/i, '');
+}
+function caseStatusHtml(round){
+  const cs = caseCur(round), n = Math.min(round.index + 1, round.cases.length);
+  const chip = cs && !round.finished ? `<span class="game-status-end"><span class="game-chip">${L(`${cs.clues.length} clues`, `${cs.clues.length} ipucu`, `${cs.clues.length} راهنمایی`, `${cs.clues.length} pistas`)}</span></span>` : '';
+  return `<div class="game-status" id="case-status"><span class="game-status-text">${round.finished ? L('Cases closed','Davalar kapandı','پرونده‌ها مختومه','Casos cerrados') : L(`Case ${n} of ${round.cases.length}`, `Dava ${n} / ${round.cases.length}`, `پرونده ${n} از ${round.cases.length}`, `Caso ${n} de ${round.cases.length}`)}</span>${chip}</div>`;
+}
+function caseFileHtml(round, cs){
+  const lang = round.lang;
+  const pols = cs.names.map((n, i)=>`<button type="button" class="case-pol${cs.pick === i ? ' pick' : ''}${cs.solved && i === cs.culprit ? ' caught' : ''}" id="case-pol-${i}" data-action="case-pick" data-quiet="1" data-s="${i}" aria-label="${esc(n.name)}"${cs.solved ? ' disabled' : ''}><img src="char-${cs.chars[i]}.png" alt=""><span dir="ltr">${esc(n.name)}</span></button>`).join('');
+  const chips = cs.places.map(id=>`<span class="game-chip case-chip" dir="ltr">${casePlace(id).art} ${esc(caseBare(id, lang))}</span>`).join('');
+  const objs = cs.objs ? `<div class="case-chips">${cs.objs.map(id=>`<span class="game-chip case-chip obj" dir="ltr">${caseObject(id).art} ${esc(caseBare(id, lang, 'o'))}</span>`).join('')}</div>` : '';
+  return `<div class="game-card tight case-file" id="case-file">
+    <div class="case-setting"><span dir="ltr">${esc(cs.setting)}</span><button type="button" class="tts-btn" data-action="case-say" data-quiet="1" data-i="-1" aria-label="${esc(L('Listen','Dinle','گوش کن','Escuchar'))}">${ICONS.soundOn}</button></div>
+    <div class="case-pols">${pols}</div>
+    <div class="case-chips">${chips}</div>${objs}
+    ${cs.solved ? `<div class="case-stamp" id="case-stamp">${esc(L('CASE CLOSED','DAVA KAPANDI','پرونده مختومه','CASO CERRADO'))}</div>` : ''}
+  </div>`;
+}
+function caseCluesHtml(round, cs){
+  return `<ol class="case-clues" id="case-clues">${cs.clues.map((c, i)=>`<li class="case-clue${cs.hl === i ? ' hl' : ''}" id="case-clue-${i}"><span class="case-num">${i + 1}</span><span class="case-text" dir="ltr">${esc(c.text)}</span><button type="button" class="tts-btn" data-action="case-say" data-quiet="1" data-i="${i}" aria-label="${esc(L('Listen','Dinle','گوش کن','Escuchar'))}">${ICONS.soundOn}</button></li>`).join('')}</ol>`;
+}
+function caseStateWord(v){ return v === 'ok' ? L('confirmed','onaylı','تأیید','confirmado') : (v ? L('crossed out','çizili','خط‌خورده','descartado') : L('empty','boş','خالی','vacío')); }
+// What a cell shows: the learner's mark, else a light auto-cross (a confirmed cell in its row or column), else a pencilled hint.
+function caseCellView(cs, kind, s, i){
+  const key = kind + ':' + s + ':' + i, m = cs.marks[key];
+  if(m) return {v:m, cls:m};
+  const auto = [0,1,2].some(j=>(j !== i && cs.marks[kind + ':' + s + ':' + j] === 'ok') || (j !== s && cs.marks[kind + ':' + j + ':' + i] === 'ok'));
+  if(auto) return {v:'x', cls:'x auto'};
+  const p = cs.pencil[key];
+  if(p) return {v:p, cls:p + ' pencil'};
+  return {v:'', cls:''};
+}
+function caseNotebookHtml(round, cs){
+  const lang = round.lang, kind = cs.objs && cs.tab === 'o' ? 'o' : 'p';
+  const cols = kind === 'o' ? cs.objs : cs.places;
+  const head = cols.map(id=>`<span class="case-nb-h" dir="ltr">${(kind === 'o' ? caseObject(id) : casePlace(id)).art}<small>${esc(caseBare(id, lang, kind))}</small></span>`).join('');
+  const rows = cs.names.map((n, s)=>`<span class="case-nb-name" dir="ltr">${esc(n.name)}</span>` + cols.map((id, i)=>{
+    const cv = caseCellView(cs, kind, s, i);
+    return `<button type="button" class="case-cell ${cv.cls}" data-action="case-cell" data-quiet="1" data-k="${kind}" data-s="${s}" data-c="${i}" aria-label="${esc(n.name + ', ' + caseBare(id, lang, kind) + ', ' + caseStateWord(cv.v))}"${cs.solved ? ' disabled' : ''}>${cv.v === 'ok' ? '✓' : (cv.v ? '✗' : '')}</button>`;
+  }).join('')).join('');
+  const tabs = cs.objs ? `<span class="case-tabs"><button type="button" class="case-tab${kind === 'p' ? ' on' : ''}" data-action="case-tab" data-quiet="1" data-t="p">${esc(L('Places','Yerler','مکان‌ها','Lugares'))}</button><button type="button" class="case-tab${kind === 'o' ? ' on' : ''}" data-action="case-tab" data-quiet="1" data-t="o">${esc(L('Objects','Eşyalar','اشیا','Objetos'))}</button></span>` : '';
+  return `<div class="case-nb" id="case-nb">
+    <div class="case-nb-top"><button type="button" class="case-nb-toggle" data-action="case-nb" data-quiet="1" aria-expanded="${cs.nb ? 'true' : 'false'}">${esc(L('Notebook','Not defteri','دفترچه','Cuaderno'))} ${cs.nb ? '▾' : '▸'}</button>${cs.nb ? tabs : ''}</div>
+    ${cs.nb ? `<div class="case-nb-grid"><span></span>${head}${rows}</div>` : ''}
+  </div>`;
+}
+function caseBottomHtml(round, cs){
+  if(cs.solved){
+    const n = cs.names[cs.culprit], p = casePlace(cs.places[cs.crime]);
+    const wrap = round.lang === 'es' ? `¡Fue ${n.name}! Estaba ${p.esAt}.` : `It was ${n.name}! ${n.g === 'f' ? 'She' : 'He'} was ${p.enAt}.`;
+    const last = round.index + 1 >= round.cases.length;
+    return `<div class="case-wrap" id="case-wrap"><p class="case-wrap-line" dir="ltr">${esc(wrap)}</p><button class="btn btn-primary game-cta" data-action="case-next">${last ? L('See how you did','Sonucu gör','نتیجه را ببین','Ver el resultado') : L('Next case','Sonraki dava','پرونده بعدی','Siguiente caso')}</button></div>`;
+  }
+  const sheet = cs.pick != null ? `<div class="case-confirm" id="case-confirm"><p>${esc(L(`Accuse ${cs.names[cs.pick].name}?`, `${cs.names[cs.pick].name} suçlansın mı?`, `${cs.names[cs.pick].name} را متهم می‌کنی؟`, `¿Acusar a ${cs.names[cs.pick].name}?`))}</p><div class="case-confirm-btns"><button class="btn btn-primary" data-action="case-accuse">${esc(L('Accuse','Suçla','متهم کن','Acusar'))}</button><button class="btn btn-ghost" data-action="case-cancel">${esc(L('Not yet','Henüz değil','هنوز نه','Todavía no'))}</button></div></div>` : `<p class="game-hint case-tip">${esc(L('Tap a photo to accuse someone.','Suçlamak için bir fotoğrafa dokun.','برای متهم کردن روی یک عکس بزن.','Toca una foto para acusar a alguien.'))}</p>`;
+  return sheet + `<button class="btn btn-ghost case-help" data-action="case-hint">${esc(L('Ask your partner','Ortağına sor','از همکارت بپرس','Pregunta a tu compañero'))}</button>`;
+}
+function caseBodyHtml(round, cs){ return caseFileHtml(round, cs) + caseCluesHtml(round, cs) + (cs.solved ? '' : caseNotebookHtml(round, cs)) + caseBottomHtml(round, cs); }
+function caseResultHtml(round){
+  const st = gameRoundStats('mystery', round);
+  return `<div class="game-card tight badge-unlock-shine">
+    <div class="case-stamp still">${esc(L('CASE CLOSED','DAVA KAPANDI','پرونده مختومه','CASO CERRADO'))}</div>
+    <div class="game-result-title">${st.perfect ? L('Sharp detective!','Keskin dedektif!','کارآگاه تیزبین!','¡Gran detective!') : L('Cases closed!','Davalar kapandı!','پرونده‌ها مختومه شد!','¡Casos cerrados!')}</div>
+    <p class="game-result-line">${L(`${st.clean} of ${st.total} cases clean`, `${st.total} davadan ${st.clean} tanesi temiz`, `${st.clean} از ${st.total} پرونده بی‌خطا`, `${st.clean} de ${st.total} casos limpios`)}${st.hints ? '' : ' · ' + L('No hints','İpucusuz','بدون کمک','Sin ayudas')}</p>
+    ${gameDoneCta()}
+  </div>`;
+}
+function renderGameMystery(){
+  const vp = state.viewParams, round = vp.round, cs = caseCur(round);
+  return `<div class="fade-in game-screen">
+    ${gameTopHtml(L('Case','Dava','پرونده','Caso'))}
+    ${caseStatusHtml(round)}
+    <div class="case-body" id="case-body">${(round.finished || !cs) ? caseResultHtml(round) + renderBadgeUnlockCard(pullJustEarnedBadges()) : caseBodyHtml(round, cs)}</div>
+  </div>`;
+}
+function caseRefresh(){
+  const vp = state.viewParams, round = vp && vp.round;
+  if(!round || state.view !== 'game-mystery' || round.finished) return;
+  const cs = caseCur(round); if(!cs) return;
+  const st = document.getElementById('case-status'); if(st) st.outerHTML = caseStatusHtml(round);
+  const body = document.getElementById('case-body'); if(body) body.innerHTML = caseBodyHtml(round, cs);
+}
+/* ---- Flow and feel (spec §4.2, §4.7) ---- */
+function caseSay(round, text){ const idx = round.index; setTimeout(()=>{ if(state.viewParams && state.viewParams.round === round && round.index === idx) speakTarget(text, 0.92); }, 60); }
+function caseOpen(round){
+  const cs = caseCur(round); if(!cs || round.finished) return;
+  anim(document.getElementById('case-file'), [{transform:'perspective(600px) rotateX(12deg)', opacity:0}, {transform:'perspective(600px) rotateX(0)', opacity:1}], {duration:300, easing:'ease-out'});
+  sfx('flip');
+  caseSay(round, cs.setting);
+}
+function caseHighlight(round, cs, i, speak){
+  cs.hl = i; caseRefresh();
+  const el = document.getElementById('case-clue-' + i);
+  if(el){ try{ el.scrollIntoView({block:'nearest', behavior:reducedMotion() ? 'auto' : 'smooth'}); }catch(e){} anim(el, [{transform:'scale(1)'}, {transform:'scale(1.03)'}, {transform:'scale(1)'}], {duration:300, easing:SPRING}); }
+  if(speak && cs.clues[i]) caseSay(round, cs.clues[i].text);
+}
+function caseAccuse(){
+  const vp = state.viewParams, round = vp && vp.round, cs = round && caseCur(round);
+  if(!cs || round.finished || cs.solved || cs.pick == null) return;
+  const s = cs.pick;
+  if(s === cs.culprit){
+    cs.solved = true; cs.pick = null; cs.hl = -1;
+    cs.clean = !cs.wrong && !cs.hints;
+    if(cs.clean) round.clean++;
+    caseRefresh();
+    const stamp = document.getElementById('case-stamp');
+    anim(stamp, [{transform:'rotate(-12deg) scale(1.6)', opacity:0}, {transform:'rotate(-12deg) scale(1)', opacity:1}], {duration:220, easing:'ease-out'});
+    sfx('stamp'); buzz([12]);
+    const p = centerOf(stamp); sparkBurst(p.x, p.y, 12, 'var(--clay-coral-deep)', 90);
+    setTimeout(()=>sfx('reveal'), 260);
+    companionCheer();
+    companionSay(L('Case closed!','Dava kapandı!','پرونده مختومه شد!','¡Caso cerrado!'), 1600);
+    const line = document.querySelector('.case-wrap-line'); if(line) caseSay(round, line.textContent);
+    save();
+    return;
+  }
+  cs.wrong++; cs.pick = null;
+  const k = caseClearingClue(cs, s);
+  if(cs.cleared == null) cs.cleared = k;
+  caseHighlight(round, cs, k, true);
+  const pol = document.getElementById('case-pol-' + s);
+  anim(pol, [{transform:'translateX(0)'}, {transform:'translateX(-6px)'}, {transform:'translateX(6px)'}, {transform:'translateX(-6px)'}, {transform:'translateX(0)'}], {duration:280, easing:'linear'});
+  if(pol){ pol.classList.add('wrong'); setTimeout(()=>{ const e = document.getElementById('case-pol-' + s); if(e) e.classList.remove('wrong'); }, 900); }
+  sfx('flip'); companionOops();
+  companionSay(L(`Look at clue ${k + 1} again.`, `${k + 1}. ipucuna tekrar bak.`, `راهنمایی ${k + 1} را دوباره ببین.`, `Mira otra vez la pista ${k + 1}.`), 2200);
+  save();
+}
+function caseAdvance(vp, round){
+  round.index++;
+  if(round.index >= round.cases.length){
+    round.finished = true; round.finishedAt = Date.now();
+    round.hints = round.cases.reduce((n, c)=>n + c.hints, 0);
+    const st = gameRoundStats('mystery', round);
+    round.xpGain = scoreGameCompletion(vp.refId, st.perfect);
+    markGameComplete(vp.refId);
+    if(st.perfect) queueFx(()=>sfx('combo'));
+    save(); render();
+    return;
+  }
+  caseRefresh(); save(); caseOpen(round);
+}
+// Souvenir: the clue that cleared a wrongly accused suspect; on a clean round the hardest clue (the level's own grammar).
+function caseSouvenir(round){
+  let cs = round.cases.find(c=>c.cleared != null), clue = cs ? cs.clues[cs.cleared] : null;
+  if(!clue){
+    const li = CASE_LEVELS.indexOf(round.level);
+    let best = null, bestScore = -1;
+    round.cases.forEach(c=>c.clues.forEach(x=>{ const sc = (x.g !== 'basic' ? 2 : 0) + (CASE_LEVELS.indexOf(x.lv) === li ? 2 : 0) + x.text.length / 100; if(sc > bestScore){ bestScore = sc; best = {c, x}; } }));
+    if(!best) return null;
+    cs = best.c; clue = best.x;
+  }
+  return {text:clue.text, say:clue.text, note:caseFrame(clue, cs)};
 }
 /* ============================= GAMIFICATION V3 BUILD 2: STORY HUNT =============================
    Games catalogue 4.3 + the LXD changes (approved 2026-10-04): a passage from the
@@ -18650,6 +19253,7 @@ const screens = {
   'game-cross': renderGameCross,
   'game-order': renderGameOrder,
   'game-desk': renderGameDesk,
+  'game-mystery': renderGameMystery,
   'game-path': renderGamePath,
   'game-hunt': renderGameHunt,
   'game-echo': renderGameEcho,
@@ -20088,6 +20692,39 @@ const HANDLERS = {
   },
   'desk-stamp'(){ deskStamp(); },
   'desk-skip'(){ const vp = state.viewParams, r = vp && vp.round, t = r && deskCur(r); if(!t || !t.done || r.finished) return; deskAdvance(vp, r); },
+  // ---- Case Closed (Jq6f9OFv wave B): read the clues, mark the notebook, accuse ----
+  'case-say'(el){ const r = state.viewParams && state.viewParams.round, cs = r && caseCur(r); if(!cs || r.finished) return; const i = Number(el.dataset.i); const t = i < 0 ? cs.setting : (cs.clues[i] && cs.clues[i].text); if(t) speakTarget(t, 0.92); },
+  'case-pick'(el){
+    const r = state.viewParams && state.viewParams.round, cs = r && caseCur(r); if(!cs || r.finished || cs.solved) return;
+    const s = Number(el.dataset.s);
+    cs.pick = cs.pick === s ? null : s;
+    sfx('tick'); caseRefresh(); save();
+    if(cs.pick != null) anim(document.getElementById('case-pol-' + s), [{transform:'translateY(0) scale(1)'}, {transform:'translateY(-6px) scale(1.06)'}], {duration:180, easing:SPRING});
+  },
+  'case-accuse'(){ caseAccuse(); },
+  'case-cancel'(){ const r = state.viewParams && state.viewParams.round, cs = r && caseCur(r); if(!cs || cs.solved) return; cs.pick = null; caseRefresh(); save(); },
+  'case-cell'(el){
+    const r = state.viewParams && state.viewParams.round, cs = r && caseCur(r); if(!cs || r.finished || cs.solved) return;
+    const kind = el.dataset.k, s = Number(el.dataset.s), i = Number(el.dataset.c), key = kind + ':' + s + ':' + i;
+    const cur = caseCellView(cs, kind, s, i);
+    const now = cs.marks[key] ? cs.marks[key] : (cur.cls.indexOf('auto') >= 0 ? 'x' : '');
+    const next = now === '' ? 'x' : (now === 'x' ? 'ok' : '');   // empty -> crossed out -> confirmed -> empty
+    if(next) cs.marks[key] = next; else delete cs.marks[key];
+    sfx('tick'); caseRefresh(); save();
+  },
+  'case-tab'(el){ const r = state.viewParams && state.viewParams.round, cs = r && caseCur(r); if(!cs) return; cs.tab = el.dataset.t === 'o' ? 'o' : 'p'; sfx('tick'); caseRefresh(); save(); },
+  'case-nb'(){ const r = state.viewParams && state.viewParams.round, cs = r && caseCur(r); if(!cs) return; cs.nb = !cs.nb; caseRefresh(); save(); },
+  'case-hint'(){
+    const r = state.viewParams && state.viewParams.round, cs = r && caseCur(r); if(!cs || r.finished || cs.solved) return;
+    const h = caseHint(cs);
+    cs.hints++;
+    if(h.key){ cs.pencil[h.key] = h.v; cs.nb = true; if(cs.objs) cs.tab = h.key.charAt(0) === 'o' ? 'o' : 'p'; }
+    caseHighlight(r, cs, h.clue, false);
+    sfx('flip');
+    companionSay(L(`Look at clue ${h.clue + 1}.`, `${h.clue + 1}. ipucuna bak.`, `به راهنمایی ${h.clue + 1} نگاه کن.`, `Mira la pista ${h.clue + 1}.`), 2000);
+    save();
+  },
+  'case-next'(){ const vp = state.viewParams, r = vp && vp.round, cs = r && caseCur(r); if(!cs || r.finished || !cs.solved) return; caseAdvance(vp, r); },
   // ---- Games shelf (Jq6f9OFv, D4 = A): one tap replays a game the learner has met, with fresh content ----
   'shelf-play'(el){
     const kind = el.dataset.kind;
@@ -20186,6 +20823,14 @@ const HANDLERS = {
       // same five travellers); free play (Games shelf) draws fresh ones. The first traveller steps up after the render.
       const deskRound = buildDeskRound(params.free ? null : params.refId);
       if(deskRound){ queueFx(()=>deskArrive(deskRound)); go('game-desk', Object.assign({round: deskRound}, params)); return; }
+    }
+    if(kind === 'mystery'){
+      // Case Closed: two generated cases with one solution each (seeded by refId on the roadmap, fresh on the Games
+      // shelf). The basic clue set can always build a case; if one ever can't be built, Build It plays instead.
+      const caseRound = buildCaseRound(params.free ? null : params.refId);
+      if(caseRound){ queueFx(()=>caseOpen(caseRound)); go('game-mystery', Object.assign({round: caseRound}, params)); return; }
+      HANDLERS['start-game']({dataset:Object.assign({}, el.dataset, {kind:'build'})});
+      return;
     }
     const setObj = VOCAB_SETS.find(x=>x.id===el.dataset.setId);
     if(!setObj) return;

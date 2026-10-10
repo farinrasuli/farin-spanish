@@ -5922,6 +5922,21 @@ const COURSE_EXTRA = {speaking:[], judge:[], branch:[], writing:[], perspective:
 const GRAMMAR_ITEMS_FREE = GRAMMAR_ITEMS.filter(x=>!x.course);
 const VOCAB_SETS_FREE = VOCAB_SETS.filter(x=>!x.course);
 const STORY_LIBRARY_FREE = STORY_LIBRARY.filter(x=>!x.course);
+/* Teaching redesign phase 2, X4: STAGE_THEMES A1.1-C1.2 (farin-lxd, Claude/specs/lxd-phase2-content/stage-themes.js,
+   Spanish ids). theme, grammar (teaching order), vocab {base, <goal>}, pairs {grammarId: vocabSetId placed just
+   before it}, story {tags, topics, fallbackLevel}, dialogue id, canDo (ids reserved for phase 3). Read by stageThemePlan(). */
+const STAGE_THEMES = {
+ "A1.1":{"theme":{"en":"Me and my people","tr":"Ben ve çevrem","fa":"من و آدم‌های اطرافم","es":"Yo y mi gente"},"grammar":["g-A1-1","g-A1-2","g-A1-3","g-A1-7","g-A1-9"],"vocab":{"base":["v-A1-1","v-A1-3","v-A1-2"],"career":["v-A1-1"],"travel":["v-A1-1"],"exam":["v-A1-2"],"immigration":["v-A1-3"],"everyday":["v-A1-1","v-A1-3"]},"pairs":{"g-A1-1":"v-A1-1","g-A1-7":"v-A1-3","g-A1-9":"v-A1-2"},"story":{"tags":["people","family","friendship","animals"],"topics":["nature","art"],"fallbackLevel":"A1"},"dialogue":"dlg-A1-everyday-1","canDo":["cd-A1.1-1","cd-A1.1-2","cd-A1.1-3"]},
+ "A1.2":{"theme":{"en":"My day and my place","tr":"Günüm ve yaşadığım yer","fa":"روز من و جایی که زندگی می‌کنم","es":"Mi día y mi lugar"},"grammar":["g-A1-5","g-A1-6","g-A1-4","g-A1-8","g-A1-10"],"vocab":{"base":["v-A1-10","v-A1-4","v-A1-8","v-A1-9"],"travel":["v-A1-9","v-A1-7","v-A1-4"],"immigration":["v-A1-8","v-A1-6"],"everyday":["v-A1-10","v-A1-5"],"career":["v-A1-6"],"exam":["v-A1-6"]},"pairs":{"g-A1-5":"v-A1-10","g-A1-8":"v-A1-4","g-A1-10":"v-A1-8"},"story":{"tags":["daily life","home","town","food"],"topics":["food","nature"],"fallbackLevel":"A1"},"dialogue":"dlg-A1-travel-1","canDo":["cd-A1.2-1","cd-A1.2-2","cd-A1.2-3"]},
+ "A2.1":{"theme":{"en":"Then and now","tr":"O zaman ve şimdi","fa":"آن موقع و حالا","es":"Antes y ahora"},"grammar":["g-A2-5","g-A2-1","g-A2-2","g-A2-3","g-A2-4"],"vocab":{"base":["v-A2-3","v-A2-7","v-A2-9"],"career":["v-A2-5"],"travel":["v-A2-1","v-A2-10"],"exam":["v-A2-9"],"immigration":["v-A2-4"],"everyday":["v-A2-7","v-A2-9"]},"pairs":{"g-A2-5":"v-A2-3","g-A2-1":"v-A2-7","g-A2-3":"v-A2-9"},"story":{"tags":["memories","people","journey","history"],"topics":["history","music","sport"],"fallbackLevel":"A2"},"dialogue":"dlg-A2-everyday-1","canDo":["cd-A2.1-1","cd-A2.1-2","cd-A2.1-3"]},
+ "A2.2":{"theme":{"en":"Choices, plans and instructions","tr":"Seçimler, planlar ve yönergeler","fa":"انتخاب‌ها، برنامه‌ها و دستورها","es":"Decisiones, planes e instrucciones"},"grammar":["g-A2-6","g-A2-7","g-A2-8","g-A2-9","g-A2-10"],"vocab":{"base":["v-A2-8","v-A2-2","v-A2-6"],"travel":["v-A2-10","v-A2-2"],"career":["v-A2-5","v-A2-6"],"immigration":["v-A2-8"],"exam":["v-A2-6"],"everyday":["v-A2-8","v-A2-2"]},"pairs":{"g-A2-6":"v-A2-8","g-A2-7":"v-A2-2","g-A2-10":"v-A2-6"},"story":{"tags":["decision","town","nature","food"],"topics":["food","nature","technology"],"fallbackLevel":"A2"},"dialogue":"dlg-A2-travel-1","canDo":["cd-A2.2-1","cd-A2.2-2","cd-A2.2-3"]},
+ "B1.1":{"theme":{"en":"Experiences and wishes","tr":"Deneyimler ve dilekler","fa":"تجربه‌ها و آرزوها","es":"Experiencias y deseos"},"grammar":["g-B1-1","g-B1-7","g-B1-2","g-B1-3","g-B1-10"],"vocab":{"base":["v-B1-6","v-B1-9","v-B1-3"],"career":["v-B1-10","v-B1-5"],"travel":["v-B1-3","v-B1-9"],"immigration":["v-B1-7","v-B1-4"],"exam":["v-B1-5","v-B1-2"],"everyday":["v-B1-6","v-B1-9"]},"pairs":{"g-B1-1":"v-B1-6","g-B1-3":"v-B1-9","g-B1-10":"v-B1-3"},"story":{"tags":["memories","change","friendship","work"],"topics":["food","art","music"],"fallbackLevel":"B1"},"dialogue":"dlg-B1-everyday-1","canDo":["cd-B1.1-1","cd-B1.1-2","cd-B1.1-3"]},
+ "B1.2":{"theme":{"en":"Explaining, doubting and describing","tr":"Açıklamak, kuşku duymak, betimlemek","fa":"توضیح دادن، شک کردن و توصیف کردن","es":"Explicar, dudar y describir"},"grammar":["g-B1-4","g-B1-5","g-B1-6","g-B1-8","g-B1-9"],"vocab":{"base":["v-B1-8","v-B1-1","v-B1-2"],"career":["v-B1-10"],"travel":["v-B1-1"],"immigration":["v-B1-7"],"exam":["v-B1-1","v-B1-2"],"everyday":["v-B1-8"]},"pairs":{"g-B1-4":"v-B1-8","g-B1-6":"v-B1-1","g-B1-9":"v-B1-7"},"story":{"tags":["mystery","environment","community","nature"],"topics":["nature","science","technology"],"fallbackLevel":"B1"},"dialogue":"dlg-B1-immigration-1","canDo":["cd-B1.2-1","cd-B1.2-2","cd-B1.2-3"]},
+ "B2.1":{"theme":{"en":"What if: hypotheticals","tr":"Ya olsaydı: varsayımlar","fa":"اگر چه می‌شد: فرض‌ها","es":"Y si...: hipótesis"},"grammar":["g-B2-2","g-B2-3","g-B2-1","g-B2-7","g-B2-10"],"vocab":{"base":["v-B2-10","v-B2-4","v-B2-7"],"career":["v-B2-1"],"travel":["v-B2-8"],"immigration":["v-B2-3"],"exam":["v-B2-6","v-B2-10"],"everyday":["v-B2-4","v-B2-7"]},"pairs":{"g-B2-3":"v-B2-10","g-B2-7":"v-B2-4","g-B2-10":"v-B2-7"},"story":{"tags":["regret","choice","mystery","journey"],"topics":["movies","art","nature"],"fallbackLevel":"B2"},"dialogue":"dlg-B2-travel-1","canDo":["cd-B2.1-1","cd-B2.1-2","cd-B2.1-3"]},
+ "B2.2":{"theme":{"en":"Reporting and arguing","tr":"Aktarmak ve savunmak","fa":"نقل کردن و استدلال کردن","es":"Contar lo dicho y argumentar"},"grammar":["g-B2-5","g-B2-4","g-B2-6","g-B2-8","g-B2-9"],"vocab":{"base":["v-B2-5","v-B2-9","v-B2-6"],"career":["v-B2-2","v-B2-1"],"travel":["v-B2-8"],"immigration":["v-B2-3"],"exam":["v-B2-6","v-B2-5"],"everyday":["v-B2-9"]},"pairs":{"g-B2-4":"v-B2-5","g-B2-6":"v-B2-9","g-B2-9":"v-B2-6"},"story":{"tags":["society","history","science","work"],"topics":["history","science","business"],"fallbackLevel":"B2"},"dialogue":"dlg-B2-career-1","canDo":["cd-B2.2-1","cd-B2.2-2","cd-B2.2-3"]},
+ "C1.1":{"theme":{"en":"Nuance","tr":"İnce ayrımlar","fa":"ظرافت‌ها","es":"Matices"},"grammar":["g-C1-2","g-C1-10","g-C1-1","g-C1-7","g-C1-9"],"vocab":{"base":["v-C1-5","v-C1-3","v-C1-9"],"career":["v-C1-10","v-C1-4"],"travel":["v-C1-8"],"immigration":["v-C1-9"],"exam":["v-C1-7","v-C1-3"],"everyday":["v-C1-9","v-C1-5"]},"pairs":{"g-C1-10":"v-C1-5","g-C1-1":"v-C1-3","g-C1-9":"v-C1-9"},"story":{"tags":["memory","identity","family","mystery"],"topics":["art","music","movies"],"fallbackLevel":"C1"},"dialogue":"dlg-C1-immigration-1","canDo":["cd-C1.1-1","cd-C1.1-2","cd-C1.1-3"]},
+ "C1.2":{"theme":{"en":"Register and style","tr":"Dil düzeyi ve üslup","fa":"لحن و سبک","es":"Registro y estilo"},"grammar":["g-C1-3","g-C1-5","g-C1-6","g-C1-8","g-C1-4"],"vocab":{"base":["v-C1-2","v-C1-1","v-C1-6"],"career":["v-C1-2","v-C1-10"],"travel":["v-C1-8"],"immigration":["v-C1-9"],"exam":["v-C1-1","v-C1-7"],"everyday":["v-C1-6"]},"pairs":{"g-C1-3":"v-C1-2","g-C1-5":"v-C1-1","g-C1-4":"v-C1-6"},"story":{"tags":["society","time","discovery","language"],"topics":["science","history","nature"],"fallbackLevel":"C1"},"dialogue":"dlg-C1-career-1","canDo":["cd-C1.2-1","cd-C1.2-2","cd-C1.2-3"]}
+};
 const COURSES = [];
 const _SS = [['review','story','grammar'],['vocab','game'],['speaking','writing','perspective','exit']];
 const _TU = (id,en,tr,es,ce,ct,ces)=>({id, title:{en,tr,es}, cando:{en:ce,tr:ct,es:ces}, sessions:_SS});
@@ -8001,6 +8016,37 @@ function ensureRoadmapMedia(){
   if(g && g.nodeId){ const gi = rm.findIndex(n=>roadmapNodeId(n)===g.nodeId); if(gi > -1) g.goldenIdx = gi; }
   return true;
 }
+/* Teaching redesign phase 2, X4 stage themes (farin-lxd, Claude/specs/lxd-phase2-content/stage-themes.js).
+   One theme per level-stage. A NEW roadmap takes the stage's five grammar items in its teaching order (the goal
+   only picks the goalVariant), puts each paired vocab set right before its grammar item, and draws the other vocab
+   nodes from the stage's own sets (the learner's goal sets first, interleaved goal by goal, then base). A second
+   pass on a set already on the page is not a new node. Roadmaps already saved keep their nodes. */
+function stageKeyOf(profile){ return ((profile && profile.level) || 'A1') + '.' + ((profile && profile.levelStage) === 2 ? 2 : 1); }
+function stageTheme(profile){ return STAGE_THEMES[stageKeyOf(profile)] || null; }
+function stageThemePlan(profile, goals){
+  const th = stageTheme(profile);
+  if(!th || !profile || !profile.level) return null;
+  const grammar = (th.grammar || []).map(id=>GRAMMAR_ITEMS_FREE.find(g=>g.id===id && g.level===profile.level)).filter(Boolean);
+  if(grammar.length < 3) return null;
+  const setOf = id => VOCAB_SETS_FREE.find(s=>s.id===id && s.category==='vocab');
+  const vb = th.vocab || {};
+  const lists = (goals || []).map(gk=>vb[gk] || []);
+  const ids = [];
+  for(let i = 0; lists.some(l=>i < l.length); i++) lists.forEach(l=>{ if(i < l.length) ids.push(l[i]); });
+  (vb.base || []).forEach(id=>ids.push(id));
+  const vocab = ids.filter((id, i)=>ids.indexOf(id) === i).map(setOf).filter(Boolean);
+  const pairs = {};
+  Object.keys(th.pairs || {}).forEach(gid=>{ const s = setOf(th.pairs[gid]); if(s && grammar.some(g=>g.id===gid)) pairs[gid] = s; });
+  return {key:stageKeyOf(profile), theme:th, grammar, vocab, pairs};
+}
+// The stage theme's name for the roadmap header, only when the page was built from that theme.
+function roadmapThemeLabel(p){
+  const th = stageTheme(p);
+  if(!th || !th.theme) return '';
+  const gIds = currentRoadmap().filter(n=>n.type==='grammar').map(n=>n.refId);
+  if(!gIds.length || !gIds.every(id=>(th.grammar || []).includes(id))) return '';
+  return L(th.theme.en, th.theme.tr, th.theme.fa, th.theme.es) || '';
+}
 function buildRoadmap(profile){
   const goals = profileGoalKeys(profile);
   const gPoolAll = GRAMMAR_ITEMS_FREE.filter(g=>g.level===profile.level);
@@ -8020,7 +8066,9 @@ function buildRoadmap(profile){
   };
   const vPoolGoal = matchesGoal(vPoolAll);
   const slPoolGoal = matchesGoal(slPoolAll);
-  const vPool = vPoolGoal.length ? vPoolGoal : vPoolAll;
+  // Teaching redesign phase 2, X4: a stage with a STAGE_THEMES entry brings its own grammar order and vocab sets.
+  const plan = stageThemePlan(profile, goals);
+  const vPool = plan && plan.vocab.length ? plan.vocab : (vPoolGoal.length ? vPoolGoal : vPoolAll);
   const slPool = slPoolGoal.length ? slPoolGoal : slPoolAll;
   // primaryGoal still drives ordering/labels when an item has no per-goal content of its own
   // (e.g. a vocab set untagged for any of the student's goals) — but it's no longer the only
@@ -8043,8 +8091,17 @@ function buildRoadmap(profile){
   const itemGoalFor = g => goals.find(gk => g.goalVariant && g.goalVariant[gk]) || primaryGoal;
   const stage = profile.levelStage===2 ? 2 : 1;
   const gHalf = Math.ceil(gPool.length/2);
-  const gSlice = stage===1 ? gPool.slice(0, gHalf) : gPool.slice(gHalf);
+  const gSlice = plan ? plan.grammar : (stage===1 ? gPool.slice(0, gHalf) : gPool.slice(gHalf));
+  // the grammar stage 1 taught (Build It on stage 2 may use it)
+  const gStage1 = stage !== 2 ? [] : (plan ? ((stageThemePlan(Object.assign({}, profile, {levelStage:1}), goals) || {}).grammar || []) : gPool.slice(0, gHalf));
   const items = [];
+  // X4 vocab: a set already on this page is never a second node; a fill slot prefers a set no later grammar item is paired with
+  const vocabNode = v => ({type:'vocab', refId:v.id, goal:(v.goals&&v.goals.find(gk=>goals.includes(gk)))||primaryGoal, title:L('Vocab','Kelime','کلمات','Vocabulario')+': '+setTitle(v)});
+  const vocabOnPage = id => items.some(it=>it.type==='vocab' && it.refId===id);
+  const planFill = () => {
+    const paired = new Set(Object.keys(plan.pairs).map(k=>plan.pairs[k].id));
+    return vPool.find(s=>!vocabOnPage(s.id) && !paired.has(s.id)) || (vocabEvery === 1 ? vPool[vi % vPool.length] : null);
+  };
   let sessionSeed = 0;
   // Character shapes activity style, not the goal itself: analysts get grammar explained up
   // front (default order already does this); drillers get a vocab rep after every item instead
@@ -8146,7 +8203,7 @@ function buildRoadmap(profile){
     // Build It plays the grammar taught so far (stage 2: all of stage 1 too) and needs 4 sentences.
     const buildOk = () => {
       if(!gPoolAll.length) return false;
-      const taught = (stage===2 ? gPool.slice(0, gHalf) : []).concat(items.filter(it=>it.type==='grammar').map(it=>GRAMMAR_ITEMS.find(x=>x.id===it.refId)).filter(Boolean));
+      const taught = gStage1.concat(items.filter(it=>it.type==='grammar').map(it=>GRAMMAR_ITEMS.find(x=>x.id===it.refId)).filter(Boolean));
       return buildCandidates(profile, taught).length >= BUILD_MIN;
     };
     if(kind === 'trap') kind = low ? 'match' : 'order';
@@ -8192,13 +8249,15 @@ function buildRoadmap(profile){
   // ids were stable — see 2q51DdAB — but a real problem now, since checking one
   // node's box would silently "complete" the other too). Starting the loop's
   // index one past the warm-up avoids the immediate repeat.
-  let vi = vPool.length ? (stage===2 ? Math.ceil(vPool.length/2) : (gaveVocabWarmup ? 1 : 0)) : 0;
+  let vi = vPool.length ? ((stage===2 && !plan) ? Math.ceil(vPool.length/2) : (gaveVocabWarmup ? 1 : 0)) : 0;
   let sli = slPool.length ? (stage===2 ? Math.ceil(slPool.length/2) : 0) : 0;
   gSlice.forEach((g, i)=>{
+    // X4 rule 2: the paired vocab set comes immediately before its grammar item
+    if(plan && plan.pairs[g.id] && !vocabOnPage(plan.pairs[g.id].id)) items.push(vocabNode(plan.pairs[g.id]));
     items.push({type:'grammar', refId:g.id, goal:itemGoalFor(g), title:L('Grammar','Dilbilgisi','گرامر', 'Gramática')+': '+grammarTitle(g)});
     if(i % vocabEvery === (vocabEvery===1?0:1) && vPool.length){
-      const v = vPool[vi % vPool.length]; vi++;
-      items.push({type:'vocab', refId:v.id, goal:(v.goals&&v.goals.find(gk=>goals.includes(gk)))||primaryGoal, title:L('Vocab','Kelime','کلمات', 'Vocabulario')+': '+setTitle(v)});
+      const v = plan ? planFill() : vPool[vi % vPool.length]; vi++;
+      if(v) items.push({type:'vocab', refId:v.id, goal:(v.goals&&v.goals.find(gk=>goals.includes(gk)))||primaryGoal, title:L('Vocab','Kelime','کلمات', 'Vocabulario')+': '+setTitle(v)});
     }
     // Immersive learners absorb best in context, so slang (and now story) land early
     // instead of only at the end — a story is the most immersive content there is.
@@ -11009,6 +11068,7 @@ function renderRoadmapCard(p){
         <div class="row between" style="align-items:center;">
           <div>
             <div style="font-weight:700; font-size:14px;">${esc(displayLevel(p))} ${L('roadmap','yol haritası','نقشه راه', 'hoja de ruta')}</div>
+            ${(() => { const th = roadmapThemeLabel(p); return th ? `<div class="rm2-theme" style="font-size:12.5px; font-weight:800; color:${archColor}; margin-top:2px;">${esc(th)}</div>` : ''; })()}
             <div style="font-size:12px; color:var(--ink-soft); margin-top:2px;">${doneCount===0 ? L('Your first souvenir is waiting','İlk hatıran seni bekliyor','اولین یادگاری‌ات منتظرت است','Tu primer recuerdo te espera') : L('Check everything off to reach','Hepsini işaretle ve şuraya ulaş:','همه را علامت بزن تا برسی به','Marca todo para llegar a')+' '+esc(nextDisplayLevel(p))}</div>
           </div>
           <div class="rm2-head-count">${roadmapHeaderSlots(doneCount)}<div class="num" style="font-weight:800; font-size:15px; color:${archColor}; white-space:nowrap;">${allDone ? L('Page complete','Sayfa tamam','صفحه کامل شد','Página completa') : (doneCount/roadmap.length <= .5 ? doneCount+' '+L('done','tamam','انجام شد','hechos') : (roadmap.length-doneCount)+' '+L('to go','kaldı','مانده','por hacer'))}</div></div>

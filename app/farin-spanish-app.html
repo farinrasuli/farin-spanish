@@ -19197,8 +19197,8 @@ const COURSE_TYPE_META = {
   judge:{en:'Judge the answers', tr:'Cevapları değerlendir', fa:'پاسخ‌ها را داوری کن', es:'Juzga las respuestas', min:3, cat:'diag', ic:'search'},
   branch:{en:'Live the scene', tr:'Sahneyi yaşa', fa:'صحنه را زندگی کن', es:'Vive la escena', min:5, cat:'lis', ic:'chat'},
   writing:{en:'Write it', tr:'Yaz', fa:'بنویس', es:'Escríbelo', min:7, cat:'gram', ic:'pen'},
-  perspective:{en:'Step into their shoes', tr:'Onun yerine geç', fa:'خودتان را جای او بگذارید', es:'Ponte en su lugar', min:2, cat:'lis', ic:'heart'},
-  exit:{en:'Lock it in: 6 questions', tr:'Pekiştir: 6 soru', fa:'تثبیت کن: ۶ سؤال', es:'Fíjalo: 6 preguntas', min:3, cat:'story', ic:'check'},
+  perspective:{en:'Step into their shoes', tr:'Onun yerine geç', fa:'خودت را جای او بگذار', es:'Ponte en su lugar', min:2, cat:'lis', ic:'heart'},
+  exit:{en:'Lock it in: 6 questions', tr:'Pekiştir: 6 soru', fa:'تثبیتش کن: ۶ سؤال', es:'Fíjalo: 6 preguntas', min:3, cat:'story', ic:'check'},
   mock:{en:'Mock test', tr:'Deneme sınavı', fa:'آزمون آزمایشی', es:'Simulacro', min:40, cat:'diag', ic:'pen'},
   project:{en:'Build your portfolio', tr:'Portföyünü oluştur', fa:'پرونده‌ی کاری‌ات را بساز', es:'Construye tu portafolio', min:15, cat:'diag', ic:'star'}
 };
@@ -19681,7 +19681,7 @@ function courseCardHtml(c){
 function renderCoursesHome(){
   return `<div class="fade-in">
     ${topbar(false)}
-    ${sectionHeadNoBack(CL('Courses','Kurslar','دوره‌ها','Cursos'), CL('Focused courses for one real-life goal. Your free Roadmap is never touched.','Tek bir gerçek hayat hedefi için odaklı kurslar. Ücretsiz Yol Haritan hiç değişmez.','دوره‌هایی متمرکز برای یک هدف مشخص در زندگی واقعی. نقشه‌ی راه رایگان شما دست‌نخورده می‌ماند.','Cursos centrados en un objetivo de la vida real. Tu Ruta gratuita no se toca.'))}
+    ${sectionHeadNoBack(CL('Courses','Kurslar','دوره‌ها','Cursos'), CL('Focused courses for one real-life goal. Your free Roadmap is never touched.','Tek bir gerçek hayat hedefi için odaklı kurslar. Ücretsiz Yol Haritan hiç değişmez.','دوره‌هایی متمرکز برای یک هدف مشخص در زندگی واقعی. نقشه‌ی راه رایگان تو دست‌نخورده می‌ماند.','Cursos centrados en un objetivo de la vida real. Tu Ruta gratuita no se toca.'))}
     <div class="screen" style="padding-top:0;">
       <div class="stack" style="gap:12px;">${COURSES.map(courseCardHtml).join('')}</div>
     </div>
@@ -19805,7 +19805,7 @@ function courseContinueCardHtml(c, nx){
   if(!nx && !courseHasContent(c.id)){
     eyebrow = CL('Coming soon','Yakında','به‌زودی','Próximamente'); title = cl(c.title);
     line = CL('The units are being written. Leave a message and Farin will tell you when it opens.','Üniteler yazılıyor. Mesaj bırak, açılınca Farin haber versin.','واحدها در حال نوشته شدن هستند. پیام بگذار تا Farin وقتی دوره باز شد خبرت کند.','Las unidades se están escribiendo. Deja un mensaje y Farin te avisará cuando abra.');
-    btn = `<a class="btn" style="margin-top:12px; background:#fff; color:var(--clay-lavender-deep);" target="_top" rel="noopener" href="${esc(courseWaLink(c))}">${ICONS.whatsapp} ${CL('Tell me when it opens','Açılınca haber ver','وقتی باز شد، خبرم کنید','Avísame cuando abra')}</a>`;
+    btn = `<a class="btn" style="margin-top:12px; background:#fff; color:var(--clay-lavender-deep);" target="_top" rel="noopener" href="${esc(courseWaLink(c))}">${ICONS.whatsapp} ${CL('Tell me when it opens','Açılınca haber ver','وقتی باز شد، خبرم کن','Avísame cuando abra')}</a>`;
   } else if(!nx){
     eyebrow = CL('Course complete','Kurs tamamlandı','دوره تمام شد','Curso completado'); title = cl(c.title);
     line = pd ? CL('Your certificate is on the final project page.','Sertifikan final projesi sayfasında.','گواهی‌نامه‌ات در صفحه‌ی پروژه‌ی پایانی است.','Tu certificado está en la página del proyecto final.') : '';
@@ -19942,13 +19942,13 @@ function renderCourseGate(){
         ${claySparkles()}
         <div style="display:inline-flex; width:52px; height:52px; border-radius:50%; background:rgba(255,255,255,.26); align-items:center; justify-content:center; color:#fff;">${COURSE_LOCK_SVG}</div>
         <h2 class="display" style="font-size:20px; margin:10px 0 6px;">${soon ? CL('This course is being built','Bu kurs hazırlanıyor','این دوره در حال آماده‌سازی است','Este curso se está construyendo') : (vp.uid ? esc(courseUnitLabel(c.id, vp.uid))+' · ' : '')+CL('in the full course','tam kursta','در دوره‌ی کامل','en el curso completo')}</h2>
-        <p style="font-size:13.5px; margin:0; opacity:.95;">${soon ? CL('Leave a message and Farin will tell you when it opens.','Mesaj bırak, açılınca Farin haber versin.','پیام بگذارید تا Farin وقتی دوره باز شد خبرتان کند.','Deja un mensaje y Farin te avisará cuando abra.') : esc(courseFreeUnitsText(c))}</p>
+        <p style="font-size:13.5px; margin:0; opacity:.95;">${soon ? CL('Leave a message and Farin will tell you when it opens.','Mesaj bırak, açılınca Farin haber versin.','پیام بگذار تا Farin وقتی دوره باز شد خبرت کند.','Deja un mensaje y Farin te avisará cuando abra.') : esc(courseFreeUnitsText(c))}</p>
       </div>
       ${!soon ? `<div class="card-flat" style="margin-top:12px;"><div class="eyebrow">${CL('What is in the full course','Tam kursta neler var','دوره‌ی کامل چه دارد','Qué hay en el curso completo')}</div>
         <ul style="margin:6px 0 0; padding-inline-start:18px; font-size:13px;">${chapters}${c.final ? `<li><b>${CL('Final project','Final projesi','پروژه‌ی پایانی','Proyecto final')}</b> · ${CL('your portfolio and the certificate','portföyün ve sertifika','پرونده‌ی کاری و گواهی‌نامه','tu portafolio y el certificado')}</li>` : ''}</ul></div>
         ${courseUnlockBoxHtml(c, CL('Farin unlocks the full course with a password made for you.','Farin tam kursu sana özel bir şifreyle açar.','Farin دوره‌ی کامل را با رمزی مخصوص تو باز می‌کند.','Farin desbloquea el curso completo con una contraseña hecha para ti.'))}` : ''}
       <div class="stack" style="gap:10px; margin-top:14px;">
-        ${soon && c ? `<a class="btn btn-primary" target="_top" rel="noopener" href="${esc(courseWaLink(c))}">${ICONS.whatsapp} ${CL('Tell me when it opens','Açılınca haber ver','وقتی باز شد، خبرم کنید','Avísame cuando abra')}</a>` : ''}
+        ${soon && c ? `<a class="btn btn-primary" target="_top" rel="noopener" href="${esc(courseWaLink(c))}">${ICONS.whatsapp} ${CL('Tell me when it opens','Açılınca haber ver','وقتی باز شد، خبرم کن','Avísame cuando abra')}</a>` : ''}
         ${!soon ? `<button class="btn btn-ghost" data-action="course-open" data-view="course-detail" data-cid="${c.id}">${CL('Back to the course','Kursa dön','بازگشت به دوره','Volver al curso')}</button>` : `<button class="btn btn-ghost" data-action="nav" data-view="courses-home">${CL('Back to courses','Kurslara dön','بازگشت به دوره‌ها','Volver a los cursos')}</button>`}
       </div>
     </div>
@@ -19986,7 +19986,7 @@ function renderCourseUnit(cid, uid){
       nextBtn = `<button class="btn btn-primary" style="margin-top:12px;" data-action="course-open" data-view="course-detail" data-cid="${cid}">${CL('Back to the course','Kursa dön','بازگشت به دوره','Volver al curso')}</button>`;
     }
     completeCard = `<div class="card-flat badge-unlock-shine" style="margin-bottom:14px; text-align:center; background:var(--cat-review-soft); border-color:var(--cat-review-soft);">
-      <div class="display" style="font-size:18px;">${isCp ? CL('Checkpoint complete!','Kontrol tamamlandı!','ایستگاه ارزیابی را تمام کردید!','¡Control completado!') : CL('Unit complete!','Ünite tamamlandı!','این واحد را تمام کردید!','¡Unidad completada!')}</div>
+      <div class="display" style="font-size:18px;">${isCp ? CL('Checkpoint complete!','Kontrol tamamlandı!','ایستگاه ارزیابی را تمام کردی!','¡Control completado!') : CL('Unit complete!','Ünite tamamlandı!','این واحد را تمام کردی!','¡Unidad completada!')}</div>
       ${!isCp && u.cando ? `<p style="margin:8px 0 0; font-size:13.5px;"><b>${CL('You can now','Artık yapabildiğin','حالا می‌توانی','Ahora puedes')}:</b> ${esc(cl(u.cando).replace(/^I can /, ''))}</p>` : ''}
       ${nextBtn}
     </div>`;
@@ -20020,7 +20020,7 @@ function renderCourseUnit(cid, uid){
       </div>
       ${completeCard}
       ${sessions}
-      ${!steps.length ? `<div class="card-flat" style="text-align:center; color:var(--ink-soft);">${CL('This unit is being written. Farin will tell you when the course opens.','Bu ünite yazılıyor. Kurs açılınca Farin haber verecek.','این واحد در حال نوشته شدن است. Farin وقتی دوره باز شد خبرت می‌کند.','Esta unidad se está escribiendo. Farin te avisará cuando abra el curso.')}</div><a class="btn btn-ghost" style="margin-top:12px;" target="_top" rel="noopener" href="${esc(courseWaLink(c))}">${ICONS.whatsapp} ${CL('Tell me when it opens','Açılınca haber ver','وقتی باز شد، خبرم کنید','Avísame cuando abra')}</a>` : ''}
+      ${!steps.length ? `<div class="card-flat" style="text-align:center; color:var(--ink-soft);">${CL('This unit is being written. Farin will tell you when the course opens.','Bu ünite yazılıyor. Kurs açılınca Farin haber verecek.','این واحد در حال نوشته شدن است. Farin وقتی دوره باز شد خبرت می‌کند.','Esta unidad se está escribiendo. Farin te avisará cuando abra el curso.')}</div><a class="btn btn-ghost" style="margin-top:12px;" target="_top" rel="noopener" href="${esc(courseWaLink(c))}">${ICONS.whatsapp} ${CL('Tell me when it opens','Açılınca haber ver','وقتی باز شد، خبرم کن','Avísame cuando abra')}</a>` : ''}
     </div>
     ${nx ? `<div class="course-sticky"><button class="btn btn-primary" data-action="course-step" data-cid="${cid}" data-uid="${uid}" data-type="${nx.type}">${esc((nx.k===0 && !steps.some(s=>s.done) ? CL('Start','Başla','شروع','Empezar') : CL('Continue','Devam et','ادامه','Continuar'))+': '+courseStepLabel(nx.type)+' · '+courseMinText(courseStepMin(nx.type)))}</button></div>` : ''}
   </div>`;
@@ -20041,8 +20041,8 @@ function courseStepShell(cid, uid, type, inner){
 function courseSpeakingHeading(sp){
   if(sp.heading) return cl(sp.heading);
   const qs = sp.questions || [];
-  if(qs.length && qs.every(q=>/\?["'”’)]*\s*$/.test(String(q.en||'')))) return CL('Answer out loud:','Yüksek sesle cevap ver:','با صدای بلند جواب دهید:','Responde en voz alta:');
-  return CL('Your tasks:','Görevlerin:','تمرین‌های شما:','Tus tareas:');
+  if(qs.length && qs.every(q=>/\?["'”’)]*\s*$/.test(String(q.en||'')))) return CL('Answer out loud:','Yüksek sesle cevap ver:','با صدای بلند جواب بده:','Responde en voz alta:');
+  return CL('Your tasks:','Görevlerin:','تمرین‌های تو:','Tus tareas:');
 }
 // B2 track: the b2 item's extra requirement under the writing and speaking prompts.
 function courseUseInHtml(cid, uid){
@@ -20084,14 +20084,14 @@ function renderCourseJudge(cid, uid, j){
   let st = courseUi.judge;
   if(!st || st.uid !== uid) st = courseUi.judge = {uid, i:0, sel:[], checked:false, right:0, total:0};
   if(st.i >= j.items.length){
-    return `<div class="card-flat badge-unlock-shine" style="text-align:center;"><h2 class="display" style="font-size:19px;">${CL('Nicely spotted!','İyi yakaladın!','آفرین، خوب تشخیص دادید!')}</h2>
+    return `<div class="card-flat badge-unlock-shine" style="text-align:center;"><h2 class="display" style="font-size:19px;">${CL('Nicely spotted!','İyi yakaladın!','آفرین، خوب تشخیص دادی!')}</h2>
       <p>${st.right}/${st.total} ${CL('judged correctly','doğru değerlendirildi','درست تشخیص داده شد')}</p>
       <button class="btn btn-primary" data-action="course-judge-finish" data-cid="${cid}" data-uid="${uid}">${esc(courseNextBtnLabel(cid, uid))}</button></div>`;
   }
   const item = j.items[st.i];
   return `<div class="eyebrow">${st.i+1} / ${j.items.length}</div>
     <div class="card-flat" dir="ltr" style="margin:8px 0 12px; font-size:15.5px; line-height:1.6;">${esc(item.answer)}</div>
-    <p style="font-size:13px; color:var(--ink-soft); margin:0 0 8px;">${j.instruction ? cl(j.instruction) : CL('Tap each part you can find in this answer.','Bu cevapta bulduğun her parçaya dokun.','هر بخشی را که در این پاسخ می‌بینید لمس کنید.')}</p>
+    <p style="font-size:13px; color:var(--ink-soft); margin:0 0 8px;">${j.instruction ? cl(j.instruction) : CL('Tap each part you can find in this answer.','Bu cevapta bulduğun her parçaya dokun.','هر بخشی را که در این پاسخ می‌بینی لمس کن.')}</p>
     <div class="row" style="gap:8px; flex-wrap:wrap;">${j.parts.map(p=>{
       const on = st.sel.includes(p), pres = item.present.includes(p);
       let cls = on ? ' on' : '';
@@ -20130,15 +20130,15 @@ function renderCourseBranch(cid, uid, b){
   const line = `<div class="card-flat" dir="ltr" style="margin-top:12px;"><div class="eyebrow">${esc(node.speaker || '')}</div><p style="margin:4px 0 0; font-size:15.5px; line-height:1.5;">${esc(node.line || '')}</p></div>`;
   if(st.picked === null){
     return `${head}${line}
-      <p style="font-size:13px; color:var(--ink-soft); margin:12px 0 8px;">${CL('What do you say?','Ne dersin?','چه می‌گویید؟', '¿Qué dices?')}</p>
+      <p style="font-size:13px; color:var(--ink-soft); margin:12px 0 8px;">${CL('What do you say?','Ne dersin?','چه می‌گویی؟', '¿Qué dices?')}</p>
       <div class="stack" style="gap:8px;">${st.order[st.node].map(i=>`<button class="cj-part wide" dir="ltr" data-action="course-branch-pick" data-i="${i}">${esc(node.choices[i].text)}</button>`).join('')}</div>`;
   }
   const ch = node.choices[st.picked], tone = COURSE_TONE[ch.tone] || COURSE_TONE.ok, again = ch.next === st.node;
   return `${head}${line}
-    <div class="card-flat" dir="ltr" style="margin-top:10px;"><div class="eyebrow">${CL('You','Sen','شما', 'Tú')}</div><p style="margin:4px 0 0; font-size:14.5px;">${esc(ch.text)}</p></div>
+    <div class="card-flat" dir="ltr" style="margin-top:10px;"><div class="eyebrow">${CL('You','Sen','تو', 'Tú')}</div><p style="margin:4px 0 0; font-size:14.5px;">${esc(ch.text)}</p></div>
     <div class="card-flat" dir="ltr" style="margin-top:10px;"><div class="eyebrow">${esc(node.speaker || '')}</div><p style="margin:4px 0 0; font-size:14.5px;">${esc(ch.reply || '')}</p></div>
     <div class="card-flat" style="margin-top:10px; background:${tone.bg}; border-color:transparent;"><div class="eyebrow" style="color:${tone.fg};">${L(tone.en, tone.tr, tone.fa, tone.es)}</div><p style="margin:4px 0 0; font-size:13.5px;">${esc(cl(ch.feedback))}</p></div>
-    <button class="btn btn-primary" style="margin-top:14px;" data-action="course-branch-next">${again ? CL('Try again','Tekrar dene','دوباره امتحان کنید', 'Inténtalo de nuevo') : CL('Continue','Devam','ادامه', 'Continuar')}</button>`;
+    <button class="btn btn-primary" style="margin-top:14px;" data-action="course-branch-next">${again ? CL('Try again','Tekrar dene','دوباره امتحان کن', 'Inténtalo de nuevo') : CL('Continue','Devam','ادامه', 'Continuar')}</button>`;
 }
 
 /* review: up to 3 earlier exit items (courseReviewPicks), same look as the exit check. */
@@ -20147,9 +20147,9 @@ function renderCourseReview(cid, uid){
   if(!st || st.uid !== uid) st = courseUi.review = {uid, cid, qs:courseReviewPicks(cid, uid).map(p=>courseQ(p.item, p.key)), i:0, picked:null, right:0};
   if(!st.qs.length) return `<div class="card-flat">${CL('Nothing to review yet.','Henüz tekrar edilecek bir şey yok.','هنوز چیزی برای مرور نیست.', 'Aún no hay nada que repasar.')}</div>`;
   if(st.i >= st.qs.length){
-    return `<div class="card-flat badge-unlock-shine" style="text-align:center;"><h2 class="display" style="font-size:19px;">${CL('Warmed up!','Isındın!','حسابی گرم شدید!', '¡Ya has calentado!')}</h2>
+    return `<div class="card-flat badge-unlock-shine" style="text-align:center;"><h2 class="display" style="font-size:19px;">${CL('Warmed up!','Isındın!','حسابی گرم شدی!', '¡Ya has calentado!')}</h2>
       <p>${st.right}/${st.qs.length}</p>
-      <p style="font-size:12.5px; color:var(--ink-faint);">${CL('Missed items come back sooner; the ones you know wait longer.','Kaçırdıkların daha erken, bildiklerin daha geç geri gelir.','مواردی که اشتباه کردید زودتر دوباره می‌آیند و آن‌هایی که بلدید، دیرتر.', 'Lo que fallas vuelve antes; lo que sabes espera más.')}</p>
+      <p style="font-size:12.5px; color:var(--ink-faint);">${CL('Missed items come back sooner; the ones you know wait longer.','Kaçırdıkların daha erken, bildiklerin daha geç geri gelir.','مواردی که اشتباه کردی زودتر دوباره می‌آیند و آن‌هایی که بلدی، دیرتر.', 'Lo que fallas vuelve antes; lo que sabes espera más.')}</p>
       <button class="btn btn-primary" data-action="course-review-finish" data-cid="${cid}" data-uid="${uid}">${esc(courseNextBtnLabel(cid, uid))}</button></div>`;
   }
   const q = st.qs[st.i], fu = q.from ? courseFindUnit(cid, q.from) : null;
@@ -20174,12 +20174,12 @@ function renderCourseWriting(cid, uid, w){
     ${courseUseInHtml(cid, uid)}
     ${showModelFirst ? `<div class="card-flat" dir="ltr" style="margin-top:10px; background:var(--cat-story-soft); border-color:var(--cat-story-soft);"><div class="eyebrow" style="color:var(--cat-story);">${CL('Model','Örnek','نمونه')}</div><p style="margin:4px 0 0; font-size:13.5px;">${esc(w.model)}</p></div>` : ''}
     ${track==='B1' && w.frame ? `<div class="card-flat" dir="ltr" style="margin-top:10px;"><div class="eyebrow">${CL('Frame','Kalıp','قالب جمله')}</div><p style="margin:4px 0 0; font-size:13.5px;">${esc(w.frame)}</p></div>` : ''}
-    <textarea id="cw-text" class="game-input" dir="ltr" rows="7" style="margin-top:12px; font-weight:500; min-height:150px;" placeholder="${esc(CL('Write here','Buraya yaz','اینجا بنویسید'))}">${esc(saved)}</textarea>
-    <p style="font-size:12px; color:var(--ink-faint); margin:6px 0 0;">${CL('Use','Kullan','از این‌ها استفاده کنید')}: ${w.words.map(x=>esc(x.word)).join(', ')} · ${w.minWords}+ ${CL('words','kelime','کلمه')}</p>
+    <textarea id="cw-text" class="game-input" dir="ltr" rows="7" style="margin-top:12px; font-weight:500; min-height:150px;" placeholder="${esc(CL('Write here','Buraya yaz','اینجا بنویس'))}">${esc(saved)}</textarea>
+    <p style="font-size:12px; color:var(--ink-faint); margin:6px 0 0;">${CL('Use','Kullan','از این‌ها استفاده کن')}: ${w.words.map(x=>esc(x.word)).join(', ')} · ${w.minWords}+ ${CL('words','kelime','کلمه')}</p>
     ${res ? `<div class="card-flat" style="margin-top:12px; background:${res.lengthOk && !res.wordsMissed.length ? 'var(--cat-voc-soft)' : 'var(--cat-gram-soft)'}; border-color:transparent;">
       <p style="margin:0; font-size:13.5px;">${res.wc} ${CL('words','kelime','کلمه')} · ${res.sc} ${CL('sentences','cümle','جمله')}${res.wordsMissed.length ? ' · '+CL('Not used yet','Henüz kullanılmadı','هنوز استفاده نشده')+': '+esc(res.wordsMissed.join(', ')) : ''}</p>
-      ${!res.lengthOk ? `<p style="margin:6px 0 0; font-size:13px;">${L('A little longer, please: at least '+w.minWords+' words and '+w.minSentences+' sentences.','Biraz daha uzun yaz: en az '+w.minWords+' kelime ve '+w.minSentences+' cümle.','کمی بیشتر بنویسید: دست‌کم '+w.minWords+' کلمه و '+w.minSentences+' جمله.', 'Un poco más largo, por favor: al menos '+w.minWords+' palabras y '+w.minSentences+' frases.')}</p>` : ''}</div>` : ''}
-    <div class="card-flat" style="margin-top:12px;"><div class="eyebrow">${CL('Check it yourself','Kendin kontrol et','خودتان بسنجید')}</div>
+      ${!res.lengthOk ? `<p style="margin:6px 0 0; font-size:13px;">${L('A little longer, please: at least '+w.minWords+' words and '+w.minSentences+' sentences.','Biraz daha uzun yaz: en az '+w.minWords+' kelime ve '+w.minSentences+' cümle.','کمی بیشتر بنویس: دست‌کم '+w.minWords+' کلمه و '+w.minSentences+' جمله.', 'Un poco más largo, por favor: al menos '+w.minWords+' palabras y '+w.minSentences+' frases.')}</p>` : ''}</div>` : ''}
+    <div class="card-flat" style="margin-top:12px;"><div class="eyebrow">${CL('Check it yourself','Kendin kontrol et','خودت بسنج')}</div>
       <ul style="margin:6px 0 0; padding-inline-start:18px; font-size:13px; color:var(--ink-soft);">${w.rubric.map((r,ri)=>`<li style="margin-bottom:4px;"><span dir="ltr">${esc(r)}</span>${b2 && b2.useIn && /^Language\b/i.test(r) ? ` <b>+ ${CL('B2 extra (above)','B2 ek şartı (yukarıda)','شرط اضافه‌ی B2 (بالای صفحه)','extra B2 (arriba)')}</b>` : ''}${courseRubricSubHtml(w, ri)}</li>`).join('')}</ul></div>
     ${res && courseStepDone(uid, 'writing') ? `<button class="btn btn-primary" style="margin-top:14px;" data-action="course-advance" data-cid="${cid}" data-uid="${uid}">${esc(courseNextBtnLabel(cid, uid))}</button>
     <button class="btn btn-ghost" style="margin-top:8px;" data-action="course-write-check" data-cid="${cid}" data-uid="${uid}">${CL('Check again','Tekrar kontrol et','دوباره بررسی کن','Comprobar otra vez')}</button>`
@@ -20289,7 +20289,7 @@ function courseFinalHomeHtml(c, pd){
       ${list('Duties', v.duties)}${list('Essential', v.essential)}${list('Desirable', v.desirable)}${list('Finalists', v.finalists)}</div>` : ''}
     <div class="card-flat" style="margin-top:12px; background:var(--cat-diag-soft); border-color:var(--cat-diag-soft);">
       <div class="eyebrow" style="color:var(--cat-diag);">${CL('Self-check','Kendini değerlendir','خودارزیابی', 'Autoevaluación')}</div>
-      <p style="margin:4px 0 0; font-size:13px;">${CL('You score each part yourself against the rubric. There is no teacher marking in the app.','Her bölümü rubriğe göre kendin puanlarsın. Uygulamada öğretmen değerlendirmesi yok.','به هر بخش خودتان و بر اساس جدول معیارها نمره می‌دهید. در اپ، تصحیح معلم وجود ندارد.', 'Puntúas cada parte tú mismo con la rúbrica. En la app no hay corrección del profesor.')}</p>
+      <p style="margin:4px 0 0; font-size:13px;">${CL('You score each part yourself against the rubric. There is no teacher marking in the app.','Her bölümü rubriğe göre kendin puanlarsın. Uygulamada öğretmen değerlendirmesi yok.','به هر بخش خودت و بر اساس جدول معیارها نمره می‌دهی. در اپ، تصحیح معلم وجود ندارد.', 'Puntúas cada parte tú mismo con la rúbrica. En la app no hay corrección del profesor.')}</p>
       <p style="margin:6px 0 0; font-size:13px; font-weight:700;">${esc(cl(pd.passRule))}</p>
       <ul style="margin:6px 0 0; padding-inline-start:18px; font-size:12.5px; color:var(--ink-soft);">${pd.rubric.map((r,ri)=>`<li><span dir="ltr">${esc(r)}</span>${courseRubricSubHtml(pd, ri)}</li>`).join('')}</ul></div>
     <div class="eyebrow" style="margin:16px 0 8px;">${passed}/${pd.parts.length} ${CL('parts passed','bölüm geçildi','بخش قبول‌شده', 'partes aprobadas')}</div>
@@ -20304,7 +20304,7 @@ function courseFinalHomeHtml(c, pd){
 }
 function courseCertificateHtml(c, pd, all){
   const cert = pd.certificate || {};
-  if(!all) return `<div class="card-flat" style="margin-top:16px; text-align:center; color:var(--ink-soft);">${COURSE_LOCK_SVG} ${CL('Pass all '+pd.parts.length+' parts to get your certificate.','Sertifikanı almak için '+pd.parts.length+' bölümün hepsini geç.','برای دریافت گواهی‌نامه، باید در هر '+pd.parts.length+' بخش قبول شوید.', 'Aprueba las '+pd.parts.length+' partes para conseguir tu certificado.')}</div>`;
+  if(!all) return `<div class="card-flat" style="margin-top:16px; text-align:center; color:var(--ink-soft);">${COURSE_LOCK_SVG} ${CL('Pass all '+pd.parts.length+' parts to get your certificate.','Sertifikanı almak için '+pd.parts.length+' bölümün hepsini geç.','برای دریافت گواهی‌نامه، باید در هر '+pd.parts.length+' بخش قبول شوی.', 'Aprueba las '+pd.parts.length+' partes para conseguir tu certificado.')}</div>`;
   const when = courseProg(c.id).done[pd.id+':project'];
   return `<div class="card-flat badge-unlock-shine" style="margin-top:16px; text-align:center; border:2px solid var(--cat-diag);">
     <div class="eyebrow" style="color:var(--cat-diag);">${CL('Certificate','Sertifika','گواهی‌نامه', 'Certificado')}</div>
@@ -20330,16 +20330,16 @@ function courseFinalPartHtml(c, pd, p){
           : `<button class="btn btn-ghost" style="margin-top:8px;" data-action="course-final-star-check" data-a="${ai}">${CL('Check','Kontrol et','بررسی', 'Comprobar')}</button>`}</div>`).join('')}`;
   }
   return `<div class="card-flat"><p style="margin:0; font-size:14.5px; font-weight:700;">${esc(cl(p.prompt))}</p></div>
-    ${review ? `<div style="margin-top:10px; font-size:12.5px; color:var(--ink-soft);">${CL('Review first:','Önce tekrar et:','پیش از شروع، این‌ها را مرور کنید:', 'Repasa primero:')} ${review}</div>` : ''}
+    ${review ? `<div style="margin-top:10px; font-size:12.5px; color:var(--ink-soft);">${CL('Review first:','Önce tekrar et:','پیش از شروع، این‌ها را مرور کن:', 'Repasa primero:')} ${review}</div>` : ''}
     ${p.model ? `<details class="card-flat" style="margin-top:10px; background:var(--cat-story-soft); border-color:var(--cat-story-soft);"><summary style="cursor:pointer; font-weight:800; color:var(--cat-story);">${CL('Show an example','Bir örnek göster','دیدن یک نمونه', 'Ver un ejemplo')}</summary><p dir="ltr" style="margin:6px 0 0; font-size:13.5px;">${esc(p.model)}</p></details>` : ''}
     ${star}
-    ${p.mode==='speaking' ? `<p style="font-size:12.5px; color:var(--ink-soft); margin:12px 0 0;">${CL('Write your questions here, then say them out loud and record yourself on your phone.','Sorularını buraya yaz, sonra yüksek sesle söyle ve telefonunla kaydet.','سؤال‌هایتان را اینجا بنویسید، بعد آن‌ها را با صدای بلند بگویید و با گوشی‌تان ضبط کنید.', 'Escribe aquí tus preguntas, luego dilas en voz alta y grábate con el móvil.')}</p>` : ''}
-    <textarea id="cw-text" class="game-input" dir="ltr" rows="8" style="margin-top:12px; font-weight:500; min-height:170px;" placeholder="${esc(CL('Write here','Buraya yaz','اینجا بنویسید', 'Escribe aquí'))}">${esc(a.text || '')}</textarea>
+    ${p.mode==='speaking' ? `<p style="font-size:12.5px; color:var(--ink-soft); margin:12px 0 0;">${CL('Write your questions here, then say them out loud and record yourself on your phone.','Sorularını buraya yaz, sonra yüksek sesle söyle ve telefonunla kaydet.','سؤال‌هایت را اینجا بنویس، بعد آن‌ها را با صدای بلند بگو و با گوشی‌ات ضبط کن.', 'Escribe aquí tus preguntas, luego dilas en voz alta y grábate con el móvil.')}</p>` : ''}
+    <textarea id="cw-text" class="game-input" dir="ltr" rows="8" style="margin-top:12px; font-weight:500; min-height:170px;" placeholder="${esc(CL('Write here','Buraya yaz','اینجا بنویس', 'Escribe aquí'))}">${esc(a.text || '')}</textarea>
     <p style="font-size:12px; color:var(--ink-faint); margin:6px 0 0;">${p.minWords}+ ${CL('words','kelime','کلمه', 'palabras')}</p>
-    <div class="card-flat" style="margin-top:12px;"><div class="eyebrow">${CL('Score yourself','Kendini puanla','به خودتان نمره دهید', 'Puntúate')}</div>
+    <div class="card-flat" style="margin-top:12px;"><div class="eyebrow">${CL('Score yourself','Kendini puanla','به خودت نمره بده', 'Puntúate')}</div>
       <p style="margin:4px 0 8px; font-size:12px; color:var(--ink-faint);">${esc(cl(COURSE_SCORE_HINT))}</p>
       ${pd.rubric.map((r,ri)=>`<div style="margin-bottom:10px;"><div dir="ltr" style="font-size:13px; margin-bottom:5px;">${esc(r)}${courseRubricSubHtml(pd, ri)}</div><div class="row" style="gap:6px;">${[0,1,2,3].map(v=>`<button class="cj-part${scores[ri]===v ? (v>=2 ? ' ok' : ' bad') : ''}" data-action="course-final-score" data-c="${ri}" data-v="${v}">${v}</button>`).join('')}</div></div>`).join('')}</div>
-    ${res ? `<div class="card-flat" style="margin-top:12px; background:${res.passed ? 'var(--cat-voc-soft)' : 'var(--cat-gram-soft)'}; border-color:transparent;"><p style="margin:0; font-size:13.5px;">${res.wc} ${CL('words','kelime','کلمه', 'palabras')} · ${res.passed ? CL('Part passed. Well done!','Bölüm geçildi. Tebrikler!','این بخش را قبول شدید. آفرین!', 'Parte aprobada. ¡Bien hecho!') : res.missing ? CL('Score every line of the rubric first.','Önce rubriğin her satırını puanla.','اول به همه‌ی ردیف‌های جدول نمره دهید.', 'Primero puntúa cada línea de la rúbrica.') : res.short ? CL('A little longer, please: at least '+p.minWords+' words.','Biraz daha uzun yaz: en az '+p.minWords+' kelime.','کمی بیشتر بنویسید: دست‌کم '+p.minWords+' کلمه.', 'Un poco más largo, por favor: al menos '+p.minWords+' palabras.') : CL('Not yet: every line needs 2 or more. Revise, then score again.','Henüz değil: her satır 2 veya üstü olmalı. Düzelt ve yeniden puanla.','هنوز نه: نمره‌ی هر ردیف باید ۲ یا بیشتر باشد. متن را بازبینی کنید و دوباره نمره دهید.', 'Todavía no: cada línea necesita 2 o más. Revisa y puntúa otra vez.')}</p></div>` : ''}
+    ${res ? `<div class="card-flat" style="margin-top:12px; background:${res.passed ? 'var(--cat-voc-soft)' : 'var(--cat-gram-soft)'}; border-color:transparent;"><p style="margin:0; font-size:13.5px;">${res.wc} ${CL('words','kelime','کلمه', 'palabras')} · ${res.passed ? CL('Part passed. Well done!','Bölüm geçildi. Tebrikler!','این بخش را قبول شدی. آفرین!', 'Parte aprobada. ¡Bien hecho!') : res.missing ? CL('Score every line of the rubric first.','Önce rubriğin her satırını puanla.','اول به همه‌ی ردیف‌های جدول نمره بده.', 'Primero puntúa cada línea de la rúbrica.') : res.short ? CL('A little longer, please: at least '+p.minWords+' words.','Biraz daha uzun yaz: en az '+p.minWords+' kelime.','کمی بیشتر بنویس: دست‌کم '+p.minWords+' کلمه.', 'Un poco más largo, por favor: al menos '+p.minWords+' palabras.') : CL('Not yet: every line needs 2 or more. Revise, then score again.','Henüz değil: her satır 2 veya üstü olmalı. Düzelt ve yeniden puanla.','هنوز نه: نمره‌ی هر ردیف باید ۲ یا بیشتر باشد. متن را بازبینی کن و دوباره نمره بده.', 'Todavía no: cada línea necesita 2 o más. Revisa y puntúa otra vez.')}</p></div>` : ''}
     <button class="btn btn-primary" style="margin-top:14px;" data-action="course-final-save" data-cid="${c.id}" data-part="${p.id}">${CL('Check and save','Kontrol et ve kaydet','بررسی و ذخیره', 'Comprobar y guardar')}</button>`;
 }
 

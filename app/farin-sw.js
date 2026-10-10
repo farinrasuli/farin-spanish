@@ -1,4 +1,4 @@
-const CACHE = 'farin-spanish-v3';
+const CACHE = 'farin-spanish-v4';
 const PAGE_URL = self.registration.scope;
 /* Cozy Chores painted art (Trello 1m2Y0zdU, 8JAiLuV7): the game's plates and cut-outs are sibling files
    under chores/ (chores/plate-<id>.webp, chores/co-<id>.webp), precached with the page so the room
@@ -23,6 +23,15 @@ const ART_PRECACHE = [
   'chores/co-puff.webp'
 ];
 const ART_RE = /\/chores\/[^/?#]+\.webp$/;
+/* Character and story art (Trello c24wjywa): the companions (char-<goal>.png, also the Order Up! customers),
+   the story genre cut-outs (stories, souvenirs, the journal) and the logo on every souvenir back, precached at
+   install so they show offline even before a screen first used them. One request per file, so a missing file
+   never blocks the rest. The bigger menu icons stay cache-on-first-use (IMG_RE below). */
+const APP_ART_PRECACHE = [
+  'char-career.png', 'char-everyday.png', 'char-exam.png', 'char-immigration.png', 'char-travel.png',
+  'story-adventure-cutout.png', 'story-documentary-cutout.png', 'story-fiction-cutout.png', 'story-romance-cutout.png', 'story-thriller-cutout.png',
+  'logo-fe-cutout.png'
+];
 // Natural voice clips (Claude/tts): audio/<lang>/<key>.mp3 never change under one name -> cache-first;
 // audio/<lang>/manifest.json changes when clips are added -> network-first, cached copy offline.
 const AUDIO_RE = /\/audio\/[a-z]{2}\/[0-9a-f]{16}\.mp3$/;
@@ -40,7 +49,8 @@ const PAGE_TIMEOUT_MS = 4000;
 self.addEventListener('install', (e) => {
   e.waitUntil(caches.open(CACHE).then((c) => Promise.all([
     c.add(new Request(PAGE_URL, { cache: 'reload' })),
-    c.addAll(ART_PRECACHE.map((u) => new URL(u, PAGE_URL).href)).catch(() => {})
+    c.addAll(ART_PRECACHE.map((u) => new URL(u, PAGE_URL).href)).catch(() => {}),
+    Promise.all(APP_ART_PRECACHE.map((u) => c.add(new URL(u, PAGE_URL).href).catch(() => {})))
   ])).catch(() => {}));
   self.skipWaiting();
 });

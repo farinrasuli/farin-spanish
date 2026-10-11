@@ -1,4 +1,6 @@
+<html lang="tr" translate="no">
 <meta charset="UTF-8">
+<meta name="google" content="notranslate">
 <title>Farin Spanish</title>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#fdf1e2" media="(prefers-color-scheme: light)">
@@ -9778,6 +9780,7 @@ function maybeCelebrate(){
 function render(){
   const root = document.getElementById('app');
   document.documentElement.dir = LANG==='fa' ? 'rtl' : 'ltr';
+  document.documentElement.lang = LANG;   // DbRQXYiY: the page says which language its UI is in (browser translate is off: translate="no")
   // Course return context (yNFXBq6k) ends once the learner is back in the course area or on Home.
   if(state.courseReturn && courseReturnEnds(state.view)) state.courseReturn = null;
   root.innerHTML = screens[state.view] ? screens[state.view]() : screens['dashboard']();
@@ -18076,9 +18079,9 @@ function renderGrammarTrap(id){
             <div class="gx-label">${L('Example','Örnek','مثال','Ejemplo')}</div>
             <div style="display:flex; gap:11px; align-items:flex-start;">
               <button type="button" class="icon-btn" data-action="speak-sentence" data-text="${esc(right)}" style="flex:0 0 auto; background:var(--cat-gram-soft); color:var(--cat-gram); border-radius:50%; width:34px; height:34px; display:flex; align-items:center; justify-content:center; border:none;">${ICONS.soundOn}</button>
-              <div style="min-width:0;">
+              <div style="min-width:0;" translate="no">
                 <div style="font-weight:700; font-size:16px; line-height:1.5; padding-top:4px;" dir="ltr">${glossify(right)}</div>
-                ${(() => { const trText = t.rightTranslation ? L(null,t.rightTranslation.tr,t.rightTranslation.fa) : null; return trText ? `<div style="font-size:13px; color:var(--ink-faint); margin-top:3px;">${esc(trText)}</div>` : ''; })()}
+                ${(() => { const rt = effectiveGrammarItem(t, variant).rightTranslation; const trText = rt ? L(null,rt.tr,rt.fa) : null; return trText ? `<div style="font-size:13px; color:var(--ink-faint); margin-top:3px;">${esc(trText)}</div>` : ''; })()}
               </div>
             </div>
           </div>
@@ -18088,7 +18091,7 @@ function renderGrammarTrap(id){
           </div>` : ''}
           ${ft ? `<div class="gx-sec">
             <div class="gx-label">${L('The forms','Biçimler','شکل‌ها','Las formas')}</div>
-            <div class="gx-table"><table>
+            <div class="gx-table" translate="no"><table>
               <thead><tr>${L(ft.headers.en,ft.headers.tr,ft.headers.fa, ft.headers.es).map(h=>`<th>${esc(h)}</th>`).join('')}</tr></thead>
               <tbody>${ft.rows.map(row=>`<tr>${row.map(cell=>`<td dir="ltr">${esc(cell)}</td>`).join('')}</tr>`).join('')}</tbody>
             </table></div>
@@ -18104,7 +18107,7 @@ function renderGrammarTrap(id){
         ${exampleBadge(1)}
         <h3 class="display" style="font-size:13.5px; color:var(--ink-faint); text-transform:uppercase; letter-spacing:.05em;">${L('Example','Örnek','مثال', 'Ejemplo')}</h3>
       </div>
-      <div class="contrast" dir="ltr">
+      <div class="contrast" dir="ltr" translate="no">
         <div class="contrast-line wrong"><b>✗</b><span class="txt">${glossify(wrong)}</span></div>
         <div class="contrast-line right"><b>✓</b><span class="txt">${glossify(right)}</span></div>
       </div>
@@ -18114,7 +18117,7 @@ function renderGrammarTrap(id){
         ${exampleBadge(2)}
         <h3 class="display" style="font-size:13.5px; color:var(--ink-faint); text-transform:uppercase; letter-spacing:.05em;">${L('Example','Örnek','مثال', 'Ejemplo')}</h3>
       </div>
-      <div class="contrast" dir="ltr">
+      <div class="contrast" dir="ltr" translate="no">
         <div class="contrast-line wrong"><b>✗</b><span class="txt">${glossify(wrong2)}</span></div>
         <div class="contrast-line right"><b>✓</b><span class="txt">${glossify(right2)}</span></div>
       </div>` : ''}
@@ -18187,7 +18190,7 @@ function renderVocabSetIntro(id){
         </div>
         <p style="margin-top:12px; font-size:14.5px; line-height:1.65; color:var(--ink);">${L('Skim through all '+s.cards.length+' below, then flip through flashcards to lock them in.','Aşağıdaki tüm '+s.cards.length+' tanesine göz gezdir, sonra pekiştirmek için kartları çevir.','همه '+s.cards.length+' مورد زیر را مرور کن، بعد با ورق زدن کارت‌ها آن‌ها را در ذهنت ثبت کن.', 'Repasa las '+s.cards.length+' de abajo y luego practica con las tarjetas para memorizarlas.')}</p>
       </div>
-      <div class="card-flat" dir="ltr" style="margin-top:14px; padding-top:2px; padding-bottom:2px;">
+      <div class="card-flat" dir="ltr" translate="no" style="margin-top:14px; padding-top:2px; padding-bottom:2px;">
         ${s.cards.map((c,idx)=>`
           <div class="phrase-row">
             <div class="row" style="gap:8px; align-items:center;">
@@ -18372,7 +18375,7 @@ function renderVocabSet(id, cardIndex){
     </div>
     <div class="flash-wrap deck-wrap">
       ${deckGhostsHtml(left, soft)}
-      <div class="flashcard" data-action="flip-card" id="deck-card">
+      <div class="flashcard" data-action="flip-card" id="deck-card" translate="no">
         <div class="flash-face" style="background:${soft};">
           ${state.viewParams.flipped ? `
             <div class="flash-hint">${L('Example','Örnek','مثال','Ejemplo')}</div>
@@ -18762,7 +18765,7 @@ function storyReaderHtml(story, R){
   const dots = R.n <= 12
     ? `<div class="flash-dots">${R.pages.map((_,i)=>`<i class="${i===R.pg ? 'active' : ''}"></i>`).join('')}</div>`
     : `<div class="flash-dots"><span class="game-chip">${L(`Page ${R.pg+1} of ${R.n}`, `Sayfa ${R.pg+1}/${R.n}`, `صفحه ${R.pg+1} از ${R.n}`, `Página ${R.pg+1} de ${R.n}`)}</span></div>`;
-  return `<div class="card-flat story-page" id="story-page" dir="ltr" style="line-height:1.7; font-size:15px;">${storyPageHtml(story, R)}</div>
+  return `<div class="card-flat story-page" id="story-page" dir="ltr" translate="no" style="line-height:1.7; font-size:15px;">${storyPageHtml(story, R)}</div>
     ${dots}
     <div class="flash-nav">
       ${R.pg > 0 ? `<button class="btn btn-ghost" style="flex:1;" data-action="story-page" data-d="-1">${L('Back','Geri','قبلی','Atrás')}</button>` : ''}
@@ -19491,10 +19494,10 @@ function renderQuiz(){
       <span class="game-status-end">${quizStreakChip(q)}</span>
     </div>
     ${q.round === 2 ? `<p class="game-hint" style="margin:0;">${L('Practise again','Tekrar çalış','دوباره تمرین کن','Practicar otra vez')}</p>` : ''}
-    <div class="game-card${longOpts ? ' tight' : ''}">
+    <div class="game-card${longOpts ? ' tight' : ''}" translate="no">
       ${quizPromptHtml(item, q)}
     </div>
-    <div class="game-opts">
+    <div class="game-opts" translate="no">
       ${item.options.map((opt,i)=>{
         let cls = 'game-opt' + (longOpts ? ' long' : '');
         const missed = (q.miss||[]).includes(i);

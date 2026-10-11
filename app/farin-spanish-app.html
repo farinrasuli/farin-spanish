@@ -903,9 +903,9 @@
   .cs-center{text-align:center;}
   .cs-big{font-size:46px; line-height:1; margin:10px 0 8px;}
   .cs-h1{font-size:24px; margin:0;}
-  .cs-card-green{background:var(--cat-voc-soft); border-color:transparent;}
-  .cs-card-lav{background-color:var(--clay-lavender-deep); background-image:radial-gradient(circle at 88% -18%, rgba(255,255,255,.45), transparent 55%), linear-gradient(135deg, var(--clay-lavender), var(--clay-lavender-deep)); color:#fff; border:none;}
-  .cs-card-lav .eyebrow{color:rgba(255,255,255,.9);}
+  .card-flat.cs-card-green{background:var(--cat-voc-soft); border-color:transparent;}
+  .card-flat.cs-card-lav{position:relative; overflow:hidden; background-color:var(--clay-lavender-deep); background-image:radial-gradient(circle at 88% -18%, rgba(255,255,255,.45), transparent 55%), linear-gradient(135deg, var(--clay-lavender), var(--clay-lavender-deep)); color:#fff; border:none;}
+  .card-flat.cs-card-lav .eyebrow{color:rgba(255,255,255,.9);}
   .cp-head{display:flex; align-items:center; padding:calc(14px + env(safe-area-inset-top, 0px)) 20px 2px;}
   .cp-back{border:none; background:none; padding:6px 0; font-weight:700; font-size:15px; color:var(--ink-soft); cursor:pointer; font-family:inherit;}
   .cp-title{font-size:26px; padding:8px 20px 14px; margin:0;}
@@ -931,6 +931,9 @@
   .cp-cur{flex:1; min-width:0; border:2px solid var(--accent); border-radius:18px; padding:10px 14px 14px; background:var(--bg-elevated); box-shadow:0 10px 22px -12px rgba(232,92,59,.5);}
   .cp-tag{display:inline-block; background:var(--accent); color:#fff; font-size:10.5px; font-weight:900; letter-spacing:.06em; padding:3px 9px; border-radius:99px; margin-bottom:6px;}
   .cp-foot{display:flex; flex-wrap:wrap; justify-content:center; gap:4px 8px; margin-top:16px; font-size:13px; color:var(--ink-soft);}
+  .course-unlock a.btn{text-decoration:none;}
+  .cs-foot .btn-ghost{background:var(--bg-elevated);}
+  .cs-pick, .cs-foot .btn{font-family:inherit;}
   .course-unlock a.btn{text-decoration:none;}
   .cs-foot .btn-ghost{background:var(--bg-elevated);}
   .cs-pick, .cs-foot .btn{font-family:inherit;}
@@ -22775,7 +22778,6 @@ function courseAdvance(cid, uid){
   }
   const nx = courseNextInUnit(cid, uid);
   if(!nx){
-    if(!screens['course-done']) return courseShow('course-detail', {cid}, cid, false);
     if(courseIsCp(cid, uid)) return courseShow('course-chapter-done', {cid, mi:courseModuleIndex(courseGet(cid), uid)}, cid, true);
     return courseShow('course-done', {cid, uid}, cid, true);
   }
@@ -23465,6 +23467,76 @@ function renderCourseStep(){
   // mock and anything unbuilt: a clear stub, never a blank screen.
   return courseStepShell(cid, uid, type, `<div class="card-flat" style="text-align:center;"><h2 class="display" style="font-size:18px;">${CL('Coming soon','Yakında','به‌زودی','Próximamente')}</h2><p style="color:var(--ink-soft);">${CL('This part of the course is not built yet.','Kursun bu kısmı henüz hazır değil.','این بخش از دوره هنوز آماده نشده است.','Esta parte del curso aún no está lista.')}</p></div>`);
 }
+/* ---------- lesson done (S7) and chapter done (S8) ---------- */
+// The can-do as the learner's own sentence: "Now you can say: 'I can ...'" (A6: no you/I mix; A12: shown once).
+function courseQuote(s){ return LANG==='tr' ? '"'+s+'"' : LANG==='fa' ? '«'+s+'»' : '“'+s+'”'; }
+function renderCourseDone(){
+  const vp = state.viewParams || {}, cid = vp.cid, uid = vp.uid, f = courseFindUnit(cid, uid);
+  if(!f) return renderNotFound();
+  const c = f.c, no = courseUnitNo(cid, uid), it = courseUnitItems(uid);
+  const persp = courseProg(cid).answers[uid+':perspective'], pm = COURSE_CARD.empathy;
+  const nextUid = courseUnitAfter(cid, uid), nf = nextUid ? courseFindUnit(cid, nextUid) : null, pd = courseFinalData(c);
+  let nextCard = '', btn = '';
+  if(nf){
+    const isCp = courseIsCp(cid, nextUid), access = courseUnitAccess(c, nextUid);
+    nextCard = `<div class="card-flat cs-card-lav" style="margin-top:12px; text-align:start;">${claySparkles()}
+      <div class="eyebrow">${esc(courseUp(isCp ? CL('Chapter finale','Bölüm finali','پایان فصل','Final del capítulo') : CL('Next lesson','Sıradaki ders','درس بعدی','Siguiente lección')+' · '+courseUnitNo(cid, nextUid)))}</div>
+      <div class="display" style="font-size:19px; margin-top:4px; color:#fff;">${esc(isCp ? courseLessonLine(cid, nextUid) : cl(nf.u.title))}</div>
+      ${!isCp && nf.u.episode ? `<p style="margin:6px 0 0; font-size:13.5px; line-height:1.45; opacity:.95;">${esc(cl(nf.u.episode))}</p>` : ''}</div>`;
+    btn = access ? `<button class="btn btn-primary cs-main" data-action="course-go" data-cid="${cid}" data-uid="${esc(nextUid)}">${isCp ? CL('Start the chapter finale','Bölüm finaline başla','شروع پایان فصل','Empezar el final del capítulo') : CL('Start the next lesson','Sonraki derse başla','درس بعدی را شروع کن','Empezar la siguiente lección')}</button>`
+      : `<button class="btn btn-primary cs-main" data-action="course-open" data-view="course-gate" data-cid="${cid}" data-uid="${esc(nextUid)}">${CL('Next lesson','Sıradaki ders','درس بعدی','Siguiente lección')}</button>`;
+  } else if(pd){
+    btn = `<button class="btn btn-primary cs-main" data-action="course-open" data-view="${courseUnitAccess(c, pd.id) && courseFinalUnlocked(c) ? 'course-final' : 'course-gate'}" data-cid="${cid}">${CL('Final project','Final projesi','پروژه‌ی پایانی','Proyecto final')}</button>`;
+  }
+  return `<div class="fade-in course-done">
+    ${courseShellTopHtml(cid, uid, null)}
+    <div class="screen cs-center" style="padding-top:14px;">
+      <div class="cs-big" aria-hidden="true">🎉</div>
+      <h1 class="display cs-h1">${esc(CL('Lesson '+no+' done', no+' dersi bitti', 'درس '+no+' تمام شد', 'Lección '+no+' terminada'))}</h1>
+      ${f.u.cando ? `<div class="card-flat cs-card-green" style="margin-top:16px; text-align:start;"><b style="font-size:14px;">${CL('Now you can say:','Artık şunu söyleyebilirsin:','حالا می‌توانی بگویی:','Ahora puedes decir:')}</b>
+        <p style="margin:4px 0 0; font-size:14.5px; line-height:1.45;">${esc(courseQuote(cl(f.u.cando)))}</p></div>` : ''}
+      ${persp && persp.text ? `<div class="card-flat" style="margin-top:12px; text-align:start;"><div class="cs-eyebrow" style="color:${pm.t};">${esc(courseUp(cl(pm)+(it.perspective && it.perspective.title ? ' · '+cl(it.perspective.title) : '')))}</div>
+        <p style="margin:6px 0 0; font-size:14px; line-height:1.5;">${CL('What you wrote:','Senin yazdığın:','چیزی که نوشتی:','Lo que escribiste:')} <span dir="ltr" translate="no">${esc(courseQuote(persp.text))}</span></p></div>` : ''}
+      ${nextCard}
+      <button class="link-btn cs-back-course" data-action="course-close" data-cid="${cid}" style="display:block; margin:16px auto 0;">${CL('Back to the course','Kursa dön','برگشت به دوره','Volver al curso')}</button>
+    </div>
+    <div class="cs-foot">${btn}</div>
+  </div>`;
+}
+function renderCourseChapterDone(){
+  const vp = state.viewParams || {}, cid = vp.cid, c = courseGet(cid), mi = Number(vp.mi) || 0;
+  if(!c || !c.modules[mi]) return renderNotFound();
+  const m = c.modules[mi], next = c.modules[mi+1], pd = courseFinalData(c);
+  const candos = m.units.filter(u=>u.cando).map(u=>`<div style="margin-top:4px; font-size:14px; line-height:1.45;">✓ ${esc(cl(u.cando))}</div>`).join('');
+  const nextFirst = next && next.units[0] ? next.units[0].id : null, owner = nextFirst ? courseUnitAccess(c, nextFirst) : (pd ? courseUnitAccess(c, pd.id) : true);
+  const nextBox = next ? `<div class="card-flat cs-card-lav" style="margin-top:12px; text-align:start;">${claySparkles()}
+      <div class="eyebrow">${esc(courseUp(CL('What happens next','Sırada ne var','بعدش چه می‌شود','Lo que viene')))}</div>
+      <div class="display" style="font-size:19px; margin-top:4px; color:#fff;">${esc(courseChapterName(mi+1)+' · '+cl(next.title))}</div>
+      ${next.blurb ? `<p style="margin:6px 0 0; font-size:13.5px; line-height:1.45; opacity:.95;">${esc(cl(next.blurb))}</p>` : ''}</div>`
+    : pd ? `<div class="card-flat cs-card-lav" style="margin-top:12px; text-align:start;">${claySparkles()}
+      <div class="eyebrow">${esc(courseUp(CL('What happens next','Sırada ne var','بعدش چه می‌شود','Lo que viene')))}</div>
+      <div class="display" style="font-size:19px; margin-top:4px; color:#fff;">${esc(CL('Final project','Final projesi','پروژه‌ی پایانی','Proyecto final'))}</div>
+      <p style="margin:6px 0 0; font-size:13.5px; opacity:.95;">${esc(cl(pd.title).replace(/^[^:]+:\s*/, ''))}</p></div>` : '';
+  let foot = '', unlock = '';
+  if(owner){
+    if(nextFirst) foot = `<button class="btn btn-primary cs-main" data-action="course-go" data-cid="${cid}" data-uid="${esc(nextFirst)}">${esc(CL('Start Chapter '+(mi+2), (mi+2)+'. Bölüme başla', 'شروع فصل '+(mi+2), 'Empezar el capítulo '+(mi+2)))}</button>`;
+    else if(pd) foot = `<button class="btn btn-primary cs-main" data-action="course-open" data-view="${courseFinalUnlocked(c) ? 'course-final' : 'course-gate'}" data-cid="${cid}">${CL('Final project','Final projesi','پروژه‌ی پایانی','Proyecto final')}</button>`;
+  } else unlock = courseUnlockBoxHtml(c, null, true);
+  return `<div class="fade-in course-chapter-done">
+    <div class="cs-top"><button class="cs-x" data-action="course-close" data-cid="${cid}" aria-label="${esc(CL('Close','Kapat','بستن','Cerrar'))}">${COURSE_X_SVG}</button><span style="flex:1;"></span></div>
+    <div class="screen cs-center" style="padding-top:6px;">
+      <div class="cs-big" aria-hidden="true">⭐</div>
+      <h1 class="display cs-h1">${esc(CL('Chapter '+(mi+1)+' done', (mi+1)+'. Bölüm bitti', 'فصل '+(mi+1)+' تمام شد', 'Capítulo '+(mi+1)+' terminado'))}</h1>
+      <p style="margin:4px 0 0; color:var(--ink-soft); font-size:13.5px;">${esc(cl(m.title))}</p>
+      ${candos ? `<div class="card-flat cs-card-green" style="margin-top:16px; text-align:start;"><b style="font-size:14px;">${CL('Now you can say:','Artık şunları söyleyebilirsin:','حالا می‌توانی این‌ها را بگویی:','Ahora puedes decir:')}</b>${candos}</div>` : ''}
+      ${nextBox}
+      ${owner ? `<button class="link-btn cs-back-course" data-action="course-close" data-cid="${cid}" style="display:block; margin:16px auto 0;">${CL('Back to the course','Kursa dön','برگشت به دوره','Volver al curso')}</button>` : ''}
+      ${unlock ? `<div style="text-align:start;">${unlock}</div>` : ''}
+    </div>
+    ${foot ? `<div class="cs-foot">${foot}</div>` : ''}
+  </div>`;
+}
+
 /* judge: tap which parts are present */
 function renderCourseJudge(cid, uid, j){
   let st = courseUi.judge;
@@ -23902,6 +23974,8 @@ Object.assign(HANDLERS, {
 });
 Object.assign(screens, {
   'course-pause': renderCoursePause,
+  'course-done': renderCourseDone,
+  'course-chapter-done': renderCourseChapterDone,
   'courses-home': renderCoursesHome,
   'course-detail': ()=>renderCourseDetail(state.viewParams.cid),
   'course-unit': ()=>renderCourseUnit(state.viewParams.cid, state.viewParams.uid),

@@ -23724,7 +23724,7 @@ function renderCourseFinal(){
   if(!courseUnitAccess(c, pd.id) || !courseFinalUnlocked(c)) return renderCourseGate();
   const part = vp.part ? pd.parts.find(p=>p.id===vp.part) : null;
   return `<div class="fade-in">
-    ${sectionHead(part ? CL('Part','Bölüm','بخش', 'Parte')+' '+part.step+' · '+cl(part.title) : cl(pd.title), cl(c.title))}
+    ${sectionHead(part ? CL('Part','Kısım','بخش', 'Parte')+' '+part.step+' · '+cl(part.title) : cl(pd.title), cl(c.title))}
     <div class="screen" style="padding-top:0;">${part ? courseFinalPartHtml(c, pd, part) : courseFinalHomeHtml(c, pd)}</div>
   </div>`;
 }
@@ -23739,10 +23739,10 @@ function courseFinalHomeHtml(c, pd){
       ${list('Duties', v.duties)}${list('Essential', v.essential)}${list('Desirable', v.desirable)}${list('Finalists', v.finalists)}</div>` : ''}
     <div class="card-flat" style="margin-top:12px; background:var(--cat-diag-soft); border-color:var(--cat-diag-soft);">
       <div class="eyebrow" style="color:var(--cat-diag);">${CL('Self-check','Kendini değerlendir','خودارزیابی', 'Autoevaluación')}</div>
-      <p style="margin:4px 0 0; font-size:13px;">${CL('You score each part yourself against the rubric. There is no teacher marking in the app.','Her bölümü rubriğe göre kendin puanlarsın. Uygulamada öğretmen değerlendirmesi yok.','به هر بخش خودت و بر اساس جدول معیارها نمره می‌دهی. در اپ، تصحیح معلم وجود ندارد.', 'Puntúas cada parte tú mismo con la rúbrica. En la app no hay corrección del profesor.')}</p>
+      <p style="margin:4px 0 0; font-size:13px;">${CL('You score each part yourself with the checklist. There is no teacher marking in the app.','Her kısmı kontrol listesiyle kendin puanlarsın. Uygulamada öğretmen değerlendirmesi yok.','به هر بخش خودت و با چک‌لیست نمره می‌دهی. در اپ، تصحیح معلم وجود ندارد.', 'Puntúas cada parte tú mismo con la lista de comprobación. En la app no hay corrección del profesor.')}</p>
       <p style="margin:6px 0 0; font-size:13px; font-weight:700;">${esc(cl(pd.passRule))}</p>
       <ul style="margin:6px 0 0; padding-inline-start:18px; font-size:12.5px; color:var(--ink-soft);">${pd.rubric.map((r,ri)=>`<li><span dir="ltr" translate="no">${esc(r)}</span>${courseRubricSubHtml(pd, ri)}</li>`).join('')}</ul></div>
-    <div class="eyebrow" style="margin:16px 0 8px;">${passed}/${pd.parts.length} ${CL('parts passed','bölüm geçildi','بخش قبول‌شده', 'partes aprobadas')}</div>
+    <div class="eyebrow" style="margin:16px 0 8px;">${passed}/${pd.parts.length} ${CL('parts passed','kısım geçildi','بخش قبول‌شده', 'partes aprobadas')}</div>
     <div class="stack" style="gap:8px;">${pd.parts.map(p=>{
       const a = courseFinalPart(c.id, p.id), m = COURSE_TYPE_META[p.mode] || COURSE_TYPE_META.writing;
       const tail = a.passed ? `<span class="pill badge-done">${ICONS.check}</span>` : (a.date ? `<span class="pill" style="background:var(--cat-gram-soft); color:var(--cat-gram);">${CL('Revise','Gözden geçir','بازبینی', 'Revisar')}</span>` : `<span class="chevron">${ICONS.chev}</span>`);
@@ -23754,7 +23754,7 @@ function courseFinalHomeHtml(c, pd){
 }
 function courseCertificateHtml(c, pd, all){
   const cert = pd.certificate || {};
-  if(!all) return `<div class="card-flat" style="margin-top:16px; text-align:center; color:var(--ink-soft);">${COURSE_LOCK_SVG} ${CL('Pass all '+pd.parts.length+' parts to get your certificate.','Sertifikanı almak için '+pd.parts.length+' bölümün hepsini geç.','برای دریافت گواهی‌نامه، باید در هر '+pd.parts.length+' بخش قبول شوی.', 'Aprueba las '+pd.parts.length+' partes para conseguir tu certificado.')}</div>`;
+  if(!all) return `<div class="card-flat" style="margin-top:16px; text-align:center; color:var(--ink-soft);">${COURSE_LOCK_SVG} ${CL('Pass all '+pd.parts.length+' parts to get your certificate.','Sertifikanı almak için '+pd.parts.length+' kısmın hepsini geç.','برای دریافت گواهی‌نامه، باید در هر '+pd.parts.length+' بخش قبول شوی.', 'Aprueba las '+pd.parts.length+' partes para conseguir tu certificado.')}</div>`;
   const when = courseProg(c.id).done[pd.id+':project'];
   return `<div class="card-flat badge-unlock-shine" style="margin-top:16px; text-align:center; border:2px solid var(--cat-diag);">
     <div class="eyebrow" style="color:var(--cat-diag);">${CL('Certificate','Sertifika','گواهی‌نامه', 'Certificado')}</div>
@@ -23789,7 +23789,7 @@ function courseFinalPartHtml(c, pd, p){
     <div class="card-flat" style="margin-top:12px;"><div class="eyebrow">${CL('Score yourself','Kendini puanla','به خودت نمره بده', 'Puntúate')}</div>
       <p style="margin:4px 0 8px; font-size:12px; color:var(--ink-faint);">${esc(cl(COURSE_SCORE_HINT))}</p>
       ${pd.rubric.map((r,ri)=>`<div style="margin-bottom:10px;"><div dir="ltr" translate="no" style="font-size:13px; margin-bottom:5px;">${esc(r)}${courseRubricSubHtml(pd, ri)}</div><div class="row" style="gap:6px;">${[0,1,2,3].map(v=>`<button class="cj-part${scores[ri]===v ? (v>=2 ? ' ok' : ' bad') : ''}" data-action="course-final-score" data-c="${ri}" data-v="${v}">${v}</button>`).join('')}</div></div>`).join('')}</div>
-    ${res ? `<div class="card-flat" style="margin-top:12px; background:${res.passed ? 'var(--cat-voc-soft)' : 'var(--cat-gram-soft)'}; border-color:transparent;"><p style="margin:0; font-size:13.5px;">${res.wc} ${CL('words','kelime','کلمه', 'palabras')} · ${res.passed ? CL('Part passed. Well done!','Bölüm geçildi. Tebrikler!','این بخش را قبول شدی. آفرین!', 'Parte aprobada. ¡Bien hecho!') : res.missing ? CL('Score every line of the rubric first.','Önce rubriğin her satırını puanla.','اول به همه‌ی ردیف‌های جدول نمره بده.', 'Primero puntúa cada línea de la rúbrica.') : res.short ? CL('A little longer, please: at least '+p.minWords+' words.','Biraz daha uzun yaz: en az '+p.minWords+' kelime.','کمی بیشتر بنویس: دست‌کم '+p.minWords+' کلمه.', 'Un poco más largo, por favor: al menos '+p.minWords+' palabras.') : CL('Not yet: every line needs 2 or more. Revise, then score again.','Henüz değil: her satır 2 veya üstü olmalı. Düzelt ve yeniden puanla.','هنوز نه: نمره‌ی هر ردیف باید ۲ یا بیشتر باشد. متن را بازبینی کن و دوباره نمره بده.', 'Todavía no: cada línea necesita 2 o más. Revisa y puntúa otra vez.')}</p></div>` : ''}
+    ${res ? `<div class="card-flat" style="margin-top:12px; background:${res.passed ? 'var(--cat-voc-soft)' : 'var(--cat-gram-soft)'}; border-color:transparent;"><p style="margin:0; font-size:13.5px;">${res.wc} ${CL('words','kelime','کلمه', 'palabras')} · ${res.passed ? CL('Part passed. Well done!','Bölüm geçildi. Tebrikler!','این بخش را قبول شدی. آفرین!', 'Parte aprobada. ¡Bien hecho!') : res.missing ? CL('Score every line of the checklist first.','Önce kontrol listesinin her satırını puanla.','اول به همه‌ی ردیف‌های چک‌لیست نمره بده.', 'Primero puntúa cada línea de la lista.') : res.short ? CL('A little longer, please: at least '+p.minWords+' words.','Biraz daha uzun yaz: en az '+p.minWords+' kelime.','کمی بیشتر بنویس: دست‌کم '+p.minWords+' کلمه.', 'Un poco más largo, por favor: al menos '+p.minWords+' palabras.') : CL('Not yet: every line needs 2 or more. Revise, then score again.','Henüz değil: her satır 2 veya üstü olmalı. Düzelt ve yeniden puanla.','هنوز نه: نمره‌ی هر ردیف باید ۲ یا بیشتر باشد. متن را بازبینی کن و دوباره نمره بده.', 'Todavía no: cada línea necesita 2 o más. Revisa y puntúa otra vez.')}</p></div>` : ''}
     <button class="btn btn-primary" style="margin-top:14px;" data-action="course-final-save" data-cid="${c.id}" data-part="${p.id}">${CL('Check and save','Kontrol et ve kaydet','بررسی و ذخیره', 'Comprobar y guardar')}</button>`;
 }
 

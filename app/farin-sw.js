@@ -1,10 +1,11 @@
-const CACHE = 'farin-spanish-v5';
+const CACHE = 'farin-spanish-v6';
 const PAGE_URL = self.registration.scope;
 /* Cozy Chores painted art (Trello 1m2Y0zdU, 8JAiLuV7): the game's plates and cut-outs are sibling files
    under chores/ (chores/plate-<id>.webp, chores/co-<id>.webp), precached with the page so the room
    opens offline. home1 (the family kitchen, live 2026-10-10) + the helper and steam puff every place
-   shares. Add each next room's files here when it opens (and bump CACHE); the fetch rule below still
-   caches any chores/*.webp on first use. */
+   shares; home2, home3, home4, the bakery, the flower shop and the building (live 2026-10-14). Add a
+   room's files here when it opens or changes (and bump CACHE); the fetch rule below still caches any
+   chores/*.webp on first use. */
 const ART_PRECACHE = [
   'chores/plate-home1.webp',
   'chores/co-char.webp',
@@ -20,7 +21,77 @@ const ART_PRECACHE = [
   'chores/co-f1-toysBasket.webp',
   'chores/co-f1-valance.webp',
   'chores/co-f1-view.webp',
-  'chores/co-puff.webp'
+  'chores/co-puff.webp',
+  'chores/co-f2-basket.webp',
+  'chores/co-f2-bedEnd.webp',
+  'chores/co-f2-bedMade.webp',
+  'chores/co-f2-bedMessy.webp',
+  'chores/co-f2-binEmpty.webp',
+  'chores/co-f2-binFull.webp',
+  'chores/co-f2-books.webp',
+  'chores/co-f2-booksShelf.webp',
+  'chores/co-f2-clothes.webp',
+  'chores/co-f2-curtainsClosed.webp',
+  'chores/plate-home2.webp',
+  'chores/co-f3-blanketFolded.webp',
+  'chores/co-f3-blanketMessy.webp',
+  'chores/co-f3-bowl.webp',
+  'chores/co-f3-catHappy.webp',
+  'chores/co-f3-catHungry.webp',
+  'chores/co-f3-fire.webp',
+  'chores/co-f3-papers.webp',
+  'chores/co-f3-papersStack.webp',
+  'chores/co-f3-plantHappy.webp',
+  'chores/co-f3-plantSad.webp',
+  'chores/co-f3-sweepings.webp',
+  'chores/plate-home3.webp',
+  'chores/co-f4-balloons.webp',
+  'chores/co-f4-chairFront.webp',
+  'chores/co-f4-cups.webp',
+  'chores/co-f4-footprints.webp',
+  'chores/co-f4-lamp.webp',
+  'chores/co-f4-lights.webp',
+  'chores/co-f4-lightsGlow.webp',
+  'chores/co-f4-puddle.webp',
+  'chores/co-f4-spill.webp',
+  'chores/co-f4-tableFront.webp',
+  'chores/co-f4-towels.webp',
+  'chores/co-f4-towelsHung.webp',
+  'chores/co-f4-tray.webp',
+  'chores/co-f4-view.webp',
+  'chores/co-f4-windowClosed.webp',
+  'chores/co-f4-windowOpen.webp',
+  'chores/plate-home4.webp',
+  'chores/co-fl-bouquet.webp',
+  'chores/co-fl-flowersFresh.webp',
+  'chores/co-fl-flowersWilted.webp',
+  'chores/co-fl-hanging.webp',
+  'chores/co-fl-petals.webp',
+  'chores/co-fl-signClosed.webp',
+  'chores/co-fl-signOpen.webp',
+  'chores/co-fl-stemsLong.webp',
+  'chores/co-fl-stemsTrimmed.webp',
+  'chores/co-fl-tableFront.webp',
+  'chores/plate-flowers.webp',
+  'chores/co-bk-bulb.webp',
+  'chores/co-bk-dough.webp',
+  'chores/co-bk-doughKneaded.webp',
+  'chores/co-bk-flour.webp',
+  'chores/co-bk-loaves.webp',
+  'chores/co-bk-ovenGlow.webp',
+  'chores/co-bk-shutter.webp',
+  'chores/co-bk-traysClean.webp',
+  'chores/co-bk-traysDirty.webp',
+  'chores/plate-bakery.webp',
+  'chores/co-ext-awnings.webp',
+  'chores/co-win-bakery.webp',
+  'chores/co-win-flowers.webp',
+  'chores/co-win-home1.webp',
+  'chores/co-win-home2.webp',
+  'chores/co-win-home3-tv.webp',
+  'chores/co-win-home3.webp',
+  'chores/co-win-home4.webp',
+  'chores/plate-facade.webp'
 ];
 const ART_RE = /\/chores\/[^/?#]+\.webp$/;
 /* Character and story art (Trello c24wjywa): the companions (char-<goal>.png, also the Order Up! customers),

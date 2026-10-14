@@ -6911,6 +6911,7 @@ function load(){
     // Teaching redesign phase 2: Your turn sentences per grammar item (flat map of {text, hits, date})
     if(!merged.progress.yourTurn || typeof merged.progress.yourTurn !== 'object' || Array.isArray(merged.progress.yourTurn)) merged.progress.yourTurn = {};
     if(!merged.progress.useIt || typeof merged.progress.useIt !== 'object' || Array.isArray(merged.progress.useIt)) merged.progress.useIt = {};
+    if(!merged.progress.calibration || typeof merged.progress.calibration !== 'object' || Array.isArray(merged.progress.calibration)) merged.progress.calibration = {};
     // Teaching redesign phase 2: story perspective picks (flat map of {f, why, date})
     if(!merged.progress.storyFeel || typeof merged.progress.storyFeel !== 'object' || Array.isArray(merged.progress.storyFeel)) merged.progress.storyFeel = {};
     // Teaching redesign phase 2: dialogue nodes finished (ids)
@@ -7557,6 +7558,44 @@ function companionPlanHtml(){
     + `<span class="cb-small">${esc(tomorrowPreview())}</span>`
     + (extra ? `<div class="cb-btns"><button class="cb-btn alt" data-action="plan-replay">${L('One more game?','Bir oyun daha?','یک بازی دیگر؟','¿Un juego más?')}</button></div>` : '');
 }
+/* Teaching redesign S1 calibration offer (Trello ALYtdMw2 d). After the first 3 Try beats (scored practice quizzes:
+   grammar, vocab, slang, story) of a roadmap, the first-attempt average decides: 90% or more -> the companion offers one
+   stage up (A1 -> A1.2 -> A2 ...), 35% or less -> one stage earlier. Nothing changes unless the learner taps. One offer per
+   stage roadmap (progress.calibration[stageKey] = {dir, pct, date, answer, shown}); it shows in the Home bubble at the next
+   real action, at most twice. Never for Club learners or inside a course step. */
+const CALIB_UP = 0.9, CALIB_DOWN = 0.35, CALIB_SHOWS = 2;
+function calibShift(p, dir){
+  const li = LEVELS.indexOf(p && p.level), st = (p && p.levelStage) === 2 ? 2 : 1;
+  if(li < 0) return null;
+  if(dir === 'up') return st === 1 ? {level:p.level, levelStage:2} : (li < LEVELS.length - 1 ? {level:LEVELS[li + 1], levelStage:1} : null);
+  if(dir === 'down') return st === 2 ? {level:p.level, levelStage:1} : (li > 0 ? {level:LEVELS[li - 1], levelStage:2} : null);
+  return null;
+}
+function calibCheck(){
+  const p = state.profile, pr = state.progress;
+  if(!p || !p.completedDiagnostic || p.clubCode || inCourseStep()) return;
+  if(!pr.calibration || typeof pr.calibration !== 'object' || Array.isArray(pr.calibration)) pr.calibration = {};
+  const key = stageKeyOf(p);
+  if(pr.calibration[key]) return;
+  const rm = currentRoadmap(), ns = pr.nodeScores || {};
+  if(rm.some(n=>n.type === 'session')) return;
+  const tries = rm.filter(n=>['grammar','vocab','slang','story'].includes(n.type)).map(n=>ns[nodeScoreKey(n.type === 'slang' ? 'vocab' : n.type, n.refId)]).filter(x=>x && typeof x.first === 'number');
+  if(tries.length !== 3) return;
+  const pct = tries.reduce((a, x)=>a + x.first, 0) / 3;
+  const dir = pct >= CALIB_UP ? 'up' : (pct <= CALIB_DOWN ? 'down' : '');
+  pr.calibration[key] = {dir: dir && calibShift(p, dir) ? dir : '', pct:Math.round(pct*100)/100, date:todayISO(), answer:null, shown:0};
+}
+function calibPending(){
+  const p = state.profile, c = state.progress && state.progress.calibration, r = p && c && c[stageKeyOf(p)];
+  return (r && r.dir && !r.answer && (r.shown || 0) < CALIB_SHOWS && !p.clubCode && calibShift(p, r.dir)) ? r : null;
+}
+function calibOfferHtml(){
+  const r = calibPending(); if(!r) return '';
+  r.shown = (r.shown || 0) + 1;
+  const lab = '<bdi>' + esc(displayLevel(calibShift(state.profile, r.dir))) + '</bdi>';
+  return esc(trLine(CALIBRATION[r.dir]))
+    + `<div class="cb-btns"><button class="cb-btn" data-action="calib-move">${r.dir === 'up' ? L(`Move up to ${lab}`, `${lab} seviyesine geç`, `برو به ${lab}`, `Subir a ${lab}`) : L(`Start at ${lab}`, `${lab} seviyesinden başla`, `از ${lab} شروع کن`, `Empezar en ${lab}`)}</button><button class="cb-btn alt" data-action="calib-stay">${L('Stay here','Burada kal','همین‌جا بمان','Quedarme aquí')}</button></div>`;
+}
 function companionBubbleContent(){
   if(isComeback()){
     const name = '<bdi>'+esc(state.profile.name||'')+'</bdi>';
@@ -7567,7 +7606,8 @@ function companionBubbleContent(){
         : L('Your roadmap is right where you left it.','Yol haritan bıraktığın yerde.','نقشه راهت همان‌جایی است که رهایش کردی.','Tu hoja de ruta está donde la dejaste.'));
   }
   // Pack for class (FCgBqtei): a new Club session souvenir is announced once, quietly, in the normal bubble.
-  return clubArrivalHtml() || companionPlanHtml() || null;
+  // S1: a pending calibration offer comes first (ALYtdMw2 d).
+  return calibOfferHtml() || clubArrivalHtml() || companionPlanHtml() || null;
 }
 function checkBadges(){
   BADGES.forEach(b=>{
@@ -9333,7 +9373,7 @@ function showCharTip(motivOnly){
   if(document.getElementById('char-tip') || document.querySelector('.celebrate-overlay')) return false;
   // Gamification v3: the bubble also carries the comeback greeting and today's plan (with buttons).
   const offer = motivOnly ? null : companionBubbleContent();
-  const asksWeekGoal = !!offer && !isComeback() && !state.progress.goalChosen;
+  const asksWeekGoal = !!offer && !isComeback() && (!state.progress.goalChosen || /data-action="calib-move"/.test(offer));
   const text = offer || pickGreeting(state.profile, dueItems().length, charTipRot++);
   const el = document.createElement('div');
   el.className = 'char-tip'; el.id = 'char-tip';
@@ -10130,7 +10170,7 @@ function backToRoadmap(){
   if(state.view !== 'dashboard') go('dashboard');
   else if(held) render();
   // Gamification v3 (M4): the companion comes back with the next step of today's plan.
-  if(todayPlan()){ hideCharTip(true); scheduleCharTips(2600); }
+  if(todayPlan() || calibPending()){ hideCharTip(true); scheduleCharTips(2600); }
   navHistory.length = 0;
 }
 // After every render(): fire the celebration once per finished round (flag is
@@ -19824,6 +19864,7 @@ function completeLessonQuiz(q){
   const arr = progressArrForKind(q.kind);
   if(!arr.includes(q.contextId)) arr.push(q.contextId);
   if(lesson) pr.nodeScores[nodeScoreKey(q.kind, q.contextId)] = {first:Math.round(first*100)/100, tries:round, weak};
+  if(lesson) calibCheck();
   updateSRS(q.contextId, q.kind, first);
   if(weak && !srsIsCourseItem(q.contextId)){ const e = pr.srs[q.contextId]; if(e) srsSetBox(e, 0, 1); }
   q.retryOffered = false; q.weak = weak;
@@ -21330,6 +21371,18 @@ const HANDLERS = {
     if(step) runPlanStep(step); else { render(); scheduleCharTips(400); }
   },
   'plan-step'(){ const step = planNextStep(); if(step) runPlanStep(step); },
+  // S1 calibration (ALYtdMw2 d): move one stage up / earlier, or stay. Only on a tap; a new roadmap for the new stage.
+  'calib-move'(){
+    const p = state.profile, r = calibPending(), to = r && calibShift(p, r.dir);
+    if(!to) return;
+    r.answer = 'move'; r.to = to.level + '.' + to.levelStage;
+    p.level = to.level; p.levelStage = to.levelStage;
+    regenerateRoadmap();
+    markActivity(); save();
+    if(state.view !== 'dashboard') go('dashboard'); else render();
+    window.scrollTo(0,0);
+  },
+  'calib-stay'(){ const r = calibPending(); if(r){ r.answer = 'stay'; save(); } },
   'plan-replay'(){ startReplayGame(); },
   'set-week-goal'(el){
     state.progress.weeklyGoal = [2,3,5].includes(Number(el.dataset.goal)) ? Number(el.dataset.goal) : 3;

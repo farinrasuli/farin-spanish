@@ -273,6 +273,11 @@
 .yt-frame{margin-top:8px; padding:8px 12px; border-radius:12px; background:var(--cat-gram-soft); font-size:14px; font-weight:700; line-height:1.5; color:var(--ink);}
 .yt-saved{margin:10px 0 0; display:flex; align-items:center; gap:6px; font-size:13px; font-weight:700; color:var(--cat-gram);}
 .yt-saved svg{width:15px; height:15px; flex:0 0 auto;}
+.use-frame{margin-top:8px; padding:8px 12px; border-radius:12px; background:var(--cat-voc-soft); font-size:14px; font-weight:700; line-height:1.5; color:var(--ink);}
+.use-chips{margin-top:10px; display:flex; flex-wrap:wrap; gap:6px;}
+.use-chip{display:inline-flex; align-items:center; gap:4px; padding:4px 10px; border-radius:999px; background:var(--success-soft); color:color-mix(in srgb, var(--success) 62%, var(--ink)); font-size:13px; font-weight:700;}
+.use-chip svg{width:13px; height:13px;}
+.use-more{margin:10px 0 0; font-size:13.5px; font-weight:600; color:var(--ink-soft); line-height:1.5;}
 .quiz-type-row .desk-go{width:auto; margin-top:0;}
 .quiz-typed{align-self:center; max-width:100%; border-radius:16px; padding:10px 16px; font-size:17px; font-weight:700; overflow-wrap:anywhere; border:2px solid var(--border); background:var(--bg-elevated); color:var(--ink);}
 .quiz-typed.ok{border-color:var(--success); background:var(--success-soft);}
@@ -6905,6 +6910,7 @@ function load(){
     if(!merged.progress.storyCalls || typeof merged.progress.storyCalls !== 'object') merged.progress.storyCalls = {};
     // Teaching redesign phase 2: Your turn sentences per grammar item (flat map of {text, hits, date})
     if(!merged.progress.yourTurn || typeof merged.progress.yourTurn !== 'object' || Array.isArray(merged.progress.yourTurn)) merged.progress.yourTurn = {};
+    if(!merged.progress.useIt || typeof merged.progress.useIt !== 'object' || Array.isArray(merged.progress.useIt)) merged.progress.useIt = {};
     // Teaching redesign phase 2: story perspective picks (flat map of {f, why, date})
     if(!merged.progress.storyFeel || typeof merged.progress.storyFeel !== 'object' || Array.isArray(merged.progress.storyFeel)) merged.progress.storyFeel = {};
     // Teaching redesign phase 2: dialogue nodes finished (ids)
@@ -9745,6 +9751,7 @@ function souvenirContent(node, ctx){
       }
       out.text = card.word;
       out.meaning = card.meaning || '';
+      { const ur = useItRec(set.id); if(ur && ur.text && !out.keep) out.keep = useItKeep(set, ur); }
     }
   } else if(t === 'story'){
     const s = STORY_LIBRARY.find(x=>x.id===node.refId);
@@ -10145,7 +10152,7 @@ function maybeCelebrate(){
   target._celebrated = true;
   // Gamification v2: award the souvenir now (saved with the round), reveal it in the sequence
   const extra = celebrationExtras(v, vp, kind);
-  if(v === 'quiz'){ const ytGo = yourTurnExit(state.quiz); if(ytGo) extra.onExit = ytGo; }   // teaching redesign phase 2: Try, then Your turn
+  if(v === 'quiz'){ const ytGo = yourTurnExit(state.quiz) || useItExit(state.quiz); if(ytGo) extra.onExit = ytGo; }   // teaching redesign phase 2: Try, then Your turn / Use it
   save();
   setTimeout(()=>{ if(state.view===v) showCelebration(v === 'game-path' ? 'path' : kind, detail, low, extra); }, 900);
 }
@@ -18588,6 +18595,75 @@ function renderVocabList(){
 function ttsButton(text, cls){
   return `<button class="tts-btn ${cls||''}" data-action="speak-word" data-text="${esc(text)}" aria-label="${L('Listen','Dinle','گوش کن','Escuchar')}">${ICONS.soundOn}</button>`;
 }
+/* Teaching redesign phase 2, S4 step 4 "Use it" (Trello ALYtdMw2 c). After a free vocab set's quiz the learner writes
+   2 sentences about their own life with phrases from the set, in the set's useTask frame. A phrase check (typedNorm:
+   case, punctuation and accents never count; a Spanish article may be left out) and error watch (the grammar items of
+   this level the learner has done) run and never block; then the model. The text is kept on the set's souvenir back,
+   which reads the model aloud. Shown under the word list once the set is done (the celebration leads there, useItExit);
+   never in a course step. progress.useIt[setId] = {text, used:[words], hits, date}. */
+function useItRec(id){ const u = state.progress.useIt; return (u && u[id]) || null; }
+function useItUsed(s, text){
+  const hay = ' ' + typedBare(typedNorm(text)) + ' ';
+  return s.cards.filter(c=>[c.word, cardGap(c)].concat(Array.isArray(c.accept) ? c.accept : []).some(w=>{
+    const n = typedBare(typedNoArticle(typedNorm(w)));
+    return n && hay.includes(' ' + n + ' ');
+  })).map(c=>c.word);
+}
+function useItHits(s, text){
+  const out = [];
+  GRAMMAR_ITEMS_FREE.filter(g=>g.level === s.level && g.errorWatch && state.progress.completedTraps.includes(g.id)).forEach(g=>{
+    errorWatchHits(text, g).forEach(h=>{ if(!out.some(x=>x.phrase === h.phrase)) out.push(h); });
+  });
+  return out.slice(0, 3);
+}
+function useItKeep(s, rec){
+  const txt = String((rec && rec.text) || '').trim(), model = String((s.useTask && s.useTask.model) || '').trim();
+  return {src:'use', text:txt.length > 90 ? txt.slice(0, 90).replace(/\s+\S*$/, '') + '…' : txt, say:model || txt,
+    note: model ? {en:'One way to say it: ' + model, tr:'Söylemenin bir yolu: ' + model, fa:'یک راه برای گفتنش: ' + model, es:'Una forma de decirlo: ' + model} : ''};
+}
+function useItSouvenirs(id){ return ((state.progress && state.progress.souvenirs) || []).filter(sv=>sv && (sv.type === 'vocab' || sv.type === 'slang') && svRefId(sv) === id); }
+function useItHtml(s){
+  const ut = s && s.useTask;
+  if(!ut || !ut.prompt || s.course || inCourseStep() || !state.progress.completedVocabSets.includes(s.id)) return '';
+  const rec = useItRec(s.id), editing = !rec || state.viewParams.useEdit === s.id;
+  const head = `<div class="eyebrow" style="color:var(--cat-voc);">${L('Use it','Kullan','به کار ببر','Úsalo')}</div>
+      <p dir="auto" style="margin:6px 0 0; font-size:15px; font-weight:700; line-height:1.5;">${esc(trLine(ut.prompt))}</p>
+      ${ut.frame ? `<div class="use-frame" dir="ltr" translate="no">${esc(ut.frame)}</div>` : ''}`;
+  if(editing) return `<div class="card-flat use-card" style="margin-top:16px; text-align:start;">
+      ${head}
+      <textarea class="story-answer" id="use-input" dir="ltr" translate="no" maxlength="400" placeholder="${esc(ut.frame || L('Write here.','Buraya yaz.','اینجا بنویس.','Escribe aquí.'))}">${esc(rec ? rec.text : '')}</textarea>
+      <button class="btn btn-primary" style="margin-top:8px;" data-action="use-check" data-id="${esc(s.id)}">${L('Check my sentences','Cümlelerimi kontrol et','جمله‌هایم را بررسی کن','Revisar mis frases')}</button>
+    </div>`;
+  const used = useItUsed(s, rec.text), hits = useItHits(s, rec.text);
+  const chips = used.length
+    ? `<div class="use-chips" dir="ltr" translate="no">${used.map(w=>`<span class="use-chip">${ICONS.check} ${esc(w)}</span>`).join('')}</div>`
+    : '';
+  const usedLine = used.length >= 2 ? '' : `<p class="use-more" dir="auto">${esc(used.length ? L('Nice. Next time, try a second phrase from this set.','Güzel. Bir dahaki sefere bu setten ikinci bir ifade dene.','خوبه. دفعهٔ بعد یک عبارت دیگر از این مجموعه هم امتحان کن.','Bien. La próxima vez, prueba una segunda frase de este grupo.') : L('Try to use 2 phrases from this set.','Bu setten 2 ifade kullanmayı dene.','سعی کن ۲ عبارت از این مجموعه به کار ببری.','Intenta usar 2 frases de este grupo.'))}</p>`;
+  const watch = hits.map(h=>`<div class="game-why" style="margin-top:10px;"><img src="char-${learnerCharKey()}.png" alt=""><div dir="auto"><b>${esc(L('Check this','Şuna bak','این را بررسی کن','Revisa esto'))}:</b> "${esc(h.phrase)}" · ${esc(trLine(h.fix))}</div></div>`).join('');
+  return `<div class="card-flat use-card" style="margin-top:16px; text-align:start;">
+      ${head}
+      <div class="phrase-mean" dir="ltr" translate="no" style="margin-top:8px; font-style:italic; white-space:pre-line;">${esc(rec.text)}</div>
+      ${chips}${usedLine}${watch}
+      ${ut.model ? `<div class="gx-tip" style="margin-top:12px;"><button type="button" class="icon-btn" data-action="speak-sentence" data-text="${esc(ut.model)}" style="flex:0 0 auto; background:var(--cat-voc-soft); color:var(--cat-voc); border-radius:50%; width:30px; height:30px; display:flex; align-items:center; justify-content:center; border:none;">${ICONS.soundOn}</button><div style="min-width:0;"><div class="gx-label" style="margin-bottom:4px;">${L('One way to say it','Söylemenin bir yolu','یک راه برای گفتنش','Una forma de decirlo')}</div><div dir="ltr" translate="no" style="font-size:14.5px; font-weight:700; line-height:1.5;">${esc(ut.model)}</div></div></div>` : ''}
+      ${useItSouvenirs(s.id).length ? `<p class="yt-saved" style="color:var(--cat-voc);">${ICONS.star} ${esc(L('Saved on the back of this step’s souvenir.','Bu adımın hatırasının arkasına kaydedildi.','پشت یادگاری این قدم ذخیره شد.','Guardado en el reverso del recuerdo de este paso.'))}</p>` : ''}
+      <button class="btn btn-ghost" style="margin-top:10px;" data-action="use-edit" data-id="${esc(s.id)}">${L('Change my sentences','Cümlelerimi değiştir','جمله‌هایم را عوض کن','Cambiar mis frases')}</button>
+    </div>`;
+}
+// After a free vocab set's quiz the celebration leads to Use it (S4: Try, then Use) while it is not written yet.
+function useItExit(q){
+  if(!q || q.kind !== 'vocab' || !q.contextId || inCourseStep()) return null;
+  const s = VOCAB_SETS.find(x=>x.id===q.contextId);
+  if(!s || s.course || !s.useTask || useItRec(s.id) || roadmapAllDone()) return null;
+  return ()=>{
+    clearTimeout(celebrateTimer); celebrateTimer = null;
+    clearCelebrateSeq(); celebrateSeq = null;
+    document.querySelectorAll('.celebrate-overlay').forEach(n=>n.remove());
+    navHistory.length = 0;
+    state.view = 'dashboard'; state.viewParams = {};   // Back from the word list lands on the roadmap
+    go('vocab-set-intro', {id:s.id, goal:q.goal || ''});
+    const c = document.querySelector('.use-card'); if(c) c.scrollIntoView({block:'center'});
+  };
+}
 function renderVocabSetIntro(id){
   const s = VOCAB_SETS.find(x=>x.id===id);
   if(!s) return renderNotFound();
@@ -18618,6 +18694,7 @@ function renderVocabSetIntro(id){
         `).join('')}
       </div>
       <button class="btn btn-primary" style="margin-top:16px;" data-action="nav" data-view="vocab-set" data-id="${s.id}">${L('Start flashcards','Kartlara başla','شروع فلش‌کارت‌ها', 'Empezar las tarjetas')}</button>
+      ${useItHtml(s)}
       ${crossOfferHtml(s)}
     </div>
   </div>`;
@@ -19447,9 +19524,25 @@ function vocabQuizQuestions(s){
     return Object.assign({qt:'tf', prompt: tfLabel+'\n"'+filled+'"', options: opts, correct: opts.indexOf(answer), why: whyOf(c)}, ansFor(c));
   };
   const generators = [fillQ, reverseQ, tfQ];
-  const chosenCards = shuffle(s.cards).slice(0, 10);
+  // Teaching redesign S4 (ALYtdMw2 c): a free set ends with 3 cued-recall questions (meaning + the sentence with a gap +
+  // the first letter; the learner types it, typedMatch against card.accept). Recognition first, recall last. The cards
+  // come from the deck sort first ("Show me again" twice, then once), so the sort stays the only rating.
+  const recallLabel = (c, f) => { const m = L(c.meaning.en, c.meaning.tr, c.meaning.fa, c.meaning.es) || c.meaning.en || ''; return L(`${m} · first letter: ${f}`, `${m} · ilk harf: ${f}`, `${m} · حرف اول: ${f}`, `${m} · primera letra: ${f}`); };
+  const recallQ = c => {
+    const m = String(c.sentence).match(cardGapRe(c)), gapTxt = m ? m[2] : cardGap(c);
+    const f = (gapTxt.match(/\p{L}/u) || [gapTxt.charAt(0)])[0];
+    const acc = (Array.isArray(c.accept) && c.accept.length ? c.accept : [c.word]).concat([gapTxt]).map(x=>String(x).toLowerCase().trim()).filter((x,i,a)=>x && a.indexOf(x)===i);
+    return Object.assign({qt:'type', prompt:recallLabel(c, f) + '\n' + blankOf(c), options:[gapTxt], correct:0, accept:acc, why:whyOf(c)}, ansFor(c));
+  };
+  let recall = [];
+  if(!s.course){
+    const ds = deckSortFor(s.id), again = ds ? (ds.twice || []).concat(ds.again || []) : [];
+    const pool = s.cards.filter(c=>cardHasGap(c));
+    recall = shuffle(pool.filter(c=>again.includes(c.word))).concat(shuffle(pool.filter(c=>!again.includes(c.word)))).slice(0, 3);
+  }
+  const chosenCards = shuffle(s.cards.filter(c=>!recall.includes(c))).slice(0, 10 - recall.length);
   const questions = chosenCards.map((c,i)=> cardHasGap(c) ? generators[i % generators.length](c, i) : meaningQ(c));
-  return shuffle(questions);
+  return shuffle(questions).concat(shuffle(recall).map(recallQ));
 }
 // Teaching redesign phase 1 (B1): the story data keeps the right answer at index 0
 // (simple to author), so the options are shuffled here and `correct` recomputed.
@@ -20937,6 +21030,20 @@ const HANDLERS = {
     markActivity(); save(); render();
   },
   'yt-edit'(el){ state.viewParams.ytEdit = el.dataset.id; render(); },
+  // Teaching redesign phase 2: vocab Use it (useItHtml)
+  'use-check'(el){
+    const ta = document.getElementById('use-input'), text = ta ? ta.value.trim() : '';
+    if(!text){ if(ta) anim(ta, [{transform:'translateX(0)'},{transform:'translateX(-4px)'},{transform:'translateX(4px)'},{transform:'translateX(0)'}], {duration:240}); return; }
+    const s = VOCAB_SETS.find(x=>x.id===el.dataset.id); if(!s) return;
+    if(!state.progress.useIt || typeof state.progress.useIt !== 'object' || Array.isArray(state.progress.useIt)) state.progress.useIt = {};
+    const rec = state.progress.useIt[s.id] = {text:text.slice(0, 400), used:useItUsed(s, text), hits:useItHits(s, text).length, date:todayISO()};
+    const keep = useItKeep(s, rec);
+    useItSouvenirs(s.id).forEach(sv=>{ if(!sv.keep || sv.keep.src === 'use') sv.keep = keep; });   // a slang "Say this when…" back stays
+    state.viewParams.useEdit = null;
+    if(rec.used.length){ sfx('reveal'); queueFx(()=>{ const c = document.querySelector('.use-chips'); if(c) anim(c, [{transform:'scale(.96)', opacity:.4}, {transform:'scale(1)', opacity:1}], {duration:260, easing:SPRING}); }); }
+    markActivity(); save(); render();
+  },
+  'use-edit'(el){ state.viewParams.useEdit = el.dataset.id; render(); },
   'open-speaking-session'(el){
     markSpeakingTopicUsed(el.dataset.topicId);
     window.top.location.href = el.dataset.walink;

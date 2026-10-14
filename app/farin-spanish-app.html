@@ -269,6 +269,11 @@
   .build-tile{min-height:50px; box-sizing:border-box; padding:6px 18px; border-radius:16px; border:2px solid var(--border); background:var(--bg-elevated); color:var(--ink); box-shadow:var(--clay-shadow-soft); font-family:'Fredoka',-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; font-weight:700; font-size:19px; cursor:pointer;}
   .build-tile:active{transform:scale(.97);}
   .build-tile.used{visibility:hidden;}
+.quiz-type-row{margin-top:2px;}
+.quiz-type-row .desk-go{width:auto; margin-top:0;}
+.quiz-typed{align-self:center; max-width:100%; border-radius:16px; padding:10px 16px; font-size:17px; font-weight:700; overflow-wrap:anywhere; border:2px solid var(--border); background:var(--bg-elevated); color:var(--ink);}
+.quiz-typed.ok{border-color:var(--success); background:var(--success-soft);}
+.quiz-typed.no{border-color:var(--error); background:var(--error-soft); text-decoration:line-through;}
   .build-solved{display:inline-block; background:var(--success-soft); border:2px solid var(--success); color:color-mix(in srgb, var(--success) 62%, var(--ink)); border-radius:18px; padding:10px 16px; font-family:'Fredoka',-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; font-weight:700; font-size:22px; line-height:1.35; cursor:pointer;}
   .tts-btn{border:none; cursor:pointer; display:inline-flex; align-items:center; justify-content:center; width:34px; height:34px; border-radius:50%; background:var(--cat-voc-soft); color:var(--cat-voc); flex:0 0 auto; padding:0; margin-inline-start:auto;}
   .tts-btn svg{width:17px; height:17px;}
@@ -7897,6 +7902,64 @@ function cardGap(c){ return (c && c.gap) || c.word; }
 function cardGapRe(c){ return new RegExp('(^|[^\\p{L}\\p{N}])(' + reEsc(cardGap(c)) + ')', 'iu'); }
 function cardHasGap(c){ return !!(c && c.sentence && cardGap(c) && cardGapRe(c).test(c.sentence)); }
 function cardBlank(c, gap){ return String(c.sentence).replace(cardGapRe(c), (m, pre)=>pre + (gap || '_____')); }
+/* Teaching redesign X3 (Trello ALYtdMw2): the one typed-answer matcher, used by every typed answer (grammar `type`
+   items, vocab cued recall, the Use it chunk check). Case, punctuation and extra spaces never count. An answer that
+   differs only in its accents is "almost": it counts as right and the feedback shows the accent. One wrong, missing,
+   extra or swapped letter in one word of 6+ letters is a typo: it counts as right and the spelling is shown. In the
+   Spanish app the article (el, la, los, las, un, una, unos, unas) may be left out; when both sides have one, it must
+   match. In the English app contractions read as their long form (don't = do not). Returns {ok, near:'accent'|'typo'|'',
+   answer} with answer = the accepted form that matched. */
+const TYPED_ARTICLES = ['el','la','los','las','un','una','unos','unas'];
+function typedLang(){ return String(TTS_LANG || 'en').slice(0, 2); }
+function typedNorm(s){
+  let t = String(s == null ? '' : s).normalize('NFC').toLowerCase().replace(/[’‘`´]/g, "'");
+  if(typedLang() === 'en') t = t.replace(/\bcan't\b/g, 'can not').replace(/\bcannot\b/g, 'can not').replace(/\bwon't\b/g, 'will not').replace(/\bshan't\b/g, 'shall not')
+    .replace(/n't\b/g, ' not').replace(/'re\b/g, ' are').replace(/'m\b/g, ' am').replace(/'ll\b/g, ' will').replace(/'ve\b/g, ' have')
+    .replace(/\b(it|he|she|that|what|there|here|who|where)'s\b/g, '$1 is');
+  return t.replace(/[^\p{L}\p{N}\s]+/gu, ' ').replace(/\s+/g, ' ').trim();
+}
+function typedBare(s){ return String(s).normalize('NFD').replace(/\p{M}+/gu, '').normalize('NFC'); }
+function typedNoArticle(s){ if(typedLang() !== 'es') return s; const w = s.split(' '); return (w.length > 1 && TYPED_ARTICLES.includes(w[0])) ? w.slice(1).join(' ') : s; }
+function typedDist(a, b){
+  const m = a.length, n = b.length; let prev = Array.from({length:n + 1}, (_, j)=>j);
+  for(let i = 1; i <= m; i++){ const cur = [i]; for(let j = 1; j <= n; j++) cur[j] = Math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1)); prev = cur; }
+  return prev[n];
+}
+// one edit (or two neighbouring letters swapped) in exactly one word, and that word has 6+ letters
+function typedTypo(x, y){
+  const xa = x.split(' '), ya = y.split(' ');
+  if(xa.length !== ya.length) return false;
+  const d = ya.map((w, i)=>w !== xa[i] ? i : -1).filter(i=>i >= 0);
+  if(d.length !== 1) return false;
+  const a = xa[d[0]], b = ya[d[0]];
+  if(b.length < 6) return false;
+  if(typedDist(a, b) === 1) return true;
+  if(a.length !== b.length) return false;
+  const k = [...b].map((c, i)=>c !== a[i] ? i : -1).filter(i=>i >= 0);
+  return k.length === 2 && k[1] === k[0] + 1 && a[k[0]] === b[k[1]] && a[k[1]] === b[k[0]];
+}
+function typedPairs(input, accepts){
+  const inp = typedNorm(input);
+  return (accepts || []).map(a=>String(a == null ? '' : a)).filter(Boolean).map(a=>{
+    const n = typedNorm(a), both = typedNoArticle(inp) !== inp && typedNoArticle(n) !== n;
+    return {a, x: both ? inp : typedNoArticle(inp), y: both ? n : typedNoArticle(n)};
+  }).filter(p=>p.x && p.y);
+}
+function typedMatch(input, accepts){
+  // an answer that is only a symbol ("-" for no article) is compared as typed
+  const raw = String(input == null ? '' : input).trim(), sym = (accepts || []).map(String).find(x=>x.trim() && !typedNorm(x) && x.trim() === raw);
+  if(sym) return {ok:true, near:'', answer:sym};
+  const pairs = typedPairs(input, accepts);
+  let p = pairs.find(p=>p.x === p.y);
+  if(p) return {ok:true, near:'', answer:p.a};
+  p = pairs.find(p=>typedBare(p.x) === typedBare(p.y));
+  if(p) return {ok:true, near:'accent', answer:p.a};
+  p = pairs.find(p=>typedTypo(typedBare(p.x), typedBare(p.y)));
+  if(p) return {ok:true, near:'typo', answer:p.a};
+  return {ok:false, near:'', answer:''};
+}
+// A wrong typed answer that is close to an accepted one (X6: "So close: check the spelling").
+function typedClose(input, accepts){ return typedPairs(input, accepts).some(p=>typedDist(typedBare(p.x), typedBare(p.y)) <= 2); }
 function highlightWord(sentence, word, meaning){
   const re = new RegExp(word.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'), 'i');
   const m = sentence.match(re);
@@ -19254,8 +19317,25 @@ function grammarQuizQuestions(item){
     });
     return qs;
   };
+  // Teaching redesign item 12: practice[] slots 5-8 (build, type, type, type). Same option shape as the rest: options:[answer], correct:0.
+  const buildLabel = L('Put the words in order.','Kelimeleri sıraya koy.','کلمه‌ها را به ترتیب بچین.','Ordena las palabras.');
+  const fillAns = (s, w) => { const t = String(s); w = String(w); if(/^\s*_{2,}/.test(t)) w = w.charAt(0).toUpperCase() + w.slice(1); return t.replace(/_{2,}(\s*\([^)]*\))?/, w); };
+  const buildQ = p => {
+    const words = p.words.map(String);
+    let order = shuffle(words.map((_, i)=>i));
+    for(let t = 0; t < 6 && order.every((k, i)=>words[k] === words[i]); t++) order = shuffle(order);   // never already in order
+    const q = {qt:'build', prompt:buildLabel, tiles:order.map(i=>words[i]), words, options:[String(p.answer)], correct:0, why, key:norm(p.answer), answerText:String(p.answer)};
+    if(p.translation) q.answerTr = p.translation;
+    return q;
+  };
+  const typeQ = p => {
+    const acc = p.accept.map(String), first = /^\s*_{2,}/.test(String(p.sentence)) ? acc[0].charAt(0).toUpperCase() + acc[0].slice(1) : acc[0];
+    const q = {qt:'type', prompt:p.sentence, options:[first], correct:0, accept:acc, typeHint:p.hint || null, why, key:norm(fillAns(p.sentence, acc[0])), answerText:fillAns(p.sentence, acc[0])};
+    if(p.translation) q.answerTr = p.translation;
+    return q;
+  };
   const fromPractice = () => {
-    const out = {fill:[], meaning:[], fix:[]};
+    const out = {fill:[], meaning:[], fix:[], build:[], type:[]};
     (item.practice || []).forEach(p=>{
       if(!p) return;
       if(p.type === 'fill' && goodBlank(p)) out.fill.push(mk(p.sentence, p.word, uniq(p.distractors), fillIn(p.sentence, p.word), o=>dwText(p.distractorWhy, o), p.translation));
@@ -19266,8 +19346,11 @@ function grammarQuizQuestions(item){
         { const mq = mk(prompt, opts[ci], opts.filter((o,i)=>i !== ci), prompt, null, p.translation); mq.answerText = opts[ci]; out.meaning.push(mq); }
       }
       else if(p.type === 'fix' && p.right && p.distractors && p.distractors.length >= 2) out.fix.push(mk(fixLabel + '\n"' + p.wrong + '"', p.right, uniq(p.distractors), p.right, null, p.translation));
+      else if(p.type === 'build' && Array.isArray(p.words) && p.words.length >= 2 && p.answer) out.build.push(buildQ(p));
+      else if(p.type === 'type' && p.sentence && /_{2,}/.test(String(p.sentence)) && Array.isArray(p.accept) && p.accept.length) out.type.push(typeQ(p));
     });
-    return [].concat(out.fill.slice(0, 2), out.meaning.slice(0, 1), out.fix.slice(0, 1), out.fill.slice(2), out.meaning.slice(1), out.fix.slice(1));
+    // S3 order: fill, fill, meaning, fix, build, type, type, type; extras (goal practice comes first) after them
+    return [].concat(out.fill.slice(0, 2), out.meaning.slice(0, 1), out.fix.slice(0, 1), out.build.slice(0, 1), out.type.slice(0, 3), out.fill.slice(2), out.meaning.slice(1), out.fix.slice(1), out.build.slice(1), out.type.slice(3));
   };
   // Never the same sentence twice in a row.
   const spread = qs => {
@@ -19759,6 +19842,10 @@ function quizHintText(q, item){
   const own = item.hints && item.hints[i];
   const dot = t => /[.!?؟…]$/.test(String(t).trim()) ? String(t).trim() : String(t).trim() + '.';
   if(own) return lead + dot(own) + tail;
+  // item 12: a typed answer close to an accepted one, else the item's own hint; a build keeps its right first words
+  if(item.qt === 'type' && q.typed && q.typed.close) return lead + L('So close: check the spelling.','Çok yaklaştın: yazılışına bak.','خیلی نزدیک بود: املایش را نگاه کن.','Casi: revisa cómo se escribe.') + tail;
+  if(item.qt === 'type' && item.typeHint && trLine(item.typeHint)) return lead + dot(trLine(item.typeHint)) + tail;
+  if(item.qt === 'build') return lead + L('The green words are right. Put the rest in order.','Yeşil kelimeler doğru. Gerisini sıraya koy.','کلمه‌های سبز درست‌اند. بقیه را به ترتیب بچین.','Las palabras verdes están bien. Ordena el resto.') + tail;
   if(q.kind === 'grammar'){
     const gap = /_{3,}/.test(String(item.prompt||''));
     return lead + (gap
@@ -19814,6 +19901,70 @@ function fxProveMorph(from){
   anim(el, [{transform:`translate(${from.left - to.left}px, ${from.top - to.top}px) scale(${from.width / to.width}, ${from.height / to.height})`, opacity:.5}, {transform:'translate(0,0) scale(1)', opacity:1}], {duration:380, easing:SPRING});
 }
 
+/* Teaching redesign phase 2, item 12 (Trello ALYtdMw2): the quiz engine's two new question types.
+   qt 'type': a sentence with a gap, the learner types the missing form (typedMatch). qt 'build': the learner taps word
+   tiles into order (Build It's tiles). Both keep the option shape (options:[answer], correct:0) so the score, the
+   results, the banner and the souvenir read them like any other question. X6 still holds: in a lesson quiz the first
+   miss gives a hint and one more try (a build keeps its right first words), the second shows the answer, the score
+   counts first attempts only. */
+function quizBuildState(q, item){
+  if(!q.bp || q.bp.index !== q.index) q.bp = {index:q.index, placed:[], lock:0};
+  return q.bp;
+}
+function quizBuildHtml(q, item){
+  const label = `<p class="game-hint" style="margin:0 0 10px;">${esc(item.prompt)}</p>`;
+  if(q.answered) return label + `<p class="game-sentence${String(item.answerText).length > 52 ? ' long' : ''}" dir="ltr" translate="no"><span class="trap-fill"${q.selected === item.correct ? ' id="trap-fill"' : ''}>${esc(item.answerText)}</span></p>`;
+  const bp = quizBuildState(q, item);
+  const line = bp.placed.map((ti, k)=>k < bp.lock
+    ? `<span class="build-word ok">${esc(item.tiles[ti])}</span>`
+    : `<button class="build-slot filled" data-action="quiz-build-back" data-k="${k}">${esc(item.tiles[ti])}</button>`).join('');
+  return label + `<div class="build-line" id="quiz-build-line" dir="ltr" translate="no">${line || '<span class="build-mark">…</span>'}</div>`;
+}
+function quizBuildTrayHtml(q, item){
+  if(q.answered) return '';
+  const bp = quizBuildState(q, item);
+  return `<div class="build-tray" dir="ltr" translate="no">${item.tiles.map((t, i)=>{ const used = bp.placed.includes(i);
+    return `<button class="build-tile${used ? ' used' : ''}" data-action="quiz-build-tile" data-i="${i}" ${used ? 'disabled' : ''}>${esc(t)}</button>`; }).join('')}</div>`;
+}
+function quizTypeHtml(q, item){
+  const t = q.typed && q.typed.index === q.index ? q.typed : null;
+  if(q.answered) return t ? `<div class="quiz-typed${t.ok ? ' ok' : ' no'}" dir="ltr" translate="no">${esc(t.value)}</div>` : '';
+  return `<div class="desk-input-row quiz-type-row" translate="no">
+      <input id="quiz-type-input" class="game-input" type="text" dir="ltr" lang="${typedLang()}" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" maxlength="80" placeholder="${esc(L('Type it here','Buraya yaz','اینجا بنویس','Escríbelo aquí'))}" value="${esc(t ? t.value : '')}">
+      <button class="btn btn-primary desk-go" data-action="quiz-type-check">${L('Check','Kontrol et','بررسی کن','Comprobar')}</button>
+    </div>`;
+}
+// Right with an accent or a typo: the answer is shown with the correct spelling.
+function quizTypedNoteHtml(q, item){
+  const t = q.typed && q.typed.index === q.index ? q.typed : null;
+  if(!q.answered || !t || !t.ok || !t.near) return '';
+  const a = t.answer || item.options[item.correct];
+  const line = t.near === 'accent'
+    ? L('Right, watch the accent: ','Doğru, aksan işaretine dikkat: ','درسته، به علامت روی حرف دقت کن: ','Bien, ojo con la tilde: ')
+    : L('Right, check the spelling: ','Doğru, yazılışına dikkat: ','درسته، به املایش دقت کن: ','Bien, revisa cómo se escribe: ');
+  return `<div class="game-why"><img src="char-${learnerCharKey()}.png" alt=""><div dir="auto">${esc(line)}<b dir="ltr" translate="no">${esc(a)}</b></div></div>`;
+}
+// One answer for a typed or built question, under the same rules as 'quiz-answer' (X6 retry, first attempts score).
+function quizSettle(q, it, ok, e, el){
+  if(!q.results) q.results = [];
+  const miss = q.miss || [];
+  if(LESSON_KINDS.includes(q.kind) && !miss.length && !ok){
+    q.miss = [-1]; q.results[q.index] = false; q.streak = 0;
+    queueFx(()=>{ sfx('wrong'); companionOops(); anim(document.getElementById(it.qt === 'type' ? 'quiz-type-input' : 'quiz-build-line'), [{transform:'translateX(0)'},{transform:'translateX(-6px)'},{transform:'translateX(6px)'},{transform:'translateX(0)'}], {duration:240}); });
+    save(); render();
+    return;
+  }
+  q.answered = true; q.selected = ok ? it.correct : -1;
+  if(!miss.length){
+    if(ok) q.correct++;
+    q.results[q.index] = ok;
+    q.streak = ok ? (q.streak||0) + 1 : 0;
+  }
+  { const word = it.options[it.correct], pt = tapPoint(e) || centerOf(el), streak = q.streak; queueFx(()=>fxQuizAnswer(-1, pt, ok, streak, word)); }
+  proveArm(q, !miss.length && ok);
+  save(); render();
+}
+
 function renderQuiz(){
   const q = state.quiz;
   const item = q.questions[q.index];
@@ -19830,10 +19981,11 @@ function renderQuiz(){
     </div>
     ${q.round === 2 ? `<p class="game-hint" style="margin:0;">${L('Practise again','Tekrar çalış','دوباره تمرین کن','Practicar otra vez')}</p>` : ''}
     <div class="game-card${longOpts ? ' tight' : ''}" translate="no">
-      ${quizPromptHtml(item, q)}
+      ${item.qt === 'build' ? quizBuildHtml(q, item) : quizPromptHtml(item, q)}
     </div>
+    ${item.qt === 'build' ? quizBuildTrayHtml(q, item) : (item.qt === 'type' ? quizTypeHtml(q, item) : '')}
     <div class="game-opts" translate="no">
-      ${item.options.map((opt,i)=>{
+      ${(item.qt === 'build' || item.qt === 'type') ? '' : item.options.map((opt,i)=>{
         let cls = 'game-opt' + (longOpts ? ' long' : '');
         const missed = (q.miss||[]).includes(i);
         if(q.answered){
@@ -19847,6 +19999,7 @@ function renderQuiz(){
     ${!q.answered && (q.miss||[]).length ? `<div class="game-why"><img src="char-${learnerCharKey()}.png" alt=""><div dir="ltr">${esc(quizHintText(q, item))}</div></div>` : ''}
     ${q.answered ? `
       ${answerBannerHtml(item, q.results && q.results[q.index] === true, q.selected)}
+      ${quizTypedNoteHtml(q, item)}
       ${proveHtml(q)}
       <button class="btn btn-primary game-cta" data-action="quiz-next">${q.index+1 < q.questions.length ? L('Next question','Sonraki soru','سوال بعدی','Siguiente pregunta') : L('See results','Sonuçları gör','دیدن نتایج','Ver resultados')}</button>
     ` : ''}
@@ -22020,6 +22173,37 @@ const HANDLERS = {
     proveArm(q, !miss.length && isCorrect);
     save(); render();
   },
+  // Teaching redesign item 12: a typed answer (qt 'type'), checked by typedMatch.
+  'quiz-type-check'(el, e){
+    const q = state.quiz; if(!q || q.answered) return;
+    const it = q.questions[q.index]; if(!it || it.qt !== 'type') return;
+    const inp = document.getElementById('quiz-type-input'), value = inp ? inp.value.trim() : '';
+    if(!value){ if(inp){ anim(inp, [{transform:'translateX(0)'},{transform:'translateX(-4px)'},{transform:'translateX(4px)'},{transform:'translateX(0)'}], {duration:240}); inp.focus(); } return; }
+    const m = typedMatch(value, it.accept);
+    q.typed = {index:q.index, value:value.slice(0, 80), ok:m.ok, near:m.near, answer:m.answer, close:!m.ok && typedClose(value, it.accept)};
+    quizSettle(q, it, m.ok, e, el);
+  },
+  // Teaching redesign item 12: built answers (qt 'build'). A tile goes to the end of the line; a placed word goes back.
+  'quiz-build-tile'(el, e){
+    const q = state.quiz; if(!q || q.answered) return;
+    const it = q.questions[q.index]; if(!it || it.qt !== 'build') return;
+    const bp = quizBuildState(q, it), i = +el.dataset.i;
+    if(!(i >= 0 && i < it.tiles.length) || bp.placed.includes(i)) return;
+    bp.placed.push(i); sfx('tick');
+    if(bp.placed.length < it.tiles.length){ save(); render(); return; }
+    const want = it.words.map(w=>typedNorm(w)), got = bp.placed.map(k=>typedNorm(it.tiles[k]));
+    const ok = got.join(' ') === want.join(' ');
+    if(!ok){ let k = 0; while(k < got.length && got[k] === want[k]) k++; bp.lock = k; bp.placed = bp.placed.slice(0, k); }
+    quizSettle(q, it, ok, e, el);
+  },
+  'quiz-build-back'(el){
+    const q = state.quiz; if(!q || q.answered) return;
+    const it = q.questions[q.index]; if(!it || it.qt !== 'build') return;
+    const bp = quizBuildState(q, it), k = +el.dataset.k;
+    if(!(k >= bp.lock && k < bp.placed.length)) return;
+    bp.placed.splice(k, 1); sfx('tick');
+    save(); render();
+  },
   // X1: one "Practise again" round — the misses (options reshuffled) plus fresh questions.
   'quiz-retry'(){
     const q = state.quiz;
@@ -22049,7 +22233,7 @@ const HANDLERS = {
   },
   'quiz-next'(){
     const q = state.quiz;
-    q.index++; q.answered = false; q.selected = null; q.miss = null;
+    q.index++; q.answered = false; q.selected = null; q.miss = null; q.typed = null; q.bp = null;
     if(q.index < q.questions.length){
       q.timeLimit = questionTimeLimit(q.questions[q.index]);
       q.deadline = quizTimed(q.kind) ? Date.now() + q.timeLimit*1000 : null;
@@ -25938,6 +26122,14 @@ try{ document.addEventListener('keydown', function(e){
 
 // Order Up!: from B1 the shelf hides the word under each item; holding a tile peeks at it (the tap that follows doesn't drop it).
 try{ document.addEventListener('pointerdown', orderPeekStart); document.addEventListener('pointerup', orderPeekEnd); document.addEventListener('pointercancel', orderPeekEnd); }catch(e){}
+
+// Typed quiz answers (teaching redesign item 12): Enter checks.
+try{ document.addEventListener('keydown', function(e){
+  if(e.key !== 'Enter' || state.view !== 'quiz' || !e.target || e.target.id !== 'quiz-type-input') return;
+  e.preventDefault();
+  const b = document.querySelector('[data-action="quiz-type-check"]');
+  if(b) HANDLERS['quiz-type-check'](b, e);
+}); }catch(e){}
 
 // Passport Desk / Magic Words: Enter in the typing box confirms.
 try{ document.addEventListener('keydown', function(e){

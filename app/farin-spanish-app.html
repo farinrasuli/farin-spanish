@@ -9521,7 +9521,7 @@ function ensureGolden(roadmap){
   return pr.roadmapGolden;
 }
 function gameDisplayName(kind){
-  if(kind === 'path') return L('Story Path','Hikâye Yolu','مسیر داستان','Senda');
+  if(kind === 'path') return L('Your Call','Karar Senin','تصمیم با تو','Tú decides');
   if(kind === 'build') return L('Build It','Cümle Kur','جمله بساز','Constrúyelo');
   if(kind === 'cross') return L('Mini Cross','Mini Bulmaca','جدول کوچک','Minicrucigrama');
   if(kind === 'order') return L('Order Up!','Sipariş Hazır!','سفارش حاضر!','¡Marchando!');
@@ -17593,7 +17593,7 @@ function renderGamePath(){
       ${status}
       <div class="game-card tight sp-card badge-unlock-shine">
         <div class="game-result-title">${esc(svText(c.title))}</div>
-        <p class="game-result-line">${n === PATH_CH ? L('This summer is part of your story now.','Bu yaz artık hikâyenin bir parçası.','این تابستان حالا بخشی از داستان توست.','Este verano ya es parte de tu historia.') : L(`Chapter ${n} is part of your story now.`, `${n}. bölüm artık hikâyenin bir parçası.`, `فصل ${n} حالا بخشی از داستان توست.`, `El capítulo ${n} ya es parte de tu historia.`)}</p>
+        <p class="game-result-line">${n === PATH_CH ? L('This summer is part of your story now.','Bu yaz artık hikâyenin bir parçası.','این تابستان حالا بخشی از داستان توست.','Este verano ya es parte de tu historia.') : L(`Chapter ${n} is finished.`, `${n}. bölüm bitti.`, `فصل ${n} تمام شد.`, `El capítulo ${n} ha terminado.`)}</p>
         ${n === PATH_CH ? pathRibbonHtml(pathRoundChoices(round)) : ''}
         <div class="sp-said-list">${said}</div>
         ${gameDoneCta(true)}
@@ -17697,8 +17697,8 @@ function pathAct(kind, el){
 }
 // Arc completion is recognised once per level (only while Story Path is live, so a dormant game adds nothing to the trophy case).
 if(PATH_LIVE) Object.keys(STORY_PATH.lane).forEach(lv=>BADGES.push({id:'path-' + lv, icon:'book',
-  title:{en:'Story Path ' + lv, tr:'Hikâye Yolu ' + lv, fa:'مسیر داستان ' + lv, es:'Senda ' + lv},
-  desc:{en:'Finish the ' + lv + ' summer of Story Path.', tr:'Hikâye Yolu\'nun ' + lv + ' yazını bitir.', fa:'تابستانِ ' + lv + ' مسیر داستان را تمام کن.', es:'Termina el verano ' + lv + ' de la Senda.'},
+  title:{en:'Your Call · ' + lv, tr:'Karar Senin · ' + lv, fa:'تصمیم با تو · ' + lv, es:'Tú decides · ' + lv},
+  desc:{en:'Finish the ' + lv + ' summer in Your Call.', tr:'Karar Senin oyununda ' + lv + ' yazını bitir.', fa:'تابستانِ ' + lv + ' را در «تصمیم با تو» تمام کن.', es:'Termina el verano ' + lv + ' en «Tú decides».'},
   check:(st)=>!!(st.progress.path && Array.isArray(st.progress.path.history) && st.progress.path.history.some(h=>h && h.level === lv && h.done))}));
 /* ---- Cozy Chores: game shell — building (pick a place) → room (look → do → done) ----
    One place per card; only the places in CHORES_OPEN can be played. Difficulty lives in the

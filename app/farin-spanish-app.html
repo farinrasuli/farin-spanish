@@ -9194,20 +9194,30 @@ const PATH_FALLBACK = {
   B2:{ s1:[null,'cross',    'build'], s2:['desk','echo','bingo'] },
   C1:{ s1:[null,'dictation','order'], s2:['build','spell','dictation'] }
 };
-/* Story Path (Trello RzlovAPw) is built but dormant: Farin chose to wait for the painted scenes
-   (story-path-DRAFT.md §12 E). PATH_LIVE = true puts its chapters into positions 0/1/4 of NEW
-   roadmaps at every level that has STORY_PATH content (A1, A2) and lists it on the Games shelf.
+/* Story Path ("Your Call", Trello RzlovAPw) is live since 2026-10-14 (AlgNvFej): Farin approved the painted
+   scenes on DGiapNTx, which ends the wait of story-path-DRAFT.md §12 E. PATH_LIVE = true puts its chapters
+   into positions 0/1/4 of NEW roadmaps at every level that has STORY_PATH content (A1, A2) and lists it on the
+   Games shelf once a chapter has been played; saved roadmaps keep the PATH_FALLBACK games they were made with.
    Cozy Chores (Trello 8JAiLuV7) is live since 2026-10-10 (Farin: "yes" to the painted kitchen,
    card w2xFYHot; "open one completed section and then build the next room", card nAy64bBS D2):
    NEW roadmaps get its own positions above, saved roadmaps keep their nodes. CHORES_OPEN lists the
    places that can be played (all six since 2026-10-14); a place left out shows on the building as a
    dimmed name with a lock and is never picked. Add a place id there once its painted files are in
    chores/ (and in farin-sw.js). */
-const PATH_LIVE = false;
+const PATH_LIVE = true;
 const CHORES_LIVE = true;
 const CHORES_OPEN = ['home1', 'home2', 'home3', 'home4', 'bakery', 'flowers'];
 const GAME_STANDIN = {};
 function pathLevelLive(level){ return PATH_LIVE && typeof STORY_PATH !== 'undefined' && !!(STORY_PATH.lane && STORY_PATH.lane[level]); }
+// A learner meets Your Call at a level once a roadmap made after go-live holds its chapters there (or a chapter of
+// that level was played): only then does its arc-end reflection replace the companion's 100% one. Older roadmaps
+// keep the companion's reflection.
+function pathOnLevel(level){
+  if(!pathLevelLive(level)) return false;
+  const p = state.progress && state.progress.path;
+  if(p && (p.level === level || (Array.isArray(p.history) && p.history.some(h=>h && h.level === level)))) return true;
+  return !!(Array.isArray(state.roadmap) && state.roadmap.some(it=>it && it.type === 'game' && it.gameKind === 'path' && String(it.refId || '').indexOf('path-lane-' + level + '-') === 0));
+}
 function gameKindForPosition(level, stage, pos){
   const s = 's' + (stage === 2 ? 2 : 1);
   let kind = (GAME_ROTATION[level] || GAME_ROTATION.A1)[s][pos];
@@ -10643,6 +10653,7 @@ function renderPrivacyPolicy(){
         <p>Words, sentences and stories are read aloud by recorded clips made with free, open-source text-to-speech. The clips are downloaded from the App's own website; nothing you type or say is sent anywhere to make them.</p>
         <p>English voices "Bella" and "George": Kokoro-82M (Apache License 2.0). Spanish voice "Daniela": Piper voice es_AR-daniela-high, trained on Google's crowdsourced Argentinian Spanish recordings (OpenSLR 61), licensed CC BY-SA 4.0; the Daniela audio clips are shared under the same licence (creativecommons.org/licenses/by-sa/4.0). Spanish voice "Dave": Piper voice es_ES-davefx-medium (CC0). Piper is open-source software by Rhasspy / the Open Home Foundation.</p>
         <p>Cozy Chores artwork, all in the public domain and re-composed and recoloured for the game: Carl Larsson, "The Kitchen" (1898), "Mamma's and the Small Girls' Room" (1897), "Cosy Corner" (1894), "When the Children Have Gone to Bed" (1894–98) and "Flowers on the Windowsill" (1894), all from "Ett hem"; August Macke, "Little Walter's Toys" (1912); Pierre Bonnard, "Dining Room in the Country" (1913); Félix Vallotton, "Dinner, Lamp Effect" (1899); Moritz Daniel Oppenheim (attr.), "Interior of a Bakery" (1854); Job Adriaenszoon Berckheyde, "The Baker" (c. 1681); Henri Fantin-Latour, "Large Bouquet with Three Peonies" (1879); Childe Hassam, "At the Florist" (1889). The building is Jacob Appel's "The Dolls' House of Petronella Oortman" (c. 1710, Rijksmuseum, CC0). Everything else in the rooms is painted for the game.</p>
+        <p>Your Call artwork (the Cudillero scenes), re-composed and repainted for the game: "Cudillero Sep 16" by Manuel Pérez, licensed CC BY 3.0 (https://creativecommons.org/licenses/by/3.0/), via Wikimedia Commons, modified (cropped, painted over, recoloured). "Jubilee Confectioners interior, Town, Beamish Museum" by milo bostock, licensed CC BY 2.0 (https://creativecommons.org/licenses/by/2.0/), via Wikimedia Commons, modified (people and signs painted out, goods repainted, recoloured). In the public domain, with thanks: A. Winter Moore, "Tate Hill, Whitby", painted postcard, c. 1903 (Newberry Library); Louis Thévenet, "Kitchen Interior" (1907, MSK Gent); "Cudillero" by Nacho (2011); Harriet Backer, "Interior from Vendelsborg" (1924); "Cudillero1" by Martin253 (2006). People, streets, signs, food, sky, water and props are painted for the game.</p>
 
         <h3 class="display" style="font-size:15px; margin:18px 0 8px;">11. Contact</h3>
         <p>If you have questions about this Privacy Policy, please contact the designated teacher through the WhatsApp contact option provided in the App.</p>
@@ -11170,7 +11181,7 @@ function companionEntryHtml(levelBase, i){
     ${d.translation ? (open ? `<p class="jr-entry-trans">${esc(d.translation)}</p>` : `<p class="jr-entry-tap" data-action="story-entry-toggle" data-key="${esc(key)}">${L('Tap for the translation','Çeviri için dokun','برای ترجمه بزن','Toca para ver la traducción')}</p>`) : ''}
     ${needsChoice ? `<div class="jr-entry-choices">${choiceBtn(d.choiceA, 'A')}${choiceBtn(d.choiceB, 'B')}</div>` : ''}
     ${chosen ? `<p class="jr-entry-chosen" dir="ltr">✓ ${esc(companionPick(chosen))}</p>` : ''}
-    ${i === 4 && d.reflection && !pathLevelLive(levelBase) ? `<div class="jr-entry-reflect">
+    ${i === 4 && d.reflection && !pathOnLevel(levelBase) ? `<div class="jr-entry-reflect">
       <div class="eyebrow" style="margin:0 0 4px; color:var(--cat-story);">${L('Write about it','Bunun hakkında yaz','درباره‌اش بنویس','Escribe sobre esto')}</div>
       <p dir="ltr">${esc(companionPick(d.reflection))}</p>
       ${svText(d.reflection) && svText(d.reflection) !== companionPick(d.reflection) ? `<p class="jr-entry-trans" style="margin-top:4px;">${esc(svText(d.reflection))}</p>` : ''}
@@ -11188,7 +11199,7 @@ function pendingReflection(){
   const upto = LEVELS.indexOf(cur);
   for(let k = upto; k >= 0; k--){
     const lv = LEVELS[k];
-    if(pathLevelLive(lv)) continue;   // one reflection per level: Story Path's arc-end prompt replaces the 100% entry's
+    if(pathOnLevel(lv)) continue;   // one reflection per level: Story Path's arc-end prompt replaces the 100% entry's (for a learner who meets it there)
     const st = companionStory(lv);
     if(!st || !st.entries[4] || !st.entries[4].reflection) continue;
     if(!companionEntryUnlocked(lv, 4) || storyChoices()[lv + ':reflected']) continue;
@@ -17437,7 +17448,7 @@ async function runSteps(steps, ctx){
    d1, d2 (prompt + options a/b with stance, out, feel, feelgloss) / turn / close / recap, ch5.flip, A2 back
    (the callback line to last year's choice); per arc end.{neighbour,friend,person}.{a,b} and reflect.{page1,end}.
    Scene text is target-language only; the author notes (place, grammar, when, meta) are left out. Read only by
-   the Story Path engine below, which is dormant while PATH_LIVE is false. */
+   the Story Path engine below (live since 2026-10-14, PATH_LIVE). */
 const STORY_PATH = {lane:{
  A1:{
   ch1:{"title":{"es":"La parada","en":"The bus stop","tr":"Otobüs durağı","fa":"ایستگاه اتوبوس"},"souvenir":"g5","open":{"es":"¡Mi papel vuela con el viento! Es mi primer minuto en Cudillero. Mi dirección nueva está en el papel. Las gaviotas gritan. Una señora coge el papel. «¿La calle del puerto? ¡Sé dónde está!»."},"g1":{"word":"la gaviota","en":"gull, a big white and grey sea bird","tr":"martı","fa":"مرغ دریایی"},"g2":{"word":"enfrente","en":"opposite, across the street","tr":"karşıda, tam karşısında","fa":"روبه‌رو"},"g3":{"word":"las escaleras","en":"stairs, steps (Cudillero's streets are stairs)","tr":"merdivenler (Cudillero'nun sokakları merdivendir)","fa":"پله‌ها (کوچه‌های کودیِیرو پله‌پله‌اند)"},"g4":{"word":"de fuera","en":"from outside; not from here","tr":"dışarıdan, buralı olmayan","fa":"غیربومی، از جای دیگر"},"g5":{"word":"contento/-a","en":"pleased, happy","tr":"memnun","fa":"خشنود"},"d1":{"prompt":{"es":"La señora es Carmen. Es pequeña, con el pelo blanco. Mira mi maleta. «¡Es muy grande! ¿Te ayudo?». ¿Qué digo?","en":"The woman is Carmen. She is small, with white hair. She looks at my suitcase. \"It's very big! Shall I help you?\" What do I say?","tr":"Kadının adı Carmen. Ufak tefek, saçları bembeyaz. Bavuluma bakıyor. \"Çok büyük! Yardım edeyim mi?\" Ne diyorum?","fa":"اسم آن خانم کارمن است. ریزنقش است، با موهای سفید. به چمدانم نگاه می‌کند. «خیلی بزرگ است! کمکت کنم؟» چه می‌گویم؟"},"a":{"es":"Sí, por favor. Gracias, Carmen.","en":"Yes, please. Thank you, Carmen.","tr":"Evet, lütfen. Teşekkürler, Carmen.","fa":"بله، لطفاً. ممنون، کارمن.","stance":"warmth","out":{"es":"Carmen coge la maleta. Es pequeña, ¡pero va muy rápido! Bajamos las escaleras. Abajo están el puerto y los barcos. «¡La calle del puerto es mi calle también!», dice."},"feel":{"es":"Carmen está contenta porque ayuda a una persona nueva."},"feelgloss":"g5"},"b":{"es":"No, gracias. Estoy bien.","en":"No, thank you. I'm fine.","tr":"Hayır, teşekkürler. Ben iyiyim.","fa":"نه، ممنون. من خوبم.","stance":"none","out":{"es":"«Vale», dice Carmen. Pero baja las escaleras conmigo. Mi maleta pesa mucho. Una rueda está rota. ¡Pum, pum, pum por las escaleras! Carmen sonríe. No dice nada."},"feel":{"es":"Carmen está un poco triste porque mi respuesta es «no»."},"feelgloss":"none"}},"turn":{"es":"Una calle pequeña con escaleras. Huele a mar. Carmen para delante de una puerta verde. «Mi puerta». Luego mira la puerta azul. «Y esa es tu puerta. ¡Vivo enfrente!»."},"d2":{"prompt":{"es":"Carmen ríe. «Bueno, ¿y tú cómo te llamas?». ¿Cómo contesto?","en":"Carmen laughs. \"So, what's your name?\" How do I answer?","tr":"Carmen gülüyor. \"Eee, senin adın ne?\" Nasıl cevap veriyorum?","fa":"کارمن می‌خندد. «خب، اسم تو چیست؟» چطور جواب می‌دهم؟"},"a":{"es":"Mucho gusto, señora. Soy de fuera.","en":"Pleased to meet you, madam. I am from out of town.","tr":"Memnun oldum, hanımefendi. Ben buralı değilim.","fa":"خوشوقتم، خانم. من اهل اینجا نیستم.","stance":"none","out":{"es":"Carmen ríe. «¿Señora? ¡Carmen, por favor!». Dice mi nombre dos veces. Luego entra en casa. La puerta está un poco abierta. Desde dentro, una voz: «¡Café a las seis!»."},"feel":{"es":"Carmen está sorprendida porque aquí nadie dice «señora»."},"feelgloss":"none"},"b":{"es":"¡Hola, Carmen! ¡Qué calle tan bonita!","en":"Hi, Carmen! What a lovely street!","tr":"Selam Carmen! Ne güzel bir sokak!","fa":"سلام کارمن! چه کوچهٔ قشنگی!","stance":"warmth","out":{"es":"«¡Hola!», dice Carmen. «¿Bonita? ¡Y con buena gente!». Abre su puerta verde. Carmen saluda con la mano. «¡Café a las seis! Mi puerta está siempre abierta»."},"feel":{"es":"Carmen está contenta porque hablo como la gente de aquí."},"feelgloss":"g5"}},"close":{"es":"Por la tarde. Escucho el mar. Enfrente, hay una luz. Carmen abre la ventana. «¿Pan? En la panadería de la plaza. ¡Pero hay una regla!». ¿Qué regla?"},"recap":{"es":"Capítulo 1: Llego a Cudillero en autobús. Carmen vive enfrente.","en":"Chapter 1: I arrive in Cudillero by bus. Carmen lives opposite me.","tr":"1. Bölüm: Cudillero'ya otobüsle geliyorum. Carmen karşımda oturuyor.","fa":"فصل ۱: با اتوبوس به کودیِیرو می‌رسم. کارمن روبه‌روی من زندگی می‌کند."}},
@@ -17466,7 +17477,7 @@ const STORY_PATH = {lane:{
   festival:"L'Amuravela"
  }
 }};
-/* ============================= STORY PATH (Trello RzlovAPw) — engine, dormant behind PATH_LIVE =============================
+/* ============================= STORY PATH ("Your Call", Trello RzlovAPw) — engine, live since 2026-10-14 (PATH_LIVE) =============================
    One spine ("The Lane"), first person, one protagonist, a real town per app, six chapters per level (A1 + A2 are
    written), two decisions per chapter, two outcomes per decision: no right answer, no score, no timer, no lives
    (story-path-DRAFT.md as amended by story-path-selif-review.md and lxd-review-story-path-every-card-cozy.md §A).
@@ -17477,10 +17488,9 @@ const STORY_PATH = {lane:{
    A1 shows the UI-language line under every prompt and option; from A2 it sits behind "Show translation".
    Glossed words are tappable (meaning shown, word spoken); the chosen line is spoken back. Every step is a tap
    (the stage advances too); nothing auto-plays past the learner.
-   The stage is the shared scene engine (mountScene): until painted plates exist each scene is a coloured panel
-   per chapter plus its scene id; PATH_SCENES[id] = {shape:'int', layers:[{id:'plate', plate:true, x:0, y:0,
-   w:100, z:1, src:'path/plate-<id>.webp'}]} drops a plate in by id (scenes lane-ch<N>-1 / lane-ch<N>-2, outcome
-   swaps lane-ch<N>-d<K><a|b>), with no change here.
+   The stage is the shared scene engine (mountScene): PATH_SCENES[id] = {shape:'int', layers:[{id, x, y, w, z,
+   src:'path/<file>.webp', plate?, anim?, origin?}]} (scenes lane-ch<N>-1 / lane-ch<N>-2, outcome swaps
+   lane-ch<N>-d<K><a|b>); a scene without an entry falls back to a coloured panel per chapter plus its scene id.
    progress.path = {level, chapter, choices[], stance, history[], reflect{}}: choices[ch] = two letters, d1 then d2
    ('ab'; strings, because Firestore cannot store nested arrays); stance = {warmth, candour} recomputed from the
    option map of the arc; history = arcs left behind ({level, choices, stance, date, done}); reflect = the
@@ -17489,7 +17499,49 @@ const STORY_PATH = {lane:{
    never the plot. reflect.end (SELIF's two checkpoint questions) is the level's 100% journal prompt, answered once
    at a writing node; reflect.page1 is offered at the stage-1 writing node, which follows chapter 2. Finishing an
    arc is recognised (a golden souvenir, a badge per level); single choices never are. */
-const PATH_SCENES = {};
+/* The painted scenes of Cudillero (farin-game, Claude/specs/story-path-art/tools/out/cudillero/scenes.json, pasted
+   verbatim, one id per line; the files are in path/; live 2026-10-14, AlgNvFej): 12 scenes lane-ch<N>-1|2 (a plate
+   + 3-4 layers, one quiet loop) and 24 outcome swaps lane-ch<N>-d<K><a|b> (1-4 feathered patch layers painted over
+   the same background, so nothing has to be hidden). Some files serve several scenes (plate-lane-ch1-1 is chapter 1
+   and chapter 6). Credits: privacy policy section 10. */
+const PATH_SCENES = {
+ "lane-ch1-1":{"shape":"int","layers":[{"id":"c11-plate","x":0,"y":0,"w":100,"z":1,"src":"path/plate-lane-ch1-1.webp","plate":true},{"id":"c11-glint","x":80.179,"y":94.286,"w":18.214,"z":3,"src":"path/lane-ch1-1-glint.webp","anim":"a-glow","origin":"50% 50%"},{"id":"c11-street","x":0,"y":37.619,"w":73.631,"z":10,"src":"path/lane-ch1-1-street.webp"},{"id":"c11-dress","x":38.81,"y":80.079,"w":15.357,"z":11,"src":"path/lane-ch1-1-dress.webp"},{"id":"c11-people","x":17.202,"y":73.889,"w":20,"z":12,"src":"path/lane-ch1-1-people.webp"}],"atmos":[]},
+ "lane-ch1-d1a":{"layers":[{"id":"sw-ch1-d1a","x":10.774,"y":56.032,"w":31.488,"z":14,"src":"path/lane-ch1-d1a.webp"}]},
+ "lane-ch1-d1b":{"layers":[{"id":"sw-ch1-d1b","x":10.774,"y":56.032,"w":31.488,"z":14,"src":"path/lane-ch1-d1b.webp"}]},
+ "lane-ch1-2":{"shape":"int","layers":[{"id":"c12-plate","x":0,"y":0,"w":100,"z":1,"src":"path/plate-lane-ch1-2.webp","plate":true},{"id":"c12-wash","x":17.143,"y":14.365,"w":44.107,"z":6,"src":"path/lane-ch1-2-wash.webp","anim":"a-breeze","origin":"50% 0%"},{"id":"c12-dress","x":9.048,"y":29.127,"w":90.952,"z":11,"src":"path/lane-ch1-2-dress.webp"},{"id":"c12-people","x":12.5,"y":48.016,"w":53.452,"z":12,"src":"path/lane-ch1-2-people.webp"}],"atmos":[]},
+ "lane-ch1-d2a":{"layers":[{"id":"sw-ch1-d2a","x":57.5,"y":33.492,"w":18.512,"z":14,"src":"path/lane-ch1-d2a.webp"}]},
+ "lane-ch1-d2b":{"layers":[{"id":"sw-ch1-d2b","x":57.5,"y":33.492,"w":18.512,"z":14,"src":"path/lane-ch1-d2b.webp"}]},
+ "lane-ch2-1":{"shape":"int","layers":[{"id":"c21-plate","x":0,"y":0,"w":100,"z":1,"src":"path/plate-lane-ch2-1.webp","plate":true},{"id":"c21-glow","x":0.714,"y":5.714,"w":99.286,"z":3,"src":"path/lane-ch2-1-glow.webp","anim":"a-glow","origin":"50% 50%"},{"id":"c21-dress","x":96.131,"y":44.444,"w":3.869,"z":11,"src":"path/lane-ch2-1-dress.webp"},{"id":"c21-people","x":0,"y":55,"w":50.417,"z":12,"src":"path/lane-ch2-1-people.webp"}],"atmos":[]},
+ "lane-ch2-d1a":{"layers":[{"id":"sw-ch2-d1a","x":0,"y":50,"w":62.024,"z":14,"src":"path/lane-ch2-d1a.webp"}]},
+ "lane-ch2-d1b":{"layers":[{"id":"sw-ch2-d1b","x":0,"y":50,"w":62.024,"z":14,"src":"path/lane-ch2-d1b.webp"}]},
+ "lane-ch2-2":{"shape":"int","layers":[{"id":"c22-plate","x":0,"y":0,"w":100,"z":1,"src":"path/plate-lane-ch2-1.webp","plate":true},{"id":"c22-glow","x":0.714,"y":5.714,"w":99.286,"z":3,"src":"path/lane-ch2-1-glow.webp","anim":"a-glow","origin":"50% 50%"},{"id":"c22-dress","x":3.571,"y":44.444,"w":96.429,"z":11,"src":"path/lane-ch2-2-dress.webp"},{"id":"c22-people","x":22.44,"y":55,"w":27.976,"z":12,"src":"path/lane-ch2-2-people.webp"}],"atmos":[]},
+ "lane-ch2-d2a":{"layers":[{"id":"sw-ch2-d2a","x":0,"y":50,"w":62.024,"z":14,"src":"path/lane-ch2-d2a.webp"}]},
+ "lane-ch2-d2b":{"layers":[{"id":"sw-ch2-d2b","x":0,"y":50,"w":62.024,"z":14,"src":"path/lane-ch2-d2b.webp"}]},
+ "lane-ch3-1":{"shape":"int","layers":[{"id":"c31-plate","x":0,"y":0,"w":100,"z":1,"src":"path/plate-lane-ch3-1.webp","plate":true},{"id":"c31-steam","x":74.405,"y":17.698,"w":6.548,"z":4,"src":"path/lane-ch3-1-steam.webp","anim":"a-sway-slow","origin":"40% 100%"},{"id":"c31-dress","x":29.345,"y":41.349,"w":36.31,"z":11,"src":"path/lane-ch3-1-dress.webp"},{"id":"c31-people","x":0.357,"y":40.635,"w":21.548,"z":12,"src":"path/lane-ch3-1-people.webp"}],"atmos":[]},
+ "lane-ch3-d1a":{"layers":[{"id":"sw-ch3-d1a","x":0,"y":33.968,"w":30,"z":14,"src":"path/lane-ch3-d1a.webp"}]},
+ "lane-ch3-d1b":{"layers":[{"id":"sw-ch3-d1b","x":0,"y":33.968,"w":30,"z":14,"src":"path/lane-ch3-d1b.webp"}]},
+ "lane-ch3-2":{"shape":"int","layers":[{"id":"c32-plate","x":0,"y":0,"w":100,"z":1,"src":"path/plate-lane-ch3-1.webp","plate":true},{"id":"c32-steam","x":74.405,"y":17.698,"w":6.548,"z":4,"src":"path/lane-ch3-1-steam.webp","anim":"a-sway-slow","origin":"40% 100%"},{"id":"c32-dress","x":29.345,"y":41.349,"w":36.31,"z":11,"src":"path/lane-ch3-2-dress.webp"},{"id":"c32-people","x":0.357,"y":29.444,"w":34.286,"z":12,"src":"path/lane-ch3-2-people.webp"}],"atmos":[]},
+ "lane-ch3-d2a":{"layers":[{"id":"sw-ch3-d2a-1","x":14.226,"y":20,"w":21.607,"z":14,"src":"path/lane-ch3-d2a-1.webp"},{"id":"sw-ch3-d2a-2","x":35.595,"y":26.984,"w":21.429,"z":14,"src":"path/lane-ch3-d2a-2.webp"},{"id":"sw-ch3-d2a-3","x":28.988,"y":70,"w":12.976,"z":14,"src":"path/lane-ch3-d2a-3.webp"},{"id":"sw-ch3-d2a-4","x":0,"y":56.032,"w":21.012,"z":14,"src":"path/lane-ch3-d2a-4.webp"}]},
+ "lane-ch3-d2b":{"layers":[{"id":"sw-ch3-d2b-1","x":14.226,"y":20,"w":21.607,"z":14,"src":"path/lane-ch3-d2b-1.webp"},{"id":"sw-ch3-d2b-2","x":0,"y":56.032,"w":21.012,"z":14,"src":"path/lane-ch3-d2b-2.webp"}]},
+ "lane-ch4-1":{"shape":"int","layers":[{"id":"c41-plate","x":0,"y":0,"w":100,"z":1,"src":"path/plate-lane-ch4-1.webp","plate":true},{"id":"c41-awning","x":0,"y":77.143,"w":100,"z":6,"src":"path/lane-ch4-1-awning.webp","anim":"a-breeze","origin":"50% 0%"},{"id":"c41-people","x":26.369,"y":69.683,"w":53.631,"z":12,"src":"path/lane-ch4-1-people.webp"}],"atmos":[]},
+ "lane-ch4-d1a":{"layers":[{"id":"sw-ch4-d1a","x":20,"y":58.016,"w":80,"z":14,"src":"path/lane-ch4-d1a.webp"}]},
+ "lane-ch4-d1b":{"layers":[{"id":"sw-ch4-d1b","x":13.988,"y":58.016,"w":86.012,"z":14,"src":"path/lane-ch4-d1b.webp"}]},
+ "lane-ch4-2":{"shape":"int","layers":[{"id":"c42-plate","x":0,"y":0,"w":100,"z":1,"src":"path/plate-lane-ch4-2.webp","plate":true},{"id":"c42-glow","x":0.714,"y":5.714,"w":99.286,"z":3,"src":"path/lane-ch2-1-glow.webp","anim":"a-glow","origin":"50% 50%"},{"id":"c42-dress","x":96.131,"y":44.444,"w":3.869,"z":11,"src":"path/lane-ch2-1-dress.webp"},{"id":"c42-people","x":3.988,"y":51.508,"w":46.369,"z":12,"src":"path/lane-ch4-2-people.webp"}],"atmos":[]},
+ "lane-ch4-d2a":{"layers":[{"id":"sw-ch4-d2a","x":0,"y":46.032,"w":62.024,"z":14,"src":"path/lane-ch4-d2a.webp"}]},
+ "lane-ch4-d2b":{"layers":[{"id":"sw-ch4-d2b","x":0,"y":46.032,"w":62.024,"z":14,"src":"path/lane-ch4-d2b.webp"}]},
+ "lane-ch5-1":{"shape":"int","layers":[{"id":"c51-plate","x":0,"y":0,"w":100,"z":1,"src":"path/plate-lane-ch5-1.webp","plate":true},{"id":"c51-steam","x":89.762,"y":46.667,"w":5.119,"z":4,"src":"path/lane-ch5-1-steam.webp","anim":"a-sway-slow","origin":"50% 100%"},{"id":"c51-dress","x":0,"y":11.27,"w":95.179,"z":11,"src":"path/lane-ch5-1-dress.webp"},{"id":"c51-people","x":9.286,"y":48.968,"w":80.714,"z":12,"src":"path/lane-ch5-1-people.webp"}],"atmos":[]},
+ "lane-ch5-d1a":{"layers":[{"id":"sw-ch5-d1a-1","x":0,"y":40,"w":40,"z":14,"src":"path/lane-ch5-d1a-1.webp"},{"id":"sw-ch5-d1a-2","x":76.012,"y":53.968,"w":20,"z":14,"src":"path/lane-ch5-d1a-2.webp"}]},
+ "lane-ch5-d1b":{"layers":[{"id":"sw-ch5-d1b-1","x":0,"y":0,"w":40,"z":14,"src":"path/lane-ch5-d1b-1.webp"},{"id":"sw-ch5-d1b-2","x":76.012,"y":53.968,"w":20,"z":14,"src":"path/lane-ch5-d1b-2.webp"}]},
+ "lane-ch5-2":{"shape":"int","layers":[{"id":"c52-plate","x":0,"y":0,"w":100,"z":1,"src":"path/plate-lane-ch1-2.webp","plate":true},{"id":"c52-wash","x":17.143,"y":14.365,"w":44.107,"z":6,"src":"path/lane-ch1-2-wash.webp"},{"id":"c52-dress","x":9.048,"y":29.127,"w":90.952,"z":11,"src":"path/lane-ch1-2-dress.webp"},{"id":"c52-dusk","x":0,"y":0,"w":100,"z":12,"src":"path/lane-ch5-2-dusk.webp"},{"id":"c52-poster","x":42.381,"y":41.19,"w":7.262,"z":12,"src":"path/lane-ch5-2-poster.webp"},{"id":"c52-glow","x":0,"y":22.143,"w":74.583,"z":15,"src":"path/lane-ch5-2-glow.webp","anim":"a-glow","origin":"50% 50%"},{"id":"c52-people","x":3.333,"y":27.302,"w":46.845,"z":13,"src":"path/lane-ch5-2-people.webp"}],"atmos":[]},
+ "lane-ch5-d2a":{"layers":[{"id":"sw-ch5-d2a-1","x":36.012,"y":33.968,"w":22.024,"z":14,"src":"path/lane-ch5-d2a-1.webp"},{"id":"sw-ch5-d2a-2","x":7.976,"y":61.984,"w":17.976,"z":14,"src":"path/lane-ch5-d2a-2.webp"}]},
+ "lane-ch5-d2b":{"layers":[{"id":"sw-ch5-d2b-1","x":36.012,"y":33.968,"w":22.024,"z":16,"src":"path/lane-ch5-d2b-1.webp"},{"id":"sw-ch5-d2b-2","x":0,"y":23.968,"w":26.012,"z":16,"src":"path/lane-ch5-d2b-2.webp"}]},
+ "lane-ch6-1":{"shape":"int","layers":[{"id":"c61-plate","x":0,"y":0,"w":100,"z":1,"src":"path/plate-lane-ch6-1.webp","plate":true},{"id":"c61-glint","x":19.345,"y":72.222,"w":66.786,"z":3,"src":"path/lane-ch6-1-glint.webp","anim":"a-glow","origin":"50% 50%"},{"id":"c61-dress","x":0,"y":45.873,"w":100,"z":10,"src":"path/lane-ch6-1-dress.webp"},{"id":"c61-people","x":3.869,"y":62.619,"w":92.202,"z":12,"src":"path/lane-ch6-1-people.webp"}],"atmos":[]},
+ "lane-ch6-d1a":{"layers":[{"id":"sw-ch6-d1a","x":0,"y":56.032,"w":100,"z":14,"src":"path/lane-ch6-d1a.webp"}]},
+ "lane-ch6-d1b":{"layers":[{"id":"sw-ch6-d1b","x":0,"y":56.032,"w":100,"z":14,"src":"path/lane-ch6-d1b.webp"}]},
+ "lane-ch6-2":{"shape":"int","layers":[{"id":"c62-plate","x":0,"y":0,"w":100,"z":1,"src":"path/plate-lane-ch6-1.webp","plate":true},{"id":"c62-dress","x":0,"y":45.873,"w":100,"z":10,"src":"path/lane-ch6-1-dress.webp"},{"id":"c62-night","x":0,"y":0,"w":100,"z":11,"src":"path/lane-ch6-2-night.webp"},{"id":"c62-fw1","x":17.679,"y":4.683,"w":18.631,"z":11,"src":"path/lane-ch6-2-fw1.webp","anim":"a-twinkle","origin":"50% 50%"},{"id":"c62-fw2","x":64.702,"y":1.984,"w":14.643,"z":11,"src":"path/lane-ch6-2-fw2.webp","anim":"a-glow","origin":"50% 50%"},{"id":"c62-bulbs","x":0,"y":68.81,"w":100,"z":11,"src":"path/lane-ch6-2-bulbs.webp"},{"id":"c62-people","x":3.869,"y":63.651,"w":92.202,"z":12,"src":"path/lane-ch6-2-people.webp"}],"atmos":[]},
+ "lane-ch6-d2a":{"layers":[{"id":"sw-ch6-d2a","x":13.988,"y":61.984,"w":60,"z":14,"src":"path/lane-ch6-d2a.webp"}]},
+ "lane-ch6-d2b":{"layers":[{"id":"sw-ch6-d2b","x":13.988,"y":61.984,"w":60,"z":14,"src":"path/lane-ch6-d2b.webp"}]}
+};
 const PATH_CH = 6;
 const PATH_PANEL = [
   'linear-gradient(165deg,#a8e1ff 0%,#5aa9e6 50%,#2c6893 100%)',   // 1 street, bus stop, the sea
@@ -17601,9 +17653,23 @@ function pathRoundChoices(round){
   base[round.ch] = round.picks.join('');
   return base;
 }
+// A chapter's painted files (both scenes and its four outcome swaps, 151-305 KB) start loading when the chapter
+// starts, so scene 2 and the swaps never pop in; the service worker keeps them after the first use.
+const pathPreloaded = new Map();
+function pathPreload(ch){
+  const pre = 'lane-ch' + ch + '-';
+  Object.keys(PATH_SCENES).forEach(id=>{
+    if(id.indexOf(pre) !== 0) return;
+    (PATH_SCENES[id].layers || []).forEach(l=>{
+      if(!l.src || pathPreloaded.has(l.src)) return;
+      try{ const im = new Image(); im.decoding = 'async'; im.src = l.src; pathPreloaded.set(l.src, im); }catch(e){}
+    });
+  });
+}
 function pathBuildRound(level, ch, free){
   const c = pathChapter(level, ch);
   if(!c) return null;
+  pathPreload(ch);
   const done = pathArcChoices(level), recap = [];
   if(!free) for(let k = 1; k < ch; k++){ if(!done[k]) recap.push(k); }
   const beats = (recap.length ? ['recap'] : []).concat(['open', 'd1', 'o1', 'turn', 'd2', 'o2'], c.flip ? ['flip'] : [], ['close'], ch === PATH_CH ? ['end'] : []);
@@ -17732,7 +17798,7 @@ function pathMountStage(){
   if(!round || round.finished || !stage || stage.childElementCount) return;
   const d = pathSceneData(round);
   mountScene(stage, d.scene);
-  d.swapIds.forEach(id=>{ try{ VERB.appear(id); }catch(e){} });
+  d.swapIds.forEach(id=>{ try{ VERB.lightUp(id); }catch(e){} });   // a 600 ms fade: appear() scales from .86, which makes a full-size patch zoom
 }
 function pathTr(o, show){ const u = pathUiLine(o); return show && u ? `<small class="sp-tr" dir="auto">${esc(u)}</small>` : ''; }
 function pathSayBtn(text){ return text ? `<button class="tts-btn sp-say" data-action="speak-sentence" data-text="${esc(text)}" aria-label="${esc(L('Listen','Dinle','گوش کن','Escuchar'))}">${ICONS.soundOn}</button>` : ''; }

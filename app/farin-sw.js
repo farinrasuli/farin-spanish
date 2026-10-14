@@ -1,4 +1,5 @@
-const CACHE = 'farin-spanish-v6';
+const CACHE = 'farin-spanish-v7';
+const CACHE_PREFIX = CACHE.replace(/\d+$/, '');   // 'farin-english-v' / 'farin-spanish-v'
 const PAGE_URL = self.registration.scope;
 /* Cozy Chores painted art (Trello 1m2Y0zdU, 8JAiLuV7): the game's plates and cut-outs are sibling files
    under chores/ (chores/plate-<id>.webp, chores/co-<id>.webp), precached with the page so the room
@@ -94,6 +95,27 @@ const ART_PRECACHE = [
   'chores/plate-facade.webp'
 ];
 const ART_RE = /\/chores\/[^/?#]+\.webp$/;
+/* Your Call (Story Path) painted scenes (Trello AlgNvFej, live 2026-10-14): path/<file>.webp, one town per app
+   under the same file names. Chapter 1 (both scenes + its four outcome swaps, 13 files) is precached at install
+   so the first chapter opens offline; chapters 2-6 are cached on first use (the app preloads a chapter's files
+   when it starts). One request per file, so a missing file never blocks the rest. Bump CACHE when a file is
+   repainted under the same name. */
+const PATH_PRECACHE = [
+  'path/plate-lane-ch1-1.webp',
+  'path/lane-ch1-1-glint.webp',
+  'path/lane-ch1-1-street.webp',
+  'path/lane-ch1-1-dress.webp',
+  'path/lane-ch1-1-people.webp',
+  'path/lane-ch1-d1a.webp',
+  'path/lane-ch1-d1b.webp',
+  'path/plate-lane-ch1-2.webp',
+  'path/lane-ch1-2-wash.webp',
+  'path/lane-ch1-2-dress.webp',
+  'path/lane-ch1-2-people.webp',
+  'path/lane-ch1-d2a.webp',
+  'path/lane-ch1-d2b.webp'
+];
+const PATH_RE = /\/path\/[^/?#]+\.webp$/;
 /* Character and story art (Trello c24wjywa): the companions (char-<goal>.png, also the Order Up! customers),
    the story genre cut-outs (stories, souvenirs, the journal) and the logo on every souvenir back, precached at
    install so they show offline even before a screen first used them. One request per file, so a missing file
@@ -122,15 +144,19 @@ self.addEventListener('install', (e) => {
   e.waitUntil(caches.open(CACHE).then((c) => Promise.all([
     c.add(new Request(PAGE_URL, { cache: 'reload' })),
     c.addAll(ART_PRECACHE.map((u) => new URL(u, PAGE_URL).href)).catch(() => {}),
-    Promise.all(APP_ART_PRECACHE.map((u) => c.add(new URL(u, PAGE_URL).href).catch(() => {})))
+    Promise.all(APP_ART_PRECACHE.map((u) => c.add(new URL(u, PAGE_URL).href).catch(() => {}))),
+    Promise.all(PATH_PRECACHE.map((u) => c.add(new URL(u, PAGE_URL).href).catch(() => {})))
   ])).catch(() => {}));
   self.skipWaiting();
 });
 
 self.addEventListener('activate', (e) => {
   e.waitUntil(
+    // Only this app's older caches (and unknown leftovers): the English and Spanish apps share the
+    // farinrasuli.github.io origin, so deleting every other name wiped the other app's saved page, art
+    // and clips whenever one of them updated (found 2026-10-14, AlgNvFej).
     caches.keys().then((keys) => Promise.all(
-      keys.filter((k) => k !== CACHE).map((k) => caches.delete(k))
+      keys.filter((k) => k !== CACHE && (k.indexOf(CACHE_PREFIX) === 0 || !/^farin-(english|spanish)-v\d+$/.test(k))).map((k) => caches.delete(k))
     )).then(() => self.clients.claim())
   );
 });
@@ -195,7 +221,7 @@ self.addEventListener('fetch', (e) => {
     // game art and app images: cache-first, filled on first use (the files never change under one name)
     if (AUDIO_RE.test(url.pathname)) { e.respondWith(audioCacheFirst(e.request)); return; }
     if (MANIFEST_RE.test(url.pathname)) { e.respondWith(networkFirst(e.request)); return; }
-    if (ART_RE.test(url.pathname) || IMG_RE.test(url.pathname)) e.respondWith(cacheFirst(e.request));
+    if (ART_RE.test(url.pathname) || PATH_RE.test(url.pathname) || IMG_RE.test(url.pathname)) e.respondWith(cacheFirst(e.request));
     return;
   }
   if (STATIC_HOSTS.includes(url.hostname) || url.href.startsWith(FIREBASE_SDK)) {

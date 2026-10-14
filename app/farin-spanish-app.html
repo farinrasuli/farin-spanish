@@ -15490,7 +15490,8 @@ function buildDeskRound(refId){
       travellers.push(t);
     }
     if(travellers.length < DESK_TRAVELLERS) continue;
-    return {level, lang, today, travellers, index:0, clean:0, combo:0, said:0, noVoice:ttsVoiceMissing(), greeted:false, finished:false, startedAt:Date.now(), finishedAt:null};
+    // "How to play" shows once, before the learner's first-ever round (gamesMet stays true for every replay after).
+    return {level, lang, today, travellers, index:0, clean:0, combo:0, said:0, noVoice:ttsVoiceMissing(), greeted:false, finished:false, startedAt:Date.now(), finishedAt:null, intro:!gamesMet().has('desk')};
   }
   return null;
 }
@@ -15639,18 +15640,18 @@ function deskFixHtml(round, t){
   if(t.done || !t.open) return '';
   const f = t.open;
   if(t.mode === 'ask' && !t.fixed[f]){
-    return `<div class="desk-fix" id="desk-fix"><p class="game-hint desk-ask-q">${esc(L('Which question?','Hangi soru?','کدام سؤال؟','¿Qué pregunta?'))}</p>
+    return `<div class="desk-fix fade-in" id="desk-fix"><p class="game-hint desk-ask-q">${esc(L('Which question?','Hangi soru?','کدام سؤال؟','¿Qué pregunta?'))}</p>
       <div class="game-opts">${t.ask.opts.map((o, i)=>`<button class="game-opt long" data-action="desk-q" data-quiet="1" data-i="${i}" dir="ltr">${esc(o.q)}</button>`).join('')}</div></div>`;
   }
   if(t.mode === 'blank' && !t.asked){
-    return `<div class="desk-fix" id="desk-fix"><button class="btn btn-primary game-cta" data-action="desk-ask">${esc(L('Ask','Sor','بپرس','Preguntar'))}</button></div>`;
+    return `<div class="desk-fix fade-in" id="desk-fix"><button class="btn btn-primary game-cta" data-action="desk-ask">${esc(L('Ask','Sor','بپرس','Preguntar'))}</button></div>`;
   }
   const kind = deskInputKind(f);
   if(round.level === 'A1' || t.chips || kind === 'chips'){
-    return `<div class="desk-fix" id="desk-fix"><div class="desk-chips">${t.chipVals.map((v, i)=>`<button class="game-opt desk-chip" data-action="desk-chip" data-quiet="1" data-i="${i}">${deskChipLabel(round, f, v)}</button>`).join('')}</div></div>`;
+    return `<div class="desk-fix fade-in" id="desk-fix"><div class="desk-chips">${t.chipVals.map((v, i)=>`<button class="game-opt desk-chip" data-action="desk-chip" data-quiet="1" data-i="${i}">${deskChipLabel(round, f, v)}</button>`).join('')}</div></div>`;
   }
   const hint = kind === 'date' ? L('day month year','gün ay yıl','روز ماه سال','día mes año') : (kind === 'time' ? L('hh:mm','ss:dd','ساعت:دقیقه','hh:mm') : (kind === 'number' ? L('a number','sayı','عدد','un número') : L('surname','soyadı','نام خانوادگی','apellido')));
-  return `<div class="desk-fix" id="desk-fix"><div class="desk-input-row">
+  return `<div class="desk-fix fade-in" id="desk-fix"><div class="desk-input-row">
     <input id="desk-input" class="game-input" type="text" dir="ltr" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="${esc(deskLabel(f) + ' · ' + hint)}"${kind === 'number' ? ' inputmode="numeric"' : ''}>
     <button class="btn btn-primary desk-go" data-action="desk-fix-go">${esc(L('Fix','Düzelt','درست کن','Corregir'))}</button>
   </div></div>`;
@@ -15679,12 +15680,27 @@ function deskResultHtml(round){
     ${gameDoneCta()}
   </div>`;
 }
+// One-time "how to play" card, shown only before the learner's very first Passport Desk round
+// (gamesMet() turns false->true the moment they finish one, on roadmap or Games shelf alike).
+function deskIntroHtml(){
+  const steps = [
+    L('Listen to the traveller — they say their own name, age and trip out loud.','Yolcuyu dinle — adını, yaşını ve gezisini kendi söylüyor.','به مسافر گوش کن — خودش اسم، سن و سفرش را می‌گوید.','Escucha al viajero — él mismo dice su nombre, edad y viaje.'),
+    L('One detail on the card doesn’t match what they said. Tap it.','Karttaki bir bilgi söylediğiyle uyuşmuyor. Ona dokun.','یک جای کارت با چیزی که گفت جور نیست. روی آن بزن.','Un dato de la tarjeta no coincide con lo que dijo. Tócalo.'),
+    L('Fix it, then press APPROVED to send them through.','Düzelt, sonra geçmesi için ONAYLANDI’ya bas.','درستش کن، بعد برای رد شدنش روی «تأیید شد» بزن.','Corrígelo y luego pulsa APROBADO para dejarlo pasar.')
+  ];
+  const rows = steps.map((s, i)=>`<p style="margin:${i ? '10px' : '14px'} 0 0; font-size:14.5px; line-height:1.5; color:var(--ink-soft); text-align:start;"><b style="color:var(--ink);">${i + 1}.</b> ${esc(s)}</p>`).join('');
+  return `<div class="game-card tight fade-in" id="desk-intro">
+    <div class="game-result-title">${esc(L('How to play','Nasıl oynanır','چطور بازی می‌شود','Cómo se juega'))}</div>
+    ${rows}
+    <button class="btn btn-primary game-cta" style="margin-top:18px;" data-action="desk-intro-start">${esc(L('Start','Başla','شروع','Empezar'))}</button>
+  </div>`;
+}
 function renderGameDesk(){
   const vp = state.viewParams, round = vp.round, t = deskCur(round);
   return `<div class="fade-in game-screen">
     ${gameTopHtml(L('Passport','Pasaport','گذرنامه','Pasaporte'))}
     ${deskStatusHtml(round)}
-    <div class="desk-body" id="desk-body">${(round.finished || !t) ? deskResultHtml(round) + renderBadgeUnlockCard(pullJustEarnedBadges()) : deskBodyHtml(round, t)}</div>
+    <div class="desk-body" id="desk-body">${round.intro ? deskIntroHtml() : ((round.finished || !t) ? deskResultHtml(round) + renderBadgeUnlockCard(pullJustEarnedBadges()) : deskBodyHtml(round, t))}</div>
   </div>`;
 }
 function deskRefresh(){
@@ -15692,7 +15708,7 @@ function deskRefresh(){
   if(!round || state.view !== 'game-desk' || round.finished) return;
   const t = deskCur(round); if(!t) return;
   const st = document.getElementById('desk-status'); if(st) st.outerHTML = deskStatusHtml(round);
-  const body = document.getElementById('desk-body'); if(body) body.innerHTML = deskBodyHtml(round, t);
+  const body = document.getElementById('desk-body'); if(body) body.innerHTML = round.intro ? deskIntroHtml() : deskBodyHtml(round, t);
 }
 /* ---- Flow and feel (spec §5.2, §5.7) ---- */
 let deskBusy = false, deskTimer = null;
@@ -15743,11 +15759,15 @@ function deskApplyFix(round, t, f){
 }
 function deskMiss(round, t, f, el){
   t.tries++; round.combo = 0;
+  const revealingChips = !t.chips;   // first wrong (but readable) answer: options appear instantly, never a delayed second step
+  if(revealingChips) t.chips = true;
   sfx('tick'); companionOops(); deskShake(el);
-  companionSay(L('Listen to that part again.','O kısmı tekrar dinle.','آن قسمت را دوباره گوش کن.','Escucha otra vez esa parte.'), 1800);
+  companionSay(revealingChips
+    ? L('Not quite — pick the one you heard.','Tam değil — duyduğunu seç.','دقیق نبود — همان را که شنیدی انتخاب کن.','No exactamente — elige la que has oído.')
+    : L('Listen to that part again.','O kısmı tekrar dinle.','آن قسمت را دوباره گوش کن.','Escucha otra vez esa parte.'), 1800);
   if(t.mode === 'blank'){ if(t.blank) deskSpeak(round, t.blank.say, 380); }
   else deskRepeat(round, t, f);
-  if(t.tries >= 2 && !t.chips){ t.chips = true; setTimeout(()=>{ if(state.viewParams && state.viewParams.round === round && deskCur(round) === t){ deskRefresh(); } }, 700); }
+  if(revealingChips) deskRefresh();
   save();
 }
 function deskStamp(){
@@ -21346,6 +21366,10 @@ const HANDLERS = {
   'order-extra-off'(el){ const r = state.viewParams && state.viewParams.round, l = r && r.tray[Number(el.dataset.i)]; if(!l || r.finished) return; const k = l.extras.indexOf(el.dataset.e); if(k >= 0) l.extras.splice(k, 1); r.sel = Number(el.dataset.i); sfx('tick'); orderRefresh(['tray']); save(); },
   'order-serve'(){ orderServe(); },
   // ---- Passport Desk (Jq6f9OFv wave B): tap the wrong field, fix it, bring the APPROVED stamp down ----
+  'desk-intro-start'(){
+    const r = state.viewParams && state.viewParams.round; if(!r || !r.intro) return;
+    r.intro = false; sfx('tick'); deskRefresh(); save(); deskArrive(r);
+  },
   'desk-play'(){ const r = state.viewParams && state.viewParams.round, t = r && deskCur(r); if(!t || r.finished) return; speakTarget(t.reply && t.mode === 'ask' ? t.reply : deskAllSaid(t), deskRate(r)); },
   'desk-said'(){
     const r = state.viewParams && state.viewParams.round, t = r && deskCur(r); if(!t || r.finished || t.said) return;
@@ -21548,9 +21572,11 @@ const HANDLERS = {
     }
     if(kind === 'desk'){
       // Passport Desk: own generated content, never falls back. A roadmap node is seeded by its refId (a replay = the
-      // same five travellers); free play (Games shelf) draws fresh ones. The first traveller steps up after the render.
+      // same five travellers); free play (Games shelf) draws fresh ones. First time ever: a "how to play" card shows
+      // first and the traveller only steps up once it's dismissed (desk-intro-start); after that it's met, so later
+      // rounds skip straight to the traveller stepping up after the render.
       const deskRound = buildDeskRound(params.free ? null : params.refId);
-      if(deskRound){ queueFx(()=>deskArrive(deskRound)); go('game-desk', Object.assign({round: deskRound}, params)); return; }
+      if(deskRound){ if(!deskRound.intro) queueFx(()=>deskArrive(deskRound)); go('game-desk', Object.assign({round: deskRound}, params)); return; }
     }
     if(kind === 'mystery'){
       // Case Closed: two generated cases with one solution each (seeded by refId on the roadmap, fresh on the Games

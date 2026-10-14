@@ -270,6 +270,9 @@
   .build-tile:active{transform:scale(.97);}
   .build-tile.used{visibility:hidden;}
 .quiz-type-row{margin-top:2px;}
+.yt-frame{margin-top:8px; padding:8px 12px; border-radius:12px; background:var(--cat-gram-soft); font-size:14px; font-weight:700; line-height:1.5; color:var(--ink);}
+.yt-saved{margin:10px 0 0; display:flex; align-items:center; gap:6px; font-size:13px; font-weight:700; color:var(--cat-gram);}
+.yt-saved svg{width:15px; height:15px; flex:0 0 auto;}
 .quiz-type-row .desk-go{width:auto; margin-top:0;}
 .quiz-typed{align-self:center; max-width:100%; border-radius:16px; padding:10px 16px; font-size:17px; font-weight:700; overflow-wrap:anywhere; border:2px solid var(--border); background:var(--bg-elevated); color:var(--ink);}
 .quiz-typed.ok{border-color:var(--success); background:var(--success-soft);}
@@ -9715,6 +9718,8 @@ function souvenirContent(node, ctx){
       out.meaning = it.title || '';
       // Prove it (uVzMAAGg): proved the rule and >= 80% on the first attempt -> a "rule" emblem on the souvenir.
       if(ctx.quiz && ctx.quiz.proved && ctx.quiz.proved.ok && proveFirstPct(ctx.quiz) >= 0.8) out.emblem = 'rule';
+      const yr = yourTurnRec(it.id);
+      if(yr && yr.text){ const yc = yourTurnSouvenir(it, yr); out.text = yc.text; out.label = yc.label; if(yc.keep) out.keep = yc.keep; }
     }
   } else if(t === 'vocab' || t === 'slang'){
     const set = VOCAB_SETS.find(s=>s.id===node.refId);
@@ -9887,6 +9892,7 @@ function souvenirFaceHtml(sv){
     ? `<img src="${art}" alt="" class="sv-art" style="width:${art==='studio-icon-cutout.png'?72:56}px; height:${art==='studio-icon-cutout.png'?72:56}px;">`
     : `<span class="sv-art sv-art-ic">${m.ic}</span>`;
   const label = sv.label === 'words' ? L('Your words','Senin sözlerin','حرف‌های تو','Tus palabras')
+    : sv.label === 'turn' ? L('Your turn','Sıra sende','نوبت توست','Tu turno')
     : (sv.label === 'teacher' ? L('From your teacher','Öğretmeninden','از طرف معلمت','De tu profe') : '');
   const isWord = sv.type === 'vocab' || sv.type === 'slang';
   return `<div class="sv-card ${sv.golden?'sv-gold':''}" style="--svc:${color};">
@@ -18409,15 +18415,25 @@ function grammarContextHtml(t){
    page once the item is done (the post-quiz celebration leads there, yourTurnExit); never inside a course step.
    progress.yourTurn[itemId] = {text, hits, date}. */
 function yourTurnRec(id){ const y = state.progress.yourTurn; return (y && y[id]) || null; }
+// S3 step 5 (ALYtdMw2 b): the checked Your turn sentence is the grammar node's souvenir, labelled "Your turn" (not the
+// uncorrected "Your words"); its back keeps the model, which is also what the card reads aloud.
+function yourTurnSouvenir(t, rec){
+  const txt = String((rec && rec.text) || '').trim(), model = String((t && t.yourTurn && t.yourTurn.model) || '').trim();
+  const out = {text:txt.length > 80 ? txt.slice(0, 80).replace(/\s+\S*$/, '') + '…' : txt, label:'turn'};
+  if(model) out.keep = {text:model, say:model, note:{en:'One way to say it', tr:'Söylemenin bir yolu', fa:'یک راه برای گفتنش', es:'Una forma de decirlo'}};
+  return out;
+}
+function yourTurnSouvenirs(id){ return ((state.progress && state.progress.souvenirs) || []).filter(sv=>sv && sv.type === 'grammar' && svRefId(sv) === id); }
 function yourTurnHtml(t){
   const yt = t && t.yourTurn;
   if(!yt || !yt.prompt || inCourseStep()) return '';
   const rec = yourTurnRec(t.id), editing = !rec || state.viewParams.ytEdit === t.id;
   const head = `<div class="eyebrow" style="color:var(--cat-gram);">${L('Your turn','Sıra sende','نوبت توست','Tu turno')}</div>
-      <p class="yt-prompt" dir="auto" style="margin:6px 0 0; font-size:15px; font-weight:700; line-height:1.5;">${esc(trLine(yt.prompt))}</p>`;
+      <p class="yt-prompt" dir="auto" style="margin:6px 0 0; font-size:15px; font-weight:700; line-height:1.5;">${esc(trLine(yt.prompt))}</p>${yt.frame ? `
+      <div class="yt-frame" dir="ltr" translate="no">${esc(yt.frame)}</div>` : ''}`;
   if(editing) return `<div class="card-flat yt-card" style="margin-top:16px; text-align:start;">
       ${head}
-      <textarea class="story-answer" id="yt-input" dir="ltr" maxlength="300" placeholder="${esc(L('Write here.','Buraya yaz.','اینجا بنویس.','Escribe aquí.'))}">${esc(rec ? rec.text : '')}</textarea>
+      <textarea class="story-answer" id="yt-input" dir="ltr" translate="no" maxlength="300" placeholder="${esc(yt.frame || L('Write here.','Buraya yaz.','اینجا بنویس.','Escribe aquí.'))}">${esc(rec ? rec.text : '')}</textarea>
       <button class="btn btn-primary" style="margin-top:8px;" data-action="yt-check" data-id="${esc(t.id)}">${L('Check my sentence','Cümlemi kontrol et','جمله‌ام را بررسی کن','Revisar mi frase')}</button>
     </div>`;
   const hits = errorWatchHits(rec.text, t);
@@ -18426,10 +18442,11 @@ function yourTurnHtml(t){
     : `<p class="yt-clean" style="margin:10px 0 0; font-size:13.5px; font-weight:700; color:var(--success);">${ICONS.check} ${esc(L('No common mistake found.','Yaygın bir hata bulunmadı.','اشتباه رایجی پیدا نشد.','No hay errores frecuentes.'))}</p>`;
   return `<div class="card-flat yt-card" style="margin-top:16px; text-align:start;">
       ${head}
-      <div class="phrase-mean" dir="ltr" style="margin-top:8px; font-style:italic;">${esc(rec.text)}</div>
+      <div class="phrase-mean" dir="ltr" translate="no" style="margin-top:8px; font-style:italic;">${esc(rec.text)}</div>
       ${watch}
-      ${yt.model ? `<div class="gx-tip" style="margin-top:12px;"><button type="button" class="icon-btn" data-action="speak-sentence" data-text="${esc(yt.model)}" style="flex:0 0 auto; background:var(--cat-gram-soft); color:var(--cat-gram); border-radius:50%; width:30px; height:30px; display:flex; align-items:center; justify-content:center; border:none;">${ICONS.soundOn}</button><div style="min-width:0;"><div class="gx-label" style="margin-bottom:4px;">${L('One way to say it','Söylemenin bir yolu','یک راه برای گفتنش','Una forma de decirlo')}</div><div dir="ltr" style="font-size:14.5px; font-weight:700; line-height:1.5;">${esc(yt.model)}</div></div></div>` : ''}
+      ${yt.model ? `<div class="gx-tip" style="margin-top:12px;"><button type="button" class="icon-btn" data-action="speak-sentence" data-text="${esc(yt.model)}" style="flex:0 0 auto; background:var(--cat-gram-soft); color:var(--cat-gram); border-radius:50%; width:30px; height:30px; display:flex; align-items:center; justify-content:center; border:none;">${ICONS.soundOn}</button><div style="min-width:0;"><div class="gx-label" style="margin-bottom:4px;">${L('One way to say it','Söylemenin bir yolu','یک راه برای گفتنش','Una forma de decirlo')}</div><div dir="ltr" translate="no" style="font-size:14.5px; font-weight:700; line-height:1.5;">${esc(yt.model)}</div></div></div>` : ''}
       ${yt.selfCheck ? `<p dir="auto" style="margin:12px 0 0; font-size:13.5px; color:var(--ink-soft); line-height:1.5;"><b>${esc(L('Look again','Tekrar bak','دوباره نگاه کن','Mira otra vez'))}:</b> ${esc(trLine(yt.selfCheck))}</p>` : ''}
+      ${yourTurnSouvenirs(t.id).length ? `<p class="yt-saved">${ICONS.star} ${esc(L('Saved as this step’s souvenir.','Bu adımın hatırası olarak kaydedildi.','به‌عنوان یادگاری این قدم ذخیره شد.','Guardada como recuerdo de este paso.'))}</p>` : ''}
       <button class="btn btn-ghost" style="margin-top:10px;" data-action="yt-edit" data-id="${esc(t.id)}">${L('Change my sentence','Cümlemi değiştir','جمله‌ام را عوض کن','Cambiar mi frase')}</button>
     </div>`;
 }
@@ -20915,6 +20932,7 @@ const HANDLERS = {
     const t = GRAMMAR_ITEMS.find(x=>x.id===el.dataset.id); if(!t) return;
     if(!state.progress.yourTurn || typeof state.progress.yourTurn !== 'object') state.progress.yourTurn = {};
     state.progress.yourTurn[t.id] = {text:text.slice(0, 300), hits:errorWatchHits(text, t).length, date:todayISO()};
+    { const yc = yourTurnSouvenir(t, state.progress.yourTurn[t.id]); yourTurnSouvenirs(t.id).forEach(sv=>{ sv.text = yc.text; sv.label = yc.label; if(yc.keep) sv.keep = yc.keep; }); }
     state.viewParams.ytEdit = null;
     markActivity(); save(); render();
   },

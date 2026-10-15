@@ -958,6 +958,24 @@
   .cs-pick, .cs-foot .btn{font-family:inherit;}
   .course-unlock a.btn{text-decoration:none;}
   .course-chapter.current{border-color:var(--accent);}
+  /* Course Build 2 (Trello ffD7KEAp): grammar with expParts, story "Watch for" */
+  .cs-glabel{font-size:12px; font-weight:900; letter-spacing:.06em; color:var(--ink-faint); margin:18px 0 8px;}
+  .cs-gram > .cs-glabel:first-child{margin-top:4px;}
+  .cs-ghook{margin:0 0 4px; font-size:15.5px; line-height:1.5; font-weight:700;}
+  .cs-gspk{flex:0 0 auto; margin-inline-start:auto; background:transparent; border:none; color:inherit; width:30px; height:30px; display:flex; align-items:center; justify-content:center;}
+  .cs-grule{margin-top:14px;}
+  .cs-grule .cs-glabel, .cs-gtest .cs-glabel{margin-top:0; color:color-mix(in srgb, var(--cat-gram) 85%, var(--ink));}
+  .cs-grule ul{margin:2px 0 0; padding:0; list-style:none;}
+  .cs-grule li{padding:9px 0; border-top:1px solid var(--border-soft); font-size:14px; line-height:1.45;}
+  .cs-grule li:first-child{border-top:none; padding-top:2px;}
+  .cs-grule li b{display:block; margin-top:3px; font-size:15px;}
+  .cs-gtest{margin-top:12px; background:var(--cat-gram-soft); border-color:transparent;}
+  .cs-gtest p, .cs-why p{margin:4px 0 0; font-size:14px; line-height:1.5;}
+  .cs-why{margin-top:12px; border-radius:16px; background:var(--bg-sunken); padding:12px 14px;}
+  .cs-why summary{cursor:pointer; font-weight:800; font-size:13.5px;}
+  .cs-gwait{margin:14px 0 0; text-align:center; font-size:13px; color:var(--ink-soft);}
+  .card-flat.cs-notice{background:var(--cat-story-soft); border-color:transparent; margin:0 0 14px;}
+  .cs-notice p{margin:4px 0 0; font-size:14.5px; line-height:1.5; font-weight:600;}
   .cj-part.miss{border-color:var(--clay-orange-deep); background:var(--cat-gram-soft); color:var(--ink); border-style:dashed;}
   .card-flat{background:var(--bg-elevated); border:1px solid var(--border-soft); border-radius:var(--radius); padding:18px; box-shadow:var(--clay-shadow-soft);}
   .badge-unlock-shine{position:relative; overflow:hidden; box-shadow:var(--glow-badge), var(--shadow); animation:badge-pulse 1.6s ease-in-out infinite;}
@@ -10220,7 +10238,7 @@ function showCelebration(kind, detail, low, extra){
       </div></div>
       ${alt ? `<button class="cel-alt" id="cel-alt" type="button">↻ ${L('Take the other one','Diğerini al','آن یکی را بردار','Toma la otra')}</button>` : ''}
       <div class="celebrate-hint cel-caption" id="cel-caption">${esc(L('Added to your '+journalName(), journalName()+' koleksiyonuna eklendi', 'به '+journalName()+' تو اضافه شد', 'Añadido a tu '+journalName()))}</div>` : ''}
-    <div class="celebrate-hint">${(state.viewParams && state.viewParams.shelf) ? L('Back to your games in a moment…','Birazdan oyunlarına dönüyorsun…','تا چند لحظه دیگر به بازی‌هات برمی‌گردی…','En un momento vuelves a tus juegos…') : state.courseReturn ? L('Your lesson continues in a moment…','Dersin birazdan devam ediyor…','درست تا چند لحظه‌ی دیگر ادامه پیدا می‌کند…','Tu lección sigue en un momento…') : L('Back to your roadmap in a moment…','Birazdan yol haritana dönüyorsun…','تا چند لحظه دیگر به نقشه راهت برمی‌گردی…','En un momento vuelves a tu hoja de ruta…')}</div>
+    <div class="celebrate-hint">${(state.viewParams && state.viewParams.shelf) ? L('Back to your games in a moment…','Birazdan oyunlarına dönüyorsun…','تا چند لحظه دیگر به بازی‌هات برمی‌گردی…','En un momento vuelves a tus juegos…') : state.courseReturn ? esc(courseCelebrateHint()) : L('Back to your roadmap in a moment…','Birazdan yol haritana dönüyorsun…','تا چند لحظه دیگر به نقشه راهت برمی‌گردی…','En un momento vuelves a tu hoja de ruta…')}</div>
   </div>`;
   document.body.appendChild(el);
   playFinishJingle(low);
@@ -23849,22 +23867,30 @@ function courseStripHtml(){ return ''; }
 function inCourseStep(){ return !!(state.courseReturn && state.courseReturn.type); }
 // "Try one" (spec 3.6, grammar): the item's blank2 (or blank) as a 3-option tap with immediate
 // feedback, shown before any rule text. Pick lives in courseUi (screen-only).
-function courseTryOneHtml(t){
-  const b = t.blank2 || t.blank; if(!b || !b.word || !(b.distractors||[]).length) return '';
-  const key = t.id + ':' + (t.blank2 ? 'blank2' : 'blank');
+// Which blank Try one uses: blank2 (else blank); with expParts, the one its tryWhy explains (tryWhy starts with that word).
+function courseTryField(t){
+  const why = t.expParts && t.expParts.tryWhy && String(t.expParts.tryWhy.en || '').split(':')[0].trim().toLowerCase();
+  if(why && t.blank && String(t.blank.word || '').toLowerCase() === why) return 'blank';
+  return t.blank2 ? 'blank2' : 'blank';
+}
+function courseTryOneHtml(t, why){
+  const fld = courseTryField(t), b = t[fld]; if(!b || !b.word || !(b.distractors||[]).length) return '';
+  const key = t.id + ':' + fld;
   if(courseUi.tryKey !== key){ courseUi.tryKey = key; courseUi.tryPick = null; courseUi.tryOpts = shuffle([b.word].concat(b.distractors)); }
   const opts = courseUi.tryOpts || [b.word].concat(b.distractors), picked = courseUi.tryPick, right = picked !== null && opts[picked] === b.word;
   return `<div class="card-flat" style="margin-top:12px; background:var(--cat-gram-soft); border-color:var(--cat-gram-soft);">
     <div class="eyebrow" style="color:var(--cat-gram);">${CL('Try one','Bir tane dene','یکی را امتحان کن','Prueba una')}</div>
     <p dir="ltr" translate="no" style="margin:6px 0 10px; font-size:16px; font-weight:700; line-height:1.5;">${esc(b.sentence)}</p>
     <div class="row" style="gap:8px; flex-wrap:wrap;">${opts.map((o,i)=>{ let cls = ''; if(picked !== null){ if(o === b.word) cls = ' ok'; else if(i === picked) cls = ' bad'; } return `<button class="cj-part${cls}" dir="ltr" translate="no" data-action="course-try-pick" data-i="${i}" ${picked !== null ? 'disabled' : ''}>${esc(o)}</button>`; }).join('')}</div>
-    ${picked !== null ? `<p style="margin:10px 0 0; font-size:13.5px; font-weight:700;">${right ? CL('Yes: '+b.word+'.','Evet: '+b.word+'.','درست است: '+b.word+'.','Sí: '+b.word+'.') : CL('Not quite. It is: '+b.word+'. The rule below says why.','Tam değil. Doğrusu: '+b.word+'. Nedenini aşağıdaki kural açıklıyor.','نه دقیقاً. درستش این است: '+b.word+'. قاعده‌ی زیر دلیلش را می‌گوید.','No exactamente. Es: '+b.word+'. La regla de abajo explica por qué.')}</p>` : ''}
+    ${picked !== null && why ? `<p class="cs-trywhy" dir="auto" style="margin:10px 0 0; font-size:13.5px; line-height:1.5;"><b>${right ? CL('Yes!','Evet!','درست است!','¡Sí!') : CL('Not quite.','Tam değil.','نه دقیقاً.','No exactamente.')}</b> ${esc(cl(why))}</p>` : ''}
+    ${picked !== null && !why ? `<p style="margin:10px 0 0; font-size:13.5px; font-weight:700;">${right ? CL('Yes: '+b.word+'.','Evet: '+b.word+'.','درست است: '+b.word+'.','Sí: '+b.word+'.') : CL('Not quite. It is: '+b.word+'. The rule below says why.','Tam değil. Doğrusu: '+b.word+'. Nedenini aşağıdaki kural açıklıyor.','نه دقیقاً. درستش این است: '+b.word+'. قاعده‌ی زیر دلیلش را می‌گوید.','No exactamente. Es: '+b.word+'. La regla de abajo explica por qué.')}</p>` : ''}
   </div>`;
 }
 // Grammar in course context (Build 1 item 6): the story's wrong/right pair and "Try one" come BEFORE the
 // rule card, so the learner acts before reading. Works on the free renderer's HTML, which stays unchanged.
 function courseGrammarOrder(t, html){
   if(!inCourseStep()) return html;
+  if(t.expParts && (t.expParts.rule || []).length) return courseGrammarExpHtml(t);   // Build 2; the Build 1 order below is the fallback
   const rowMark = '<div class="row" style="gap:7px; align-items:center; margin:22px 0 10px;">';
   const i1 = html.indexOf('<div class="tip-card"'), i2 = html.indexOf(rowMark);
   if(i1 < 0 || i2 < 0 || i2 < i1) return html;
@@ -23874,6 +23900,51 @@ function courseGrammarOrder(t, html){
   if(i3 < 0) return html;
   const ex1 = html.slice(i2, i3).replace(/<h3 class="display"[^>]*>[^<]*<\/h3>/, '<h3 class="display" style="font-size:13.5px; color:var(--ink-faint); text-transform:uppercase; letter-spacing:.05em;">' + CL('From the story','Hikayeden','از داستان','De la historia') + '</h3>').replace('margin:22px 0 10px;', 'margin:4px 0 10px;');
   return html.slice(0, i1) + ex1 + courseTryOneHtml(t) + '<div style="height:18px;"></div>' + html.slice(i1, i2) + html.slice(i3);
+}
+/* Grammar with expParts (Build 2, spec 3.6 "Grammar" + 3.7), inside the lesson frame. First screen, about 35 words: "From
+   the story" (expParts.hook + the story's wrong/right pair) and "Try one" (the item's blank as a 3-option tap). Only after
+   that tap: the tryWhy feedback, the rule in 3-4 lines (each with its example in bold), the quick test, the L1 note folded
+   under "Why do we mix these up?", the forms folded, one more example and the quiz. Items without expParts keep the Build 1
+   order (courseGrammarOrder); the free grammar page never comes here. */
+function courseGrammarExpHtml(t){
+  const x = t.expParts, fld = courseTryField(t), b = t[fld], canTry = !!(b && b.word && (b.distractors||[]).length);
+  const tried = !canTry || (courseUi.tryKey === t.id+':'+fld && courseUi.tryPick !== null);
+  const label = s=>`<div class="cs-glabel">${esc(courseUp(s))}</div>`;
+  const spk = s=>`<button type="button" class="icon-btn cs-gspk" data-action="speak-sentence" data-text="${esc(s)}" aria-label="${esc(CL('Listen','Dinle','گوش کن','Escuchar'))}">${ICONS.soundOn}</button>`;
+  const pair = (w, r)=>w && r ? `<div class="contrast" dir="ltr" translate="no"><div class="contrast-line wrong"><b>✗</b><span class="txt">${glossify(w)}</span></div><div class="contrast-line right"><b>✓</b><span class="txt">${glossify(r)}</span>${spk(r)}</div></div>` : '';
+  const ft = t.formsTable;
+  const forms = ft ? `<details class="cs-why"><summary>${CL('The forms','Biçimler','شکل‌ها','Las formas')}</summary><div class="gx-table" translate="no" style="margin-top:8px;"><table>
+      <thead><tr>${(cl(ft.headers) || ft.headers.en || []).map(h=>`<th>${esc(h)}</th>`).join('')}</tr></thead>
+      <tbody>${ft.rows.map(row=>`<tr>${row.map(cell=>`<td dir="ltr">${esc(cell)}</td>`).join('')}</tr>`).join('')}</tbody></table></div></details>` : '';
+  const rest = !tried ? `<p class="cs-gwait">${CL('Pick one to see the rule.','Kuralı görmek için birini seç.','برای دیدن قاعده، یکی را انتخاب کن.','Elige una para ver la regla.')}</p>` : `
+    <div class="card-flat cs-grule">${label(CL('The rule','Kural','قاعده','La regla'))}
+      <ul>${x.rule.map(r=>`<li><span>${esc(cl(r))}</span>${r.ex ? `<b dir="ltr" translate="no">${esc(r.ex)}</b>` : ''}</li>`).join('')}</ul></div>
+    ${x.test ? `<div class="card-flat cs-gtest">${label(CL('Quick test','Hızlı sınama','محک سریع','Prueba rápida'))}<p>${esc(cl(x.test))}</p></div>` : ''}
+    ${x.contrast ? `<details class="cs-why"><summary>${CL('Why do we mix these up?','Bunları neden karıştırıyoruz?','چرا این‌ها را قاطی می‌کنیم؟','¿Por qué los confundimos?')}</summary><p dir="auto">${esc(cl(x.contrast))}</p></details>` : ''}
+    ${forms}
+    ${t.wrong2 && t.right2 ? label(CL('One more example','Bir örnek daha','یک مثال دیگر','Otro ejemplo')) + pair(t.wrong2, t.right2) : ''}
+    <button class="btn btn-primary" style="margin-top:16px;" data-action="start-grammar-quiz" data-id="${t.id}">${CL('Practise: the quiz','Alıştırma: test','تمرین: آزمون','Practica: el test')}</button>`;
+  return `<div class="fade-in">
+    ${sectionHead('', '')}
+    <div class="screen cs-gram" style="padding-top:0;">
+      ${label(CL('From the story','Hikayeden','از داستان','De la historia'))}
+      ${x.hook ? `<p class="cs-ghook">${esc(cl(x.hook))}</p>` : ''}
+      ${pair(t.wrong, t.right)}
+      ${canTry ? courseTryOneHtml(t, x.tryWhy) : ''}
+      ${rest}
+    </div>
+  </div>`;
+}
+/* story.notice ("Watch for", before the text) and story.bridge (Build 2, spec 3.6 "Story"). The notice is put into the
+   reused story page by courseWrapViewer; the bridge is the celebration line after the course story's quiz, before the
+   next card opens (the one course string in showCelebration). Other cards keep "Your lesson continues in a moment". */
+function courseStoryNoticeHtml(s){
+  return s && s.notice ? `<div class="card-flat cs-notice"><div class="eyebrow" style="color:${COURSE_CARD.story.c};">${esc(courseUp(CL('Watch for','Şuna dikkat et','حواست به این باشد','Fíjate en esto')))}</div><p>${esc(cl(s.notice))}</p></div>` : '';
+}
+function courseCelebrateHint(){
+  const r = state.courseReturn, s = r && r.uid ? courseUnitItems(r.uid).story : null;
+  if(r && r.type==='story' && s && s.bridge) return cl(s.bridge);
+  return CL('Your lesson continues in a moment…','Dersin birazdan devam ediyor…','درست تا چند لحظه‌ی دیگر ادامه پیدا می‌کند…','Tu lección sigue en un momento…');
 }
 const COURSE_LOCK_SVG = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="9" rx="2.5"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>';
 const COURSE_HERO_BG = 'background-color:var(--clay-lavender-deep); background-image:radial-gradient(circle at 88% -18%, rgba(255,255,255,.5), transparent 55%), linear-gradient(135deg, var(--clay-lavender), var(--clay-lavender-deep));';
@@ -24433,6 +24504,10 @@ function courseWrapViewer(html){
   const r = state.courseReturn;
   courseShellOn = !!(r && r.type && COURSE_VIEWER_VIEWS.includes(state.view) && courseFindUnit(r.cid, r.uid));
   if(!courseShellOn) return html;
+  if(state.view==='story-detail' && r.type==='story'){   // Build 2: "Watch for" before the story text
+    const s = courseUnitItems(r.uid).story, at = html.indexOf('<div class="screen" style="padding-top:0;">');
+    if(s && s.notice && at >= 0 && (state.viewParams || {}).id===s.id){ const k = at + '<div class="screen" style="padding-top:0;">'.length; html = html.slice(0, k) + courseStoryNoticeHtml(s) + html.slice(k); }
+  }
   return courseShellTopHtml(r.cid, r.uid, r.type) + courseCardHeadHtml(r.cid, r.uid, r.type) + html;
 }
 // After every render(): the shell class, and the writing card's live bits (Leyla's version folds once you type; word chips tick).

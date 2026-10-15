@@ -958,6 +958,20 @@
   .cs-pick, .cs-foot .btn{font-family:inherit;}
   .course-unlock a.btn{text-decoration:none;}
   .course-chapter.current{border-color:var(--accent);}
+  /* Course Build 2: writing (live count, Check this, your text vs the model with checklist ticks) */
+  .cs-wcount{flex:0 0 auto; margin-top:8px; font-size:12.5px; font-weight:800; color:var(--ink-faint); white-space:nowrap;}
+  .cs-wcount.ok{color:var(--success);}
+  .card-flat.cs-watch{margin-top:12px; background:var(--error-soft); border-color:transparent;}
+  .cs-watch p{margin:8px 0 0; font-size:13.5px; line-height:1.45;}
+  .cs-watch p b{display:block; color:var(--error);}
+  .cs-saved{display:flex; gap:6px; align-items:center; margin:12px 0 0; font-size:13px; font-weight:700; color:var(--success);}
+  .cs-saved svg{width:16px; height:16px; flex:0 0 auto;}
+  .cs-cmp{margin-top:14px;}
+  .cs-cmp .card-flat p{margin:6px 0 0; font-size:14px; line-height:1.55; white-space:pre-wrap;}
+  .card-flat.cs-yours{border:2px solid var(--cat-gram-soft);}
+  .card-flat.cs-theirs{background:var(--accent-soft); border-color:transparent;}
+  .cs-cmp-mid{margin:12px 0;}
+  .cs-cmp-hint{margin:4px 0 8px; font-size:12.5px; color:var(--ink-soft);}
   /* Course Build 2: three-round speaking (prepare, 90/60/45 s, check) */
   .cs-phr{display:flex; flex-direction:column; align-items:flex-start; gap:2px; width:100%; text-align:start; border:2px solid var(--border-soft); background:var(--bg-elevated); border-radius:16px; padding:10px 14px; cursor:pointer; color:var(--ink); font-family:inherit;}
   .cs-phr b{font-size:15px; font-weight:800;}
@@ -23728,7 +23742,7 @@ function courseOpenStep(cid, uid, type, redo){
   if(type==='branch') courseUi.branch = null;
   if(type==='judge') courseUi.judge = {uid, i:0, sel:[], checked:false, right:0, total:0};
   if(type==='exit') courseUi.exit = null;
-  courseUi.wres = null;
+  courseUi.wres = null; courseUi.wdraft = null;
   go('course-step', {cid, uid, type}); done();
 }
 /* Course return context (Trello yNFXBq6k; Phase 0). courseOpenStep() sets state.courseReturn = {cid, uid, type};
@@ -24547,7 +24561,8 @@ function courseAfterRender(root){
   const ta = state.view==='course-step' ? root.querySelector('#cw-text[data-words]') : null;
   if(ta && !ta.readOnly) ta.addEventListener('input', ()=>{
     const mdl = root.querySelector('details.cs-model'); if(mdl && mdl.open && ta.value.trim()) mdl.open = false;
-    const low = ta.value.toLowerCase();
+    const low = ta.value.toLowerCase(), cnt = root.querySelector('#cw-count'), n = courseWordCount(ta.value);
+    if(cnt){ cnt.textContent = n; const box = cnt.closest('.cs-wcount'); if(box) box.classList.toggle('ok', n >= Number(box.dataset.min || 0)); }
     root.querySelectorAll('.cs-wchip').forEach(ch=>ch.classList.toggle('on', low.includes(String(ch.dataset.w || '').toLowerCase())));
   });
 }
@@ -24872,35 +24887,72 @@ function renderCourseReview(cid, uid){
     ${st.picked!==null ? `<button class="btn btn-primary cs-main" data-action="course-review-next">${CL('Next','Sonraki','بعدی', 'Siguiente')}</button>` : ''}`;
 }
 
-/* writing (S4): the task, "Leyla's version" (the model; it folds once you start typing, tap to see it again), "Start like
-   this" (B1 only), the text box, the words as chips that tick when used, the checklist in the learner's language (A2). */
+/* writing: the model name ("Leyla's version" in the HR course). The card itself is renderCourseWriting below. */
 function courseModelName(cid){
   const w = (COURSE_INTRO[cid] || {}).who;
   if(w && w.en==='Leyla') return CL('Leyla\'s version','Leyla\'nın versiyonu','نسخه‌ی لیلا','La versión de Leyla');
   return CL('Example text','Örnek metin','متن نمونه','Texto de ejemplo');
 }
+/* writing (S4 + Build 2, spec 3.6 "Writing"): the task; "Leyla's version" (the model; B1 only before Check, it folds once you
+   start typing); "Start like this" (B1); the text box with a live word count and the target words that tick as you use them.
+   Check runs on the device: length and target words, the lesson grammar's errorWatch rules ("Check this"), and then "Your
+   text" and the model one above the other with the checklist between them as tap-to-tick boxes (ticks only after Check;
+   saved as the self-score). A task that is a portfolio piece (writing.portfolio) is saved as a draft for "Your work".
+   Nothing blocks: Continue is there after one check. */
+function courseWritingGrammar(cid, uid){
+  // the grammar items whose errorWatch rules apply: the lesson's (and its B2 item on the B2 track); a chapter finale: its lessons'
+  const items = [], add = id=>{ const it = courseUnitItems(id); if(it.grammar) items.push(it.grammar); const b2 = courseB2(cid, id); if(b2) items.push(b2); };
+  if(courseIsCp(cid, uid)){ const cm = COURSE_EXTRA.checkpoint.find(x=>x.id===uid); ((cm && cm.covers) || []).forEach(add); }
+  else add(uid);
+  return items.filter(g=>g && (g.errorWatch || []).length);
+}
+function courseWritingHits(cid, uid, text){
+  const out = [];
+  courseWritingGrammar(cid, uid).forEach(g=>errorWatchHits(text, g).forEach(h=>{ if(!out.some(o=>o.phrase===h.phrase)) out.push(h); }));
+  return out;
+}
+function coursePortfolioMap(cid){ const cp = courseProg(cid); if(!cp.portfolio || typeof cp.portfolio !== 'object') cp.portfolio = {}; return cp.portfolio; }
+function coursePortfolioDraft(cid, slot){ const d = coursePortfolioMap(cid)[slot]; return d && d.text ? d : null; }
+function courseWriteTicks(cid, uid){ const s = courseProg(cid).scores[uid+':writing']; return (s && Array.isArray(s.ticks)) ? s.ticks : []; }
 function renderCourseWriting(cid, uid, w){
   const track = courseTrack(cid), cp = courseProg(cid), key = uid+':writing';
   const saved = (cp.answers[key] && cp.answers[key].text) || '';
-  const res = courseUi.wres;
-  const showModel = track==='B1' || !!res;
-  const b2 = courseB2(cid, uid), low = saved.toLowerCase();
-  const checklist = w.rubric.map((r,ri)=>{ const loc = courseRubricI18n(w, ri), extra = b2 && b2.useIn && /^Language\b/i.test(r) ? ` <b>+ ${CL('B2 extra (above)','B2 ek şartı (yukarıda)','شرط اضافه‌ی B2 (بالای صفحه)','extra B2 (arriba)')}</b>` : '';
-    return `<li style="margin-bottom:4px;">${loc ? `<span class="rubric-i18n" dir="auto">${esc(loc)}</span>` : `<span dir="ltr" translate="no">${esc(r)}</span>`}${extra}</li>`; }).join('');
+  const draft = courseUi.wdraft && courseUi.wdraft.uid===uid ? courseUi.wdraft.text : saved;
+  const res = courseUi.wres && (courseUi.wres.uid===undefined || courseUi.wres.uid===uid) ? courseUi.wres : null;
+  const b2 = courseB2(cid, uid), low = draft.toLowerCase(), wc = courseWordCount(draft);
+  const ruleLine = (r, ri)=>{ const loc = courseRubricI18n(w, ri), extra = b2 && b2.useIn && /^Language\b/i.test(r) ? ` <b>+ ${CL('B2 extra (above)','B2 ek şartı (yukarıda)','شرط اضافه‌ی B2 (بالای صفحه)','extra B2 (arriba)')}</b>` : '';
+    return (loc ? `<span class="rubric-i18n" dir="auto">${esc(loc)}</span>` : `<span dir="ltr" translate="no">${esc(r)}</span>`) + extra; };
+  const showModel = track==='B1' && !res;
+  let after = '';
+  if(res){
+    const hits = courseWritingHits(cid, uid, saved), ticks = courseWriteTicks(cid, uid), slot = w.portfolio && courseStepDone(uid, 'writing') ? w.portfolio : null;
+    after = `<div class="card-flat" style="margin-top:12px; background:${res.lengthOk && !res.wordsMissed.length ? 'var(--cat-voc-soft)' : 'var(--cat-gram-soft)'}; border-color:transparent;">
+      <p style="margin:0; font-size:13.5px;">${res.wc} ${CL('words','kelime','کلمه','palabras')} · ${res.sc} ${CL('sentences','cümle','جمله','frases')}${res.wordsMissed.length ? ' · '+CL('Not used yet','Henüz kullanılmadı','هنوز استفاده نشده','Aún sin usar')+': <span dir="ltr" translate="no">'+esc(res.wordsMissed.join(', '))+'</span>' : ''}</p>
+      ${!res.lengthOk ? `<p style="margin:6px 0 0; font-size:13px;">${L('A little longer, please: at least '+w.minWords+' words and '+w.minSentences+' sentences.','Biraz daha uzun yaz: en az '+w.minWords+' kelime ve '+w.minSentences+' cümle.','کمی بیشتر بنویس: دست‌کم '+w.minWords+' کلمه و '+w.minSentences+' جمله.', 'Un poco más largo, por favor: al menos '+w.minWords+' palabras y '+w.minSentences+' frases.')}</p>` : ''}</div>
+    ${hits.length ? `<div class="card-flat cs-watch"><div class="eyebrow">${CL('Check this','Şuna bir bak','این را بررسی کن','Revisa esto')}</div>${hits.map(h=>`<p><b dir="ltr" translate="no">${esc(h.phrase)}</b><span dir="auto">${esc(cl(h.fix))}</span></p>`).join('')}</div>` : ''}
+    ${slot ? `<p class="cs-saved">${ICONS.check} ${CL('Saved as a draft for your portfolio. You find it in "Your work".','Portföyün için taslak olarak saklandı. "Çalışmaların" bölümünde bulursun.','به‌عنوان پیش‌نویس برای پرونده‌ی کاری‌ات نگه داشته شد. در «کارهای تو» پیدایش می‌کنی.','Guardado como borrador para tu portafolio. Lo encuentras en "Tu trabajo".')}</p>` : ''}
+    <div class="cs-cmp">
+      <div class="card-flat cs-yours"><div class="eyebrow">${CL('Your text','Senin metnin','متن تو','Tu texto')}</div><p dir="ltr" translate="no">${esc(saved)}</p></div>
+      <div class="cs-cmp-mid"><div class="eyebrow">${CL('Checklist','Kontrol listesi','چک‌لیست','Lista de comprobación')}</div>
+        <p class="cs-cmp-hint">${CL('Compare, then tick what your text does.','Karşılaştır, sonra metninin yaptıklarını işaretle.','مقایسه کن و بعد هر چیزی را که متنت دارد تیک بزن.','Compara y marca lo que hace tu texto.')}</p>
+        <div class="stack" style="gap:8px;">${w.rubric.map((r,ri)=>`<button class="cs-tick${ticks[ri] ? ' on' : ''}" data-action="course-write-tick" data-cid="${cid}" data-uid="${esc(uid)}" data-i="${ri}" aria-pressed="${ticks[ri] ? 'true' : 'false'}"><span class="cs-box">${ticks[ri] ? ICONS.check : ''}</span><span>${ruleLine(r, ri)}</span></button>`).join('')}</div></div>
+      <div class="card-flat cs-theirs"><div class="eyebrow">${esc(courseModelName(cid))}</div><p dir="ltr" translate="no">${esc(w.model)}</p></div>
+    </div>`;
+  } else {
+    after = `<div class="card-flat" style="margin-top:12px;"><div class="eyebrow">${CL('Checklist','Kontrol listesi','چک‌لیست','Lista de comprobación')}</div>
+      <ul style="margin:6px 0 0; padding-inline-start:18px; font-size:13px; color:var(--ink-soft);">${w.rubric.map((r,ri)=>`<li style="margin-bottom:4px;">${ruleLine(r, ri)}</li>`).join('')}</ul>
+      <p style="margin:6px 0 0; font-size:12px; color:var(--ink-faint);">${CL('You tick it after Check, next to Leyla\'s version.','Kontrol ettikten sonra, örnek metnin yanında işaretlersin.','بعد از بررسی، کنار نسخه‌ی نمونه تیکش می‌زنی.','Lo marcas después de comprobar, junto al texto modelo.')}</p></div>`;
+  }
   return `<div class="card-flat" style="border:2px solid var(--cat-gram-soft);"><p style="margin:0; font-size:14.5px; font-weight:700; line-height:1.5;">${esc(cl(w.prompt))}</p></div>
     ${courseUseInHtml(cid, uid)}
-    ${showModel ? `<details class="cs-model"${saved.trim() && !res ? '' : ' open'}><summary>${esc(courseUp(courseModelName(cid)))}</summary>
+    ${showModel ? `<details class="cs-model"${draft.trim() ? '' : ' open'}><summary>${esc(courseUp(courseModelName(cid)))}</summary>
       <p dir="ltr" translate="no" style="margin:6px 0 0; font-size:13.5px; line-height:1.55;">${esc(w.model)}</p>
       <p style="margin:6px 0 0; font-size:12px; color:var(--ink-soft);">${CL('It folds when you start writing. Tap to see it again.','Yazmaya başlayınca kapanır. Tekrar görmek için dokun.','وقتی شروع به نوشتن کنی جمع می‌شود. برای دیدن دوباره لمسش کن.','Se pliega cuando empiezas a escribir. Tócalo para verlo otra vez.')}</p></details>` : ''}
     ${track==='B1' && w.frame ? `<p style="margin:12px 0 0; font-size:13.5px;"><b>${CL('Start like this','Böyle başla','این‌طوری شروع کن','Empieza así')}:</b> <span dir="ltr" translate="no">${esc(w.frame)}</span></p>` : ''}
-    <textarea id="cw-text" class="game-input" dir="ltr" translate="no" rows="7" data-words="1" ${courseReviewLocked(cid, uid, w) ? 'readonly ' : ''}style="margin-top:10px; font-weight:500; min-height:150px;" placeholder="${esc(CL('Write here','Buraya yaz','اینجا بنویس','Escribe aquí'))}">${esc(saved)}</textarea>
-    <div translate="no">${w.words.map(x=>`<span class="cs-wchip${low.includes(String(x.word).toLowerCase()) ? ' on' : ''}" data-w="${esc(x.word)}" dir="ltr" translate="no">${esc(x.word)}</span>`).join('')}</div>
-    <p style="font-size:12px; color:var(--ink-faint); margin:6px 0 0;">${w.minWords}+ ${CL('words','kelime','کلمه','palabras')}</p>
-    ${res ? `<div class="card-flat" style="margin-top:12px; background:${res.lengthOk && !res.wordsMissed.length ? 'var(--cat-voc-soft)' : 'var(--cat-gram-soft)'}; border-color:transparent;">
-      <p style="margin:0; font-size:13.5px;">${res.wc} ${CL('words','kelime','کلمه','palabras')} · ${res.sc} ${CL('sentences','cümle','جمله','frases')}${res.wordsMissed.length ? ' · '+CL('Not used yet','Henüz kullanılmadı','هنوز استفاده نشده','Aún sin usar')+': '+esc(res.wordsMissed.join(', ')) : ''}</p>
-      ${!res.lengthOk ? `<p style="margin:6px 0 0; font-size:13px;">${L('A little longer, please: at least '+w.minWords+' words and '+w.minSentences+' sentences.','Biraz daha uzun yaz: en az '+w.minWords+' kelime ve '+w.minSentences+' cümle.','کمی بیشتر بنویس: دست‌کم '+w.minWords+' کلمه و '+w.minSentences+' جمله.', 'Un poco más largo, por favor: al menos '+w.minWords+' palabras y '+w.minSentences+' frases.')}</p>` : ''}</div>` : ''}
-    <div class="card-flat" style="margin-top:12px;"><div class="eyebrow">${CL('Checklist','Kontrol listesi','چک‌لیست','Lista de comprobación')}</div>
-      <ul style="margin:6px 0 0; padding-inline-start:18px; font-size:13px; color:var(--ink-soft);">${checklist}</ul></div>
+    <textarea id="cw-text" class="game-input" dir="ltr" translate="no" rows="7" data-words="1" ${courseReviewLocked(cid, uid, w) ? 'readonly ' : ''}style="margin-top:10px; font-weight:500; min-height:150px;" placeholder="${esc(CL('Write here','Buraya yaz','اینجا بنویس','Escribe aquí'))}">${esc(draft)}</textarea>
+    <div class="row between" style="align-items:flex-start; gap:8px;"><div translate="no">${w.words.map(x=>`<span class="cs-wchip${low.includes(String(x.word).toLowerCase()) ? ' on' : ''}" data-w="${esc(x.word)}" dir="ltr" translate="no">${esc(x.word)}</span>`).join('')}</div>
+      <span class="cs-wcount${wc >= w.minWords ? ' ok' : ''}" data-min="${w.minWords}"><b id="cw-count">${wc}</b> / ${w.minWords}+</span></div>
+    ${after}
     ${res && courseStepDone(uid, 'writing') ? `<button class="btn btn-primary cs-main" data-action="course-advance" data-cid="${cid}" data-uid="${uid}">${esc(courseNextBtnLabel())}</button>
     <button class="btn btn-ghost" style="margin-top:12px;" data-action="course-write-check" data-cid="${cid}" data-uid="${uid}">${CL('Check again','Tekrar kontrol et','دوباره بررسی کن','Comprobar otra vez')}</button>`
     : `<button class="btn btn-primary cs-main" data-action="course-write-check" data-cid="${cid}" data-uid="${uid}">${CL('Check','Kontrol et','بررسی کن','Comprobar')}</button>`}${courseReviewHtml(cid, uid, w)}`;
@@ -25189,8 +25241,8 @@ Object.assign(HANDLERS, {
     const text = ta ? ta.value : '';
     const res = checkPracticeAnswer({words:w.words, minWords:w.minWords, minSentences:w.minSentences, difficulty:'easy'}, text);
     courseProg(el.dataset.cid).answers[el.dataset.uid+':writing'] = {text, date:todayISO()};
-    courseUi.wres = res;
-    if(res.lengthOk && res.looksReal) courseMarkDone(el.dataset.cid, el.dataset.uid, 'writing'); else save();
+    courseUi.wres = Object.assign({uid:el.dataset.uid}, res); courseUi.wdraft = null;
+    if(res.lengthOk && res.looksReal){ if(w.portfolio) coursePortfolioMap(el.dataset.cid)[w.portfolio] = {text, from:el.dataset.uid, date:todayISO()}; courseMarkDone(el.dataset.cid, el.dataset.uid, 'writing'); } else save();
     render();
   },
   // Speaking (Build 2): notes, the record switch, one button per round, the self-check ticks, Continue.
@@ -25204,6 +25256,13 @@ Object.assign(HANDLERS, {
     const cid = el.dataset.cid, uid = el.dataset.uid, st = courseUi.sp, sp = courseUnitItems(uid).speaking;
     if(st && st.uid===uid) courseProg(cid).scores[uid+':speaking'] = {ticks:((sp && sp.selfCheck) || []).map((_,i)=>!!st.ticks[i]), rounds:COURSE_SP_ROUNDS.map((_,i)=>st.used[i] || 0), notes:st.notes.length, recorded:st.clips.filter(Boolean).length, date:todayISO()};
     courseSpLeave(); courseMarkDone(cid, uid, 'speaking'); courseAdvance(cid, uid);
+  },
+  // Writing (Build 2): a checklist tick after Check = the self-score; the text on screen is kept across the re-render.
+  'course-write-tick'(el){
+    const cid = el.dataset.cid, uid = el.dataset.uid, i = Number(el.dataset.i), w = courseUnitItems(uid).writing, ta = document.getElementById('cw-text'); if(!w) return;
+    if(ta) courseUi.wdraft = {uid, text:ta.value};
+    const cp = courseProg(cid), k = uid+':writing', old = (cp.scores[k] && cp.scores[k].ticks) || [];
+    cp.scores[k] = {ticks:w.rubric.map((_,j)=>j===i ? !old[j] : !!old[j]), date:todayISO()}; save(); render();
   },
   'course-review-ask'(el){
     const cid = el.dataset.cid, uid = el.dataset.uid, w = courseUnitItems(uid).writing, ta = document.getElementById('cw-text');

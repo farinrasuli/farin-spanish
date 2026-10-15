@@ -7876,15 +7876,104 @@ function srsStoryQ(story, v){
 }
 // The two questions for one due item. sv = its souvenir (may be null).
 // Returns {qs:[q1,q2], nextVi} — nextVi is saved when the Shuffle ends.
-function srsQuestions(id, sv){
+/* X3 grammar review (LXD 2026-10-15 READY-1, Trello xLyFBJeK; rule approved 2026-10-04, redesign X3/S10/item 16).
+   The two Shuffle questions for a due grammar item get harder as its box grows, from fresh sentences every time:
+   box 0-1 recognition (blank / blank2 options, practice fill, practice meaning), box 2-3 cued recall (practice type
+   with its hint, practice fix), box 4+ free recall (practice build tiles, practice type without the hint). Warm-up
+   always uses recognition. Never the same sentence as the item's last review (entry.lastQ = the two answer keys,
+   saved when the card is decided, like vocab's vi). Short tier -> the tier below; everything used -> one sentence
+   from lastQ may come back, never both. The goal version's sentences come first (srsGoalFor). */
+function srsGrammarPools(item, goal){
+  const norm = s => String(s||'').toLowerCase().replace(/\s+/g,' ').trim();
+  const why = grammarRuleLine(item);
+  const uniq = arr => arr.filter((w,i)=>w && arr.indexOf(w)===i);
+  const variant = goal && goal !== 'base' && item.goalVariant && item.goalVariant[goal];
+  const practice = ((variant && variant.practice) || []).concat(item.practice || []);
+  const fillIn = (s, w) => String(s).replace(/_{2,}/, w);
+  const fillAns = (s, w) => { const t = String(s); w = String(w); if(/^\s*_{2,}/.test(t)) w = w.charAt(0).toUpperCase() + w.slice(1); return t.replace(/_{2,}(\s*\([^)]*\))?/, w); };
+  const fixLabel = L('Fix the mistake. Which sentence is right?','Hatayı düzelt. Hangi cümle doğru?','اشتباه را درست کن. کدام جمله درست است؟','Corrige el error. ¿Qué oración es correcta?');
+  const buildLabel = L('Put the words in order.','Kelimeleri sıraya koy.','کلمه‌ها را به ترتیب بچین.','Ordena las palabras.');
+  const dw = (map, k) => { const d = (map && map[k]) || (item.distractorWhy && item.distractorWhy[k]); if(!d) return undefined; return typeof d === 'string' ? d : L(d.en, d.tr, d.fa, d.es); };
+  const opt = (prompt, right, wrongs, key, hintFor, tr) => {
+    const opts = shuffle([right].concat(wrongs));
+    const q = {prompt, options:opts, correct:opts.indexOf(right), why, key:norm(key), answerText:String(key)};
+    if(tr) q.answerTr = tr;
+    if(hintFor){ const h = opts.map(o=>hintFor(o)); if(h.some(Boolean)) q.hints = h; }
+    return q;
+  };
+  const typeQ = (p, hint) => {
+    const acc = p.accept.map(String), first = /^\s*_{2,}/.test(String(p.sentence)) ? acc[0].charAt(0).toUpperCase() + acc[0].slice(1) : acc[0];
+    const ans = fillAns(p.sentence, acc[0]);
+    const q = {qt:'type', prompt:p.sentence, options:[first], correct:0, accept:acc, typeHint:hint ? (p.hint || null) : null, why, key:norm(ans), answerText:ans};
+    if(p.translation) q.answerTr = p.translation;
+    return q;
+  };
+  const buildQ = p => {
+    const words = p.words.map(String);
+    let order = shuffle(words.map((_, i)=>i));
+    for(let t = 0; t < 6 && order.every((k, i)=>words[k] === words[i]); t++) order = shuffle(order);
+    const q = {qt:'build', prompt:buildLabel, tiles:order.map(i=>words[i]), words, options:[String(p.answer)], correct:0, why, key:norm(p.answer), answerText:String(p.answer)};
+    if(p.translation) q.answerTr = p.translation;
+    return q;
+  };
+  const pools = {rec:[], cued:[], free:[]};
+  // recognition: the review's own blank / blank2 (TRAP_EXCLUDE_BLANKS handled inside srsGrammarQ), practice fill, practice meaning
+  ['blank','blank2'].forEach(f=>{ if(f === 'blank' || item.blank2 || (variant && variant.blank2)){ const q = srsGrammarQ(item, f, goal); if(q){ q.key = norm(q.answerText); pools.rec.push(q); } } });
+  practice.forEach(p=>{
+    if(!p) return;
+    if(p.type === 'fill' && p.sentence && p.word && p.distractors && p.distractors.length >= 2) pools.rec.push(opt(p.sentence, p.word, uniq(p.distractors).slice(0, 3), fillIn(p.sentence, p.word), o=>dw(p.distractorWhy, o), p.translation));
+    else if(p.type === 'meaning' && p.options && p.options.length >= 3){
+      const txt = x => (x && typeof x === 'object') ? (L(x.en, x.tr, x.fa, x.es) || x.en) : x;
+      const ci = p.correct || 0, opts = p.options.map(txt), prompt = txt(p.prompt);
+      const q = opt(prompt, opts[ci], opts.filter((o,i)=>i !== ci), prompt, null, p.translation); q.answerText = opts[ci]; q.qt = 'meaning'; pools.rec.push(q);
+    }
+    else if(p.type === 'fix' && p.right && p.distractors && p.distractors.length >= 2) pools.cued.push(opt(fixLabel + '\n"' + p.wrong + '"', p.right, uniq(p.distractors).slice(0, 2), p.right, null, p.translation));
+    else if(p.type === 'type' && p.sentence && /_{2,}/.test(String(p.sentence)) && Array.isArray(p.accept) && p.accept.length){ pools.cued.push(typeQ(p, true)); pools.free.push(typeQ(p, false)); }
+    else if(p.type === 'build' && Array.isArray(p.words) && p.words.length >= 2 && p.answer) pools.free.push(buildQ(p));
+  });
+  return pools;
+}
+function srsGrammarTier(e, warm){
+  const box = (e && typeof e.box === 'number') ? e.box : 0;
+  if(warm || box <= 1) return 'rec';
+  return box <= 3 ? 'cued' : 'free';
+}
+// The two X3 questions for a due grammar item. Returns [q1, q2].
+function srsGrammarX3(item, e, goal, warm){
+  const tier = srsGrammarTier(e, warm), pools = srsGrammarPools(item, goal);
+  const last = new Set((e && Array.isArray(e.lastQ)) ? e.lastQ : []);
+  const order = tier === 'free' ? ['free','cued','rec'] : (tier === 'cued' ? ['cued','rec'] : ['rec']);
+  const out = [], keys = new Set();
+  const take = q => { out.push(q); keys.add(q.key); };
+  const fresh = q => q && !keys.has(q.key) && !last.has(q.key);
+  // the main format of the tier first (cued: a typed answer; free: a build or a no-hint typed answer), then the other one
+  const lead = {cued:q=>q.qt === 'type', free:q=>q.qt === 'build', rec:()=>true}[tier];
+  const second = {cued:q=>q.qt !== 'type', free:q=>q.qt === 'type', rec:()=>true}[tier];
+  { const q = shuffle(pools[tier].filter(fresh)).find(lead); if(q) take(q); }
+  { const q = shuffle(pools[tier].filter(fresh)).find(second); if(q) take(q); }
+  for(const t of order){ if(out.length >= 2) break; shuffle(pools[t].filter(fresh)).forEach(q=>{ if(out.length < 2 && fresh(q)) take(q); }); }
+  // everything used: one sentence from the last review may come back, never both
+  if(out.length < 2){
+    let fromLast = out.filter(q=>last.has(q.key)).length;
+    for(const t of order.concat(['rec'])){ shuffle(pools[t]).forEach(q=>{ if(out.length < 2 && !keys.has(q.key) && (!last.has(q.key) || fromLast < 1)){ if(last.has(q.key)) fromLast++; take(q); } }); }
+  }
+  // a broken item (no content at all): the old fixed pair
+  if(out.length < 2){
+    const g = srsGrammarQ(item, 'blank', goal), g2 = srsGrammarQ(item, item.blank2 ? 'blank2' : 'blank', goal);
+    [g, g2].forEach(q=>{ if(out.length < 2 && q){ q.key = String(q.answerText||'').toLowerCase().replace(/\s+/g,' ').trim(); out.push(q); } });
+  }
+  return out.slice(0, 2);
+}
+function srsQuestions(id, sv, warm){
   const e = state.progress.srs[id];
   const src = e && srsSource(id, e.kind);
   if(!src) return null;
   const vi = (e.vi || 0);
-  let qs = [], nextVi = vi;
+  let qs = [], nextVi = vi, lastQ = null;
   if(e.kind === 'grammar'){
     const g = srsGoalFor(src);
-    qs = [srsGrammarQ(src, 'blank', g), srsGrammarQ(src, src.blank2 ? 'blank2' : 'blank', g)];
+    qs = srsGrammarX3(src, e, g, warm);
+    lastQ = qs.map(q=>q.key);
   } else if(e.kind === 'vocab'){
     const cards = src.cards || [];
     if(cards.length < 2) return null;
@@ -7904,7 +7993,7 @@ function srsQuestions(id, sv){
     nextVi = k + 2;
   }
   qs.forEach(q=>{ q.itemId = id; q.kind = e.kind; });
-  return {qs, nextVi};
+  return {qs, nextVi, lastQ};
 }
 function progressArrForKind(kind){
   return kind==='grammar' ? state.progress.completedTraps
@@ -13752,7 +13841,10 @@ const TRAP_MIN_QUESTIONS = 4;
    returns null and the caller opens a vocabulary game instead. */
 function buildTrapRound(profile, n){
   n = n || 8;
-  const usable = items => grammarBlankCandidates(profile, items).filter(c=>!blankListed(TRAP_EXCLUDE_BLANKS, c.itemId, c.field, c.variant));
+  const usable = items => grammarBlankCandidates(profile, items).filter(c=>!blankListed(TRAP_EXCLUDE_BLANKS, c.itemId, c.field, c.variant))
+    // X3 / S11 (xLyFBJeK): practice[] fill items too (3 options, like the blanks)
+    .concat(grammarPracticeOf(profile, items, 'fill').filter(c=>c.p.sentence && /_{2,}/.test(String(c.p.sentence)) && c.p.word && c.p.distractors && c.p.distractors.length >= 2)
+      .map(c=>({itemId:c.itemId, item:c.item, field:'practice', variant:c.variant, blank:{sentence:c.p.sentence, word:c.p.word, distractors:c.p.distractors.filter((d,i,a)=>d && d !== c.p.word && a.indexOf(d) === i).slice(0, 2)}})));
   let candidates = usable(completedGrammarItems(profile.level));
   if(candidates.length < TRAP_MIN_QUESTIONS) candidates = usable(completedGrammarItems(null));
   if(candidates.length < TRAP_MIN_QUESTIONS) return null;
@@ -13913,8 +14005,8 @@ function buildSlots(blank){
 function buildCandidates(profile, itemsOverride){
   const low = profile.level === 'A1' || profile.level === 'A2';
   const cap = low ? 8 : 12, maxDecoy = low ? 1 : 2;
-  const out = [];
-  grammarBlankCandidates(profile, itemsOverride || completedGrammarItems(profile.level)).forEach(c=>{
+  const out = [], items = itemsOverride || completedGrammarItems(profile.level);
+  grammarBlankCandidates(profile, items).forEach(c=>{
     if(blankListed(BUILD_EXCLUDE_BLANKS, c.itemId, c.field, c.variant)) return;
     const slots = buildSlots(c.blank);
     if(!slots || slots.length < 3 || slots.length > 10) return;
@@ -13933,6 +14025,28 @@ function buildCandidates(profile, itemsOverride){
     }
     out.push({itemId:c.itemId, field:c.field, variant:c.variant, slots, lockFirst, tileWords, decoys,
       sentence:slots.map(s=>s.pre + s.w + s.post).join(' ')});
+  });
+  // X3 / S11 (xLyFBJeK): the items' practice[] build sentences too (goal version first), first word placed, no decoys.
+  const seen = new Set(out.map(o=>o.sentence.toLowerCase()));
+  grammarPracticeOf(profile, items, 'build').forEach(c=>{
+    const slots = buildSlots({sentence:String(c.p.answer), word:''});
+    if(!slots || slots.length < 3 || slots.length > 10) return;
+    if(slots.some(s=>!/^[\p{L}\p{N}][\p{L}\p{N}'’\-]*$/u.test(s.w))) return;
+    const tileWords = slots.slice(1).map(s=>s.w);
+    if(tileWords.length > cap) return;
+    const sentence = slots.map(s=>s.pre + s.w + s.post).join(' ');
+    if(seen.has(sentence.toLowerCase())) return;
+    seen.add(sentence.toLowerCase());
+    out.push({itemId:c.itemId, field:'practice', variant:c.variant, slots, lockFirst:true, tileWords, decoys:[], sentence});
+  });
+  return out;
+}
+// practice[] items of one type for these grammar items, the learner's goal version first (X3 / S11).
+function grammarPracticeOf(profile, items, type){
+  const goals = profileGoalKeys(profile), out = [];
+  items.forEach(item=>{
+    const gk = goals.find(k=>item.goalVariant && item.goalVariant[k] && item.goalVariant[k].practice);
+    ((gk && item.goalVariant[gk].practice) || []).concat(item.practice || []).forEach(p=>{ if(p && p.type === type) out.push({itemId:item.id, item, variant:gk || 'base', p}); });
   });
   return out;
 }
@@ -19778,8 +19892,8 @@ function buildShuffle(mode){
   shuffleIds(mode).forEach(id=>{
     const kind = state.progress.srs[id].kind;
     const sv = souvenirForItem(id, kind);
-    const r = srsQuestions(id, sv);
-    if(r) cards.push({id, sv, qs:r.qs, nextVi:r.nextVi, first:[null,null], done:false, revealed:false, good:0, counted:false});
+    const r = srsQuestions(id, sv, mode === 'warm');
+    if(r) cards.push({id, sv, qs:r.qs, nextVi:r.nextVi, lastQ:r.lastQ || null, first:[null,null], done:false, revealed:false, good:0, counted:false});
   });
   if(!cards.length) return null;
   const queue = [];
@@ -19795,6 +19909,30 @@ function shuffleRevealCaption(card){
   }
   if(card.good === 1) return [L('Nearly there!','Az kaldı!','تقریباً رسیدی!','¡Casi!'), companionLine('shuffleNearly') || L('It comes back in 2 days.','2 gün sonra geri gelecek.','۲ روز دیگر برمی‌گردد.','Vuelve en 2 días.')];
   return [L('Good to look again!','Tekrar bakmak iyi geldi!','دوباره دیدنش خوب بود!','¡Bien por repasarlo!'), companionLine('shuffleAgain') || L("It comes back tomorrow — you'll have it.",'Yarın geri gelecek — kapacaksın.','فردا برمی‌گردد — یادش می‌گیری.','Vuelve mañana: seguro que te sale.')];
+}
+// Souvenir Shuffle: one answer (tapped, typed or built). i = the tapped option, or the answer index / -1 for typed and built.
+function shuffleSettle(sh, ok, i, e){
+  const step = sh.queue[sh.pos], card = sh.cards[step.c], q = card.qs[step.k];
+  sh.answered = true; sh.selected = i;
+  if(!step.retry){
+    card.first[step.k] = ok;
+    if(!ok) sh.queue.push({c:step.c, k:step.k, retry:true});
+    if(card.first[0] !== null && card.first[1] !== null && !card.done){
+      // the box is decided on the first attempts
+      card.done = true;
+      card.good = card.first.filter(Boolean).length;
+      const hiBefore = (state.progress.srs[card.id] && state.progress.srs[card.id].hi) || 0;
+      card.counted = srsReview(card.id, card.good);
+      const entry = state.progress.srs[card.id];
+      if(entry) entry.vi = card.nextVi;
+      if(entry && card.lastQ) entry.lastQ = card.lastQ;   // X3: never the same sentences at the next review
+      // Light the shelf (FCgBqtei): crossing into Kept for the first time; the first such card gets the beat.
+      if(entry && hiBefore < SRS_KEPT_BOX && (entry.hi || 0) >= SRS_KEPT_BOX){ card.kept = true; if(sh.keptBeat == null) sh.keptBeat = step.c; }
+    }
+  }
+  sh.streak = ok ? (sh.streak||0) + 1 : 0;
+  { const word = q.options[q.correct]; const pt = tapPoint(e); const streak = sh.streak; queueFx(()=>fxQuizAnswer(i, pt, ok, streak, word, 'shuffle-answer')); }
+  save(); render();
 }
 function renderShuffle(){
   const sh = state.viewParams.sh;
@@ -19833,7 +19971,8 @@ function renderShuffle(){
     </div>`;
   }
   const step = sh.queue[sh.pos], card = sh.cards[step.c], item = card.qs[step.k];
-  const qv = {answered:sh.answered, selected:sh.selected};
+  if(!sh.bp || sh.bp.index !== sh.pos) sh.bp = {index:sh.pos, placed:[], lock:0};
+  const qv = {answered:sh.answered, selected:sh.selected, index:sh.pos, typed:sh.typed, bp:sh.bp};
   const a = step.c + 1, b = sh.cards.length;
   const longOpts = item.options.some(o=>String(o).length > 26);
   const missed = sh.answered && sh.selected !== item.correct;
@@ -19847,9 +19986,10 @@ function renderShuffle(){
       <span class="game-status-end">${left ? `<span class="game-chip" id="sh-left">${esc(shuffleLeftLabel(left))}</span>` : ''}${quizStreakChip({streak:sh.streak, correct:sh.cards.reduce((n,c)=>n + c.first.filter(x=>x===true).length, 0)})}</span>
     </div>
     <div class="sh-stage"><div class="sh-deck" id="sh-deck">${deckGhostsHtml(Math.min(2, left), 'var(--cat-review-soft)')}${souvenirCardHtml(card.sv, 'tiny', souvenirBackHtml(card.sv))}</div></div>
-    <div class="game-card${longOpts ? ' tight' : ''}">${quizPromptHtml(item, qv)}</div>
+    <div class="game-card${longOpts ? ' tight' : ''}">${item.qt === 'build' ? quizBuildHtml(qv, item).replace(/data-action="quiz-build-back"/g, 'data-action="shuffle-build-back"') : quizPromptHtml(item, qv)}</div>
+    ${item.qt === 'build' ? quizBuildTrayHtml(qv, item).replace(/data-action="quiz-build-tile"/g, 'data-action="shuffle-build-tile"') : (item.qt === 'type' ? quizTypeHtml(qv, item).replace('data-action="quiz-type-check"', 'data-action="shuffle-type-check"') : '')}
     <div class="game-opts">
-      ${item.options.map((opt,i)=>{
+      ${(item.qt === 'build' || item.qt === 'type') ? '' : item.options.map((opt,i)=>{
         let cls = 'game-opt' + (longOpts ? ' long' : '');
         if(sh.answered){ if(i===item.correct) cls += ' ok'; else if(i===sh.selected) cls += ' no'; else cls += ' dim'; }
         return `<button class="${cls}" dir="ltr" ${sh.answered?'disabled':''} data-action="shuffle-answer" data-i="${i}">${esc(opt)}</button>`;
@@ -19857,6 +19997,7 @@ function renderShuffle(){
     </div>
     ${sh.answered ? `
       ${answerBannerHtml(item, !missed, sh.selected)}
+      ${quizTypedNoteHtml(qv, item)}
       <button class="btn btn-primary game-cta" data-action="shuffle-next">${L('Next','Devam','بعدی','Siguiente')}</button>
     ` : ''}
   </div>`;
@@ -22771,25 +22912,39 @@ const HANDLERS = {
     const sh = state.viewParams && state.viewParams.sh;
     if(!sh || sh.answered || sh.finished || sh.reveal != null) return;
     const step = sh.queue[sh.pos], card = sh.cards[step.c], q = card.qs[step.k];
-    const i = +el.dataset.i, ok = i === q.correct;
-    sh.answered = true; sh.selected = i;
-    if(!step.retry){
-      card.first[step.k] = ok;
-      if(!ok) sh.queue.push({c:step.c, k:step.k, retry:true});
-      if(card.first[0] !== null && card.first[1] !== null && !card.done){
-        // the box is decided on the first attempts
-        card.done = true;
-        card.good = card.first.filter(Boolean).length;
-        const hiBefore = (state.progress.srs[card.id] && state.progress.srs[card.id].hi) || 0;
-        card.counted = srsReview(card.id, card.good);
-        const entry = state.progress.srs[card.id];
-        if(entry) entry.vi = card.nextVi;
-        // Light the shelf (FCgBqtei): crossing into Kept for the first time; the first such card gets the beat.
-        if(entry && hiBefore < SRS_KEPT_BOX && (entry.hi || 0) >= SRS_KEPT_BOX){ card.kept = true; if(sh.keptBeat == null) sh.keptBeat = step.c; }
-      }
-    }
-    sh.streak = ok ? (sh.streak||0) + 1 : 0;
-    { const word = q.options[q.correct]; const pt = tapPoint(e); const streak = sh.streak; queueFx(()=>fxQuizAnswer(i, pt, ok, streak, word, 'shuffle-answer')); }
+    if(q.qt === 'type' || q.qt === 'build') return;
+    const i = +el.dataset.i;
+    shuffleSettle(sh, i === q.correct, i, e);
+  },
+  // X3 (xLyFBJeK): typed and built answers in the Shuffle, one try, same scoring as a tapped answer.
+  'shuffle-type-check'(el, e){
+    const sh = state.viewParams && state.viewParams.sh;
+    if(!sh || sh.answered || sh.finished || sh.reveal != null) return;
+    const q = sh.cards[sh.queue[sh.pos].c].qs[sh.queue[sh.pos].k]; if(!q || q.qt !== 'type') return;
+    const inp = document.getElementById('quiz-type-input'), value = inp ? inp.value.trim() : '';
+    if(!value){ if(inp){ anim(inp, [{transform:'translateX(0)'},{transform:'translateX(-4px)'},{transform:'translateX(4px)'},{transform:'translateX(0)'}], {duration:240}); inp.focus(); } return; }
+    const m = typedMatch(value, q.accept);
+    sh.typed = {index:sh.pos, value:value.slice(0, 80), ok:m.ok, near:m.near, answer:m.answer};
+    shuffleSettle(sh, m.ok, m.ok ? q.correct : -1, e);
+  },
+  'shuffle-build-tile'(el, e){
+    const sh = state.viewParams && state.viewParams.sh;
+    if(!sh || sh.answered || sh.finished || sh.reveal != null) return;
+    const q = sh.cards[sh.queue[sh.pos].c].qs[sh.queue[sh.pos].k]; if(!q || q.qt !== 'build') return;
+    if(!sh.bp || sh.bp.index !== sh.pos) sh.bp = {index:sh.pos, placed:[], lock:0};
+    const bp = sh.bp, i = +el.dataset.i;
+    if(!(i >= 0 && i < q.tiles.length) || bp.placed.includes(i)) return;
+    bp.placed.push(i); sfx('tick');
+    if(bp.placed.length < q.tiles.length){ save(); render(); return; }
+    const ok = bp.placed.map(k=>typedNorm(q.tiles[k])).join(' ') === q.words.map(w=>typedNorm(w)).join(' ');
+    shuffleSettle(sh, ok, ok ? q.correct : -1, e);
+  },
+  'shuffle-build-back'(el){
+    const sh = state.viewParams && state.viewParams.sh;
+    if(!sh || sh.answered || !sh.bp || sh.bp.index !== sh.pos) return;
+    const k = +el.dataset.k;
+    if(!(k >= sh.bp.lock && k < sh.bp.placed.length)) return;
+    sh.bp.placed.splice(k, 1); sfx('tick');
     save(); render();
   },
   'shuffle-next'(){
@@ -22807,7 +22962,7 @@ const HANDLERS = {
       }
       sh.pos++;
     }
-    sh.answered = false; sh.selected = null;
+    sh.answered = false; sh.selected = null; sh.typed = null; sh.bp = null;
     if(sh.pos >= sh.queue.length) finishShuffle(sh);
     save(); render();
     window.scrollTo(0,0);
@@ -26795,10 +26950,11 @@ try{ document.addEventListener('pointerdown', orderPeekStart); document.addEvent
 
 // Typed quiz answers (teaching redesign item 12): Enter checks.
 try{ document.addEventListener('keydown', function(e){
-  if(e.key !== 'Enter' || state.view !== 'quiz' || !e.target || e.target.id !== 'quiz-type-input') return;
+  if(e.key !== 'Enter' || (state.view !== 'quiz' && state.view !== 'souvenir-shuffle') || !e.target || e.target.id !== 'quiz-type-input') return;
   e.preventDefault();
-  const b = document.querySelector('[data-action="quiz-type-check"]');
-  if(b) HANDLERS['quiz-type-check'](b, e);
+  const act = state.view === 'souvenir-shuffle' ? 'shuffle-type-check' : 'quiz-type-check';
+  const b = document.querySelector('[data-action="' + act + '"]');
+  if(b) HANDLERS[act](b, e);
 }); }catch(e){}
 
 // Passport Desk / Magic Words: Enter in the typing box confirms.

@@ -6744,7 +6744,7 @@ const DIALOGUES = [
 const COURSES = [];
 const _SS = [['review','story','grammar'],['vocab','game'],['speaking','writing','perspective','exit']];
 const _TU = (id,en,tr,es,ce,ct,ces)=>({id, title:{en,tr,es}, cando:{en:ce,tr:ct,es:ces}, sessions:_SS});
-COURSES.push({id:'travel-es', status:'shell', cat:'story', icon:'suitcase', entry:'A1', weeks:8, tracks:['full','express'], freeUnits:[],
+COURSES.push({id:'travel-es', status:'later', cat:'story', icon:'suitcase', entry:'A1', weeks:8, tracks:['full','express'], freeUnits:[],
   title:{en:'Travel Spanish', tr:'Seyahat İspanyolcası', fa:'اسپانیایی سفر', es:'Español para viajar'},
   promise:{en:'Handle the core trip situations in Spanish, from booking to complaints. Spain first, then Mexico and Argentina.', tr:'Rezervasyondan şikâyete temel seyahat durumlarını İspanyolca yönet. Önce İspanya, sonra Meksika ve Arjantin.', es:'Resuelve las situaciones básicas de un viaje en español, desde la reserva hasta las quejas. Primero España, luego México y Argentina.'},
   story:{character:'Mina', company:'Madrid', cast:[]},
@@ -23915,7 +23915,8 @@ function courseFreeUnitsText(c){
 function courseCardHtml(c){
   const live = c.status === 'live', open = live || c.status === 'shell';
   const nx = open ? courseNext(c.id) : null, started = open && courseStarted(c.id);
-  const pill = !open ? `<span class="pill" style="background:rgba(255,255,255,.3); color:#fff;">${CL('Coming soon','Yakında','به‌زودی','Próximamente')}</span>`
+  // status 'later' = postponed (Travel, Farin 2026-10-14): "Later", listed after the "Coming soon" courses.
+  const pill = !open ? `<span class="pill" style="background:rgba(255,255,255,.3); color:#fff;">${c.status === 'later' ? CL('Later','Daha sonra','بعداً','Más adelante') : CL('Coming soon','Yakında','به‌زودی','Próximamente')}</span>`
     : courseUnlocked(c.id) ? `<span class="pill" style="background:#fff; color:var(--clay-lavender-deep); font-weight:900;">${CL('Full course','Tam kurs','دوره‌ی کامل','Curso completo')}</span>`
     : !courseHasContent(c.id) ? '' : `<span class="pill" style="background:#fff; color:var(--clay-lavender-deep); font-weight:900;">${(c.freeUnits||[]).length > 1 ? CL('Chapter 1 free','1. Bölüm ücretsiz','فصل ۱ رایگان','Capítulo 1 gratis') : CL('Free sample lesson','Ücretsiz örnek ders','درس نمونه‌ی رایگان','Lección de muestra gratis')}</span>`;
   const where = started && nx ? (nx.final ? CL('Final project','Final projesi','پروژه‌ی پایانی','Proyecto final') : courseLessonName(c.id, nx.uid) + ' · ' + (courseIsCp(c.id, nx.uid) ? courseLessonLine(c.id, nx.uid) : cl(courseFindUnit(c.id, nx.uid).u.title)))
@@ -23933,12 +23934,14 @@ function courseCardHtml(c){
     <span class="chevron" style="color:#fff;">${ICONS.chev}</span>
   </div>`;
 }
+// Courses list order: open courses, then "Coming soon", then "Later" (postponed); the data order inside each group.
+function courseListOrder(){ const rank = c=>(c.status==='live' || c.status==='shell') ? 0 : c.status==='later' ? 2 : 1; return COURSES.map((c,i)=>({c, i})).sort((a,b)=>rank(a.c)-rank(b.c) || a.i-b.i).map(x=>x.c); }
 function renderCoursesHome(){
   return `<div class="fade-in">
     ${topbar(false)}
     ${sectionHeadNoBack(CL('Courses','Kurslar','دوره‌ها','Cursos'), CL('Focused courses for one real-life goal. Your free Roadmap is never touched.','Tek bir gerçek hayat hedefi için odaklı kurslar. Ücretsiz Yol Haritan hiç değişmez.','دوره‌هایی متمرکز برای یک هدف مشخص در زندگی واقعی. نقشه‌ی راه رایگان تو دست‌نخورده می‌ماند.','Cursos centrados en un objetivo de la vida real. Tu Ruta gratuita no se toca.'))}
     <div class="screen" style="padding-top:0;">
-      <div class="stack" style="gap:12px;">${COURSES.map(courseCardHtml).join('')}</div>
+      <div class="stack" style="gap:12px;">${courseListOrder().map(courseCardHtml).join('')}</div>
     </div>
   </div>`;
 }
@@ -24334,7 +24337,7 @@ function renderCourseGate(){
     <h1 class="display cp-title">${esc(c ? cl(c.title) : CL('Courses','Kurslar','دوره‌ها','Cursos'))}</h1>
     <div class="screen" style="padding-top:0;">
       <div class="hero-card" style="${COURSE_HERO_BG} cursor:default; text-align:center;">${claySparkles()}
-        <h2 class="display" style="font-size:20px; margin:4px 0 6px;">${CL('This course is being built','Bu kurs hazırlanıyor','این دوره در حال آماده‌سازی است','Este curso se está construyendo')}</h2>
+        <h2 class="display" style="font-size:20px; margin:4px 0 6px;">${c && c.status==='later' ? CL('This course comes later','Bu kurs daha sonra gelecek','این دوره بعداً می‌آید','Este curso llegará más adelante') : CL('This course is being built','Bu kurs hazırlanıyor','این دوره در حال آماده‌سازی است','Este curso se está construyendo')}</h2>
         <p style="font-size:13.5px; margin:0; opacity:.95;">${CL('Leave a message and Farin will tell you when it opens.','Mesaj bırak, açılınca Farin haber versin.','پیام بگذار تا Farin وقتی دوره باز شد خبرت کند.','Deja un mensaje y Farin te avisará cuando abra.')}</p>
       </div>
       ${c ? `<a class="btn btn-primary" style="margin-top:14px;" target="_top" rel="noopener" href="${esc(courseWaLink(c))}">${ICONS.whatsapp} ${CL('Tell me when it opens','Açılınca haber ver','وقتی باز شد، خبرم کن','Avísame cuando abra')}</a>` : ''}

@@ -958,6 +958,19 @@
   .cs-pick, .cs-foot .btn{font-family:inherit;}
   .course-unlock a.btn{text-decoration:none;}
   .course-chapter.current{border-color:var(--accent);}
+  /* Course Build 2: the certificate */
+  .cs-cert{position:relative; overflow:hidden; border-radius:28px; padding:14px; background-color:var(--clay-lavender-deep); background-image:linear-gradient(135deg, var(--clay-lavender), var(--clay-lavender-deep)); box-shadow:0 18px 34px -16px rgba(80,60,180,.55);}
+  .cs-cert-in{position:relative; background:#fffdf8; color:#1f2430; border-radius:20px; border:3px solid #F5B92E; padding:22px 18px 18px;}
+  .cs-cert-brand{font-weight:900; font-size:17px; color:#7C68D6;}
+  .cs-cert-eye{font-weight:800; font-size:11.5px; letter-spacing:.08em; color:#b07a00; margin-top:6px;}
+  .cs-cert-title{font-size:21px; line-height:1.3; margin:8px 0 0; color:#1f2430;}
+  .cs-cert-seal{width:48px; height:48px; margin:14px auto 8px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:24px; color:#7a4a00; background:linear-gradient(135deg,#FFE08A,#F5B92E);}
+  .cs-cert-name{font-weight:900; font-size:24px; color:#7C68D6; line-height:1.25;}
+  .cs-cert-date{font-size:12.5px; color:#6b7280; margin-top:2px;}
+  .cs-cert-cando{text-align:start; margin:14px 0 0; padding-inline-start:18px; font-size:12.5px; line-height:1.45; color:#374151;}
+  .cs-cert-cando li{margin-bottom:5px;}
+  .cs-cert-disc{margin:12px 0 0; font-size:11.5px; font-weight:700; color:#6b7280; line-height:1.4;}
+  .cs-cert-msg{margin:12px 0 0; font-size:13px; font-weight:700; color:var(--success);}
   /* Course Build 2: "Your work" (portfolio + journal) */
   .cs-wh{font-size:17px; margin:20px 0 2px;}
   .cs-wsub{margin:0 0 10px; font-size:12.5px; color:var(--ink-soft); line-height:1.4;}
@@ -25140,7 +25153,8 @@ function courseCertificateHtml(c, pd, all){
     ${state.profile && state.profile.name ? `<div style="font-weight:800; font-size:16px;">${esc(state.profile.name)}</div>` : ''}
     ${when ? `<div style="font-size:12px; color:var(--ink-faint);">${esc(localDateStr(new Date(when)))}</div>` : ''}
     <ul style="text-align:start; margin:12px 0 0; padding-inline-start:18px; font-size:13px;">${(cert.canDo||[]).map(x=>`<li style="margin-bottom:4px;">${esc(cl(x))}</li>`).join('')}</ul>
-    <p style="margin:12px 0 0; font-size:12px; color:var(--ink-soft); font-weight:700;">${esc(cl(cert.disclaimer))}</p></div>`;
+    <p style="margin:12px 0 0; font-size:12px; color:var(--ink-soft); font-weight:700;">${esc(cl(cert.disclaimer))}</p>
+    <button class="btn btn-primary" style="margin-top:14px;" data-action="course-open" data-view="course-cert" data-cid="${c.id}">${CL('Open your certificate','Sertifikanı aç','گواهی‌نامه‌ات را باز کن','Abre tu certificado')}</button></div>`;
 }
 function courseFinalPartHtml(c, pd, p){
   const a = courseFinalPart(c.id, p.id), res = courseUi.fres && courseUi.fres.part===p.id ? courseUi.fres : null;
@@ -25172,6 +25186,82 @@ function courseFinalPartHtml(c, pd, p){
       ${pd.rubric.map((r,ri)=>`<div style="margin-bottom:10px;"><div dir="ltr" translate="no" style="font-size:13px; margin-bottom:5px;">${esc(r)}${courseRubricSubHtml(pd, ri)}</div><div class="row" style="gap:6px;">${[0,1,2,3].map(v=>`<button class="cj-part${scores[ri]===v ? (v>=2 ? ' ok' : ' bad') : ''}" data-action="course-final-score" data-c="${ri}" data-v="${v}">${v}</button>`).join('')}</div></div>`).join('')}</div>
     ${res ? `<div class="card-flat" style="margin-top:12px; background:${res.passed ? 'var(--cat-voc-soft)' : 'var(--cat-gram-soft)'}; border-color:transparent;"><p style="margin:0; font-size:13.5px;">${res.wc} ${CL('words','kelime','کلمه', 'palabras')} · ${res.passed ? CL('Part passed. Well done!','Bölüm geçildi. Tebrikler!','این بخش را قبول شدی. آفرین!', 'Parte aprobada. ¡Bien hecho!') : res.missing ? CL('Score every line of the checklist first.','Önce kontrol listesinin her satırını puanla.','اول به همه‌ی ردیف‌های چک‌لیست نمره بده.', 'Primero puntúa cada línea de la lista.') : res.short ? CL('A little longer, please: at least '+p.minWords+' words.','Biraz daha uzun yaz: en az '+p.minWords+' kelime.','کمی بیشتر بنویس: دست‌کم '+p.minWords+' کلمه.', 'Un poco más largo, por favor: al menos '+p.minWords+' palabras.') : CL('Not yet: every line needs 2 or more. Revise, then score again.','Henüz değil: her satır 2 veya üstü olmalı. Düzelt ve yeniden puanla.','هنوز نه: نمره‌ی هر ردیف باید ۲ یا بیشتر باشد. متن را بازبینی کن و دوباره نمره بده.', 'Todavía no: cada línea necesita 2 o más. Revisa y puntúa otra vez.')}</p></div>` : ''}
     <button class="btn btn-primary" style="margin-top:14px;" data-action="course-final-save" data-cid="${c.id}" data-part="${p.id}">${CL('Check and save','Kontrol et ve kaydet','بررسی و ذخیره', 'Comprobar y guardar')}</button>`;
+}
+
+/* ---------- the certificate (Build 2, spec 3.6 "Certificate"; Farin Q5 = A) ----------
+   When every part of the final project passes: a full-screen certificate (opened once at that moment, then from the final
+   project and "Your work"). "Save as image" draws it on a canvas on the device and downloads a PNG; "Share" hands the PNG
+   to the system share sheet where the browser can share files. Nothing goes to a server. The disclaimer is always on it. */
+function courseCertDisclaimer(cert){
+  return cert && cert.disclaimer ? cl(cert.disclaimer) : CL('This certificate shows that you finished an FEschool course. It is not an official CEFR or IELTS certificate.','Bu sertifika bir FEschool kursunu bitirdiğini gösterir. Resmî bir CEFR veya IELTS sertifikası değildir.','این گواهی نشان می‌دهد که یک دوره‌ی FEschool را تمام کرده‌ای. مدرک رسمی CEFR یا IELTS نیست.','Este certificado muestra que terminaste un curso de FEschool. No es un certificado oficial CEFR ni IELTS.');
+}
+function courseCertDate(c, pd){ const when = courseProg(c.id).done[pd.id+':project']; return when ? localDateStr(new Date(when)) : ''; }
+function courseCertFile(c){ return 'feschool-certificate-' + c.id + '.png'; }
+// The certificate as a 1080 x 1350 PNG canvas (phone-share size), in the learner's UI language.
+function courseCertCanvas(c, pd){
+  const cert = pd.certificate || {}, W = 1080, H = 1350, cv = document.createElement('canvas'); cv.width = W; cv.height = H;
+  const x = cv.getContext('2d'); if(!x) return null;
+  let ff = 'sans-serif'; try{ ff = getComputedStyle(document.body).fontFamily || ff; }catch(e){}
+  const rr = (X, Y, w, h, r)=>{ x.beginPath(); x.moveTo(X+r, Y); x.arcTo(X+w, Y, X+w, Y+h, r); x.arcTo(X+w, Y+h, X, Y+h, r); x.arcTo(X, Y+h, X, Y, r); x.arcTo(X, Y, X+w, Y, r); x.closePath(); };
+  const bg = x.createLinearGradient(0, 0, W, H); bg.addColorStop(0, '#A99BEA'); bg.addColorStop(1, '#7C68D6'); x.fillStyle = bg; x.fillRect(0, 0, W, H);
+  x.fillStyle = 'rgba(255,255,255,.18)'; [[120,110,10],[960,180,7],[900,1250,9],[140,1220,6],[1010,700,5]].forEach(([a,b,r])=>{ x.beginPath(); x.arc(a, b, r, 0, Math.PI*2); x.fill(); });
+  rr(60, 60, W-120, H-120, 44); x.fillStyle = '#fffdf8'; x.fill();
+  rr(90, 90, W-180, H-180, 30); x.lineWidth = 5; x.strokeStyle = '#F5B92E'; x.stroke();
+  x.textAlign = 'center'; x.textBaseline = 'alphabetic'; try{ x.direction = LANG==='fa' ? 'rtl' : 'ltr'; }catch(e){}
+  const wrap = (t, max)=>{ const words = String(t || '').split(/\s+/).filter(Boolean), out = []; let cur = '';
+    words.forEach(w=>{ const n = cur ? cur + ' ' + w : w; if(x.measureText(n).width > max && cur){ out.push(cur); cur = w; } else cur = n; }); if(cur) out.push(cur); return out; };
+  let y = 190;
+  const put = (t, font, color, lh, max)=>{ x.font = font; x.fillStyle = color; wrap(t, max || 840).forEach(l=>{ x.fillText(l, W/2, y); y += lh; }); };
+  put('FEschool', '900 44px ' + ff, '#7C68D6', 62);
+  put(courseUp(CL('Certificate','Sertifika','گواهی‌نامه','Certificado')), '800 28px ' + ff, '#b07a00', 74);
+  put(cl(cert.title) || cl(c.title), '800 50px ' + ff, '#1f2430', 62);
+  // seal
+  y += 26; x.beginPath(); x.arc(W/2, y + 34, 38, 0, Math.PI*2); const sg = x.createLinearGradient(W/2-38, y, W/2+38, y+76); sg.addColorStop(0, '#FFE08A'); sg.addColorStop(1, '#F5B92E'); x.fillStyle = sg; x.fill();
+  x.font = '900 40px ' + ff; x.fillStyle = '#7a4a00'; x.fillText('★', W/2, y + 48); y += 130;
+  const name = (state.profile && state.profile.name) || ''; if(name) put(name, '900 70px ' + ff, '#7C68D6', 84);
+  const d = courseCertDate(c, pd); if(d) put(d, '600 28px ' + ff, '#6b7280', 64);
+  // can-dos: shrink the type until they fit above the disclaimer
+  const cds = (cert.canDo || []).map(cl).filter(Boolean), disc = courseCertDisclaimer(cert);
+  x.font = '600 24px ' + ff; const discLines = wrap(disc, 840), discTop = H - 120 - discLines.length * 32;
+  let size = 28; const fits = s=>{ x.font = '500 ' + s + 'px ' + ff; return cds.reduce((n, t)=>n + wrap('✓ ' + t, 860).length * Math.round(s * 1.36) + 10, 0) <= discTop - 30 - y; };
+  while(size > 18 && !fits(size)) size -= 2;
+  y += 6; cds.forEach(t=>{ put('✓ ' + t, '500 ' + size + 'px ' + ff, '#374151', Math.round(size * 1.36), 860); y += 10; });
+  y = discTop; put(disc, '600 24px ' + ff, '#6b7280', 32, 840);
+  return cv;
+}
+function courseCertPng(c, pd){ return new Promise(res=>{ const cv = courseCertCanvas(c, pd); if(!cv || !cv.toBlob) return res(null); cv.toBlob(b=>res(b), 'image/png'); }); }
+function courseCanShareFiles(){ try{ return !!(navigator.share && navigator.canShare && typeof File !== 'undefined' && navigator.canShare({files:[new File([new Blob(['x'], {type:'image/png'})], 'x.png', {type:'image/png'})]})); }catch(e){ return false; } }
+function renderCourseCert(){
+  const vp = state.viewParams || {}, c = courseGet(vp.cid), pd = courseFinalData(c);
+  if(!c || !pd) return renderNotFound();
+  if(courseFinalPassed(c.id, pd) < pd.parts.length) return renderCourseFinal();
+  const cert = pd.certificate || {}, name = (state.profile && state.profile.name) || '', d = courseCertDate(c, pd);
+  const nameBox = name ? '' : `<div class="card-flat" style="margin-top:14px; text-align:start;"><p style="margin:0 0 8px; font-size:13px;">${CL('Which name goes on your certificate?','Sertifikanda hangi isim yazsın?','چه اسمی روی گواهی‌نامه‌ات نوشته شود؟','¿Qué nombre va en tu certificado?')}</p>
+      <input id="course-req-name" class="name-input" type="text" autocomplete="name" placeholder="${esc(CL('Your name','Adın','اسم تو','Tu nombre'))}" />
+      <button class="btn btn-ghost" style="margin-top:8px;" data-action="course-request-name-save">${CL('Add my name','Adımı ekle','اسمم را اضافه کن','Añadir mi nombre')}</button></div>`;
+  return `<div class="fade-in course-cert">
+    <div class="cs-top"><button class="cs-x" data-action="course-close" data-cid="${c.id}" aria-label="${esc(CL('Close','Kapat','بستن','Cerrar'))}">${COURSE_X_SVG}</button><span style="flex:1;"></span></div>
+    <div class="screen cs-center" style="padding-top:4px;">
+      <div class="cs-cert">${claySparkles()}
+        <div class="cs-cert-in">
+          <div class="cs-cert-brand">FEschool</div>
+          <div class="cs-cert-eye">${esc(courseUp(CL('Certificate','Sertifika','گواهی‌نامه','Certificado')))}</div>
+          <h1 class="display cs-cert-title">${esc(cl(cert.title) || cl(c.title))}</h1>
+          <div class="cs-cert-seal" aria-hidden="true">★</div>
+          ${name ? `<div class="cs-cert-name">${esc(name)}</div>` : ''}
+          ${d ? `<div class="cs-cert-date">${esc(d)}</div>` : ''}
+          <ul class="cs-cert-cando">${(cert.canDo || []).map(t=>`<li>${esc(cl(t))}</li>`).join('')}</ul>
+          <p class="cs-cert-disc">${esc(courseCertDisclaimer(cert))}</p>
+        </div>
+      </div>
+      ${nameBox}
+      ${courseUi.certMsg ? `<p class="cs-cert-msg">${esc(courseUi.certMsg)}</p>` : ''}
+    </div>
+    <div class="cs-foot">
+      <button class="btn btn-primary cs-main" data-action="course-cert-save" data-cid="${c.id}">${CL('Save as image','Resim olarak kaydet','ذخیره به‌صورت تصویر','Guardar como imagen')}</button>
+      ${courseCanShareFiles() ? `<button class="btn btn-ghost cs-cert-share" data-action="course-cert-share" data-cid="${c.id}">${CL('Share','Paylaş','اشتراک‌گذاری','Compartir')}</button>` : ''}
+    </div>
+  </div>`;
 }
 
 /* ---------- handlers ---------- */
@@ -25216,9 +25306,12 @@ Object.assign(HANDLERS, {
     a.passed = !missing && !short && pd.rubric.every((_,i)=>a.scores[i] >= 2);
     a.date = todayISO();
     if(a.passed) cp.done[pd.id+':'+p.id] = Date.now(); else delete cp.done[pd.id+':'+p.id];
-    if(courseFinalPassed(cid, pd)===pd.parts.length){ if(!cp.done[pd.id+':project']) cp.done[pd.id+':project'] = Date.now(); markActivity(); }
+    let first = false;
+    if(courseFinalPassed(cid, pd)===pd.parts.length){ if(!cp.done[pd.id+':project']){ cp.done[pd.id+':project'] = Date.now(); first = true; } markActivity(); }
     courseUi.fres = {part:p.id, wc, missing, short, passed:a.passed};
-    save(); render();
+    save();
+    if(first){ courseUi.certMsg = null; go('course-cert', {cid}); window.scrollTo(0, 0); return; }   // Build 2: the certificate moment, once
+    render();
   },
   'course-final-star'(el){
     const st = courseUi.star, ai = Number(el.dataset.a); if(!st || st.checked[ai]) return;
@@ -25341,6 +25434,16 @@ Object.assign(HANDLERS, {
     const cp = courseProg(cid), k = uid+':writing', old = (cp.scores[k] && cp.scores[k].ticks) || [];
     cp.scores[k] = {ticks:w.rubric.map((_,j)=>j===i ? !old[j] : !!old[j]), date:todayISO()}; save(); render();
   },
+  // Certificate (Build 2): a PNG drawn on this device; Save downloads it, Share hands it to the system share sheet.
+  'course-cert-save'(el){
+    const c = courseGet(el.dataset.cid), pd = courseFinalData(c); if(!pd) return;
+    courseCertPng(c, pd).then(b=>{ if(!b) return; const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = courseCertFile(c); document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(a.href), 8000);
+      courseUi.certMsg = CL('Saved. Look in your downloads or photos.','Kaydedildi. İndirilenlere ya da fotoğraflarına bak.','ذخیره شد. در دانلودها یا عکس‌هایت ببین.','Guardado. Míralo en tus descargas o fotos.'); if(state.view==='course-cert') render(); });
+  },
+  'course-cert-share'(el){
+    const c = courseGet(el.dataset.cid), pd = courseFinalData(c); if(!pd) return;
+    courseCertPng(c, pd).then(b=>{ if(!b) return; try{ const f = new File([b], courseCertFile(c), {type:'image/png'}); navigator.share({files:[f], title:cl((pd.certificate || {}).title) || cl(c.title)}).catch(()=>{}); }catch(e){} });
+  },
   'course-review-ask'(el){
     const cid = el.dataset.cid, uid = el.dataset.uid, w = courseUnitItems(uid).writing, ta = document.getElementById('cw-text');
     if(!w || courseReviewReq(w)) return;
@@ -25382,7 +25485,8 @@ Object.assign(screens, {
   'course-step': renderCourseStep,
   'course-gate': renderCourseGate,
   'course-final': renderCourseFinal,
-  'course-work': renderCourseWork
+  'course-work': renderCourseWork,
+  'course-cert': renderCourseCert
 });
 /* ---------- admin › Course access (Trello Hr03Iu6C): issue, list, revoke and re-issue course passwords ----------
    Lives in the same hidden #admin route (Firebase-auth sign-in). Docs are progress/ca-<hash> (see the

@@ -472,6 +472,23 @@
   .case-wrap{text-align:center;}
   .case-wrap-line{margin:0 0 12px; font-family:'Fredoka',-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; font-weight:700; font-size:19px; color:var(--ink);}
   @media (prefers-reduced-motion: reduce){ .case-file, .case-pol, .case-pol:nth-child(2), .case-pol:nth-child(3){transform:none;} }
+  /* Cosy-detective visual pass (gamification card MXsYRclV): gold=paper/file (--cat-review), coral=pin/attention
+     (--clay-coral) across the case file, clue cards, notebook and polaroids - existing tokens only, no new ones. */
+  .case-file-wrap{position:relative;}
+  .case-folder-tab{position:relative; z-index:0; display:inline-block; margin:0 0 -8px; margin-inline-start:18px; padding:4px 14px 10px; border-radius:10px 10px 0 0; background:var(--cat-review); color:#3b2f63; font-family:'Fredoka',-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; font-weight:800; font-size:11px; letter-spacing:.06em; text-transform:uppercase;}
+  .case-file{background:repeating-linear-gradient(45deg, color-mix(in srgb, var(--cat-review) 10%, transparent) 0 2px, transparent 2px 11px), repeating-linear-gradient(-45deg, color-mix(in srgb, var(--cat-review) 10%, transparent) 0 2px, transparent 2px 11px), var(--cat-review-soft);}
+  .case-title{opacity:.8; font-weight:600;}
+  .case-pol{position:relative;}
+  .case-pol::before{content:''; position:absolute; top:-5px; left:50%; transform:translateX(-50%); width:10px; height:10px; border-radius:50%; background:var(--clay-coral); box-shadow:0 1px 2px rgba(0,0,0,.3); pointer-events:none; z-index:1;}
+  .case-clue{border-inline-start-width:3px; border-inline-start-color:color-mix(in srgb, var(--clay-coral) 50%, transparent);}
+  .case-why img{transform:rotate(-8deg);}
+  .case-nb-legend{display:flex; gap:12px; flex-wrap:wrap; margin-top:8px; padding-top:8px; border-top:1px dashed color-mix(in srgb, var(--cat-review) 50%, transparent); font-size:11.5px; font-weight:700; color:var(--ink-faint);}
+  .case-nb-legend span{display:inline-flex; align-items:center; gap:4px;}
+  .case-cell-mini{display:inline-flex; align-items:center; justify-content:center; width:16px; height:16px; border-radius:4px; background:var(--bg-sunken); color:var(--ink-faint); font-size:11px; font-weight:900;}
+  .case-cell-mini.ok{color:var(--success);}
+  .case-intro-demo{display:flex; align-items:center; gap:12px; margin-top:14px; padding:10px 12px; border-radius:16px; background:var(--cat-review-soft);}
+  .case-intro-demo-txt{margin:0; font-size:13.5px; font-weight:700; color:var(--ink); line-height:1.4; text-align:start;}
+  .case-cell.intro-glow{box-shadow:0 0 0 2px rgba(255,194,46,.65), 0 0 26px 6px rgba(255,194,46,.5);}
   /* Five new games wave B (Jq6f9OFv): Magic Words - arched door, rune tiles, light behind, clue dots, mic (spec §6.7 tokens) */
   .spell-body{display:flex; flex-direction:column; gap:14px; align-items:stretch;}
   .spell-card{display:flex; flex-direction:column; align-items:center; gap:14px;}
@@ -16256,109 +16273,151 @@ const CASE_OBJECTS = [
   {id:'book', art:'📖', en:'the book', es:'el libro', g:'m', tr:'kitap', fa:'کتاب'},
   {id:'phone', art:'📱', en:'the phone', es:'el teléfono', g:'m', tr:'telefon', fa:'تلفن'}
 ];
+// Suspect portraits (farin-gamification/farin-game art, approved 2026-10-15; Claude/specs/case-closed-art/sourced/SOURCES.md):
+// 5 female + 5 male, shared by both apps, keyed by gender position (not by name - the pairing itself carries no meaning).
+const CASE_PORTRAITS = {
+  f:['suspect-f1-gypsygirl', 'suspect-f2-lady', 'suspect-f3-strawhat', 'suspect-f4-painter', 'suspect-f5-rose'],
+  m:['suspect-m1-merchant', 'suspect-m2-painter', 'suspect-m3-archdeacon', 'suspect-m4-youngman', 'suspect-m5-turban']
+};
+// One portrait per suspect, drawn from their gender's pool with the case's own rnd (same determinism buildCaseRound
+// already uses elsewhere) so two same-gender suspects in one case never get the same portrait.
+function casePortraitsFor(names, rnd){
+  const pool = {f:crossShuffle(CASE_PORTRAITS.f, rnd), m:crossShuffle(CASE_PORTRAITS.m, rnd)};
+  const used = {f:0, m:0};
+  return names.map(n=>{ const g = n.g === 'f' ? 'f' : 'm'; return pool[g][used[g]++ % pool[g].length]; });
+}
 // One line, spoken once; the thing taken is never one of the six objects. From B1 "Everyone is telling the truth." follows.
+// v2 (farin-lxd 2026-10-14/15, Claude/specs/games-content/mystery-en.md "v2 content rewrite"): 6 -> 24 settings, each
+// with its own display title (CASE_SETTING_TITLES, same order - mystery-case-titles.md) shown in caseStatusHtml.
 const CASE_SETTINGS = {
-  en:['Someone took the cake from {P_CRIME}.', 'Someone ate the last cookie {P_CRIME_AT}.', 'Someone took the letter that was {P_CRIME_AT}.', 'The flowers {P_CRIME_AT} are gone — someone took them.', 'Someone hid the chocolate box {P_CRIME_AT}.', 'The concert tickets were {P_CRIME_AT}. Now they aren’t.'],
-  es:['Alguien se llevó la tarta de {P_CRIME}.', 'Alguien se comió la última galleta {P_CRIME_AT}.', 'Alguien se llevó la carta que estaba {P_CRIME_AT}.', 'Las flores que había {P_CRIME_AT} han desaparecido: alguien se las llevó.', 'Alguien escondió la caja de bombones {P_CRIME_AT}.', 'Las entradas del concierto estaban {P_CRIME_AT}. Ya no están.']
+  en:['Someone took the cake from {P_CRIME}.', 'Someone ate the last cookie {P_CRIME_AT}.', 'Someone took the letter that was {P_CRIME_AT}.', 'The flowers {P_CRIME_AT} are gone — someone took them.', 'Someone hid the chocolate box {P_CRIME_AT}.', 'The concert tickets were {P_CRIME_AT}. Now they aren’t.', 'Someone ate the prize tomato that was growing {P_CRIME_AT}.', 'The birthday candles disappeared from {P_CRIME}. The party starts in an hour!', 'Someone swapped the recipe card {P_CRIME_AT} for a blank one.', 'The club’s trophy is missing from {P_CRIME}.', 'Someone let the cat out of {P_CRIME}, and now it’s missing too.', 'The last slice of pie vanished from {P_CRIME}.', 'Someone broke the teapot {P_CRIME_AT} and didn’t say a word.', 'The raffle tickets {P_CRIME_AT} are gone. The draw is tonight.', 'Someone moved the chess pieces {P_CRIME_AT} in the middle of the game.', 'The jar of honey from {P_CRIME} is empty. Someone finished it.', 'Someone painted over the sign {P_CRIME_AT} as a joke. Nobody is laughing.', 'The knitting circle’s wool basket is missing from {P_CRIME}.', 'Someone untied the balloons {P_CRIME_AT} before the photos.', 'The garden gnome from {P_CRIME} has disappeared. Again.', 'Someone ate the last sandwich {P_CRIME_AT} before the meeting started.', 'The choir’s song sheets are missing from {P_CRIME}.', 'Someone hid the prize ribbon {P_CRIME_AT} the night before the fair.', 'The biscuit tin {P_CRIME_AT} is empty, and it was full this morning.'],
+  es:['Alguien se llevó la tarta de {P_CRIME}.', 'Alguien se comió la última galleta {P_CRIME_AT}.', 'Alguien se llevó la carta que estaba {P_CRIME_AT}.', 'Las flores que había {P_CRIME_AT} han desaparecido: alguien se las llevó.', 'Alguien escondió la caja de bombones {P_CRIME_AT}.', 'Las entradas del concierto estaban {P_CRIME_AT}. Ya no están.', 'Alguien se comió el tomate premiado que crecía {P_CRIME_AT}.', 'Las velas de cumpleaños desaparecieron de {P_CRIME}. ¡La fiesta empieza en una hora!', 'Alguien cambió la receta {P_CRIME_AT} por una hoja en blanco.', 'El trofeo del club ha desaparecido de {P_CRIME}.', 'Alguien dejó salir al gato de {P_CRIME}, y ahora el gato también falta.', 'El último trozo de tarta desapareció de {P_CRIME}.', 'Alguien rompió la tetera {P_CRIME_AT} y no dijo nada.', 'Los boletos de la rifa {P_CRIME_AT} han desaparecido. El sorteo es esta noche.', 'Alguien movió las piezas de ajedrez {P_CRIME_AT} en mitad de la partida.', 'El tarro de miel de {P_CRIME} está vacío. Alguien se lo terminó.', 'Alguien pintó encima del cartel {P_CRIME_AT} como broma. A nadie le hace gracia.', 'La cesta de lana del club de punto ha desaparecido de {P_CRIME}.', 'Alguien desató los globos {P_CRIME_AT} antes de las fotos.', 'El gnomo de jardín de {P_CRIME} ha desaparecido. Otra vez.', 'Alguien se comió el último bocadillo {P_CRIME_AT} antes de que empezara la reunión.', 'Las partituras del coro han desaparecido de {P_CRIME}.', 'Alguien escondió la cinta del premio {P_CRIME_AT} la noche antes de la feria.', 'La lata de galletas {P_CRIME_AT} está vacía, y esta mañana estaba llena.']
+};
+// Display titles, 1:1 with CASE_SETTINGS (mystery-case-titles.md) - UI chrome, not localized into tr/fa (the settings
+// text itself is only ever en/es, matching CASE_SETTINGS having no tr/fa fields).
+const CASE_SETTING_TITLES = {
+  en:['The Vanishing Cake', 'Who Ate the Last Cookie?', 'The Missing Letter', 'Someone Took the Flowers', 'The Secret Chocolates', 'Tickets to Nowhere', 'The Prize Tomato Caper', 'No Candles, No Cake', 'The Switched Recipe', 'Where’s the Trophy?', 'The Cat Who Vanished', 'The Last Slice', 'The Silent Teapot', 'Raffle Night Robbery', 'The Midgame Mystery', 'The Empty Honey Jar', 'The Painted Prank', 'The Missing Wool Basket', 'Balloons Set Free', 'The Gnome Strikes Again', 'The Disappearing Sandwich', 'Silence in the Choir', 'The Ribbon Before the Fair', 'The Empty Tin'],
+  es:['La tarta desaparecida', '¿Quién se comió la galleta?', 'La carta perdida', 'Las flores desaparecidas', 'Los bombones escondidos', 'Las entradas perdidas', 'El tomate premiado', 'Sin velas, sin fiesta', 'La receta cambiada', '¿Dónde está el trofeo?', 'El gato desaparecido', 'El último trozo', 'La tetera silenciosa', 'El robo de la rifa', 'La partida interrumpida', 'El tarro de miel vacío', 'La broma pintada', 'La cesta de lana perdida', 'Los globos sueltos', 'El gnomo, otra vez', 'El bocadillo desaparecido', 'Silencio en el coro', 'La cinta antes de la feria', 'La lata vacía']
 };
 /* Clue templates (t = logic type, g = 'basic' or the live GRAMMAR_ITEMS id the form needs, lv = the lowest level).
    Slots: {S1} {S2} names, {P1AT} {P2AT} place with preposition, {P1} {P2} bare place, {O1} object with article,
    {PRO1} he/she, {POSS1} his/her, {OBJ1} him/her (by the suspect's g), {G1:m|f} a Spanish word agreeing with S1,
-   {GO:m|f} agreeing with the object. crime = P1 is always the crime place (es B2-1: only there one sees the thief). */
+   {GO:m|f} agreeing with the object. crime = P1 is always the crime place (es B2-1: only there one sees the thief).
+   v2 (farin-lxd 2026-10-14/15, mystery-en.md/mystery-es.md "v2 content rewrite" + "A1/A2 basic mode"): text rewritten
+   into a FILE/WIT voice mix (A1-A2 stay FILE-only), a few new variant ids added, and 3 new basic-tagged templates
+   (A1-8, A1-9, A2-9) so A1/A2 reach 4 clue types from the always-available basic set alone (AT/NOT_AT/EITHER/NEITHER -
+   see the NEITHER addition in caseTemplates()/caseInstances() below). ids/t/g/lv of every pre-existing id are unchanged. */
 const CASE_CLUES = {
   en:[
-    {id:'A1-1', t:'AT', g:'basic', lv:'A1', x:'{S1} is {P1AT}.'},
-    {id:'A1-2', t:'NOT_AT', g:'basic', lv:'A1', x:'{S1} is not {P1AT}.'},
-    {id:'A1-3', t:'NOT_AT', g:'basic', lv:'A1', x:'{S1} isn’t {P1AT}.'},
-    {id:'A1-4', t:'AT', g:'g-A1-8', lv:'A1', x:'{S1} is {P1AT}, not {P2AT}.'},
-    {id:'A1-5', t:'AT', g:'g-A1-7', lv:'A1', x:'There is one person {P1AT}: it is {S1}.'},
-    {id:'A1-6', t:'NOT_AT', g:'g-A1-10', lv:'A1', x:'Where is {S1}? Not {P1AT}.'},
-    {id:'A1-7', t:'NOT_AT', g:'g-A1-4', lv:'A1', x:'That person {P1AT}? That is not {S1}.'},
-    {id:'A2-1', t:'NOT_AT', g:'basic', lv:'A2', x:'{S1} wasn’t {P1AT}.'},
-    {id:'A2-2', t:'AT', g:'basic', lv:'A2', x:'{S1} was {P1AT} all afternoon.'},
-    {id:'A2-3', t:'EITHER', g:'g-A2-1', lv:'A2', x:'{S1} was either {P1AT} or {P2AT}.'},
-    {id:'A2-4', t:'AT', g:'g-A2-1', lv:'A2', x:'Only {S1} was {P1AT}.'},
-    {id:'A2-5', t:'AT', g:'g-A2-1', lv:'A2', x:'{S1} went to {P1} and stayed there.'},
-    {id:'A2-6', t:'NOT_AT', g:'g-A2-7', lv:'A2', x:'{S1} is never {P1AT}.'},
-    {id:'A2-7', t:'AT', g:'g-A2-8', lv:'A2', x:'Right now {S1} is standing {P1AT}.'},
-    {id:'A2-8', t:'AT', g:'g-A2-9', lv:'A2', x:'{S2} saw {S1} {P1AT} and waved at {OBJ1} — I mean, at {S1}.'},
-    {id:'B1-1', t:'NEITHER', g:'basic', lv:'B1', x:'Neither {S1} nor {S2} was {P1AT}.'},
-    {id:'B1-2', t:'HAS', g:'basic', lv:'B1', x:'{S1} had {O1}.'},
-    {id:'B1-3', t:'NOT_HAS', g:'basic', lv:'B1', x:'{S1} didn’t have {O1}.'},
-    {id:'B1-4', t:'OBJ_AT', g:'g-B1-6', lv:'B1', x:'The person who had {O1} was {P1AT}.'},
-    {id:'B1-5', t:'OBJ_AT', g:'g-B1-6', lv:'B1', x:'{O1} belongs to the person who was {P1AT}.'},
-    {id:'B1-6', t:'HAS', g:'g-B1-6', lv:'B1', x:'{S1} is the one who had {O1}.'},
-    {id:'B1-7', t:'NOT_AT', g:'g-B1-1', lv:'B1', x:'{S1} hasn’t been {P1AT} today.'},
-    {id:'B1-8', t:'AT', g:'g-B1-2', lv:'B1', x:'{S1} has been {P1AT} for two hours.'},
-    {id:'B1-9', t:'HAS', g:'g-B1-5', lv:'B1', x:'{O1} was given to {S1} this morning, and {PRO1} still has it.'},
-    {id:'B1-10', t:'AT', g:'g-B1-10', lv:'B1', x:'{S2} said that {S1} was {P1AT}.'},
-    {id:'B2-1', t:'NOT_AT', g:'g-B2-5', lv:'B2', x:'{S1} can’t have been {P1AT}.'},
-    {id:'B2-2', t:'AT', g:'g-B2-5', lv:'B2', x:'{S1} must have been {P1AT} the whole time.'},
-    {id:'B2-3', t:'OBJ_AT', g:'g-B2-5', lv:'B2', x:'{O1} must have been {P1AT} — that’s where its owner was.'},
-    {id:'B2-4', t:'NOT_HAS', g:'g-B2-5', lv:'B2', x:'{S1} can’t have had {O1}.'},
-    {id:'B2-5', t:'IF', g:'g-B1-3', lv:'B2', x:'If {S1} was {P1AT}, then {S2} was {P2AT}.'},
-    {id:'B2-6', t:'NOT_AT', g:'g-B2-6', lv:'B2', x:'Not once was {S1} {P1AT}.'},
-    {id:'B2-7', t:'AT', g:'g-B2-8', lv:'B2', x:'{S1} wishes {PRO1} had been {P2AT}, but {PRO1} was {P1AT}.'},
-    {id:'B2-8', t:'AT', g:'g-B2-4', lv:'B2', x:'{S2} claimed that {S1} had been {P1AT} the entire afternoon.'},
-    {id:'B2-9', t:'AT', g:'g-B2-3', lv:'B2', x:'{S1} was seen {P1AT} by two people.'},
-    {id:'B2-10', t:'AT', g:'g-B2-10', lv:'B2', x:'Although {S1} wanted to be {P2AT}, {PRO1} was in fact {P1AT}.'},
-    {id:'C1-1', t:'NOT_AT', g:'g-C1-2', lv:'C1', x:'It wasn’t {S1} who was {P1AT}.'},
-    {id:'C1-2', t:'AT', g:'g-C1-2', lv:'C1', x:'It was {P1} where {S1} spent the whole afternoon.'},
-    {id:'C1-3', t:'HAS', g:'g-C1-2', lv:'C1', x:'What {S1} had with {POSS1} was {O1}.'},
-    {id:'C1-4', t:'AT', g:'g-C1-1', lv:'C1', x:'Not once did {S1} leave {P1}.'},
-    {id:'C1-5', t:'NOT_AT', g:'g-C1-1', lv:'C1', x:'Never had {S1} set foot {P1AT} that day.'},
-    {id:'C1-6', t:'UNLESS', g:'g-C1-5', lv:'C1', x:'Unless {S1} was {P1AT}, {S2} was {P2AT}.'},
-    {id:'C1-7', t:'NOT_AT', g:'g-C1-4', lv:'C1', x:'{S1} couldn’t possibly have been {P1AT}.'},
-    {id:'C1-8', t:'OBJ_AT', g:'g-C1-6', lv:'C1', x:'The person holding {O1} was {P1AT}.'},
-    {id:'C1-9', t:'HAS', g:'g-C1-9', lv:'C1', x:'{S1} did have {O1} — whatever anyone says.'},
-    {id:'C1-10', t:'NEITHER', g:'g-C1-8', lv:'C1', x:'{S1} wasn’t {P1AT}, and neither was {S2}.'}
+    {id:'A1-1', t:'AT', g:'basic', lv:'A1', x:'Look — {S1} is {P1AT}.'},
+    {id:'A1-2', t:'NOT_AT', g:'basic', lv:'A1', x:'No, {S1} is not {P1AT}.'},
+    {id:'A1-3', t:'NOT_AT', g:'basic', lv:'A1', x:'{S1} isn’t {P1AT} right now.'},
+    {id:'A1-4', t:'AT', g:'g-A1-8', lv:'A1', x:'Careful: {S1} is {P1AT}, not {P2AT}.'},
+    {id:'A1-5', t:'AT', g:'g-A1-7', lv:'A1', x:'There is only one person {P1AT} — it’s {S1}.'},
+    {id:'A1-6', t:'NOT_AT', g:'g-A1-10', lv:'A1', x:'Where is {S1} right now? Not {P1AT}.'},
+    {id:'A1-7', t:'NOT_AT', g:'g-A1-4', lv:'A1', x:'Someone is {P1AT}. That is not {S1}.'},
+    {id:'A1-1b', t:'AT', g:'basic', lv:'A1', x:'{S1} is {P1AT}, nice and clear.'},
+    {id:'A1-2b', t:'NOT_AT', g:'basic', lv:'A1', x:'{S1} is not {P1AT} — look again.'},
+    {id:'A1-8', t:'EITHER', g:'basic', lv:'A1', x:'{S1} is {P1AT} or {P2AT}.'},
+    {id:'A1-9', t:'NEITHER', g:'basic', lv:'A1', x:'{S1} and {S2} are not {P1AT}.'},
+    {id:'A2-1', t:'NOT_AT', g:'basic', lv:'A2', x:'Funny thing — {S1} wasn’t {P1AT} that afternoon.'},
+    {id:'A2-2', t:'AT', g:'basic', lv:'A2', x:'{S1} was {P1AT} all afternoon, and didn’t leave once.'},
+    {id:'A2-3', t:'EITHER', g:'g-A2-1', lv:'A2', x:'Nobody remembers exactly — {S1} was either {P1AT} or {P2AT}.'},
+    {id:'A2-4', t:'AT', g:'g-A2-1', lv:'A2', x:'Only {S1} was {P1AT} — everyone agrees on that.'},
+    {id:'A2-5', t:'AT', g:'g-A2-1', lv:'A2', x:'{S1} went straight to {P1} and never left.'},
+    {id:'A2-6', t:'NOT_AT', g:'g-A2-7', lv:'A2', x:'{S1} is never {P1AT}. Not once.'},
+    {id:'A2-7', t:'AT', g:'g-A2-8', lv:'A2', x:'Right now, {S1} is standing {P1AT}, waiting.'},
+    {id:'A2-8', t:'AT', g:'g-A2-9', lv:'A2', x:'{S2} saw {S1} {P1AT} and waved at {OBJ1} — I mean, at {S1}!'},
+    {id:'A2-2b', t:'AT', g:'basic', lv:'A2', x:'{S1} was {P1AT} the whole time.'},
+    {id:'A2-9', t:'NEITHER', g:'basic', lv:'A2', x:'{S1} and {S2} weren’t {P1AT}.'},
+    {id:'B1-1', t:'NEITHER', g:'basic', lv:'B1', x:'Neither {S1} nor {S2} was {P1AT} — the notebook is clear on that.'},
+    {id:'B1-2', t:'HAS', g:'basic', lv:'B1', x:'“I had {O1} the whole time,” {S1} says.'},
+    {id:'B1-3', t:'NOT_HAS', g:'basic', lv:'B1', x:'“I didn’t have {O1},” {S1} insists.'},
+    {id:'B1-4', t:'OBJ_AT', g:'g-B1-6', lv:'B1', x:'Whoever had {O1} was {P1AT} — that much is certain.'},
+    {id:'B1-5', t:'OBJ_AT', g:'g-B1-6', lv:'B1', x:'{O1} belongs to the person who was {P1AT}, and everyone knows it.'},
+    {id:'B1-6', t:'HAS', g:'g-B1-6', lv:'B1', x:'{S1} is quick to point out: “I’m the one who had {O1}.”'},
+    {id:'B1-7', t:'NOT_AT', g:'g-B1-1', lv:'B1', x:'{S1} hasn’t been {P1AT} today — not even once.'},
+    {id:'B1-8', t:'AT', g:'g-B1-2', lv:'B1', x:'“I’ve been {P1AT} for two hours,” {S1} explains.'},
+    {id:'B1-9', t:'HAS', g:'g-B1-5', lv:'B1', x:'{O1} was given to {S1} this morning, and {PRO1} still has it, according to the file.'},
+    {id:'B1-10', t:'AT', g:'g-B1-10', lv:'B1', x:'{S2} told the detective that {S1} was {P1AT} all along.'},
+    {id:'B1-10b', t:'AT', g:'g-B1-10', lv:'B1', x:'{S2} mentioned that {S1} was {P1AT}.'},
+    {id:'B1-10c', t:'AT', g:'g-B1-10', lv:'B1', x:'{S2} insisted that {S1} was {P1AT}.'},
+    {id:'B2-1', t:'NOT_AT', g:'g-B2-5', lv:'B2', x:'“{S1} can’t have been {P1AT},” says {S2} firmly.'},
+    {id:'B2-2', t:'AT', g:'g-B2-5', lv:'B2', x:'{S1} must have been {P1AT} the whole time — the evidence points only one way.'},
+    {id:'B2-3', t:'OBJ_AT', g:'g-B2-5', lv:'B2', x:'{O1} must have been {P1AT} — that’s exactly where the owner was standing.'},
+    {id:'B2-4', t:'NOT_HAS', g:'g-B2-5', lv:'B2', x:'“{S1} can’t have had {O1},” {S2} says simply.'},
+    {id:'B2-5', t:'IF', g:'g-B1-3', lv:'B2', x:'If {S1} was {P1AT}, it follows that {S2} was {P2AT}.'},
+    {id:'B2-6', t:'NOT_AT', g:'g-B2-6', lv:'B2', x:'Not once was {S1} {P1AT} — the record is clear.'},
+    {id:'B2-7', t:'AT', g:'g-B2-8', lv:'B2', x:'“I wish I’d been {P2AT},” {S1} admits, “but I was {P1AT}.”'},
+    {id:'B2-8', t:'AT', g:'g-B2-4', lv:'B2', x:'{S2} swore that {S1} had been {P1AT} the entire afternoon.'},
+    {id:'B2-9', t:'AT', g:'g-B2-3', lv:'B2', x:'{S1} was seen {P1AT} by two separate witnesses.'},
+    {id:'B2-10', t:'AT', g:'g-B2-10', lv:'B2', x:'Although {S1} had hoped to be {P2AT}, {PRO1} ended up {P1AT} instead.'},
+    {id:'B2-8b', t:'AT', g:'g-B2-4', lv:'B2', x:'{S2} admitted that {S1} had been {P1AT} the entire afternoon.'},
+    {id:'C1-1', t:'NOT_AT', g:'g-C1-2', lv:'C1', x:'“It wasn’t {S1} who was {P1AT},” {S2} corrected the detective.'},
+    {id:'C1-2', t:'AT', g:'g-C1-2', lv:'C1', x:'It was {P1} where {S1} spent the whole afternoon — of that, there’s no doubt.'},
+    {id:'C1-3', t:'HAS', g:'g-C1-2', lv:'C1', x:'What {S1} actually had with {POSS1} was {O1}, nothing more.'},
+    {id:'C1-4', t:'AT', g:'g-C1-1', lv:'C1', x:'Not once did {S1} leave {P1} — the detective checked twice.'},
+    {id:'C1-5', t:'NOT_AT', g:'g-C1-1', lv:'C1', x:'“Never had {S1} set foot {P1AT} that day,” {S2} testified.'},
+    {id:'C1-6', t:'UNLESS', g:'g-C1-5', lv:'C1', x:'Unless {S1} was {P1AT}, {S2} was {P2AT} — there’s no other option.'},
+    {id:'C1-7', t:'NOT_AT', g:'g-C1-4', lv:'C1', x:'“{S1} couldn’t possibly have been {P1AT},” {S2} said flatly.'},
+    {id:'C1-8', t:'OBJ_AT', g:'g-C1-6', lv:'C1', x:'The person holding {O1} was, without question, {P1AT}.'},
+    {id:'C1-9', t:'HAS', g:'g-C1-9', lv:'C1', x:'“I did have {O1}, whatever anyone says,” {S1} shot back.'},
+    {id:'C1-10', t:'NEITHER', g:'g-C1-8', lv:'C1', x:'{S1} wasn’t {P1AT}. Neither was {S2}. Full stop.'}
   ],
   es:[
-    {id:'A1-1', t:'AT', g:'basic', lv:'A1', x:'{S1} está {P1AT}.'},
-    {id:'A1-2', t:'NOT_AT', g:'basic', lv:'A1', x:'{S1} no está {P1AT}.'},
-    {id:'A1-3', t:'AT', g:'g-A1-2', lv:'A1', x:'{S1} está {P1AT}, no {P2AT}.'},
-    {id:'A1-4', t:'NOT_AT', g:'g-A1-9', lv:'A1', x:'¿Dónde está {S1}? {P1AT}, no.'},
-    {id:'A1-5', t:'AT', g:'g-A1-7', lv:'A1', x:'{P1AT} hay una persona: es {S1}.'},
-    {id:'A1-6', t:'NOT_AT', g:'g-A1-10', lv:'A1', x:'{S1} no está {P1AT} nunca.'},
-    {id:'A1-7', t:'AT', g:'g-A1-5', lv:'A1', x:'{S1} trabaja {P1AT} toda la tarde y no sale.'},
-    {id:'A2-1', t:'NOT_AT', g:'basic', lv:'A2', x:'{S1} no estaba {P1AT}.'},
-    {id:'A2-2', t:'AT', g:'g-A2-4', lv:'A2', x:'{S1} estuvo {P1AT} toda la tarde.'},
-    {id:'A2-3', t:'EITHER', g:'g-A2-3', lv:'A2', x:'{S1} estaba o {P1AT} o {P2AT}.'},
-    {id:'A2-4', t:'AT', g:'g-A2-3', lv:'A2', x:'Solo {S1} estaba {P1AT}.'},
-    {id:'A2-5', t:'AT', g:'g-A2-2', lv:'A2', x:'{S1} fue a {P1} y se quedó allí.'},
-    {id:'A2-6', t:'AT', g:'g-A2-7', lv:'A2', x:'{S2} vio a {S1} {P1AT} y {G1:lo|la} saludó — quiero decir, saludó a {S1}.'},
-    {id:'A2-7', t:'NOT_AT', g:'g-A2-5', lv:'A2', x:'{S1} no se metió {P1AT} en ningún momento.'},
-    {id:'A2-8', t:'AT', g:'g-A2-9', lv:'A2', x:'{S1} iba a quedarse {P1AT} toda la tarde, y así fue.'},
-    {id:'B1-1', t:'NEITHER', g:'basic', lv:'B1', x:'Ni {S1} ni {S2} estaban {P1AT}.'},
-    {id:'B1-2', t:'HAS', g:'basic', lv:'B1', x:'{S1} tenía {O1}.'},
-    {id:'B1-3', t:'NOT_HAS', g:'basic', lv:'B1', x:'{S1} no tenía {O1}.'},
-    {id:'B1-4', t:'OBJ_AT', g:'g-B1-6', lv:'B1', x:'La persona que llevaba {O1} estaba {P1AT}.'},
-    {id:'B1-5', t:'OBJ_AT', g:'g-B1-6', lv:'B1', x:'{O1} es de la persona que estaba {P1AT}.'},
-    {id:'B1-6', t:'AT', g:'g-B1-6', lv:'B1', x:'{P1} es el lugar donde {S1} pasó toda la tarde.'},
-    {id:'B1-7', t:'NOT_AT', g:'g-B1-1', lv:'B1', x:'{S1} no ha estado {P1AT} hoy.'},
-    {id:'B1-8', t:'AT', g:'g-B1-8', lv:'B1', x:'{S1} estuvo trabajando {P1AT} toda la tarde.'},
-    {id:'B1-9', t:'OBJ_AT', g:'g-B1-9', lv:'B1', x:'{O1} se encontró {P1AT}, junto a su dueño.'},
-    {id:'B1-10', t:'NOT_HAS', g:'g-B1-4', lv:'B1', x:'No es verdad que {S1} tuviera {O1}.'},
-    {id:'B2-1', t:'NOT_AT', g:'g-B2-3', lv:'B2', crime:true, x:'Si {S1} hubiera estado {P1AT}, habría visto al ladrón — y no vio nada.'},
-    {id:'B2-2', t:'IF', g:'g-B1-10', lv:'B2', x:'Si {S1} estaba {P1AT}, entonces {S2} estaba {P2AT}.'},
-    {id:'B2-3', t:'AT', g:'g-B2-5', lv:'B2', x:'{S2} dijo que {S1} había estado {P1AT} toda la tarde.'},
-    {id:'B2-4', t:'NOT_HAS', g:'g-B2-5', lv:'B2', x:'{S2} aseguró que {S1} no había tenido {O1} en ningún momento.'},
-    {id:'B2-5', t:'AT', g:'g-B2-4', lv:'B2', x:'{S1} fue {G1:visto|vista} {P1AT} por dos personas.'},
-    {id:'B2-6', t:'OBJ_AT', g:'g-B2-4', lv:'B2', x:'{O1} fue {GO:encontrado|encontrada} {P1AT}, en manos de su dueño.'},
-    {id:'B2-7', t:'AT', g:'g-B2-9', lv:'B2', x:'A pesar de que {S1} quería estar {P2AT}, en realidad estaba {P1AT}.'},
-    {id:'B2-8', t:'NOT_AT', g:'g-B2-10', lv:'B2', x:'{S1} no estuvo {P1AT} ni un minuto.'},
-    {id:'B2-9', t:'HAS', g:'g-B2-7', lv:'B2', x:'{S1} llevaba {O1} encima desde el mediodía.'},
-    {id:'B2-10', t:'NOT_AT', g:'g-B2-6', lv:'B2', x:'Para las cinco, {S1} ya se había ido a casa, y en toda la tarde no había pasado por {P1}.'},
-    {id:'C1-1', t:'NOT_AT', g:'g-C1-5', lv:'C1', x:'No fue {S1} quien estuvo {P1AT}.'},
-    {id:'C1-2', t:'AT', g:'g-C1-5', lv:'C1', x:'El hecho es que {S1} pasó toda la tarde {P1AT}.'},
+    {id:'A1-1', t:'AT', g:'basic', lv:'A1', x:'Mira — {S1} está {P1AT}.'},
+    {id:'A1-2', t:'NOT_AT', g:'basic', lv:'A1', x:'No, {S1} no está {P1AT}.'},
+    {id:'A1-3', t:'AT', g:'g-A1-2', lv:'A1', x:'{S1} está {P1AT}, no {P2AT}. Ojo con eso.'},
+    {id:'A1-4', t:'NOT_AT', g:'g-A1-9', lv:'A1', x:'¿Dónde está {S1} ahora? No {P1AT}.'},
+    {id:'A1-5', t:'AT', g:'g-A1-7', lv:'A1', x:'{P1AT} hay una persona, y es {S1}.'},
+    {id:'A1-6', t:'NOT_AT', g:'g-A1-10', lv:'A1', x:'{S1} no está {P1AT} nunca. Ni una vez.'},
+    {id:'A1-7', t:'AT', g:'g-A1-5', lv:'A1', x:'{S1} trabaja {P1AT} toda la tarde. No sale para nada.'},
+    {id:'A1-1b', t:'AT', g:'basic', lv:'A1', x:'{S1} está {P1AT}, bien claro.'},
+    {id:'A1-2b', t:'NOT_AT', g:'basic', lv:'A1', x:'{S1} no está {P1AT} — mira otra vez.'},
+    {id:'A1-8', t:'EITHER', g:'basic', lv:'A1', x:'{S1} está {P1AT} o {P2AT}.'},
+    {id:'A1-9', t:'NEITHER', g:'basic', lv:'A1', x:'{S1} y {S2} no están {P1AT}.'},
+    {id:'A2-1', t:'NOT_AT', g:'basic', lv:'A2', x:'Qué curioso — {S1} no estaba {P1AT} esa tarde.'},
+    {id:'A2-2', t:'AT', g:'g-A2-4', lv:'A2', x:'{S1} estuvo {P1AT} toda la tarde y no se movió.'},
+    {id:'A2-3', t:'EITHER', g:'g-A2-3', lv:'A2', x:'Nadie se acuerda bien — {S1} estaba o {P1AT} o {P2AT}.'},
+    {id:'A2-4', t:'AT', g:'g-A2-3', lv:'A2', x:'Solo {S1} estaba {P1AT}; todos están de acuerdo en eso.'},
+    {id:'A2-5', t:'AT', g:'g-A2-2', lv:'A2', x:'{S1} fue directo a {P1} y ya no se movió de ahí.'},
+    {id:'A2-6', t:'AT', g:'g-A2-7', lv:'A2', x:'{S2} vio a {S1} {P1AT} y {G1:lo|la} saludó — digo, saludó a {S1}.'},
+    {id:'A2-7', t:'NOT_AT', g:'g-A2-5', lv:'A2', x:'{S1} no se acercó {P1AT} en ningún momento. Para nada.'},
+    {id:'A2-8', t:'AT', g:'g-A2-9', lv:'A2', x:'{S1} va a quedarse {P1AT} toda la tarde, y así fue, tal cual.'},
+    {id:'A2-2b', t:'AT', g:'g-A2-4', lv:'A2', x:'{S1} estuvo {P1AT} todo el rato.'},
+    {id:'A2-9', t:'NEITHER', g:'basic', lv:'A2', x:'{S1} y {S2} no estaban {P1AT}.'},
+    {id:'B1-1', t:'NEITHER', g:'basic', lv:'B1', x:'Ni {S1} ni {S2} estaban {P1AT} — eso está clarísimo en el cuaderno.'},
+    {id:'B1-2', t:'HAS', g:'basic', lv:'B1', x:'«Yo tenía {O1} todo el tiempo», dice {S1}.'},
+    {id:'B1-3', t:'NOT_HAS', g:'basic', lv:'B1', x:'«Yo no tenía {O1}», insiste {S1}.'},
+    {id:'B1-4', t:'OBJ_AT', g:'g-B1-6', lv:'B1', x:'Quien llevaba {O1} estaba {P1AT}; de eso no hay duda.'},
+    {id:'B1-5', t:'OBJ_AT', g:'g-B1-6', lv:'B1', x:'{O1} es de la persona que estaba {P1AT}, y todo el mundo lo sabe.'},
+    {id:'B1-6', t:'AT', g:'g-B1-6', lv:'B1', x:'«{P1} es el lugar donde pasé toda la tarde», dice {S1} sin dudar.'},
+    {id:'B1-7', t:'NOT_AT', g:'g-B1-1', lv:'B1', x:'{S1} no ha estado {P1AT} hoy. Ni una sola vez.'},
+    {id:'B1-8', t:'AT', g:'g-B1-8', lv:'B1', x:'«Estuve trabajando {P1AT} toda la tarde», explica {S1}.'},
+    {id:'B1-9', t:'OBJ_AT', g:'g-B1-9', lv:'B1', x:'{O1} se encontró {P1AT}, justo junto a su dueño.'},
+    {id:'B1-10', t:'NOT_HAS', g:'g-B1-4', lv:'B1', x:'«No es verdad que {S1} tuviera {O1}», aclaró {S2}.'},
+    {id:'B2-1', t:'NOT_AT', g:'g-B2-3', lv:'B2', crime:true, x:'«Si {S1} hubiera estado {P1AT}, habría visto al ladrón», razona {S2}, «y no vio nada».'},
+    {id:'B2-2', t:'IF', g:'g-B1-10', lv:'B2', x:'Si {S1} estaba {P1AT}, entonces, por fuerza, {S2} estaba {P2AT}.'},
+    {id:'B2-3', t:'AT', g:'g-B2-5', lv:'B2', x:'{S2} contó que {S1} había estado {P1AT} toda la tarde.'},
+    {id:'B2-4', t:'NOT_HAS', g:'g-B2-5', lv:'B2', x:'{S2} juró que {S1} no había tenido {O1} en ningún momento.'},
+    {id:'B2-5', t:'AT', g:'g-B2-4', lv:'B2', x:'{S1} fue {G1:visto|vista} {P1AT}, y no por una sola persona: por dos.'},
+    {id:'B2-6', t:'OBJ_AT', g:'g-B2-4', lv:'B2', x:'{O1} fue {GO:encontrado|encontrada} {P1AT}, justo en manos de su dueño.'},
+    {id:'B2-7', t:'AT', g:'g-B2-9', lv:'B2', x:'«Yo quería estar {P2AT}», admite {S1}, «pero al final estaba {P1AT}».'},
+    {id:'B2-8', t:'NOT_AT', g:'g-B2-10', lv:'B2', x:'{S1} no estuvo {P1AT} ni un minuto. Ni uno.'},
+    {id:'B2-9', t:'HAS', g:'g-B2-7', lv:'B2', x:'«Llevaba {O1} encima desde el mediodía», reconoce {S1}.'},
+    {id:'B2-10', t:'NOT_AT', g:'g-B2-6', lv:'B2', x:'Para las cinco, {S1} ya se había ido a casa; en toda la tarde no había pasado por {P1}.'},
+    {id:'B2-3b', t:'AT', g:'g-B2-5', lv:'B2', x:'{S2} comentó que {S1} había estado {P1AT} toda la tarde.'},
+    {id:'B2-4b', t:'NOT_HAS', g:'g-B2-5', lv:'B2', x:'{S2} insistió en que {S1} no había tenido {O1} en ningún momento.'},
+    {id:'C1-1', t:'NOT_AT', g:'g-C1-5', lv:'C1', x:'«No fue {S1} quien estuvo {P1AT}», corrigió {S2} a la detective.'},
+    {id:'C1-2', t:'AT', g:'g-C1-5', lv:'C1', x:'El hecho es que {S1} pasó toda la tarde {P1AT}. No hay más que decir.'},
     {id:'C1-3', t:'AT', g:'g-C1-6', lv:'C1', x:'{S1} no salió de {P1} ni una sola vez; de ahí que nadie {G1:lo|la} viera en otro sitio.'},
-    {id:'C1-4', t:'NEITHER', g:'g-C1-6', lv:'C1', x:'{S1} no estaba {P1AT}; {S2}, tampoco.'},
-    {id:'C1-5', t:'UNLESS', g:'g-C1-7', lv:'C1', x:'A menos que {S1} estuviera {P1AT}, {S2} estaba {P2AT}.'},
-    {id:'C1-6', t:'NOT_AT', g:'g-C1-7', lv:'C1', x:'Por mucho que lo intentara, {S1} no habría podido estar {P1AT}: la puerta estaba cerrada con llave.'},
-    {id:'C1-7', t:'HAS', g:'g-C1-2', lv:'C1', x:'{S1} llevaba horas con {O1} en la mano; no dejó de {GO:llevarlo|llevarla} en toda la tarde.'},
-    {id:'C1-8', t:'OBJ_AT', g:'g-C1-9', lv:'C1', x:'Quien tenía {O1} prestaba atención a lo que pasaba {P1AT} — desde dentro.'},
-    {id:'C1-9', t:'NOT_AT', g:'g-C1-10', lv:'C1', x:'Cuando llegó la policía, {S1} llevaba horas fuera de {P1}, adonde no había vuelto desde la mañana.'},
-    {id:'C1-10', t:'NOT_HAS', g:'g-C1-3', lv:'C1', x:'Le aseguro, señor inspector, que {S1} en ningún momento tuvo {O1}.'}
+    {id:'C1-4', t:'NEITHER', g:'g-C1-6', lv:'C1', x:'{S1} no estaba {P1AT}. {S2}, tampoco. Punto.'},
+    {id:'C1-5', t:'UNLESS', g:'g-C1-7', lv:'C1', x:'A menos que {S1} estuviera {P1AT}, {S2} estaba {P2AT} — no hay otra opción.'},
+    {id:'C1-6', t:'NOT_AT', g:'g-C1-7', lv:'C1', x:'«Por mucho que lo intentara, no habría podido estar {P1AT}», dice {S1}: «la puerta estaba cerrada con llave».'},
+    {id:'C1-7', t:'HAS', g:'g-C1-2', lv:'C1', x:'«Llevaba horas con {O1} en la mano; no {GO:lo|la} solté en toda la tarde», jura {S1}.'},
+    {id:'C1-8', t:'OBJ_AT', g:'g-C1-9', lv:'C1', x:'Quien tenía {O1} prestaba atención a lo que pasaba {P1AT} — eso, desde dentro.'},
+    {id:'C1-9', t:'NOT_AT', g:'g-C1-10', lv:'C1', x:'Cuando llegó la policía, {S1} llevaba horas fuera de {P1}; no había vuelto desde la mañana.'},
+    {id:'C1-10', t:'NOT_HAS', g:'g-C1-3', lv:'C1', x:'«Le aseguro, señor inspector, que {S1} en ningún momento tuvo {O1}», declaró ante la policía.'}
   ]
 };
 const CASE_NEG = {NOT_AT:1, NEITHER:1, NOT_HAS:1};
@@ -16404,7 +16463,9 @@ function caseInstances(tpls, sol, crime, culprit, withObj){
       } else if(t === 'EITHER'){
         Pi.forEach(p1=>Pi.forEach(p2=>{ if(p1 !== p2) push(tpl, {s1, p1, p2}); }));
       } else if(t === 'NEITHER'){
-        others.forEach(s2=>{ if(s2 > s1 || true) Pi.forEach(p1=>push(tpl, {s1, s2, p1})); });
+        // At the no-object tier (A1/A2) a NEITHER clue would otherwise hand over the culprit directly by elimination
+        // (3 suspects, so "neither X nor Y" names the third) - same guard AT already has above, mirrored here.
+        others.forEach(s2=>{ if(s2 > s1 || true) Pi.forEach(p1=>{ if(!withObj && p1 === crime) return; push(tpl, {s1, s2, p1}); }); });
       } else if(t === 'HAS' || t === 'NOT_HAS'){
         if(!withObj) return;
         [0,1,2].forEach(o1=>{ const s2s = caseUses(tpl, 'S2') ? others : [null]; s2s.forEach(s2=>push(tpl, {s1, s2, o1})); });
@@ -16420,7 +16481,8 @@ function caseInstances(tpls, sol, crime, culprit, withObj){
 function caseCompleted(){ return new Set((state.progress && state.progress.completedTraps) || []); }
 function caseTemplates(level, lang, done){
   const li = CASE_LEVELS.indexOf(level), withObj = li >= 2;
-  return CASE_CLUES[lang].filter(c=>CASE_LEVELS.indexOf(c.lv) <= li && (c.g === 'basic' || done.has(c.g)) && (withObj || c.t === 'AT' || c.t === 'NOT_AT' || c.t === 'EITHER'));
+  // A1/A2 basic mode (games-all-levels-2026-10-15.md §3): NEITHER joins AT/NOT_AT/EITHER as allowed without objects.
+  return CASE_CLUES[lang].filter(c=>CASE_LEVELS.indexOf(c.lv) <= li && (c.g === 'basic' || done.has(c.g)) && (withObj || c.t === 'AT' || c.t === 'NOT_AT' || c.t === 'EITHER' || c.t === 'NEITHER'));
 }
 // Distinct clue types available (spec §9: fewer than 3 -> the node plays Build It).
 function caseTypeCount(level, lang, done){ return new Set(caseTemplates(level, lang, done).map(c=>c.t)).size; }
@@ -16518,8 +16580,11 @@ function buildCase(level, lang, done, rnd){
         const after = rem.filter(a=>caseEval(c, a)), elim = rem.length - after.length;
         if(!elim) continue;
         // most removed + negatives + the level's own grammar, with variety (a type or template new to this case) and some luck
+        // No-object tier (A1/A2) now has 4 eligible types (A1/A2 basic mode); weight "a type new to this case" much
+        // harder there so the ≥3-distinct-types guarantee actually holds in practice, not just in theory (measured:
+        // the old flat +1 bonus let the +2.5*rnd() term override it ~15-25% of the time - see the 200-seed check).
         let score = 2 * elim / rem.length + (CASE_NEG[c.t] ? 0.6 : 0) + (c.lv === CASE_LEVELS[li] ? 1.5 : 0)
-          + (chosen.some(x=>x.t === c.t) ? 0 : 1) + (chosen.some(x=>x.tpl === c.tpl) ? -1.5 : 0) + ((c.t === 'IF' || c.t === 'UNLESS') ? 0.8 : 0) + 2.5 * rnd();
+          + (chosen.some(x=>x.t === c.t) ? 0 : (withObj ? 1 : 4)) + (chosen.some(x=>x.tpl === c.tpl) ? -1.5 : 0) + ((c.t === 'IF' || c.t === 'UNLESS') ? 0.8 : 0) + 2.5 * rnd();
         if(after.length === 1 && chosen.length + 1 < minC) score -= 8;
         if(score > bestScore){ bestScore = score; best = {c, after, key}; }
       }
@@ -16536,8 +16601,9 @@ function buildCase(level, lang, done, rnd){
       if(new Set(r2.map(a=>a.P.indexOf(crime))).size > 1) continue;
     }
     const cs = {names, places, objs, sol, crime, culprit};
-    const settings = CASE_SETTINGS[lang];
-    cs.setting = caseText(settings[Math.floor(rnd() * settings.length)], cs, {}, lang) + (withObj ? (lang === 'es' ? ' Todos dicen la verdad.' : ' Everyone is telling the truth.') : '');
+    const settings = CASE_SETTINGS[lang], si = Math.floor(rnd() * settings.length);
+    cs.setting = caseText(settings[si], cs, {}, lang) + (withObj ? (lang === 'es' ? ' Todos dicen la verdad.' : ' Everyone is telling the truth.') : '');
+    cs.title = (CASE_SETTING_TITLES[lang] || [])[si] || '';
     cs.clues = crossShuffle(chosen, rnd).map(c=>Object.assign({}, c, {text:caseText(byId[c.tpl].x, cs, c.a, lang)}));
     if(caseWords(cs.setting) + cs.clues.reduce((n, c)=>n + caseWords(c.text), 0) > budget) continue;
     if(caseSolutions(cs).length !== 1) continue;
@@ -16549,17 +16615,18 @@ function buildCase(level, lang, done, rnd){
 function buildCaseRound(refId){
   const lvl = (state.profile && state.profile.level) || 'A1';
   const level = CASE_LEVELS.indexOf(lvl) >= 0 ? lvl : 'A1', lang = orderLang(), done = caseCompleted();
-  const chars = crossShuffle(ORDER_CHARS.filter(k=>k !== learnerCharKey()), crossRng(refId ? crossHash('case|' + refId) : (Math.random()*4294967295) >>> 0));
   const cases = [];
   for(let i = 0; i < CASE_COUNT; i++){
     const rnd = crossRng(refId ? crossHash(refId + '#' + i) : (Math.random()*4294967295) >>> 0);
     const cs = buildCase(level, lang, done, rnd);
     if(!cs) return null;
-    cs.chars = crossShuffle(chars, rnd).slice(0, 3);
-    Object.assign(cs, {marks:{}, pencil:{}, tab:'p', nb:true, pick:null, wrong:0, hints:0, hl:-1, solved:false, clean:false, cleared:null});
+    cs.portraits = casePortraitsFor(cs.names, rnd);
+    Object.assign(cs, {marks:{}, pencil:{}, tab:'p', nb:true, pick:null, wrong:0, hints:0, hl:-1, solved:false, clean:false, cleared:null, why:null});
     cases.push(cs);
   }
-  return {level, lang, cases, index:0, clean:0, hints:0, finished:false, startedAt:Date.now(), finishedAt:null};
+  // "How to play" shows once, before the learner's very first round (gamesMet stays true for every replay after -
+  // same gating Passport Desk's deskIntroHtml uses).
+  return {level, lang, cases, index:0, clean:0, hints:0, finished:false, startedAt:Date.now(), finishedAt:null, intro:!gamesMet().has('mystery'), introDemo:''};
 }
 function caseCur(round){ return round.cases[round.index] || null; }
 // Cells every assignment left by these clues agrees on: {key: 'ok' | 'x'} (key 'p:s:i' places, 'o:s:i' objects).
@@ -16607,22 +16674,38 @@ function caseBare(id, lang, kind){
 function caseStatusHtml(round){
   const cs = caseCur(round), n = Math.min(round.index + 1, round.cases.length);
   const chip = cs && !round.finished ? `<span class="game-status-end"><span class="game-chip">${L(`${cs.clues.length} clues`, `${cs.clues.length} ipucu`, `${cs.clues.length} راهنمایی`, `${cs.clues.length} pistas`)}</span></span>` : '';
-  return `<div class="game-status" id="case-status"><span class="game-status-text">${round.finished ? L('Cases closed','Davalar kapandı','پرونده‌ها مختومه','Casos cerrados') : L(`Case ${n} of ${round.cases.length}`, `Dava ${n} / ${round.cases.length}`, `پرونده ${n} از ${round.cases.length}`, `Caso ${n} de ${round.cases.length}`)}</span>${chip}</div>`;
+  const title = cs && !round.finished && cs.title ? ` <span class="case-title" dir="ltr" translate="no">· ${esc(cs.title)}</span>` : '';
+  return `<div class="game-status" id="case-status"><span class="game-status-text">${round.finished ? L('Cases closed','Davalar kapandı','پرونده‌ها مختومه','Casos cerrados') : L(`Case ${n} of ${round.cases.length}`, `Dava ${n} / ${round.cases.length}`, `پرونده ${n} از ${round.cases.length}`, `Caso ${n} de ${round.cases.length}`)}${title}</span>${chip}</div>`;
 }
 function caseFileHtml(round, cs){
   const lang = round.lang;
-  const pols = cs.names.map((n, i)=>`<button type="button" class="case-pol${cs.pick === i ? ' pick' : ''}${cs.solved && i === cs.culprit ? ' caught' : ''}" id="case-pol-${i}" data-action="case-pick" data-quiet="1" data-s="${i}" aria-label="${esc(n.name)}"${cs.solved ? ' disabled' : ''}><img src="char-${cs.chars[i]}.png" alt=""><span dir="ltr">${esc(n.name)}</span></button>`).join('');
+  // Fallback for a round saved before portraits shipped (cs.portraits missing) - deterministic from the names
+  // already on the case, so an in-flight old save never crashes on the image src.
+  const portraits = cs.portraits || casePortraitsFor(cs.names, crossRng(crossHash(cs.names.map(n=>n.name).join('|'))));
+  const pols = cs.names.map((n, i)=>`<button type="button" class="case-pol${cs.pick === i ? ' pick' : ''}${cs.solved && i === cs.culprit ? ' caught' : ''}" id="case-pol-${i}" data-action="case-pick" data-quiet="1" data-s="${i}" aria-label="${esc(n.name)}"${cs.solved ? ' disabled' : ''}><img src="${portraits[i]}.webp" alt=""><span dir="ltr">${esc(n.name)}</span></button>`).join('');
   const chips = cs.places.map(id=>`<span class="game-chip case-chip" dir="ltr">${casePlace(id).art} ${esc(caseBare(id, lang))}</span>`).join('');
   const objs = cs.objs ? `<div class="case-chips">${cs.objs.map(id=>`<span class="game-chip case-chip obj" dir="ltr">${caseObject(id).art} ${esc(caseBare(id, lang, 'o'))}</span>`).join('')}</div>` : '';
-  return `<div class="game-card tight case-file" id="case-file">
-    <div class="case-setting"><span dir="ltr">${esc(cs.setting)}</span><button type="button" class="tts-btn" data-action="case-say" data-quiet="1" data-i="-1" aria-label="${esc(L('Listen','Dinle','گوش کن','Escuchar'))}">${ICONS.soundOn}</button></div>
-    <div class="case-pols">${pols}</div>
-    <div class="case-chips">${chips}</div>${objs}
-    ${cs.solved ? `<div class="case-stamp" id="case-stamp">${esc(L('CASE CLOSED','DAVA KAPANDI','پرونده مختومه','CASO CERRADO'))}</div>` : ''}
+  // Cosy-detective visual pass (gamification card MXsYRclV): a little gold folder tab behind the case file, in its own
+  // wrapper so it can poke out above the card without fighting .case-file's own overflow:hidden (used by the stamp).
+  return `<div class="case-file-wrap">
+    <div class="case-folder-tab" aria-hidden="true">${esc(L('CASE FILE','DAVA','پرونده','EXPEDIENTE'))}</div>
+    <div class="game-card tight case-file" id="case-file">
+      <div class="case-setting"><span dir="ltr">${esc(cs.setting)}</span><button type="button" class="tts-btn" data-action="case-say" data-quiet="1" data-i="-1" aria-label="${esc(L('Listen','Dinle','گوش کن','Escuchar'))}">${ICONS.soundOn}</button></div>
+      <div class="case-pols">${pols}</div>
+      <div class="case-chips">${chips}</div>${objs}
+      ${cs.solved ? `<div class="case-stamp" id="case-stamp">${esc(L('CASE CLOSED','DAVA KAPANDI','پرونده مختومه','CASO CERRADO'))}</div>` : ''}
+    </div>
   </div>`;
 }
 function caseCluesHtml(round, cs){
   return `<ol class="case-clues" id="case-clues">${cs.clues.map((c, i)=>`<li class="case-clue${cs.hl === i ? ' hl' : ''}" id="case-clue-${i}"><span class="case-num">${i + 1}</span><span class="case-text" dir="ltr">${esc(c.text)}</span><button type="button" class="tts-btn" data-action="case-say" data-quiet="1" data-i="${i}" aria-label="${esc(L('Listen','Dinle','گوش کن','Escuchar'))}">${ICONS.soundOn}</button></li>`).join('')}</ol>`;
+}
+// Hint/wrong-accusation "why": the clue's own words, then what it proves (reuses caseFrame's plain-language logic
+// table) in a persistent callout under the clue list - gamification card MXsYRclV, fixes the old vague "look again".
+function caseReasonHtml(cs, clueIdx){
+  const clue = clueIdx != null ? cs.clues[clueIdx] : null;
+  if(!clue) return '';
+  return `<div class="game-why case-why" id="case-why"><img src="char-${learnerCharKey()}.png" alt=""><div dir="auto"><b dir="ltr" translate="no">${esc(clue.text)}</b><br>${esc(caseFrame(clue, cs))}</div></div>`;
 }
 function caseStateWord(v){ return v === 'ok' ? L('confirmed','onaylı','تأیید','confirmado') : (v ? L('crossed out','çizili','خط‌خورده','descartado') : L('empty','boş','خالی','vacío')); }
 // What a cell shows: the learner's mark, else a light auto-cross (a confirmed cell in its row or column), else a pencilled hint.
@@ -16635,6 +16718,14 @@ function caseCellView(cs, kind, s, i){
   if(p) return {v:p, cls:p + ' pencil'};
   return {v:'', cls:''};
 }
+// Legend row (cosy-detective visual pass): spells out what empty / crossed out / confirmed mean, right above the grid.
+function caseNbLegendHtml(){
+  return `<div class="case-nb-legend" dir="auto">
+    <span><span class="case-cell-mini"></span>${esc(L('empty','boş','خالی','vacío'))}</span>
+    <span><span class="case-cell-mini x">✗</span>${esc(L('not there','orada değil','آن‌جا نیست','no está'))}</span>
+    <span><span class="case-cell-mini ok">✓</span>${esc(L('confirmed','onaylı','تأیید','confirmado'))}</span>
+  </div>`;
+}
 function caseNotebookHtml(round, cs){
   const lang = round.lang, kind = cs.objs && cs.tab === 'o' ? 'o' : 'p';
   const cols = kind === 'o' ? cs.objs : cs.places;
@@ -16646,6 +16737,7 @@ function caseNotebookHtml(round, cs){
   const tabs = cs.objs ? `<span class="case-tabs"><button type="button" class="case-tab${kind === 'p' ? ' on' : ''}" data-action="case-tab" data-quiet="1" data-t="p">${esc(L('Places','Yerler','مکان‌ها','Lugares'))}</button><button type="button" class="case-tab${kind === 'o' ? ' on' : ''}" data-action="case-tab" data-quiet="1" data-t="o">${esc(L('Objects','Eşyalar','اشیا','Objetos'))}</button></span>` : '';
   return `<div class="case-nb" id="case-nb">
     <div class="case-nb-top"><button type="button" class="case-nb-toggle" data-action="case-nb" data-quiet="1" aria-expanded="${cs.nb ? 'true' : 'false'}">${esc(L('Notebook','Not defteri','دفترچه','Cuaderno'))} ${cs.nb ? '▾' : '▸'}</button>${cs.nb ? tabs : ''}</div>
+    ${cs.nb ? caseNbLegendHtml() : ''}
     ${cs.nb ? `<div class="case-nb-grid"><span></span>${head}${rows}</div>` : ''}
   </div>`;
 }
@@ -16657,9 +16749,9 @@ function caseBottomHtml(round, cs){
     return `<div class="case-wrap" id="case-wrap"><p class="case-wrap-line" dir="ltr">${esc(wrap)}</p><button class="btn btn-primary game-cta" data-action="case-next">${last ? L('See how you did','Sonucu gör','نتیجه را ببین','Ver el resultado') : L('Next case','Sonraki dava','پرونده بعدی','Siguiente caso')}</button></div>`;
   }
   const sheet = cs.pick != null ? `<div class="case-confirm" id="case-confirm"><p>${esc(L(`Accuse ${cs.names[cs.pick].name}?`, `${cs.names[cs.pick].name} suçlansın mı?`, `${cs.names[cs.pick].name} را متهم می‌کنی؟`, `¿Acusar a ${cs.names[cs.pick].name}?`))}</p><div class="case-confirm-btns"><button class="btn btn-primary" data-action="case-accuse">${esc(L('Accuse','Suçla','متهم کن','Acusar'))}</button><button class="btn btn-ghost" data-action="case-cancel">${esc(L('Not yet','Henüz değil','هنوز نه','Todavía no'))}</button></div></div>` : `<p class="game-hint case-tip">${esc(L('Tap a photo to accuse someone.','Suçlamak için bir fotoğrafa dokun.','برای متهم کردن روی یک عکس بزن.','Toca una foto para acusar a alguien.'))}</p>`;
-  return sheet + `<button class="btn btn-ghost case-help" data-action="case-hint">${esc(L('Ask your partner','Ortağına sor','از همکارت بپرس','Pregunta a tu compañero'))}</button>`;
+  return sheet + `<button class="btn btn-ghost case-help" data-action="case-hint">${esc(L('Get a hint','İpucu al','یک راهنمایی بگیر','Pedir una pista'))}</button>`;
 }
-function caseBodyHtml(round, cs){ return caseFileHtml(round, cs) + caseCluesHtml(round, cs) + (cs.solved ? '' : caseNotebookHtml(round, cs)) + caseBottomHtml(round, cs); }
+function caseBodyHtml(round, cs){ return caseFileHtml(round, cs) + caseCluesHtml(round, cs) + (cs.solved ? '' : caseReasonHtml(cs, cs.why)) + (cs.solved ? '' : caseNotebookHtml(round, cs)) + caseBottomHtml(round, cs); }
 function caseResultHtml(round){
   const st = gameRoundStats('mystery', round);
   return `<div class="game-card tight badge-unlock-shine">
@@ -16669,20 +16761,48 @@ function caseResultHtml(round){
     ${gameDoneCta()}
   </div>`;
 }
+// One-time "how to play" card with a live demo notebook cell (tap-cycle: empty -> x -> ok -> empty), shown only before
+// the learner's very first Case Closed round - gamesMet() gating mirrors Passport Desk's deskIntroHtml.
+function caseIntroDemoWord(v){
+  return v === 'ok'
+    ? L('Confirmed — this is where they were.','Onaylı — buradaymış.','تأیید شد — همین‌جا بوده.','Confirmado — aquí estaba.')
+    : (v ? L('Crossed out — they were NOT there.','Çizili — orada değilmiş.','خط‌خورده — آن‌جا نبوده.','Descartado — NO estaba aquí.')
+         : L('Empty — tap to mark what the clues tell you. Try it:','Boş — ipuçlarının söylediğini işaretlemek için dokun. Dene:','خالی — چیزی که راهنمایی‌ها می‌گویند را علامت بزن. امتحان کن:','Vacío — toca para marcar lo que dicen las pistas. Pruébalo:'));
+}
+function caseIntroHtml(round){
+  const v = round.introDemo || '';
+  const steps = [
+    L('Read every clue — each one rules someone in or out.','Her ipucunu oku — her biri birini eler veya içeri alır.','هر راهنمایی را بخوان — هر کدام یک نفر را رد یا تأیید می‌کند.','Lee cada pista — cada una descarta o confirma a alguien.'),
+    L('Tap a notebook cell to mark it: empty → crossed out → confirmed → empty again.','Not defterindeki bir hücreye dokun: boş → çizili → onaylı → tekrar boş.','روی یک خانه از دفترچه بزن: خالی ← خط‌خورده ← تأیید ← دوباره خالی.','Toca una celda del cuaderno: vacía → descartada → confirmada → vacía otra vez.'),
+    L('Sure who did it? Tap their photo, then Accuse.','Kimin yaptığından eminsin? Fotoğrafına dokun, sonra Suçla’ya bas.','مطمئنی کار کی بوده؟ روی عکسش بزن، بعد «متهم کن» را بزن.','¿Seguro de quién fue? Toca su foto y luego Acusar.')
+  ];
+  const rows = steps.map((s, i)=>`<p style="margin:${i ? '10px' : '14px'} 0 0; font-size:14.5px; line-height:1.5; color:var(--ink-soft); text-align:start;"><b style="color:var(--ink);">${i + 1}.</b> ${esc(s)}</p>`).join('');
+  return `<div class="game-card tight fade-in case-intro" id="case-intro">
+    <div class="game-result-title">${esc(L('How to play','Nasıl oynanır','چطور بازی می‌شود','Cómo se juega'))}</div>
+    ${rows}
+    <div class="case-intro-demo">
+      <button type="button" class="case-cell intro-glow ${v}" data-action="case-intro-demo" aria-label="${esc(caseIntroDemoWord(v))}">${v === 'ok' ? '✓' : (v ? '✗' : '')}</button>
+      <p class="case-intro-demo-txt" dir="auto">${esc(caseIntroDemoWord(v))}</p>
+    </div>
+    <button class="btn btn-primary game-cta" style="margin-top:14px;" data-action="case-intro-start">${esc(L('Start','Başla','شروع','Empezar'))}</button>
+  </div>`;
+}
 function renderGameMystery(){
   const vp = state.viewParams, round = vp.round, cs = caseCur(round);
   return `<div class="fade-in game-screen">
     ${gameTopHtml(L('Case','Dava','پرونده','Caso'))}
     ${caseStatusHtml(round)}
-    <div class="case-body" id="case-body">${(round.finished || !cs) ? caseResultHtml(round) + renderBadgeUnlockCard(pullJustEarnedBadges()) : caseBodyHtml(round, cs)}</div>
+    <div class="case-body" id="case-body">${round.intro ? caseIntroHtml(round) : ((round.finished || !cs) ? caseResultHtml(round) + renderBadgeUnlockCard(pullJustEarnedBadges()) : caseBodyHtml(round, cs))}</div>
   </div>`;
 }
 function caseRefresh(){
   const vp = state.viewParams, round = vp && vp.round;
   if(!round || state.view !== 'game-mystery' || round.finished) return;
-  const cs = caseCur(round); if(!cs) return;
   const st = document.getElementById('case-status'); if(st) st.outerHTML = caseStatusHtml(round);
-  const body = document.getElementById('case-body'); if(body) body.innerHTML = caseBodyHtml(round, cs);
+  const body = document.getElementById('case-body'); if(!body) return;
+  if(round.intro){ body.innerHTML = caseIntroHtml(round); return; }
+  const cs = caseCur(round); if(!cs) return;
+  body.innerHTML = caseBodyHtml(round, cs);
 }
 /* ---- Flow and feel (spec §4.2, §4.7) ---- */
 function caseSay(round, text){ const idx = round.index; setTimeout(()=>{ if(state.viewParams && state.viewParams.round === round && round.index === idx) speakTarget(text, 0.92); }, 60); }
@@ -16721,6 +16841,7 @@ function caseAccuse(){
   cs.wrong++; cs.pick = null;
   const k = caseClearingClue(cs, s);
   if(cs.cleared == null) cs.cleared = k;
+  cs.why = k;
   caseHighlight(round, cs, k, true);
   const pol = document.getElementById('case-pol-' + s);
   anim(pol, [{transform:'translateX(0)'}, {transform:'translateX(-6px)'}, {transform:'translateX(6px)'}, {transform:'translateX(-6px)'}, {transform:'translateX(0)'}], {duration:280, easing:'linear'});
@@ -22497,12 +22618,23 @@ const HANDLERS = {
     const h = caseHint(cs);
     cs.hints++;
     if(h.key){ cs.pencil[h.key] = h.v; cs.nb = true; if(cs.objs) cs.tab = h.key.charAt(0) === 'o' ? 'o' : 'p'; }
+    cs.why = h.clue;
     caseHighlight(r, cs, h.clue, false);
     sfx('flip');
     companionSay(L(`Look at clue ${h.clue + 1}.`, `${h.clue + 1}. ipucuna bak.`, `به راهنمایی ${h.clue + 1} نگاه کن.`, `Mira la pista ${h.clue + 1}.`), 2000);
     save();
   },
   'case-next'(){ const vp = state.viewParams, r = vp && vp.round, cs = r && caseCur(r); if(!cs || r.finished || !cs.solved) return; caseAdvance(vp, r); },
+  'case-intro-demo'(){
+    const r = state.viewParams && state.viewParams.round; if(!r || !r.intro) return;
+    const v = r.introDemo || '';
+    r.introDemo = v === '' ? 'x' : (v === 'x' ? 'ok' : '');
+    sfx('tick'); caseRefresh(); save();
+  },
+  'case-intro-start'(){
+    const r = state.viewParams && state.viewParams.round; if(!r || !r.intro) return;
+    r.intro = false; sfx('tick'); caseRefresh(); save(); caseOpen(r);
+  },
   // ---- Magic Words (Jq6f9OFv wave B): say (or type) the word to open each door ----
   'spell-mic'(){
     const r = state.viewParams && state.viewParams.round, d = r && spellCur(r); if(!d || r.finished || d.open || r.typing) return;
@@ -22636,8 +22768,10 @@ const HANDLERS = {
     if(kind === 'mystery'){
       // Case Closed: two generated cases with one solution each (seeded by refId on the roadmap, fresh on the Games
       // shelf). The basic clue set can always build a case; if one ever can't be built, Build It plays instead.
+      // First time ever: a "how to play" card shows first (case-intro-start); after that it's met, so later rounds
+      // open the first case straight away, same gating as Passport Desk.
       const caseRound = buildCaseRound(params.free ? null : params.refId);
-      if(caseRound){ queueFx(()=>caseOpen(caseRound)); go('game-mystery', Object.assign({round: caseRound}, params)); return; }
+      if(caseRound){ if(!caseRound.intro) queueFx(()=>caseOpen(caseRound)); go('game-mystery', Object.assign({round: caseRound}, params)); return; }
       HANDLERS['start-game']({dataset:Object.assign({}, el.dataset, {kind:'build'})});
       return;
     }

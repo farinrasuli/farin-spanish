@@ -6906,6 +6906,8 @@ function load(){
     if(!merged.progress.lastWords) merged.progress.lastWords = {};
     if(!Array.isArray(merged.progress.mediaWatched)) merged.progress.mediaWatched = [];
     if(!merged.progress.nodeScores || typeof merged.progress.nodeScores !== 'object') merged.progress.nodeScores = {};
+    // LXD READY-5 (gv6ixmRf): light stage checks, {"A1.2":{v, date, skipped, score, total, grammar, words, listen}}
+    if(!merged.progress.stageChecks || typeof merged.progress.stageChecks !== 'object' || Array.isArray(merged.progress.stageChecks)) merged.progress.stageChecks = {};
     if(!merged.progress.storyAnswers || typeof merged.progress.storyAnswers !== 'object') merged.progress.storyAnswers = {};
     // Every-card wave 2 (uVzMAAGg): story pages read so far and turning-point calls
     if(!merged.progress.storyPages || typeof merged.progress.storyPages !== 'object') merged.progress.storyPages = {};
@@ -6934,7 +6936,7 @@ function load(){
     if(!merged.progress.dailyTasksChecked) merged.progress.dailyTasksChecked = {};
     if(merged.progress.dailyTasksDate===undefined) merged.progress.dailyTasksDate = null;
     // Gamification v3: the old review quiz is untimed now (one review experience).
-    if(merged.quiz && ['grammar','vocab','story','review'].includes(merged.quiz.kind)) merged.quiz.deadline = null;
+    if(merged.quiz && ['grammar','vocab','story','review','stagecheck'].includes(merged.quiz.kind)) merged.quiz.deadline = null;
     if(merged.profile.dashboardIntroShown===undefined) merged.profile.dashboardIntroShown = true;
     if(merged.profile.wantsContact===undefined) merged.profile.wantsContact = false;
     if(merged.profile.contactPhone===undefined) merged.profile.contactPhone = '';
@@ -10190,7 +10192,7 @@ function backToRoadmap(){
 function maybeCelebrate(){
   const v = state.view, vp = state.viewParams || {};
   let target = null, kind = null, detail = '', low = false;
-  if(v==='quiz' && state.quiz && state.quiz.index >= state.quiz.questions.length && !state.quiz.retryOffered){
+  if(v==='quiz' && state.quiz && state.quiz.index >= state.quiz.questions.length && !state.quiz.retryOffered && state.quiz.kind !== 'stagecheck'){
     target = state.quiz; kind = state.quiz.kind; detail = state.quiz.correct+' / '+state.quiz.questions.length+' '+L('correct','doğru','درست','correctas');
     low = state.quiz.correct/state.quiz.questions.length < .5;
   } else if(v==='game-match' && vp.round && vp.round.matchedKeys && vp.round.matchedKeys.length === vp.round.pairCount){
@@ -11970,7 +11972,8 @@ function renderRoadmapCard(p){
         ${stackedRoadmap(roadmap.length, pinFn, cardFn, L(arch.name.en,arch.name.tr,arch.name.fa, arch.name.es), startMedia, allDone ? L("You've made it!",'Başardın!','موفق شدی!', '¡Lo lograste!') : nextDisplayLevel(p), endMedia)}
       </div>
       ${allDone ? `
-      <button class="btn" style="margin-top:18px; width:100%; justify-content:center; background:var(--clay-orange); color:#fff; border:none;" data-action="advance-roadmap-level"><img src="icon-gradcap.png" alt="" style="width:22px; height:22px; object-fit:contain;">${L('Go to the next level','Bir sonraki seviyeye geç','برو به سطح بعدی', 'Ir al siguiente nivel')}</button>` : `
+      <button class="btn" style="margin-top:18px; width:100%; justify-content:center; background:var(--clay-orange); color:#fff; border:none;" data-action="advance-roadmap-level"><img src="icon-gradcap.png" alt="" style="width:22px; height:22px; object-fit:contain;">${L('Go to the next level','Bir sonraki seviyeye geç','برو به سطح بعدی', 'Ir al siguiente nivel')}</button>
+      ${!stageCheckRecord(stageKeyOf(state.profile)) ? `<p style="font-size:12.5px; color:var(--ink-soft); text-align:center; margin-top:6px;" dir="auto">${esc(L('First a quick 10-question check (about 4 min). It never stops you.','Önce 10 soruluk kısa bir kontrol (yaklaşık 4 dk). Seni asla durdurmaz.','اول یک مرور کوتاه ۱۰ سؤالی (حدود ۴ دقیقه). هیچ‌وقت جلویت را نمی‌گیرد.','Primero un repaso rápido de 10 preguntas (unos 4 min). Nunca te frena.'))}</p>` : ''}` : `
       <button class="btn" disabled style="margin-top:18px; width:100%; justify-content:center; background:var(--bg-sunken); color:var(--ink-faint); border:1.5px solid var(--border-soft); cursor:default;">${L('Finish everything above to unlock the next level','Bir sonraki seviyeyi açmak için yukarıdakilerin hepsini bitir','برای باز کردن سطح بعدی، همه موارد بالا را تمام کن', 'Termina todo lo de arriba para desbloquear el siguiente nivel')}</button>`}
       <button class="btn btn-ghost" style="margin-top:10px;" data-action="retake-diagnostic">${L('Redo my diagnostic','Testimi yeniden yap','دوباره انجام‌دادن آزمون', 'Rehacer mi diagnóstico')}</button>`;
 }
@@ -19908,7 +19911,7 @@ function finishShuffle(sh){
 function questionTimeLimit(item){ return item.options.length <= 2 ? 15 : 20; }
 // Teaching redesign phase 1 (B3): first exposure is untimed. Lesson quizzes
 // (grammar, vocab, story) and review have no countdown; only games keep a timer.
-const QUIZ_UNTIMED_KINDS = ['grammar','vocab','story','review'];
+const QUIZ_UNTIMED_KINDS = ['grammar','vocab','story','review','stagecheck'];
 function quizTimed(kind){ return !QUIZ_UNTIMED_KINDS.includes(kind); }
 /* Teaching redesign phase 1, X1 completion rule (B2). A grammar / vocab / story node is
    done when its quiz scores 60% or more on FIRST attempts. Under 60% the learner gets one
@@ -19949,6 +19952,330 @@ function completeLessonQuiz(q){
   if(weak && !srsIsCourseItem(q.contextId)){ const e = pr.srs[q.contextId]; if(e) srsSetBox(e, 0, 1); }
   q.retryOffered = false; q.weak = weak;
   if(q.kind === 'vocab') notePlayed(q.contextId);
+}
+/* ============================= LIGHT STAGE CHECK (LXD READY-5, Trello gv6ixmRf) =============================
+   Farin chose B on QCbe09H4: a light end-of-stage check on "Go to the next level". 10 questions drawn from
+   the page's own content (5 grammar, 4 words, 1 listening; 5 typed), one try each, feedback after each, never
+   blocks: whatever the score the learner advances. Misses go to review box 0 (due tomorrow). Offered once per
+   stage: taken or skipped is stored in progress.stageChecks[stageKey]. Runs in the lesson quiz renderer as
+   kind 'stagecheck' (untimed, not a LESSON_KIND: no retry round, no nodeScores). */
+const SC_SLOTS = [['g','pick'],['w','choose'],['g','type'],['w','typed'],['g','type'],['l','listen'],['g','pick'],['w','choose'],['g','type'],['w','typed']];
+function stageCheckRecord(key){ const sc = state.progress && state.progress.stageChecks; return (sc && sc[key]) || null; }
+function scNorm(s){ return String(s||'').toLowerCase().replace(/\s+/g,' ').trim(); }
+function scFillAns(s, w){ const t = String(s); w = String(w); if(/^\s*_{2,}/.test(t)) w = w.charAt(0).toUpperCase() + w.slice(1); return t.replace(/_{2,}(\s*\([^)]*\))?/, w); }
+function scFillIn(s, w){ return String(s).replace(/_{2,}/, w); }
+// Builds the check for the learner's current page. Returns [] when it cannot reach 6 questions.
+function buildStageCheck(){
+  const rm = currentRoadmap(), srs = (state.progress && state.progress.srs) || {}, today = todayISO();
+  const p = state.profile || {}, lowLevel = ['A1','A2'].includes(p.level || 'A1');
+  const scores = (state.progress && state.progress.nodeScores) || {};
+  const used = new Set(), gramAns = new Set();
+  const isUsed = arr => arr.some(x=>x && used.has(scNorm(x)));
+  const use = arr => arr.forEach(x=>{ if(x) used.add(scNorm(x)); });
+  const pickLabel = L('Which sentence is correct?','Hangi cümle doğru?','کدام جمله درست است؟','¿Qué oración es correcta?');
+  const fixLabel = L('Fix the mistake. Which sentence is right?','Hatayı düzelt. Hangi cümle doğru?','اشتباه را درست کن. کدام جمله درست است؟','Corrige el error. ¿Qué oración es correcta?');
+  const uniq = arr => arr.filter((w,i)=>w && arr.indexOf(w)===i);
+  const goodBlank = b => b && b.sentence && b.word && b.distractors && b.distractors.length >= 2;
+  const goodType = x => x && x.type === 'type' && x.sentence && /_{2,}/.test(String(x.sentence)) && Array.isArray(x.accept) && x.accept.length;
+  const dwText = (item, map, k) => { const d = (map && map[k]) || (item.distractorWhy && item.distractorWhy[k]); if(!d) return undefined; return typeof d === 'string' ? d : L(d.en, d.tr, d.fa, d.es); };
+  const mk = (prompt, right, wrongs, key, hintFor, tr) => {
+    const opts = shuffle([right].concat(wrongs));
+    const q = {prompt, options:opts, correct:opts.indexOf(right), why:'', key:scNorm(key), answerText:String(key)};
+    if(tr) q.answerTr = tr;
+    if(hintFor){ const h = opts.map(o=>hintFor(o)); if(h.some(Boolean)) q.hints = h; }
+    return q;
+  };
+  const verSrc = (t, o) => o === 'base' ? t : (t.goalVariant && t.goalVariant[o]);
+  // ---- grammar (G1) ----
+  let G = [];
+  rm.forEach(n=>{
+    if(n.type !== 'grammar' || G.some(x=>x.id === n.refId)) return;
+    const t = GRAMMAR_ITEMS.find(x=>x.id === n.refId);
+    if(t && !t.course) G.push({id:t.id, t, goal:n.goal, at:G.length});
+  });
+  if(G.length > 5){
+    const first = g => { const s = scores['grammar:' + g.id]; return (s && typeof s.first === 'number') ? s.first : 0; };
+    G = G.slice().sort((a,b)=>(first(a) - first(b)) || (a.at - b.at)).slice(0, 5);
+  }
+  G = shuffle(G);
+  const gInfo = g => {
+    const t = g.t, v = (g.goal && t.goalVariant && t.goalVariant[g.goal]) ? g.goal : 'base';
+    const eff = effectiveGrammarItem(t, v === 'base' ? null : t.goalVariant[v]);
+    const seen = new Set();
+    [eff.blank, eff.blank2].forEach(b=>{ if(b && b.sentence){ seen.add(scNorm(b.sentence)); if(b.word) seen.add(scNorm(scFillIn(b.sentence, b.word))); } });
+    [eff.right, eff.right2].forEach(r=>{ if(r) seen.add(scNorm(r)); });
+    const goals = profileGoalKeys(p);
+    const others = uniq(goals.filter(k=>k !== v && t.goalVariant && t.goalVariant[k]).concat(v !== 'base' ? ['base'] : [], Object.keys(t.goalVariant || {}).filter(k=>k !== v)));
+    return {t, v, eff, seen, others};
+  };
+  const typeFrom = (gi, x) => {
+    const acc = x.accept.map(String), first = /^\s*_{2,}/.test(String(x.sentence)) ? acc[0].charAt(0).toUpperCase() + acc[0].slice(1) : acc[0];
+    const ans = scFillAns(x.sentence, acc[0]);
+    const q = {qt:'type', prompt:x.sentence, options:[first], correct:0, accept:acc, typeHint:x.hint || null, why:'', key:scNorm(ans), answerText:ans};
+    if(x.translation) q.answerTr = x.translation;
+    q._s = [x.sentence, ans]; q._a = acc[0];
+    return q;
+  };
+  const pickFrom = (cands) => { for(const q of shuffle(cands)){ if(!isUsed(q._s)) return q; } return null; };
+  const gType = gi => {
+    const t = gi.t, isSeen = x => gi.seen.has(scNorm(x.sentence)) || gi.seen.has(scNorm(scFillIn(x.sentence, x.accept[0])));
+    const tier1 = [];
+    Object.keys(t.goalVariant || {}).filter(g=>g !== gi.v).forEach(g=>((t.goalVariant[g] && t.goalVariant[g].practice) || []).forEach(x=>{ if(goodType(x)) tier1.push(typeFrom(gi, x)); }));
+    let q = pickFrom(tier1);
+    if(!q) q = pickFrom((t.practice || []).filter(x=>goodType(x) && !isSeen(x)).map(x=>typeFrom(gi, x)));
+    return q;
+  };
+  const gPick = gi => {
+    const t = gi.t;
+    // tier 1: another version's right / wrong / wrong2
+    for(const o of gi.others){
+      const s = verSrc(t, o);
+      if(!s || !s.right || !s.wrong || !s.wrong2) continue;
+      if(s.right === s.wrong || s.right === s.wrong2 || s.wrong === s.wrong2 || gi.seen.has(scNorm(s.right))) continue;
+      if(isUsed([s.right])) continue;
+      const q = mk(pickLabel, s.right, [s.wrong, s.wrong2], s.right, null, s === t ? t.rightTranslation : s.rightTranslation);
+      q._s = [s.right]; return q;
+    }
+    // tier 2: another version's blank / blank2, not seen
+    const fillQ = (b, field, o) => {
+      if(!goodBlank(b) || blankListed(TRAP_EXCLUDE_BLANKS, t.id, field, o)) return null;
+      const filled = scFillIn(b.sentence, b.word), dists = uniq(b.distractors).slice(0, 2);
+      const q = mk(b.sentence, b.word, dists, filled, x=>dwText(t, b.distractorWhy, x), b.translation);
+      q._s = [b.sentence, filled]; q._a = b.word; return q;
+    };
+    const t2 = [];
+    gi.others.forEach(o=>{ const s = verSrc(t, o); if(!s) return; [['blank', s.blank], ['blank2', s.blank2]].forEach(([f, b])=>{ if(b && !gi.seen.has(scNorm(b.sentence))){ const q = fillQ(b, f, o); if(q) t2.push(q); } }); });
+    let q = pickFrom(t2); if(q) return q;
+    // tier 3: the item's own practice fix item
+    const fixes = (t.practice || []).filter(x=>x && x.type === 'fix' && x.right && x.distractors && x.distractors.length >= 2).map(x=>{ const fq = mk(fixLabel + '\n"' + x.wrong + '"', x.right, uniq(x.distractors).slice(0, 2), x.right, null, x.translation); fq._s = [x.right, x.wrong]; return fq; });
+    q = pickFrom(fixes); if(q) return q;
+    // tier 4: the learner's own blank2
+    const b2 = gi.eff.blank2;
+    if(b2){ q = fillQ(b2, 'blank2', gi.v); if(q && !isUsed(q._s)) return q; }
+    return null;
+  };
+  // ---- words (W1, W2) ----
+  const S = [];
+  rm.forEach(n=>{ if(n.type === 'vocab' && !S.includes(n.refId)){ const s = VOCAB_SETS.find(x=>x.id === n.refId); if(s && !s.course && s.category !== 'slang') S.push(n.refId); } });
+  const box = id => (srs[id] && typeof srs[id].box === 'number') ? srs[id].box : 0;
+  const sets = S.map((id, at)=>({id, at, set:VOCAB_SETS.find(x=>x.id === id)})).sort((a,b)=>(box(a.id) - box(b.id)) || (a.at - b.at));
+  const rankFor = (setId, c) => { const ds = deckSortFor(setId); if(ds && (ds.twice || []).includes(c.word)) return 0; if(ds && (ds.again || []).includes(c.word)) return 1; return 2; };
+  const wordQueues = sets.map(x=>{
+    const cards = x.set.cards || [], e = srs[x.id];
+    const skip = new Set();
+    if(e && e.last === today && cards.length){ const vi = e.vi || 0; skip.add(((vi - 1) % cards.length + cards.length) % cards.length); skip.add(((vi - 2) % cards.length + cards.length) % cards.length); }
+    const list = cards.map((c, i)=>({c, i})).filter(o=>cardHasGap(o.c) && !skip.has(o.i));
+    list.sort((a,b)=>(rankFor(x.id, a.c) - rankFor(x.id, b.c)) || (a.i - b.i));
+    return {id:x.id, set:x.set, list, taken:0};
+  });
+  const nextWord = (perSetMax) => {
+    for(let round = 0; round < 50; round++){
+      let progressed = false;
+      for(const wq of wordQueues){
+        if(wq.taken > round || (perSetMax && wq.taken >= perSetMax)) continue;
+        while(wq.list.length){
+          const o = wq.list.shift();
+          const gap = scNorm(cardGap(o.c));
+          if(gramAns.has(gap) || isUsed([o.c.sentence])) continue;
+          wq.taken++; progressed = true;
+          return {set:wq.set, card:o.c, rank:rankFor(wq.id, o.c)};
+        }
+      }
+      if(!progressed && wordQueues.every(wq=>!wq.list.length)) return null;
+    }
+    return null;
+  };
+  const sibOf = s => VOCAB_SETS_FREE.filter(x=>x.level === s.level && x.category === s.category).flatMap(x=>x.cards);
+  const meaningOf = c => L(c.meaning.en, c.meaning.tr, c.meaning.fa, c.meaning.es) || c.meaning.en || '';
+  const wordAns = c => ({answerText:c.sentence, answerTr:'"' + c.word + '" = ' + meaningOf(c)});
+  const wChoose = w => {
+    const c = w.card, seen = new Set([c.word.toLowerCase()]), opts = [];
+    [sibOf(w.set), w.set.cards].forEach(pool=>shuffle(pool).forEach(x=>{ const k = x.word.toLowerCase(); if(opts.length < 3 && !seen.has(k)){ seen.add(k); opts.push(x.word); } }));
+    const options = shuffle([c.word].concat(opts));
+    return Object.assign({qt:'fill', prompt:cardBlank(c), options, correct:options.indexOf(c.word), why:''}, wordAns(c));
+  };
+  const wTyped = w => {
+    const c = w.card, m = String(c.sentence).match(cardGapRe(c)), gapTxt = m ? m[2] : cardGap(c);
+    const f = (gapTxt.match(/\p{L}/u) || [gapTxt.charAt(0)])[0], mean = meaningOf(c);
+    const label = L(`${mean} · first letter: ${f}`, `${mean} · ilk harf: ${f}`, `${mean} · حرف اول: ${f}`, `${mean} · primera letra: ${f}`);
+    const acc = (Array.isArray(c.accept) && c.accept.length ? c.accept : [c.word]).concat([gapTxt]).map(x=>String(x).toLowerCase().trim()).filter((x,i,a)=>x && a.indexOf(x)===i);
+    return Object.assign({qt:'type', prompt:label + '\n' + cardBlank(c), options:[gapTxt], correct:0, accept:acc, why:''}, wordAns(c));
+  };
+  // ---- listening (L) ----
+  const listenPrompt = () => lowLevel ? L('Listen. Which sentence did you hear?','Dinle. Hangi cümleyi duydun?','گوش کن. کدام جمله را شنیدی؟','Escucha. ¿Qué frase has oído?')
+      : L('Listen carefully. Which one did you hear exactly?','Dikkatle dinle. Tam olarak hangisini duydun?','با دقت گوش کن. دقیقاً کدام را شنیدی؟','Escucha bien. ¿Cuál has oído exactamente?');
+  const mkL = (text, wrongs, hintFor, itemId) => {
+      if(!text || wrongs.length < 2 || isUsed([text].concat(wrongs))) return null;
+      const options = shuffle([text].concat(wrongs.slice(0, 2)));
+      const q = {qt:'listen', prompt:listenPrompt(), listenText:text, options, correct:options.indexOf(text), why:'', key:scNorm(text), answerText:text, scKind:'listen', itemId, kind:'listen'};
+      if(hintFor){ const h = options.map(o=>hintFor(o)); if(h.some(Boolean)) q.hints = h; }
+      q._s = [text].concat(wrongs.slice(0, 2));
+      return q;
+  };
+  const listenQ = () => {
+    const dn = rm.find(n=>n.type === 'dialogue'), d = dn && DIALOGUES.find(x=>x.id === dn.refId);
+    if(d){
+      const mine = (d.lines || []).filter(l=>l.who === 'you' && dialogueOkLine(l));
+      const last = mine[mine.length - 1];
+      if(last){
+        const text = dialogueOkLine(last);
+        if(lowLevel){
+          let others = uniq(mine.slice(0, -1).map(dialogueOkLine)).filter(x=>x !== text);
+          if(others.length < 2) others = others.concat(shuffle(DIALOGUES.filter(x=>x.id !== d.id && x.level === d.level).flatMap(x=>(x.lines || []).filter(l=>l.who === 'you').map(dialogueOkLine))).filter(x=>x && x !== text && !others.includes(x)));
+          const q = mkL(text, shuffle(others).slice(0, 2), null, d.id);
+          if(q) return q;
+        } else {
+          const wrong = (last.choices || []).filter(c=>!c.ok && c.text);
+          const why = {}; wrong.forEach(c=>{ why[c.text] = c.why ? (L(c.why.en, c.why.tr, c.why.fa, c.why.es) || c.why.en) : ''; });
+          const q = mkL(text, wrong.map(c=>c.text), o=>why[o] || undefined, d.id);
+          if(q) return q;
+        }
+      }
+    }
+    return null;
+  };
+  // ---- assemble in the table's order ----
+  const gList = G.map(gInfo);
+  const slots = SC_SLOTS.map(s=>s.slice());
+  // G1: fewer than 5 grammar items -> the free grammar slots become word slots (pick -> choose, type -> typed)
+  let gi = 0;
+  slots.forEach(s=>{ if(s[0] === 'g'){ if(gi < gList.length){ s.push(gList[gi]); gi++; } else { s[0] = 'w'; s[1] = s[1] === 'pick' ? 'choose' : 'typed'; } } });
+  const out = new Array(slots.length).fill(null);
+  // grammar first (their answers keep a word off the word slots)
+  slots.forEach((s, k)=>{
+    if(s[0] !== 'g') return;
+    const g = s[2];
+    let q = s[1] === 'type' ? (gType(g) || gPick(g)) : gPick(g);
+    if(!q){ s[0] = 'w'; s[1] = s[1] === 'pick' ? 'choose' : 'typed'; return; }
+    use(q._s); if(q._a) gramAns.add(scNorm(q._a));
+    q.scKind = 'grammar'; q.itemId = g.t.id; q.kind = 'grammar';
+    delete q._s; delete q._a;
+    out[k] = q;
+  });
+  // listening: the page's dialogue (rule L); without one, a word sentence after the words are chosen (below)
+  const lSlot = slots.findIndex(s=>s[0] === 'l');
+  let lDone = false;
+  if(lSlot >= 0){ const q = listenQ(); if(q){ use(q._s); delete q._s; out[lSlot] = q; lDone = true; } }
+  // words: round-robin over the sets, at most 2 per set when 3+ sets exist
+  const wSlots = slots.map((s, k)=>s[0] === 'w' ? k : -1).filter(k=>k >= 0);
+  const perSetMax = wordQueues.length >= 3 ? 2 : 0;
+  const words = [];
+  for(let n = 0; n < wSlots.length; n++){ const w = nextWord(perSetMax) || (perSetMax ? nextWord(0) : null); if(!w) break; words.push(w); use([w.card.sentence]); }
+  // the two (or more) highest-ranked words go to the typed slots
+  const typedSlots = wSlots.filter(k=>slots[k][1] === 'typed'), chooseSlots = wSlots.filter(k=>slots[k][1] !== 'typed');
+  const ranked = words.map((w, i)=>({w, i})).sort((a,b)=>(a.w.rank - b.w.rank) || (a.i - b.i));
+  const forTyped = ranked.slice(0, typedSlots.length).map(x=>x.w), rest = ranked.slice(typedSlots.length).map(x=>x.w);
+  typedSlots.forEach((k, j)=>{ const w = forTyped[j]; if(w) out[k] = Object.assign(wTyped(w), {scKind:'vocab', itemId:w.set.id, kind:'vocab', scWord:w.card.word}); });
+  chooseSlots.forEach((k, j)=>{ const w = rest[j]; if(w) out[k] = Object.assign(wChoose(w), {scKind:'vocab', itemId:w.set.id, kind:'vocab', scWord:w.card.word}); });
+  // no dialogue on the page: hear a sentence of a word not asked above, among two other sentences of its set; else that word is asked
+  if(lSlot >= 0 && !lDone){
+    const w = nextWord(0);
+    if(w){
+      const others = (w.set.cards || []).filter(c=>c !== w.card && c.sentence && c.sentence !== w.card.sentence && !isUsed([c.sentence])).map(c=>c.sentence).filter((x,i,a)=>a.indexOf(x) === i);
+      const q = mkL(w.card.sentence, shuffle(others).slice(0, 2), null, w.set.id);
+      if(q){ delete q._s; out[lSlot] = q; }
+      else out[lSlot] = Object.assign(wChoose(w), {scKind:'vocab', itemId:w.set.id, kind:'vocab', scWord:w.card.word});
+    }
+  }
+  const qs = out.filter(Boolean);
+  return qs.length >= 6 ? qs : [];
+}
+function scAutoPlay(){
+  const q = state.quiz, it = q && q.kind === 'stagecheck' && q.questions[q.index];
+  if(it && it.qt === 'listen' && !q.answered) setTimeout(()=>{ try{ if(state.view === 'quiz' && state.quiz === q && q.questions[q.index] === it) ttsSpeak(it.listenText, 1); }catch(e){} }, 350);
+}
+function scPlayRowHtml(item){
+  return `<div class="row" style="gap:8px; justify-content:center; margin-top:12px; flex-wrap:wrap;">
+      <button class="btn btn-ghost" style="width:auto;" data-action="sc-play" data-r="1">${ICONS.soundOn} ${L('Play','Dinle','پخش','Escuchar')}</button>
+      <button class="btn btn-ghost" style="width:auto;" data-action="sc-play" data-r="0.8">${ICONS.soundOn} ${L('Slower','Daha yavaş','آهسته‌تر','Más despacio')}</button>
+    </div>`;
+}
+function scEyebrow(q){
+  const a = q.index + 1, b = q.questions.length;
+  return L(`Quick check · ${a} of ${b}`, `Kısa kontrol · ${a}/${b}`, `مرور کوتاه · ${a} از ${b}`, `Repaso rápido · ${a} de ${b}`);
+}
+function renderStageCheckIntro(){
+  const key = state.viewParams.key || stageKeyOf(state.profile);
+  const qs = state.viewParams.qs || [], n = qs.length || 10;
+  const intro = n === 10
+    ? L("10 short questions about this page. About 4 minutes. Whatever your score, you go to the next level, and anything you miss comes back in your review.", "Bu sayfayla ilgili 10 kısa soru. Yaklaşık 4 dakika. Puanın ne olursa olsun bir sonraki seviyeye geçersin; kaçırdıkların tekrarında geri gelir.", "۱۰ سؤال کوتاه دربارهٔ همین صفحه. حدود ۴ دقیقه. نمره‌ات هر چه باشد به سطح بعدی می‌روی، و هر چیزی را که جا بیندازی در مرورت دوباره می‌بینی.", "10 preguntas cortas sobre esta página. Unos 4 minutos. Saques lo que saques, pasas al siguiente nivel, y lo que falles vuelve en tu repaso.")
+    : L(`${n} short questions about this page. About 4 minutes. Whatever your score, you go to the next level, and anything you miss comes back in your review.`, `Bu sayfayla ilgili ${n} kısa soru. Yaklaşık 4 dakika. Puanın ne olursa olsun bir sonraki seviyeye geçersin; kaçırdıkların tekrarında geri gelir.`, `${n} سؤال کوتاه دربارهٔ همین صفحه. حدود ۴ دقیقه. نمره‌ات هر چه باشد به سطح بعدی می‌روی، و هر چیزی را که جا بیندازی در مرورت دوباره می‌بینی.`, `${n} preguntas cortas sobre esta página. Unos 4 minutos. Saques lo que saques, pasas al siguiente nivel, y lo que falles vuelve en tu repaso.`);
+  return `<div class="fade-in game-screen">
+    ${gameTopHtml(L('Quick check: {stage}','Kısa kontrol: {stage}','مرور کوتاه: {stage}','Repaso rápido: {stage}').replace('{stage}', key))}
+    <div class="game-card" style="text-align:center;">
+      <img src="char-${learnerCharKey()}.png" alt="" style="width:96px; height:96px; object-fit:contain; margin:0 auto 10px; display:block;">
+      <div class="game-result-title" style="font-size:20px;" dir="auto">${esc(L('Quick check: {stage}','Kısa kontrol: {stage}','مرور کوتاه: {stage}','Repaso rápido: {stage}').replace('{stage}', key))}</div>
+      <p class="game-result-line" dir="auto">${esc(intro)}</p>
+    </div>
+    <button class="btn btn-primary game-cta" data-action="sc-start">${L('Start','Başla','شروع کن','Empezar')}</button>
+    <button class="btn btn-ghost" style="margin-top:8px;" data-action="sc-skip">${L('Skip and go to the next level','Atla ve bir sonraki seviyeye geç','رد شو و برو به سطح بعدی','Saltar e ir al siguiente nivel')}</button>
+  </div>`;
+}
+// Results (never blocks): headline by score, Grammar / Words / Listening rows tagged Strong or Needs a review.
+function renderStageCheckResults(){
+  const q = state.quiz, n = q.correct, total = q.questions.length;
+  const head = n >= 9 ? L('Excellent! This page really stuck.','Harika! Bu sayfa iyice yerleşmiş.','عالی! این صفحه حسابی توی ذهنت مانده.','¡Excelente! Esta página se te ha quedado.')
+    : n >= 6 ? L('Good work! Most of it stuck.','İyi iş! Çoğu yerleşmiş.','آفرین! بیشترش توی ذهنت مانده.','¡Buen trabajo! Casi todo se te ha quedado.')
+    : n >= 3 ? L("Good start. A few things need another look, and that's normal.",'İyi bir başlangıç. Birkaç şeye bir daha bakmak gerek, bu çok normal.','شروع خوبی است. چند چیز یک نگاه دیگر لازم دارد، و این کاملاً عادی است.','Buen comienzo. Algunas cosas necesitan otro vistazo, y es normal.')
+    : L("This page needs a little more time, and that's okay. Your review will help.",'Bu sayfa biraz daha zaman istiyor, sorun değil. Tekrarların yardımcı olacak.','این صفحه کمی وقت بیشتری می‌خواهد، و اشکالی ندارد. مرورهایت کمکت می‌کنند.','Esta página necesita un poco más de tiempo, y no pasa nada. Tu repaso te ayudará.');
+  const score = L(`You got ${n} of ${total}`, `${total} sorudan ${n} doğru`, `${n} از ${total} درست`, `Has acertado ${n} de ${total}`);
+  const strong = L('Strong','Sağlam','محکم','Lo dominas'), weak = L('Needs a review','Tekrar gerekli','مرور لازم دارد','Para repasar');
+  const tag = ok => `<span class="pill" style="background:${ok ? 'var(--success-soft)' : 'var(--bg-sunken)'}; color:${ok ? 'var(--success)' : 'var(--ink-soft)'}; white-space:nowrap;">${esc(ok ? strong : weak)}</span>`;
+  const row = (title, ok, sub) => `<div style="padding:8px 0; border-bottom:1px solid var(--border-soft);"><div class="row between" style="align-items:center; gap:10px;"><span style="font-size:13.5px; font-weight:600;" dir="auto">${esc(title)}</span>${tag(ok)}</div>${sub ? `<div style="font-size:12.5px; color:var(--ink-soft); margin-top:3px;" dir="auto">${esc(sub)}</div>` : ''}</div>`;
+  const section = (h, rows) => rows.length ? `<h3 class="display" style="font-size:14px; margin:14px 0 4px;">${esc(h)}</h3>${rows.join('')}` : '';
+  const g = [], w = {}, wOrder = [], l = [];
+  q.questions.forEach((qq, i)=>{
+    const ok = !!q.results[i];
+    if(qq.scKind === 'grammar'){ const it = GRAMMAR_ITEMS.find(x=>x.id === qq.itemId); g.push(row(it ? grammarTitle(it) : qq.itemId, ok)); }
+    else if(qq.scKind === 'vocab'){ if(!w[qq.itemId]){ w[qq.itemId] = []; wOrder.push(qq.itemId); } if(!ok) w[qq.itemId].push(qq.scWord); }
+    else if(qq.scKind === 'listen'){ const d = DIALOGUES.find(x=>x.id === qq.itemId), t = d && d.title; l.push(row(t ? (typeof t === 'string' ? t : (L(t.en, t.tr, t.fa, t.es) || t.en)) : L('Listening','Dinleme','شنیدن','Comprensión auditiva'), ok)); }
+  });
+  const wRows = wOrder.map(id=>{ const s = VOCAB_SETS.find(x=>x.id === id), miss = w[id];
+    return row(s ? setTitle(s) : id, !miss.length, miss.length ? L('Words to review: {list}','Tekrar edilecek kelimeler: {list}','کلمه‌هایی برای مرور: {list}','Palabras para repasar: {list}').replace('{list}', miss.join(', ')) : ''); });
+  const anyMiss = q.correct < total;
+  return `<div class="fade-in game-screen" style="gap:0;">
+    ${gameTopHtml(L('Quick check: {stage}','Kısa kontrol: {stage}','مرور کوتاه: {stage}','Repaso rápido: {stage}').replace('{stage}', q.scKey || ''))}
+    <div style="text-align:center;">
+      <img src="char-${learnerCharKey()}.png" alt="" style="width:84px; height:84px; object-fit:contain; margin:4px auto 6px; display:block;">
+      <h2 class="game-result-title" dir="auto">${esc(head)}</h2>
+      <p class="game-result-line" dir="auto" style="margin-bottom:6px;">${esc(score)}</p>
+    </div>
+    <div class="card-flat" style="margin-top:14px; text-align:start;">
+      ${section(L('Grammar','Dilbilgisi','گرامر','Gramática'), g)}
+      ${section(L('Words','Kelimeler','کلمه‌ها','Palabras'), wRows)}
+      ${section(L('Listening','Dinleme','شنیدن','Comprensión auditiva'), l.length ? [l[0]] : [])}
+      ${anyMiss ? `<p style="font-size:12.5px; color:var(--ink-soft); margin-top:12px;" dir="auto">${esc(L('The ones marked “Needs a review” come back in your review tomorrow.','“Tekrar gerekli” olanlar yarın tekrarında geri gelir.','مواردی که «مرور لازم دارد» خورده‌اند، فردا در مرورت برمی‌گردند.','Lo marcado «Para repasar» vuelve mañana en tu repaso.'))}</p>` : ''}
+    </div>
+    <button class="btn game-cta" style="margin-top:18px; width:100%; justify-content:center; background:var(--clay-orange); color:#fff; border:none;" data-action="sc-advance"><img src="icon-gradcap.png" alt="" style="width:22px; height:22px; object-fit:contain;">${L('Go to the next level','Bir sonraki seviyeye geç','برو به سطح بعدی','Ir al siguiente nivel')}</button>
+  </div>`;
+}
+// The check is answered to the end: misses go to review box 0, the record is stored (local + cloud with progress).
+function completeStageCheck(q){
+  const pr = state.progress, today = todayISO();
+  if(!pr.stageChecks || typeof pr.stageChecks !== 'object') pr.stageChecks = {};
+  const rec = {v:1, date:today, skipped:false, score:q.correct, total:q.questions.length, grammar:{}, words:{}};
+  const missedWords = {};
+  q.questions.forEach((qq, i)=>{
+    const ok = !!q.results[i];
+    if(qq.scKind === 'grammar'){
+      rec.grammar[qq.itemId] = ok ? 1 : 0;
+      if(!ok && !srsIsCourseItem(qq.itemId)){ const e = pr.srs && pr.srs[qq.itemId]; if(e){ srsSetBox(e, 0, 1); e.lapses = (e.lapses || 0) + 1; } }
+    } else if(qq.scKind === 'vocab'){
+      if(!rec.words[qq.itemId]) rec.words[qq.itemId] = [];
+      if(!ok){ rec.words[qq.itemId].push(qq.scWord); (missedWords[qq.itemId] = missedWords[qq.itemId] || []).push(qq.scWord); }
+    } else if(qq.scKind === 'listen') rec.listen = ok ? 1 : 0;
+  });
+  Object.keys(missedWords).forEach(setId=>{
+    const e = pr.srs && pr.srs[setId], set = VOCAB_SETS.find(x=>x.id === setId);
+    if(!pr.deckSort) pr.deckSort = {};
+    const ds = pr.deckSort[setId] || (pr.deckSort[setId] = {again:[], twice:[], date:today});
+    if(!Array.isArray(ds.again)) ds.again = [];
+    const miss = missedWords[setId];
+    ds.again = miss.concat(ds.again.filter(x=>!miss.includes(x)));
+    if(e){ srsSetBox(e, 0, 1); const k = set ? set.cards.findIndex(c=>c.word === miss[0]) : -1; if(k >= 0) e.vi = k; }
+  });
+  pr.stageChecks[q.scKey] = rec;
+  q.scDone = true;
 }
 function startQuiz(kind, contextId, questions, backView, backParams, extra){
   questions.forEach(qq=>{ if(qq.itemId===undefined){ qq.itemId = contextId; qq.kind = kind; } });
@@ -20000,6 +20327,7 @@ function quizKindTitle(q){
   }
   if(q.kind === 'story') return L('Story','Hikaye','داستان','Historia');
   if(q.kind === 'review') return L('Review','Tekrar','مرور','Repaso');
+  if(q.kind === 'stagecheck') return L('Quick check','Kısa kontrol','مرور کوتاه','Repaso rápido');
   return L('Grammar','Dilbilgisi','گرامر','Gramática');
 }
 // The question: an optional instruction line, then the sentence. A blank is a
@@ -20019,7 +20347,7 @@ function quizPromptHtml(item, q){
       : `${before}<span class="trap-gap"></span>${after}`;
   }
   // a meaning question (Zuq1fEjy) shows the meaning in the UI language, so its direction follows the text
-  return `${label ? `<p class="game-hint" style="margin:0 0 10px;">${esc(label)}</p>` : ''}<p class="${cls}" dir="${item.qt === 'meaning' ? 'auto' : 'ltr'}">${inner}</p>`;
+  return `${label ? `<p class="game-hint" style="margin:0 0 10px;">${esc(label)}</p>` : ''}<p class="${cls}" dir="${(item.qt === 'meaning' || item.qt === 'listen') ? 'auto' : 'ltr'}">${inner}</p>`;
 }
 // Left of the status row: the countdown ring while the question is open, then
 // a tick or a cross once it is answered. No ring when the round has no timer.
@@ -20199,7 +20527,7 @@ function quizSettle(q, it, ok, e, el){
 function renderQuiz(){
   const q = state.quiz;
   const item = q.questions[q.index];
-  const CAT = {grammar:'gram', vocab:'voc', story:'story', review:'review'}[q.kind];
+  const CAT = {grammar:'gram', vocab:'voc', story:'story', review:'review', stagecheck:'review'}[q.kind];
   const a = q.index+1, b = q.questions.length;
   const longOpts = item.options.some(o=>String(o).length > 26);
   // Practice screens v3 (2026-10-03): same layout as the game screens.
@@ -20207,12 +20535,13 @@ function renderQuiz(){
     ${gameTopHtml(quizKindTitle(q))}
     <div class="game-status">
       ${quizTimerRingHtml(q, item, CAT)}
-      <span class="game-status-text">${L(`Question ${a} of ${b}`, `Soru ${a}/${b}`, `سوال ${a} از ${b}`, `Pregunta ${a} de ${b}`)}</span>
-      <span class="game-status-end">${quizStreakChip(q)}</span>
+      <span class="game-status-text">${q.kind === 'stagecheck' ? esc(scEyebrow(q)) : L(`Question ${a} of ${b}`, `Soru ${a}/${b}`, `سوال ${a} از ${b}`, `Pregunta ${a} de ${b}`)}</span>
+      <span class="game-status-end">${q.kind === 'stagecheck' ? '' : quizStreakChip(q)}</span>
     </div>
+    ${q.kind === 'stagecheck' ? `<div class="progress-track" style="margin:0;"><div class="progress-fill" style="width:${((a-1)/b)*100}%; background:var(--clay-orange);"></div></div>` : ''}
     ${q.round === 2 ? `<p class="game-hint" style="margin:0;">${L('Practise again','Tekrar çalış','دوباره تمرین کن','Practicar otra vez')}</p>` : ''}
     <div class="game-card${longOpts ? ' tight' : ''}" translate="no">
-      ${item.qt === 'build' ? quizBuildHtml(q, item) : quizPromptHtml(item, q)}
+      ${item.qt === 'build' ? quizBuildHtml(q, item) : quizPromptHtml(item, q)}${item.qt === 'listen' ? scPlayRowHtml(item) : ''}
     </div>
     ${item.qt === 'build' ? quizBuildTrayHtml(q, item) : (item.qt === 'type' ? quizTypeHtml(q, item) : '')}
     <div class="game-opts" translate="no">
@@ -20231,6 +20560,7 @@ function renderQuiz(){
     ${q.answered ? `
       ${answerBannerHtml(item, q.results && q.results[q.index] === true, q.selected)}
       ${quizTypedNoteHtml(q, item)}
+      ${q.kind === 'stagecheck' && !(q.results && q.results[q.index] === true) ? `<p class="game-result-line" dir="auto" style="margin:0;">${esc(L('This one comes back in your review tomorrow.','Bu soru yarın tekrarında geri gelecek.','این یکی فردا در مرورت برمی‌گردد.','Esta vuelve mañana en tu repaso.'))}</p>` : ''}
       ${proveHtml(q)}
       <button class="btn btn-primary game-cta" data-action="quiz-next">${q.index+1 < q.questions.length ? L('Next question','Sonraki soru','سوال بعدی','Siguiente pregunta') : L('See results','Sonuçları gör','دیدن نتایج','Ver resultados')}</button>
     ` : ''}
@@ -20363,13 +20693,14 @@ const screens = {
   'game-chores-building': renderGameChoresBuilding,
   'game-chores-room': renderGameChoresRoom,
   'souvenir-shuffle': renderShuffle,
+  'stage-check': renderStageCheckIntro,
   'coming-soon': renderNotFound,
   'not-found': renderNotFound,
   'story-list': renderStoryList,
   'story-detail': ()=>renderStoryDetail(state.viewParams.id),
   'media-session': ()=>renderMediaSession(state.viewParams.id),
   'dialogue': ()=>renderDialogue(state.viewParams.id),
-  'quiz': ()=> state.quiz.index < state.quiz.questions.length ? renderQuiz() : renderQuizResults()
+  'quiz': ()=> state.quiz.index < state.quiz.questions.length ? renderQuiz() : (state.quiz.kind === 'stagecheck' ? renderStageCheckResults() : renderQuizResults())
 };
 
 /* ============================= EVENT HANDLING ============================= */
@@ -21439,8 +21770,41 @@ const HANDLERS = {
     render();
   },
   'advance-roadmap-level'(){
+    // LXD READY-5 (gv6ixmRf): a light stage check first, offered once per stage (taken or skipped). It never blocks.
+    if(state.profile && state.profile.completedDiagnostic && roadmapAllDone()){
+      const key = stageKeyOf(state.profile);
+      if(!stageCheckRecord(key)){
+        let qs = [];
+        try{ qs = buildStageCheck(); }catch(e){ qs = []; }
+        if(qs.length >= 6){ go('stage-check', {key, qs}); return; }
+      }
+    }
     checkRoadmapStageAdvance();
     save(); render();
+  },
+  'sc-start'(){
+    const vp = state.viewParams || {}, key = vp.key || stageKeyOf(state.profile);
+    let qs = (vp.qs && vp.qs.length >= 6) ? vp.qs : [];
+    if(!qs.length){ try{ qs = buildStageCheck(); }catch(e){ qs = []; } }
+    if(qs.length < 6){ HANDLERS['sc-advance'](); return; }
+    startQuiz('stagecheck', '', qs, 'dashboard', {}, {scKey:key});
+    window.scrollTo(0,0);
+    scAutoPlay();
+  },
+  'sc-skip'(){
+    const key = (state.viewParams && state.viewParams.key) || stageKeyOf(state.profile);
+    if(!state.progress.stageChecks || typeof state.progress.stageChecks !== 'object') state.progress.stageChecks = {};
+    if(!state.progress.stageChecks[key]) state.progress.stageChecks[key] = {v:1, date:todayISO(), skipped:true};
+    HANDLERS['sc-advance']();
+  },
+  'sc-advance'(){
+    checkRoadmapStageAdvance();
+    markActivity();
+    go('dashboard');
+  },
+  'sc-play'(el){
+    const q = state.quiz, it = q && q.questions && q.questions[q.index];
+    if(it && it.listenText) ttsSpeak(it.listenText, +el.dataset.r || 1);
   },
   // Gamification v3 (M4): today's plan, chosen in the companion bubble.
   'plan-choose'(el){
@@ -22498,7 +22862,9 @@ const HANDLERS = {
       q.lastTickSecond = null;
     }
     if(q.index >= q.questions.length){
-      if(q.contextId){
+      if(q.kind === 'stagecheck'){
+        if(!q.scDone) completeStageCheck(q);
+      } else if(q.contextId){
         completeLessonQuiz(q);
       } else {
         const byItem = {};
@@ -22519,6 +22885,7 @@ const HANDLERS = {
       markActivity();
     }
     save(); render();
+    scAutoPlay();
   },
   // Was go(q.backView) — landed on the old grammar/vocab list instead of the
   // roadmap (2026-09-30 bug report). Every finished practice now returns to the

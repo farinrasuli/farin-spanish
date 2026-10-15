@@ -958,6 +958,22 @@
   .cs-pick, .cs-foot .btn{font-family:inherit;}
   .course-unlock a.btn{text-decoration:none;}
   .course-chapter.current{border-color:var(--accent);}
+  /* Course Build 2: "Your work" (portfolio + journal) */
+  .cs-wh{font-size:17px; margin:20px 0 2px;}
+  .cs-wsub{margin:0 0 10px; font-size:12.5px; color:var(--ink-soft); line-height:1.4;}
+  .card-flat.cs-slot{padding:14px 16px;}
+  .card-flat.cs-slot:not(.has):not(.done){background:transparent; box-shadow:none; border-style:dashed;}
+  .cs-slotno{flex:0 0 auto; width:30px; height:30px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:900; font-size:13px; background:var(--cat-diag-soft); color:var(--clay-lavender-deep);}
+  .cs-slot.done .cs-slotno{background:var(--success); color:#fff;}
+  .cs-slotno svg{width:15px; height:15px;}
+  .cs-slottitle{font-weight:800; font-size:14.5px; line-height:1.3;}
+  .cs-slotsub{font-size:12px; color:var(--ink-soft); margin-top:3px; line-height:1.35;}
+  .cs-slotx{margin-top:10px; background:var(--bg-sunken); border-radius:12px; padding:9px 12px;}
+  .cs-slotx summary{cursor:pointer; font-size:13px; font-weight:600;}
+  .cs-slotx p{margin:8px 0 0; font-size:13.5px; line-height:1.55; white-space:pre-wrap;}
+  .cs-slotgo{margin-top:10px; background:var(--cat-diag-soft); color:var(--clay-lavender-deep); font-weight:800; font-family:inherit;}
+  .card-flat.cs-jentry p{margin:6px 0 4px; font-size:14px; line-height:1.55;}
+  .cs-draftnote{margin-top:10px; background:var(--cat-voc-soft); border-color:transparent; font-size:13px;}
   /* Course Build 2: writing (live count, Check this, your text vs the model with checklist ticks) */
   .cs-wcount{flex:0 0 auto; margin-top:8px; font-size:12.5px; font-weight:800; color:var(--ink-faint); white-space:nowrap;}
   .cs-wcount.ok{color:var(--success);}
@@ -23750,7 +23766,7 @@ function courseOpenStep(cid, uid, type, redo){
    celebration, a result screen's Continue) opens the next card (courseAdvance); ✕ and Back (goBack) land on the
    course page with the place kept. It ends as soon as the learner is on a course screen or a Home tab (render),
    so the free roadmap keeps returning to Home. The Home button is a deliberate exit and still goes Home. */
-function courseReturnEnds(view){ return ['courses-home','course-detail','course-unit','course-gate','course-final','course-pause','course-done','course-chapter-done','dashboard','goals-list','student-club'].includes(view); }
+function courseReturnEnds(view){ return ['courses-home','course-detail','course-unit','course-gate','course-final','course-work','course-cert','course-pause','course-done','course-chapter-done','dashboard','goals-list','student-club'].includes(view); }
 function courseReturnTarget(){ const r = state.courseReturn; return r && courseFindUnit(r.cid, r.uid) ? {view:'course-detail', params:{cid:r.cid}} : null; }
 // Back leaves the card when it is a native card, or when the screen behind is the course area / Home / nothing.
 function courseBackLeavesStep(){
@@ -24395,14 +24411,72 @@ function courseFinalNodeHtml(c, nx){
   const act = access && unlocked ? `data-action="course-open" data-view="course-final" data-cid="${c.id}"` : !access ? `data-action="course-open" data-view="course-gate" data-cid="${c.id}" data-mi="${c.modules.length}"` : 'disabled';
   return `<div class="cp-nodes" style="margin-top:8px;"><button class="cp-node" ${act}>${dot}<div class="cp-body"><div class="cp-ntitle">${esc(title)}</div><div class="cp-nsub">${esc(sub)}</div></div></button></div>`;
 }
-// "Your work (n)": the final project pieces written so far; only once the first one exists [D].
+/* ---------- "Your work" (Build 2: spec 3.6 portfolio + journal; v2: "Your work (n)" on the course page) ----------
+   One screen per course. Portfolio = the final project's pieces, each showing what exists: the final version, a draft that a
+   lesson or chapter finale saved (writing.portfolio -> progress.courses[cid].portfolio[slot] = {text, from, date}), or the
+   lesson it comes from. The final project opens each piece prefilled with its draft. Journal = the learner's Empathy
+   answers, newest first, with the card title and the lesson. No counts or empty-slot wording. */
+function coursePortfolioSources(cid){
+  const order = courseOrder(cid), m = {};
+  COURSE_EXTRA.writing.filter(w=>w.course===cid && w.portfolio).forEach(w=>{ (m[w.portfolio] = m[w.portfolio] || []).push(w.unit); });
+  Object.keys(m).forEach(k=>m[k].sort((a,b)=>order.indexOf(a)-order.indexOf(b)));
+  return m;
+}
+function courseJournal(cid){
+  const cp = courseProg(cid), order = courseOrder(cid);
+  return order.map(uid=>{ const a = cp.answers[uid+':perspective']; return a && a.text ? {uid, text:a.text, date:a.date || '', p:courseUnitItems(uid).perspective || null} : null; })
+    .filter(Boolean).sort((x,y)=>String(y.date).localeCompare(String(x.date)) || order.indexOf(y.uid)-order.indexOf(x.uid));
+}
+function courseWorkPieces(c){
+  const pd = courseFinalData(c); if(!pd) return 0;
+  return pd.parts.filter(p=>{ const a = courseFinalPart(c.id, p.id); return (a.text && a.text.trim()) || coursePortfolioDraft(c.id, p.id); }).length;
+}
+// "Your work (n)": the pieces written so far plus the journal entries; shown once there is one.
 function courseWorkRowHtml(c){
-  const pd = courseFinalData(c); if(!pd) return '';
-  const n = pd.parts.filter(p=>{ const a = courseFinalPart(c.id, p.id); return a.text && a.text.trim(); }).length;
+  const n = courseWorkPieces(c) + courseJournal(c.id).length;
   if(!n) return '';
-  return `<button class="item-row course-work" data-action="course-open" data-view="course-final" data-cid="${c.id}" style="margin-top:16px;">
+  return `<button class="item-row course-work" data-action="course-open" data-view="course-work" data-cid="${c.id}" style="margin-top:16px;">
     <span class="item-ic" style="background:var(--cat-diag-soft); color:var(--clay-lavender-deep);">${ICONS.pen}</span>
-    <div class="item-body"><div class="item-title">${CL('Your work','Çalışmaların','کارهای تو','Tu trabajo')} (${n})</div></div><span class="chevron">${ICONS.chev}</span></button>`;
+    <div class="item-body"><div class="item-title">${CL('Your work','Çalışmaların','کارهای تو','Tu trabajo')} (${n})</div><div style="font-size:12px; color:var(--ink-soft); margin-top:2px;">${CL('Portfolio and journal','Portföy ve günlük','پرونده‌ی کاری و دفترچه','Portafolio y diario')}</div></div><span class="chevron">${ICONS.chev}</span></button>`;
+}
+function courseFirstLine(t){ const s = String(t || '').trim().split(/\n/)[0]; return s.length > 90 ? s.slice(0, 88).replace(/\s+\S*$/, '') + '…' : s; }
+function renderCourseWork(){
+  const vp = state.viewParams || {}, c = courseGet(vp.cid), pd = courseFinalData(c);
+  if(!c) return renderNotFound();
+  const src = coursePortfolioSources(c.id), open = !!pd && courseUnitAccess(c, pd.id) && courseFinalUnlocked(c);
+  const all = !!pd && courseFinalPassed(c.id, pd)===pd.parts.length;
+  const slots = pd ? pd.parts.map(p=>{
+    const a = courseFinalPart(c.id, p.id), d = coursePortfolioDraft(c.id, p.id), from = (src[p.id] || [])[0];
+    let st, text = '', cls = '';
+    if(a.passed){ st = CL('Final version','Son hâli','نسخه‌ی نهایی','Versión final'); text = a.text; cls = ' done'; }
+    else if(a.text && a.text.trim()){ st = CL('In your final project','Final projende','در پروژه‌ی پایانی‌ات','En tu proyecto final'); text = a.text; cls = ' has'; }
+    else if(d){ st = CL('Your draft from','Taslağın:','پیش‌نویس تو از','Tu borrador de')+' '+courseLessonName(c.id, d.from); text = d.text; cls = ' has'; }
+    else st = from ? CL('You write a draft in','Taslağını şurada yazarsın:','پیش‌نویسش را می‌نویسی در','Escribes un borrador en')+' '+courseLessonName(c.id, from) : CL('You write it in the final project','Final projesinde yazarsın','آن را در پروژه‌ی پایانی می‌نویسی','Lo escribes en el proyecto final');
+    const m = COURSE_TYPE_META[p.mode] || COURSE_TYPE_META.writing;
+    return `<div class="card-flat cs-slot${cls}">
+      <div class="row" style="gap:10px; align-items:flex-start;"><span class="cs-slotno">${a.passed ? ICONS.check : esc(String(p.step))}</span>
+        <div style="min-width:0; flex:1;"><div class="cs-slottitle">${esc(cl(p.title))}</div><div class="cs-slotsub">${esc(L(m.en, m.tr, m.fa, m.es))} · ${esc(st)}</div></div></div>
+      ${text ? `<details class="cs-slotx"><summary dir="ltr" translate="no">${esc(courseFirstLine(text))}</summary><p dir="ltr" translate="no">${esc(text)}</p></details>` : ''}
+      ${open && (text || !from) ? `<button class="btn btn-sm cs-slotgo" data-action="course-final-part" data-cid="${c.id}" data-part="${p.id}">${a.passed ? CL('Open','Aç','باز کن','Abrir') : CL('Work on it in the final project','Final projesinde üzerinde çalış','در پروژه‌ی پایانی رویش کار کن','Trabájalo en el proyecto final')}</button>` : ''}
+    </div>`;
+  }).join('') : '';
+  const pm = COURSE_CARD.empathy, jr = courseJournal(c.id);
+  const journal = jr.length ? jr.map(e=>`<div class="card-flat cs-jentry"><div class="cs-eyebrow" style="color:${pm.t};">${esc(courseUp(cl(pm)+(e.p && e.p.title ? ' · '+cl(e.p.title) : '')))}</div>
+      <p dir="ltr" translate="no">${esc(e.text)}</p><div class="cs-slotsub">${esc(courseLessonName(c.id, e.uid))}${e.date ? ' · '+esc(courseReviewDate(new Date(e.date+'T12:00:00').getTime())) : ''}</div></div>`).join('')
+    : `<p style="font-size:13px; color:var(--ink-soft); margin:0;">${CL('Your Empathy answers appear here.','Empati cevapların burada görünür.','پاسخ‌های تو در کارت‌های همدلی اینجا نشان داده می‌شوند.','Tus respuestas de Empatía aparecen aquí.')}</p>`;
+  return `<div class="fade-in course-work-page">
+    <div class="cp-head"><button class="cp-back" data-action="course-open" data-view="course-detail" data-cid="${c.id}">${LANG==='fa' ? '›' : '‹'} ${esc(cl(c.title))}</button></div>
+    <h1 class="display cp-title">${CL('Your work','Çalışmaların','کارهای تو','Tu trabajo')}</h1>
+    <div class="screen" style="padding-top:0;">
+      ${all ? `<button class="item-row cs-certrow" data-action="course-open" data-view="course-cert" data-cid="${c.id}"><span class="item-ic" style="background:linear-gradient(135deg,#FFE08A,#F5B92E); color:#7a4a00;">${COURSE_TROPHY_SVG}</span><div class="item-body"><div class="item-title">${CL('Your certificate','Sertifikan','گواهی‌نامه‌ی تو','Tu certificado')}</div></div><span class="chevron">${ICONS.chev}</span></button>` : ''}
+      ${pd ? `<h2 class="cs-wh">${CL('Portfolio','Portföy','پرونده‌ی کاری','Portafolio')}</h2>
+      <p class="cs-wsub">${CL('The pieces of your final project. Drafts you write in the lessons wait here.','Final projenin parçaları. Derslerde yazdığın taslaklar burada bekler.','قطعه‌های پروژه‌ی پایانی‌ات. پیش‌نویس‌هایی که در درس‌ها می‌نویسی اینجا منتظرند.','Las piezas de tu proyecto final. Los borradores que escribes en las lecciones te esperan aquí.')}</p>
+      <div class="stack" style="gap:10px;">${slots}</div>` : ''}
+      <h2 class="cs-wh">${CL('Journal','Günlük','دفترچه','Diario')}</h2>
+      <p class="cs-wsub">${CL('What you wrote in the Empathy cards, newest first.','Empati kartlarında yazdıkların, en yenisi önce.','چیزهایی که در کارت‌های همدلی نوشتی، جدیدترین اول.','Lo que escribiste en las tarjetas de Empatía, lo más reciente primero.')}</p>
+      <div class="stack" style="gap:10px;">${journal}</div>
+    </div>
+  </div>`;
 }
 function courseComingSoonHtml(c){
   return `<div class="hero-card" style="${COURSE_HERO_BG} cursor:default;">${claySparkles()}
@@ -25071,6 +25145,8 @@ function courseCertificateHtml(c, pd, all){
 function courseFinalPartHtml(c, pd, p){
   const a = courseFinalPart(c.id, p.id), res = courseUi.fres && courseUi.fres.part===p.id ? courseUi.fres : null;
   const scores = a.scores || [];
+  // Build 2: a piece with no text of its own opens with the draft a lesson or chapter finale saved for it.
+  const draft = !(a.text && a.text.trim()) ? coursePortfolioDraft(c.id, p.id) : null;
   const ss = pd.selfStudy && pd.selfStudy.part===p.id ? pd.selfStudy : null;
   const review = (p.from||[]).map(id=>{ const f = courseFindUnit(c.id, id); return f ? `<button class="pill" style="border:none; background:var(--cat-story-soft); color:var(--cat-story); cursor:pointer;" data-action="course-open" data-view="course-unit" data-cid="${c.id}" data-uid="${id}">${esc(cl(f.u.title))}</button>` : ''; }).join(' ');
   let star = '';
@@ -25087,8 +25163,9 @@ function courseFinalPartHtml(c, pd, p){
     ${review ? `<div style="margin-top:10px; font-size:12.5px; color:var(--ink-soft);">${CL('Review first:','Önce tekrar et:','پیش از شروع، این‌ها را مرور کن:', 'Repasa primero:')} ${review}</div>` : ''}
     ${p.model ? `<details class="card-flat" style="margin-top:10px; background:var(--cat-story-soft); border-color:var(--cat-story-soft);"><summary style="cursor:pointer; font-weight:800; color:var(--cat-story);">${CL('Show an example','Bir örnek göster','دیدن یک نمونه', 'Ver un ejemplo')}</summary><p dir="ltr" translate="no" style="margin:6px 0 0; font-size:13.5px;">${esc(p.model)}</p></details>` : ''}
     ${star}
+    ${draft ? `<div class="card-flat cs-draftnote">${CL('Your draft from '+courseLessonName(c.id, draft.from)+' is below. Revise it for this part.', courseLessonName(c.id, draft.from)+' taslağın aşağıda. Bu kısım için düzelt.', 'پیش‌نویس تو از '+courseLessonName(c.id, draft.from)+' پایین است. برای این بخش بازنویسی‌اش کن.', 'Tu borrador de '+courseLessonName(c.id, draft.from)+' está abajo. Revísalo para esta parte.')}</div>` : ''}
     ${p.mode==='speaking' ? `<p style="font-size:12.5px; color:var(--ink-soft); margin:12px 0 0;">${CL('Write your questions here, then say them out loud and record yourself on your phone.','Sorularını buraya yaz, sonra yüksek sesle söyle ve telefonunla kaydet.','سؤال‌هایت را اینجا بنویس، بعد آن‌ها را با صدای بلند بگو و با گوشی‌ات ضبط کن.', 'Escribe aquí tus preguntas, luego dilas en voz alta y grábate con el móvil.')}</p>` : ''}
-    <textarea id="cw-text" class="game-input" dir="ltr" translate="no" rows="8" style="margin-top:12px; font-weight:500; min-height:170px;" placeholder="${esc(CL('Write here','Buraya yaz','اینجا بنویس', 'Escribe aquí'))}">${esc(a.text || '')}</textarea>
+    <textarea id="cw-text" class="game-input" dir="ltr" translate="no" rows="8" style="margin-top:12px; font-weight:500; min-height:170px;" placeholder="${esc(CL('Write here','Buraya yaz','اینجا بنویس', 'Escribe aquí'))}">${esc(a.text || (draft ? draft.text : '') || '')}</textarea>
     <p style="font-size:12px; color:var(--ink-faint); margin:6px 0 0;">${p.minWords}+ ${CL('words','kelime','کلمه', 'palabras')}</p>
     <div class="card-flat" style="margin-top:12px;"><div class="eyebrow">${CL('Score yourself','Kendini puanla','به خودت نمره بده', 'Puntúate')}</div>
       <p style="margin:4px 0 8px; font-size:12px; color:var(--ink-faint);">${esc(cl(COURSE_SCORE_HINT))}</p>
@@ -25304,7 +25381,8 @@ Object.assign(screens, {
   'course-unit': ()=>renderCourseUnit(state.viewParams.cid, state.viewParams.uid),
   'course-step': renderCourseStep,
   'course-gate': renderCourseGate,
-  'course-final': renderCourseFinal
+  'course-final': renderCourseFinal,
+  'course-work': renderCourseWork
 });
 /* ---------- admin › Course access (Trello Hr03Iu6C): issue, list, revoke and re-issue course passwords ----------
    Lives in the same hidden #admin route (Firebase-auth sign-in). Docs are progress/ca-<hash> (see the

@@ -958,6 +958,35 @@
   .cs-pick, .cs-foot .btn{font-family:inherit;}
   .course-unlock a.btn{text-decoration:none;}
   .course-chapter.current{border-color:var(--accent);}
+  /* Course Build 2: three-round speaking (prepare, 90/60/45 s, check) */
+  .cs-phr{display:flex; flex-direction:column; align-items:flex-start; gap:2px; width:100%; text-align:start; border:2px solid var(--border-soft); background:var(--bg-elevated); border-radius:16px; padding:10px 14px; cursor:pointer; color:var(--ink); font-family:inherit;}
+  .cs-phr b{font-size:15px; font-weight:800;}
+  .cs-phr span{font-size:12.5px; color:var(--ink-soft);}
+  .cs-phr.on{border-color:var(--cat-lis); background:var(--cat-lis-soft);}
+  .card-flat.cs-notes{margin-top:12px; border:2px dashed var(--cat-lis); background:var(--bg-elevated);}
+  .cs-note{display:inline-block; margin:6px 6px 0 0; padding:5px 10px; border-radius:99px; background:var(--cat-lis-soft); font-weight:800; font-size:13px;}
+  .cs-rec{display:flex; gap:10px; align-items:flex-start; width:100%; text-align:start; margin-top:14px; border:none; background:var(--bg-sunken); border-radius:16px; padding:12px 14px; cursor:pointer; color:var(--ink); font-family:inherit;}
+  .cs-rec b{display:block; font-size:14px;}
+  .cs-rec small{display:block; font-size:12px; color:var(--ink-soft); margin-top:2px; line-height:1.4;}
+  .cs-box{flex:0 0 auto; width:24px; height:24px; border-radius:8px; border:2px solid var(--border-soft); background:var(--bg-elevated); display:flex; align-items:center; justify-content:center; color:#fff;}
+  .cs-box svg{width:14px; height:14px;}
+  .cs-rec.on .cs-box, .cs-tick.on .cs-box{background:var(--success); border-color:var(--success);}
+  .cs-rounds{display:flex; gap:8px; justify-content:center; flex-wrap:wrap; margin:4px 0 12px;}
+  .cs-rdot{padding:5px 12px; border-radius:99px; background:var(--bg-sunken); color:var(--ink-soft); font-weight:800; font-size:12.5px;}
+  .cs-rdot.cur{background:var(--accent); color:#fff;}
+  .cs-rdot.done{background:var(--success-soft); color:var(--success);}
+  .cs-count{text-align:center; border-radius:24px; padding:16px 16px 18px; background:var(--cat-lis-soft);}
+  .cs-count b{display:block; font-size:54px; line-height:1.1; font-weight:900; font-variant-numeric:tabular-nums; margin-top:4px;}
+  .cs-cbar{display:block; height:8px; border-radius:8px; background:rgba(255,255,255,.7); overflow:hidden; margin-top:10px;}
+  .cs-cbar i{display:block; height:100%; background:var(--cat-lis); border-radius:8px; transition:width 1s linear;}
+  .cs-rtip{text-align:center; font-weight:800; font-size:14px; margin:12px 0 0;}
+  .card-flat.cs-clip{margin-top:12px;}
+  .cs-clip audio{width:100%; margin-top:8px;}
+  .card-flat.cs-spmodel{margin-top:4px; border:2px solid var(--cat-lis-soft);}
+  .cs-play{background:var(--cat-lis-soft); color:var(--ink); font-weight:800; display:inline-flex; align-items:center; gap:6px; font-family:inherit;}
+  .cs-play svg{width:16px; height:16px;}
+  .cs-tick{display:flex; gap:10px; align-items:flex-start; width:100%; text-align:start; border:2px solid var(--border-soft); background:var(--bg-elevated); border-radius:16px; padding:11px 14px; cursor:pointer; color:var(--ink); font-family:inherit; font-size:14px; line-height:1.4;}
+  .cs-tick.on{border-color:var(--success); background:var(--success-soft);}
   /* Course Build 2 (Trello ffD7KEAp): grammar with expParts, story "Watch for" */
   .cs-glabel{font-size:12px; font-weight:900; letter-spacing:.06em; color:var(--ink-faint); margin:18px 0 8px;}
   .cs-gram > .cs-glabel:first-child{margin-top:4px;}
@@ -24513,6 +24542,8 @@ function courseWrapViewer(html){
 // After every render(): the shell class, and the writing card's live bits (Leyla's version folds once you type; word chips tick).
 function courseAfterRender(root){
   root.classList.toggle('cs-in', courseShellOn || state.view==='course-step');
+  // the speaking card's timer / recorder stop as soon as another screen is shown
+  if(courseUi.sp){ const vp = state.viewParams || {}; if(!(state.view==='course-step' && vp.type==='speaking' && vp.uid===courseUi.sp.uid)) courseSpLeave(); }
   const ta = state.view==='course-step' ? root.querySelector('#cw-text[data-words]') : null;
   if(ta && !ta.readOnly) ta.addEventListener('input', ()=>{
     const mdl = root.querySelector('details.cs-model'); if(mdl && mdl.open && ta.value.trim()) mdl.open = false;
@@ -24562,10 +24593,113 @@ function renderCoursePause(){
     </div>
   </div>`;
 }
+/* ---------- speaking (Build 2, spec 3.6 "Say it: 90 / 60 / 45 seconds"): one card, one button per round ----------
+   Prepare: the warm-up, the prompts and the phrases as chips; tapped phrases stack into a notes card that stays on
+   screen. Then three timed rounds (90, 60, 45 s: "same facts, fewer words"); each round is one button (Start, then Done
+   while it runs; the countdown ends it too). If the browser has a recorder the learner may switch it on: each round is
+   recorded and played back on this phone only (nothing is uploaded or saved). Check: the model answer read by the app
+   voice (the existing TTS), the self-check ticks (saved as self-report) and the culture note, then Continue. Nothing
+   blocks: a round can be ended early, and Continue is always on the Check step. Screen state lives in courseUi.sp. */
+const COURSE_SP_ROUNDS = [90, 60, 45];
+function courseRecSupported(){ try{ return typeof MediaRecorder !== 'undefined' && !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia); }catch(e){ return false; } }
+function courseSpState(uid){
+  let st = courseUi.sp;
+  if(!st || st.uid !== uid){ courseSpStop(true); st = courseUi.sp = {uid, stage:0, round:-1, running:false, left:0, notes:[], used:[], ticks:[], rec:false, recErr:null, clips:[]}; }
+  return st;
+}
+// Ends a running round (timer and recorder). `quiet`: no re-render (leaving the card).
+function courseSpStop(quiet){
+  const st = courseUi.sp; if(!st) return;
+  if(st.timer){ clearInterval(st.timer); st.timer = null; }
+  if(st.recorder){ try{ if(st.recorder.state !== 'inactive') st.recorder.stop(); }catch(e){} st.recorder = null; }
+  if(st.stream){ try{ st.stream.getTracks().forEach(t=>t.stop()); }catch(e){} st.stream = null; }
+  if(st.running){ st.running = false; st.used[st.round] = COURSE_SP_ROUNDS[st.round] - Math.max(0, st.left); }
+  if(!quiet) render();
+}
+// Leaving the speaking card (another view, another unit): stop everything and free the recordings.
+function courseSpLeave(){ const st = courseUi.sp; if(!st) return; courseSpStop(true); (st.clips || []).forEach(u=>{ try{ if(u) URL.revokeObjectURL(u); }catch(e){} }); courseUi.sp = null; }
+function courseSpStart(){
+  const st = courseUi.sp; if(!st || st.running) return;
+  if(st.round + 1 >= COURSE_SP_ROUNDS.length) return;
+  st.round = st.round + 1;
+  st.stage = 1; st.running = true; st.left = COURSE_SP_ROUNDS[st.round]; const round = st.round;
+  st.timer = setInterval(()=>{
+    if(courseUi.sp !== st || !st.running){ clearInterval(st.timer); return; }
+    st.left--; const el = document.querySelector('.cs-count b'); if(el) el.textContent = courseClock(st.left);
+    const bar = document.querySelector('.cs-count i'); if(bar) bar.style.width = Math.max(0, 100 * st.left / COURSE_SP_ROUNDS[round]) + '%';
+    if(st.left <= 0) courseSpStop();
+  }, 1000);
+  if(st.rec && courseRecSupported()){
+    navigator.mediaDevices.getUserMedia({audio:true}).then(stream=>{
+      if(courseUi.sp !== st || !st.running || st.round !== round){ stream.getTracks().forEach(t=>t.stop()); return; }
+      const chunks = [], mr = new MediaRecorder(stream);
+      st.stream = stream; st.recorder = mr;
+      mr.ondataavailable = e=>{ if(e.data && e.data.size) chunks.push(e.data); };
+      mr.onstop = ()=>{ try{ stream.getTracks().forEach(t=>t.stop()); }catch(e){}
+        if(courseUi.sp !== st || !chunks.length) return;
+        if(st.clips[round]) try{ URL.revokeObjectURL(st.clips[round]); }catch(e){}
+        st.clips[round] = URL.createObjectURL(new Blob(chunks, {type:mr.mimeType || 'audio/webm'})); render(); };
+      mr.start();
+    }).catch(()=>{ if(courseUi.sp === st){ st.rec = false; st.recErr = 'denied'; render(); } });
+  }
+  render();
+}
+function courseClock(s){ s = Math.max(0, s|0); return Math.floor(s/60) + ':' + String(s%60).padStart(2,'0'); }
+function renderCourseSpeaking(cid, uid, sp){
+  const st = courseSpState(uid), R = COURSE_SP_ROUNDS, last = R.length - 1;
+  const phrase = (e, i)=>`<button class="cs-phr${st.notes.includes(i) ? ' on' : ''}" data-action="course-sp-note" data-i="${i}"><b dir="ltr" translate="no">${esc(e.phrase)}</b><span>${esc(cl(e.meaning))}</span></button>`;
+  const notes = st.notes.length ? `<div class="card-flat cs-notes"><div class="eyebrow">${CL('Your notes','Notların','یادداشت‌های تو','Tus notas')}</div>
+      <div dir="ltr" translate="no">${st.notes.map(i=>`<span class="cs-note">${esc((sp.expressions[i] || {}).phrase || '')}</span>`).join('')}</div></div>` : '';
+  const prompts = `<div class="eyebrow" style="margin:14px 0 8px;">${esc(courseSpeakingHeading(sp))}</div>
+      <div class="stack" style="gap:8px;">${sp.questions.map((q,i)=>`<div class="card-flat"><b>${i+1}.</b> ${esc(cl(q))}</div>`).join('')}
+        ${(sp.followups||[]).map(q=>`<div class="card-flat" style="background:var(--cat-lis-soft); border-color:var(--cat-lis-soft);"><div class="eyebrow" style="color:color-mix(in srgb, var(--cat-lis) 75%, var(--ink));">${CL('Then','Sonra','بعد','Después')}</div>${esc(cl(q))}</div>`).join('')}</div>`;
+  const btn = (action, label)=>`<button class="btn btn-primary cs-main" data-action="${action}" data-cid="${cid}" data-uid="${esc(uid)}">${label}</button>`;
+  // Prepare
+  if(st.stage === 0){
+    const recRow = courseRecSupported() ? `<button class="cs-rec${st.rec ? ' on' : ''}" data-action="course-sp-rec" aria-pressed="${st.rec ? 'true' : 'false'}"><span class="cs-box">${st.rec ? ICONS.check : ''}</span><span><b>${CL('Record myself','Sesimi kayda al','صدایم را ضبط کن','Grabarme')}</b><small>${CL('You hear it back after each round. It stays on this phone and is not saved.','Her turdan sonra dinlersin. Bu telefonda kalır, saklanmaz.','بعد از هر دور دوباره گوشش می‌کنی. روی همین گوشی می‌ماند و ذخیره نمی‌شود.','Lo escuchas después de cada ronda. Se queda en este móvil y no se guarda.')}</small></span></button>` : '';
+    return `<div class="card-flat"><div class="eyebrow">${CL('Before you start','Başlamadan önce','قبل از شروع','Antes de empezar')}</div><p style="margin:4px 0 0;">${esc(cl(sp.warmup))}</p></div>
+      ${prompts}
+      ${courseUseInHtml(cid, uid)}
+      <div class="eyebrow" style="margin:16px 0 4px;">${CL('Useful phrases','Faydalı kalıplar','عبارت‌های مفید','Frases útiles')}</div>
+      <p style="margin:0 0 8px; font-size:12.5px; color:var(--ink-soft);">${CL('Tap the phrases you will use. They go into your notes.','Kullanacağın kalıplara dokun. Notlarına eklenir.','عبارت‌هایی را که به کار می‌بری لمس کن تا به یادداشت‌هایت اضافه شوند.','Toca las frases que vas a usar. Van a tus notas.')}</p>
+      <div class="stack" style="gap:8px;">${(sp.expressions||[]).map(phrase).join('')}</div>
+      ${notes}
+      ${recRow}
+      <p style="font-size:12.5px; color:var(--ink-soft); margin:14px 0 0;">${CL('Say your answers out loud three times: 90 seconds, then 60, then 45. Same facts, fewer words each time.','Cevaplarını üç kez yüksek sesle söyle: 90 saniye, sonra 60, sonra 45. Aynı bilgiler, her seferinde daha az kelime.','پاسخ‌هایت را سه بار با صدای بلند بگو: ۹۰ ثانیه، بعد ۶۰ و بعد ۴۵ ثانیه. همان نکته‌ها، هر بار با کلمه‌های کمتر.','Di tus respuestas en voz alta tres veces: 90 segundos, luego 60 y luego 45. Los mismos datos, cada vez con menos palabras.')}</p>
+      ${btn('course-sp-go', CL('Start round 1 · 90 s','1. tura başla · 90 sn','شروع دور ۱ · ۹۰ ثانیه','Empezar la ronda 1 · 90 s'))}`;
+  }
+  // The three rounds
+  if(st.stage === 1){
+    const r = st.round, secs = R[r], left = st.running ? st.left : 0;
+    const rounds = R.map((s,i)=>`<span class="cs-rdot${i < r || (i === r && !st.running) ? ' done' : i === r ? ' cur' : ''}">${s}</span>`).join('');
+    const clip = !st.running && st.clips[r] ? `<div class="card-flat cs-clip"><div class="eyebrow">${CL('Listen to yourself','Kendini dinle','به صدای خودت گوش کن','Escúchate')} · ${CL('Round','Tur','دور','Ronda')} ${r+1}</div><audio controls preload="auto" src="${st.clips[r]}"></audio></div>` : '';
+    const recNote = st.recErr ? `<p style="font-size:12px; color:var(--ink-soft); margin:8px 0 0;">${CL('The microphone is off, so this round is not recorded. The timer still works.','Mikrofon kapalı, bu yüzden tur kaydedilmiyor. Süre yine çalışır.','میکروفون خاموش است، پس این دور ضبط نمی‌شود. زمان‌سنج همچنان کار می‌کند.','El micrófono está apagado, así que esta ronda no se graba. El temporizador sigue funcionando.')}</p>` : '';
+    const tip = r > 0 ? `<p class="cs-rtip">${CL('Same facts, fewer words.','Aynı bilgiler, daha az kelime.','همان نکته‌ها، با کلمه‌های کمتر.','Los mismos datos, menos palabras.')}</p>` : '';
+    let action, label;
+    if(st.running){ action = 'course-sp-done'; label = CL('Done','Bitti','تمام','Listo'); }
+    else if(r < last){ action = 'course-sp-go'; label = CL('Start round '+(r+2)+' · '+R[r+1]+' s', (r+2)+'. tura başla · '+R[r+1]+' sn', 'شروع دور '+(r+2)+' · '+R[r+1]+' ثانیه', 'Empezar la ronda '+(r+2)+' · '+R[r+1]+' s'); }
+    else { action = 'course-sp-check'; label = CL('Check yourself','Kendini değerlendir','خودت را ارزیابی کن','Evalúate'); }
+    return `<div class="cs-rounds">${rounds}</div>
+      <div class="cs-count${st.running ? ' on' : ''}"><div class="eyebrow">${CL('Round','Tur','دور','Ronda')} ${r+1} · ${secs} ${CL('seconds','saniye','ثانیه','segundos')}</div><b>${courseClock(st.running ? left : 0)}</b><span class="cs-cbar"><i style="width:${st.running ? 100 * left / secs : 0}%;"></i></span></div>
+      ${tip}${recNote}${clip}
+      ${notes || ''}
+      <details class="cs-why" style="margin-top:12px;"><summary>${esc(courseSpeakingHeading(sp).replace(/[:：]\s*$/, ''))}</summary><div style="margin-top:6px;">${sp.questions.map((q,i)=>`<p style="margin:4px 0 0; font-size:13.5px;"><b>${i+1}.</b> ${esc(cl(q))}</p>`).join('')}</div></details>
+      ${btn(action, label)}`;
+  }
+  // Check
+  const sec = CL('s','sn','ثانیه','s'), used = st.used.map((u,i)=>u ? `<span class="cs-rdot done">${R[i]} ${sec} → ${u} ${sec}</span>` : '').join('');
+  const ticks = (sp.selfCheck || []).map((x,i)=>`<button class="cs-tick${st.ticks[i] ? ' on' : ''}" data-action="course-sp-tick" data-i="${i}" aria-pressed="${st.ticks[i] ? 'true' : 'false'}"><span class="cs-box">${st.ticks[i] ? ICONS.check : ''}</span><span>${esc(cl(x))}</span></button>`).join('');
+  return `${used ? `<div class="cs-rounds">${used}</div>` : ''}
+    ${sp.model ? `<div class="card-flat cs-spmodel"><div class="row between" style="align-items:center; gap:8px;"><div class="eyebrow" style="color:color-mix(in srgb, var(--cat-lis) 75%, var(--ink));">${CL('Listen to a model','Bir örnek dinle','یک نمونه گوش کن','Escucha un modelo')}</div>
+        <button class="btn btn-sm cs-play" data-action="speak-sentence" data-text="${esc(sp.model)}">${ICONS.soundOn} ${CL('Play','Dinle','پخش','Escuchar')}</button></div>
+      <details style="margin-top:8px;"><summary style="cursor:pointer; font-size:13px; font-weight:700; color:var(--ink-soft);">${CL('Read it','Metni gör','متنش را ببین','Leerlo')}</summary><p dir="ltr" translate="no" style="margin:6px 0 0; font-size:14px; line-height:1.55;">${esc(sp.model)}</p></details></div>` : ''}
+    ${ticks ? `<div class="eyebrow" style="margin:16px 0 8px;">${CL('Checklist','Kontrol listesi','چک‌لیست','Lista de comprobación')}</div><div class="stack" style="gap:8px;">${ticks}</div>` : ''}
+    ${sp.culture ? `<div class="card-flat" style="margin-top:14px; background:var(--cat-review-soft); border-color:var(--cat-review-soft);"><div class="eyebrow">${CL('Culture note','Kültür notu','نکته‌ی فرهنگی','Nota cultural')}</div><p style="margin:4px 0 0; font-size:13.5px;">${esc(cl(sp.culture))}</p></div>` : ''}
+    ${btn('course-sp-finish', esc(courseNextBtnLabel()))}`;
+}
 function renderCourseStep(){
   const vp = state.viewParams || {}, cid = vp.cid, uid = vp.uid, type = vp.type;
   const it = courseUnitItems(uid);
-  const doneBtn = (label)=>`<button class="btn btn-primary cs-main" data-action="course-mark-done" data-cid="${cid}" data-uid="${uid}" data-type="${type}">${label}</button>`;
   if(type==='scene'){
     const f = courseFindUnit(cid, uid), cpMeta = COURSE_EXTRA.checkpoint.find(x=>x.id===uid);
     const covers = ((cpMeta && cpMeta.covers) || []).map(id=>{ const x = courseFindUnit(cid, id); return x ? cl(x.u.title) : ''; }).filter(Boolean);
@@ -24575,20 +24709,7 @@ function renderCourseStep(){
       <div style="margin-top:14px;">${courseParts(cid, uid).map(p=>`<div class="cs-pbox"><div class="cs-pname"><span>${esc(coursePartLabel(cid, uid, p.si))}</span></div><div>${p.cards.map(x=>courseCardChipHtml(cid, uid, x, false)).join('')}</div></div>`).join('')}</div>
       <button class="btn btn-primary cs-main" data-action="course-advance" data-cid="${cid}" data-uid="${esc(uid)}">${CL('Start','Başla','شروع','Empezar')}</button>`);
   }
-  if(type==='speaking' && it.speaking){
-    const sp = it.speaking;
-    return courseStepShell(cid, uid, type, `
-      <div class="card-flat"><div class="eyebrow">${CL('Before you start','Başlamadan önce','قبل از شروع','Antes de empezar')}</div><p style="margin:4px 0 0;">${esc(cl(sp.warmup))}</p></div>
-      <div class="eyebrow" style="margin:14px 0 8px;">${esc(courseSpeakingHeading(sp))}</div>
-      <div class="stack" style="gap:8px;">${sp.questions.map((q,i)=>`<div class="card-flat"><b>${i+1}.</b> ${esc(cl(q))}</div>`).join('')}
-        ${(sp.followups||[]).map(q=>`<div class="card-flat" style="background:var(--cat-lis-soft); border-color:var(--cat-lis-soft);"><div class="eyebrow" style="color:var(--cat-lis);">${CL('Follow-up','Takip sorusu','تمرین تکمیلی','Pregunta de seguimiento')}</div>${esc(cl(q))}</div>`).join('')}</div>
-      ${courseUseInHtml(cid, uid)}
-      <div class="eyebrow" style="margin:14px 0 8px;">${CL('Useful phrases','Faydalı kalıplar','عبارت‌های مفید','Frases útiles')}</div>
-      <div class="stack" style="gap:8px;">${(sp.expressions||[]).map(e=>`<div class="card-flat"><div class="row between" style="align-items:center;"><b dir="ltr" translate="no">${esc(e.phrase)}</b>${ttsButton(e.phrase)}</div><div style="font-size:12.5px; color:var(--ink-soft); margin-top:2px;">${esc(cl(e.meaning))}</div></div>`).join('')}</div>
-      ${sp.culture ? `<div class="card-flat" style="margin-top:14px; background:var(--cat-review-soft); border-color:var(--cat-review-soft);"><div class="eyebrow">${CL('Culture note','Kültür notu','نکته‌ی فرهنگی','Nota cultural')}</div><p style="margin:4px 0 0; font-size:13.5px;">${esc(cl(sp.culture))}</p></div>` : ''}
-      <p style="font-size:12px; color:var(--ink-faint); margin-top:12px;">${CL('Say your answers out loud three times: 90 seconds, then 60, then 45. Same facts, fewer words each time.','Cevaplarını üç kez yüksek sesle söyle: 90 saniye, sonra 60, sonra 45. Aynı bilgiler, her seferinde daha az kelime.','پاسخ‌هایت را سه بار با صدای بلند بگو: ۹۰ ثانیه، بعد ۶۰ و بعد ۴۵ ثانیه. همان نکته‌ها، هر بار با کلمه‌های کمتر.','Di tus respuestas en voz alta tres veces: 90 segundos, luego 60 y luego 45. Los mismos datos, cada vez con menos palabras.')}</p>
-      ${doneBtn(CL("I've practised it","Pratik yaptım",'تمرین کردم','Ya lo practiqué'))}`);
-  }
+  if(type==='speaking' && it.speaking) return courseStepShell(cid, uid, type, renderCourseSpeaking(cid, uid, it.speaking));
   if(type==='judge' && it.judge) return courseStepShell(cid, uid, type, renderCourseJudge(cid, uid, it.judge));
   if(type==='branch' && it.branch) return courseStepShell(cid, uid, type, renderCourseBranch(cid, uid, it.branch));
   if(type==='review') return courseStepShell(cid, uid, type, renderCourseReview(cid, uid));
@@ -25071,6 +25192,18 @@ Object.assign(HANDLERS, {
     courseUi.wres = res;
     if(res.lengthOk && res.looksReal) courseMarkDone(el.dataset.cid, el.dataset.uid, 'writing'); else save();
     render();
+  },
+  // Speaking (Build 2): notes, the record switch, one button per round, the self-check ticks, Continue.
+  'course-sp-note'(el){ const st = courseUi.sp; if(!st) return; const i = Number(el.dataset.i), k = st.notes.indexOf(i); if(k >= 0) st.notes.splice(k, 1); else st.notes.push(i); render(); },
+  'course-sp-rec'(){ const st = courseUi.sp; if(!st || st.running) return; st.rec = !st.rec; st.recErr = null; render(); },
+  'course-sp-go'(){ courseSpStart(); window.scrollTo(0, 0); },
+  'course-sp-done'(){ courseSpStop(); },
+  'course-sp-check'(){ const st = courseUi.sp; if(!st) return; courseSpStop(true); st.stage = 2; render(); window.scrollTo(0, 0); },
+  'course-sp-tick'(el){ const st = courseUi.sp; if(!st) return; const i = Number(el.dataset.i); st.ticks[i] = !st.ticks[i]; render(); },
+  'course-sp-finish'(el){
+    const cid = el.dataset.cid, uid = el.dataset.uid, st = courseUi.sp, sp = courseUnitItems(uid).speaking;
+    if(st && st.uid===uid) courseProg(cid).scores[uid+':speaking'] = {ticks:((sp && sp.selfCheck) || []).map((_,i)=>!!st.ticks[i]), rounds:COURSE_SP_ROUNDS.map((_,i)=>st.used[i] || 0), notes:st.notes.length, recorded:st.clips.filter(Boolean).length, date:todayISO()};
+    courseSpLeave(); courseMarkDone(cid, uid, 'speaking'); courseAdvance(cid, uid);
   },
   'course-review-ask'(el){
     const cid = el.dataset.cid, uid = el.dataset.uid, w = courseUnitItems(uid).writing, ta = document.getElementById('cw-text');

@@ -9018,49 +9018,58 @@ function renderDialogue(id){
 function renderMediaSession(id){
   const m = MEDIA_LIBRARY.find(x=>x.id===id);
   if(!m) return renderNotFound();
-  // Manual toggle via the same state.progress.roadmapChecked mechanism the
-  // roadmap card itself uses for session/writing/speaking (roadmapNodeId()) —
-  // no separate progress array, consistent with those other manual-only types.
-  const roadmapId = roadmapNodeId({type:'media', refId:m.id});
-  const done = !!(state.progress.roadmapChecked && state.progress.roadmapChecked[roadmapId]);
+  // Farin, 2026-10-17: a watch / listen card is the media and one "Enjoy" line - nothing else
+  // (the Catch these sheet, discussion questions, New words and the Mark as watched button are
+  // no longer rendered; their data stays in MEDIA_LIBRARY). Tapping play completes the node.
   // 2026-10-04 (96gUMgAB): any entry with a videoId is embedded, podcasts included
   // (their official YouTube uploads); a podcast without one keeps the link button.
-  // 2026-10-15 (W402Oj9d): switched off youtube-nocookie.com. All 94 ids pass the oEmbed
-  // check (not restricted/removed), so the "sign in, then bounced to youtube.com" Farin
-  // hit is YouTube's own bot/age gate on the embed - nocookie strips any existing session,
-  // so it can never satisfy that gate. The plain embed domain can use an existing sign-in.
+  // 2026-10-15 (W402Oj9d): plain youtube.com/embed, not youtube-nocookie.com (sign-in gate).
+  // The embed is cross-origin, so its clicks can't be seen: the screen shows a tap-to-play
+  // poster first; the tap completes the node (markMediaWatched), then loads the player
+  // with autoplay in the same box (HANDLERS['media-play']).
   const isPodcast = m.kind === 'podcast';
+  const title = L(m.title.en,m.title.tr,m.title.fa, m.title.es);
   const embed = m.videoId
-    ? `<div style="position:relative; width:100%; padding-top:56.25%; border-radius:20px; overflow:hidden; background:#000;"><iframe src="https://www.youtube.com/embed/${esc(m.videoId)}" title="${esc(L(m.title.en,m.title.tr,m.title.fa, m.title.es))}" style="position:absolute; inset:0; width:100%; height:100%; border:0;" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe></div>`
-    : `<a class="btn btn-primary" href="${esc(m.sourceUrl)}" target="_blank" rel="noopener">${L('Listen to the podcast','Podcasti dinle','گوش‌دادن به پادکست','Escucha el pódcast')} ↗</a>`;
+    ? `<div class="media-frame" id="media-frame" style="position:relative; width:100%; padding-top:56.25%; border-radius:20px; overflow:hidden; background:#000;">
+        <button type="button" class="media-poster" data-action="media-play" data-id="${esc(m.id)}" aria-label="${esc(L('Play','Oynat','پخش کن','Reproducir'))}: ${esc(title)}" style="position:absolute; inset:0; width:100%; height:100%; border:0; padding:0; margin:0; cursor:pointer; background:#000 url('https://i.ytimg.com/vi/${esc(m.videoId)}/hqdefault.jpg') center/cover no-repeat;">
+          <span aria-hidden="true" style="position:absolute; left:50%; top:50%; width:72px; height:72px; margin:-36px 0 0 -36px; border-radius:50%; background:var(--cat-lis); box-shadow:0 6px 20px rgba(0,0,0,.35); display:flex; align-items:center; justify-content:center;"><svg width="30" height="30" viewBox="0 0 24 24" style="margin-inline-start:4px;"><path d="M7 4.5v15l13-7.5z" fill="#fff"/></svg></span>
+        </button>
+      </div>`
+    : `<a class="btn btn-primary" href="${esc(m.sourceUrl)}" target="_blank" rel="noopener" data-action="media-play" data-id="${esc(m.id)}">${L('Listen to the podcast','Podcasti dinle','گوش‌دادن به پادکست','Escucha el pódcast')} ↗</a>`;
   const credit = m.channel ? `<div style="margin-top:8px; font-size:12px; color:var(--ink-faint);">${L('Source','Kaynak','منبع','Fuente')}: ${esc(m.channel)}</div>` : '';
+  const enjoy = isPodcast
+    ? L('Enjoy listening!','İyi dinlemeler!','از گوش دادن لذت ببر!','¡Disfruta escuchándolo!')
+    : L('Enjoy watching!','İyi seyirler!','از تماشا لذت ببر!','¡Disfruta viéndolo!');
   return `<div class="fade-in">
-    ${sectionHead(L(m.title.en,m.title.tr,m.title.fa, m.title.es), (m.goal && GOALS_META[m.goal] ? goalMetaLabel(m.goal)+' · ' : '')+(m.durationMin?m.durationMin+' '+L('min','dk','دقیقه','min'):''))}
+    ${sectionHead(title, (m.goal && GOALS_META[m.goal] ? goalMetaLabel(m.goal)+' · ' : '')+(m.durationMin?m.durationMin+' '+L('min','dk','دقیقه','min'):''))}
     <div class="screen" style="padding-top:0;">
-      ${catchSheetHtml(m)}
       ${embed}
       ${credit}
-      ${m.discussionQuestions && m.discussionQuestions.length ? `
-      <div class="card-flat" style="margin-top:16px;">
-        <div class="eyebrow" style="color:var(--cat-story);">${L('Discussion questions','Tartışma soruları','سؤالات بحث', 'Preguntas de discusión')}</div>
-        <ol style="margin:8px 0 0; padding-inline-start:18px;">
-          ${m.discussionQuestions.map((q,i)=>{
-            // the question in Spanish (the language being learned) first, like stories;
-            // the learner's own language as a small gloss under it
-            const main = q.es || L(q.en,q.tr,q.fa);
-            const gloss = (q.es && LANG !== 'es') ? L(q.en,q.tr,q.fa) : '';
-            return `<li style="font-size:14px; line-height:1.6; margin-top:6px;">${esc(main)}${gloss ? `<div style="font-size:12px; color:var(--ink-faint); line-height:1.4;">${esc(gloss)}</div>` : ''}<div id="media-answer-${i}">${mediaAnswerBodyHtml(m, i)}</div></li>`;
-          }).join('')}
-        </ol>
-      </div>` : ''}
-      ${m.vocab && m.vocab.length ? `
-      <div class="card-flat" style="margin-top:14px; background:var(--cat-voc-soft); border-color:var(--cat-voc-soft);">
-        <div class="eyebrow" style="color:var(--cat-voc);">${L('New words','Yeni kelimeler','کلمات جدید', 'Palabras nuevas')}</div>
-        ${m.vocab.map(v=>`<div class="phrase-row"><div class="phrase-term" style="color:var(--cat-voc);">${esc(v.word)}</div><div class="phrase-mean">${esc(L(v.en,v.tr,v.fa, v.es))}</div></div>`).join('')}
-      </div>` : ''}
-      <button class="btn ${done?'btn-ghost':'btn-primary'}" id="media-done-btn" style="margin-top:16px;" data-action="toggle-roadmap-item" data-id="${roadmapId}">${mediaDoneLabel(m, done, mediaCaughtCount(m))}</button>
+      <div class="game-why media-enjoy" style="margin-top:16px; background:var(--cat-lis-soft); font-size:16px;"><img src="char-${learnerCharKey()}.png" alt=""><div dir="auto">${enjoy}</div></div>
     </div>
   </div>`;
+}
+// Completes a watch / listen node the first time its media is played (Farin, 2026-10-17).
+// Same store as the roadmap's own check-off (progress.roadmapChecked + mediaWatched, the
+// node's souvenir, save() -> cloud sync). Idempotent: later plays change nothing. The
+// celebration waits for the Home screen (maybeCelebrate) so it never covers the video.
+function markMediaWatched(m){
+  const p = state.progress;
+  const id = roadmapNodeId({type:'media', refId:m.id});
+  const rc = p.roadmapChecked || (p.roadmapChecked = {});
+  const mw = Array.isArray(p.mediaWatched) ? p.mediaWatched : (p.mediaWatched = []);
+  let changed = false;
+  if(!mw.includes(m.id)){ mw.push(m.id); changed = true; }
+  if(!rc[id]){
+    rc[id] = true; changed = true;
+    const node = currentRoadmap().find(n=>roadmapNodeId(n)===id);
+    if(node){
+      const fresh = awardSouvenirs({node});
+      ui.mediaCeleb = {type:node.type, sv:fresh[0] || null};
+      ui.holdAdvance = true;   // the roadmap's advance animation plays after that celebration
+    }
+  }
+  if(changed) save();
 }
 /* ============================= GAMIFY EVERY CARD TYPE (2026-10-07, Trello tobT7nwI) =============================
    Spec: Claude/specs/gamify-every-card-type-DRAFT.md (§3, §4.7, §4.2, §4.5) with the LXD
@@ -10559,6 +10568,12 @@ function backToRoadmap(){
 function maybeCelebrate(){
   const v = state.view, vp = state.viewParams || {};
   let target = null, kind = null, detail = '', low = false;
+  // A watch / listen node finished by pressing play (markMediaWatched): celebrate on Home.
+  if(v === 'dashboard' && ui.mediaCeleb){
+    const mc = ui.mediaCeleb; ui.mediaCeleb = null;
+    setTimeout(()=>{ if(state.view === 'dashboard') showCelebration(mc.type, '', false, mc.sv ? {souvenir:mc.sv, fresh:true} : {}); else ui.holdAdvance = false; }, 600);
+    return;
+  }
   if(v==='quiz' && state.quiz && state.quiz.index >= state.quiz.questions.length && !state.quiz.retryOffered && state.quiz.kind !== 'stagecheck'){
     target = state.quiz; kind = state.quiz.kind; detail = state.quiz.correct+' / '+state.quiz.questions.length+' '+L('correct','doğru','درست','correctas');
     low = state.quiz.correct/state.quiz.questions.length < .5;
@@ -22396,6 +22411,18 @@ const HANDLERS = {
   // tap. The roadmap card's button turns orange and clickable once everything is
   // done (see renderRoadmapCard), and only 'advance-roadmap-level' below advances
   // the level/stage; toggling an item just toggles it.
+  // Watch / listen card (Farin, 2026-10-17): tapping play completes the node, then the
+  // poster turns into the player (autoplay - the tap is the user gesture). A podcast link
+  // opens normally (no preventDefault). Never re-renders: that would reload the player.
+  'media-play'(el){
+    const m = MEDIA_LIBRARY.find(x=>x.id===el.dataset.id);
+    if(!m) return;
+    markMediaWatched(m);
+    const box = el.closest('.media-frame');
+    if(box && m.videoId){
+      box.innerHTML = `<iframe src="https://www.youtube.com/embed/${esc(m.videoId)}?autoplay=1&playsinline=1&rel=0" title="${esc(L(m.title.en,m.title.tr,m.title.fa, m.title.es))}" style="position:absolute; inset:0; width:100%; height:100%; border:0;" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`;
+    }
+  },
   'toggle-roadmap-item'(el){
     const id = el.dataset.id;
     const rc = state.progress.roadmapChecked;

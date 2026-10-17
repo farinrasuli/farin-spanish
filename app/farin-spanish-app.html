@@ -3,7 +3,7 @@
 <meta name="google" content="notranslate">
 <title>Farin Spanish</title>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#fdf1e2" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#E2F1EB" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#14201f" media="(prefers-color-scheme: dark)">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon-180.png">
@@ -16,9 +16,9 @@
 <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
   :root{
-    --bg:#fdf1e2; --bg-elevated:#fffaf2; --bg-sunken:#f6e3c6;
-    --ink:#14332e; --ink-soft:#4d6b66; --ink-faint:#8aa19c;
-    --border:#e5e1d8; --border-soft:#eeebe3;
+    --bg:#fdfbf8; --bg-elevated:#ffffff; --bg-sunken:#F1ECE3;
+    --ink:#14332e; --ink-soft:#3A5550; --ink-faint:#456360;
+    --border:#E3EAE6; --border-soft:#EAF0EC;
     --accent:#ff7a59; --accent-ink:#ffffff; --accent-soft:#ffe7de; --accent-strong:#e85c3b;
     --cat-diag:#A99BEA; --cat-diag-soft:#ece5ff;
     --cat-gram:#FFA53D; --cat-gram-soft:#ffedd1;
@@ -40,7 +40,19 @@
     --clay-shadow:inset 0 2px 3px rgba(255,255,255,.4), inset 0 -14px 22px -10px rgba(0,0,0,.2), 0 14px 30px -12px rgba(0,0,0,.32);
     --clay-shadow-soft:inset 0 1.5px 2px rgba(255,255,255,.8), inset 0 -8px 14px -10px rgba(20,51,46,.14), 0 10px 22px -15px rgba(20,51,46,.22);
     --clay-inset:inset 0 3px 6px -2px rgba(20,51,46,.16), inset 0 -1px 1px rgba(255,255,255,.6);
-    --diorama-bg:radial-gradient(circle at 18% -8%, rgba(255,165,61,.12), transparent 38%), radial-gradient(circle at 102% 12%, rgba(124,147,255,.10), transparent 42%), radial-gradient(circle at 12% 96%, rgba(143,174,133,.10), transparent 40%);
+    /* Ocean light palette (farin-design, Farin approved 2026-10-17: "i wanted that on app too"). Light mode only. */
+    --diorama-bg:linear-gradient(180deg,#E2F1EB 0,#fdfbf8 520px);
+    --glass:#C0E3D5; --glass-l:#E2F1EB; --shallow:#86C6B6; --sage:#8FAE85;
+    --sand:#DCD3C3; --sand-l:#F1ECE3; --peach:#E3B8A5; --peach-l:#F6E6DE;
+    /* Surface tokens: light values here, dark values restored in the "ocean dark mirror" blocks below. */
+    --surface-shadow:0 0 0 1px rgba(20,51,46,.08), 0 14px 30px -18px rgba(20,51,46,.28);
+    --app-backdrop:#DCD3C3;
+    --ocean-water:block;
+    --splash-bg:linear-gradient(180deg,#E2F1EB,#C0E3D5);
+    --cs-top-bg:rgba(238,246,242,.88);
+    --game-under:#E2F1EB;
+    --courses-tile-bg:#F6E6DE; --courses-tile-ink:#14332e; --courses-tile-chip:var(--clay-lavender); --courses-tile-spark:var(--clay-lavender-deep);
+    --club-bg:#F6E6DE; --club-ink:#14332e; --club-ic-bg:#E3B8A5; --club-ic-ink:#14332e; --club-spark:var(--accent-strong); --club-shadow:0 0 0 1px rgba(20,51,46,.08), 0 14px 30px -18px rgba(20,51,46,.28);
     color-scheme: light;
   }
   @media (prefers-color-scheme: dark){
@@ -85,9 +97,9 @@
     color-scheme: dark;
   }
   :root[data-theme="light"]{
-    --bg:#fdf1e2; --bg-elevated:#fffaf2; --bg-sunken:#f6e3c6;
-    --ink:#14332e; --ink-soft:#4d6b66; --ink-faint:#8aa19c;
-    --border:#e5e1d8; --border-soft:#eeebe3;
+    --bg:#fdfbf8; --bg-elevated:#ffffff; --bg-sunken:#F1ECE3;
+    --ink:#14332e; --ink-soft:#3A5550; --ink-faint:#456360;
+    --border:#E3EAE6; --border-soft:#EAF0EC;
     --accent:#ff7a59; --accent-ink:#ffffff; --accent-soft:#ffe7de; --accent-strong:#e85c3b;
     --cat-diag:#A99BEA; --cat-diag-soft:#ece5ff;
     --cat-gram:#FFA53D; --cat-gram-soft:#ffedd1;
@@ -99,6 +111,33 @@
     --error:#ff4444; --error-soft:#ffe1df;
     color-scheme: light;
   }
+  /* ---- ocean dark mirror (2026-10-17): the ocean restyle is light-only, so dark mode gets
+     its previous surfaces back. Mirrors the two dark selectors above without editing them. ---- */
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --app-backdrop:var(--diorama-bg), var(--bg-sunken);
+      --ocean-water:none;
+      --splash-bg:var(--diorama-bg), var(--bg);
+      --cs-top-bg:var(--bg);
+      --game-under:transparent;
+      --courses-tile-bg:radial-gradient(circle at 88% -18%, rgba(255,255,255,.5), transparent 55%), linear-gradient(135deg, var(--clay-lavender), var(--clay-lavender-deep)); --courses-tile-ink:#fff; --courses-tile-chip:rgba(255,255,255,.26); --courses-tile-spark:#fff;
+      --club-bg:linear-gradient(135deg,#8a5cf7,#ff4fa3); --club-ink:#fff; --club-ic-bg:rgba(255,255,255,.28); --club-ic-ink:#fff; --club-spark:#fff; --club-shadow:0 6px 16px -8px rgba(138,92,247,.6);
+    }
+  }
+  :root[data-theme="dark"]{
+      --app-backdrop:var(--diorama-bg), var(--bg-sunken);
+      --ocean-water:none;
+      --splash-bg:var(--diorama-bg), var(--bg);
+      --cs-top-bg:var(--bg);
+      --game-under:transparent;
+      --courses-tile-bg:radial-gradient(circle at 88% -18%, rgba(255,255,255,.5), transparent 55%), linear-gradient(135deg, var(--clay-lavender), var(--clay-lavender-deep)); --courses-tile-ink:#fff; --courses-tile-chip:rgba(255,255,255,.26); --courses-tile-spark:#fff;
+      --club-bg:linear-gradient(135deg,#8a5cf7,#ff4fa3); --club-ink:#fff; --club-ic-bg:rgba(255,255,255,.28); --club-ic-ink:#fff; --club-spark:#fff; --club-shadow:0 6px 16px -8px rgba(138,92,247,.6);
+  }
+  /* static water-light layer (no animation): Home header + splash. --caustic is drawn once at startup. */
+  .ocean-water{display:var(--ocean-water); position:absolute; inset:0; z-index:-1; pointer-events:none;
+    background:radial-gradient(ellipse 45% 55% at 85% 0%, rgba(255,214,192,.45), transparent 70%), linear-gradient(180deg, rgba(255,255,255,.35), rgba(255,255,255,0) 30%);
+    -webkit-mask-image:linear-gradient(180deg,#000 35%,transparent); mask-image:linear-gradient(180deg,#000 35%,transparent);}
+  .ocean-water::after{content:""; position:absolute; inset:0; background-image:var(--caustic, none); background-size:300px 300px; opacity:.35;}
 
   *{box-sizing:border-box;}
   html,body{margin:0;padding:0;}
@@ -116,7 +155,7 @@
   html{scroll-padding-bottom:var(--home-fab-room);}
   #app{max-width:480px; margin:0 auto; min-height:100vh; background:var(--diorama-bg), var(--bg); background-attachment:fixed; position:relative; padding-bottom:var(--home-fab-room);}
   @media (min-width:481px){
-    body{background:var(--diorama-bg), var(--bg-sunken);}
+    body{background:var(--app-backdrop);}
     #app{min-height:100dvh; box-shadow:var(--shadow); border-left:1px solid var(--border); border-right:1px solid var(--border);}
   }
   h1,h2,h3{text-wrap:balance; margin:0;}
@@ -145,7 +184,7 @@
      extra live motion around it. Sparkle color is set explicitly (brand
      purple/orange) since the splash sits on the warm-cream --bg, where the
      default white .sparkle color used on colored cards wouldn't show. */
-  .splash-overlay{position:fixed; inset:0; z-index:999; display:flex; align-items:center; justify-content:center; background:var(--diorama-bg), var(--bg); opacity:1; transition:opacity .5s ease; pointer-events:none;}
+  .splash-overlay{position:fixed; inset:0; z-index:999; display:flex; align-items:center; justify-content:center; background:var(--splash-bg); opacity:1; transition:opacity .5s ease; pointer-events:none;}
   .splash-overlay.hide{opacity:0;}
   /* 2026-09-30, Farin: "the FE logo... should have no background, it's like it is
      in a square. Give it a bit slow breath, float and sparkle motions" — now uses
@@ -192,7 +231,7 @@
   /* Game screens v3 (2026-10-02): layout rebuilt to the approved Journey Journal
      mockup, panel 5 "Games feel physical" (title row with the companion, inline
      timer + "N in a row", big sentence card, tall Fredoka answer buttons). */
-  .game-screen{position:relative; min-height:100vh; min-height:100dvh; box-sizing:border-box; padding:18px 20px 110px; display:flex; flex-direction:column; gap:18px; background:radial-gradient(circle at 80% 0%, color-mix(in srgb, var(--cat-review) 25%, transparent), transparent 45%);}
+  .game-screen{position:relative; min-height:100vh; min-height:100dvh; box-sizing:border-box; padding:18px 20px 110px; display:flex; flex-direction:column; gap:18px; background:radial-gradient(circle at 80% 0%, color-mix(in srgb, var(--cat-review) 25%, transparent), transparent 45%), var(--game-under);}
   .game-top{display:flex; align-items:center; gap:10px; min-height:70px;}
   .game-back{flex:0 0 auto; width:40px; height:40px; border-radius:50%; border:1px solid var(--border); background:var(--bg-elevated); color:var(--ink); display:flex; align-items:center; justify-content:center; box-shadow:var(--clay-shadow-soft); padding:0; cursor:pointer;}
   [dir="rtl"] .game-back svg{transform:scaleX(-1);}
@@ -449,7 +488,7 @@
   .case-num{flex:0 0 28px; height:28px; border-radius:50%; background:var(--cat-story); color:#fff; display:flex; align-items:center; justify-content:center; font-weight:900; font-size:14px;}
   .case-text{flex:1 1 auto; min-width:0; font-size:17px; font-weight:700; line-height:1.4; color:var(--ink); overflow-wrap:anywhere;}
   .case-clue .tts-btn{margin:0; width:44px; height:44px;}
-  .case-nb{border-radius:18px; background:var(--bg-elevated); box-shadow:var(--clay-shadow-soft); padding:10px 12px;}
+  .case-nb{border-radius:18px; background:var(--bg-elevated); box-shadow:var(--surface-shadow); padding:10px 12px;}
   .case-nb-top{display:flex; align-items:center; gap:8px; flex-wrap:wrap;}
   .case-nb-toggle{border:0; background:transparent; color:var(--ink); font-family:'Fredoka',-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; font-weight:700; font-size:16px; padding:6px 2px; cursor:pointer;}
   .case-tabs{margin-inline-start:auto; display:inline-flex; gap:4px; padding:3px; border-radius:999px; background:var(--bg-sunken);}
@@ -843,6 +882,7 @@
 
   /* ---- topbar ---- */
   .topbar{display:flex; align-items:center; justify-content:space-between; padding:18px 20px 8px; gap:10px;}
+  .topbar.has-water{position:relative; isolation:isolate;}
   .wordmark{font-weight:800; font-size:19px; letter-spacing:-.01em;}
   .wordmark span{color:var(--accent);}
   .streak-chip{display:flex; align-items:center; gap:5px; background:var(--bg-elevated); border:1px solid var(--border); padding:6px 10px 6px 8px; border-radius:999px; font-weight:700; font-size:13px;}
@@ -882,12 +922,12 @@
   .lang-btn:active{box-shadow:var(--clay-inset); transform:translateY(1px);}
 
   /* ---- generic layout ---- */
-  .screen{padding:8px 20px 32px;}
+  .screen{padding:12px 20px 40px;}
   .stack{display:flex; flex-direction:column; gap:16px;}
   .row{display:flex; align-items:center; gap:10px;}
   .between{justify-content:space-between;}
 
-  .card{background:var(--bg-elevated); border:1px solid var(--border-soft); border-radius:var(--radius); padding:20px; box-shadow:var(--clay-shadow-soft);}
+  .card{background:var(--bg-elevated); border:1px solid var(--border-soft); border-radius:var(--radius); padding:22px; box-shadow:var(--surface-shadow);}
   .cj-part{padding:10px 16px; border-radius:999px; border:2px solid var(--border); background:var(--bg-elevated); color:var(--ink); font-weight:800; font-size:14px; box-shadow:var(--clay-shadow-soft); cursor:pointer;}
   .cj-part.wide{border-radius:18px; width:100%; text-align:start; font-weight:600; line-height:1.4;}
   .cj-part.on{border-color:var(--clay-lavender-deep); background:var(--cat-diag-soft);}
@@ -899,7 +939,7 @@
   /* Premium course Phase 0 "Guided lesson" (Trello ffD7KEAp, spec course-ux-simplify/v2/SPEC-v2-final.md). The floating
      Home stays where it is (Farin 2026-10-10): the sticky lesson button stops short of it, sits under it (z-index 24 < 25)
      and the shared --home-fab-room padding on #app keeps the last content clear of both. */
-  .cs-top{position:sticky; top:0; z-index:20; display:flex; align-items:center; gap:10px; padding:calc(8px + env(safe-area-inset-top, 0px)) 14px 6px; background:var(--bg);}
+  .cs-top{position:sticky; top:0; z-index:20; display:flex; align-items:center; gap:10px; padding:calc(8px + env(safe-area-inset-top, 0px)) 14px 6px; background:var(--cs-top-bg); -webkit-backdrop-filter:blur(12px); backdrop-filter:blur(12px);}
   .cs-x{flex:0 0 auto; width:40px; height:40px; border:none; background:transparent; color:var(--ink); display:flex; align-items:center; justify-content:center; border-radius:50%; cursor:pointer; padding:0;}
   .cs-x:active{background:var(--bg-sunken);}
   .cs-bar{flex:1; min-width:0; display:flex; gap:8px; align-items:center; border:none; background:transparent; padding:14px 2px; cursor:pointer;}
@@ -1067,7 +1107,7 @@
   .card-flat.cs-notice{background:var(--cat-story-soft); border-color:transparent; margin:0 0 14px;}
   .cs-notice p{margin:4px 0 0; font-size:14.5px; line-height:1.5; font-weight:600;}
   .cj-part.miss{border-color:var(--clay-orange-deep); background:var(--cat-gram-soft); color:var(--ink); border-style:dashed;}
-  .card-flat{background:var(--bg-elevated); border:1px solid var(--border-soft); border-radius:var(--radius); padding:18px; box-shadow:var(--clay-shadow-soft);}
+  .card-flat{background:var(--bg-elevated); border:1px solid var(--border-soft); border-radius:var(--radius); padding:22px; box-shadow:var(--surface-shadow);}
   .badge-unlock-shine{position:relative; overflow:hidden; box-shadow:var(--glow-badge), var(--shadow); animation:badge-pulse 1.6s ease-in-out infinite;}
   .badge-unlock-shine::after{content:''; position:absolute; top:-60%; left:-60%; width:35%; height:220%; background:linear-gradient(120deg, transparent, rgba(255,255,255,.8), transparent); transform:rotate(22deg); animation:badge-shine-sweep 2.2s ease-in-out infinite; pointer-events:none;}
   @keyframes badge-pulse{0%,100%{transform:scale(1);} 50%{transform:scale(1.02);}}
@@ -1177,17 +1217,17 @@
   .ring-label{position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-weight:800;}
 
   /* ---- stat chips (icon-badge stats, shared by dashboard + profile) ---- */
-  .stat-row{display:grid; grid-template-columns:repeat(3,1fr); gap:10px;}
-  .stat-box{display:flex; align-items:center; gap:8px; background:var(--bg-elevated); border:1px solid var(--border-soft); border-radius:22px; padding:12px 10px; box-shadow:var(--clay-shadow-soft);}
+  .stat-row{display:grid; grid-template-columns:repeat(3,1fr); gap:12px;}
+  .stat-box{display:flex; align-items:center; gap:8px; background:var(--bg-elevated); border:1px solid var(--border-soft); border-radius:22px; padding:12px 10px; box-shadow:var(--surface-shadow);}
   .stat-box-ic{flex:0 0 auto; width:30px; height:30px; border-radius:50%; display:flex; align-items:center; justify-content:center;}
   .stat-box-ic svg{width:15px; height:15px;}
   .stat-num{font-family:'Fredoka',-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; font-size:19px; font-weight:700; line-height:1.1; letter-spacing:-.01em;}
   .stat-lab{font-size:9.5px; color:var(--ink-faint); font-weight:700; text-transform:uppercase; letter-spacing:.02em; margin-top:1px;}
-  .stat-box-club{position:relative; overflow:hidden; border:none; cursor:pointer; text-align:start; background:linear-gradient(135deg,#8a5cf7,#ff4fa3); box-shadow:0 6px 16px -8px rgba(138,92,247,.6);}
-  .stat-box-club .stat-box-ic{background:rgba(255,255,255,.28); color:#fff;}
-  .stat-box-club .stat-num, .stat-box-club .stat-lab{color:#fff;}
+  .stat-box-club{position:relative; overflow:hidden; border:none; cursor:pointer; text-align:start; background:var(--club-bg); box-shadow:var(--club-shadow);}
+  .stat-box-club .stat-box-ic{background:var(--club-ic-bg); color:var(--club-ic-ink);}
+  .stat-box-club .stat-num, .stat-box-club .stat-lab{color:var(--club-ink);}
   .stat-box-club .stat-lab{opacity:.9;}
-  .stat-box-club .sparkle{color:#fff;}
+  .stat-box-club .sparkle{color:var(--club-spark);}
   .stat-box-club:active{transform:scale(.97);}
 
   /* ---- featured tile (roadmap hero card in the dashboard grid) ---- */
@@ -1255,7 +1295,7 @@
   .level-card.current{border-color:var(--cat-review); background:var(--cat-review-soft); color:var(--cat-review); animation:intro-heartbeat 2.6s ease-in-out infinite;}
 
   /* ---- section header ---- */
-  .section-head{padding:22px 20px 16px;}
+  .section-head{padding:26px 20px 18px;}
   .back{display:inline-flex;align-items:center;gap:4px;color:var(--ink-soft);background:none;border:none;font-weight:600;font-size:13px;padding:0 0 12px;}
   html[dir="rtl"] .back svg, html[dir="rtl"] .chevron svg{transform:scaleX(-1);}
   .section-head h1{font-size:22px;}
@@ -1418,7 +1458,10 @@
   .pc-stamp.kept{border-color:#8f6fe0; color:#5b3fa6; box-shadow:inset 0 0 0 6px rgba(143,111,224,.22); background:linear-gradient(135deg, rgba(255,214,245,.9), rgba(201,247,255,.9) 35%, rgba(255,246,194,.9) 62%, rgba(217,201,255,.9));}
   .sv-modal-stack{display:flex; flex-direction:column; align-items:center; text-align:center;}
   .pc-stack{display:flex; flex-direction:column; align-items:center; width:100%; max-width:360px;}
-  .pc-page{position:relative; width:100%; box-sizing:border-box; background:var(--bg-elevated); border-radius:24px; padding:14px; box-shadow:var(--clay-shadow);}
+  .pc-page{position:relative; width:100%; box-sizing:border-box; background:var(--bg-elevated); border-radius:24px; padding:14px; box-shadow:var(--surface-shadow);}
+  /* Premium courses tile on Home: Peach-light in light mode (ocean), lavender in dark (tokens). */
+  .hero-card.courses-tile{background:var(--courses-tile-bg); color:var(--courses-tile-ink);}
+  .courses-tile .sparkle{color:var(--courses-tile-spark);}
   .pc-grid{display:grid; grid-template-columns:repeat(5, 56px); gap:6px; justify-content:center; margin-top:10px;}
   .pc-slot{opacity:0;}
   .pc-stamp{position:absolute; left:50%; top:52%; width:160px; height:160px; box-sizing:border-box; border-radius:50%; border:4px solid var(--clay-coral); box-shadow:inset 0 0 0 6px color-mix(in srgb, var(--clay-coral) 22%, transparent); background:color-mix(in srgb, var(--bg-elevated) 82%, transparent); color:var(--clay-coral); display:flex; flex-direction:column; align-items:center; justify-content:center; font-family:'Fredoka',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; font-weight:800; line-height:1; transform:translate(-50%,-50%) rotate(-12deg); opacity:0; pointer-events:none;}
@@ -10506,7 +10549,7 @@ function topbar(showGear, showEnglishLink){
   // its own dashboard tile — ported from the English app's Spanish-switch button
   // (Farin, 2026-09-29: "smaller and in a better place"). Only passed true from the
   // dashboard, same as showGear.
-  return `<div class="topbar">
+  return `<div class="topbar${showEnglishLink ? ' has-water' : ''}">${showEnglishLink ? '<div class="ocean-water" aria-hidden="true"></div>' : ''}
     <div class="wordmark">Farin<span>Spanish</span></div>
     <div class="row" style="gap:8px;">
       ${weekChipHtml()}
@@ -11144,11 +11187,22 @@ function miniSparkles(){
     <span class="sparkle" style="bottom:9px; left:14px; width:4px; height:4px; animation-delay:1.2s;"></span>`;
 }
 /* ============================= SPLASH + CHARACTER BUBBLES ============================= */
+/* Ocean caustic texture (2026-10-17): drawn once at startup into the CSS var --caustic, used by
+   the static .ocean-water layer (Home header + splash). Same generator as the website preview. */
+(function(){
+  try{
+    var S=200,c=document.createElement('canvas');c.width=c.height=S;var x=c.getContext('2d');if(!x)return;var im=x.createImageData(S,S),TAU=6.28318530718,t=13.7;
+    for(var py=0;py<S;py++)for(var px=0;px<S;px++){var p0=px/S*TAU-250,p1=py/S*TAU-250,i0=p0,i1=p1,cc=1,inten=.005;
+      for(var n=0;n<5;n++){var tt=t*(1-3.5/(n+1));var a=p0+Math.cos(tt-i0)+Math.sin(tt+i1),b=p1+Math.sin(tt-i1)+Math.cos(tt+i0);i0=a;i1=b;cc+=1/Math.hypot(p0/(Math.sin(i0+tt)/inten),p1/(Math.cos(i1+tt)/inten));}
+      cc/=5;cc=1.17-Math.pow(cc,1.4);var v=Math.min(1,Math.max(0,Math.pow(Math.abs(cc),8)));var k=(py*S+px)*4;im.data[k]=255;im.data[k+1]=255;im.data[k+2]=250;im.data[k+3]=Math.round(v*255);}
+    x.putImageData(im,0,0);document.documentElement.style.setProperty('--caustic','url('+c.toDataURL()+')');
+  }catch(e){}
+})();
 function showSplash(){
   try{
     const wrap = document.createElement('div');
     wrap.className = 'splash-overlay';
-    wrap.innerHTML = `<div class="splash-logo-wrap">
+    wrap.innerHTML = `<div class="ocean-water" aria-hidden="true"></div><div class="splash-logo-wrap">
       <span class="sparkle" style="top:4px; left:6px; color:var(--clay-orange-deep); animation-delay:0s;"></span>
       <span class="sparkle" style="bottom:10px; right:2px; left:auto; width:6px; height:6px; color:var(--clay-lavender-deep); animation-delay:.5s;"></span>
       <span class="sparkle" style="top:22px; right:-6px; left:auto; width:5px; height:5px; color:var(--clay-orange-deep); animation-delay:1s;"></span>
@@ -11204,7 +11258,7 @@ function renderDashboard(){
       </button>
 
       ${coursesDashTile()}
-      <h2 class="display" style="font-size:16px; margin:22px 0 12px;">${L("Let's keep training","Hadi antrenmana devam",'بیا تمرین را ادامه بدیم','Sigamos entrenando')}</h2>
+      <h2 class="display" style="font-size:16px; margin:28px 0 14px;">${L("Let's keep training","Hadi antrenmana devam",'بیا تمرین را ادامه بدیم','Sigamos entrenando')}</h2>
       ${renderRoadmapCard(p)}
     </div>
   </div>`;
@@ -12174,7 +12228,7 @@ function renderRoadmapCard(p){
     // Gamification v2 (2026-09-30): the v1 "⚡ GAME" corner pill and the streak
     // mirror chip on the current card are gone (card faces carry no gamification
     // labels). A game's identity is its GAME subtitle; the streak stays in the top bar.
-    return `<div class="${cls}" style="border-radius:32px; padding:54px 26px 56px; min-height:168px; background:${bg}; border:none; box-shadow:${shadow}; color:#fff;">
+    return `<div class="${cls}" style="border-radius:32px; padding:58px 28px 60px; min-height:176px; background:${bg}; border:none; box-shadow:${shadow}; color:#fff;">
       ${sparkles}
       ${cardIcon}
       ${studyOpenTag}
@@ -12214,7 +12268,7 @@ function renderRoadmapCard(p){
         </div>
         <div class="progress-track" style="margin-top:10px;"><div class="progress-fill" style="width:${(doneCount/roadmap.length)*100}%; background:${archColor};"></div></div>
       </div>
-      <div class="card-flat" style="position:relative; overflow:visible; padding:18px 8px;">
+      <div class="card-flat" style="position:relative; overflow:visible; padding:20px 10px;">
         ${stackedRoadmap(roadmap.length, pinFn, cardFn, L(arch.name.en,arch.name.tr,arch.name.fa, arch.name.es), startMedia, allDone ? L("You've made it!",'Başardın!','موفق شدی!', '¡Lo lograste!') : nextDisplayLevel(p), endMedia)}
       </div>
       ${allDone ? `
@@ -24205,17 +24259,17 @@ const COURSE_HERO_BG = 'background-color:var(--clay-lavender-deep); background-i
 function coursesDashTile(){
   const c = null, sub = '';
   const act = `data-action="nav" data-view="courses-home"`;
-  return `<button class="hero-card" ${act} style="${COURSE_HERO_BG} margin-top:12px; padding:16px 18px;">
+  return `<button class="hero-card courses-tile" ${act} style="margin-top:12px; padding:16px 18px;">
     ${claySparkles()}
     <div class="row between" style="align-items:center; gap:12px;">
       <div class="row" style="gap:12px; align-items:center; min-width:0;">
-        <span class="item-ic" style="background:rgba(255,255,255,.26); color:#fff; flex:0 0 auto;">${LOGIN_APP==='es' ? ICONS.suitcase : ICONS.users}</span>
+        <span class="item-ic" style="background:var(--courses-tile-chip); color:#fff; flex:0 0 auto;">${LOGIN_APP==='es' ? ICONS.suitcase : ICONS.users}</span>
         <div style="min-width:0;">
-          <div class="display" style="font-size:19px; color:#fff;">${c ? esc(cl(c.title)) : CL('Premium courses','Premium kurslar','دوره‌های ویژه','Cursos premium')}</div>
-          ${sub ? `<div style="font-size:12.5px; font-weight:700; color:rgba(255,255,255,.92); line-height:1.35;">${esc(sub)}</div>` : ''}
+          <div class="display" style="font-size:19px; color:var(--courses-tile-ink);">${c ? esc(cl(c.title)) : CL('Premium courses','Premium kurslar','دوره‌های ویژه','Cursos premium')}</div>
+          ${sub ? `<div style="font-size:12.5px; font-weight:700; color:var(--courses-tile-ink); line-height:1.35;">${esc(sub)}</div>` : ''}
         </div>
       </div>
-      <span style="color:#fff;">${ICONS.chev}</span>
+      <span style="color:var(--courses-tile-ink);">${ICONS.chev}</span>
     </div>
   </button>`;
 }

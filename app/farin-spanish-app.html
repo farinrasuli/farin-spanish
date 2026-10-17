@@ -538,6 +538,19 @@
   .spell-mini span{max-width:42px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
   .spell-mini.gold{background:linear-gradient(150deg, var(--cat-review), var(--clay-orange)); color:var(--ink); box-shadow:var(--glow-game);}
   .spell-mini.bright{background:linear-gradient(150deg, color-mix(in srgb, var(--cat-review) 60%, var(--clay-lavender)), var(--clay-lavender-deep));}
+  /* Magic Words, Rune by rune (jU9pZHnL): waiting doors, the sky-blue echo door, rune sockets + letter tray */
+  .spell-mini.rescued{position:relative; overflow:visible;}
+  .spell-waits{display:inline-flex; gap:4px; align-items:flex-end;}
+  .spell-wait{display:inline-block; width:14px; height:18px; border-radius:7px 7px 3px 3px; background:linear-gradient(150deg, var(--clay-lavender), var(--clay-lavender-deep));}
+  .spell-wait.echo{background:linear-gradient(150deg, var(--clay-sky), var(--clay-sky-deep));}
+  .spell-door.echo{background:linear-gradient(150deg, var(--clay-sky), var(--clay-sky-deep));}
+  .spell-rune.lit.still{animation:none;}
+  .spell-rune.placed{border:0; padding:0; background:#fff; color:var(--ink); cursor:pointer; -webkit-tap-highlight-color:transparent;}
+  .spell-runes.fade .spell-rune{animation:spell-fade .3s ease-out both;}
+  @keyframes spell-fade{from{opacity:.2;} to{opacity:1;}}
+  .spell-tray{display:flex; flex-wrap:wrap; justify-content:center; gap:8px;}
+  .spell-tray .cross-key{flex:0 0 44px; width:44px; max-width:44px;}
+  .spell-tray .cross-key.used{visibility:hidden;}
   /* Gamify every card type (tobT7nwI): Catch these */
   .catch-tiles{margin-top:10px;}
   .catch-tiles.four{grid-template-columns:repeat(2, minmax(0, 1fr));}
@@ -10063,7 +10076,7 @@ function viewGameKind(view){
 function gameRoundStats(kind, round){
   if(kind === 'path') return {chapter:round.ch, total:PATH_CH, perfect:false};   // Story Path: no score, no perfect round
   if(kind === 'order'){ const total = round.customers.length, right = round.customers.filter(c=>c.perfect).length; return {right, total, tickets:round.tickets||0, perfect:total>0 && right===total}; }   // right = orders served perfectly (spec's per-customer "perfect" count); perfect = the whole round
-  if(kind === 'spell'){ const ds = round.doors, total = ds.length; return {gold:ds.filter(d=>d.open && !d.tried && d.at === 1).length, bright:ds.filter(d=>d.open && !d.tried && d.at === 2).length, total, voice:ds.filter(d=>d.by === 'voice').length, typed:total > 0 && ds.every(d=>d.by === 'typed'), perfect:total > 0 && ds.every(d=>d.open && !d.tried && d.at <= 2 && (d.by === 'voice' || round.noMic))}; }   // perfect = every door on clue 1-2, by voice (typing counts when the phone has no microphone)
+  if(kind === 'spell'){ const ds = round.doors, total = ds.length; return {rescued:ds.filter(d=>d.rescued).length, gold:ds.filter(d=>d.open && !d.tried && d.at === 1).length, bright:ds.filter(d=>d.open && !d.tried && d.at === 2).length, total, voice:ds.filter(d=>d.by === 'voice').length, typed:total > 0 && ds.every(d=>d.by === 'typed'), perfect:total > 0 && ds.every(d=>d.open && !d.tried && d.at <= 2 && (d.by === 'voice' || round.noMic))}; }   // perfect = every door on clue 1-2, by voice (typing counts when the phone has no microphone)
   if(kind === 'mystery'){ const total = round.cases.length, clean = round.cases.filter(c=>c.clean).length, hints = round.cases.reduce((n, c)=>n + (c.hints||0), 0); return {clean, total, hints, perfect:total>0 && clean===total}; }   // clean = right on the first accusation, no hint
   if(kind === 'desk'){ const total = round.travellers.length, clean = round.travellers.filter(t=>t.clean).length; return {clean, total, said:round.said||0, perfect:total>0 && clean===total}; }   // clean = no transcript, no wrong tap, no bounced stamp, fix right first time
   if(kind === 'cross'){ const total = round.words.length, clean = round.clean||0, time = Math.max(1, Math.round(((round.finishedAt||Date.now()) - round.startedAt)/1000)); return {clean, total, reveals:round.reveals||0, hints:round.hints||0, time, perfect:total>0 && clean===total && !(round.hints||0)}; }
@@ -17022,7 +17035,8 @@ function caseSouvenir(round){
    count as the word). Clue ladder: A1-A2 gapped sentence -> meaning in your language -> first letter, the
    letter count shown from clue 1; B1-C1 target-language definition (spoken) -> gapped sentence -> meaning +
    first letter, the letter count only from clue 3. A miss shows what the phone heard, never "wrong"; two
-   misses bring the next clue; after clue 3 "Hear it" plays the word and the next try always opens the door.
+   misses bring the next clue; after clue 3 the word is built from rune tiles (Rune by rune, jU9pZHnL: Later, tiles,
+   Show me, the sky-blue echo door; see spellToTiles), and every door still opens.
    No microphone (unsupported, refused, network, no audio, or silence twice) = typing mode with the same
    rules, never a fallback; "Type instead" is always one tap away. Untimed, no lives, no XP. Counts as the
    set's review when due. Fewer than 4 cards a door can use -> Word Bingo (start-game). */
@@ -17075,10 +17089,17 @@ function spellCards(setObj){
     const m = spellMeaning(c);
     if(['en','tr','fa','es'].some(k=>spellHas(m[k], n))) return;
     seen.add(n);
-    out.push({word:t, n, sentence:c.sentence, gap, m});
+    out.push({word:t, n, sentence:c.sentence, gap, m, cw:c.word, say:spellSayForm(c.word, t)});
   });
   return out;
 }
+// Shown on an opened door and spoken as the model: Spanish keeps the card's article (la mesa), the target stays article-free.
+function spellSayForm(word, t){
+  if(spellLang() !== 'es') return t;
+  const s = String(word || '').split('/')[0].trim().replace(/[.!?¡¿]+$/g, '').trim();
+  return s || t;
+}
+function spellSay(d){ return (d && (d.say || d.word)) || ''; }
 function spellSetOk(setObj){ return spellCards(setObj).length >= SPELL_MIN; }
 function spellMicOk(){ return !!(window.SpeechRecognition || window.webkitSpeechRecognition); }
 function spellLow(level){ return level === 'A1' || level === 'A2'; }
@@ -17095,13 +17116,273 @@ function buildSpellRound(setObj, refId){
   const cards = spellCards(setObj);
   if(cards.length < SPELL_MIN) return null;
   const level = (state.profile && state.profile.level) || 'A1';
-  const rnd = crossRng(refId ? crossHash('spell|' + refId) : (Math.random()*4294967295) >>> 0);
-  const pick = crossShuffle(cards, rnd).slice(0, SPELL_DOORS);
+  const seed = refId ? crossHash('spell|' + refId) : (Math.random()*4294967295) >>> 0;
+  const rnd = crossRng(seed);
+  const pick = spellPickDoors(setObj.id, crossShuffle(cards, rnd), spellLow(level) ? 2 : 3);
   const noMic = !spellMicOk();
-  return {setId:setObj.id, level, doors:pick.map(c=>({word:c.word, n:c.n, sentence:c.sentence, m:c.m, gap:c.gap, clue:1, misses:0, tries:0, heard:'', hear:false, heardIt:false, open:false, at:0, by:'', tried:false, homo:false})),
+  spellBusy = false;
+  return {setId:setObj.id, level, seed, doors:pick.map(c=>({word:c.word, n:c.n, sentence:c.sentence, m:c.m, gap:c.gap, cw:c.cw, say:c.say, clue:1, misses:0, tries:0, heard:'', hear:false, heardIt:false, open:false, at:0, by:'', tried:false, homo:false, step:0, later:false, missed:false, rescued:false})),
+    queue:pick.map((c, i)=>({i})), returns:0, budget:level === 'A1' ? 2 : 3, buildSaid:false,
     index:0, gold:0, combo:0, typing:noMic, noMic, listening:false, interim:'', silent:0, homoSaid:false, finished:false, startedAt:Date.now(), finishedAt:null};
 }
-function spellCur(round){ return round.doors[round.index] || null; }
+// Spec §5 round build: up to 2 (A1-A2) / 3 (B1+) words from deckSort (twice first, then again) at doors 2, 4, 6, never door 1.
+function spellPickDoors(setId, shuffled, maxHard){
+  const ds = deckSortFor(setId), tw = (ds && ds.twice) || [], ag = (ds && ds.again) || [];
+  const rank = c=>tw.includes(c.cw) ? 0 : (ag.includes(c.cw) ? 1 : 2);
+  const n = Math.min(SPELL_DOORS, shuffled.length);
+  const hard = shuffled.filter(c=>rank(c) < 2).sort((a, b)=>rank(a) - rank(b)).slice(0, maxHard);
+  const rest = shuffled.filter(c=>!hard.includes(c));
+  if(rest.length && rank(rest[0]) < 2){ const k = rest.findIndex(c=>rank(c) === 2); if(k > 0) rest.unshift(rest.splice(k, 1)[0]); }   // door 1 is a likely win
+  const out = rest.slice(0, n - hard.length);
+  hard.forEach((c, k)=>out.splice(Math.min(1 + k * 2, out.length), 0, c));
+  return out.slice(0, n);
+}
+// The visit on screen: {i} = door i, {i, echo:true, ...} = that door's echo. Rounds saved before Rune by rune get a queue here.
+function spellQ(round){
+  if(!round.queue){ round.queue = round.doors.map((_, i)=>({i})); round.returns = round.returns || 0; round.budget = round.budget || (round.level === 'A1' ? 2 : 3); if(round.seed == null) round.seed = crossHash('spell|' + round.setId); }
+  return round.queue[round.index] || null;
+}
+function spellCur(round){ const q = spellQ(round); return q ? (round.doors[q.i] || null) : null; }
+function spellIsOpen(round){ const q = spellQ(round), d = spellCur(round); return !!(q && d && (q.echo ? q.open : d.open)); }
+let spellBusy = false;
+/* ---- Rune by rune: tiles, decoys, deckSort ---- */
+const SPELL_DIGRAPHS = ['ch','ll','rr','qu','gu','th','sh','ck'];
+const SPELL_VARIANTS = [['grey','gray'],['practice','practise'],['licence','license'],['defence','defense'],['colour','color'],['favourite','favorite'],['centre','center'],['theatre','theater'],['travelling','traveling'],['cancelled','canceled'],['organise','organize'],['realise','realize'],['jewellery','jewelry'],['programme','program'],['mum','mom']];
+// Tile letter and the tile check: crossFold (keeps ñ; Ñ never folds to N here), accents kept from B2 in Spanish.
+function spellTileKey(ch, round){
+  const lo = String(ch).toLowerCase();
+  if(spellLang() === 'es' && !spellLow(round.level) && round.level !== 'B1' && /[áéíóúü]/.test(lo)) return lo;
+  return crossFold(lo);
+}
+function spellDecoyN(level){ return level === 'A1' ? 0 : (level === 'A2' ? 1 : 2); }
+function spellTileCap(level){ return spellLow(level) ? 6 : 7; }
+// The door's words as sockets: content words are built (first letter given, a long end pre-lit without splitting
+// a digraph or double letter), function words, punctuation, apostrophes and hyphens stay pre-lit.
+function spellBuildTiles(round, d){
+  const es = spellLang() === 'es', stop = CROSS_STOP[es ? 'es' : 'en'];
+  const toks = String(d.word).split(' ').filter(Boolean);
+  let content = toks.map(t=>{ const f = crossFold(t.replace(/[^\p{L}]/gu, '')); return !!f && !stop.has(f); });
+  if(!content.some(Boolean)) content = toks.map(t=>/\p{L}/u.test(t));
+  const room = spellTileCap(round.level) - spellDecoyN(round.level);
+  const words = toks.map((t, wi)=>{
+    const slots = Array.from(t).map(ch=>({ch, k:/\p{L}/u.test(ch) ? spellTileKey(ch, round) : '', given:true, lit:false, tile:-1}));
+    if(!content[wi]) return {slots, build:false};
+    const li = slots.map((s, i)=>s.k ? i : -1).filter(i=>i >= 0).slice(1);
+    let cut = li.length;
+    if(cut > room){
+      cut = room;
+      while(cut > 0 && cut < li.length){ const a = slots[li[cut - 1]].k, b = slots[li[cut]].k; if(a === b || SPELL_DIGRAPHS.includes(a + b)) cut++; else break; }
+    }
+    li.slice(0, cut).forEach(i=>{ slots[i].given = false; });
+    return {slots, build:li.slice(0, cut).length > 0};
+  });
+  const art = es ? ((spellSay(d).match(/^(el|la|los|las|un|una|unos|unas)\s+/i) || [])[1] || '') : '';
+  const T = {art, words, wi:-1, tray:[], checks:0, done:false, fresh:[]};
+  spellNextWord(round, d, T);
+  return T;
+}
+// Moves to the next word with sockets to fill (left to right) and deals its tray; none left = built.
+function spellNextWord(round, d, T){
+  let wi = T.wi + 1;
+  while(wi < T.words.length && !T.words[wi].build) wi++;
+  if(wi >= T.words.length){ T.done = true; T.tray = []; return; }
+  T.wi = wi;
+  const w = T.words[wi], need = w.slots.filter(s=>!s.given).map(s=>s.k);
+  const rnd = crossRng(crossHash('spelltiles|' + round.seed + '|' + spellQ(round).i + '|' + wi));
+  const decoys = spellDecoys(round, w, Math.max(0, Math.min(spellDecoyN(round.level), spellTileCap(round.level) - need.length)), rnd);
+  let tray = need.concat(decoys);
+  for(let k = 0; k < 4; k++){ tray = crossShuffle(tray, rnd); if(tray.join('') !== need.concat(decoys).join('') || tray.length < 2) break; }
+  T.tray = tray.map(k=>({k, used:false}));
+}
+// Decoys (spec §4): one swapped or added letter inside the built part that never spells an accepted variant.
+function spellDecoys(round, w, n, rnd){
+  if(n <= 0) return [];
+  const es = spellLang() === 'es', ks = w.slots.map(s=>s.k), word = ks.join('');
+  const group = (SPELL_VARIANTS.find(g=>g.includes(word)) || []).filter(x=>x !== word);
+  const cands = [];
+  const sub = (i, x)=>{ if(x && x !== ks[i] && !group.includes(ks.slice(0, i).join('') + x + ks.slice(i + 1).join(''))) cands.push(x); };
+  const ins = (i, x)=>{ if(x && !group.includes(ks.slice(0, i + 1).join('') + x + ks.slice(i + 1).join(''))) cands.push(x); };
+  const V = 'aeiou';
+  w.slots.forEach((s, i)=>{
+    if(s.given || !s.k) return;
+    const c = s.k, nx = ks[i + 1] || '', pv = ks[i - 1] || '';
+    if(!es){
+      ({a:['e'], e:['a','i'], i:['e','y'], y:['i'], o:['u'], u:['o'], c:['k','s'], k:['c'], s:['c']}[c] || []).forEach(x=>sub(i, x));
+      if('lstrpmncf'.indexOf(c) >= 0) ins(i, c);
+      if(i === ks.length - 1 && c !== 'e') ins(i, 'e');
+    } else {
+      if(c === 'b') sub(i, 'v'); if(c === 'v') sub(i, 'b');
+      if(c === 'l' && (nx === 'l' || pv === 'l')) sub(i, 'y');
+      if(i === ks.length - 1 && c === 'y') sub(i, 'i'); if(i === ks.length - 1 && c === 'i') sub(i, 'y');
+      if(c === 'c' && /[ei]/.test(nx)) sub(i, 'z'); if(c === 'z' && /[ei]/.test(nx)) sub(i, 'c');
+      if(c === 's'){ sub(i, /[ei]/.test(nx) ? 'c' : 'z'); }
+      if((c === 'c' && /[aou]/.test(nx)) || (c === 'q' && nx === 'u')) sub(i, 'k');
+      if(c === 'g' && /[ei]/.test(nx)) sub(i, 'j'); if(c === 'j' && /[ei]/.test(nx)) sub(i, 'g');
+      if(V.indexOf(crossFold(c)) >= 0) ins(Math.max(0, i - 1), 'h');
+      if(c === 'r' && nx !== 'r' && pv !== 'r' && V.indexOf(crossFold(pv)) >= 0 && V.indexOf(crossFold(nx)) >= 0) ins(i, 'r');
+      if(c === 'ñ' && round.level !== 'A1' && !/^años?$/.test(word)) sub(i, 'n');
+      if(/[áéíóú]/.test(c)) sub(i, crossFold(c));
+    }
+  });
+  const out = [];
+  const pool = crossShuffle(Array.from(new Set(cands)), rnd);
+  while(out.length < n && pool.length) out.push(pool.shift());
+  while(out.length < n) out.push(V.charAt(Math.floor(rnd() * V.length)));
+  return out;
+}
+// Word level (spec §5): reaching tiles = to the front of "again"; a missed echo = "twice"; opened gold = again -> out, twice -> again.
+function spellDeckMark(setId, word, kind){
+  if(!setId || !word || !state.progress) return;
+  const pr = state.progress; if(!pr.deckSort) pr.deckSort = {};
+  const ds = pr.deckSort[setId] || (pr.deckSort[setId] = {again:[], twice:[], date:todayISO()});
+  if(!Array.isArray(ds.again)) ds.again = []; if(!Array.isArray(ds.twice)) ds.twice = [];
+  if(kind === 'again'){ if(!ds.twice.includes(word)) ds.again = [word].concat(ds.again.filter(x=>x !== word)); }
+  else if(kind === 'twice'){ ds.twice = [word].concat(ds.twice.filter(x=>x !== word)); ds.again = ds.again.filter(x=>x !== word); }
+  else if(kind === 'gold'){
+    if(ds.twice.includes(word)){ ds.twice = ds.twice.filter(x=>x !== word); ds.again = [word].concat(ds.again.filter(x=>x !== word)); }
+    else ds.again = ds.again.filter(x=>x !== word);
+  }
+}
+function spellLaterOk(round, d, q){
+  if(!d || !q || q.echo || d.open || d.later || !d.missed || d.step >= 5) return false;
+  if(round.queue.length - round.index - 1 < 1) return false;   // no other door left
+  return round.budget - round.returns >= 2;                      // the last return stays for an echo
+}
+function spellShowOk(d, q){ return !!(d && q && !q.echo && !d.open && d.step === 4 && d.tiles && !d.tiles.done && d.tiles.checks >= 1); }
+function spellAlive(round, idx){ return state.view === 'game-spell' && state.viewParams && state.viewParams.round === round && round.index === idx; }
+function spellFlyFrom(rect, el, ms){
+  if(!rect || !el || reducedMotion()) return;
+  const r2 = el.getBoundingClientRect();
+  anim(el, [{transform:`translate(${(rect.left + rect.width/2) - (r2.left + r2.width/2)}px, ${(rect.top + rect.height/2) - (r2.top + r2.height/2)}px)`}, {transform:'translate(0, 0)'}], {duration:ms || 160, easing:SPRING});
+}
+function spellRect(sel){ const el = document.querySelector(sel); return el ? el.getBoundingClientRect() : null; }
+function spellRumble(){ anim(document.getElementById('spell-door'), [{transform:'translateX(0)'}, {transform:'translateX(-3px)'}, {transform:'translateX(3px)'}, {transform:'translateX(-3px)'}, {transform:'translateX(3px)'}, {transform:'translateX(0)'}], {duration:240, easing:'linear'}); }
+function spellToTiles(round, d){
+  spellStopRec(); round.listening = false; round.interim = '';
+  d.step = 4; d.hear = false;
+  if(!d.tiles) d.tiles = spellBuildTiles(round, d);
+  spellDeckMark(round.setId, d.cw, 'again');
+  sfx('flip'); spellRefresh(); save();
+  if(!round.buildSaid){ round.buildSaid = true; companionSay(L('Build it','Harflerle oluştur','با حروف بساز','Constrúyela'), 2000); }
+  if(d.tiles.done) spellTilesBuilt(round, d);
+}
+function spellTilePlace(round, d, ti){
+  const T = d.tiles; if(!T || T.done || spellBusy) return;
+  const w = T.words[T.wi], t = T.tray[ti]; if(!w || !t || t.used) return;
+  const si = w.slots.findIndex(s=>!s.given && !s.lit && s.tile < 0); if(si < 0) return;
+  const from = spellRect('[data-ti="' + ti + '"]');
+  t.used = true; w.slots[si].tile = ti; T.fresh = [];
+  sfx('tick'); spellRefresh();
+  spellFlyFrom(from, document.querySelector('[data-sock="' + T.wi + '-' + si + '"]'));
+  save();
+  if(w.slots.every(s=>s.given || s.lit || s.tile >= 0)){ const idx = round.index; setTimeout(()=>{ if(spellAlive(round, idx)) spellTileCheck(round, d); }, reducedMotion() ? 0 : 200); }
+}
+function spellTileUnplace(round, d, si){
+  const T = d.tiles; if(!T || T.done || spellBusy) return;
+  const w = T.words[T.wi], s = w && w.slots[si]; if(!s || s.given || s.lit || s.tile < 0) return;
+  const from = spellRect('[data-sock="' + T.wi + '-' + si + '"]'), ti = s.tile;
+  T.tray[ti].used = false; s.tile = -1; T.fresh = [];
+  sfx('tick'); spellRefresh();
+  spellFlyFrom(from, document.querySelector('[data-ti="' + ti + '"]'));
+  save();
+}
+function spellTileUnplaceLast(round, d){
+  const T = d.tiles, w = T && T.words[T.wi]; if(!w) return;
+  let si = -1; w.slots.forEach((s, i)=>{ if(!s.given && !s.lit && s.tile >= 0) si = i; });
+  if(si >= 0) spellTileUnplace(round, d, si);
+}
+// Sockets full: right letters lock (rune pop, 60ms stagger), the rest fly back, the door rumbles. No red, no counter.
+function spellTileCheck(round, d){
+  const T = d.tiles; if(!T || T.done) return;
+  const w = T.words[T.wi];
+  if(!w.slots.every(s=>s.given || s.lit || s.tile >= 0)) return;
+  const back = []; T.fresh = [];
+  w.slots.forEach((s, si)=>{
+    if(s.given || s.lit) return;
+    if(T.tray[s.tile].k === s.k){ s.lit = true; T.fresh.push(T.wi + '-' + si); }
+    else { back.push({ti:s.tile, from:spellRect('[data-sock="' + T.wi + '-' + si + '"]')}); T.tray[s.tile].used = false; s.tile = -1; }
+  });
+  if(back.length){
+    T.checks++; d.missed = true; round.combo = 0;
+    spellRefresh(); save();
+    back.forEach(b=>spellFlyFrom(b.from, document.querySelector('[data-ti="' + b.ti + '"]')));
+    spellRumble(); sfx('tick');
+    return;
+  }
+  sfx('tick');
+  spellNextWord(round, d, T);
+  if(T.done){ spellTilesBuilt(round, d); return; }
+  spellRefresh(); save();
+}
+// Built: typing mode opens the door; voice mode keeps the runes lit and asks for the word (any try opens).
+function spellTilesBuilt(round, d){
+  d.tiles.done = true;
+  if(round.typing){ spellOpen(round, d, 'typed', false, false); return; }
+  spellRefresh(); save();
+  companionSay(L('Say it!','Söyle!','بگو!','¡Dila!'), 2000);
+}
+function spellSlideOut(then){
+  const el = document.getElementById('spell-door');
+  const a = el ? anim(el, [{transform:'translateX(0) rotate(0deg)', opacity:1}, {transform:'translateX(110%) rotate(4deg)', opacity:0}], {duration:260, easing:'ease-in', fill:'forwards'}) : null;
+  if(!a){ then(); return; }
+  let done = false; const fin = ()=>{ if(done) return; done = true; then(); };
+  a.onfinish = fin; setTimeout(fin, 420);
+}
+function spellEchoVisit(i){ return {i, echo:true, back:true, misses:0, tries:0, heard:'', heardIt:false, open:false, swung:false, by:''}; }
+// Later: this door waits; two other doors come first (fewer left = at the end). Nothing resets, brightness unchanged.
+function spellLater(round){
+  const q = spellQ(round), d = spellCur(round); if(spellBusy || !spellLaterOk(round, d, q)) return;
+  spellStopRec(); round.listening = false; round.interim = '';
+  d.later = true; round.returns++; spellBusy = true;
+  const idx = round.index;
+  spellSlideOut(()=>{
+    spellBusy = false;
+    if(!spellAlive(round, idx)) return;
+    round.queue.splice(round.index, 1); q.back = true;
+    round.queue.splice(Math.min(round.index + 2, round.queue.length), 0, q);
+    spellRefresh(); save(); spellArrive(round);
+  });
+  save();
+}
+// Show me: the tiles fly home, the word is shown and spoken, the runes go dark, the door waits 2 doors for its echo.
+// Out of returns: today's ending (hear it, say it, any try opens).
+function spellShow(round){
+  const q = spellQ(round), d = spellCur(round); if(spellBusy || !spellShowOk(d, q)) return;
+  const T = d.tiles, idx = round.index, say = spellSay(d);
+  if(round.budget - round.returns < 1){
+    d.step = 6; d.heardIt = true;
+    speakTarget(say, 0.92);
+    companionSay(L('Now you say it.','Şimdi sen söyle.','حالا تو بگو.','Ahora dila tú.'), 1800);
+    spellRefresh(); save();
+    return;
+  }
+  spellBusy = true; round.returns++;
+  const placed = [];
+  T.words.forEach(w=>w.slots.forEach(s=>{ if(!s.given && !s.lit && s.tile >= 0) placed.push(s); }));
+  const gap = reducedMotion() ? 0 : 120;
+  placed.forEach((s, k)=>setTimeout(()=>{ if(!spellAlive(round, idx)) return; T.tray[s.tile].used = false; s.tile = -1; sfx('tick'); spellRefresh(); }, k * gap));
+  const voice = ttsHasClip(say) || (typeof speechSynthesis !== 'undefined' && speechSynthesis.getVoices && speechSynthesis.getVoices().some(v=>String(v.lang || '').toLowerCase().indexOf(String(TTS_LANG).slice(0, 2).toLowerCase()) === 0));
+  setTimeout(()=>{
+    if(!spellAlive(round, idx)){ spellBusy = false; return; }
+    d.step = 5; d.show = 'word'; spellRefresh(); save();
+    if(voice) speakTarget(say, 0.92);
+    setTimeout(()=>{
+      if(!spellAlive(round, idx)){ spellBusy = false; return; }
+      d.show = 'dark'; spellRefresh();
+      companionSay(L('It\u2019ll come back.','Geri gelecek.','برمی‌گردد.','Volverá.'), 1800);
+      setTimeout(()=>{
+        if(!spellAlive(round, idx)){ spellBusy = false; return; }
+        spellSlideOut(()=>{
+          spellBusy = false; d.show = '';
+          if(!spellAlive(round, idx)) return;
+          round.queue.splice(round.index, 1);
+          round.queue.splice(Math.min(round.index + 2, round.queue.length), 0, spellEchoVisit(q.i));
+          spellRefresh(); save(); spellArrive(round);
+        });
+      }, reducedMotion() ? 0 : 420);
+    }, voice ? 1600 : 2400);
+  }, placed.length * gap + (placed.length ? 160 : 0));
+}
 /* ---- Matching (spec §6.2 step 3, spell-homophones.md "Matching rule") ---- */
 function spellEdit1(a, b){
   if(a === b) return true;
@@ -17132,64 +17413,129 @@ function spellMatch(target, alts){
 }
 /* ---- Screen (spec §6.7: the door with rune tiles, clue + dots, "I hear", mic, ghost buttons) ---- */
 function spellStatusHtml(round){
-  const n = Math.min(round.index + 1, round.doors.length), c = round.combo || 0;
-  const streak = c >= 2 ? `<span class="game-status-end"><span class="game-streak${c >= 3 ? ' hot' : ''}">${ICONS.star} ${L(`${c} in a row`, `Arka arkaya ${c}`, `${c} پشت سر هم`, `${c} seguidas`)}</span></span>` : '';
-  return `<div class="game-status" id="spell-status"><span class="game-status-text">${round.finished ? L('Every door is open','Bütün kapılar açık','همه درها باز شد','Todas las puertas abiertas') : L(`Door ${n} of ${round.doors.length}`, `Kapı ${n} / ${round.doors.length}`, `در ${n} از ${round.doors.length}`, `Puerta ${n} de ${round.doors.length}`)}</span>${streak}</div>`;
+  const q = round.finished ? null : spellQ(round), total = round.doors.length, c = round.combo || 0;
+  const n = q ? q.i + 1 : total;
+  const waits = round.finished ? '' : (round.queue || []).slice(round.index + 1).filter(x=>x.back).map(x=>`<span class="spell-wait${x.echo ? ' echo' : ''}"></span>`).join('');
+  const streak = c >= 2 ? `<span class="game-streak${c >= 3 ? ' hot' : ''}">${ICONS.star} ${L(`${c} in a row`, `Arka arkaya ${c}`, `${c} پشت سر هم`, `${c} seguidas`)}</span>` : '';
+  const end = (waits || streak) ? `<span class="game-status-end">${waits ? `<span class="spell-waits" aria-hidden="true">${waits}</span>` : ''}${streak}</span>` : '';
+  const text = round.finished ? L('Every door is open','Bütün kapılar açık','همه درها باز شد','Todas las puertas abiertas')
+    : (q && q.echo ? L(`Door ${n} again`, `Yine ${n}. kapı`, `دوباره در ${n}`, `Otra vez la puerta ${n}`) : L(`Door ${n} of ${total}`, `Kapı ${n} / ${total}`, `در ${n} از ${total}`, `Puerta ${n} de ${total}`));
+  return `<div class="game-status" id="spell-status"><span class="game-status-text">${text}</span>${end}</div>`;
 }
 function spellGlow(d){ return d.tried || d.at >= 3 ? 'glow' : (d.at === 2 ? 'bright' : 'gold'); }
 function spellRunesHtml(round, d){
+  const q = spellQ(round);
+  if(q && q.echo) return spellEchoRunesHtml(round, d, q);
+  if(!d.open && d.step === 4 && d.tiles) return spellTileRunesHtml(round, d);
   const chars = Array.from(d.word);
-  const showCount = spellLow(round.level) || d.clue >= 3 || d.open;
+  const showCount = spellLow(round.level) || d.clue >= 3 || d.open || d.step >= 4;
   if(!showCount) return `<div class="spell-runes" dir="ltr"><span class="spell-bar" aria-hidden="true"></span></div>`;
+  const shown = !d.open && (d.step === 6 || d.show === 'word'), dark = !d.open && d.show === 'dark';
   let k = 0;
-  return `<div class="spell-runes" dir="ltr" aria-label="${esc(L(`${chars.filter(c=>c !== ' ').length} letters`, `${chars.filter(c=>c !== ' ').length} harf`, `${chars.filter(c=>c !== ' ').length} حرف`, `${chars.filter(c=>c !== ' ').length} letras`))}">${chars.map((c, i)=>{
+  return `<div class="spell-runes${dark ? ' fade' : ''}" dir="ltr" aria-label="${esc(L(`${chars.filter(c=>c !== ' ').length} letters`, `${chars.filter(c=>c !== ' ').length} harf`, `${chars.filter(c=>c !== ' ').length} حرف`, `${chars.filter(c=>c !== ' ').length} letras`))}">${chars.map((c, i)=>{
     if(c === ' ') return '<span class="spell-gap"></span>';
-    const first = i === 0 && d.clue >= 3;
-    const lit = d.open;
+    const first = i === 0 && d.clue >= 3 && !dark;
+    const lit = d.open || shown;
     return `<span class="spell-rune${lit ? ' lit' : ''}${first && !lit ? ' first' : ''}"${lit ? ` style="animation-delay:${(k++) * 60}ms"` : ''}>${lit || first ? esc(c.toUpperCase()) : '·'}</span>`;
   }).join('')}</div>`;
 }
+// Tile step: the article (Spanish) pre-lit, given letters bright, locked letters lit, placed letters tap back, empty sockets "·".
+function spellTileRunesHtml(round, d){
+  const T = d.tiles, parts = [];
+  if(T.art) parts.push(Array.from(T.art).map(c=>`<span class="spell-rune first">${esc(c.toUpperCase())}</span>`).join(''));
+  let k = 0;
+  T.words.forEach((w, wi)=>{
+    parts.push(w.slots.map((s, si)=>{
+      if(s.given) return `<span class="spell-rune first">${esc(s.ch.toUpperCase())}</span>`;
+      if(s.lit || T.done){ const fresh = T.fresh.indexOf(wi + '-' + si) >= 0; return `<span class="spell-rune lit${fresh ? '' : ' still'}"${fresh ? ` style="animation-delay:${(k++) * 60}ms"` : ''}>${esc(s.k.toUpperCase())}</span>`; }
+      if(wi === T.wi && s.tile >= 0){ const L1 = T.tray[s.tile].k.toUpperCase(); return `<button type="button" class="spell-rune placed" data-action="spell-unplace" data-quiet="1" data-si="${si}" data-sock="${wi}-${si}" aria-label="${esc(L1)}">${esc(L1)}</button>`; }
+      return `<span class="spell-rune${wi === T.wi ? ' first' : ''}" data-sock="${wi}-${si}">·</span>`;
+    }).join(''));
+  });
+  return `<div class="spell-runes" dir="ltr">${parts.join('<span class="spell-gap"></span>')}</div>`;
+}
+// Echo door: the letter count as dark dots at every level; miss 1 adds the first letter.
+function spellEchoRunesHtml(round, d, q){
+  const chars = Array.from(d.word); let k = 0;
+  return `<div class="spell-runes" dir="ltr" aria-label="${esc(L(`${chars.filter(c=>c !== ' ').length} letters`, `${chars.filter(c=>c !== ' ').length} harf`, `${chars.filter(c=>c !== ' ').length} حرف`, `${chars.filter(c=>c !== ' ').length} letras`))}">${chars.map((c, i)=>{
+    if(c === ' ') return '<span class="spell-gap"></span>';
+    const first = i === 0 && q.misses >= 1;
+    if(q.open) return `<span class="spell-rune lit" style="animation-delay:${(k++) * 60}ms">${esc(c.toUpperCase())}</span>`;
+    return `<span class="spell-rune${first ? ' first' : ''}">${first ? esc(c.toUpperCase()) : '·'}</span>`;
+  }).join('')}</div>`;
+}
 function spellClueHtml(round, d){
+  const q = spellQ(round);
+  if(q && q.echo) return spellEchoClueHtml(round, d, q);
   const clues = spellClues(d, round.level), c = clues[Math.min(d.clue, 3) - 1];
   const dots = [1, 2, 3].map(i=>`<i class="${i <= d.clue ? 'on' : ''}"></i>`).join('');
   let body;
   if(c.k === 'gap') body = `<p class="game-sentence long spell-clue" dir="ltr">${esc(c.text).replace('____', '<span class="trap-gap"></span>')}</p>`;
   else if(c.k === 'def') body = `<p class="game-sentence long spell-clue" dir="ltr">${esc(c.text)}</p>`;
-  else if(c.k === 'letter'){
+  else if(c.k === 'letter' && !d.step){
     const slots = Array.from(d.word).map((ch, i)=>ch === ' ' ? '  ' : (i === 0 ? ch.toLowerCase() : '_')).join(' ');
     body = `<p class="spell-clue spell-ui">${esc(c.text)}</p><p class="spell-letters" dir="ltr">${esc(slots)}</p>`;
   }
   else body = `<p class="spell-clue spell-ui">${esc(c.text)}</p>`;
   return `<div class="spell-cluebox">${body}<div class="spell-dots" aria-label="${esc(L(`Clue ${d.clue} of 3`, `İpucu ${d.clue} / 3`, `راهنمایی ${d.clue} از ۳`, `Pista ${d.clue} de 3`))}">${dots}</div></div>`;
 }
+// Echo cue (LXD): A1-A2 the meaning in the learner's language, B1-C1 the door's clue 1; miss 1 adds the first letter + slots.
+function spellEchoClueHtml(round, d, q){
+  let body;
+  const ui = L(d.m.en, d.m.tr, d.m.fa, d.m.es) || d.m.en;
+  const c = spellLow(round.level) ? {k:'ui', text:ui} : spellClues(d, round.level)[0];
+  if(c.k === 'gap') body = `<p class="game-sentence long spell-clue" dir="ltr">${esc(c.text).replace('____', '<span class="trap-gap"></span>')}</p>`;
+  else if(c.k === 'def') body = `<p class="game-sentence long spell-clue" dir="ltr">${esc(c.text)}</p>`;
+  else body = `<p class="spell-clue spell-ui">${esc(c.text)}</p>`;
+  if(q.misses >= 1 && !q.open) body += `<p class="spell-letters" dir="ltr">${esc(Array.from(d.word).map((ch, i)=>ch === ' ' ? '  ' : (i === 0 ? ch.toLowerCase() : '_')).join(' '))}</p>`;
+  return `<div class="spell-cluebox">${body}</div>`;
+}
 function spellDoorHtml(round, d){
+  const q = spellQ(round);
+  if(q && q.echo) return `<div class="spell-stage"><div class="spell-light ${q.open ? 'glow' : ''}" aria-hidden="true"></div><div class="spell-door echo${q.open && q.swung ? ' open' : ''}" id="spell-door">${spellRunesHtml(round, d)}<span class="spell-knob" aria-hidden="true"></span>${q.open && d.rescued ? '<span class="sparkle sparkle-1"></span>' : ''}</div></div>`;
   return `<div class="spell-stage"><div class="spell-light ${d.open ? spellGlow(d) : ''}" aria-hidden="true"></div><div class="spell-door${d.open ? (d.swung ? ' open ' : ' ') + spellGlow(d) : ''}" id="spell-door">${spellRunesHtml(round, d)}<span class="spell-knob" aria-hidden="true"></span>${d.open && spellGlow(d) === 'gold' ? '<span class="sparkle sparkle-1"></span><span class="sparkle sparkle-2"></span><span class="sparkle sparkle-3"></span>' : ''}</div></div>`;
 }
-function spellControlsHtml(round, d){
-  if(d.open){
-    const last = round.index + 1 >= round.doors.length;
-    return `<p class="spell-word" dir="ltr">${esc(d.word)}</p><button class="btn btn-primary game-cta" data-action="spell-next">${last ? L('See every door','Bütün kapıları gör','همه درها را ببین','Ver todas las puertas') : L('Next door','Sonraki kapı','در بعدی','Siguiente puerta')}</button>`;
-  }
-  const heard = round.listening ? `<p class="spell-heard" id="spell-heard">${esc(round.interim ? L(`I hear: “${round.interim}”`, `Duyduğum: “${round.interim}”`, `می‌شنوم: «${round.interim}»`, `Oigo: «${round.interim}»`) : L('I’m listening…','Dinliyorum…','گوش می‌دهم…','Te escucho…'))}</p>`
-    : (d.heard ? `<p class="spell-heard" id="spell-heard">${esc(L(`I heard: “${d.heard}”`, `Duyduğum: “${d.heard}”`, `شنیدم: «${d.heard}»`, `He oído: «${d.heard}»`))}</p>` : `<p class="spell-heard" id="spell-heard"></p>`);
-  const hear = d.hear ? `<button class="btn btn-primary spell-hear" data-action="spell-hear">${ICONS.soundOn} ${L('Hear it','Dinle','بشنو','Escúchala')}</button>` : '';
-  const main = round.typing
+function spellHeardHtml(round, heard){
+  return round.listening ? `<p class="spell-heard" id="spell-heard">${esc(round.interim ? L(`I hear: “${round.interim}”`, `Duyduğum: “${round.interim}”`, `می‌شنوم: «${round.interim}»`, `Oigo: «${round.interim}»`) : L('I’m listening…','Dinliyorum…','گوش می‌دهم…','Te escucho…'))}</p>`
+    : (heard ? `<p class="spell-heard" id="spell-heard">${esc(L(`I heard: “${heard}”`, `Duyduğum: “${heard}”`, `شنیدم: «${heard}»`, `He oído: «${heard}»`))}</p>` : `<p class="spell-heard" id="spell-heard"></p>`);
+}
+function spellMainHtml(round, pulse){
+  return round.typing
     ? `<div class="desk-input-row spell-type"><input id="spell-input" class="game-input" type="text" dir="ltr" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="${esc(L('Type the magic word','Sihirli kelimeyi yaz','کلمه جادویی را بنویس','Escribe la palabra mágica'))}"><button class="btn btn-primary desk-go" data-action="spell-cast">${L('Cast','Büyüle','طلسم کن','Lanzar')}</button></div>`
-    : `<button type="button" class="spell-mic${round.listening ? ' on' : ''}" data-action="spell-mic" data-quiet="1" aria-label="${esc(round.listening ? L('Stop','Durdur','توقف','Parar') : L('Say the word','Kelimeyi söyle','کلمه را بگو','Di la palabra'))}">${ICONS.mic}</button>`;
-  const more = d.clue < 3 ? `<button class="btn btn-ghost btn-sm" data-action="spell-clue">${L('Another clue','Başka ipucu','یک راهنمایی دیگر','Otra pista')}</button>` : '';
-  const sw = round.typing ? (round.noMic ? '' : `<button class="btn btn-ghost btn-sm" data-action="spell-voice">${L('Use my voice','Sesimi kullan','با صدایم','Usar mi voz')}</button>`) : `<button class="btn btn-ghost btn-sm" data-action="spell-type">${L('Type instead','Yazarak dene','به‌جایش تایپ کن','Escribir en su lugar')}</button>`;
-  return heard + hear + main + `<div class="spell-ghosts">${more}${sw}</div>`;
+    : `<button type="button" class="spell-mic${round.listening || pulse ? ' on' : ''}" data-action="spell-mic" data-quiet="1" aria-label="${esc(round.listening ? L('Stop','Durdur','توقف','Parar') : L('Say the word','Kelimeyi söyle','کلمه را بگو','Di la palabra'))}">${ICONS.mic}</button>`;
+}
+function spellSwitchHtml(round){
+  return round.typing ? (round.noMic ? '' : `<button class="btn btn-ghost btn-sm" data-action="spell-voice">${L('Use my voice','Sesimi kullan','با صدایم','Usar mi voz')}</button>`) : `<button class="btn btn-ghost btn-sm" data-action="spell-type">${L('Type instead','Yazarak dene','به‌جایش تایپ کن','Escribir en su lugar')}</button>`;
+}
+function spellControlsHtml(round, d){
+  const q = spellQ(round);
+  const openNow = q && q.echo ? q.open : d.open;
+  if(openNow){
+    const last = round.index + 1 >= round.queue.length;
+    return `<p class="spell-word" dir="ltr">${esc(spellSay(d))}</p><button class="btn btn-primary game-cta" data-action="spell-next">${last ? L('See every door','Bütün kapıları gör','همه درها را ببین','Ver todas las puertas') : L('Next door','Sonraki kapı','در بعدی','Siguiente puerta')}</button>`;
+  }
+  if(q && q.echo) return spellHeardHtml(round, q.heard) + spellMainHtml(round, false) + `<div class="spell-ghosts">${spellSwitchHtml(round)}</div>`;
+  if(d.step === 5) return '';
+  const later = spellLaterOk(round, d, q) ? `<button class="btn btn-ghost btn-sm" data-action="spell-later">${L('Later','Sonraya bırak','بعداً','Más tarde')}</button>` : '';
+  if(d.step === 4 && d.tiles && !d.tiles.done){
+    const show = spellShowOk(d, q) ? `<button class="btn btn-ghost btn-sm" data-action="spell-show">${L('Show me','Göster','نشانم بده','Enséñamela')}</button>` : '';
+    const tray = `<div class="spell-tray" dir="ltr">${d.tiles.tray.map((t, ti)=>{ const ch = t.k.toUpperCase(); return `<button type="button" class="cross-key${t.used ? ' used' : ''}" data-action="spell-tile" data-quiet="1" data-ti="${ti}" aria-label="${esc(ch)}"${t.used ? ' disabled aria-hidden="true"' : ''}>${esc(ch)}</button>`; }).join('')}</div>`;
+    return tray + ((show || later) ? `<div class="spell-ghosts">${show}${later}</div>` : '');
+  }
+  const built = d.step === 4 && d.tiles && d.tiles.done;
+  const more = !d.step ? `<button class="btn btn-ghost btn-sm" data-action="spell-clue">${L('Another clue','Başka ipucu','یک راهنمایی دیگر','Otra pista')}</button>` : '';
+  return spellHeardHtml(round, d.step ? '' : d.heard) + spellMainHtml(round, built) + `<div class="spell-ghosts">${more}${later}${spellSwitchHtml(round)}</div>`;
 }
 function spellBodyHtml(round, d){
   return `<div class="game-card tight spell-card">${spellDoorHtml(round, d)}${spellClueHtml(round, d)}</div>${spellControlsHtml(round, d)}`;
 }
 function spellResultHtml(round){
   const st = gameRoundStats('spell', round);
-  const row = round.doors.map(d=>`<span class="spell-mini ${spellGlow(d)}" title="${esc(d.word)}"><span dir="ltr">${esc(d.word)}</span></span>`).join('');
+  const row = round.doors.map(d=>`<span class="spell-mini ${spellGlow(d)}${d.rescued ? ' rescued' : ''}" title="${esc(d.word)}"><span dir="ltr">${esc(d.word)}</span>${d.rescued ? '<span class="sparkle sparkle-1"></span>' : ''}</span>`).join('');
   return `<div class="game-card tight badge-unlock-shine">
     <div class="spell-row">${row}</div>
     <div class="game-result-title">${st.perfect ? L('Pure magic!','Saf büyü!','جادوی ناب!','¡Pura magia!') : L('Every door is open!','Bütün kapılar açık!','همه درها باز شد!','¡Todas las puertas abiertas!')}</div>
-    <p class="game-result-line">${L(`${st.gold} golden ${st.gold === 1 ? 'door' : 'doors'}`, `${st.gold} altın kapı`, `${st.gold} در طلایی`, `${st.gold} ${st.gold === 1 ? 'puerta de oro' : 'puertas de oro'}`)}${st.voice === st.total ? ' · ' + L(`${st.total}/${st.total} by voice`, `${st.total}/${st.total} sesle`, `${st.total}/${st.total} با صدا`, `${st.total}/${st.total} con la voz`) : (st.typed ? ' · ' + L('typed','yazarak','تایپی','escrito') : '')}</p>
+    <p class="game-result-line">${L(`${st.gold} golden ${st.gold === 1 ? 'door' : 'doors'}`, `${st.gold} altın kapı`, `${st.gold} در طلایی`, `${st.gold} ${st.gold === 1 ? 'puerta de oro' : 'puertas de oro'}`)}${st.voice === st.total ? ' · ' + L(`${st.total}/${st.total} by voice`, `${st.total}/${st.total} sesle`, `${st.total}/${st.total} با صدا`, `${st.total}/${st.total} con la voz`) : (st.typed ? ' · ' + L('typed','yazarak','تایپی','escrito') : '')}${st.rescued ? ' · ' + L(`${st.rescued} rescued`, `${st.rescued} kurtarıldı`, `${st.rescued} نجات‌یافته`, `${st.rescued} ${st.rescued === 1 ? 'rescatada' : 'rescatadas'}`) : ''}</p>
     ${gameDoneCta()}
   </div>`;
 }
@@ -17210,8 +17556,9 @@ function spellRefresh(){
 }
 /* ---- Flow (spec §6.2, §6.6, §6.8) ---- */
 function spellSayClue(round){
-  const d = spellCur(round); if(!d || d.open) return;
-  const c = spellClues(d, round.level)[d.clue - 1];
+  const q = spellQ(round), d = spellCur(round); if(!d || spellIsOpen(round)) return;
+  if(q.echo ? spellLow(round.level) : d.step) return;
+  const c = spellClues(d, round.level)[q.echo ? 0 : d.clue - 1];
   if(c && c.say){ const idx = round.index; setTimeout(()=>{ if(state.viewParams && state.viewParams.round === round && round.index === idx && !round.listening) speakTarget(c.text, 0.92); }, 300); }
 }
 function spellArrive(round){
@@ -17229,6 +17576,7 @@ function spellToTyping(round, forced, msg){
   spellStopRec();
   round.typing = true; round.listening = false; round.interim = '';
   if(forced) round.noMic = true;
+  { const q = spellQ(round), d = spellCur(round); if(q && d && !q.echo && !d.open && d.step === 4 && d.tiles && d.tiles.done){ spellOpen(round, d, 'typed', false, false); return; } }   // a finished build opens in typing mode
   spellRefresh(); save();
   if(msg) companionSay(msg, 3000);
   const inp = document.getElementById('spell-input'); if(inp && !forced) try{ inp.focus({preventScroll:true}); }catch(e){}
@@ -17279,25 +17627,54 @@ function spellListen(round){
   spellRefresh(); save();
 }
 function spellAttempt(round, alts, by){
-  const d = spellCur(round); if(!d || d.open || round.finished) return;
+  const q = spellQ(round), d = spellCur(round); if(!q || !d || round.finished) return;
+  if(q.echo){ spellEchoAttempt(round, d, q, alts, by); return; }
+  if(d.open || d.step === 5 || (d.step === 4 && !(d.tiles && d.tiles.done))) return;
   d.tries++;
   const res = spellMatch(d.word, alts);
-  if(res || d.heardIt){ spellOpen(round, d, by, res === 'homo', !res); return; }
-  d.misses++; d.heard = String(alts[0] || '').trim();
+  if(res || d.heardIt || d.step === 4){ spellOpen(round, d, by, res === 'homo', !res && d.step !== 4); return; }
+  d.misses++; d.missed = true; d.heard = String(alts[0] || '').trim();
   round.combo = 0;
   if(d.misses >= 2){
     if(d.clue < 3){ d.clue++; d.misses = 0; }
-    else d.hear = true;
+    else { spellRumble(); sfx('tick'); spellToTiles(round, d); return; }   // Rune by rune: after clue 3 the word is built from tiles
   }
   spellRefresh(); save();
-  anim(document.getElementById('spell-door'), [{transform:'translateX(0)'}, {transform:'translateX(-3px)'}, {transform:'translateX(3px)'}, {transform:'translateX(-3px)'}, {transform:'translateX(3px)'}, {transform:'translateX(0)'}], {duration:240, easing:'linear'});
+  spellRumble();
   sfx('tick'); companionOops();
   if(d.misses === 0) spellSayClue(round);   // a new clue arrived
 }
+// Echo: said or typed from memory = rescued; miss 1 = first letter + slots; miss 2 = the word plays and any try opens.
+function spellEchoAttempt(round, d, q, alts, by){
+  if(q.open) return;
+  q.tries++;
+  const res = spellMatch(d.word, alts);
+  if(res || q.heardIt){ spellEchoOpen(round, d, q, by, !!res && !q.heardIt); return; }
+  q.misses++; q.heard = String(alts[0] || '').trim(); round.combo = 0;
+  if(q.misses >= 2){ q.heardIt = true; speakTarget(spellSay(d), 0.92); companionSay(L('Now you say it.','Şimdi sen söyle.','حالا تو بگو.','Ahora dila tú.'), 1800); }
+  spellRefresh(); save();
+  spellRumble(); sfx('tick');
+  if(q.misses < 2) companionOops();
+}
+function spellEchoOpen(round, d, q, by, rescued){
+  q.open = true; q.by = by;
+  if(!d.open){ d.open = true; d.at = 5; d.by = by; d.tried = false; d.swung = true; d.step = 5; }   // a Show me door opens here
+  if(rescued) d.rescued = true; else spellDeckMark(round.setId, d.cw, 'twice');
+  spellRefresh(); save();
+  const p = centerOf(document.getElementById('spell-door'));
+  sfx('reveal'); buzz([8,40,8]);
+  if(rescued){ sparkBurst(p.x, p.y, 8, 'var(--cat-review)', 80); companionCheer(); companionSay(L('Rescued!','Kurtardın!','نجاتش دادی!','¡Rescatada!'), 2000); }
+  const idx = round.index, letters = Array.from(d.word).filter(c=>c !== ' ').length;
+  const swing = ()=>{ q.swung = true; const el = document.getElementById('spell-door'); if(el && spellAlive(round, idx)) el.classList.add('open'); save(); };
+  if(reducedMotion()) swing(); else setTimeout(swing, letters * 60 + 320);
+  setTimeout(()=>{ if(spellAlive(round, idx)) speakTarget(spellSay(d), 0.92); }, 650 + letters * 30);
+}
 function spellOpen(round, d, by, homo, tried){
-  d.open = true; d.at = d.clue; d.by = by; d.homo = !!homo; d.tried = !!tried; d.hear = false;
+  d.open = true; d.at = d.step === 4 ? 4 : (d.step === 6 ? 5 : d.clue); d.by = by; d.homo = !!homo; d.tried = !!tried; d.hear = false;
   const glow = spellGlow(d);
-  if(glow === 'gold'){ round.gold++; round.combo++; } else round.combo = 0;
+  if(glow === 'gold'){ round.gold++; round.combo++; spellDeckMark(round.setId, d.cw, 'gold'); } else round.combo = 0;
+  // a built door comes back once as an echo, two doors later (at once when no door is left)
+  if(d.step === 4 && round.returns < round.budget){ round.returns++; round.queue.splice(Math.min(round.index + 3, round.queue.length), 0, spellEchoVisit(spellQ(round).i)); }
   spellRefresh(); save();
   const door = document.getElementById('spell-door'), p = centerOf(door);
   sfx('reveal'); buzz([8,40,8]); companionCheer();
@@ -17310,12 +17687,13 @@ function spellOpen(round, d, by, homo, tried){
   // the runes light left to right (60ms apart), then the door swings open onto the light
   const swing = ()=>{ d.swung = true; const el = document.getElementById('spell-door'); if(el && state.viewParams && state.viewParams.round === round && round.index === idx) el.classList.add('open'); save(); };
   if(reducedMotion()) swing(); else setTimeout(swing, letters * 60 + 320);
-  setTimeout(()=>{ if(state.viewParams && state.viewParams.round === round && round.index === idx) speakTarget(d.word, 0.92); }, 650 + letters * 30);   // a model right after the learner's own attempt
+  setTimeout(()=>{ if(state.viewParams && state.viewParams.round === round && round.index === idx) speakTarget(spellSay(d), 0.92); }, 650 + letters * 30);   // a model right after the learner's own attempt
 }
 function spellAdvance(vp, round){
   spellStopRec();
+  spellQ(round); spellBusy = false;
   round.index++; round.listening = false; round.interim = '';
-  if(round.index >= round.doors.length){
+  if(round.index >= round.queue.length){
     round.finished = true; round.finishedAt = Date.now();
     const st = gameRoundStats('spell', round);
     round.xpGain = scoreGameCompletion(vp.refId, st.perfect);
@@ -17330,10 +17708,11 @@ function spellAdvance(vp, round){
 }
 // Souvenir: the word that took the most attempts (finally retrieved); flip side = meaning + sentence.
 function spellSouvenir(round){
-  const d = round.doors.slice().sort((a, b)=>(b.tries + b.at) - (a.tries + a.at) || b.word.length - a.word.length)[0];
+  const rescued = round.doors.filter(x=>x.rescued);
+  const d = (rescued.length ? rescued : round.doors).slice().sort((a, b)=>(b.tries + b.at) - (a.tries + a.at) || b.word.length - a.word.length)[0];
   if(!d) return null;
   const ui = L(d.m.en, d.m.tr, d.m.fa, d.m.es) || d.m.en;
-  return {text:d.word, say:d.word, note:[ui, d.sentence].filter(Boolean).join(' · ')};
+  return {text:spellSay(d), say:spellSay(d), note:[ui, d.sentence].filter(Boolean).join(' · ')};
 }
 /* ============================= GAMIFICATION V3 BUILD 2: STORY HUNT =============================
    Games catalogue 4.3 + the LXD changes (approved 2026-10-04): a passage from the
@@ -22945,19 +23324,21 @@ const HANDLERS = {
   },
   // ---- Magic Words (Jq6f9OFv wave B): say (or type) the word to open each door ----
   'spell-mic'(){
-    const r = state.viewParams && state.viewParams.round, d = r && spellCur(r); if(!d || r.finished || d.open || r.typing) return;
+    const r = state.viewParams && state.viewParams.round, d = r && spellCur(r); if(!d || r.finished || spellIsOpen(r) || r.typing || spellBusy) return;
+    if(!spellQ(r).echo && (d.step === 5 || (d.step === 4 && !(d.tiles && d.tiles.done)))) return;
     if(r.listening){ const rec = spellRec; if(rec){ try{ rec.stop(); }catch(e){} } return; }   // tap again = done speaking
     spellListen(r);
   },
   'spell-cast'(){
-    const r = state.viewParams && state.viewParams.round, d = r && spellCur(r); if(!d || r.finished || d.open) return;
+    const r = state.viewParams && state.viewParams.round, d = r && spellCur(r); if(!d || r.finished || spellIsOpen(r) || spellBusy) return;
     const inp = document.getElementById('spell-input'); const v = inp ? String(inp.value || '').trim() : '';
     if(!v){ if(inp) anim(inp, [{transform:'translateX(0)'}, {transform:'translateX(-5px)'}, {transform:'translateX(5px)'}, {transform:'translateX(0)'}], {duration:200, easing:'linear'}); return; }
     spellAttempt(r, [v], 'typed');
-    const again = document.getElementById('spell-input'); if(again && !spellCur(r).open) try{ again.focus({preventScroll:true}); }catch(e){}
+    const again = document.getElementById('spell-input'); if(again && !spellIsOpen(r)) try{ again.focus({preventScroll:true}); }catch(e){}
   },
   'spell-clue'(){
-    const r = state.viewParams && state.viewParams.round, d = r && spellCur(r); if(!d || r.finished || d.open || d.clue >= 3) return;
+    const r = state.viewParams && state.viewParams.round, d = r && spellCur(r); if(!d || r.finished || d.open || d.step || spellQ(r).echo || spellBusy) return;
+    if(d.clue >= 3){ spellToTiles(r, d); return; }   // "Another clue" at clue 3 = the rune tiles
     spellStopRec(); r.listening = false;
     d.clue++; d.misses = 0; r.combo = 0;
     sfx('flip'); spellRefresh(); save(); spellSayClue(r);
@@ -22971,7 +23352,11 @@ const HANDLERS = {
   },
   'spell-type'(){ const r = state.viewParams && state.viewParams.round; if(!r || r.finished) return; spellToTyping(r, false, ''); },
   'spell-voice'(){ const r = state.viewParams && state.viewParams.round; if(!r || r.finished || r.noMic || !spellMicOk()) return; r.typing = false; spellRefresh(); save(); },
-  'spell-next'(){ const vp = state.viewParams, r = vp && vp.round, d = r && spellCur(r); if(!d || r.finished || !d.open) return; spellAdvance(vp, r); },
+  'spell-next'(){ const vp = state.viewParams, r = vp && vp.round, d = r && spellCur(r); if(!d || r.finished || !spellIsOpen(r)) return; spellAdvance(vp, r); },
+  'spell-later'(){ const r = state.viewParams && state.viewParams.round; if(!r || r.finished) return; spellLater(r); },
+  'spell-show'(){ const r = state.viewParams && state.viewParams.round; if(!r || r.finished) return; spellShow(r); },
+  'spell-tile'(el){ const r = state.viewParams && state.viewParams.round, d = r && spellCur(r); if(!d || r.finished || d.open || spellQ(r).echo || d.step !== 4) return; spellTilePlace(r, d, +el.dataset.ti); },
+  'spell-unplace'(el){ const r = state.viewParams && state.viewParams.round, d = r && spellCur(r); if(!d || r.finished || d.open || spellQ(r).echo || d.step !== 4) return; spellTileUnplace(r, d, +el.dataset.si); },
   // ---- Games shelf (Jq6f9OFv, D4 = A): one tap replays a game the learner has met, with fresh content ----
   'shelf-play'(el){
     const kind = el.dataset.kind;
@@ -28687,6 +29072,16 @@ try{ document.addEventListener('keydown', function(e){
   if(e.key !== 'Enter' || !e.target || !e.target.id) return;
   if(state.view === 'game-desk' && e.target.id === 'desk-input'){ e.preventDefault(); HANDLERS['desk-fix-go'](); }
   if(state.view === 'game-spell' && e.target.id === 'spell-input'){ e.preventDefault(); HANDLERS['spell-cast'](); }
+}); }catch(e){}
+// Magic Words rune tiles: a hardware key places the matching tile (n never places Ñ), Backspace takes the last one back.
+try{ document.addEventListener('keydown', function(e){
+  if(state.view !== 'game-spell' || e.ctrlKey || e.metaKey || e.altKey || (e.target && /^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName))) return;
+  const r = state.viewParams && state.viewParams.round; if(!r || r.finished) return;
+  const q = spellQ(r), d = spellCur(r); if(!q || q.echo || !d || d.open || d.step !== 4 || !d.tiles || d.tiles.done) return;
+  if(e.key === 'Backspace'){ e.preventDefault(); spellTileUnplaceLast(r, d); return; }
+  if(String(e.key || '').length !== 1) return;
+  const k = spellTileKey(e.key, r), ti = d.tiles.tray.findIndex(t=>!t.used && t.k === k);
+  if(ti >= 0){ e.preventDefault(); spellTilePlace(r, d, ti); }
 }); }catch(e){}
 
 try{ window.addEventListener('popstate', function(){ goBack(); }); }catch(e){}

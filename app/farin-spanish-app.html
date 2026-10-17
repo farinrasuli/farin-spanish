@@ -16050,15 +16050,10 @@ function deskFixHtml(round, t){
   if(t.mode === 'blank' && !t.asked){
     return `<div class="desk-fix fade-in" id="desk-fix"><button class="btn btn-primary game-cta" data-action="desk-ask">${esc(L('Ask','Sor','بپرس','Preguntar'))}</button></div>`;
   }
-  const kind = deskInputKind(f);
-  if(round.level === 'A1' || t.chips || kind === 'chips'){
-    return `<div class="desk-fix fade-in" id="desk-fix"><div class="desk-chips">${t.chipVals.map((v, i)=>`<button class="game-opt desk-chip" data-action="desk-chip" data-quiet="1" data-i="${i}">${deskChipLabel(round, f, v)}</button>`).join('')}</div></div>`;
-  }
-  const hint = kind === 'date' ? L('day month year','gün ay yıl','روز ماه سال','día mes año') : (kind === 'time' ? L('hh:mm','ss:dd','ساعت:دقیقه','hh:mm') : (kind === 'number' ? L('a number','sayı','عدد','un número') : L('surname','soyadı','نام خانوادگی','apellido')));
-  return `<div class="desk-fix fade-in" id="desk-fix"><div class="desk-input-row">
-    <input id="desk-input" class="game-input" type="text" dir="ltr" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="${esc(deskLabel(f) + ' · ' + hint)}"${kind === 'number' ? ' inputmode="numeric"' : ''}>
-    <button class="btn btn-primary desk-go" data-action="desk-fix-go">${esc(L('Fix','Düzelt','درست کن','Corregir'))}</button>
-  </div></div>`;
+  // 2026-10-15 (Farin): always chips, never a typing box - deskChipValues() already
+  // builds the right value + 2 near-misses for every field kind, so there is no
+  // reduced path left; the old free-text input/desk-fix-go flow is retired.
+  return `<div class="desk-fix fade-in" id="desk-fix"><div class="desk-chips">${t.chipVals.map((v, i)=>`<button class="game-opt desk-chip" data-action="desk-chip" data-quiet="1" data-i="${i}">${deskChipLabel(round, f, v)}</button>`).join('')}</div></div>`;
 }
 function deskBodyHtml(round, t){
   const shown = t.said || round.noVoice;

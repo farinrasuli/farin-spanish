@@ -7280,6 +7280,14 @@ function ttsStop(){
   if(ttsAudio){ const a = ttsAudio; ttsAudio = null; try{ a.onended = a.onerror = null; a.pause(); }catch(e){} ttsBadge(null); }
   try{ if(typeof speechSynthesis !== 'undefined'){ speechSynthesis.cancel(); } }catch(e){}
 }
+// Central "stop everything that might be speaking" (Farin, card n4NxuH0f: leaving a section should
+// stop its voice too). Called from every navigation (go/goBack/backToRoadmap) and on tab-hide/pagehide,
+// so a stray async callback elsewhere can't leave something playing behind.
+function stopAllSpeech(){
+  stopSpeakSlots();
+  ttsStop();
+  if(typeof storyAudio !== 'undefined' && storyAudio.playing) stopStoryAudio();
+}
 // Beginners: the device voice is capped slower at A1 / A2, like the clips (explicit slow replays stay as asked).
 function ttsDeviceRate(rate){
   let lv = null; try{ lv = state.profile.level; }catch(e){}
@@ -7314,6 +7322,25 @@ function ttsSpeak(text, rate, cb){
   a.onerror = fail;
   try{ const p = a.play(); if(p && p.catch) p.catch(fail); }catch(e){ fail(); }
 }
+// Plays a list of already-complete text parts back-to-back (each via ttsSpeak's own clip/device-voice
+// fallback) - for games whose spoken line is assembled from fixed pieces (e.g. Cozy Chores' connector
+// word + imperative line) rather than one pre-rendered sentence. cb = {end}. Its own token (not
+// ttsStop's business, since ttsSpeak() calls ttsStop() before every single clip) tracks whether this
+// particular queue is still the live one; stopSpeakSlots() (via stopAllSpeech()) halts it early.
+var ttsSlot = {token:0};
+function stopSpeakSlots(){ ttsSlot.token++; }
+function speakSlots(parts, rate, cb){
+  cb = cb || {};
+  const list = (parts||[]).filter(Boolean), my = ++ttsSlot.token;
+  const next = i=>{
+    if(ttsSlot.token !== my) return;
+    if(i >= list.length){ if(cb.end) cb.end(); return; }
+    ttsSpeak(list[i], rate, {end:()=>next(i+1), error:()=>next(i+1)});
+  };
+  next(0);
+}
+document.addEventListener('visibilitychange', ()=>{ if(document.hidden) stopAllSpeech(); });
+window.addEventListener('pagehide', stopAllSpeech);
 const LOGIN_SALT = 'farin-spanish-login-v1';
 const LOGIN_DOC_PREFIX = 'pw-';
 const PASSWORD_MIN = 6;
@@ -7418,15 +7445,15 @@ function pushHistoryEntry(){
 }
 function go(view, params){
   resetConfirmPending = false;
-  if(typeof storyAudio !== 'undefined' && storyAudio.playing && view !== 'story-detail') stopStoryAudio();
+  stopAllSpeech();   // every navigation stops whatever is speaking (Farin, card n4NxuH0f)
   if(typeof echoStopRec === 'function' && view !== 'game-echo') echoStopRec();
-  if(state.view === 'game-chores-room' && view !== 'game-chores-room'){ ttsStop(); }
   navHistory.push({view: state.view, params: state.viewParams});
   state.view = view; state.viewParams = params || {}; save(); render(); window.scrollTo(0,0);
   pushHistoryEntry();
 }
 function goBack(){
   resetConfirmPending = false;
+  stopAllSpeech();
   if(state.view === 'diagnostic-step' && state.diag.step > 0){
     state.diag.step -= 1;
     save(); render(); window.scrollTo(0,0);
@@ -10419,6 +10446,7 @@ function showCelebration(kind, detail, low, extra){
   at(3100, ()=>{ seq.done = true; });
 }
 function backToRoadmap(){
+  stopAllSpeech();
   clearTimeout(celebrateTimer); celebrateTimer = null;
   clearCelebrateSeq(); celebrateSeq = null;
   document.querySelectorAll('.celebrate-overlay').forEach(n=>n.remove());
@@ -18381,6 +18409,13 @@ function chPlanText(round){
   const loc = chLoc(round.placeId), cs = chChoresFor(loc, round.level), n = cs.length;
   return round.picked.map((id,i)=>{ const c = cs.find(x=>x.id===id); return chConnector(round, i, n) + ' ' + chLowerFirst(chChoreText(loc, c, round.level).imp); }).join(' ');
 }
+// The plan as a list of already-complete clips to play back-to-back (connector word, then the fixed
+// imperative line, per chore) - speakSlots() queues these instead of needing one clip for the whole
+// joined sentence chPlanText() builds for display (connectors/imperatives are both fully pre-rendered).
+function chPlanParts(round){
+  const loc = chLoc(round.placeId), cs = chChoresFor(loc, round.level), n = cs.length;
+  return round.picked.flatMap((id,i)=>{ const c = cs.find(x=>x.id===id); return [chConnector(round, i, n), chLowerFirst(chChoreText(loc, c, round.level).imp)]; });
+}
 // The room scene with level gating and already-done chores applied: a chore outside this
 // level (or already done) starts with its mess hidden and its tidy state shown, so a room
 // never ends with mess the learner could not clear.
@@ -18552,7 +18587,7 @@ function chResultHtml(round, loc, cs){
   const perfect = round.smooth === round.total;
   return `<div class="game-card tight badge-unlock-shine">
       <div class="game-result-title">${esc(perfect ? chChrome('smooth') : chFmt(chChrome('sticker'), {n:round.smooth, total:round.total}))}</div>
-      <div class="ch-keep ch-recap"><button type="button" class="game-play small" data-action="speak-sentence" data-text="${esc(round.plan)}" aria-label="${esc(L('Hear it','Dinle','بشنو','Escúchalo'))}">${ICONS.soundOn}</button>${chQueueHtml(round, loc, cs, false)}</div>
+      <div class="ch-keep ch-recap"><button type="button" class="game-play small" data-action="chores-say-play" aria-label="${esc(L('Hear it','Dinle','بشنو','Escúchalo'))}">${ICONS.soundOn}</button>${chQueueHtml(round, loc, cs, false)}</div>
       <button class="btn btn-primary game-cta" data-action="chores-building">${esc(chChrome('back'))}</button>
     </div>${renderBadgeUnlockCard(pullJustEarnedBadges())}`;
 }
@@ -22885,7 +22920,7 @@ const HANDLERS = {
   'chores-gloss'(){ const vp = state.viewParams, round = vp && vp.round; if(!round) return; round.glossOpen = !round.glossOpen; chRefresh(); },
   'chores-hint'(el){ const vp = state.viewParams, round = vp && vp.round; if(!round) return; const id = (el && el.dataset && el.dataset.rule) || ''; if(!round.hintOpen || typeof round.hintOpen !== 'object') round.hintOpen = {}; round.hintOpen[id] = !round.hintOpen[id]; sfx('flip'); chRefresh(); },
   'chores-connector'(el){ const vp = state.viewParams, round = vp && vp.round; if(!round || round.phase !== 'done' || round.finished) return; const k = el.dataset.k; round.connector = round.connector === k ? null : k; sfx('flip'); chRefresh(); },
-  'chores-say-play'(){ const vp = state.viewParams, round = vp && vp.round; if(!round || !round.plan) return; speakTarget(round.plan, 0.92); },
+  'chores-say-play'(){ const vp = state.viewParams, round = vp && vp.round; if(!round || !round.plan) return; speakSlots(chPlanParts(round), 0.92); },
   'chores-said'(){
     const vp = state.viewParams, round = vp && vp.round; if(!round || round.say !== 'offer') return;
     round.say = 'said'; queueFx(()=>{ sfx('reveal'); companionCheer(); });

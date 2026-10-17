@@ -1420,6 +1420,51 @@
   .phrase-example{font-size:12.5px; color:var(--ink-faint); font-style:italic; margin-top:3px; padding-left:10px; border-left:2px solid var(--border);}
   html[dir="rtl"] .phrase-example{padding-left:0; padding-right:10px; border-left:none; border-right:2px solid var(--border);}
 
+  /* Lesson explanation pages, Course Report style (Farin 2026-10-18): coloured hero with title + hook, stat tiles over its
+     edge, then eyebrow + headline sections in white cards. --lx is the page's category colour. */
+  .lx-page{--lx:var(--cat-gram); --lx-soft:var(--cat-gram-soft); --lx-ink:color-mix(in srgb, var(--lx) 62%, var(--ink));}
+  .lx-page.lx-voc{--lx:var(--cat-voc); --lx-soft:var(--cat-voc-soft);}
+  .lx-page.lx-slang{--lx:var(--cat-diag); --lx-soft:var(--cat-diag-soft);}
+  .lx-hero{position:relative; overflow:hidden; border-radius:28px; padding:20px 20px 46px; color:#fff; background:radial-gradient(circle at 14% 6%, rgba(255,255,255,.34), transparent 55%), linear-gradient(150deg, var(--lx), color-mix(in srgb, var(--lx) 70%, #000 26%)); box-shadow:0 16px 30px -14px color-mix(in srgb, var(--lx) 60%, transparent);}
+  .lx-hero::before{content:""; position:absolute; inset:0; pointer-events:none; background-image:radial-gradient(circle, rgba(255,255,255,.34) 0 2.5px, transparent 3px), radial-gradient(circle, rgba(255,255,255,.2) 0 4px, transparent 4.5px); background-size:150px 120px, 230px 190px; background-position:60px 24px, 140px 70px;}
+  .lx-hero > :not(.sparkle){position:relative;}
+  .lx-pill{display:inline-flex; align-items:center; gap:6px; background:rgba(0,0,0,.2); color:#fff; border-radius:999px; padding:5px 12px; font-size:11px; font-weight:800; letter-spacing:.1em; text-transform:uppercase;}
+  .lx-hero h1{font-size:clamp(26px, 7.4vw, 34px); line-height:1.12; margin-top:12px; color:#fff; text-wrap:balance; text-shadow:0 1px 2px rgba(0,0,0,.12);}
+  .lx-hero h1 .dot{color:rgba(255,255,255,.62);}
+  .lx-hook{margin-top:10px; font-size:15.5px; line-height:1.55; color:rgba(255,255,255,.96); max-width:52ch;}
+  .lx-stats{display:grid; grid-template-columns:repeat(3, minmax(0,1fr)); gap:8px; margin:-30px 10px 0; position:relative;}
+  .lx-stat{background:var(--bg-elevated); border:1px solid var(--border-soft); border-radius:16px; padding:10px 12px; box-shadow:var(--shadow); display:flex; flex-direction:column; gap:1px; min-width:0;}
+  .lx-stat span{font-size:10px; font-weight:800; letter-spacing:.12em; text-transform:uppercase; color:var(--ink-faint); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .lx-stat b{font-size:20px; line-height:1.2; color:var(--ink); font-variant-numeric:tabular-nums; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .lx-sec{margin-top:30px;}
+  .lx-head{display:flex; flex-direction:column; gap:3px; margin-bottom:12px;}
+  .lx-eyebrow{font-size:11px; font-weight:800; letter-spacing:.16em; text-transform:uppercase; color:var(--lx-ink);}
+  .lx-head h2{font-size:22px; line-height:1.15; color:var(--ink);}
+  .lx-head h2 .dot{color:var(--lx);}
+  .lx-card{background:var(--bg-elevated); border:1px solid var(--border-soft); border-radius:20px; padding:16px; box-shadow:var(--shadow);}
+  .lx-ex{display:flex; gap:12px; align-items:flex-start;}
+  .lx-spk{flex:0 0 auto; width:40px; height:40px; border-radius:13px; border:none; background:var(--lx-soft); color:var(--lx-ink); display:flex; align-items:center; justify-content:center;}
+  .lx-ex-line{font-weight:700; font-size:17px; line-height:1.5; padding-inline-start:12px; border-inline-start:3px solid var(--lx);}
+  .lx-ex-tr{font-size:13px; color:var(--ink-faint); margin-top:5px; padding-inline-start:15px; line-height:1.45;}
+  .lx-card.gx-body p{font-size:15px !important; line-height:1.65 !important;}
+  .lx-remember{position:relative; overflow:hidden; background:var(--lx-soft); border-radius:24px; padding:20px 20px 22px; display:flex; flex-direction:column; gap:8px;}
+  .lx-remember::after{content:""; position:absolute; inset-inline-end:-28px; top:-28px; width:96px; height:96px; border-radius:50%; background:var(--lx); opacity:.55;}
+  .lx-remember > *{position:relative;}
+  .lx-remember p{font-family:'Fredoka',-apple-system,sans-serif; font-weight:600; font-size:18px; line-height:1.45; color:var(--ink); max-width:44ch; padding-inline-end:40px;}
+  .lx-sub{display:flex; align-items:center; gap:8px; margin:18px 0 10px !important;}
+  .lx-sub::after{content:""; flex:1; height:1px; background:var(--border);}
+  .lx-page .contrast{margin:0 0 4px;}
+  .lx-page .contrast-line{padding:12px 14px; border-radius:16px; font-size:15px; line-height:1.5;}
+  .lx-words{display:grid; grid-template-columns:repeat(auto-fill, minmax(min(100%, 260px), 1fr)); gap:10px;}
+  .lx-word{background:var(--bg-elevated); border:1px solid var(--border-soft); border-radius:18px; padding:13px 14px 14px; box-shadow:var(--shadow); display:flex; flex-direction:column; gap:6px; min-width:0;}
+  .lx-word-top{display:flex; align-items:center; gap:9px;}
+  .lx-n{flex:0 0 auto; width:26px; height:26px; border-radius:50%; background:var(--lx-soft); color:var(--lx-ink); font-size:12px; font-weight:800; display:inline-flex; align-items:center; justify-content:center; font-variant-numeric:tabular-nums;}
+  .lx-term{flex:1 1 auto; min-width:0; font-family:'Fredoka',-apple-system,sans-serif; font-weight:600; font-size:18px; line-height:1.2; color:var(--lx-ink);}
+  .lx-mean{font-size:14px; font-weight:600; color:var(--ink-soft); line-height:1.45;}
+  .lx-word .phrase-example{margin-top:0; font-size:13.5px; color:var(--ink); font-style:normal; border-left-color:var(--lx); border-left-width:3px;}
+  html[dir="rtl"] .lx-word .phrase-example{border-right-color:var(--lx); border-right-width:3px;}
+  .lx-word .flash-note{margin-top:2px;}
+
   /* ---- results ---- */
   .result-ring{width:104px;height:104px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-direction:column;margin:8px auto 4px;}
   .result-ring .big{font-size:30px; font-weight:800;}
@@ -19645,47 +19690,59 @@ function renderGrammarTrap(id){
   const right = (variant && variant.right) ? variant.right : t.right;
   const wrong2 = (variant && variant.wrong2) ? variant.wrong2 : t.wrong2;
   const right2 = (variant && variant.right2) ? variant.right2 : t.right2;
-  const exampleBadge = (n) => inCourseStep() ? '' : `<span style="display:inline-flex; align-items:center; justify-content:center; width:20px; height:20px; border-radius:50%; background:var(--cat-gram); color:#fff; font-size:11px; font-weight:800; flex:0 0 auto;">${n}</span>`;
-  return courseGrammarOrder(t, `<div class="fade-in">
+  const exampleBadge = (n) => inCourseStep() ? '' : `<span class="lx-n">${n}</span>`;
+  const st = structureExplanation(L(t.exp.en,t.exp.tr,t.exp.fa, t.exp.es)); const ft = t.formsTable;
+  const how = st.rest ? renderLessonText(st.rest, '--cat-gram', {noPatterns: !!ft}) : '';
+  const head = (eb, h) => `<div class="lx-head"><div class="lx-eyebrow">${eb}</div><h2 class="display">${h}<span class="dot">.</span></h2></div>`;
+  const nEx = 1 + (wrong2 && right2 ? 1 : 0);
+  // Page layout (Farin 2026-10-18, "like the Course Report"): hero -> stat tiles -> See it -> How it works -> The forms ->
+  // Remember -> Spot the difference. The course step reorders this HTML (courseGrammarOrder): keep the tip-card div and the
+  // example row markup exactly as they are.
+  return courseGrammarOrder(t, `<div class="fade-in lx-page">
     ${sectionHead('', '')}
     <div class="screen" style="padding-top:0;">
       ${courseStripHtml()}${grammarContextHtml(t)}
-      <div class="tip-card" style="position:relative; overflow:hidden; background:radial-gradient(circle at 16% 8%, rgba(255,255,255,.35), transparent 55%), linear-gradient(150deg, var(--cat-gram), color-mix(in srgb, var(--cat-gram) 78%, #000 18%)); border-radius:26px; padding:22px 20px 20px; box-shadow:0 16px 30px -14px color-mix(in srgb, var(--cat-gram) 55%, transparent);">
-        <div class="eyebrow" style="color:rgba(255,255,255,.85);">${inCourseStep() ? '' : L('TIP','İPUCU','نکته','CONSEJO')}</div>
-        <h1 class="display" style="font-size:24px; margin-top:8px; line-height:1.3; color:#fff;">${esc(grammarTitle(t))}</h1>
-        ${(() => { const st = structureExplanation(L(t.exp.en,t.exp.tr,t.exp.fa, t.exp.es)); const ft = t.formsTable; const how = st.rest ? renderLessonText(st.rest, '--cat-gram', {noPatterns: !!ft}) : ''; return `
-        ${st.hook ? `<p style="margin-top:12px; font-size:15px; line-height:1.6; color:rgba(255,255,255,.95);">${esc(st.hook)}</p>` : ''}
-        <!-- White panel under the coloured header, one labelled section per job (Farin 2026-10-10):
-             Example -> How it works -> The forms (table) -> Remember. -->
-        <div class="gx-panel">
-          <div class="gx-sec">
-            <div class="gx-label">${L('Example','Örnek','مثال','Ejemplo')}</div>
-            <div style="display:flex; gap:11px; align-items:flex-start;">
-              <button type="button" class="icon-btn" data-action="speak-sentence" data-text="${esc(right)}" style="flex:0 0 auto; background:var(--cat-gram-soft); color:var(--cat-gram); border-radius:50%; width:34px; height:34px; display:flex; align-items:center; justify-content:center; border:none;">${ICONS.soundOn}</button>
-              <div style="min-width:0;" translate="no">
-                <div style="font-weight:700; font-size:16px; line-height:1.5; padding-top:4px;" dir="ltr">${glossify(right)}</div>
-                ${(() => { const rt = effectiveGrammarItem(t, variant).rightTranslation; const trText = rt ? L(null,rt.tr,rt.fa) : null; return trText ? `<div style="font-size:13px; color:var(--ink-faint); margin-top:3px;">${esc(trText)}</div>` : ''; })()}
-              </div>
-            </div>
-          </div>
-          ${how ? `<div class="gx-sec">
-            <div class="gx-label">${L('How it works','Nasıl çalışır','چطور کار می‌کند','Cómo funciona')}</div>
-            <div class="gx-body">${how}</div>
-          </div>` : ''}
-          ${ft ? `<div class="gx-sec">
-            <div class="gx-label">${L('The forms','Biçimler','شکل‌ها','Las formas')}</div>
-            <div class="gx-table" translate="no"><table>
-              <thead><tr>${L(ft.headers.en,ft.headers.tr,ft.headers.fa, ft.headers.es).map(h=>`<th>${esc(h)}</th>`).join('')}</tr></thead>
-              <tbody>${ft.rows.map(row=>`<tr>${row.map(cell=>`<td dir="ltr">${esc(cell)}</td>`).join('')}</tr>`).join('')}</tbody>
-            </table></div>
-          </div>` : ''}
-          ${st.tip ? `<div class="gx-sec">
-            <div class="gx-label">${L('Remember','Unutma','یادت باشد','Recuerda')}</div>
-            <div class="gx-tip"><span style="font-size:15px; line-height:1.4;">💡</span><div style="font-size:14px; font-weight:600; color:var(--ink); line-height:1.5;">${esc(st.tip)}</div></div>
-          </div>` : ''}
-        </div>`; })()}
+      <div class="tip-card"><div class="lx-hero">
+        ${claySparkles()}
+        ${inCourseStep() ? '' : `<span class="lx-pill">${L('Grammar','Dilbilgisi','گرامر','Gramática')} · ${esc(t.level || '')}</span>`}
+        <h1 class="display"><bdi>${esc(grammarTitle(t))}</bdi><span class="dot">.</span></h1>
+        ${st.hook ? `<p class="lx-hook">${esc(st.hook)}</p>` : ''}
+      </div>
+      <div class="lx-stats">
+        <div class="lx-stat"><span>${L('Level','Seviye','سطح','Nivel')}</span><b class="display">${esc(t.level || '—')}</b></div>
+        <div class="lx-stat"><span>${L('Examples','Örnekler','مثال‌ها','Ejemplos')}</span><b class="display">${nEx + 1}</b></div>
+        ${ft ? `<div class="lx-stat"><span>${L('Forms','Biçimler','شکل‌ها','Formas')}</span><b class="display">${ft.rows.length}</b></div>`
+             : `<div class="lx-stat"><span>${L('Then','Sonra','بعد','Después')}</span><b class="display">${L('Quiz','Test','آزمون','Test')}</b></div>`}
       </div>
 
+      <div class="lx-sec">
+        ${head(L('See it','Gör','ببین','Míralo'), L('An example','Bir örnek','یک مثال','Un ejemplo'))}
+        <div class="lx-card lx-ex">
+          <button type="button" class="icon-btn lx-spk" data-action="speak-sentence" data-text="${esc(right)}" aria-label="${L('Listen','Dinle','گوش کن','Escuchar')}">${ICONS.soundOn}</button>
+          <div style="min-width:0;" translate="no">
+            <div class="lx-ex-line" dir="ltr">${glossify(right)}</div>
+            ${(() => { const rt = effectiveGrammarItem(t, variant).rightTranslation; const trText = rt ? L(null,rt.tr,rt.fa) : null; return trText ? `<div class="lx-ex-tr">${esc(trText)}</div>` : ''; })()}
+          </div>
+        </div>
+      </div>
+      ${how ? `<div class="lx-sec">
+        ${head(L('Understand it','Anla','بفهم','Entiéndelo'), L('How it works','Nasıl çalışır','چطور کار می‌کند','Cómo funciona'))}
+        <div class="lx-card gx-body">${how}</div>
+      </div>` : ''}
+      ${ft ? `<div class="lx-sec">
+        ${head(L('The pattern','Kalıp','الگو','El patrón'), L('The forms','Biçimler','شکل‌ها','Las formas'))}
+        <div class="gx-table" translate="no" style="background:var(--bg-elevated); box-shadow:var(--shadow);"><table>
+          <thead><tr>${L(ft.headers.en,ft.headers.tr,ft.headers.fa, ft.headers.es).map(h=>`<th>${esc(h)}</th>`).join('')}</tr></thead>
+          <tbody>${ft.rows.map(row=>`<tr>${row.map(cell=>`<td dir="ltr">${esc(cell)}</td>`).join('')}</tr>`).join('')}</tbody>
+        </table></div>
+      </div>` : ''}
+      ${st.tip ? `<div class="lx-sec lx-remember">
+        <div class="lx-eyebrow">💡 ${L('Remember','Unutma','یادت باشد','Recuerda')}</div>
+        <p>${esc(st.tip)}</p>
+      </div>` : ''}
+      </div>
+
+      <div class="lx-sec">${head(L('Wrong vs right','Yanlış ve doğru','غلط و درست','Incorrecto y correcto'), L('Spot the difference','Farkı bul','فرق را پیدا کن','Encuentra la diferencia'))}</div>
       <div class="row" style="gap:7px; align-items:center; margin:22px 0 10px;">
         ${exampleBadge(1)}
         <h3 class="display" style="font-size:13.5px; color:var(--ink-faint); text-transform:uppercase; letter-spacing:.05em;">${L('Example','Örnek','مثال', 'Ejemplo')}</h3>
@@ -19830,33 +19887,40 @@ function useItExit(q){
 function renderVocabSetIntro(id){
   const s = VOCAB_SETS.find(x=>x.id===id);
   if(!s) return renderNotFound();
-  const isSlang = s.category === 'slang';
-  return `<div class="fade-in">
-    ${sectionHead(setTitle(s), inCourseStep() ? courseStripText() : '')}
+  const isSlang = s.category === 'slang', n = s.cards.length;
+  // Course Report style (Farin 2026-10-18): hero -> stat tiles -> one card per word (term, listen, meaning, example, note).
+  return `<div class="fade-in lx-page ${isSlang ? 'lx-slang' : 'lx-voc'}">
+    ${sectionHead('', inCourseStep() ? courseStripText() : '')}
     <div class="screen" style="padding-top:0;">
-      <div class="card-flat" style="position:relative; overflow:hidden; background:linear-gradient(160deg, var(--cat-voc-soft) 0%, var(--bg-elevated) 130%); border-color:var(--cat-voc-soft);">
+      <div class="lx-hero">
         ${claySparkles()}
-        <div class="row" style="gap:9px; align-items:center;">
-          <span class="item-ic" style="background:var(--bg-elevated); box-shadow:var(--shadow); color:var(--cat-voc); flex:0 0 auto; width:36px; height:36px;">${ICONS.cards}</span>
-          <div class="eyebrow" style="color:var(--cat-voc); font-size:12.5px;">${isSlang ? L('The phrases','İfadeler','عبارت‌ها', 'Las frases') : L('The words','Kelimeler','کلمات', 'Las palabras')}</div>
-        </div>
-        <p style="margin-top:12px; font-size:14.5px; line-height:1.65; color:var(--ink);">${L('Skim through all '+s.cards.length+' below, then flip through flashcards to lock them in.','Aşağıdaki tüm '+s.cards.length+' tanesine göz gezdir, sonra pekiştirmek için kartları çevir.','همه '+s.cards.length+' مورد زیر را مرور کن، بعد با ورق زدن کارت‌ها آن‌ها را در ذهنت ثبت کن.', 'Repasa las '+s.cards.length+' de abajo y luego practica con las tarjetas para memorizarlas.')}</p>
+        <span class="lx-pill">${isSlang ? L('Slang','Argo','اصطلاحات','Jerga') : L('Vocabulary','Kelime','واژگان','Vocabulario')} · ${esc(s.level || '')}</span>
+        <h1 class="display"><bdi>${esc(setTitle(s))}</bdi><span class="dot">.</span></h1>
+        <p class="lx-hook">${L('Skim through all '+n+' below, then flip through flashcards to lock them in.','Aşağıdaki tüm '+n+' tanesine göz gezdir, sonra pekiştirmek için kartları çevir.','همه '+n+' مورد زیر را مرور کن، بعد با ورق زدن کارت‌ها آن‌ها را در ذهنت ثبت کن.', 'Repasa las '+n+' de abajo y luego practica con las tarjetas para memorizarlas.')}</p>
       </div>
-      <div class="card-flat" dir="ltr" translate="no" style="margin-top:14px; padding-top:2px; padding-bottom:2px;">
-        ${s.cards.map((c,idx)=>`
-          <div class="phrase-row">
-            <div class="row" style="gap:8px; align-items:center;">
-              <span style="display:inline-flex; align-items:center; justify-content:center; width:22px; height:22px; border-radius:50%; background:var(--cat-voc-soft); color:var(--cat-voc); font-size:11px; font-weight:800; flex:0 0 auto;">${idx+1}</span>
-              <div class="phrase-term" style="color:var(--cat-voc);">${esc(c.word)}</div>
-              ${ttsButton(c.sentence || c.word, '')}
+      <div class="lx-stats">
+        <div class="lx-stat"><span>${isSlang ? L('Phrases','İfadeler','عبارت‌ها','Frases') : L('Words','Kelimeler','کلمات','Palabras')}</span><b class="display">${n}</b></div>
+        <div class="lx-stat"><span>${L('Level','Seviye','سطح','Nivel')}</span><b class="display">${esc(s.level || '—')}</b></div>
+        <div class="lx-stat"><span>${L('Then','Sonra','بعد','Después')}</span><b class="display">${L('Cards','Kartlar','کارت‌ها','Tarjetas')}</b></div>
+      </div>
+      <div class="lx-sec">
+        <div class="lx-head"><div class="lx-eyebrow">${isSlang ? L('The phrases','İfadeler','عبارت‌ها', 'Las frases') : L('The words','Kelimeler','کلمات', 'Las palabras')}</div><h2 class="display">${L('Read, listen, notice','Oku, dinle, fark et','بخوان، گوش کن، دقت کن','Lee, escucha, fíjate')}<span class="dot">.</span></h2></div>
+        <div class="lx-words" dir="ltr" translate="no">
+          ${s.cards.map((c,idx)=>`
+            <div class="lx-word">
+              <div class="lx-word-top">
+                <span class="lx-n">${idx+1}</span>
+                <div class="lx-term">${esc(c.word)}</div>
+                ${ttsButton(c.sentence || c.word, '')}
+              </div>
+              <div class="lx-mean" dir="auto">${esc(L(c.meaning.en,c.meaning.tr,c.meaning.fa, c.meaning.es))}</div>
+              <div class="phrase-example">${highlightWord(c.sentence, cardGap(c))}</div>
+              ${c.note ? `<div class="flash-note row" style="align-items:flex-start; gap:6px;"><span style="flex:0 0 auto; color:var(--ink-faint);">${ICONS.warn}</span><span dir="auto" style="font-size:12px; color:var(--ink-soft);">${esc(L(c.note.en,c.note.tr,c.note.fa, c.note.es))}</span></div>` : ''}
             </div>
-            <div class="phrase-mean" style="margin-top:2px;">${esc(L(c.meaning.en,c.meaning.tr,c.meaning.fa, c.meaning.es))}</div>
-            <div class="phrase-example">${highlightWord(c.sentence, cardGap(c))}</div>
-            ${c.note ? `<div class="flash-note row" style="margin-top:4px; align-items:flex-start; gap:6px;"><span style="flex:0 0 auto; color:var(--ink-faint);">${ICONS.warn}</span><span style="font-size:12px; color:var(--ink-soft);">${esc(L(c.note.en,c.note.tr,c.note.fa, c.note.es))}</span></div>` : ''}
-          </div>
-        `).join('')}
+          `).join('')}
+        </div>
       </div>
-      <button class="btn btn-primary" style="margin-top:16px;" data-action="nav" data-view="vocab-set" data-id="${s.id}">${L('Start flashcards','Kartlara başla','شروع فلش‌کارت‌ها', 'Empezar las tarjetas')}</button>
+      <button class="btn btn-primary" style="margin-top:18px;" data-action="nav" data-view="vocab-set" data-id="${s.id}">${L('Start flashcards','Kartlara başla','شروع فلش‌کارت‌ها', 'Empezar las tarjetas')}</button>
       ${useItHtml(s)}
       ${crossOfferHtml(s)}
     </div>

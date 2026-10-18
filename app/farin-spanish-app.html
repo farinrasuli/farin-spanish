@@ -1064,6 +1064,26 @@
   .cp-cur{flex:1; min-width:0; border:2px solid var(--accent); border-radius:18px; padding:10px 14px 14px; background:var(--bg-elevated); box-shadow:0 10px 22px -12px rgba(232,92,59,.5);}
   .cp-tag{display:inline-block; background:var(--accent); color:#fff; font-size:10.5px; font-weight:900; letter-spacing:.06em; padding:3px 9px; border-radius:99px; margin-bottom:6px;}
   .cp-foot{display:flex; flex-wrap:wrap; justify-content:center; gap:4px 8px; margin-top:16px; font-size:13px; color:var(--ink-soft);}
+  /* Chapter cards (Farin 2026-10-18: "the structure of the premium courses like cards saying chapter 1, chapter 2, shortly written
+     what happens there; when a card opens, the circle topics as they are now"). .cp-ch = one chapter: its lavender band is the
+     card head (number / tick / lock, title, blurb, chevron), the lesson nodes are its body; one chapter open at a time. */
+  .cp-ch{margin-top:14px; border-radius:22px; background:var(--bg-elevated); border:1px solid var(--border-soft); box-shadow:var(--shadow); overflow:hidden;}
+  .cp-ch > .cp-band{margin-top:0; border-radius:0; display:flex; align-items:center; gap:12px; padding:13px 14px 13px 14px; box-shadow:none;}
+  .cp-band .cp-ch-n{flex:0 0 auto; width:40px; height:40px; border-radius:50%; background:rgba(255,255,255,.22); color:#fff; display:flex; align-items:center; justify-content:center; font-family:'Fredoka',-apple-system,sans-serif; font-weight:600; font-size:17px; margin:0; opacity:1; line-height:1;}
+  .cp-band .cp-ch-n svg{width:18px; height:18px;}
+  .cp-ch.cur > .cp-band .cp-ch-n{background:var(--accent); box-shadow:0 0 0 4px rgba(255,255,255,.35);}
+  .cp-ch.done > .cp-band .cp-ch-n{background:#fff; color:var(--clay-lavender-deep);}
+  .cp-band .cp-ch-text{flex:1 1 auto; min-width:0; display:block; margin:0; opacity:1; font-size:inherit; line-height:inherit;}
+  .cp-band .cp-ch-text b{font-size:15.5px; line-height:1.25;}
+  .cp-band .cp-ch-chev{flex:0 0 auto; width:28px; height:28px; border-radius:50%; background:rgba(255,255,255,.22); color:#fff; display:flex; align-items:center; justify-content:center; margin:0; opacity:1; transition:transform .2s ease;}
+  html[dir="rtl"] .cp-ch-chev svg{transform:scaleX(-1);}
+  .cp-ch.open > .cp-band .cp-ch-chev{transform:rotate(90deg);}
+  html[dir="rtl"] .cp-ch.open > .cp-band .cp-ch-chev{transform:rotate(-90deg);}
+  .cp-ch > .cp-nodes{padding:8px 14px 10px;}
+  .cp-ch > .cp-nodes::before{inset-inline-start:35px;}
+  .cp-dot.lock{background:var(--bg-sunken); border:3px solid var(--border); color:var(--ink-faint);}
+  .cp-dot.gold.lock{opacity:.75;}
+  .cp-node.is-locked .cp-ntitle{color:var(--ink-soft);}
   .course-unlock a.btn{text-decoration:none;}
   .cs-foot .btn-ghost{background:var(--bg-elevated);}
   .cs-pick, .cs-foot .btn{font-family:inherit;}
@@ -1484,6 +1504,33 @@
   .lx-track .cs-pick span{font-size:12px;}
   .lx-track .cs-pick.rec{border-color:var(--lx); background:var(--lx-soft);}
   .lx-note{margin:10px 0 0; font-size:12.5px; color:var(--ink-faint); text-align:center; line-height:1.45;}
+  /* "What you'll learn" card (Farin 2026-10-18): numbered skills, then check-marked real-life can-dos, then one honest note.
+     Full section on the intro, "How this course works" and the "comes later" gate; .lx-oc-row on the course page (header button,
+     open until the first lesson is done, then one line so the path stays first). */
+  .lx-oc{padding:2px 16px 14px;}
+  .lx-oc-group{padding:12px 0 6px;}
+  .lx-oc-group + .lx-oc-group{border-top:1px solid var(--border-soft); margin-top:6px; padding-top:14px;}
+  .lx-oc-title{display:flex; align-items:center; gap:8px; font-family:'Fredoka',-apple-system,sans-serif; font-weight:600; font-size:16.5px; line-height:1.2; color:var(--lx-ink); margin-bottom:10px;}
+  .lx-oc-title svg{width:19px; height:19px; flex:0 0 auto;}
+  .lx-oc-list{list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:9px;}
+  .lx-oc-list li{display:flex; gap:10px; align-items:flex-start; font-size:14.5px; line-height:1.5; color:var(--ink);}
+  .lx-oc-list li > span:last-child{flex:1 1 auto; min-width:0;}
+  .lx-oc-n, .lx-oc-ck{flex:0 0 auto; width:24px; height:24px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center;}
+  .lx-oc-n{background:var(--lx-soft); color:var(--lx-ink); font-size:12px; font-weight:800; font-variant-numeric:tabular-nums;}
+  .lx-oc-ck{background:var(--success-soft); color:var(--success);}
+  .lx-oc-ck svg{width:14px; height:14px;}
+  .lx-oc-group.life li{font-weight:600;}
+  .lx-oc-note{margin:14px 0 0; padding:10px 12px; border-radius:12px; background:var(--bg-sunken); font-size:12.5px; line-height:1.45; color:var(--ink-soft);}
+  .lx-oc-row{padding:0; margin:0 0 16px;}
+  .lx-oc-head{display:flex; align-items:center; gap:10px; width:100%; padding:14px 16px; border:none; background:none; color:var(--ink); cursor:pointer; text-align:start; font:inherit; -webkit-tap-highlight-color:transparent;}
+  .lx-oc-head > span:first-child{flex:1 1 auto; min-width:0; display:flex; flex-direction:column; gap:2px;}
+  .lx-oc-head b{font-size:19px; line-height:1.2; color:var(--ink);}
+  .lx-oc-head b .dot{color:var(--lx);}
+  .lx-oc-chev{flex:0 0 auto; width:30px; height:30px; border-radius:50%; background:var(--lx-soft); color:var(--lx-ink); display:inline-flex; align-items:center; justify-content:center; transition:transform .2s ease;}
+  html[dir="rtl"] .lx-oc-chev svg{transform:scaleX(-1);}
+  .lx-oc-row.open .lx-oc-chev{transform:rotate(90deg);}
+  html[dir="rtl"] .lx-oc-row.open .lx-oc-chev{transform:rotate(-90deg);}
+  .lx-oc-row .lx-oc-body{padding:0 16px 14px; border-top:1px solid var(--border-soft);}
   .cs-head .cs-title .dot{color:var(--accent);}
   .cs-gram.lx-page .lx-head{margin:22px 0 10px;}
   .cs-gram.lx-page > .lx-head:first-child{margin-top:4px;}
@@ -7031,6 +7078,7 @@ COURSES.push({id:'travel-es', status:'later', cat:'story', icon:'suitcase', entr
   title:{en:'Travel Spanish', tr:'Seyahat İspanyolcası', fa:'اسپانیایی سفر', es:'Español para viajar'},
   promise:{en:'Handle the core trip situations in Spanish, from booking to complaints. Spain first, then Mexico and Argentina.', tr:'Rezervasyondan şikâyete temel seyahat durumlarını İspanyolca yönet. Önce İspanya, sonra Meksika ve Arjantin.', es:'Resuelve las situaciones básicas de un viaje en español, desde la reserva hasta las quejas. Primero España, luego México y Argentina.'},
   story:{character:'Mina', company:'Madrid', cast:[]},
+  outcomes:{"learn":[{"en":"Booking, changing and asking about a room, a ticket or a tour, by message and by phone.","tr":"Mesajla ve telefonla oda, bilet ya da tur ayırtmak, değiştirmek ve sormak.","fa":"رزرو، تغییر و پرس‌وجو درباره‌ی اتاق، بلیت یا تور، با پیام و با تلفن.","es":"Reservar, cambiar y preguntar por una habitación, un billete o una visita, por mensaje y por teléfono."},{"en":"Airport Spanish: check-in, security, passport control and the key words in announcements.","tr":"Havalimanı İspanyolcası: check-in, güvenlik, pasaport kontrolü ve anonslardaki anahtar kelimeler.","fa":"اسپانیایی فرودگاه: چک‌این، بازرسی، کنترل گذرنامه و کلمه‌های کلیدی اعلان‌ها.","es":"Español de aeropuerto: facturación, seguridad, control de pasaportes y las palabras clave de los avisos."},{"en":"Eating out, shopping and paying: orders, dietary needs, prices and returns.","tr":"Dışarıda yemek, alışveriş ve ödeme: sipariş, beslenme ihtiyaçları, fiyatlar ve iadeler.","fa":"غذا خوردن بیرون، خرید و پرداخت: سفارش، محدودیت‌های غذایی، قیمت و پس دادن جنس.","es":"Comer fuera, comprar y pagar: pedidos, alergias e intolerancias, precios y devoluciones."},{"en":"Getting around: directions, public transport, taxis and ride apps.","tr":"Şehirde dolaşmak: yol tarifi, toplu taşıma, taksi ve araç çağırma uygulamaları.","fa":"جابه‌جایی: آدرس پرسیدن، حمل‌ونقل عمومی، تاکسی و اپ‌های درخواست خودرو.","es":"Moverse: direcciones, transporte público, taxis y apps de transporte."},{"en":"Problems: a lost bag, an illness, a missed flight or a lost passport, and asking for a concrete fix.","tr":"Sorunlar: kayıp bagaj, hastalık, kaçan uçuş ya da kayıp pasaport; somut bir çözüm istemek.","fa":"مشکل‌ها: چمدان گم‌شده، بیماری، پرواز ازدست‌رفته یا گذرنامه‌ی گم‌شده، و درخواست یک راه‌حل مشخص.","es":"Problemas: una maleta perdida, una enfermedad, un vuelo perdido o un pasaporte perdido, y pedir una solución concreta."},{"en":"The Spanish of Spain first, then the differences you'll hear in Mexico and Argentina.","tr":"Önce İspanya İspanyolcası, sonra Meksika ve Arjantin'de duyacağın farklar.","fa":"اول اسپانیایی اسپانیا، بعد تفاوت‌هایی که در مکزیک و آرژانتین می‌شنوی.","es":"Primero el español de España; después, las diferencias que oirás en México y Argentina."}],"life":[{"en":"Get from the plane to your hotel in a new country without a translation app.","tr":"Yeni bir ülkede uçaktan otele çeviri uygulaması olmadan ulaşmak.","fa":"در یک کشور جدید، بدون اپ ترجمه از هواپیما به هتل برسی.","es":"Llegar del avión al hotel en un país nuevo sin una app de traducción."},{"en":"Order exactly what you want and say what you can't eat.","tr":"Tam olarak istediğini sipariş etmek ve yiyemediklerini söylemek.","fa":"دقیقاً همان چیزی را که می‌خواهی سفارش بدهی و بگویی چه چیزی نمی‌توانی بخوری.","es":"Pedir exactamente lo que quieres y decir lo que no puedes comer."},{"en":"Find your way, buy the right ticket and agree a taxi price.","tr":"Yolunu bulmak, doğru bileti almak ve taksi ücretinde anlaşmak.","fa":"راهت را پیدا کنی، بلیت درست را بخری و سر کرایه‌ی تاکسی توافق کنی.","es":"Orientarte, comprar el billete correcto y acordar el precio de un taxi."},{"en":"Explain a problem at a desk, a pharmacy or a police station and ask for a real fix.","tr":"Bir bankoda, eczanede ya da karakolda sorunu anlatmak ve gerçek bir çözüm istemek.","fa":"مشکلت را در یک پیشخوان، داروخانه یا کلانتری توضیح بدهی و راه‌حل واقعی بخواهی.","es":"Explicar un problema en un mostrador, una farmacia o una comisaría y pedir una solución real."},{"en":"Chat with locals and other travellers, and understand most of what they say.","tr":"Yerel halk ve diğer gezginlerle sohbet etmek ve söylediklerinin çoğunu anlamak.","fa":"با مردم محلی و مسافرهای دیگر گپ بزنی و بیشتر حرف‌هایشان را بفهمی.","es":"Charlar con la gente local y con otros viajeros, y entender la mayor parte de lo que dicen."}],"note":{"en":"Honest limits: travel situations only. The course does not promise a general B1 level.","tr":"Dürüst sınırlar: yalnızca seyahat durumları. Kurs genel bir B1 seviyesi vaat etmez.","fa":"صادقانه بگوییم: فقط موقعیت‌های سفر. این دوره سطح عمومی B1 را وعده نمی‌دهد.","es":"Límites honestos: solo situaciones de viaje. El curso no promete un nivel B1 general."}},
   modules:[
     {id:'tes-m1', weeks:[1,2], title:{en:'Before you go', tr:'Yola çıkmadan', es:'Antes de viajar'}, units:[
       _TU('tes-1-1','Booking by message','Mesajla rezervasyon','Reservar por mensaje','I can book or change a room and ask about extras.','Bir oda ayırtabilir veya değiştirebilir, ekstralar hakkında sorabilirim.','Puedo reservar o cambiar una habitación y preguntar por los extras.'),
@@ -24518,7 +24566,7 @@ const COURSE_TYPE_SHORT = COURSE_TYPE_META;
 const COURSE_SESSION_NAMES = [{en:'Learn', tr:'Öğren', fa:'یاد بگیر', es:'Aprende'}, {en:'Practise', tr:'Alıştır', fa:'تمرین کن', es:'Practica'}, {en:'Do', tr:'Yap', fa:'انجام بده', es:'Hazlo'}];
 const COURSE_CP_SESSION_NAMES = [{en:'Test', tr:'Test', fa:'آزمون', es:'Prueba'}, {en:'Show it', tr:'Göster', fa:'نشانش بده', es:'Demuéstralo'}];
 // Screen-only state (never saved): quiz cursors, open chapter, password box, intro, try-one pick.
-const courseUi = {sceneSeen:{}, judge:null, exit:null, wres:null, review:null, branch:null, fres:null, star:null, chapter:null, pwOpen:false, pwStatus:null, pwBusy:false, introOpen:null, trackOpen:false, nameOpen:false, tryPick:null, tryKey:null};
+const courseUi = {sceneSeen:{}, judge:null, exit:null, wres:null, review:null, branch:null, fres:null, star:null, chapter:null, pwOpen:false, pwStatus:null, pwBusy:false, introOpen:null, trackOpen:false, nameOpen:false, tryPick:null, tryKey:null, outcomesOpen:{}};
 function cl(o){ return o ? L(o.en, o.tr, o.fa, o.es) : ''; }
 const CES = {"Courses":"Cursos","HR & Business English, Travel, IELTS":"Español para viajar, DELE","Free sample unit":"Unidad de muestra gratis","Coming soon":"Próximamente","units":"unidades","Focused courses for one real-life goal. Your free Roadmap is never touched.":"Cursos centrados en un objetivo de la vida real. Tu Ruta gratuita no se toca.","Soon":"Pronto","Free":"Gratis","Entry level":"Nivel de entrada","weeks":"semanas","What you will do":"Lo que vas a hacer","track":"ruta","B1 track: more frames and model texts.":"Ruta B1: más plantillas y textos modelo.","B2 track: frames removed after the model.":"Ruta B2: sin plantillas después del modelo.","Module":"Módulo","Full course":"Curso completo","The sample unit is free. The full course is on its way.":"La unidad de muestra es gratis. El curso completo está en camino.","Tell me when it opens":"Avísame cuando abra","Premium course":"Curso premium","This course is being built":"Este curso se está construyendo","This unit is part of the full course":"Esta unidad es parte del curso completo","Leave a message and Farin will tell you when it opens.":"Deja un mensaje y Farin te avisará cuando abra.","Purchases are not open yet. Try the free sample unit meanwhile.":"Las compras aún no están abiertas. Mientras tanto, prueba la unidad de muestra gratis.","Back to courses":"Volver a los cursos","By the end of this unit":"Al final de esta unidad","Unit complete!":"¡Unidad completada!","Session":"Sesión","Warm-up":"Calentamiento","You are the interviewer. Ask:":"Tú eres quien entrevista. Pregunta:","Follow-up":"Pregunta de seguimiento","Useful phrases":"Frases útiles","Culture note":"Nota cultural","Say your answers out loud: 90 seconds, then 60, then 45. Recorded answers and teacher feedback come with the full course.":"Di tus respuestas en voz alta: 90 segundos, luego 60 y luego 45. Las respuestas grabadas y los comentarios del profesor llegan con el curso completo.","I've practised it":"Ya lo he practicado","This part of the course is not built yet.":"Esta parte del curso aún no está lista.","Nicely spotted!":"¡Bien visto!","judged correctly":"bien valoradas","Done":"Listo","Tap each part you can find in this answer.":"Toca cada parte que encuentres en esta respuesta.","Missing":"Falta","A complete answer. All four parts are there.":"Una respuesta completa. Están las cuatro partes.","Nothing to fix in this line.":"Nada que corregir en esta línea.","Next":"Siguiente","Check":"Comprobar","Model":"Modelo","Frame":"Plantilla","Write here":"Escribe aquí","Use":"Usa","words":"palabras","sentences":"frases","Not used yet":"Aún sin usar","Check it yourself":"Compruébalo por tu cuenta","Check and save":"Comprobar y guardar","Not scored":"Sin puntuación","Save to my journal":"Guardar en mi diario","Complete":"Completa","Something is missing":"Falta algo","Is this answer STAR-complete?":"¿Esta respuesta está completa según STAR?","Nothing to check yet.":"Aún no hay nada que comprobar.","Secure!":"¡Dominado!","Almost there":"Casi","Questions that slipped come back in the next units.":"Las preguntas que has fallado vuelven en las próximas unidades."};
 function CL(en, tr, fa, es){ return L(en, tr, fa, es !== undefined ? es : CES[en]); }
@@ -25332,7 +25380,7 @@ function courseExamIntroHtml(c){
   </div>`;
   const chev = LANG==='fa' ? '‹' : '›', cur = (state.progress.courseTrack || {})[c.id];
   const pick = a=>{ const s = cl(a), i = s.indexOf(':'); return `<button class="cs-pick${cur===a.track ? ' rec' : ''}" data-action="course-intro-pick" data-cid="${c.id}" data-track="${a.track}"><b>${esc(i > 0 ? s.slice(0, i) : s)} ${chev}</b>${i > 0 ? `<span>${esc(s.slice(i+1).trim())}</span>` : ''}</button>`; };
-  return `<div class="fade-in course-intro">
+  return `<div class="fade-in course-intro lx-page lx-course">
     ${coursePathHeadHtml()}
     <h1 class="display cp-title" style="padding-bottom:10px;">${esc(cl(c.title))}</h1>
     <div class="screen" style="padding-top:0;">
@@ -25343,6 +25391,7 @@ function courseExamIntroHtml(c){
       <h2 class="display" style="font-size:17px; margin:16px 0 10px;">${esc(cl(q.q))}</h2>
       <div class="stack" style="gap:10px;">${[q.a, q.b].filter(Boolean).map(pick).join('')}</div>
       ${q.note ? `<p style="margin:10px 0 0; font-size:12.5px; color:var(--ink-faint); text-align:center;">${esc(cl(q.note))}</p>` : ''}
+      ${courseOutcomesHtml(c)}
     </div>
   </div>`;
 }
@@ -25388,6 +25437,7 @@ function renderCourseIntro(c){
       ${tracks.length ? `<div class="lx-track-q">${CL('Your version','Senin versiyonun','نسخه‌ی تو','Tu versión')}</div>
       <div class="lx-track">${picks}</div>
       <p class="lx-note">${CL('You can change this later.','Bunu sonra değiştirebilirsin.','بعداً می‌توانی عوضش کنی.','Puedes cambiarlo más tarde.')}${intro.finish ? ' ' + esc(cl(intro.finish)) : ''}</p>` : (intro.finish ? `<p class="lx-note">${esc(cl(intro.finish))}</p>` : '')}
+      ${courseOutcomesHtml(c)}
     </div>
   </div>`;
 }
@@ -25427,7 +25477,7 @@ function renderCourseAbout(c){
   const finish = pd ? `<ul style="margin:6px 0 0; padding-inline-start:18px; font-size:13.5px;">${pd.parts.map(p=>`<li style="margin-bottom:3px;">${esc(cl(p.title))}</li>`).join('')}</ul>
       ${cert ? `<p style="margin:10px 0 0; font-size:13px; font-weight:700;">${esc(cl(cert.title))}</p><p style="margin:2px 0 0; font-size:12px; color:var(--ink-soft);">${esc(cl(cert.disclaimer))}</p>` : ''}`
     : `<ul style="margin:6px 0 0; padding-inline-start:18px; font-size:13.5px;">${c.modules.map(mm=>`<li style="margin-bottom:3px;">${esc(cl(mm.title))}</li>`).join('')}</ul>`;
-  return `<div class="fade-in course-about">
+  return `<div class="fade-in course-about lx-page lx-course">
     <div class="cp-head"><button class="cp-back" data-action="course-intro-close" data-cid="${c.id}">${LANG==='fa' ? '›' : '‹'} ${esc(cl(c.title))}</button></div>
     <h1 class="display cp-title">${CL('How this course works','Bu kurs nasıl işler','این دوره چطور کار می‌کند','Cómo funciona este curso')}</h1>
     <div class="screen" style="padding-top:0;">
@@ -25438,6 +25488,7 @@ function renderCourseAbout(c){
       <div class="card-flat" style="margin-top:12px;"><div class="eyebrow" style="color:var(--clay-lavender-deep);">${CL('How it works','Nasıl işler','چطور کار می‌کند','Cómo funciona')}</div>
         <p style="margin:4px 0 0; font-size:14px; line-height:1.5;">${esc(exam && c.intro.how ? cl(c.intro.how.body) : how)}</p></div>
       <div class="card-flat" style="margin-top:12px;"><div class="eyebrow" style="color:var(--clay-lavender-deep);">${CL('What you finish with','Sonunda elinde ne olacak','در پایان چه چیزی داری','Con qué terminas')}</div>${exam && c.intro.finish ? `<p style="margin:4px 0 0; font-size:14px; line-height:1.5;">${esc(cl(c.intro.finish.body))}</p>` : finish}</div>
+      ${courseOutcomesHtml(c)}
       <button class="btn btn-ghost" style="margin-top:16px;" data-action="course-intro-close" data-cid="${c.id}">${CL('Back to the course','Kursa dön','برگشت به دوره','Volver al curso')}</button>
     </div>
   </div>`;
@@ -25458,6 +25509,38 @@ function courseTrackQuestionHtml(c){
   return `<div class="card-flat" style="margin-top:12px;"><div class="eyebrow">${esc(courseTrackWord(c))}</div>
     <div class="stack" style="gap:8px; margin-top:8px;">${courseTrackPicksHtml(c, courseTrack(c.id), 'course-track')}</div>
     <p style="margin:8px 0 0; font-size:12px; color:var(--ink-faint);">${CL('You can change this later.','Bunu sonra değiştirebilirsin.','بعداً می‌توانی عوضش کنی.','Puedes cambiarlo más tarde.')}</p></div>`;
+}
+/* ---------- "What you'll learn" card (Farin 2026-10-18: "when the user opens the premium course, they should see a very well
+   organized and well designed card, also bullets: what they will learn objectively and what they can do in real life after passing
+   the course"). course.outcomes = {learn:[{en,tr,fa,es?}], life:[...], note:{...}?}: `learn` is the syllabus in plain words (skills,
+   text types, situations), `life` is what the learner can do after the course, `note` is the honest limit (what is not promised:
+   business/farin-monetization/03 "Never promised"). HR: lxd-course-hr-pilot/courses.js (sync-hr.js). IELTS and Travel: app-only key
+   on the COURSES line until their source files carry it (the sync scripts keep app keys that courses.js lacks). Shown in full on
+   the first open (intro), "How this course works" and the "comes later" gate; on the course page as a card that is open until the
+   first lesson is done, then a one-line row (the path stays first). A course without `outcomes` shows nothing. ---------- */
+function courseOutcomes(c){
+  const o = c && c.outcomes; if(!o) return null;
+  const learn = (o.learn || []).map(cl).filter(Boolean), life = (o.life || []).map(cl).filter(Boolean);
+  return learn.length || life.length ? {learn, life, note:o.note ? cl(o.note) : ''} : null;
+}
+function courseOutcomesOpen(cid){ const m = courseUi.outcomesOpen || {}; return cid in m ? !!m[cid] : courseUnitsDone(cid) === 0; }
+function courseOutcomesHtml(c, row){
+  const o = courseOutcomes(c); if(!o) return '';
+  const title = CL("What you'll learn",'Neler öğreneceksin','چه چیزهایی یاد می‌گیری','Qué vas a aprender'), eyebrow = CL('This course','Bu kurs','این دوره','Este curso');
+  const body = `${o.learn.length ? `<div class="lx-oc-group"><div class="lx-oc-title">${ICONS.book}<span>${CL('Skills and language','Beceriler ve dil','مهارت‌ها و زبان','Habilidades y lengua')}</span></div>
+      <ul class="lx-oc-list">${o.learn.map((s,k)=>`<li><span class="lx-oc-n">${k+1}</span><span>${esc(s)}</span></li>`).join('')}</ul></div>` : ''}
+    ${o.life.length ? `<div class="lx-oc-group life"><div class="lx-oc-title">${ICONS.star}<span>${CL('After the course, you can','Kurstan sonra şunları yapabilirsin','بعد از دوره می‌توانی','Después del curso podrás')}</span></div>
+      <ul class="lx-oc-list">${o.life.map(s=>`<li><span class="lx-oc-ck">${ICONS.check}</span><span>${esc(s)}</span></li>`).join('')}</ul></div>` : ''}
+    ${o.note ? `<p class="lx-oc-note">${esc(o.note)}</p>` : ''}`;
+  if(row){ const open = courseOutcomesOpen(c.id);
+    return `<div class="lx-card lx-oc lx-oc-row${open ? ' open' : ''}">
+      <button class="lx-oc-head" data-action="course-outcomes-toggle" data-cid="${c.id}" aria-expanded="${open ? 'true' : 'false'}"><span><span class="lx-eyebrow">${eyebrow}</span><b class="display">${title}<span class="dot">.</span></b></span><span class="lx-oc-chev">${ICONS.chev}</span></button>
+      ${open ? `<div class="lx-oc-body">${body}</div>` : ''}
+    </div>`; }
+  return `<div class="lx-sec lx-oc-sec">
+    <div class="lx-head"><div class="lx-eyebrow">${eyebrow}</div><h2 class="display">${title}<span class="dot">.</span></h2></div>
+    <div class="lx-card lx-oc">${body}</div>
+  </div>`;
 }
 const COURSE_X_SVG = '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>';
 // The history kept under a course screen: whatever led to the course page (or Courses), then optionally the course page.
@@ -25607,10 +25690,10 @@ function courseGo(cid, uid){
   courseOpenStep(cid, nx.uid, nx.type);
 }
 /* ---------- course page = the lesson path (Phase 0 S2, spec course-ux-simplify/v2 section 2) ----------
-   Home-roadmap style: a lavender band per chapter (title + blurb), the lessons as nodes on a line under an open band
+   Home-roadmap style: one card per chapter (lavender band head: number/tick/lock, title + blurb; chapter cards 2026-10-18), the lessons as nodes on a line inside the open card
    (done: lavender tick, title only; current: orange, "YOU ARE HERE", the story line and one Start/Continue button;
    later: white with a lavender ring, full colour), the chapter finale as a gold star, the final project as a gold
-   trophy. A locked chapter is its band only, with a small lock. No counts, minutes, weeks, slots or row locks here.
+   trophy. A locked chapter is a card too (lock badge); open, its lessons are grey lock nodes that lead to the gate. No counts, minutes, weeks or slots here.
    "Your work (n)" appears once the first portfolio piece exists; the unlock box is the last block before the footer. */
 const COURSE_TROPHY_SVG = '<svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M7 3h10v2h3v3a4 4 0 0 1-4 4h-.3A5 5 0 0 1 13 14.9V17h3v3H8v-3h3v-2.1A5 5 0 0 1 8.3 12H8a4 4 0 0 1-4-4V5h3V3zm0 4H6v1a2 2 0 0 0 1 1.7V7zm10 0v2.7A2 2 0 0 0 18 8V7h-1z"/></svg>';
 function courseUp(s){ try{ return String(s||'').toLocaleUpperCase(LANG==='tr' ? 'tr-TR' : undefined); }catch(e){ return String(s||'').toUpperCase(); } }
@@ -25623,7 +25706,7 @@ function courseLessonLine(cid, uid){ const f = courseFindUnit(cid, uid); if(!f) 
 function coursePathHeadHtml(){
   return `<div class="cp-head"><button class="cp-back" data-action="nav" data-view="courses-home">${LANG==='fa' ? '›' : '‹'} ${CL('Courses','Kurslar','دوره‌ها','Cursos')}</button></div>`;
 }
-function courseNodeHtml(c, u, isCp, nx, no){
+function courseNodeHtml(c, u, isCp, nx, no, locked){
   const steps = courseUnitSteps(c.id, u.id), ready = steps.length > 0;
   const done = ready && steps.every(s=>s.done), cur = !!(ready && nx && !nx.final && nx.uid===u.id), started = steps.some(s=>s.done);
   const title = u.isMock ? courseLessonName(c.id, u.id) : isCp ? courseFinaleName(c.id) : cl(u.title);
@@ -25631,6 +25714,9 @@ function courseNodeHtml(c, u, isCp, nx, no){
   const tick = done ? `<span class="cp-tick">${ICONS.check}</span>` : '';
   const dot = isCp ? `<span class="cp-dot gold${cur ? ' cur' : ''}${u.isMock ? ' mock' : ''}">${u.isMock ? ICONS.pen : ICONS.star}${tick}</span>`
     : done ? `<span class="cp-dot done">${ICONS.check}</span>` : `<span class="cp-dot ${cur ? 'cur' : 'later'}">${esc(no)}</span>`;
+  // A lesson inside a locked chapter (chapter cards): grey lock dot (the finale keeps its gold), tap = the gate for that lesson.
+  if(locked) return `<button class="cp-node is-locked" data-action="course-open" data-view="course-gate" data-cid="${c.id}" data-uid="${esc(u.id)}">${isCp ? `<span class="cp-dot gold lock${u.isMock ? ' mock' : ''}">${u.isMock ? ICONS.pen : ICONS.star}</span>` : `<span class="cp-dot lock">${COURSE_LOCK_SVG}</span>`}
+      <div class="cp-body"><div class="cp-ntitle">${esc(title)}</div>${sub ? `<div class="cp-nsub">${esc(sub)}</div>` : ''}</div></button>`;
   if(cur) return `<div class="cp-node is-cur" data-uid="${esc(u.id)}">${dot}
       <div class="cp-cur"><span class="cp-tag">${esc(courseUp(CL('You are here','Buradasın','اینجایی','Estás aquí')))}</span>
         <div class="cp-ntitle">${esc(title)}</div>${sub ? `<div class="cp-nsub">${esc(sub)}</div>` : ''}
@@ -25639,14 +25725,28 @@ function courseNodeHtml(c, u, isCp, nx, no){
   return `<button class="cp-node${done ? ' is-done' : ''}" ${ready ? `data-action="course-map-open" data-cid="${c.id}" data-uid="${esc(u.id)}"` : 'disabled'} data-uid="${esc(u.id)}">${dot}
       <div class="cp-body"><div class="cp-ntitle">${esc(title)}</div>${!done && sub ? `<div class="cp-nsub">${esc(sub)}</div>` : ''}</div></button>`;
 }
+// Chapter cards (Farin 2026-10-18): one card per chapter, its band as the head (number; tick when every lesson is done; lock),
+// the title, what happens there, a chevron. Open = the lesson nodes as before (locked chapters show their lessons grey with a
+// lock, tap = the gate). One chapter open at a time: the one the learner is in, unless they tapped another
+// (courseUi.chapter = {cid, mi}; mi -1 = all closed). ct-p0 step 4 counts one .cp-band per chapter and the YOU ARE HERE node.
+function courseChapterOpen(c, mi, nx){
+  const st = courseUi.chapter;
+  if(st && st.cid === c.id && typeof st.mi === 'number') return st.mi === mi;
+  return !!(nx && !nx.final && nx.uid && c.modules.findIndex(m=>courseModuleIds(m).includes(nx.uid)) === mi);
+}
 function courseChapterPathHtml(c, m, mi, nx){
   const ids = courseModuleIds(m);
-  const locked = !ids.some(uid=>courseUnitAccess(c, uid));
-  const inner = `<b>${locked ? COURSE_LOCK_SVG : ''}${esc(courseChapterName(mi))} · ${esc(cl(m.title))}</b>${m.blurb ? `<span>${esc(cl(courseGt(c.id, m, 'blurb')))}</span>` : ''}`;
-  if(locked) return `<button class="cp-band locked" data-action="course-open" data-view="course-gate" data-cid="${c.id}" data-mi="${mi}">${inner}</button>`;
-  return `<div class="cp-band">${inner}</div>
-    <div class="cp-nodes">${ids.map(id=>{ const ui = m.units.findIndex(u=>u.id===id); if(ui >= 0) return courseNodeHtml(c, m.units[ui], false, nx, (mi+1)+'.'+(ui+1));
-      return courseNodeHtml(c, m.checkpoint && m.checkpoint.id===id ? m.checkpoint : courseMockUnit(c, id), true, nx, ''); }).join('')}</div>`;
+  const locked = !ids.some(uid=>courseUnitAccess(c, uid)), open = courseChapterOpen(c, mi, nx);
+  const cur = !!(nx && !nx.final && nx.uid && ids.includes(nx.uid));
+  const done = !locked && ids.every(uid=>{ const s = courseUnitSteps(c.id, uid); return s.length > 0 && s.every(x=>x.done); });
+  const badge = locked ? COURSE_LOCK_SVG : done ? ICONS.check : String(mi+1);
+  const head = `<button class="cp-band" data-action="course-chapter-toggle" data-cid="${c.id}" data-mi="${mi}" aria-expanded="${open ? 'true' : 'false'}">
+      <span class="cp-ch-n">${badge}</span>
+      <span class="cp-ch-text"><b>${esc(courseChapterName(mi))} · ${esc(cl(m.title))}</b>${m.blurb ? `<span>${esc(cl(courseGt(c.id, m, 'blurb')))}</span>` : ''}</span>
+      <span class="cp-ch-chev">${ICONS.chev}</span></button>`;
+  const nodes = !open ? '' : `<div class="cp-nodes">${ids.map(id=>{ const ui = m.units.findIndex(u=>u.id===id); if(ui >= 0) return courseNodeHtml(c, m.units[ui], false, nx, (mi+1)+'.'+(ui+1), locked);
+      return courseNodeHtml(c, m.checkpoint && m.checkpoint.id===id ? m.checkpoint : courseMockUnit(c, id), true, nx, '', locked); }).join('')}</div>`;
+  return `<div class="cp-ch${open ? ' open' : ''}${locked ? ' locked' : ''}${cur ? ' cur' : ''}${done ? ' done' : ''}">${head}${nodes}</div>`;
 }
 // The final project as a gold trophy node after the last chapter.
 function courseFinalNodeHtml(c, nx){
@@ -25757,13 +25857,15 @@ function renderCourseDetail(cid, sheetUid){
   courseAccessRefresh(cid);
   const nx = courseNext(cid), track = courseTrack(cid);
   const body = !content ? courseComingSoonHtml(c) : c.modules.map((m,mi)=>courseChapterPathHtml(c, m, mi, nx)).join('') + courseFinalNodeHtml(c, nx);
-  return `<div class="fade-in course-path${content ? ' lx-page lx-course' : ''}">
+  return `<div class="fade-in course-path lx-page lx-course">
     ${coursePathHeadHtml()}
     ${content ? '' : `<h1 class="display cp-title">${esc(cl(c.title))}</h1>`}
     <div class="screen" style="padding-top:0;">
       ${content ? coursePageHeroHtml(c, nx) : ''}
+      ${content ? courseOutcomesHtml(c, true) : ''}
       ${courseReviewNoticeHtml(c)}
       ${body}
+      ${content ? '' : courseOutcomesHtml(c)}
       ${courseWorkRowHtml(c)}
       ${courseAccessLineHtml(c)}
       ${courseUnlockBoxHtml(c)}
@@ -25783,7 +25885,7 @@ function renderCourseGate(){
   const vp = state.viewParams || {}, c = courseGet(vp.cid);
   const soon = !c || !(c.status === 'live' || c.status === 'shell');
   if(!soon && vp.uid && courseUnitAccess(c, vp.uid) && courseFindUnit(c.id, vp.uid)) return renderCourseDetail(c.id, vp.uid);
-  if(soon) return `<div class="fade-in">
+  if(soon) return `<div class="fade-in lx-page lx-course">
     ${coursePathHeadHtml()}
     <h1 class="display cp-title">${esc(c ? cl(c.title) : CL('Courses','Kurslar','دوره‌ها','Cursos'))}</h1>
     <div class="screen" style="padding-top:0;">
@@ -25791,6 +25893,7 @@ function renderCourseGate(){
         <h2 class="display" style="font-size:20px; margin:4px 0 6px;">${c && c.status==='later' ? CL('This course comes later','Bu kurs daha sonra gelecek','این دوره بعداً می‌آید','Este curso llegará más adelante') : CL('This course is being built','Bu kurs hazırlanıyor','این دوره در حال آماده‌سازی است','Este curso se está construyendo')}</h2>
         <p style="font-size:13.5px; margin:0; opacity:.95;">${CL('Leave a message and Farin will tell you when it opens.','Mesaj bırak, açılınca Farin haber versin.','پیام بگذار تا Farin وقتی دوره باز شد خبرت کند.','Deja un mensaje y Farin te avisará cuando abra.')}</p>
       </div>
+      ${c ? courseOutcomesHtml(c) : ''}
       ${c ? `<a class="btn btn-primary" style="margin-top:14px;" target="_top" rel="noopener" href="${esc(courseWaLink(c))}">${ICONS.whatsapp} ${CL('Tell me when it opens','Açılınca haber ver','وقتی باز شد، خبرم کن','Avísame cuando abra')}</a>` : ''}
     </div></div>`;
   const pd = courseFinalData(c);
@@ -27283,6 +27386,8 @@ Object.assign(HANDLERS, {
     pr.courseTrack[el.dataset.cid] = el.dataset.track; courseUi.trackOpen = false; save(); render();
   },
   'course-track-toggle'(){ courseUi.trackOpen = !courseUi.trackOpen; render(); },
+  'course-chapter-toggle'(el){ const cid = el.dataset.cid, mi = Number(el.dataset.mi), c = courseGet(cid); if(!c) return; const open = courseChapterOpen(c, mi, courseNext(cid)); courseUi.chapter = {cid, mi:open ? -1 : mi}; render(); },
+  'course-outcomes-toggle'(el){ const cid = el.dataset.cid; if(!courseUi.outcomesOpen) courseUi.outcomesOpen = {}; courseUi.outcomesOpen[cid] = !courseOutcomesOpen(cid); render(); },
   'course-step'(el){ courseOpenStep(el.dataset.cid, el.dataset.uid, el.dataset.type); },
   'course-mark-done'(el){ courseMarkDone(el.dataset.cid, el.dataset.uid, el.dataset.type); courseAdvance(el.dataset.cid, el.dataset.uid); },
   // "Continue" on the course page: land on the unit path first so Back from the step returns there.

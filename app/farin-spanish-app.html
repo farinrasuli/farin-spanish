@@ -7830,6 +7830,7 @@ function openRoadmapNode(n){
   if(n.type === 'writing' || n.type === 'speaking') return nav({view:'studio-setup', mode:n.type, goal:n.goal||'', difficulty:n.difficulty||''});
   if(n.type === 'media') return nav({view:'media-session', id:n.refId});
   if(n.type === 'dialogue') return nav({view:'dialogue', id:n.refId});
+  if(n.type === 'box') return HANDLERS['open-box']({dataset:{node:n.refId}});
   if(n.type === 'session') return nav({view:'session-prep', idx:String(currentRoadmap().indexOf(n))});
   return nav({view:'vocab-set-intro', id:n.refId, goal:n.goal||'', cat:n.type === 'slang' ? 'slang' : 'vocab'});
 }
@@ -8555,7 +8556,7 @@ function nodeTitle(it){
       grammar:L('Grammar','Dilbilgisi','گرامر','Gramática'), vocab:L('Vocab','Kelime','کلمات','Vocabulario'), slang:L('Slang','Argo','اصطلاحات','Argot'),
       story:L('Story','Hikaye','داستان','Historia'), media:L('Watch or listen','İzle veya dinle','تماشا یا گوش‌کن','Mira o escucha'),
       writing:L('Writing practice','Yazma pratiği','تمرین نوشتن','Práctica de escritura'), speaking:L('Speaking practice','Konuşma pratiği','تمرین صحبت‌کردن','Práctica de conversación'),
-      game:L('Game','Oyun','بازی','Juego')
+      game:L('Game','Oyun','بازی','Juego'), box:L('Vocab Box','Kelime Kutusu','جعبهٔ لغات','Caja de palabras')
     };
     let p = pre[it.type], tail = null;
     if(it.type==='grammar'){ const g = GRAMMAR_ITEMS.find(x=>x.id===it.refId); if(g) tail = grammarTitle(g); }
@@ -8567,6 +8568,7 @@ function nodeTitle(it){
     else if(it.type==='dialogue'){ p = L('Dialogue','Diyalog','گفت‌وگو','Diálogo'); const dl = DIALOGUES.find(x=>x.id===it.refId); if(dl) tail = svText(dl.title); }
     else if(it.type==='media'){ const m = MEDIA_LIBRARY.find(x=>x.id===it.refId); if(m) tail = L(m.title.en, m.title.tr, m.title.fa, m.title.es); }
     else if(it.type==='writing' || it.type==='speaking'){ const dl = STUDIO_DIFFICULTY_LABEL[it.difficulty]; if(dl) tail = L(dl.en, dl.tr, dl.fa, dl.es); }
+    else if(it.type==='box'){ tail = L('review','tekrar','مرور','repaso'); }
     else if(it.type==='game'){
       tail = gameDisplayName(it.gameKind);
       if(it.gameKind === 'path'){ const pc = pathNodeChapter(it); if(pc) tail += ' — ' + svText(pc.title); }
@@ -9588,6 +9590,7 @@ function buildRoadmap(profile){
     if(items[mAt] && items[mAt].type === 'game' && items[mAt].pos === 1) mAt++;   // the position-1 game stays right after speaking
     items.splice(mAt, 0, mediaRoadmapNode(profile, mediaPick, primaryGoal));
   }
+  roadmapAddBoxNodes(items, profile, 0);   // Vocab Box reviews (Farin 2026-10-18)
   const seenNodeKeys = {};
   items.forEach(it=>{
     const baseKey = it.type+':'+it.refId;
@@ -9680,6 +9683,7 @@ function roadmapNodeAutoDone(item){
     case 'game': return !!(state.progress.completedGames && state.progress.completedGames.includes(item.refId));
     case 'grammar': return state.progress.completedTraps.includes(item.refId);
     case 'vocab': case 'slang': return state.progress.completedVocabSets.includes(item.refId);
+    case 'box': return !!(state.progress.boxDone && state.progress.boxDone[item.refId]);
     case 'story': return state.progress.completedStories.includes(item.refId);
     case 'dialogue': return Array.isArray(state.progress.completedDialogues) && state.progress.completedDialogues.includes(item.refId);
     default: return null; // writing/speaking: no reliable auto-signal, manual only
@@ -9706,7 +9710,7 @@ function migrateRoadmapChecked(){
   if(!state.profile || !state.profile.completedDiagnostic) return;
   try{
     // media nodes (2026-10-04) didn't exist when index keys were written
-    const roadmap = buildRoadmap(state.profile).filter(n=>n.type!=='media');
+    const roadmap = buildRoadmap(state.profile).filter(n=>n.type!=='media' && n.type!=='box');
     numericKeys.forEach(k=>{
       const idx = Number(k);
       if(rc[k] && roadmap[idx]) rc[roadmapNodeId(roadmap[idx])] = true;
@@ -9763,6 +9767,7 @@ function ensureRoadmap(){
   // roadmaps saved before media nodes existed get theirs (see ensureRoadmapMedia)
   let mediaAdded = false;
   if(state.profile && state.profile.completedDiagnostic){ try{ mediaAdded = ensureRoadmapMedia(); }catch(e){} }
+  if(state.profile && state.profile.completedDiagnostic){ try{ if(ensureRoadmapBox()) mediaAdded = true; }catch(e){} }
   if(state.profile && state.profile.completedDiagnostic){ try{ awardSouvenirs(null); }catch(e){} }
   return mediaAdded;
 }
@@ -9794,9 +9799,10 @@ function mergeRoadmapForGoalChange(){
   try{ target = buildRoadmap(state.profile); }catch(e){ return; }
   const keptIds = new Set(kept.map(roadmapNodeId));
   // media: never appended at the end; ensureRoadmapMedia() puts it after the story
-  const newNodes = target.filter(it=>!keptIds.has(roadmapNodeId(it)) && !(legacyGames && it.type==='game') && it.type!=='media');
+  const newNodes = target.filter(it=>!keptIds.has(roadmapNodeId(it)) && !(legacyGames && it.type==='game') && it.type!=='media' && it.type!=='box');
   state.roadmap = kept.concat(newNodes).map((it,idx)=>Object.assign({}, it, {n:idx+1}));
   try{ ensureRoadmapMedia(); }catch(e){}
+  try{ ensureRoadmapBox(); }catch(e){}
 }
 
 function learnerCharKey(){
@@ -12165,6 +12171,7 @@ function renderRoadmapCard(p){
     grammar:{ic:ICONS.dumbbell, c:'gram', label:L('Grammar','Dilbilgisi','گرامر', 'Gramática')},
     vocab:{ic:ICONS.cards, img:'icon-story.png', c:'voc', label:L('Vocabulary','Kelime','واژگان', 'Vocabulario')},
     slang:{ic:ICONS.cards, c:'diag', label:L('Slang','Argo','اصطلاحات', 'Argot')},
+    box:{ic:ICONS.cards, c:'voc', label:L('Vocab Box','Kelime Kutusu','جعبهٔ لغات','Caja de palabras')},
     // icon-review.png is a clock — it reads as "a scheduled session", which fits
     // the live speaking session better than it fit slang.
     session:{ic:ICONS.chat, c:'lis', label:L('Speaking session','Konuşma seansı','جلسه مکالمه','Sesión de conversación')},
@@ -12286,6 +12293,9 @@ function renderRoadmapCard(p){
       studyCloseTag = '</button>';
     } else if(item.type==='dialogue'){
       studyOpenTag = '<button class="roadmap-study" data-action="nav" data-view="dialogue" data-id="'+item.refId+'" style="'+studyStyle+'">';
+      studyCloseTag = '</button>';
+    } else if(item.type==='box'){
+      studyOpenTag = '<button class="roadmap-study" data-action="open-box" data-node="'+item.refId+'" style="'+studyStyle+'">';
       studyCloseTag = '</button>';
     } else if(item.type==='media'){
       studyOpenTag = '<button class="roadmap-study" data-action="nav" data-view="media-session" data-id="'+item.refId+'" style="'+studyStyle+'">';
@@ -19947,7 +19957,6 @@ function deckState(s){
 function deckAdvance(s, d){
   d.pos += 1;
   if(d.pos < d.queue.length) return;
-  if(d.lap === 1 && d.again.length){ d.lap = 2; d.queue = d.again.slice(); d.pos = 0; return; }
   d.done = true;
   if(!state.progress.deckSort) state.progress.deckSort = {};
   state.progress.deckSort[s.id] = {again:d.again.map(i=>s.cards[i].word), twice:d.twice.map(i=>s.cards[i].word), date:todayISO()};
@@ -19975,7 +19984,7 @@ function deckSortTap(setId, keep){
   if(!s || !d || d.done || deckBusy || d.setId !== setId) return;
   const i = d.queue[d.pos];
   if(keep){ if(d.lap === 1) d.kept += 1; sfx('hop'); }
-  else { (d.lap === 1 ? d.again : d.twice).push(i); sfx('flip'); }
+  else { d.again.push(i); boxAdd(s, s.cards[i]); sfx('flip'); }
   deckAdvance(s, d);
   state.viewParams.flipped = false;
   save();
@@ -19988,6 +19997,144 @@ function deckSortTap(setId, keep){
   let fired = false;
   const done = ()=>{ if(fired) return; fired = true; deckBusy = false; if(state.view === 'vocab-set') render(); };
   a.onfinish = done; a.oncancel = done;
+}
+/* Vocab Box (Farin 2026-10-18). A flashcard the learner sorts "Practice again" goes into the Vocab Box
+   (progress.vocabBox = [{set, w, at}], one entry per word) instead of coming back in a second lap. Every roadmap
+   page has two Vocab Box review cards (type 'box', see roadmapAddBoxNodes): a one-lap deck of the boxed words,
+   oldest first, at most BOX_REVIEW_MAX; "I knew it" takes a word out of the box, "Practice again" keeps it for the
+   next review. Finishing the deck (or opening it with an empty box) checks the card: progress.boxDone[refId]. */
+const BOX_REVIEW_MAX = 12;
+function boxList(){
+  const p = state.progress; if(!p) return [];
+  if(!Array.isArray(p.vocabBox)) p.vocabBox = [];
+  return p.vocabBox;
+}
+function boxCard(e){ const s = e && VOCAB_SETS.find(x=>x.id===e.set); return s ? s.cards.find(c=>c.word===e.w) || null : null; }
+function boxAdd(s, card){
+  if(!s || !card) return;
+  const box = boxList();
+  if(!box.some(e=>e.set===s.id && e.w===card.word)) box.push({set:s.id, w:card.word, at:todayISO()});
+}
+function boxRemove(e){ const p = state.progress; if(p && Array.isArray(p.vocabBox)) p.vocabBox = p.vocabBox.filter(x=>!(x.set===e.set && x.w===e.w)); }
+function boxMarkDone(refId){
+  if(!refId) return;
+  if(!state.progress.boxDone) state.progress.boxDone = {};
+  state.progress.boxDone[refId] = todayISO();
+}
+function boxDeckState(){
+  const vp = state.viewParams;
+  let d = vp.boxDeck;
+  if(!d || !Array.isArray(d.queue)){
+    d = vp.boxDeck = {queue:boxList().filter(e=>boxCard(e)).slice(0, BOX_REVIEW_MAX).map(e=>({set:e.set, w:e.w})), pos:0, knew:0, again:0, done:false};
+    vp.flipped = false;
+  }
+  return d;
+}
+// One flashcard face, shared by the set deck and the Vocab Box: front = the word; back = the word (tap to hear) + meaning.
+function flashFaceHtml(card, flipped){
+  const mean = card.meaning ? (L(card.meaning.en, card.meaning.tr, card.meaning.fa, card.meaning.es) || card.meaning.en) : '';
+  return flipped ? `
+            <div class="flash-word" dir="ltr">${esc(card.word)}</div>
+            ${ttsButton(card.word, 'on-card')}
+            ${mean ? `<div class="flash-hint" style="margin-top:8px;">${L('Meaning','Anlam','معنی','Significado')}</div><div class="flash-sentence flash-meaning" dir="auto">${esc(mean)}</div>` : ''}
+          ` : `
+            <div class="flash-hint">${L('Word','Kelime','کلمه','Palabra')}</div>
+            <div class="flash-word" dir="ltr">${esc(card.word)}</div>
+            ${ttsButton(card.word, 'on-card')}
+            <div class="flash-hint" style="font-weight:600; text-transform:none; letter-spacing:0;">${L('tap to reveal','görmek için dokun','برای دیدن لمس کن','toca para revelar')}</div>
+          `;
+}
+function boxSortTap(keep){
+  const d = state.viewParams.boxDeck;
+  if(!d || d.done || deckBusy) return;
+  const e = d.queue[d.pos];
+  if(keep){ boxRemove(e); d.knew += 1; sfx('hop'); }
+  else { d.again += 1; sfx('flip'); }
+  d.pos += 1;
+  if(d.pos >= d.queue.length){ d.done = true; boxMarkDone(state.viewParams.node); }
+  state.viewParams.flipped = false;
+  save();
+  const card = document.getElementById('deck-card');
+  const a = anim(card, keep
+    ? [{transform:'translateX(0) rotate(0deg)', opacity:1}, {transform:'translateX(130%) rotate(10deg)', opacity:0}]
+    : [{transform:'translateY(0) scale(1)', opacity:1}, {transform:'translateY(14px) scale(.92)', opacity:0}], {duration:260, easing:'ease-in', fill:'forwards'});
+  if(!a){ render(); return; }
+  deckBusy = true;
+  let fired = false;
+  const done = ()=>{ if(fired) return; fired = true; deckBusy = false; if(state.view === 'vocab-box') render(); };
+  a.onfinish = done; a.oncancel = done;
+}
+function renderVocabBox(){
+  const d = boxDeckState();
+  const title = L('Vocab Box','Kelime Kutusu','جعبهٔ لغات','Caja de palabras');
+  const soft = 'var(--cat-voc-soft)';
+  const left = boxList().length;
+  if(!d.queue.length || d.done){
+    if(!d.queue.length) boxMarkDone(state.viewParams.node);
+    const line = !d.queue.length
+      ? L('Your Vocab Box is empty. Every word you mark "Practice again" lands here for a review.','Kelime Kutun boş. "Tekrar çalışayım" dediğin her kelime tekrar için buraya gelir.','جعبهٔ لغاتت خالی است. هر کلمه‌ای که «دوباره تمرین کنم» بزنی برای مرور اینجا می‌آید.','Tu Caja de palabras está vacía. Cada palabra que marques "Practicar otra vez" llega aquí para repasarla.')
+      : L(`Words you knew, now out of the box: ${d.knew}.`, `Bildiğin ve kutudan çıkan kelime: ${d.knew}.`, `کلمه‌هایی که بلد بودی و از جعبه بیرون رفتند: ${d.knew}.`, `Palabras que sabías y salen de la caja: ${d.knew}.`)
+        + (left ? ' ' + L(`Still in the box for the next review: ${left}.`, `Bir sonraki tekrar için kutuda kalan: ${left}.`, `در جعبه برای مرور بعدی می‌ماند: ${left}.`, `Siguen en la caja para el próximo repaso: ${left}.`) : '');
+    return `<div class="fade-in game-screen">
+    ${gameTopHtml(title)}
+    <div class="game-card">
+      <div class="game-result-title">${d.queue.length ? L('Box reviewed','Kutu tekrarlandı','جعبه مرور شد','Caja repasada') : L('Nothing to review','Tekrar edilecek bir şey yok','چیزی برای مرور نیست','Nada que repasar')}</div>
+      <div class="game-result-line">${esc(line)}</div>
+      <button class="btn btn-primary game-cta" data-action="box-finish">${L('Done','Tamam','تمام','Listo')}</button>
+    </div>
+  </div>`;
+  }
+  const e = d.queue[d.pos], card = boxCard(e) || {word:e.w, meaning:null};
+  const rest = d.queue.length - d.pos - 1;
+  return `<div class="fade-in game-screen">
+    ${gameTopHtml(title)}
+    <div class="game-status">
+      <span class="game-status-text">${L(`Card ${d.pos+1} of ${d.queue.length}`, `Kart ${d.pos+1}/${d.queue.length}`, `کارت ${d.pos+1} از ${d.queue.length}`, `Tarjeta ${d.pos+1} de ${d.queue.length}`)}</span>
+      <span class="game-status-end"><span class="game-chip">${d.knew ? L(`out of the box ${d.knew}`, `kutudan çıkan ${d.knew}`, `${d.knew} از جعبه بیرون`, `${d.knew} fuera de la caja`) : L('Tap the card to flip','Çevirmek için karta dokun','برای چرخاندن لمس کن','Toca para voltear')}</span></span>
+    </div>
+    <div class="flash-wrap deck-wrap">
+      ${deckGhostsHtml(rest, soft)}
+      <div class="flashcard" data-action="flip-card" id="deck-card" translate="no">
+        <div class="flash-face" style="background:${soft};">${flashFaceHtml(card, state.viewParams.flipped)}</div>
+      </div>
+    </div>
+    <div class="flash-dots">${d.queue.map((_,idx)=>`<i class="${idx===d.pos?'active':''}"></i>`).join('')}</div>
+    <div class="flash-nav">
+      ${state.viewParams.flipped
+        ? `<button class="btn btn-ghost" style="flex:1;" data-action="box-again">${L('Practice again','Tekrar çalışayım','دوباره تمرین کنم','Practicar otra vez')}</button>
+           <button class="btn btn-primary" style="flex:1;" data-action="box-keep">${L('I knew it','Biliyordum','بلد بودم','La sabía')}</button>`
+        : `<button class="btn btn-ghost" style="flex:1;" data-action="flip-card">${L('Flip the card','Kartı çevir','کارت را برگردان','Dale la vuelta a la tarjeta')}</button>`}
+    </div>
+  </div>`;
+}
+// Two Vocab Box cards per roadmap page: one after the middle (after the mid game when there is one), one before the
+// closer (the last node). minAt keeps them after anything already done on a saved page.
+function roadmapAddBoxNodes(items, profile, minAt){
+  if(!profile || !profile.level || items.some(n=>n.type==='box')) return false;
+  const stage = profile.levelStage === 2 ? 2 : 1;
+  const mk = k => ({type:'box', refId:'box-'+profile.level+'-s'+stage+'-'+k, goal:null, title:L('Vocab Box','Kelime Kutusu','جعبهٔ لغات','Caja de palabras')+': '+L('review','tekrar','مرور','repaso')});
+  const lo = Math.max(0, minAt || 0);
+  const closer = items.findIndex(n=>n.type==='game' && n.pos===6);
+  let b = closer >= 0 ? closer : Math.max(items.length - 1, 0);
+  b = Math.max(b, lo);
+  const mid = items.findIndex(n=>n.type==='game' && n.pos===3);
+  let a = mid >= 0 ? mid + 1 : Math.ceil(items.length / 2);
+  a = Math.min(Math.max(a, lo), b);
+  items.splice(b, 0, mk(2));
+  items.splice(a, 0, mk(1));
+  return true;
+}
+// Saved roadmaps (made before the Vocab Box) get their two cards on the part not done yet.
+function ensureRoadmapBox(){
+  const rm = state.roadmap;
+  if(!rm || !rm.length || !state.profile || !state.profile.completedDiagnostic) return false;
+  if(rm.some(n=>n.type==='box') || rm.every(n=>isRoadmapNodeDone(n))) return false;
+  let lastDone = -1; rm.forEach((n,i)=>{ if(isRoadmapNodeDone(n)) lastDone = i; });
+  if(!roadmapAddBoxNodes(rm, state.profile, lastDone + 1)) return false;
+  rm.forEach((n,i)=>{ n.n = i+1; });
+  const g = state.progress && state.progress.roadmapGolden;
+  if(g && g.nodeId){ const gi = rm.findIndex(n=>roadmapNodeId(n)===g.nodeId); if(gi > -1) g.goldenIdx = gi; }
+  return true;
 }
 /* Slang "Say it?" (Trello uVzMAAGg; gamify-every-card §4.3 as changed by the LXD review §B Q4).
    A 4-round beat between the slang flashcards and the quiz: one scene (UI language), the phrase
@@ -20075,7 +20222,7 @@ function renderVocabSet(id, cardIndex){
     ${gameTopHtml(setTitle(s))}
     <div class="game-card">
       <div class="game-result-title">${L('Deck sorted','Deste sıralandı','دسته مرتب شد','Baraja ordenada')}</div>
-      <div class="game-result-line">${L(`You kept ${d.kept} straight away.`, `${d.kept} kartı hemen tuttun.`, `${d.kept} کارت را همان اول بلد بودی.`, `Sabías ${d.kept} a la primera.`)}${d.again.length ? ' ' + L(`${d.again.length} took a second look.`, `${d.again.length} karta ikinci kez baktın.`, `${d.again.length} کارت را دوباره دیدی.`, `${d.again.length} han necesitado un segundo vistazo.`) : ''}${s.category === 'slang' ? esc(slangSaySummary(s)) : ''}</div>
+      <div class="game-result-line">${L(`You kept ${d.kept} straight away.`, `${d.kept} kartı hemen tuttun.`, `${d.kept} کارت را همان اول بلد بودی.`, `Sabías ${d.kept} a la primera.`)}${d.again.length ? ' ' + L(`${d.again.length} went to your Vocab Box for a review later.`, `${d.again.length} tanesi daha sonra tekrar için Kelime Kutuna gitti.`, `${d.again.length} مورد برای مرور بعدی به جعبهٔ لغاتت رفت.`, `${d.again.length} han ido a tu Caja de palabras para repasarlas luego.`) : ''}${s.category === 'slang' ? esc(slangSaySummary(s)) : ''}</div>
       <button class="btn btn-primary game-cta" data-action="start-vocab-quiz" data-id="${s.id}">${inCourseStep() ? L('Practise the words','Kelimeleri çalış','واژه‌ها را تمرین کن','Practica las palabras') : L('Play Game!','Oyunu Oyna!','بازی کن!','¡Juega!')}</button>
     </div>
   </div>`;
@@ -20087,32 +20234,20 @@ function renderVocabSet(id, cardIndex){
   return `<div class="fade-in game-screen">
     ${gameTopHtml(setTitle(s))}
     <div class="game-status">
-      <span class="game-status-text">${L(`Card ${d.pos+1} of ${d.queue.length} · lap ${d.lap}`, `Kart ${d.pos+1}/${d.queue.length} · ${d.lap}. tur`, `کارت ${d.pos+1} از ${d.queue.length} · دور ${d.lap}`, `Tarjeta ${d.pos+1} de ${d.queue.length} · vuelta ${d.lap}`)}</span>
+      <span class="game-status-text">${L(`Card ${d.pos+1} of ${d.queue.length}`, `Kart ${d.pos+1}/${d.queue.length}`, `کارت ${d.pos+1} از ${d.queue.length}`, `Tarjeta ${d.pos+1} de ${d.queue.length}`)}</span>
       <span class="game-status-end"><span class="game-chip" id="deck-kept">${d.kept ? L(`kept ${d.kept}`, `${d.kept} tuttun`, `${d.kept} بلد بودی`, `${d.kept} ya sabidas`) : L('Tap the card to flip','Çevirmek için karta dokun','برای چرخاندن لمس کن','Toca para voltear')}</span></span>
     </div>
     <div class="flash-wrap deck-wrap">
       ${deckGhostsHtml(left, soft)}
       <div class="flashcard" data-action="flip-card" id="deck-card" translate="no">
-        <div class="flash-face" style="background:${soft};">
-          ${state.viewParams.flipped ? `
-            <div class="flash-hint">${L('Example','Örnek','مثال','Ejemplo')}</div>
-            <div class="flash-sentence" dir="ltr">${highlightWord(card.sentence, cardGap(card), L(card.meaning.en, card.meaning.tr, card.meaning.fa, card.meaning.es))}</div>
-            ${ttsButton(card.sentence || card.word, 'on-card')}
-            ${card.meaning ? `<div class="flash-hint" style="margin-top:10px;">${L('Meaning','Anlam','معنی','Significado')}</div><div class="flash-sentence" dir="ltr">${esc(card.meaning.en)}${local ? ' — '+esc(local) : ''}</div>` : ''}
-            ${card.note ? `<div class="flash-note row" dir="ltr" style="align-items:flex-start; gap:7px;"><span style="flex:0 0 auto; margin-top:1px;">${ICONS.warn}</span><span>${esc(L(card.note.en,card.note.tr,card.note.fa,card.note.es))}</span></div>` : ''}
-          ` : `
-            <div class="flash-hint">${L('Word','Kelime','کلمه','Palabra')}</div>
-            <div class="flash-word" dir="ltr">${esc(card.word)}</div>
-            ${ttsButton(card.word, 'on-card')}
-            <div class="flash-hint" style="font-weight:600; text-transform:none; letter-spacing:0;">${L('tap to reveal','görmek için dokun','برای دیدن لمس کن','toca para revelar')}</div>
-          `}
+        <div class="flash-face" style="background:${soft};">${flashFaceHtml(card, state.viewParams.flipped)}
         </div>
       </div>
     </div>
     <div class="flash-dots">${d.queue.map((_,idx)=>`<i class="${idx===d.pos?'active':''}"></i>`).join('')}</div>
     <div class="flash-nav">
       ${state.viewParams.flipped
-        ? `<button class="btn btn-ghost" style="flex:1;" data-action="deck-again" data-id="${s.id}">${L('Show me again','Tekrar göster','دوباره نشانم بده','Muéstramela otra vez')}</button>
+        ? `<button class="btn btn-ghost" style="flex:1;" data-action="deck-again" data-id="${s.id}">${L('Practice again','Tekrar çalışayım','دوباره تمرین کنم','Practicar otra vez')}</button>
            <button class="btn btn-primary" style="flex:1;" data-action="deck-keep" data-id="${s.id}">${L('I knew it','Biliyordum','بلد بودم','La sabía')}</button>`
         : `<button class="btn btn-ghost" style="flex:1;" data-action="flip-card">${L('Flip the card','Kartı çevir','کارت را برگردان','Dale la vuelta a la tarjeta')}</button>`}
     </div>
@@ -21810,6 +21945,7 @@ const screens = {
   'vocab-list': renderVocabList,
   'vocab-set': ()=>renderVocabSet(state.viewParams.id, state.viewParams.cardIndex||0),
   'vocab-set-intro': ()=>renderVocabSetIntro(state.viewParams.id),
+  'vocab-box': ()=>renderVocabBox(),
   'goals-list': renderGoalsList,
   'goal-levels': ()=>renderGoalLevels(state.viewParams.goal),
   'goal-level-detail': ()=>renderGoalLevelDetail(state.viewParams.goal, state.viewParams.level),
@@ -23841,6 +23977,11 @@ const HANDLERS = {
   // Sort the deck (tobT7nwI)
   'deck-keep'(el){ deckSortTap(el.dataset.id, true); },
   'deck-again'(el){ deckSortTap(el.dataset.id, false); },
+  // Vocab Box
+  'open-box'(el){ go('vocab-box', {node:(el && el.dataset && el.dataset.node) || ''}); },
+  'box-keep'(){ boxSortTap(true); },
+  'box-again'(){ boxSortTap(false); },
+  'box-finish'(){ const ref = state.viewParams.node; if(ref) boxMarkDone(ref); save(); navHistory.length = 0; go('dashboard', {}); },
   'vocab-next'(el){ const i = +el.dataset.i; go('vocab-set', {id: el.dataset.id, cardIndex: i+1, flipped:false, level:state.viewParams.level, cat:state.viewParams.cat, goal:state.viewParams.goal}); },
   'vocab-prev'(el){ const i = +el.dataset.i; go('vocab-set', {id: el.dataset.id, cardIndex: i-1, flipped:false, level:state.viewParams.level, cat:state.viewParams.cat, goal:state.viewParams.goal}); },
   'start-grammar-quiz'(el){

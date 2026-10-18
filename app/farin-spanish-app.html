@@ -8141,13 +8141,14 @@ function srsGrammarQ(item, field, goal){
 }
 function srsVocabQ(set, card){
   const meaning = L(card.meaning.en, card.meaning.tr, card.meaning.fa, card.meaning.es) || card.meaning.en || '';
-  const others = shuffle(set.cards.filter(c=>c.word.toLowerCase() !== card.word.toLowerCase())).slice(0, 3).map(c=>c.word);
-  const opts = shuffle([card.word].concat(others));
   // Zuq1fEjy: a card whose gap is not in its sentence is asked by its meaning, never as a fill-in with no blank.
   const inSentence = cardHasGap(card);
+  const ans = inSentence ? cardGapText(card) : card.word;
+  const others = inSentence ? gapOptions(card, [set.cards], 3) : shuffle(set.cards.filter(c=>c.word.toLowerCase() !== card.word.toLowerCase())).slice(0, 3).map(c=>c.word);
+  const opts = shuffle([ans].concat(others));
   const prompt = inSentence ? meaning + '\n' + cardBlank(card, '___')
     : L('Which word means this?','Hangi kelime bu anlama geliyor?','کدام کلمه این معنی را دارد؟','¿Qué palabra significa esto?') + '\n' + meaning;
-  return {qt:inSentence ? 'fill' : 'meaning', prompt, options:opts, correct:opts.indexOf(card.word), why:'"'+card.word+'" — '+meaning+(card.sentence ? ' · '+card.sentence : ''), answerText:card.sentence || card.word, answerTr:'"'+card.word+'" = '+meaning};
+  return {qt:inSentence ? 'fill' : 'meaning', prompt, options:opts, correct:opts.indexOf(ans), why:'"'+card.word+'" — '+meaning+(card.sentence ? ' · '+card.sentence : ''), answerText:card.sentence || card.word, answerTr:'"'+card.word+'" = '+meaning};
 }
 function srsStoryQ(story, v){
   const meaning = L(v.en, v.tr, v.fa, v.es) || v.en || '';
@@ -8371,6 +8372,14 @@ function cardGap(c){ return (c && c.gap) || c.word; }
 function cardGapRe(c){ return new RegExp('(^|[^\\p{L}\\p{N}])(' + reEsc(cardGap(c)) + ')', 'iu'); }
 function cardHasGap(c){ return !!(c && c.sentence && cardGap(c) && cardGapRe(c).test(c.sentence)); }
 function cardBlank(c, gap){ return String(c.sentence).replace(cardGapRe(c), (m, pre)=>pre + (gap || '_____')); }
+// 2026-10-18 (Farin: "I'm follow up on my email"): a fill-in option must be the form the sentence really uses
+// ("following up"), never the headword, or the filled sentence is ungrammatical. Distractors use their own gap form too.
+function cardGapText(c){ const m = c && c.sentence ? String(c.sentence).match(cardGapRe(c)) : null; return m ? m[2] : cardGap(c); }
+function gapOptions(c, pools, n){
+  const ans = cardGapText(c), seen = new Set([ans.toLowerCase(), c.word.toLowerCase()]), out = [];
+  pools.forEach(p=>shuffle(p).forEach(x=>{ const g = cardGapText(x), k = g.toLowerCase(); if(out.length < n && !seen.has(k) && !seen.has(x.word.toLowerCase())){ seen.add(k); seen.add(x.word.toLowerCase()); out.push(g); } }));
+  return out;
+}
 /* Teaching redesign X3 (Trello ALYtdMw2): the one typed-answer matcher, used by every typed answer (grammar `type`
    items, vocab cued recall, the Use it chunk check). Case, punctuation and extra spaces never count. An answer that
    differs only in its accents is "almost": it counts as right and the feedback shows the accent. One wrong, missing,
@@ -20835,9 +20844,8 @@ function vocabQuizQuestions(s){
     return out;
   };
   const fillQ = (c) => {
-    const distractors = otherWords(c, [sibling], 3);
-    const options = shuffle([c.word, ...distractors]);
-    return Object.assign({qt:'fill', prompt: blankOf(c), options, correct: options.indexOf(c.word), why: whyOf(c)}, ansFor(c));
+    const ans = cardGapText(c), options = shuffle([ans, ...gapOptions(c, [sibling], 3)]);
+    return Object.assign({qt:'fill', prompt: blankOf(c), options, correct: options.indexOf(ans), why: whyOf(c)}, ansFor(c));
   };
   // Trello Zuq1fEjy: a card whose gap is not in its sentence (cardHasGap false) is asked by its meaning instead.
   const meaningLabel = L('Which word means this?','Hangi kelime bu anlama geliyor?','کدام کلمه این معنی را دارد؟','¿Qué palabra significa esto?');
@@ -21344,10 +21352,9 @@ function buildStageCheck(){
   const meaningOf = c => L(c.meaning.en, c.meaning.tr, c.meaning.fa, c.meaning.es) || c.meaning.en || '';
   const wordAns = c => ({answerText:c.sentence, answerTr:'"' + c.word + '" = ' + meaningOf(c)});
   const wChoose = w => {
-    const c = w.card, seen = new Set([c.word.toLowerCase()]), opts = [];
-    [sibOf(w.set), w.set.cards].forEach(pool=>shuffle(pool).forEach(x=>{ const k = x.word.toLowerCase(); if(opts.length < 3 && !seen.has(k)){ seen.add(k); opts.push(x.word); } }));
-    const options = shuffle([c.word].concat(opts));
-    return Object.assign({qt:'fill', prompt:cardBlank(c), options, correct:options.indexOf(c.word), why:''}, wordAns(c));
+    const c = w.card, ans = cardGapText(c);
+    const options = shuffle([ans].concat(gapOptions(c, [sibOf(w.set), w.set.cards], 3)));
+    return Object.assign({qt:'fill', prompt:cardBlank(c), options, correct:options.indexOf(ans), why:''}, wordAns(c));
   };
   const wTyped = w => {
     const c = w.card, m = String(c.sentence).match(cardGapRe(c)), gapTxt = m ? m[2] : cardGap(c);

@@ -20030,13 +20030,13 @@ function boxDeckState(){
   }
   return d;
 }
-// One flashcard face, shared by the set deck and the Vocab Box: front = the word; back = the word (tap to hear) + meaning.
+// One flashcard face, shared by the set deck and the Vocab Box: front = the word (tap to hear); back = the meaning only.
 function flashFaceHtml(card, flipped){
   const mean = card.meaning ? (L(card.meaning.en, card.meaning.tr, card.meaning.fa, card.meaning.es) || card.meaning.en) : '';
+  // The back is only the meaning (Farin 2026-10-18): the word and its listen button stay on the front.
   return flipped ? `
-            <div class="flash-word" dir="ltr">${esc(card.word)}</div>
-            ${ttsButton(card.word, 'on-card')}
-            ${mean ? `<div class="flash-hint" style="margin-top:8px;">${L('Meaning','Anlam','معنی','Significado')}</div><div class="flash-sentence flash-meaning" dir="auto">${esc(mean)}</div>` : ''}
+            <div class="flash-hint">${L('Meaning','Anlam','معنی','Significado')}</div>
+            <div class="flash-word flash-meaning" dir="auto" style="font-size:21px; line-height:1.35;">${esc(mean || card.word)}</div>
           ` : `
             <div class="flash-hint">${L('Word','Kelime','کلمه','Palabra')}</div>
             <div class="flash-word" dir="ltr">${esc(card.word)}</div>

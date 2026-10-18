@@ -20509,8 +20509,10 @@ function storyAudioMark(si){
 function storyListenLabel(){
   return storyAudio.playing
     ? ICONS.soundOff + ' ' + L('Stop','Durdur','توقف','Parar')
-    : ICONS.soundOn + ' ' + L('Listen to the story','Hikayeyi dinle','گوش دادن به داستان','Escucha la historia');
+    : ICONS.soundOn + ' ' + (storyListenExam() ? L('Listen','Dinle','گوش بده','Escuchar') : L('Listen to the story','Hikayeyi dinle','گوش دادن به داستان','Escucha la historia'));
 }
+// an IELTS exam briefing is not a story: its button just says "Listen"
+function storyListenExam(){ const s = state.view==='story-detail' && STORY_LIBRARY.find(x=>x.id===(state.viewParams || {}).id); return !!(s && s.genre==='Exam focus'); }
 function stopStoryAudio(){
   storyAudio.token++; storyAudio.playing = false;
   ttsStop();
@@ -20705,14 +20707,14 @@ function stageStoryPick(plan, pool, profile){
 function renderStoryDetail(id){
   const s = STORY_LIBRARY.find(x=>x.id===id);
   if(!s) return renderNotFound();
-  const gl = GENRE_LABEL[s.genre];
+  const gl = GENRE_LABEL[s.genre], exam = s.genre==='Exam focus';   // IELTS exam briefing: no music, "Check your understanding"
   const R = storyReader(s);   // pages + turning point (uVzMAAGg)
   return `<div class="fade-in">
-    ${sectionHead(L(s.title.en,s.title.tr,s.title.fa, s.title.es), (inCourseStep() ? courseStripText() : L(gl.en,gl.tr,gl.fa, gl.es)+' · '+s.level), 'story-list')}
+    ${sectionHead(L(s.title.en,s.title.tr,s.title.fa, s.title.es), (inCourseStep() ? courseStripText() : (exam ? L('Exam focus','Sınav odağı','تمرکز آزمون','Enfoque del examen') : gl ? L(gl.en,gl.tr,gl.fa, gl.es) : s.genre)+' · '+s.level), 'story-list')}
     <div class="screen" style="padding-top:0;">
       <div class="row" style="justify-content:space-between; align-items:center; margin-bottom:2px;">
         <button class="game-chip build-ear" data-action="story-listen" style="align-self:center;">${storyListenLabel()}</button>
-        <button class="icon-btn" data-action="toggle-story-music" aria-label="${L('Toggle background music','Arka plan müziğini aç/kapat','روشن/خاموش کردن موسیقی پس‌زمینه', 'Activar/desactivar música de fondo')}">${storyMusicMuted ? ICONS.soundOff : ICONS.soundOn}</button>
+        ${exam ? '' : `<button class="icon-btn" data-action="toggle-story-music" aria-label="${L('Toggle background music','Arka plan müziğini aç/kapat','روشن/خاموش کردن موسیقی پس‌زمینه', 'Activar/desactivar música de fondo')}">${storyMusicMuted ? ICONS.soundOff : ICONS.soundOn}</button>`}
       </div>
       ${storyReaderHtml(s, R)}
       <!-- Removed the separate "New words" list-with-translations block
@@ -20736,7 +20738,7 @@ function renderStoryDetail(id){
       <div class="card-flat" dir="ltr">
         ${s.discussionQuestions.map((q,i)=>storyAnswerHtml(s, q, i)).join('')}
       </div>` : ''}
-      <button class="btn btn-primary" style="margin-top:16px;" data-action="start-story-quiz" data-id="${s.id}">${inCourseStep() ? L('Check what you noticed','Ne fark ettiğini kontrol et','ببین چه چیزهایی را متوجه شدی','Comprueba lo que has notado') : L('Play Game!','Oyunu Oyna!','بازی کن!','¡Juega!')}</button>
+      <button class="btn btn-primary" style="margin-top:16px;" data-action="start-story-quiz" data-id="${s.id}">${exam ? L('Check your understanding','Anladığını kontrol et','ببین چقدر فهمیدی','Comprueba lo que has entendido') : inCourseStep() ? L('Check what you noticed','Ne fark ettiğini kontrol et','ببین چه چیزهایی را متوجه شدی','Comprueba lo que has notado') : L('Play Game!','Oyunu Oyna!','بازی کن!','¡Juega!')}</button>
       ` : ''}
     </div>
   </div>`;
@@ -22283,7 +22285,7 @@ function stopStoryMusic(){
 }
 function startStoryMusic(genre){
   stopStoryMusic();
-  if(storyMusicMuted) return;
+  if(storyMusicMuted || genre==='Exam focus') return;   // exam briefings have no background music
   try{
     if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     if(audioCtx.state === 'suspended') audioCtx.resume().catch(()=>{});
@@ -24488,6 +24490,8 @@ const HANDLERS = {
 const COURSE_TYPE_META = {
   review:{en:'From last time', tr:'Önceki dersten', fa:'از درس قبل', es:'De la lección anterior', min:2, cat:'review', ic:'repeat'},
   story:{en:'Story', tr:'Hikaye', fa:'داستان', es:'Historia', min:5, cat:'story', ic:'book'},
+  // exam courses (IELTS, Farin 2026-10-18 "no scenario"): the first card is an exam briefing, shown as "Exam focus" (courseShownType)
+  briefing:{en:'Exam focus', tr:'Sınav odağı', fa:'تمرکز آزمون', es:'Enfoque del examen', min:4, cat:'story', ic:'book'},
   grammar:{en:'Grammar', tr:'Dilbilgisi', fa:'گرامر', es:'Gramática', min:5, cat:'gram', ic:'dumbbell'},
   b2:{en:'B2 grammar', tr:'B2 dilbilgisi', fa:'گرامر B2', es:'Gramática B2', min:4, cat:'gram', ic:'dumbbell'},
   vocab:{en:'Words', tr:'Kelime', fa:'واژه‌ها', es:'Palabras', min:5, cat:'voc', ic:'cards'},
@@ -24562,7 +24566,7 @@ function courseModuleIds(m){
 }
 // Built node types: a node type whose renderer is not in this build yet is never offered (a step with no screen would block the lesson).
 const COURSE_BUILT = {drill:true, art:true, mock:true};
-/* General Training (IELTS, Farin 2026-10-14: GT learners follow Emre): for courseTrack 'gt' every unit.gt override (synced as an item with
+/* General Training (IELTS): for courseTrack 'gt' every unit.gt override (synced as an item with
    track:'gt': story, grammar, drill, judge, speaking, writing, perspective) replaces the plain item; a unit without one keeps the plain item. */
 function courseGtOn(uid){ const c = courseUnitCourse(uid); return !!(c && (c.tracks || []).includes('gt') && courseTrack(c.id)==='gt'); }
 // A story-facing field by track: o[k+'GT'] for General Training learners when it exists, else o[k] (episode, blurb, scene, finale, meet).
@@ -24979,7 +24983,7 @@ function courseReviewPicks(cid, uid){
    One rule decides the next step, shown with one wording everywhere: the dashboard tile, the
    course card, the Continue card on the course page, the sticky button on the unit path and the
    result screen of every step. */
-function courseStepLabel(type){ const m = COURSE_TYPE_META[type] || COURSE_TYPE_META.exit; return L(m.en, m.tr, m.fa, m.es); }
+function courseStepLabel(type, uid){ const m = COURSE_TYPE_META[uid ? courseShownType(uid, type) : type] || COURSE_TYPE_META[type] || COURSE_TYPE_META.exit; return L(m.en, m.tr, m.fa, m.es); }
 function courseStepShort(type){ const m = COURSE_TYPE_SHORT[type] || COURSE_TYPE_SHORT.exit; return L(m.en, m.tr, m.fa, m.es); }
 function courseStepMin(type){ const m = COURSE_TYPE_META[type]; return (m && m.min) || 3; }
 function courseMinText(min){ return min + ' ' + CL('min','dk','دقیقه','min'); }
@@ -24991,7 +24995,7 @@ function courseUnitNo(cid, uid){
   for(let mi=0; mi<c.modules.length; mi++){
     const m = c.modules[mi], ui = m.units.findIndex(u=>u.id===uid);
     if(ui >= 0) return (mi+1)+'.'+(ui+1);
-    if(m.checkpoint && m.checkpoint.id===uid) return CL('Chapter finale','Bölüm finali','پایان فصل','Final del capítulo')+' '+(mi+1);
+    if(m.checkpoint && m.checkpoint.id===uid) return courseFinaleName(cid)+' '+(mi+1);
     if((m.mocks || []).some(x=>x.id===uid)) return String([].concat(...c.modules.map(mm=>(mm.mocks || []).map(x=>x.id))).indexOf(uid) + 1);
   }
   return '';
@@ -25141,7 +25145,7 @@ function courseGrammarExpHtml(t){
    reused story page by courseWrapViewer; the bridge is the celebration line after the course story's quiz, before the
    next card opens (the one course string in showCelebration). Other cards keep "Your lesson continues in a moment". */
 function courseStoryNoticeHtml(s){
-  return s && s.notice ? `<div class="card-flat cs-notice"><div class="eyebrow" style="color:${COURSE_CARD.story.c};">${esc(courseUp(CL('Watch for','Şuna dikkat et','حواست به این باشد','Fíjate en esto')))}</div><p>${esc(cl(s.notice))}</p></div>` : '';
+  return s && s.notice ? `<div class="card-flat cs-notice"><div class="eyebrow" style="color:${courseStoryCard(s).c};">${esc(courseUp(CL('Watch for','Şuna dikkat et','حواست به این باشد','Fíjate en esto')))}</div><p>${esc(cl(s.notice))}</p></div>` : '';
 }
 function courseCelebrateHint(){
   const r = state.courseReturn, s = r && r.uid ? courseUnitItems(r.uid).story : null;
@@ -25299,9 +25303,11 @@ function courseIntroMark(cid){ const pr = state.progress; if(!pr.courseIntroSeen
 function courseTrackDefault(cid){ const pr = state.progress, keep = pr.courseTrack && pr.courseTrack[cid]; if(keep) delete pr.courseTrack[cid]; const t = courseTrack(cid); if(keep) pr.courseTrack[cid] = keep; return t; }
 /* Exam courses (IELTS, Trello 22PCxJWz): the course data carries its own intro (intro.how / finish / trackQuestion / meet / meetGT /
    start). First screen: how the course works and "Which IELTS do you need?" (the answer sets courseTrack 'academic' | 'gt'). Then the
-   lead for that track ("Meet Sahar" or, for General Training, "Meet Emre") and one button that starts Lesson 1. */
+   test description for that track (intro.meet / meetGT, neutral since 2026-10-18) and one button that starts Lesson 1. */
 // An exam course: its tracks are test types (IELTS academic / gt), not course levels (HR's B1 / B2 use the level intro).
 function courseIsExam(c){ return !!(c && (c.tracks || []).includes('gt')); }
+// "Chapter finale" (HR and the other courses) / "Chapter check" (exam courses).
+function courseFinaleName(cid){ return courseIsExam(courseGet(cid)) ? CL('Chapter check','Bölüm kontrolü','سنجش فصل','Control del capítulo') : CL('Chapter finale','Bölüm finali','پایان فصل','Final del capítulo'); }
 function courseTrackQ(c){ const q = courseIsExam(c) && c.intro && c.intro.trackQuestion; return q && q.a && q.a.track ? q : null; }
 function courseTrackAnswer(c, t){ const q = courseTrackQ(c); if(!q) return null; return [q.a, q.b].find(x=>x && x.track===t) || null; }
 // "Academic" / "General Training" (the words before the colon of the answer), or the track id (B1, B2).
@@ -25481,11 +25487,21 @@ const COURSE_CARD = {
   test:{c:'#4FB3E8', t:'#2a8cc2', en:'Test', tr:'Test', fa:'آزمون', es:'Prueba'},
   practice:{c:'#4FB3E8', t:'#2a8cc2', en:'Practice', tr:'Uygulama', fa:'تمرین', es:'Práctica'},
   finale:{c:'#F5B92E', t:'#b07a00', en:'Chapter finale', tr:'Bölüm finali', fa:'پایان فصل', es:'Final del capítulo'},
+  briefing:{c:'#4FB3E8', t:'#2a8cc2', en:'Exam focus', tr:'Sınav odağı', fa:'تمرکز آزمون', es:'Enfoque del examen'},
+  check:{c:'#F5B92E', t:'#b07a00', en:'Chapter check', tr:'Bölüm kontrolü', fa:'سنجش فصل', es:'Control del capítulo'},
   mock:{c:'#F5B92E', t:'#b07a00', en:'Mock test', tr:'Deneme sınavı', fa:'آزمون آزمایشی', es:'Simulacro'}
 };
-const COURSE_STEP_CARD = {review:'story', story:'story', grammar:'grammar', b2:'grammar', vocab:'words', game:'game', trap:'game', speaking:'speaking', branch:'speaking', writing:'writing', perspective:'empathy', exit:'test', judge:'practice', scene:'finale', drill:'practice', mock:'mock', 'mock-listening':'mock', 'mock-reading':'mock', 'mock-writing':'mock', 'mock-speaking':'mock'};
-function courseCardMeta(type){ return COURSE_CARD[COURSE_STEP_CARD[type] || 'test']; }
-function courseCardKindLabel(type){ return cl(courseCardMeta(type)); }
+const COURSE_STEP_CARD = {review:'story', story:'story', grammar:'grammar', b2:'grammar', vocab:'words', game:'game', trap:'game', speaking:'speaking', branch:'speaking', writing:'writing', perspective:'empathy', exit:'test', judge:'practice', scene:'finale', drill:'practice', mock:'mock', 'mock-listening':'mock', 'mock-reading':'mock', 'mock-writing':'mock', 'mock-speaking':'mock', briefing:'briefing', check:'check'};
+// Exam courses: the story card is the exam briefing ("Exam focus") and a chapter finale is a "Chapter check"; a mock's scene card
+// is the mock. Only labels and colours change: the step type stays 'story' / 'scene', so done marks, navigation and review are as before.
+function courseShownType(uid, type){
+  if(type==='story' || type==='review'){ const s = (courseUnitItems(uid) || {}).story; return s && s.genre==='Exam focus' ? 'briefing' : type; }
+  if(type==='scene'){ const c = courseUnitCourse(uid), f = c && courseIsExam(c) ? courseFindUnit(c.id, uid) : null; return f ? (f.u.isMock ? 'mock' : 'check') : type; }
+  return type;
+}
+function courseCardMeta(type, uid){ return COURSE_CARD[COURSE_STEP_CARD[uid ? courseShownType(uid, type) : type] || 'test']; }
+function courseCardKindLabel(type, uid){ return cl(courseCardMeta(type, uid)); }
+function courseStoryCard(s){ return s && s.genre==='Exam focus' ? COURSE_CARD.briefing : COURSE_CARD.story; }
 // The card's own title, shown under its type (section 4 table).
 function courseCardTitle(cid, uid, type){
   const it = courseUnitItems(uid);
@@ -25527,10 +25543,10 @@ function courseParts(cid, uid){
   cards.forEach(c=>{ if(!sis.includes(c.si)) sis.push(c.si); });
   return sis.map(si=>({si, cards:cards.filter(c=>c.si===si)}));
 }
-function coursePartMinutes(cid, uid, si){ return courseUnitSteps(cid, uid).filter(s=>si < 0 || s.si===si).reduce((n,s)=>n+courseStepMin(s.type), 0); }
+function coursePartMinutes(cid, uid, si){ return courseUnitSteps(cid, uid).filter(s=>si < 0 || s.si===si).reduce((n,s)=>n+courseStepMin(courseShownType(uid, s.type)==='briefing' ? 'briefing' : s.type), 0); }
 // A card chip in its Home colour: "Story · Five Words".
 function courseCardChipHtml(cid, uid, card, withTitle){
-  const m = courseCardMeta(card.type), t = withTitle ? courseCardTitle(cid, uid, card.type) : '';
+  const m = courseCardMeta(card.type, uid), t = withTitle ? courseCardTitle(cid, uid, card.type) : '';
   return `<span class="cs-chip" style="background:${m.c};${card.kind==='game' ? ' color:'+m.t+';' : ''}">${esc(cl(m))}${t ? ' · '+esc(t) : ''}</span>`;
 }
 
@@ -25543,7 +25559,7 @@ function courseMapSheetHtml(cid, uid){
   const later = !!(nx && !started && cnx && !cnx.final && cnx.uid !== uid && order.indexOf(uid) > order.indexOf(cnx.uid)) && !coursePreviewOn();
   const head = f.u.isMock ? `<div class="eyebrow" style="color:${COURSE_CARD.mock.t};">${esc(courseUp(courseLessonName(cid, uid)))}</div>
       <h2 class="display" style="font-size:21px; margin:2px 0 0;">${esc(cl(f.u.title))}</h2>${courseSceneText(cid, f.u) ? `<p class="cs-sub">${esc(courseSceneText(cid, f.u))}</p>` : ''}`
-    : isCp ? `<div class="eyebrow" style="color:${COURSE_CARD.finale.t};">${esc(courseUp(CL('Chapter finale','Bölüm finali','پایان فصل','Final del capítulo')))}</div>
+    : isCp ? `<div class="eyebrow" style="color:${COURSE_CARD.finale.t};">${esc(courseUp(courseFinaleName(cid)))}</div>
       <h2 class="display" style="font-size:21px; margin:2px 0 0;">${esc(courseLessonLine(cid, uid))}</h2>${f.u.scene ? `<p class="cs-sub">${esc(courseSceneText(cid, f.u))}</p>` : ''}`
     : `<div class="eyebrow" style="color:var(--clay-lavender-deep);">${esc(courseUp(courseLessonName(cid, uid)))}</div>
       <h2 class="display" style="font-size:21px; margin:2px 0 0;">${esc(cl(f.u.title))}</h2>${f.u.episode ? `<p class="cs-sub">${esc(courseLessonLine(cid, uid))}</p>` : ''}`;
@@ -25602,7 +25618,7 @@ function courseChapterName(mi){ return CL('Chapter '+(mi+1), (mi+1)+'. Bölüm',
 function courseIsCp(cid, uid){ const f = courseFindUnit(cid, uid); return !!(f && f.m.checkpoint && f.m.checkpoint.id===uid); }
 function courseModuleIndex(c, uid){ return c.modules.findIndex(m=>m.units.some(u=>u.id===uid) || (m.checkpoint && m.checkpoint.id===uid)); }
 // "Lesson 1.2" / "Chapter finale" (the finale is named by its line, never by a number on the path).
-function courseLessonName(cid, uid){ if(courseIsMock(cid, uid)){ const n = courseUnitNo(cid, uid); return CL('Mock test '+n, n+'. deneme sınavı', 'آزمون آزمایشی '+n, 'Simulacro '+n); } return courseIsCp(cid, uid) ? CL('Chapter finale','Bölüm finali','پایان فصل','Final del capítulo') : CL('Lesson','Ders','درس','Lección')+' '+courseUnitNo(cid, uid); }
+function courseLessonName(cid, uid){ if(courseIsMock(cid, uid)){ const n = courseUnitNo(cid, uid); return CL('Mock test '+n, n+'. deneme sınavı', 'آزمون آزمایشی '+n, 'Simulacro '+n); } return courseIsCp(cid, uid) ? courseFinaleName(cid) : CL('Lesson','Ders','درس','Lección')+' '+courseUnitNo(cid, uid); }
 function courseLessonLine(cid, uid){ const f = courseFindUnit(cid, uid); if(!f) return ''; if(f.u.isMock) return cl(courseGt(cid, f.u, 'finale') || f.u.title); return courseIsCp(cid, uid) ? (f.u.finale ? cl(courseGt(cid, f.u, 'finale')) : cl(f.u.title)) : (f.u.episode ? cl(courseGt(cid, f.u, 'episode')) : ''); }
 function coursePathHeadHtml(){
   return `<div class="cp-head"><button class="cp-back" data-action="nav" data-view="courses-home">${LANG==='fa' ? '›' : '‹'} ${CL('Courses','Kurslar','دوره‌ها','Cursos')}</button></div>`;
@@ -25610,7 +25626,7 @@ function coursePathHeadHtml(){
 function courseNodeHtml(c, u, isCp, nx, no){
   const steps = courseUnitSteps(c.id, u.id), ready = steps.length > 0;
   const done = ready && steps.every(s=>s.done), cur = !!(ready && nx && !nx.final && nx.uid===u.id), started = steps.some(s=>s.done);
-  const title = u.isMock ? courseLessonName(c.id, u.id) : isCp ? CL('Chapter finale','Bölüm finali','پایان فصل','Final del capítulo') : cl(u.title);
+  const title = u.isMock ? courseLessonName(c.id, u.id) : isCp ? courseFinaleName(c.id) : cl(u.title);
   const sub = courseLessonLine(c.id, u.id);
   const tick = done ? `<span class="cp-tick">${ICONS.check}</span>` : '';
   const dot = isCp ? `<span class="cp-dot gold${cur ? ' cur' : ''}${u.isMock ? ' mock' : ''}">${u.isMock ? ICONS.pen : ICONS.star}${tick}</span>`
@@ -25826,7 +25842,7 @@ function courseShellTopHtml(cid, uid, curType){
   const cur = curType ? courseCardTypeOf(cid, uid, curType) : null;
   const segs = courseParts(cid, uid).map(p=>`<span class="cs-seg">${p.cards.map(x=>{
     const on = x.type===cur;
-    return `<i class="${on ? 'cur' : x.done ? 'done' : ''}" data-type="${x.type}"${!on && x.done ? ` style="background:${courseCardMeta(x.type).c};"` : ''}></i>`;
+    return `<i class="${on ? 'cur' : x.done ? 'done' : ''}" data-type="${x.type}"${!on && x.done ? ` style="background:${courseCardMeta(x.type, uid).c};"` : ''}></i>`;
   }).join('')}</span>`).join('');
   return `<div class="cs-top">
     <button class="cs-x" data-action="course-close" data-cid="${cid}" aria-label="${esc(CL('Close','Kapat','بستن','Cerrar'))}">${COURSE_X_SVG}</button>
@@ -25836,16 +25852,17 @@ function courseShellTopHtml(cid, uid, curType){
 const COURSE_REREAD_TYPES = ['writing','speaking','branch','perspective'];
 function courseCardHeadHtml(cid, uid, type){
   const st = courseUnitSteps(cid, uid).find(s=>s.type===type), si = st ? st.si : 0;
-  const m = courseCardMeta(type), it = courseUnitItems(uid);
+  const m = courseCardMeta(type, uid), it = courseUnitItems(uid);
   let sub = '';
   if(type==='review') sub = CL('From last time','Önceki dersten','از درس قبل','De la lección anterior');
   else if(type==='game') sub = gameBlurb(courseGameKind(uid));
   else if(type==='trap') sub = CL('Pick the right form, fast.','Doğru biçimi hızlıca seç.','شکل درست را سریع انتخاب کن.','Elige la forma correcta, rápido.');
   else if(type==='speaking' && it.speaking && it.speaking.part) sub = it.speaking.part;
   else if(type==='drill' && it.drill && it.drill.part) sub = it.drill.part;
-  const reread = COURSE_REREAD_TYPES.includes(type) && courseRereadStory(cid, uid) ? `<button class="cs-reread" data-action="course-reread" data-cid="${cid}" data-uid="${esc(uid)}">${CL('Read the story again','Hikayeyi tekrar oku','داستان را دوباره بخوان','Vuelve a leer la historia')}</button>` : '';
+  const rs = COURSE_REREAD_TYPES.includes(type) && courseRereadStory(cid, uid);
+  const reread = rs ? `<button class="cs-reread" data-action="course-reread" data-cid="${cid}" data-uid="${esc(uid)}">${rs.genre==='Exam focus' ? CL('Read the exam focus again','Sınav odağını tekrar oku','تمرکز آزمون را دوباره بخوان','Vuelve a leer el enfoque del examen') : CL('Read the story again','Hikayeyi tekrar oku','داستان را دوباره بخوان','Vuelve a leer la historia')}</button>` : '';
   return `<div class="cs-head">
-    <div class="cs-part">${esc(type==='scene' ? (courseIsMock(cid, uid) ? courseLessonName(cid, uid) : CL('Chapter finale','Bölüm finali','پایان فصل','Final del capítulo')) : CL('Lesson '+courseUnitNo(cid, uid), 'Ders '+courseUnitNo(cid, uid), 'درس '+courseUnitNo(cid, uid), 'Lección '+courseUnitNo(cid, uid)) + ' · ' + coursePartLabel(cid, uid, si))}</div>
+    <div class="cs-part">${esc(type==='scene' ? (courseIsMock(cid, uid) ? courseLessonName(cid, uid) : courseFinaleName(cid)) : CL('Lesson '+courseUnitNo(cid, uid), 'Ders '+courseUnitNo(cid, uid), 'درس '+courseUnitNo(cid, uid), 'Lección '+courseUnitNo(cid, uid)) + ' · ' + coursePartLabel(cid, uid, si))}</div>
     <div class="cs-eyebrow" style="color:${m.t || m.c};">${esc(courseUp(cl(m)))}</div>
     <h1 class="display cs-title"><bdi>${esc(courseCardTitle(cid, uid, type))}</bdi><span class="dot">.</span></h1>
     ${sub ? `<p class="cs-sub">${esc(sub)}</p>` : ''}${reread}
@@ -25905,7 +25922,7 @@ function courseRereadHtml(cid, uid){
   const s = courseRereadStory(cid, uid); if(!s) return '';
   const paras = String(s.text || '').split(/\n\s*\n/).map(p=>p.trim()).filter(Boolean);
   return `<div class="cs-grab"></div>
-    <div class="cs-eyebrow" style="color:${COURSE_CARD.story.c};">${esc(courseUp(cl(COURSE_CARD.story)))}</div>
+    <div class="cs-eyebrow" style="color:${courseStoryCard(s).c};">${esc(courseUp(cl(courseStoryCard(s))))}</div>
     <h2 class="display" style="font-size:21px; margin:2px 0 12px;" translate="no">${esc(cl(s.title))}</h2>
     <div class="cs-story" dir="ltr" translate="no">${paras.map(p=>`<p>${esc(p)}</p>`).join('')}</div>
     <button class="btn btn-ghost" data-action="course-sheet-close">${CL('Close','Kapat','بستن','Cerrar')}</button>`;
@@ -26079,7 +26096,7 @@ function renderCourseDone(){
   if(nf){
     const isCp = courseIsCp(cid, nextUid) || courseIsMock(cid, nextUid), isMk = courseIsMock(cid, nextUid), access = courseUnitAccess(c, nextUid);
     nextCard = `<div class="card-flat cs-card-lav" style="margin-top:12px; text-align:start;">${claySparkles()}
-      <div class="eyebrow">${esc(courseUp(isMk ? courseLessonName(cid, nextUid) : isCp ? CL('Chapter finale','Bölüm finali','پایان فصل','Final del capítulo') : CL('Next lesson','Sıradaki ders','درس بعدی','Siguiente lección')+' · '+courseUnitNo(cid, nextUid)))}</div>
+      <div class="eyebrow">${esc(courseUp(isMk ? courseLessonName(cid, nextUid) : isCp ? courseFinaleName(cid) : CL('Next lesson','Sıradaki ders','درس بعدی','Siguiente lección')+' · '+courseUnitNo(cid, nextUid)))}</div>
       <div class="display" style="font-size:19px; margin-top:4px; color:#fff;">${esc(isCp ? courseLessonLine(cid, nextUid) : cl(nf.u.title))}</div>
       ${!isCp && nf.u.episode ? `<p style="margin:6px 0 0; font-size:13.5px; line-height:1.45; opacity:.95;">${esc(courseLessonLine(cid, nextUid))}</p>` : ''}</div>`;
     btn = access ? `<button class="btn btn-primary cs-main" data-action="course-go" data-cid="${cid}" data-uid="${esc(nextUid)}">${isMk ? CL('Start the mock test','Deneme sınavına başla','شروع آزمون آزمایشی','Empezar el simulacro') : isCp ? CL('Start the chapter finale','Bölüm finaline başla','شروع پایان فصل','Empezar el final del capítulo') : CL('Start the next lesson','Sonraki derse başla','درس بعدی را شروع کن','Empezar la siguiente lección')}</button>`
@@ -26094,7 +26111,7 @@ function renderCourseDone(){
       <h1 class="display cs-h1">${esc(CL('Lesson '+no+' done', no+' dersi bitti', 'درس '+no+' تمام شد', 'Lección '+no+' terminada'))}</h1>
       ${f.u.cando ? `<div class="card-flat cs-card-green" style="margin-top:16px; text-align:start;"><b style="font-size:14px;">${CL('Now you can say:','Artık şunu söyleyebilirsin:','حالا می‌توانی بگویی:','Ahora puedes decir:')}</b>
         <p style="margin:4px 0 0; font-size:14.5px; line-height:1.45;">${esc(courseQuote(cl(f.u.cando)))}</p></div>` : ''}
-      ${persp && persp.text ? `<div class="card-flat" style="margin-top:12px; text-align:start;"><div class="cs-eyebrow" style="color:${pm.t};">${esc(courseUp(cl(pm)+(it.perspective && it.perspective.title ? ' · '+cl(it.perspective.title) : '')))}</div>
+      ${persp && persp.text && it.perspective ? `<div class="card-flat" style="margin-top:12px; text-align:start;"><div class="cs-eyebrow" style="color:${pm.t};">${esc(courseUp(cl(pm)+(it.perspective && it.perspective.title ? ' · '+cl(it.perspective.title) : '')))}</div>
         <p style="margin:6px 0 0; font-size:14px; line-height:1.5;">${CL('What you wrote:','Senin yazdığın:','چیزی که نوشتی:','Lo que escribiste:')} <span dir="ltr" translate="no">${esc(courseQuote(persp.text))}</span></p></div>` : ''}
       ${nextCard}
       <button class="link-btn cs-back-course" data-action="course-close" data-cid="${cid}" style="display:block; margin:16px auto 0;">${CL('Back to the course','Kursa dön','برگشت به دوره','Volver al curso')}</button>
@@ -26221,13 +26238,14 @@ function renderCourseReview(cid, uid){
 }
 
 /* writing: the model name ("Leyla's version" in the HR course). The card itself is renderCourseWriting below. */
-// "<modelBy>'s version" (IELTS: Sahar, Emre, Lale, Nasrin), with the Turkish suffix that fits the name.
-const COURSE_MODEL_NAMES = {Sahar:{tr:'Sahar\'ın versiyonu', fa:'نسخه‌ی سحر'}, Emre:{tr:'Emre\'nin versiyonu', fa:'نسخه‌ی امره'}, Lale:{tr:'Lale\'nin versiyonu', fa:'نسخه‌ی لاله'}, Nasrin:{tr:'Nasrin\'in versiyonu', fa:'نسخه‌ی نسرین'}, Leyla:{tr:'Leyla\'nın versiyonu', fa:'نسخه‌ی لیلا'}};
+// "<modelBy>'s version", with the Turkish suffix that fits the name. Exam courses (IELTS) have no modelBy: "Model answer".
+const COURSE_MODEL_NAMES = {Leyla:{tr:'Leyla\'nın versiyonu', fa:'نسخه‌ی لیلا'}};
 // What a writing task shows above its prompt (Academic Task 1: the chart, drawn on the device; see courseChartHtml).
 function courseModelName(cid, wr){
   const by = wr && wr.modelBy; if(by){ const n = COURSE_MODEL_NAMES[by] || {}; return CL(by+'\'s version', n.tr || by+' versiyonu', n.fa || 'نسخه‌ی '+by, 'La versión de '+by); }
   const w = (COURSE_INTRO[cid] || {}).who;
   if(w && w.en==='Leyla') return CL('Leyla\'s version','Leyla\'nın versiyonu','نسخه‌ی لیلا','La versión de Leyla');
+  if(courseIsExam(courseGet(cid))) return CL('Model answer','Örnek cevap','پاسخ نمونه','Respuesta modelo');
   return CL('Example text','Örnek metin','متن نمونه','Texto de ejemplo');
 }
 /* writing (S4 + Build 2, spec 3.6 "Writing"): the task; "Leyla's version" (the model; B1 only before Check, it folds once you
@@ -27134,7 +27152,7 @@ Object.assign(HANDLERS, {
   'course-intro-pick'(el){
     const cid = el.dataset.cid, pr = state.progress;
     if(el.dataset.track){ if(!pr.courseTrack) pr.courseTrack = {}; pr.courseTrack[cid] = el.dataset.track; }
-    // exam course: the answer sets the test type, then the lead for that track ("Meet Sahar" / "Meet Emre") before Lesson 1
+    // exam course: the answer sets the test type, then the test description for that track (intro.meet / meetGT) before Lesson 1
     if(courseTrackQ(courseGet(cid))){ courseUi.meetOpen = cid; save(); render(); window.scrollTo(0,0); return; }
     courseIntroMark(cid);
     const first = courseOrder(cid).find(uid=>courseUnitSteps(cid, uid).length);

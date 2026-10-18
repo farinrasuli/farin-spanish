@@ -1652,11 +1652,19 @@
   .rm2-seam{height:0; display:flex; justify-content:center; position:relative; z-index:5;}
   .rm2-seam-ic{position:relative; top:-30px;}
   .rm2-node{position:relative; z-index:1; overflow:hidden; display:block; width:100%; text-align:start; color:inherit; font-family:inherit;}
-  .rm2-node-current{animation:rm2-node-pulse 2.6s ease-in-out infinite;}
-  @keyframes rm2-node-pulse{0%,100%{transform:scale(1);} 50%{transform:scale(1.012);}}
+  .rm2-node-current{z-index:3; transform:scale(1.035); animation:rm2-node-pulse 2.6s ease-in-out infinite;}
+  @keyframes rm2-node-pulse{0%,100%{transform:scale(1.035);} 50%{transform:scale(1.047);}}
   .rm2-node-current::before{content:''; position:absolute; top:-65%; left:-45%; width:32%; height:240%; background:linear-gradient(120deg, transparent, rgba(255,255,255,.75), transparent); transform:rotate(16deg); animation:rm2-shine 2.7s ease-in-out infinite; pointer-events:none;}
   @keyframes rm2-shine{0%{left:-45%;} 55%,100%{left:135%;}}
   .rm2-node-done{filter:saturate(.55); opacity:.75;}
+  /* Locked steps (Farin 2026-10-18, "make the current card a bit bigger and lock the others with
+     lower opacity"): every not-done card after the current one is dimmed and inert (no study action,
+     no sparkles, chevron hidden); a tap shows one companion hint. The current card rests at
+     scale(1.035) and sits over its neighbours (z-index 3, under the seam badges at 5). Interim
+     change — see renderRoadmapCard. */
+  .rm2-node-locked{opacity:.45;}
+  .rm2-node-locked .roadmap-study{cursor:default;}
+  .rm2-node-locked .sparkle{display:none;}
   /* Follow-up polish (2026-09-29, Farin: "sparkly not just shiny", "colors so dull",
      "font also dull... like the profile square but my brand colors"). Current-step
      card now fills with the full-strength brand/category color (same recipe as
@@ -9907,13 +9915,14 @@ function hideCharTip(instant){
   el.classList.add('leaving');
   setTimeout(()=>el.remove(), 450);
 }
-function showCharTip(motivOnly){
+function showCharTip(motivOnly, line){
   if(state.view !== 'dashboard' || !state.profile || !state.profile.completedDiagnostic) return false;
   if(document.getElementById('char-tip') || document.querySelector('.celebrate-overlay')) return false;
   // Gamification v3: the bubble also carries the comeback greeting and today's plan (with buttons).
-  const offer = motivOnly ? null : companionBubbleContent();
+  // line (2026-10-18): a fixed hint instead of the plan/greeting — used by the locked roadmap step
+  const offer = (motivOnly || line) ? null : companionBubbleContent();
   const asksWeekGoal = !!offer && !isComeback() && (!state.progress.goalChosen || /data-action="calib-move"/.test(offer));
-  const text = offer || pickGreeting(state.profile, dueItems().length, charTipRot++);
+  const text = line || offer || pickGreeting(state.profile, dueItems().length, charTipRot++);
   const el = document.createElement('div');
   el.className = 'char-tip'; el.id = 'char-tip';
   el.innerHTML = `<div class="char-tip-inner"><div class="char-tip-float">
@@ -12279,6 +12288,9 @@ function renderRoadmapCard(p){
   const doneCount = roadmap.filter(it=>isRoadmapNodeDone(it)).length;
   const allDone = doneCount === roadmap.length;
   const currentIndex = roadmap.findIndex(it=>!isRoadmapNodeDone(it));
+  // Lock rule (Farin 2026-10-18, "lets just for now make the current card a bit bigger and lock
+  // the others with lower opacity"): a node is locked when it is not done AND it comes after the
+  // current one. Done nodes after the current (finished out of order) stay done, never locked.
   // Gamification v2 §7: returning after a node — fill the finished circle, hop the companion.
   const advFrom = roadmapAdvanceFrom(currentIndex);
   const advFill = advFrom != null ? Math.round(roadmap.slice(0, advFrom+1).filter(it=>isRoadmapNodeDone(it)).length/roadmap.length*100) : 0;
@@ -12287,6 +12299,7 @@ function renderRoadmapCard(p){
   function pinFn(idx){
     const item = roadmap[idx], m = TYPE_META[item.type], checked = isRoadmapNodeDone(item);
     const isCurrent = idx === currentIndex;
+    const locked = !checked && idx > currentIndex;
     const isGame = item.type === 'game';
     // Real completion (quiz/story finished, or a game — see roadmapNodeAutoDone)
     // vs. a type that only ever has the manual toggle (session/writing/speaking).
@@ -12312,6 +12325,8 @@ function renderRoadmapCard(p){
       dataAttrs = 'data-id="'+roadmapNodeId(item)+'"';
       ariaLabel = L('Mark done','Tamamlandı say','علامت‌زدن به‌عنوان انجام‌شده', 'Marcar como hecho');
     }
+    // Locked step: no action at all (not even the manual toggle), dimmed like its card.
+    if(locked){ action = null; dataAttrs = ''; }
     // Roadmap 2.0 redesign (2026-09-29, Farin): this is the "symbol sitting between
     // the cards" badge — a chunky 60px circle per section type (book/dumbbell/mic/
     // etc, see TYPE_META), rendered by stackedRoadmap() inside a zero-height
@@ -12336,7 +12351,7 @@ function renderRoadmapCard(p){
     const circleBg = fillPct>=100 ? color : (fillPct>0 ? `conic-gradient(${color} 0 ${fillPct}%, var(--bg-elevated) ${fillPct}% 100%)` : 'var(--bg-elevated)');
     const fillVar = (idx === advFrom && fillPct>0) ? `--rm2-fill:${fillPct}%;` : '';
     const circleBgFinal = fillVar ? `conic-gradient(${color} 0 var(--rm2-fill), var(--bg-elevated) var(--rm2-fill) 100%)` : circleBg;
-    return `<button class="rm2-seam-ic ${isCurrent?'roadmap-pin-current':''}" ${action?('data-action="'+action+'"'):'disabled'} ${dataAttrs} aria-label="${ariaLabel}" style="width:60px; height:60px; border-radius:50%; ${fillVar}background:${circleBgFinal}; border:${isCurrent?'5px':'4px'} solid ${color}; display:flex; align-items:center; justify-content:center; box-shadow:${isCurrent?`0 0 0 4px ${glowRing}, 0 8px 18px -4px ${glowStrong}`:(checked?`0 6px 14px -3px ${doneGlow}, inset 0 2px 3px rgba(255,255,255,.35)`:'0 5px 12px -3px rgba(0,0,0,.25)')}; cursor:${action?'pointer':'default'}; padding:0;">
+    return `<button class="rm2-seam-ic ${isCurrent?'roadmap-pin-current':''}" ${action?('data-action="'+action+'"'):'disabled'} ${dataAttrs} aria-label="${ariaLabel}" style="width:60px; height:60px; border-radius:50%; ${locked?'opacity:.45; ':''}${fillVar}background:${circleBgFinal}; border:${isCurrent?'5px':'4px'} solid ${color}; display:flex; align-items:center; justify-content:center; box-shadow:${isCurrent?`0 0 0 4px ${glowRing}, 0 8px 18px -4px ${glowStrong}`:(checked?`0 6px 14px -3px ${doneGlow}, inset 0 2px 3px rgba(255,255,255,.35)`:'0 5px 12px -3px rgba(0,0,0,.25)')}; cursor:${action?'pointer':'default'}; padding:0;">
     </button>${isCurrent ? roadmapCompanionHtml(72) : ''}`;
   }
 
@@ -12345,6 +12360,7 @@ function renderRoadmapCard(p){
     const isSession = item.type === 'session';
     const isGame = item.type === 'game';
     const isCurrent = idx === currentIndex;
+    const locked = !checked && idx > currentIndex;
     const color = 'var(--cat-'+m.c+')';
     // Goal-label gold highlight (2026-09-29, Farin) — see the .goal-label-gold
     // CSS comment above .rm2-track. Built as HTML here (not a plain string
@@ -12391,6 +12407,12 @@ function renderRoadmapCard(p){
       studyOpenTag = '<button class="roadmap-study" data-action="nav" data-view="vocab-set-intro" data-id="'+item.refId+'" data-goal="'+(item.goal||'')+'" data-cat="'+cat+'" style="'+studyStyle+'">';
       studyCloseTag = '</button>';
     }
+    // Locked step: the same wrapper markup (nothing jumps), but a plain element with no action —
+    // the tap lands on the card's own data-action="roadmap-locked" (one companion hint).
+    if(locked){
+      studyOpenTag = '<div class="roadmap-study" aria-disabled="true" style="'+studyStyle.replace('cursor:pointer;', 'cursor:default;')+'">';
+      studyCloseTag = '</div>';
+    }
     // Roadmap 2.0 redesign (2026-09-29, Farin): "each section bigger, filled with a
     // pastel color... if the user is in that step, that one is shiny... no more
     // curve, cards under cards in different colors". Each node is one big block
@@ -12409,7 +12431,7 @@ function renderRoadmapCard(p){
     // token), the current card gets the full solid brand color, and titles switch
     // to the app's existing Fredoka "display" treatment (same font used for hero
     // headings like the profile name) instead of the default body font.
-    const cls = 'rm2-node' + (isCurrent ? ' rm2-node-current' : '') + (checked ? ' rm2-node-done' : '');
+    const cls = 'rm2-node' + (isCurrent ? ' rm2-node-current' : '') + (checked ? ' rm2-node-done' : '') + (locked ? ' rm2-node-locked' : '');
     // 2026-09-30, Farin (3rd correction, emphatic): "DO YOU SEE THE COLORS AND GOAL
     // TABS? I WANT THOSE COLORS AND SPARKLE IN THE ROADMAP TOO". The Goals screen's
     // .goal-card is the reference: a FULL-STRENGTH var(--cat-x) fill + white text +
@@ -12443,10 +12465,10 @@ function renderRoadmapCard(p){
     const subtitleColor = 'rgba(255,255,255,.92)';
     const titleColor = '#fff';
     const chevColor = 'rgba(255,255,255,.92)';
-    const titleFont = `font-family:'Fredoka',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; font-weight:800; font-size:18.5px; letter-spacing:-.01em;`;
+    const titleFont = `font-family:'Fredoka',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; font-weight:800; font-size:${isCurrent?20.5:18.5}px; letter-spacing:-.01em;`;
     // Sparkles on every card now (see the block comment above), reusing the same
     // .sparkle/@sparkle-twinkle stars the goal cards use via claySparkles().
-    const sparkles = checked ? '' : `
+    const sparkles = (checked || locked) ? '' : `
         <span class="sparkle" style="top:10px; left:16px; animation-delay:0s;"></span>
         <span class="sparkle" style="top:22px; right:22px; left:auto; width:6px; height:6px; animation-delay:.5s;"></span>
         <span class="sparkle" style="bottom:16px; right:44px; left:auto; width:5px; height:5px; animation-delay:1s;"></span>
@@ -12458,13 +12480,15 @@ function renderRoadmapCard(p){
     // the studio art sits inside a lot of transparent canvas, so it needs a larger
     // box to read the same size as the book
     const iconBig = m.img === 'studio-icon-cutout.png';
+    // the current card is a bit bigger (2026-10-18), its icon grows with it
+    const iconPx = iconBig ? (isCurrent ? 152 : 140) : (isCurrent ? 116 : 104);
     const cardIcon = m.img
-      ? `<img src="${m.img}" alt="" class="rm2-icon-float" style="position:absolute; inset-inline-end:${iconBig?'-6px':'10px'}; bottom:${iconBig?'-4px':'12px'}; width:${iconBig?140:104}px; height:${iconBig?140:104}px; object-fit:contain; pointer-events:none; filter:drop-shadow(0 6px 12px rgba(0,0,0,.28)); ${checked?'opacity:.5;':''}">`
+      ? `<img src="${m.img}" alt="" class="rm2-icon-float" style="position:absolute; inset-inline-end:${iconBig?'-6px':'10px'}; bottom:${iconBig?'-4px':'12px'}; width:${iconPx}px; height:${iconPx}px; object-fit:contain; pointer-events:none; filter:drop-shadow(0 6px 12px rgba(0,0,0,.28)); ${checked?'opacity:.5;':''}">`
       : '';
     // Gamification v2 (2026-09-30): the v1 "⚡ GAME" corner pill and the streak
     // mirror chip on the current card are gone (card faces carry no gamification
     // labels). A game's identity is its GAME subtitle; the streak stays in the top bar.
-    return `<div class="${cls}" style="border-radius:32px; padding:58px 28px 60px; min-height:176px; background:${bg}; border:none; box-shadow:${shadow}; color:#fff;">
+    return `<div class="${cls}"${locked ? ' data-action="roadmap-locked"' : ''} style="border-radius:32px; padding:${isCurrent ? '66px 30px 68px' : '58px 28px 60px'}; min-height:${isCurrent ? 196 : 176}px; background:${bg}; border:none; box-shadow:${shadow}; color:#fff;">
       ${sparkles}
       ${cardIcon}
       ${studyOpenTag}
@@ -12476,7 +12500,7 @@ function renderRoadmapCard(p){
                  short labels wrap for no reason. -->
             <div style="${titleFont} margin-top:8px; color:${titleColor}; line-height:1.28; padding-inline-end:${m.img?'100px':'0'}; ${checked?'text-decoration:line-through; opacity:.62;':''}">${esc(nodeTitle(item))}</div>
           </div>
-          <span style="flex:0 0 auto; margin-top:3px; color:${chevColor}; opacity:${checked?1:.65};">${checked?ICONS.check:ICONS.chev}</span>
+          <span style="flex:0 0 auto; margin-top:3px; color:${chevColor}; opacity:${checked?1:.65};${locked?' visibility:hidden;':''}">${checked?ICONS.check:ICONS.chev}</span>
         </div>
         ${isCurrent && !checked ? `<div class="pill" style="margin-top:14px; background:#fff; color:${color}; font-weight:900; text-transform:uppercase; letter-spacing:.03em; box-shadow:0 4px 10px -3px rgba(0,0,0,.3);"><img src="icon-mappin.png" alt="" style="width:15px; height:15px; object-fit:contain;">${L("You're here","Buradasın","اینجایی", 'Estás aquí')}</div>` : ''}
       ${studyCloseTag}
@@ -23067,6 +23091,13 @@ const HANDLERS = {
     if(box && m.videoId){
       box.innerHTML = `<iframe src="https://www.youtube.com/embed/${esc(m.videoId)}?autoplay=1&playsinline=1&rel=0" title="${esc(L(m.title.en,m.title.tr,m.title.fa, m.title.es))}" style="position:absolute; inset:0; width:100%; height:100%; border:0;" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`;
     }
+  },
+  // Locked roadmap step tapped (Farin 2026-10-18): one hint through the existing home bubble, 5 s,
+  // then the usual motivational cycle resumes. No render, nothing saved.
+  'roadmap-locked'(){
+    clearTimeout(charTipTimer); hideCharTip(true);
+    const ms = showCharTip(true, L('Finish the step above first','Önce yukarıdaki adımı bitir','اول مرحلهٔ بالایی را تمام کن','Termina primero el paso de arriba'));
+    charTipTimer = setTimeout(()=>{ hideCharTip(); scheduleCharTips(CHAR_TIP_MOTIV_GAP_MS, true); }, ms || 0);
   },
   'toggle-roadmap-item'(el){
     const id = el.dataset.id;

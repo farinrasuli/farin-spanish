@@ -20689,34 +20689,14 @@ function renderStoryDetail(id){
       ${s.vocab && s.vocab.length ? `<p style="font-size:11.5px; color:var(--ink-faint); text-align:center; margin:10px 0 0;">${L('Tap any highlighted word to see its meaning.','Anlamını görmek için vurgulanan bir kelimeye dokun.','برای دیدن معنی، روی کلمه هایلایت‌شده ضربه بزن.','Toca cualquier palabra resaltada para ver su significado.')}</p>` : ''}
       ${R.read ? `
       ${storyPerspectiveHtml(s)}
-      ${s.grammarFocus ? `
-      <div class="row" style="gap:7px; align-items:center; margin:20px 0 8px;">
-        <span class="item-ic" style="background:var(--cat-gram-soft); color:var(--cat-gram); flex:0 0 auto; width:26px; height:26px;">${ICONS.dumbbell}</span>
-        <h3 class="display" style="font-size:14px;">${L('Grammar focus','Dilbilgisi odağı','نکته گرامری', 'Enfoque gramatical')}</h3>
-      </div>
-      <div class="card-flat" dir="ltr">
-        ${s.grammarFocus.map((g,idx)=>`<div class="phrase-row"><div class="row" style="gap:8px; align-items:center;"><span style="display:inline-flex; align-items:center; justify-content:center; width:20px; height:20px; border-radius:50%; background:var(--cat-gram-soft); color:var(--cat-gram); font-size:10.5px; font-weight:800; flex:0 0 auto;">${idx+1}</span><div class="phrase-term">${esc(g.point)}</div></div><div class="phrase-mean" style="font-style:italic; margin-top:2px;">${esc(g.example)}</div></div>`).join('')}
-      </div>` : ''}
-      ${s.discussionQuestions ? `
+      <!-- 2026-10-18 Farin: after the story keep only the "You are X, how do you feel?" card; grammar focus, writing practice, Did you know? and Story message removed. Discussion questions stay only as a fallback for stories with no perspective card. -->
+      ${s.discussionQuestions && !(s.perspective && s.perspective.prompt) ? `
       <div class="row" style="gap:7px; align-items:center; margin:20px 0 8px;">
         <span class="item-ic" style="background:var(--cat-story-soft); color:var(--cat-story); flex:0 0 auto; width:26px; height:26px;">${ICONS.chat}</span>
         <h3 class="display" style="font-size:14px;">${L('Discussion questions','Tartışma soruları','سوالات بحث', 'Preguntas de discusión')}</h3>
       </div>
       <div class="card-flat" dir="ltr">
         ${s.discussionQuestions.map((q,i)=>storyAnswerHtml(s, q, i)).join('')}
-      </div>` : ''}
-      ${s.writingPractice ? `
-      <h3 class="display" style="font-size:14px; margin:20px 0 4px;">${L('Writing practice','Yazma alıştırması','تمرین نوشتاری', 'Práctica de escritura')}</h3>
-      <div class="card-flat" dir="ltr"><p style="margin:0; font-size:14px;">${esc(s.writingPractice.prompt)}</p></div>` : ''}
-      ${s.funFacts ? `
-      <h3 class="display" style="font-size:14px; margin:20px 0 4px;">${L('Did you know?','Biliyor muydun?','می‌دانستی؟', '¿Sabías que...?')}</h3>
-      <div class="card-flat" dir="ltr">
-        ${s.funFacts.map(f=>`<div class="phrase-row"><div class="phrase-mean">• ${esc(f)}</div></div>`).join('')}
-      </div>` : ''}
-      ${s.message ? `
-      <div class="card-flat" dir="ltr" style="margin-top:16px; background:var(--cat-story-soft); border-color:var(--cat-story-soft);">
-        <div class="eyebrow" style="color:var(--cat-story);">${L('Story message','Hikayenin mesajı','پیام داستان', 'Mensaje de la historia')}</div>
-        <p style="margin:6px 0 0; font-style:italic; color:var(--cat-story);">${esc(s.message.en)}</p>
       </div>` : ''}
       <button class="btn btn-primary" style="margin-top:16px;" data-action="start-story-quiz" data-id="${s.id}">${inCourseStep() ? L('Check what you noticed','Ne fark ettiğini kontrol et','ببین چه چیزهایی را متوجه شدی','Comprueba lo que has notado') : L('Play Game!','Oyunu Oyna!','بازی کن!','¡Juega!')}</button>
       ` : ''}

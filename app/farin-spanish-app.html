@@ -1465,6 +1465,35 @@
   html[dir="rtl"] .lx-word .phrase-example{border-right-color:var(--lx); border-right-width:3px;}
   .lx-word .flash-note{margin-top:2px;}
 
+  /* Premium course screens in the same style (Farin 2026-10-18: "the design you made for lesson explanation, for premium
+     courses too"): the course's lavender hero + stat tiles on the first open and the course page, lx heads on the grammar step. */
+  .lx-page.lx-course{--lx:var(--clay-lavender-deep); --lx-soft:color-mix(in srgb, var(--clay-lavender) 24%, var(--bg-elevated));}
+  .lx-course .lx-hero.compact{padding:16px 20px 42px;}
+  .lx-course .lx-hero.compact h1{font-size:clamp(23px, 6.4vw, 29px); margin-top:10px;}
+  .lx-course .lx-hook b{color:#fff;}
+  .lx-course .lx-gap{height:18px;}
+  .lx-lesson{display:flex; flex-direction:column; gap:5px;}
+  .lx-lesson b{font-family:'Fredoka',-apple-system,sans-serif; font-weight:600; font-size:19px; line-height:1.25; color:var(--ink);}
+  .lx-lesson p{margin:0; font-size:14px; line-height:1.5; color:var(--ink-soft);}
+  .lx-lesson small{font-size:12.5px; color:var(--ink-faint); font-weight:700;}
+  .lx-track-q{display:flex; align-items:center; gap:8px; font-size:11px; font-weight:800; letter-spacing:.14em; text-transform:uppercase; color:var(--ink-faint); margin:20px 0 8px;}
+  .lx-track-q::after{content:""; flex:1; height:1px; background:var(--border);}
+  .lx-track{display:grid; grid-template-columns:1fr 1fr; gap:8px;}
+  .lx-track .cs-pick{padding:10px 12px; border-radius:16px; box-shadow:none;}
+  .lx-track .cs-pick b{font-size:14px;}
+  .lx-track .cs-pick span{font-size:12px;}
+  .lx-track .cs-pick.rec{border-color:var(--lx); background:var(--lx-soft);}
+  .lx-note{margin:10px 0 0; font-size:12.5px; color:var(--ink-faint); text-align:center; line-height:1.45;}
+  .cs-head .cs-title .dot{color:var(--accent);}
+  .cs-gram.lx-page .lx-head{margin:22px 0 10px;}
+  .cs-gram.lx-page > .lx-head:first-child{margin-top:4px;}
+  .cs-gram.lx-page .card-flat .lx-head{margin:0 0 8px;}
+  .cs-gram.lx-page .card-flat .lx-head h2{font-size:18px;}
+  .cs-gram.lx-page .cs-ghook{font-size:16px; line-height:1.55;}
+  .cs-gram.lx-page .cs-grule{background:var(--bg-elevated); border:1px solid var(--border-soft); border-radius:20px; box-shadow:var(--shadow); padding:16px;}
+  .cs-gram.lx-page .cs-grule li b{padding-inline-start:10px; border-inline-start:3px solid var(--lx); margin-top:5px;}
+  .cs-gram.lx-page .cs-gtest{border-radius:20px; padding:16px;}
+
   /* ---- results ---- */
   .result-ring{width:104px;height:104px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-direction:column;margin:8px auto 4px;}
   .result-ring .big{font-size:30px; font-weight:800;}
@@ -25082,7 +25111,7 @@ function courseGrammarOrder(t, html){
 function courseGrammarExpHtml(t){
   const x = t.expParts, fld = courseTryField(t), b = t[fld], canTry = !!(b && b.word && (b.distractors||[]).length);
   const tried = !canTry || (courseUi.tryKey === t.id+':'+fld && courseUi.tryPick !== null);
-  const label = s=>`<div class="cs-glabel">${esc(courseUp(s))}</div>`;
+  const label = (s, k)=>`<div class="lx-head">${k ? `<div class="lx-eyebrow">${esc(k)}</div>` : ''}<h2 class="display">${esc(s)}<span class="dot">.</span></h2></div>`;
   const spk = s=>`<button type="button" class="icon-btn cs-gspk" data-action="speak-sentence" data-text="${esc(s)}" aria-label="${esc(CL('Listen','Dinle','گوش کن','Escuchar'))}">${ICONS.soundOn}</button>`;
   const pair = (w, r)=>w && r ? `<div class="contrast" dir="ltr" translate="no"><div class="contrast-line wrong"><b>✗</b><span class="txt">${glossify(w)}</span></div><div class="contrast-line right"><b>✓</b><span class="txt">${glossify(r)}</span>${spk(r)}</div></div>` : '';
   const ft = t.formsTable;
@@ -25090,17 +25119,17 @@ function courseGrammarExpHtml(t){
       <thead><tr>${(cl(ft.headers) || ft.headers.en || []).map(h=>`<th>${esc(h)}</th>`).join('')}</tr></thead>
       <tbody>${ft.rows.map(row=>`<tr>${row.map(cell=>`<td dir="ltr">${esc(cell)}</td>`).join('')}</tr>`).join('')}</tbody></table></div></details>` : '';
   const rest = !tried ? `<p class="cs-gwait">${CL('Pick one to see the rule.','Kuralı görmek için birini seç.','برای دیدن قاعده، یکی را انتخاب کن.','Elige una para ver la regla.')}</p>` : `
-    <div class="card-flat cs-grule">${label(CL('The rule','Kural','قاعده','La regla'))}
+    <div class="card-flat cs-grule">${label(CL('The rule','Kural','قاعده','La regla'), CL('Understand it','Anla','بفهم','Entiéndelo'))}
       <ul>${x.rule.map(r=>`<li><span>${esc(cl(r))}</span>${r.ex ? `<b dir="ltr" translate="no">${esc(r.ex)}</b>` : ''}</li>`).join('')}</ul></div>
-    ${x.test ? `<div class="card-flat cs-gtest">${label(CL('Quick test','Hızlı sınama','محک سریع','Prueba rápida'))}<p>${esc(cl(x.test))}</p></div>` : ''}
+    ${x.test ? `<div class="card-flat cs-gtest">${label(CL('Quick test','Hızlı sınama','محک سریع','Prueba rápida'), CL('Check yourself','Kendini dene','خودت را محک بزن','Compruébalo'))}<p>${esc(cl(x.test))}</p></div>` : ''}
     ${x.contrast ? `<details class="cs-why"><summary>${CL('Why do we mix these up?','Bunları neden karıştırıyoruz?','چرا این‌ها را قاطی می‌کنیم؟','¿Por qué los confundimos?')}</summary><p dir="auto">${esc(cl(x.contrast))}</p></details>` : ''}
     ${forms}
-    ${t.wrong2 && t.right2 ? label(CL('One more example','Bir örnek daha','یک مثال دیگر','Otro ejemplo')) + pair(t.wrong2, t.right2) : ''}
+    ${t.wrong2 && t.right2 ? label(CL('One more example','Bir örnek daha','یک مثال دیگر','Otro ejemplo'), CL('Spot the difference','Farkı bul','فرق را پیدا کن','Encuentra la diferencia')) + pair(t.wrong2, t.right2) : ''}
     <button class="btn btn-primary" style="margin-top:16px;" data-action="start-grammar-quiz" data-id="${t.id}">${CL('Practise: the quiz','Alıştırma: test','تمرین: آزمون','Practica: el test')}</button>`;
   return `<div class="fade-in">
     ${sectionHead('', '')}
-    <div class="screen cs-gram" style="padding-top:0;">
-      ${label(CL('From the story','Hikayeden','از داستان','De la historia'))}
+    <div class="screen cs-gram lx-page" style="padding-top:0;">
+      ${label(CL('From the story','Hikayeden','از داستان','De la historia'), CL('See it','Gör','ببین','Míralo'))}
       ${x.hook ? `<p class="cs-ghook">${esc(cl(x.hook))}</p>` : ''}
       ${pair(t.wrong, t.right)}
       ${canTry ? courseTryOneHtml(t, x.tryWhy) : ''}
@@ -25317,27 +25346,64 @@ function renderCourseIntro(c){
   const meetAll = intro.meet ? cl(intro.meet) : cl(c.promise);
   const meet = (meetAll.match(/[^.!?]+[.!?]+/g) || [meetAll]).slice(0, 2).join(' ').trim();
   const role = intro.role ? cl(intro.role) : '', ri = role.indexOf(':');
-  const roleHtml = role ? `<p style="margin:10px 0 0; font-size:14px; line-height:1.5;">${ri > 0 ? `<b>${esc(role.slice(0, ri+1))}</b>${esc(role.slice(ri+1))}` : esc(role)}</p>` : '';
-  const who = intro.who ? cl(intro.who) : (c.story ? c.story.character.split(' ')[0] : '');
-  const shape = who ? CL(total+' lessons in '+mods+' chapters. Each lesson is a scene from '+who+'\'s story.', mods+' bölümde '+total+' ders. Her ders, '+who+'\'nın hikayesinden bir sahne.', total+' درس در '+mods+' فصل. هر درس صحنه‌ای از داستان '+who+' است.', total+' lecciones en '+mods+' capítulos. Cada lección es una escena de la historia de '+who+'.')
-    : CL(total+' lessons in '+mods+' chapters.', mods+' bölümde '+total+' ders.', total+' درس در '+mods+' فصل.', total+' lecciones en '+mods+' capítulos.');
+  const roleHtml = role ? `<p class="lx-hook">${ri > 0 ? `<b>${esc(role.slice(0, ri+1))}</b>${esc(role.slice(ri+1))}` : esc(role)}</p>` : '';
+  // First open (Farin 2026-10-18, "still confusing when the user starts the course"): the course in the lesson-page style,
+  // then the first lesson by name and ONE Start button. The course level is a small choice under it (the recommended one
+  // is already picked), not a question that has to be answered before anything can start.
+  const first = courseOrder(c.id).find(uid=>courseUnitSteps(c.id, uid).length) || '';
+  const fu = first ? courseFindUnit(c.id, first) : null, no = first ? courseUnitNo(c.id, first) : '1';
+  const mins = first ? Math.round(coursePartMinutes(c.id, first, -1) / 5) * 5 : 0;
   const tracks = c.tracks || [];
-  const picks = tracks.length ? courseTrackPicksHtml(c, courseTrackDefault(c.id), 'course-intro-pick')
-    : `<button class="btn btn-primary" data-action="course-intro-pick" data-cid="${c.id}">${CL('Start lesson','Derse başla','شروع درس','Empezar la lección')}</button>`;
-  return `<div class="fade-in course-intro">
+  const sel = tracks.length ? (courseUi.introTrack && courseUi.introTrack.cid === c.id && tracks.includes(courseUi.introTrack.t) ? courseUi.introTrack.t : courseTrackDefault(c.id)) : '';
+  const picks = tracks.length ? courseTrackPicksHtml(c, sel, 'course-intro-track').replace(/ [›‹]<\/b>/g, '</b>') : '';
+  return `<div class="fade-in course-intro lx-page lx-course">
     ${coursePathHeadHtml()}
-    <h1 class="display cp-title" style="padding-bottom:10px;">${esc(cl(c.title))}</h1>
     <div class="screen" style="padding-top:0;">
-      <div class="hero-card" style="${COURSE_HERO_BG} cursor:default; padding:16px 18px;">${claySparkles()}
-        <div class="hero-eyebrow">${esc(courseUp(who ? CL('Meet '+who, who+' ile tanış', 'با '+who+' آشنا شو', 'Conoce a '+who) : CL('The story','Hikaye','داستان','La historia')))}</div>
-        <p style="margin:6px 0 0; font-size:14px; line-height:1.5;">${esc(meet)}</p>${roleHtml}
+      <div class="lx-hero" style="padding-bottom:44px;">
+        ${claySparkles()}
+        <span class="lx-pill">${CL('Premium course','Premium kurs','دوره‌ی ویژه','Curso premium')}</span>
+        <h1 class="display"><bdi>${esc(cl(c.title))}</bdi><span class="dot">.</span></h1>
+        <p class="lx-hook">${esc(meet)}</p>${roleHtml}
       </div>
-      <div class="card-flat" style="margin-top:10px; padding:12px 16px;"><p style="margin:0; font-size:13.5px; line-height:1.5;">${esc(shape)}${intro.finish ? '<br>'+esc(cl(intro.finish)) : ''}</p></div>
-      <h2 class="display" style="font-size:17px; margin:16px 0 10px;">${CL('How do you want to start?','Nasıl başlamak istersin?','دوست داری چطور شروع کنی؟','¿Cómo quieres empezar?')}</h2>
-      <div class="stack" style="gap:10px;">${picks}</div>
-      ${tracks.length ? `<p style="margin:10px 0 0; font-size:12.5px; color:var(--ink-faint); text-align:center;">${CL('You can change this later.','Bunu sonra değiştirebilirsin.','بعداً می‌توانی عوضش کنی.','Puedes cambiarlo más tarde.')}</p>` : ''}
+      <div class="lx-stats">
+        <div class="lx-stat"><span>${CL('Lessons','Ders','درس','Lecciones')}</span><b class="display">${total}</b></div>
+        <div class="lx-stat"><span>${CL('Chapters','Bölüm','فصل','Capítulos')}</span><b class="display">${mods}</b></div>
+        <div class="lx-stat"><span>${CL('Minutes','Dakika','دقیقه','Minutos')}</span><b class="display">${mins ? '~' + mins : '—'}</b></div>
+      </div>
+      <div class="lx-sec" style="margin-top:24px;">
+        <div class="lx-head"><div class="lx-eyebrow">${CL('Start here','Buradan başla','از اینجا شروع کن','Empieza aquí')}</div><h2 class="display">${esc(CL('Lesson '+no, 'Ders '+no, 'درس '+no, 'Lección '+no))}<span class="dot">.</span></h2></div>
+        <div class="lx-card lx-lesson">
+          ${fu ? `<b>${esc(cl(fu.u.title))}</b>` : ''}
+          ${first && courseLessonLine(c.id, first) ? `<p>${esc(courseLessonLine(c.id, first))}</p>` : ''}
+          <small>${CL('3 parts: Learn, Practise, Do. You can pause after each part.','3 kısım: Öğren, Alıştır, Yap. Her kısımdan sonra ara verebilirsin.','۳ بخش: یاد بگیر، تمرین کن، انجام بده. بعد از هر بخش می‌توانی استراحت کنی.','3 partes: Aprende, Practica, Hazlo. Puedes parar después de cada parte.')}</small>
+        </div>
+      </div>
+      <button class="btn btn-primary" style="margin-top:16px;" data-action="course-intro-pick" data-cid="${c.id}"${sel ? ` data-track="${sel}"` : ''}>${esc(CL('Start Lesson '+no, 'Başla: Ders '+no, 'شروع درس '+no, 'Empezar la lección '+no))}</button>
+      ${tracks.length ? `<div class="lx-track-q">${CL('Your version','Senin versiyonun','نسخه‌ی تو','Tu versión')}</div>
+      <div class="lx-track">${picks}</div>
+      <p class="lx-note">${CL('You can change this later.','Bunu sonra değiştirebilirsin.','بعداً می‌توانی عوضش کنی.','Puedes cambiarlo más tarde.')}${intro.finish ? ' ' + esc(cl(intro.finish)) : ''}</p>` : (intro.finish ? `<p class="lx-note">${esc(cl(intro.finish))}</p>` : '')}
     </div>
   </div>`;
+}
+// The course page's head in the lesson-page style: the course name, then where the learner is (chapter, next lesson, version).
+// No totals here (the 2026-10-10 data-overload rule: on the course page the only numbers are lesson numbers).
+function coursePageHeroHtml(c, nx){
+  const total = courseUnitsTotal(c), mods = c.modules.length, done = courseUnitsDone(c.id);
+  const onLesson = nx && !nx.final && nx.uid;
+  const ch = onLesson ? courseModuleIndex(c, nx.uid) + 1 : mods;
+  const next = onLesson ? courseUnitNo(c.id, nx.uid) : (nx && nx.final ? CL('Final','Final','پایانی','Final') : '✓');
+  const tracks = c.tracks || [];
+  return `<div class="lx-hero compact">
+      ${claySparkles()}
+      <span class="lx-pill">${CL('Premium course','Premium kurs','دوره‌ی ویژه','Curso premium')}</span>
+      <h1 class="display"><bdi>${esc(cl(c.title))}</bdi><span class="dot">.</span></h1>
+    </div>
+    <div class="lx-stats">
+      <div class="lx-stat"><span>${CL('Chapter','Bölüm','فصل','Capítulo')}</span><b class="display">${Math.max(1, Math.min(ch, mods))}</b></div>
+      <div class="lx-stat"><span>${CL('Next','Sıradaki','بعدی','Siguiente')}</span><b class="display">${esc(String(next))}</b></div>
+      <div class="lx-stat"><span>${esc(tracks.length ? (courseTrackQ(c) ? CL('Test','Sınav','آزمون','Examen') : CL('Version','Versiyon','نسخه','Versión')) : CL('Lessons','Ders','درس','Lecciones'))}</span><b class="display">${esc(tracks.length ? courseTrackName(c, courseTrack(c.id)) : String(done))}</b></div>
+    </div>
+    <div class="lx-gap"></div>`;
 }
 // "How this course works" (footer link): today's three intro cards, in the Phase 0 words (lessons, parts, chapter finales).
 function renderCourseAbout(c){
@@ -25675,10 +25741,11 @@ function renderCourseDetail(cid, sheetUid){
   courseAccessRefresh(cid);
   const nx = courseNext(cid), track = courseTrack(cid);
   const body = !content ? courseComingSoonHtml(c) : c.modules.map((m,mi)=>courseChapterPathHtml(c, m, mi, nx)).join('') + courseFinalNodeHtml(c, nx);
-  return `<div class="fade-in course-path">
+  return `<div class="fade-in course-path${content ? ' lx-page lx-course' : ''}">
     ${coursePathHeadHtml()}
-    <h1 class="display cp-title">${esc(cl(c.title))}</h1>
+    ${content ? '' : `<h1 class="display cp-title">${esc(cl(c.title))}</h1>`}
     <div class="screen" style="padding-top:0;">
+      ${content ? coursePageHeroHtml(c, nx) : ''}
       ${courseReviewNoticeHtml(c)}
       ${body}
       ${courseWorkRowHtml(c)}
@@ -25778,9 +25845,9 @@ function courseCardHeadHtml(cid, uid, type){
   else if(type==='drill' && it.drill && it.drill.part) sub = it.drill.part;
   const reread = COURSE_REREAD_TYPES.includes(type) && courseRereadStory(cid, uid) ? `<button class="cs-reread" data-action="course-reread" data-cid="${cid}" data-uid="${esc(uid)}">${CL('Read the story again','Hikayeyi tekrar oku','داستان را دوباره بخوان','Vuelve a leer la historia')}</button>` : '';
   return `<div class="cs-head">
-    <div class="cs-part">${esc(type==='scene' ? (courseIsMock(cid, uid) ? courseLessonName(cid, uid) : CL('Chapter finale','Bölüm finali','پایان فصل','Final del capítulo')) : coursePartLabel(cid, uid, si))}</div>
+    <div class="cs-part">${esc(type==='scene' ? (courseIsMock(cid, uid) ? courseLessonName(cid, uid) : CL('Chapter finale','Bölüm finali','پایان فصل','Final del capítulo')) : CL('Lesson '+courseUnitNo(cid, uid), 'Ders '+courseUnitNo(cid, uid), 'درس '+courseUnitNo(cid, uid), 'Lección '+courseUnitNo(cid, uid)) + ' · ' + coursePartLabel(cid, uid, si))}</div>
     <div class="cs-eyebrow" style="color:${m.t || m.c};">${esc(courseUp(cl(m)))}</div>
-    <h1 class="display cs-title">${esc(courseCardTitle(cid, uid, type))}</h1>
+    <h1 class="display cs-title"><bdi>${esc(courseCardTitle(cid, uid, type))}</bdi><span class="dot">.</span></h1>
     ${sub ? `<p class="cs-sub">${esc(sub)}</p>` : ''}${reread}
   </div>`;
 }
@@ -27079,6 +27146,7 @@ Object.assign(HANDLERS, {
     if(first) courseGo(cid, first); else render();
   },
   'course-intro-back'(){ courseUi.meetOpen = null; render(); window.scrollTo(0,0); },
+  'course-intro-track'(el){ courseUi.introTrack = {cid:el.dataset.cid, t:el.dataset.track}; render(); },
   // IELTS practice (drill): strategy card -> Start; the recording plays once; options and typed gaps; Check; Continue.
   'course-drill-start'(el){ const d = courseUnitItems(el.dataset.uid).drill; if(!d) return; const st = courseDrillState(el.dataset.uid, d); st.stage = 1; st.startedAt = Date.now(); render(); window.scrollTo(0, 0); },
   'course-listen-play'(){

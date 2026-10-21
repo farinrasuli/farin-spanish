@@ -25038,7 +25038,51 @@ function courseOwnExitItems(uid, withB2){
   if(withB2 && it.b2 && it.b2.exitItem) out.push({key:it.b2.id+'#x', item:it.b2.exitItem, uid});
   return out;
 }
-// Up to 3 items: one each from units n-1, n-3 and n-7 or more back (early units use what
+// PROPOSAL-1 change 1 (Farin 2026-10-17, lxd READY-4 course-review-word-item): one word item from the vocab of unit n-1 or n-2.
+// Due or never-reviewed cards first; wrong ones first, then the oldest last-right. The meaning is the hint,
+// so only one choice fits. A card whose hint already contains the answer is skipped.
+function courseWordSurface(c){ const m = String(c.sentence).match(cardGapRe(c)); return m ? m[2] : ''; }
+// "I", "I'm", "I’m", "I'd..." and words in capitals (KPI, ID badge) keep their capital.
+function courseKeepCap(s){ return s === 'I' || s.indexOf('I ') === 0 || s.indexOf("I'") === 0 || s.indexOf('I\u2019') === 0 || (s.length > 1 && s.charAt(1) !== s.charAt(1).toLowerCase()); }
+function courseWordPick(cid, uid){
+  const order = courseUnitOrder(cid), n = order.indexOf(uid);
+  if(n < 1) return null;
+  const srs = courseProg(cid).srs, cands = [];
+  [order[n-1], n >= 2 ? order[n-2] : null].forEach(u=>{
+    const v = u && courseUnitItems(u).vocab;
+    if(!v || !v.cards) return;
+    const ok = v.cards.map((c, i)=>({c, i, w:cardHasGap(c) ? courseWordSurface(c) : ''})).filter(x=>x.w);
+    if(ok.length < 3) return;                                  // need 2 distractors from the same set
+    ok.forEach(x=>{
+      const hint = cl(x.c.meaning);
+      if(hint && hint.toLowerCase().includes(x.w.toLowerCase())) return;
+      cands.push({key:v.id+'#'+x.i, card:x.c, word:x.w, hint, uid:u, pool:ok});
+    });
+  });
+  if(!cands.length) return null;
+  const isUp = c=>{ const e = srs[c.key]; return !e || e.wrong || srsIsDue(e); };
+  const rank = c=>{ const e = srs[c.key]; return !e ? '1' : (e.wrong ? '0'+(e.due||'') : '1'+(e.lastRight||'')); };
+  let list = cands.filter(isUp); if(!list.length) list = cands;
+  list = shuffle(list); list.sort((a,b)=>{ const ra = rank(a), rb = rank(b); return ra < rb ? -1 : (ra > rb ? 1 : 0); });
+  const p = list[0], low = s=>s.toLowerCase();
+  // Distractors with the same shape as the answer first: both with or both without a leading article
+  // (el/la/los/las/un/una, the/a/an), and no ? ¿ ! ¡ inside, so the form never gives the answer away.
+  const ART = ['el','la','los','las','un','una','the','a','an'];
+  const hasArt = w=>w.indexOf(' ') > 0 && ART.includes(low(w).split(' ')[0]);
+  const odd = w=>/[?¿!¡]/.test(w);
+  const shape = x=>(hasArt(x.w) === hasArt(p.word) ? 0 : 2) + (odd(x.w) ? 1 : 0);
+  const ds = [];
+  shuffle(p.pool.filter(x=>low(x.w) !== low(p.word))).sort((a,b)=>shape(a) - shape(b))
+    .forEach(x=>{ if(ds.length < 2 && !ds.some(d=>low(d) === low(x.w))) ds.push(x.w); });
+  if(ds.length < 2) return null;
+  // Capitals: when the blank opens the sentence (ignoring a leading ¿ ¡ or quote mark), every option starts
+  // with a capital; otherwise options start lower-case, except courseKeepCap ones.
+  let s = String(p.card.sentence); while(s && '¿¡"«“ '.indexOf(s.charAt(0)) >= 0) s = s.slice(1);
+  const opening = low(s).indexOf(low(p.word)) === 0;
+  const fix = w=>opening ? w.charAt(0).toUpperCase() + w.slice(1) : (courseKeepCap(w) ? w : w.charAt(0).toLowerCase() + w.slice(1));
+  return {key:p.key, uid:p.uid, item:{kind:'word', prompt:cardBlank(p.card), options:[fix(p.word)].concat(ds.map(fix)), correct:0, from:p.uid, hint:p.hint, full:p.card.sentence}};
+}
+// One word item from unit n-1/n-2 (courseWordPick), then up to 3 exit items: one each from units n-1, n-3 and n-7 or more back (early units use what
 // exists). Wrong items first (oldest due first), otherwise the oldest last-correct answer.
 // Never an item that is also in this unit's own exit. Unit 1 has no review.
 function courseReviewPicks(cid, uid){
@@ -25055,6 +25099,8 @@ function courseReviewPicks(cid, uid){
     cs.sort((a,b)=>{ const ra = rank(a), rb = rank(b); return ra < rb ? -1 : (ra > rb ? 1 : 0); });
     if(cs[0]) picks.push(cs[0]);
   });
+  const w = courseWordPick(cid, uid);
+  if(w) picks.unshift(w);
   return picks;
 }
 
@@ -26350,7 +26396,7 @@ function renderCourseBranch(cid, uid, b){
     <button class="btn btn-primary cs-main" data-action="course-branch-next">${again ? CL('Try again','Tekrar dene','دوباره امتحان کن', 'Inténtalo de nuevo') : CL('Continue','Devam','ادامه', 'Continuar')}</button>`;
 }
 
-/* review: up to 3 earlier exit items (courseReviewPicks), same look as the exit check. */
+/* review: 1 word item + up to 3 earlier exit items (courseReviewPicks), same look as the exit check. */
 function renderCourseReview(cid, uid){
   let st = courseUi.review;
   if(!st || st.uid !== uid) st = courseUi.review = {uid, cid, qs:courseReviewPicks(cid, uid).map(p=>courseQ(p.item, p.key)), i:0, picked:null, right:0};
@@ -26362,12 +26408,14 @@ function renderCourseReview(cid, uid){
       <button class="btn btn-primary cs-main" data-action="course-review-finish" data-cid="${cid}" data-uid="${uid}">${esc(courseNextBtnLabel())}</button></div>`;
   }
   const q = st.qs[st.i], fu = q.from ? courseFindUnit(cid, q.from) : null;
-  return `<div class="eyebrow">${st.i+1} / ${st.qs.length}${fu ? ' · '+esc(cl(fu.u.title)) : ''}</div>
+  return `<div class="eyebrow">${st.i+1} / ${st.qs.length}${q.kind==='word' ? ' · '+CL('Word','Kelime','واژه','Palabra') : ''}${fu ? ' · '+esc(cl(fu.u.title)) : ''}</div>
     <div class="card-flat" dir="ltr" translate="no" style="margin:8px 0 12px; font-size:16px; line-height:1.5;">${esc(q.prompt)}</div>
+    ${q.hint ? `<p style="font-size:13px; color:var(--ink-soft); margin:-4px 0 12px;">${esc(q.hint)}</p>` : ''}
     <div class="stack" style="gap:8px;">${q.options.map((o,i)=>{
       const cls = st.picked===null ? '' : (i===q.correct ? ' ok' : (i===st.picked ? ' bad' : ''));
       return `<button class="cj-part wide${cls}" dir="ltr" translate="no" data-action="course-review-pick" data-i="${i}" ${st.picked!==null?'disabled':''}>${esc(o)}</button>`;
     }).join('')}</div>
+    ${st.picked!==null && q.full ? `<div class="card-flat" dir="ltr" translate="no" style="margin-top:10px; font-size:14.5px;">${esc(q.full)}</div>` : ''}
     ${st.picked!==null ? `<button class="btn btn-primary cs-main" data-action="course-review-next">${CL('Next','Sonraki','بعدی', 'Siguiente')}</button>` : ''}`;
 }
 
@@ -26456,7 +26504,7 @@ function renderCoursePerspective(cid, uid, p){
 }
 /* exit check: 2 grammar blanks + 1 STAR item. The 3 spaced items from earlier units join once those units are published (stub). */
 // One display question from an exit-shaped item: options shuffled, `correct` follows the right one.
-function courseQ(x, key){ const right = x.options[x.correct], opts = shuffle(x.options); return {prompt:x.prompt, options:opts, correct:opts.indexOf(right), note:'', key, from:x.from}; }
+function courseQ(x, key){ const right = x.options[x.correct], opts = shuffle(x.options); return {prompt:x.prompt, options:opts, correct:opts.indexOf(right), note:'', key, from:x.from, kind:x.kind || '', hint:x.hint || '', full:x.full || ''}; }
 function courseExitQuestions(it, b2){
   const qs = [];
   if(it.exit && it.exit.items && it.exit.items.length){

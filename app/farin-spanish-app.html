@@ -11429,6 +11429,7 @@ function render(){
   if(state.view !== 'game-spell'){ try{ spellStopRec(); }catch(e){} }
   bindEvents(root);
   if(state.view !== 'dashboard') hideCharTip(true);
+  if(window.Theatre){ try{ Theatre.sync(state.view); }catch(e){} }   // Game Theatre: leaving a game's views closes the full-screen stage
   runPendingFx();
   maybeCelebrate();
   try{ maybeShowPageKept(); }catch(e){}
@@ -23261,6 +23262,51 @@ function sparkBurst(x, y, n, color, spread){
 
 /* ---- Companion on game screens (56px, top inline-end corner) ---- */
 let gcBubble = null, gcBubbleTimer = null;
+/* ---- Game Theatre (Trello x35crL5M, games-expansion proposal 2026-10-22 section 03) ----
+   Scenario games open full screen behind a cinematic poster. The engine is lazy-loaded from games/theatre/ on the first
+   tap of a scenario game (theatre.js + theatre.css are byte-identical EN/ES; content.js = this app's posters + HUD
+   strings; API in theatre.js's header). While it loads, a cover grows from the tapped card. If the files can't load
+   (offline before the first use) the game opens the old way. x = the old Back, all the way out of the game's views. */
+const THEATRE_KINDS = ['path','chores','mystery','order','desk','spell'];
+const THEATRE_VIEWS = ['game-path','game-chores-building','game-chores-room','game-mystery','game-order','game-desk','game-spell'];
+const THEATRE_VER = '1';
+let theatreLoading = null;
+function theatreLoad(){
+  if(window.Theatre) return Promise.resolve(window.Theatre);
+  if(!theatreLoading){
+    const add = (tag, a)=>new Promise((ok, no)=>{ const n = document.createElement(tag); Object.assign(n, a); n.onload = ok; n.onerror = ()=>{ n.remove(); no(new Error(a.src || a.href)); }; document.head.appendChild(n); });
+    const v = '?v=' + THEATRE_VER;
+    theatreLoading = Promise.all([add('link', {rel:'stylesheet', href:'games/theatre/theatre.css'+v}), add('script', {src:'games/theatre/content.js'+v}), add('script', {src:'games/theatre/theatre.js'+v})])
+      .then(()=>{ if(!window.Theatre) throw new Error('theatre'); return window.Theatre; })
+      .catch(e=>{ theatreLoading = null; throw e; });
+  }
+  return theatreLoading;
+}
+function theatreGate(el, handler){
+  const ds = (el && el.dataset) || {};
+  // course lesson cards keep their lesson shell (courseOpenStep needs the game open synchronously): no Theatre there
+  if(ds.theatre || !THEATRE_KINDS.includes(ds.kind) || state.courseReturn) return false;
+  const kind = ds.kind, from = (el.isConnected && el.getBoundingClientRect) ? el.getBoundingClientRect() : null;
+  hideCharTip(true); gcBubble = null;
+  const cover = document.createElement('div');
+  cover.style.cssText = 'position:fixed;inset:0;z-index:85;background:#f6f1e7;';
+  document.body.appendChild(cover);
+  if(from && from.width && !reducedMotion()) anim(cover, [{clipPath:`inset(${from.top}px ${innerWidth-from.right}px ${innerHeight-from.bottom}px ${from.left}px round 22px)`}, {clipPath:'inset(0px 0px 0px 0px round 0px)'}], {duration:400, easing:'cubic-bezier(.2,.7,.2,1)'});
+  const play = ()=>HANDLERS[handler]({dataset:Object.assign({}, ds, {theatre:'1'})});
+  const seen = state.progress.theatreSeen || (state.progress.theatreSeen = {});
+  theatreLoad().then(T=>T.open({kind, cover, from, views:THEATRE_VIEWS, seen:!!seen[kind],
+    app:{lang:LANG, name:(state.profile && state.profile.name) || '', level:(state.profile && state.profile.level) || '', gameName:gameDisplayName(kind),
+      view:()=>state.view, muted:()=>sfxMuted, setMuted:m=>{ sfxMuted = !!m; localStorage.setItem('farinSfxMuted', m ? '1' : '0'); }},
+    onPlay:()=>{ seen[kind] = 1; play(); },
+    onExit:theatreExit}))
+  .catch(()=>{ cover.remove(); play(); });
+  return true;
+}
+function theatreExit(){
+  stopAllSpeech();
+  while(navHistory.length && THEATRE_VIEWS.includes(navHistory[navHistory.length-1].view)) navHistory.pop();
+  try{ history.back(); }catch(e){ goBack(); }
+}
 function gameTopHtml(title){
   return `<div class="game-top">
     <button class="game-back" data-action="back" aria-label="${esc(L('Back','Geri','برگشت','Atrás'))}">${ICONS.back}</button>
@@ -24417,6 +24463,7 @@ const HANDLERS = {
   // ---- Games shelf (Jq6f9OFv, D4 = A): one tap replays a game the learner has met, with fresh content ----
   'shelf-play'(el){
     const kind = el.dataset.kind;
+    if(theatreGate(el, 'shelf-play')) return;   // Game Theatre (shelf entries too)
     hideCharTip(true); gcBubble = null;
     const ds = {kind, refId:'shelf-'+kind, goal:'', free:'1', shelf:'1', setId:''};
     if(kind === 'path'){
@@ -24449,6 +24496,7 @@ const HANDLERS = {
   },
   'start-game'(el){
     const kind = el.dataset.kind;
+    if(theatreGate(el, 'start-game')) return;   // Game Theatre: scenario games open full screen behind their poster
     gcBubble = null; trapWarnKey = null;
     const params = {refId: el.dataset.refId, goal: el.dataset.goal};
     // free play (Games shelf, "Mini Cross with these words"): no roadmap node, no scheduler, no souvenir

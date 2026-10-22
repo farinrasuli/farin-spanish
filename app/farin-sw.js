@@ -133,6 +133,9 @@ const MANIFEST_RE = /\/audio\/[a-z]{2}\/(alt\/)?manifest\.json$/;
 /* Offline: the app's own images, the Google Fonts files and the pinned Firebase SDK are
    cache-first, filled on first use, so a learner who has opened the app once can open it again
    with no connection. Bump CACHE whenever an image is replaced under the same name. */
+// Game Theatre + lazy game files (x35crL5M): games/**/*.js|css load on the first tap of a game; stale-while-revalidate keeps
+// them offline after that and picks up a new ?v= on the next visit. Poster WebPs (games/posters/) fall under IMG_RE.
+const GAMES_RE = /\/games\/[^?#]+\.(js|css)$/;
 const IMG_RE = /\.(png|webp|jpg|jpeg|svg)$/;
 const STATIC_HOSTS = ['fonts.gstatic.com'];
 const FIREBASE_SDK = 'https://www.gstatic.com/firebasejs/';
@@ -221,6 +224,7 @@ self.addEventListener('fetch', (e) => {
     // game art and app images: cache-first, filled on first use (the files never change under one name)
     if (AUDIO_RE.test(url.pathname)) { e.respondWith(audioCacheFirst(e.request)); return; }
     if (MANIFEST_RE.test(url.pathname)) { e.respondWith(networkFirst(e.request)); return; }
+    if (GAMES_RE.test(url.pathname)) { e.respondWith(staleWhileRevalidate(e)); return; }
     if (ART_RE.test(url.pathname) || PATH_RE.test(url.pathname) || IMG_RE.test(url.pathname)) e.respondWith(cacheFirst(e.request));
     return;
   }

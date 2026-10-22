@@ -1,0 +1,167 @@
+/* Game Theatre v1 (Trello x35crL5M) - byte-identical in both apps. Loaded lazily with theatre.js.
+   Layers while open: .th-backdrop (blurred light copy of the art filling the sides) < #app (the game, full height in a
+   tall centred column) < .th-hud (x, sound, extra controls) < .celebrate-overlay (z 60, the app's own) ...
+   while the poster shows: .th-backdrop (z 84) < .th-root / .th-frame (z 85) < .th-hud (z 86) < .th-titlecard (z 87). */
+
+body.theatre-on{
+  --th-col:min(100vw, calc(100dvh * .62));
+  --th-safe-t:env(safe-area-inset-top, 0px);
+  --th-safe-b:env(safe-area-inset-bottom, 0px);
+  --th-safe-l:env(safe-area-inset-left, 0px);
+  --th-safe-r:env(safe-area-inset-right, 0px);
+  --th-display:'Fredoka', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --th-text:'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  overflow-x:hidden;
+}
+body.theatre-on.th-4x5{--th-col:min(100vw, calc(100dvh * .8));}
+
+/* ---- the app becomes the stage ---- */
+body.theatre-on #app{max-width:var(--th-col); border:0 !important; box-shadow:none !important; position:relative; z-index:1;
+  padding-bottom:var(--th-safe-b); min-height:100dvh;}
+body.theatre-on .home-fab-wrap,
+body.theatre-on .home-fab,
+body.theatre-on .bottomnav,
+body.theatre-on .topbar,
+body.theatre-on .char-tip,
+body.theatre-on .game-companion,
+body.theatre-on .gc-bubble,
+body.theatre-on .game-back{display:none !important;}
+body.theatre-on .game-screen{padding-top:calc(18px + var(--th-safe-t)); padding-bottom:calc(32px + var(--th-safe-b)); min-height:100dvh;}
+body.theatre-on .game-top{padding-left:54px; padding-right:var(--th-hud-r, 58px); justify-content:center; text-align:center; min-height:70px;}
+body.theatre-on .game-title{text-align:center;}
+
+/* ---- sides: blurred, light, desaturated art, never black bars ---- */
+.th-backdrop{position:fixed; inset:0; z-index:84; overflow:hidden; pointer-events:none; background:#f6f1e7;}
+body.th-running .th-backdrop{z-index:0;}
+.th-bd-art{position:absolute; inset:-60px; filter:blur(38px) saturate(.55) brightness(1.08);}
+.th-bd-art img{width:100%; height:100%; object-fit:cover;}
+.th-bd-art .th-ph{position:absolute; inset:0;}
+.th-bd-veil{position:absolute; inset:0; background:rgba(255,255,255,.38);}
+
+/* ---- poster frame ---- */
+.th-root{position:fixed; inset:0; z-index:85;}
+.th-root.th-root-run{display:none;}
+.th-frame, .th-ghost{position:fixed; top:0; bottom:0; left:50%; width:var(--th-col); transform:translateX(-50%); z-index:85;
+  overflow:hidden; isolation:isolate; color:var(--th-ink, #1c3533); background:var(--th-sky, #fdf3e1);
+  font-family:var(--th-text); display:flex; flex-direction:column; justify-content:space-between; cursor:default;
+  -webkit-tap-highlight-color:transparent;}
+.th-ghost{pointer-events:none;}
+@media (min-width:600px){ .th-frame{box-shadow:0 0 0 1px rgba(255,255,255,.5), 0 30px 80px -30px rgba(40,30,20,.35);} }
+.th-art{position:absolute; inset:0; z-index:-2; transform-origin:50% 42%;}
+.th-art-img{width:100%; height:100%; object-fit:cover; display:block;}
+.th-grade{position:absolute; inset:0; z-index:-1; pointer-events:none;
+  background:linear-gradient(180deg, rgba(255,255,255,.55) 0%, rgba(255,255,255,0) 34%, rgba(255,255,255,0) 52%, color-mix(in srgb, var(--th-sky2, #f7d9b0) 70%, transparent) 78%, var(--th-sky2, #f7d9b0) 100%);}
+
+/* placeholder key art: gradient plate + the title's first letter set huge, clearly a stand-in until games/posters/<kind>.webp */
+.th-ph{position:absolute; inset:0; overflow:hidden;
+  background:
+    radial-gradient(90% 55% at 72% 22%, var(--th-glow, #fff6d8) 0%, transparent 62%),
+    linear-gradient(180deg, var(--th-sky, #fdf3e1) 0%, var(--th-sky2, #f7d9b0) 58%, var(--th-ground, #9fd3d1) 100%);}
+.th-ph-sun{position:absolute; width:46%; aspect-ratio:1; right:12%; top:16%; border-radius:50%;
+  background:radial-gradient(circle at 40% 38%, #fff 0%, color-mix(in srgb, var(--th-glow, #fff6d8) 85%, #fff) 45%, transparent 71%); opacity:.9;}
+.th-ph-mono{position:absolute; left:50%; top:52%; transform:translate(-50%, -50%); font-family:var(--th-display); font-weight:700;
+  font-size:min(118vw, 76dvh, calc(var(--th-col) * 1.15)); line-height:1; color:var(--th-ink, #1c3533); opacity:.075; letter-spacing:-.04em; user-select:none;}
+.th-ph-horizon{position:absolute; left:-10%; right:-10%; bottom:0; height:34%;
+  background:radial-gradient(120% 90% at 50% 100%, color-mix(in srgb, var(--th-ground, #9fd3d1) 90%, var(--th-ink, #1c3533)) 0%, var(--th-ground, #9fd3d1) 46%, transparent 72%); opacity:.55;}
+.th-ph-grain{position:absolute; inset:0; opacity:.22; mix-blend-mode:multiply;
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 .5  0 0 0 0 .45  0 0 0 0 .4  0 0 0 .5 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");}
+
+/* title lockup */
+.th-lockup{padding:calc(92px + var(--th-safe-t)) 28px 0; text-align:center; display:flex; flex-direction:column; align-items:center; gap:14px;}
+.th-kicker{margin:0; display:flex; align-items:center; gap:12px; font-weight:800; font-size:12px; letter-spacing:.24em; text-transform:uppercase;
+  color:color-mix(in srgb, var(--th-ink, #1c3533) 78%, transparent);}
+.th-kicker::before, .th-kicker::after{content:''; width:28px; height:1.5px; border-radius:2px; background:currentColor; opacity:.55;}
+[dir="rtl"] .th-kicker{letter-spacing:0; font-size:13.5px;}
+.th-title{margin:0; font-family:var(--th-display); font-weight:700; font-size:clamp(42px, calc(var(--th-col) * .145), 74px); line-height:.94;
+  letter-spacing:-.025em; text-wrap:balance; color:var(--th-ink, #1c3533);
+  text-shadow:0 1px 0 rgba(255,255,255,.7), 0 18px 40px color-mix(in srgb, var(--th-glow, #fff6d8) 90%, transparent);}
+.th-tagline{margin:0; max-width:19em; font-weight:600; font-style:italic; font-size:16.5px; line-height:1.4; text-wrap:balance;
+  color:color-mix(in srgb, var(--th-ink, #1c3533) 82%, transparent);}
+
+/* foot: Play, the strip slot, billing */
+.th-foot{padding:0 24px calc(22px + var(--th-safe-b)); display:flex; flex-direction:column; align-items:center; gap:16px;}
+.th-play{position:relative; overflow:hidden; min-width:232px; min-height:62px; padding:0 40px; border:0; border-radius:999px; cursor:pointer;
+  background:linear-gradient(180deg, color-mix(in srgb, var(--th-accent, #c8352e) 82%, #fff) 0%, var(--th-accent, #c8352e) 55%, color-mix(in srgb, var(--th-accent, #c8352e) 88%, #000) 100%);
+  color:var(--th-accent-ink, #fff); font-family:var(--th-display); font-weight:700; font-size:23px; letter-spacing:.01em;
+  box-shadow:0 1px 0 rgba(255,255,255,.55) inset, 0 -3px 0 rgba(0,0,0,.12) inset, 0 14px 30px -10px color-mix(in srgb, var(--th-accent, #c8352e) 75%, transparent);
+  transition:transform .12s ease;}
+.th-play::after{content:''; position:absolute; top:-20%; bottom:-20%; width:38%; left:-60%; transform:skewX(-20deg);
+  background:linear-gradient(90deg, transparent, rgba(255,255,255,.55), transparent); animation:th-shine 3.6s ease-in-out 2.8s infinite;}
+.th-play:active{transform:scale(.97);}
+.th-play:focus-visible{outline:3px solid var(--th-ink, #1c3533); outline-offset:4px;}
+.th-strip{display:flex; gap:10px; max-width:100%; overflow-x:auto; padding:2px 4px; scrollbar-width:none;}
+.th-strip:empty{display:none;}
+.th-strip::-webkit-scrollbar{display:none;}
+.th-strip-item{flex:0 0 auto; width:72px; display:flex; flex-direction:column; align-items:center; gap:5px; border:0; background:none; padding:0; cursor:pointer; color:inherit; font:inherit;}
+.th-strip-thumb{position:relative; width:64px; height:64px; border-radius:16px; overflow:hidden; background:rgba(255,255,255,.6); box-shadow:0 0 0 2px rgba(255,255,255,.85), 0 8px 18px -10px rgba(40,30,20,.5);}
+.th-strip-thumb img{width:100%; height:100%; object-fit:cover;}
+.th-strip-label{font-size:11.5px; font-weight:700; line-height:1.2; text-align:center;}
+.th-developing .th-strip-thumb{box-shadow:0 0 0 3px var(--th-accent, #c8352e), 0 8px 18px -10px rgba(40,30,20,.5);}
+.th-locked{opacity:.45; cursor:default;}
+.th-strip-lock{position:absolute; inset:0; display:flex; align-items:center; justify-content:center; color:var(--th-ink, #1c3533);}
+.th-billing{display:flex; align-items:center; justify-content:center; gap:12px; flex-wrap:wrap;}
+.th-bill-line{font-size:11.5px; font-weight:700; letter-spacing:.2em; text-transform:uppercase; color:color-mix(in srgb, var(--th-ink, #1c3533) 80%, transparent);}
+.th-bill-line .th-star{font-family:var(--th-display); font-weight:700; font-size:17px; letter-spacing:.06em; color:var(--th-ink, #1c3533); margin-inline-start:2px;}
+[dir="rtl"] .th-bill-line{letter-spacing:0; font-size:13px;}
+.th-stamp{display:inline-block; padding:3px 9px 2px; border:2px solid var(--th-accent, #c8352e); border-radius:6px; color:var(--th-accent, #c8352e);
+  font-weight:800; font-size:11px; letter-spacing:.16em; text-transform:uppercase; transform:rotate(-6deg); background:rgba(255,255,255,.35);}
+[dir="rtl"] .th-stamp{letter-spacing:0;}
+.th-ph-tag{margin:-4px 0 0; font-size:10.5px; font-weight:700; letter-spacing:.14em; text-transform:uppercase; opacity:.5;}
+[dir="rtl"] .th-ph-tag{letter-spacing:0;}
+.th-flash{position:absolute; inset:0; background:#fff; pointer-events:none; z-index:5;}
+
+/* ---- first view: the ~2.5 s sequence (proposal 03: flash, push-in with saturation rising, title, tagline, billing, Play) ---- */
+.th-intro .th-flash{animation:th-flash 1s ease-out both;}
+.th-intro .th-art{animation:th-pushin 2.5s cubic-bezier(.2,.7,.2,1) both;}
+.th-intro .th-kicker{animation:th-fadeup .5s .45s both;}
+.th-intro .th-title{animation:th-title .7s .6s cubic-bezier(.2,.8,.2,1) both;}
+.th-intro .th-tagline{animation:th-fadeup .6s 1.15s both;}
+.th-intro .th-bill-line{animation:th-fadeup .6s 1.55s both;}
+.th-intro .th-stamp{animation:th-stamp .38s 1.9s cubic-bezier(.3,1.6,.5,1) both;}
+.th-intro .th-play{animation:th-pop .5s 2.1s cubic-bezier(.3,1.5,.5,1) both;}
+.th-intro .th-ph-tag{animation:th-fadeup .5s 2.2s both;}
+.th-skip *, .th-skip{animation:none !important;}
+.th-skip .th-flash{display:none;}
+.th-skip .th-play::after{animation:th-shine 3.6s ease-in-out 1s infinite !important;}
+@keyframes th-flash{0%{opacity:1} 100%{opacity:0}}
+@keyframes th-pushin{from{transform:scale(1.14); filter:saturate(.3) brightness(1.2)} to{transform:none; filter:none}}
+@keyframes th-fadeup{from{opacity:0; transform:translateY(10px)} to{opacity:1; transform:none}}
+@keyframes th-title{from{opacity:0; transform:translateY(16px) scale(.96); letter-spacing:.02em} to{opacity:1; transform:none}}
+@keyframes th-stamp{from{opacity:0; transform:rotate(-6deg) scale(1.9)} to{opacity:1; transform:rotate(-6deg) scale(1)}}
+@keyframes th-pop{0%{opacity:0; transform:scale(.6)} 70%{opacity:1; transform:scale(1.06)} 100%{opacity:1; transform:scale(1)}}
+@keyframes th-shine{0%{left:-60%} 30%, 100%{left:130%}}
+
+/* ---- HUD ---- */
+.th-hud{direction:ltr; position:fixed; z-index:86; top:calc(31px + var(--th-safe-t)); left:50%; transform:translateX(-50%); width:var(--th-col);
+  padding:0 max(12px, var(--th-safe-r)) 0 max(12px, var(--th-safe-l)); box-sizing:border-box; display:flex; justify-content:space-between; align-items:center; pointer-events:none;}
+body.th-running .th-hud{z-index:50;}
+.th-hud-r, .th-controls{display:flex; gap:4px; align-items:center;}
+.th-btn{pointer-events:auto; width:44px; height:44px; border-radius:50%; padding:0; display:inline-flex; align-items:center; justify-content:center; cursor:pointer;
+  border:1px solid rgba(30,25,20,.08); background:rgba(255,255,255,.78); color:#2b2420;
+  -webkit-backdrop-filter:blur(10px) saturate(1.3); backdrop-filter:blur(10px) saturate(1.3);
+  box-shadow:0 1px 0 rgba(255,255,255,.8) inset, 0 6px 16px -8px rgba(40,30,20,.45); transition:transform .12s ease;}
+.th-btn:active{transform:scale(.92);}
+.th-btn:focus-visible{outline:3px solid var(--accent, #ff7a59); outline-offset:2px;}
+.th-btn svg{display:block;}
+
+/* ---- stage for games that draw their own (Your Call v2) ---- */
+.th-stage{position:fixed; top:0; bottom:0; left:50%; width:var(--th-col); transform:translateX(-50%); z-index:2; overflow:hidden;}
+
+/* ---- title card between chapters ---- */
+.th-titlecard{position:fixed; z-index:87; top:0; bottom:0; left:50%; width:var(--th-col, 100vw); max-width:100vw; transform:translateX(-50%); display:flex; align-items:center; justify-content:center; cursor:pointer;
+  background:radial-gradient(80% 50% at 50% 40%, var(--th-glow, #fff6d8), var(--th-sky, #fdf3e1)); color:var(--th-ink, #1c3533); text-align:center; padding:24px;}
+.th-tc-in{display:flex; flex-direction:column; gap:12px; align-items:center;}
+.th-tc-text{margin:0; font-family:'Fredoka', -apple-system, sans-serif; font-weight:700; font-size:clamp(34px, 10vw, 54px); line-height:1; letter-spacing:-.02em; text-wrap:balance;}
+.th-tc-sub{margin:0; font-weight:800; font-size:12px; letter-spacing:.24em; text-transform:uppercase; opacity:.7;}
+
+/* ---- View Transition: the poster dissolves into the game ---- */
+html.th-vt::view-transition-old(root){animation:th-vt-out .42s cubic-bezier(.4,0,.2,1) both;}
+html.th-vt::view-transition-new(root){animation:th-vt-in .42s cubic-bezier(.2,.7,.2,1) both;}
+@keyframes th-vt-out{to{opacity:0; transform:scale(1.04)}}
+@keyframes th-vt-in{from{opacity:0}}
+
+@media (prefers-reduced-motion: reduce){
+  .th-frame *, .th-frame, .th-titlecard *{animation:none !important; transition:none !important;}
+  .th-flash{display:none;}
+  html.th-vt::view-transition-old(root), html.th-vt::view-transition-new(root){animation:none !important;}
+}

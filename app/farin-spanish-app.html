@@ -7373,6 +7373,8 @@ function load(){
     if(!merged.progress.nodeScores || typeof merged.progress.nodeScores !== 'object') merged.progress.nodeScores = {};
     // LXD READY-5 (gv6ixmRf): light stage checks, {"A1.2":{v, date, skipped, score, total, grammar, words, listen}}
     if(!merged.progress.stageChecks || typeof merged.progress.stageChecks !== 'object' || Array.isArray(merged.progress.stageChecks)) merged.progress.stageChecks = {};
+    // LXD READY-6 R2: carried item per first-two grammar node, {"A2.1":{nodeItemId: carriedItemId}}
+    if(!merged.progress.carryAsked || typeof merged.progress.carryAsked !== 'object' || Array.isArray(merged.progress.carryAsked)) merged.progress.carryAsked = {};
     if(!merged.progress.storyAnswers || typeof merged.progress.storyAnswers !== 'object') merged.progress.storyAnswers = {};
     // Every-card wave 2 (uVzMAAGg): story pages read so far and turning-point calls
     if(!merged.progress.storyPages || typeof merged.progress.storyPages !== 'object') merged.progress.storyPages = {};
@@ -9790,6 +9792,72 @@ function stageThemePlan(profile, goals){
   Object.keys(th.pairs || {}).forEach(gid=>{ const s = setOf(th.pairs[gid]); if(s && grammar.some(g=>g.id===gid)) pairs[gid] = s; });
   return {key:stageKeyOf(profile), theme:th, grammar, vocab, pairs};
 }
+/* LXD READY-6 R2-R4 (Farin sEZ2Y6Pr = A, card tROjHkSd): recycling across the stage line. One memory: progress.srs /
+   LEITNER_INTERVALS. "Carry" items = the previous stage's grammar items / vocab sets the learner has met (an SRS entry
+   exists), weakest first: lowest box, then earliest due date, then teaching order. Course items never. A learner placed
+   straight into a stage has no entries for the stage before, so nothing is carried (by design). Only grammar and vocab
+   SRS kinds are read: song / media / game / story nodes are never carry items. */
+function prevStageKey(key, back){
+  const ks = Object.keys(STAGE_THEMES), i = ks.indexOf(key), n = back || 1;
+  return (i >= 0 && i - n >= 0) ? ks[i - n] : null;
+}
+function stageSetIds(key){
+  const th = STAGE_THEMES[key]; if(!th) return [];
+  const ids = [].concat(...Object.values(th.vocab || {}), Object.values(th.pairs || {}));
+  return ids.filter((id, i)=>ids.indexOf(id) === i);
+}
+function carryRank(ids, kind){
+  const srs = (state.progress && state.progress.srs) || {};
+  return ids.map((id, at)=>({id, at, e:srs[id]}))
+    .filter(x=>x.e && x.e.kind === kind && !srsIsCourseItem(x.id) && srsSource(x.id, kind))
+    .sort((a,b)=>((a.e.box || 0) - (b.e.box || 0)) || String(a.e.due || '').localeCompare(String(b.e.due || '')) || (a.at - b.at))
+    .map(x=>x.id);
+}
+function carryGrammarIds(profile){ const k = prevStageKey(stageKeyOf(profile)); return k ? carryRank(STAGE_THEMES[k].grammar || [], 'grammar') : []; }
+function carrySetIds(profile){ const k = prevStageKey(stageKeyOf(profile)); return k ? carryRank(stageSetIds(k).filter(id=>{ const s = VOCAB_SETS.find(x=>x.id === id); return s && s.category === 'vocab'; }), 'vocab') : []; }
+// R2: the carry-over question for one of the first two grammar nodes of the page, or null.
+function carryQuestionFor(itemId){
+  const p = state.profile;
+  if(!p || !p.completedDiagnostic || inCourseStep()) return null;
+  const firstTwo = currentRoadmap().filter(n=>n.type === 'grammar').slice(0, 2).map(n=>n.refId);
+  if(!firstTwo.includes(itemId)) return null;
+  const key = stageKeyOf(p), ranked = carryGrammarIds(p);
+  if(!state.progress.carryAsked || typeof state.progress.carryAsked !== 'object') state.progress.carryAsked = {};
+  const asked = state.progress.carryAsked[key] || {};          // {nodeItemId: carriedItemId}
+  let cid = asked[itemId];
+  if(!cid || !ranked.includes(cid)){
+    const taken = Object.keys(asked).filter(k=>k !== itemId).map(k=>asked[k]);
+    cid = ranked.find(id=>!taken.includes(id));
+  }
+  const item = cid && GRAMMAR_ITEMS.find(x=>x.id === cid), e = cid && state.progress.srs && state.progress.srs[cid];
+  if(!item || !e) return null;
+  const q = srsGrammarX3(item, e, srsGoalFor(item), false)[0];
+  if(!q) return null;
+  q.carry = cid; q.itemId = cid; q.kind = 'grammar';
+  state.progress.carryAsked[key] = Object.assign({}, asked, {[itemId]:cid});
+  return q;
+}
+// R2: a carry-over answer. A miss moves the item down one box, due tomorrow (the Shuffle's 0/2 move); a right
+// answer moves nothing (boxes move on due reviews). The sentence joins lastQ so the next review picks another.
+function carryOutcome(id, ok, key){
+  const e = state.progress.srs && state.progress.srs[id];
+  if(!e) return;
+  if(key) e.lastQ = [key].concat((e.lastQ || []).filter(k=>k !== key)).slice(0, 2);
+  if(!ok){ srsSetBox(e, (e.box || 0) - 1, 1); e.lapses = (e.lapses || 0) + 1; }
+}
+function carryEyebrow(id){
+  const it = GRAMMAR_ITEMS.find(x=>x.id === id), t = it ? grammarTitle(it) : '';
+  return L(`From your last page · ${t}`, `Önceki sayfandan · ${t}`, `از صفحهٔ قبلی‌ات · ${t}`, `De tu página anterior · ${t}`);
+}
+function carryTag(){ return L('from the page before', 'önceki sayfadan', 'از صفحهٔ قبل', 'de la página anterior'); }
+// R3a: completed grammar items of the level before that are due today (stage 1 of a level only).
+function carryDueItems(profile){
+  if(!profile || profile.levelStage === 2) return [];
+  const prevLevel = LEVELS[LEVELS.indexOf(profile.level) - 1];
+  if(!prevLevel) return [];
+  const srs = (state.progress && state.progress.srs) || {};
+  return completedGrammarItems(prevLevel).filter(g=>srsIsDue(srs[g.id]));
+}
 // The stage theme's name for the roadmap header, only when the page was built from that theme.
 function roadmapThemeLabel(p){
   const th = stageTheme(p);
@@ -9937,7 +10005,10 @@ function buildRoadmap(profile){
     const usedByGames = items.filter(it=>it.type==='game' && it.setId).map(it=>it.setId);
     const usedRefs = new Set(items.filter(it=>it.type==='game').map(it=>it.refId));
     const fits = s => !!s && !usedRefs.has(s.id+'-'+kind) && (kind !== 'bingo' || s.cards.length >= 9) && (kind !== 'cross' || crossSetOk(s)) && (kind !== 'spell' || spellSetOk(s)) && ((kind !== 'dictation' && kind !== 'echo') || s.cards.filter(c=>c.sentence).length >= 3);
-    const taught = items.filter(it=>it.type==='vocab').map(it=>VOCAB_SETS.find(s=>s.id===it.refId)).filter(Boolean).reverse().concat(stage1Vocab);
+    // LXD READY-6 R3b: sets taught before this page, weakest first (stage 2: stage 1's; stage 1: the stage before). Vocab nodes only, never song/media.
+    const rankSets = arr => { const ids = carryRank(arr.map(s=>s.id), 'vocab'); return ids.map(id=>arr.find(s=>s.id===id)).concat(arr.filter(s=>!ids.includes(s.id))); };
+    const before = stage === 2 ? rankSets(stage1Vocab) : carrySetIds(profile).map(id=>VOCAB_SETS.find(s=>s.id===id)).filter(Boolean);
+    const taught = items.filter(it=>it.type==='vocab').map(it=>VOCAB_SETS.find(s=>s.id===it.refId)).filter(Boolean).reverse().concat(before);
     const passes = [s=>!usedByGames.includes(s.id) && !stage1Sets.has(s.id) && !playedSetIds.has(s.id), s=>!usedByGames.includes(s.id) && !stage1Sets.has(s.id), s=>!usedByGames.includes(s.id)];
     if(reuse) passes.push(()=>true);
     for(const pass of passes){ const s = taught.find(x=>fits(x) && pass(x)); if(s) return s; }
@@ -14688,7 +14759,10 @@ function buildTrapRound(profile, n){
   let candidates = usable(completedGrammarItems(profile.level));
   if(candidates.length < TRAP_MIN_QUESTIONS) candidates = usable(completedGrammarItems(null));
   if(candidates.length < TRAP_MIN_QUESTIONS) return null;
-  const picked = shuffle(candidates).slice(0, Math.min(n, candidates.length));
+  const extraT = shuffle(usable(carryDueItems(profile))).slice(0, 2);                   // LXD READY-6 R3a
+  const exS = new Set(extraT.map(c=>c.blank.sentence));
+  const ownT = candidates.filter(c=>!exS.has(c.blank.sentence));                       // the widened pool may hold the same items
+  const picked = shuffle(shuffle(ownT).slice(0, Math.min(n - extraT.length, ownT.length)).concat(extraT));
   const questions = picked.map(c=>{
     const opts = shuffle([c.blank.word].concat(c.blank.distractors));
     return {sentence:c.blank.sentence, options:opts, correct:opts.indexOf(c.blank.word), itemId:c.itemId, field:c.field};
@@ -14894,7 +14968,8 @@ function grammarPracticeOf(profile, items, type){
 function buildBuildRound(profile){
   const cands = buildCandidates(profile);
   if(cands.length < BUILD_MIN) return null;
-  const items = shuffle(cands).slice(0, Math.min(6, cands.length)).map(c=>({
+  const extra = shuffle(buildCandidates(profile, carryDueItems(profile))).slice(0, 2);   // LXD READY-6 R3a: up to 2 due items of the level before
+  const items = shuffle(shuffle(cands).slice(0, Math.min(6 - extra.length, cands.length)).concat(extra)).map(c=>({
     itemId:c.itemId, field:c.field, variant:c.variant, sentence:c.sentence,
     slots:c.slots.map((s,i)=>({pre:s.pre, w:s.w, post:s.post, fixed:(i===0 && c.lockFirst), ok:false})),
     tiles:shuffle(c.tileWords.concat(c.decoys)).map(t=>({t, used:false})),
@@ -21182,10 +21257,12 @@ function stageStoryPick(plan, pool, profile){
   const tags = (plan.theme.story && plan.theme.story.tags) || [], favs = profile.topics || [];
   const gIds = plan.grammar.map(g=>g.id), read = (state.progress && state.progress.completedStories) || [];
   const genres = ['Fiction','Adventure','Romance','Thriller','Documentary'];
+  const prevG = ((STAGE_THEMES[prevStageKey(plan.key)] || {}).grammar) || [];   // LXD READY-6 R3c
   const rot = (Math.max(LEVELS.indexOf(profile.level), 0) * 2 + (profile.levelStage === 2 ? 1 : 0)) % genres.length;
   const score = s => (s.tags || []).filter(t=>tags.includes(t)).length * 3
     + ((s.topics || []).concat(STORY_TOPICS[s.id] || [])).filter((t, i, a)=>a.indexOf(t) === i && favs.includes(t)).length * 2
     + ((s.grammarIds || []).some(id=>gIds.includes(id)) ? 2 : 0)
+    + ((s.grammarIds || []).some(id=>prevG.includes(id)) ? 1 : 0)
     - (read.includes(s.id) ? 5 : 0);
   const gRank = s => (genres.indexOf(s.genre) - rot + genres.length) % genres.length;
   return pool.map((s, i)=>({s, i, sc:score(s)})).sort((a, b)=>b.sc - a.sc || gRank(a.s) - gRank(b.s) || a.i - b.i)[0].s;
@@ -21719,7 +21796,12 @@ function nodeScoreKey(kind, id){
 function completeLessonQuiz(q){
   const pr = state.progress;
   if(!pr.nodeScores) pr.nodeScores = {};
-  const total = q.questions.length || 1, pct = q.correct/total, round = q.round || 1;
+  const round = q.round || 1;
+  // LXD READY-6 R2: a carry-over question scores for its own item, never for this node
+  if(round === 1 && !q.carryDone){ q.carryDone = true; q.questions.forEach((x, i)=>{ if(x.carry) carryOutcome(x.carry, !!(q.results && q.results[i]), x.key); }); }
+  const own = q.questions.map((x, i)=>i).filter(i=>!q.questions[i].carry);
+  const total = own.length || 1;
+  const pct = (own.length === q.questions.length ? q.correct : own.filter(i=>q.results && q.results[i] === true).length) / total;
   const lesson = LESSON_KINDS.includes(q.kind);
   if(lesson && round === 1 && pct < LESSON_PASS){ q.retryOffered = true; q.firstPct = pct; return; }
   const first = round === 1 ? pct : (q.firstPct != null ? q.firstPct : pct);
@@ -21773,9 +21855,14 @@ function buildStageCheck(){
     const t = GRAMMAR_ITEMS.find(x=>x.id === n.refId);
     if(t && !t.course) G.push({id:t.id, t, goal:n.goal, at:G.length});
   });
-  if(G.length > 5){
+  // LXD READY-6 R4: slot 7 = the weakest grammar item of the stage before, slot 8 = a word from its weakest set
+  const cgId = carryGrammarIds(p).find(id=>!G.some(g=>g.id === id));
+  const cT = cgId && GRAMMAR_ITEMS.find(x=>x.id === cgId);
+  const carryG = cT ? {id:cT.id, t:cT, goal:srsGoalFor(cT), at:99} : null;
+  const gMax = carryG ? 4 : 5;
+  if(G.length > gMax){
     const first = g => { const s = scores['grammar:' + g.id]; return (s && typeof s.first === 'number') ? s.first : 0; };
-    G = G.slice().sort((a,b)=>(first(a) - first(b)) || (a.at - b.at)).slice(0, 5);
+    G = G.slice().sort((a,b)=>(first(a) - first(b)) || (a.at - b.at)).slice(0, gMax);
   }
   G = shuffle(G);
   const gInfo = g => {
@@ -21918,7 +22005,9 @@ function buildStageCheck(){
   const slots = SC_SLOTS.map(s=>s.slice());
   // G1: fewer than 5 grammar items -> the free grammar slots become word slots (pick -> choose, type -> typed)
   let gi = 0;
-  slots.forEach(s=>{ if(s[0] === 'g'){ if(gi < gList.length){ s.push(gList[gi]); gi++; } else { s[0] = 'w'; s[1] = s[1] === 'pick' ? 'choose' : 'typed'; } } });
+  slots.forEach((s, k)=>{ if(s[0] === 'g'){
+    if(k === 6 && carryG){ s.push(Object.assign(gInfo(carryG), {carry:true})); return; }   // LXD READY-6 R4
+    if(gi < gList.length){ s.push(gList[gi]); gi++; } else { s[0] = 'w'; s[1] = s[1] === 'pick' ? 'choose' : 'typed'; } } });
   const out = new Array(slots.length).fill(null);
   // grammar first (their answers keep a word off the word slots)
   slots.forEach((s, k)=>{
@@ -21928,6 +22017,7 @@ function buildStageCheck(){
     if(!q){ s[0] = 'w'; s[1] = s[1] === 'pick' ? 'choose' : 'typed'; return; }
     use(q._s); if(q._a) gramAns.add(scNorm(q._a));
     q.scKind = 'grammar'; q.itemId = g.t.id; q.kind = 'grammar';
+    if(g.carry) q.scCarry = true;
     delete q._s; delete q._a;
     out[k] = q;
   });
@@ -21935,6 +22025,20 @@ function buildStageCheck(){
   const lSlot = slots.findIndex(s=>s[0] === 'l');
   let lDone = false;
   if(lSlot >= 0){ const q = listenQ(); if(q){ use(q._s); delete q._s; out[lSlot] = q; lDone = true; } }
+  // R4: one word from the weakest set of the stage before, into slot 8 (index 7) when it is a "choose" slot
+  if(slots[7] && slots[7][0] === 'w' && slots[7][1] === 'choose'){
+    for(const cid of carrySetIds(p)){
+      const set = VOCAB_SETS.find(x=>x.id === cid);
+      if(!set || S.includes(cid)) continue;
+      const cand = (set.cards || []).map((c, i)=>({c, i})).filter(o=>cardHasGap(o.c) && !gramAns.has(scNorm(cardGap(o.c))) && !isUsed([o.c.sentence]))
+        .sort((a,b)=>(rankFor(cid, a.c) - rankFor(cid, b.c)) || (a.i - b.i))[0];
+      if(!cand) continue;
+      use([cand.c.sentence]);
+      out[7] = Object.assign(wChoose({set, card:cand.c}), {scKind:'vocab', itemId:cid, kind:'vocab', scWord:cand.c.word, scCarry:true});
+      slots[7][0] = 'done';
+      break;
+    }
+  }
   // words: round-robin over the sets, at most 2 per set when 3+ sets exist
   const wSlots = slots.map((s, k)=>s[0] === 'w' ? k : -1).filter(k=>k >= 0);
   const perSetMax = wordQueues.length >= 3 ? 2 : 0;
@@ -21976,7 +22080,12 @@ function scEyebrow(q){
 function renderStageCheckIntro(){
   const key = state.viewParams.key || stageKeyOf(state.profile);
   const qs = state.viewParams.qs || [], n = qs.length || 10;
-  const intro = n === 10
+  const cb = qs.filter(x=>x && x.scCarry).length, ca = n - cb;   // LXD READY-6 R4: S2b when the check reaches back
+  const intro = cb ? L(`${n} short questions: ${ca} about this page and ${cb} from the page before. About 4 minutes. Whatever your score, you go to the next level, and anything you miss comes back in your review.`,
+      `${n} kısa soru: ${ca} tanesi bu sayfadan, ${cb} tanesi bir önceki sayfadan. Yaklaşık 4 dakika. Puanın ne olursa olsun bir sonraki seviyeye geçersin; kaçırdıkların tekrarında geri gelir.`,
+      `${n} سؤال کوتاه: ${ca} تا از همین صفحه و ${cb} تا از صفحهٔ قبل. حدود ۴ دقیقه. نمره‌ات هر چه باشد به سطح بعدی می‌روی، و هر چیزی را که جا بیندازی در مرورت دوباره می‌بینی.`,
+      `${n} preguntas cortas: ${ca} de esta página y ${cb} de la anterior. Unos 4 minutos. Saques lo que saques, pasas al siguiente nivel, y lo que falles vuelve en tu repaso.`)
+    : n === 10
     ? L("10 short questions about this page. About 4 minutes. Whatever your score, you go to the next level, and anything you miss comes back in your review.", "Bu sayfayla ilgili 10 kısa soru. Yaklaşık 4 dakika. Puanın ne olursa olsun bir sonraki seviyeye geçersin; kaçırdıkların tekrarında geri gelir.", "۱۰ سؤال کوتاه دربارهٔ همین صفحه. حدود ۴ دقیقه. نمره‌ات هر چه باشد به سطح بعدی می‌روی، و هر چیزی را که جا بیندازی در مرورت دوباره می‌بینی.", "10 preguntas cortas sobre esta página. Unos 4 minutos. Saques lo que saques, pasas al siguiente nivel, y lo que falles vuelve en tu repaso.")
     : L(`${n} short questions about this page. About 4 minutes. Whatever your score, you go to the next level, and anything you miss comes back in your review.`, `Bu sayfayla ilgili ${n} kısa soru. Yaklaşık 4 dakika. Puanın ne olursa olsun bir sonraki seviyeye geçersin; kaçırdıkların tekrarında geri gelir.`, `${n} سؤال کوتاه دربارهٔ همین صفحه. حدود ۴ دقیقه. نمره‌ات هر چه باشد به سطح بعدی می‌روی، و هر چیزی را که جا بیندازی در مرورت دوباره می‌بینی.`, `${n} preguntas cortas sobre esta página. Unos 4 minutos. Saques lo que saques, pasas al siguiente nivel, y lo que falles vuelve en tu repaso.`);
   return `<div class="fade-in game-screen">
@@ -22002,15 +22111,16 @@ function renderStageCheckResults(){
   const tag = ok => `<span class="pill" style="background:${ok ? 'var(--success-soft)' : 'var(--bg-sunken)'}; color:${ok ? 'var(--success)' : 'var(--ink-soft)'}; white-space:nowrap;">${esc(ok ? strong : weak)}</span>`;
   const row = (title, ok, sub) => `<div style="padding:8px 0; border-bottom:1px solid var(--border-soft);"><div class="row between" style="align-items:center; gap:10px;"><span style="font-size:13.5px; font-weight:600;" dir="auto">${esc(title)}</span>${tag(ok)}</div>${sub ? `<div style="font-size:12.5px; color:var(--ink-soft); margin-top:3px;" dir="auto">${esc(sub)}</div>` : ''}</div>`;
   const section = (h, rows) => rows.length ? `<h3 class="display" style="font-size:14px; margin:14px 0 4px;">${esc(h)}</h3>${rows.join('')}` : '';
-  const g = [], w = {}, wOrder = [], l = [];
+  const g = [], w = {}, wOrder = [], l = [], wCarry = {};
   q.questions.forEach((qq, i)=>{
     const ok = !!q.results[i];
-    if(qq.scKind === 'grammar'){ const it = GRAMMAR_ITEMS.find(x=>x.id === qq.itemId); g.push(row(it ? grammarTitle(it) : qq.itemId, ok)); }
-    else if(qq.scKind === 'vocab'){ if(!w[qq.itemId]){ w[qq.itemId] = []; wOrder.push(qq.itemId); } if(!ok) w[qq.itemId].push(qq.scWord); }
+    if(qq.scKind === 'grammar'){ const it = GRAMMAR_ITEMS.find(x=>x.id === qq.itemId); g.push(row(it ? grammarTitle(it) : qq.itemId, ok, qq.scCarry ? carryTag() : '')); }
+    else if(qq.scKind === 'vocab'){ if(!w[qq.itemId]){ w[qq.itemId] = []; wOrder.push(qq.itemId); } if(!ok) w[qq.itemId].push(qq.scWord); if(qq.scCarry) wCarry[qq.itemId] = true; }
     else if(qq.scKind === 'listen'){ const d = DIALOGUES.find(x=>x.id === qq.itemId), t = d && d.title; l.push(row(t ? (typeof t === 'string' ? t : (L(t.en, t.tr, t.fa, t.es) || t.en)) : L('Listening','Dinleme','شنیدن','Comprensión auditiva'), ok)); }
   });
   const wRows = wOrder.map(id=>{ const s = VOCAB_SETS.find(x=>x.id === id), miss = w[id];
-    return row(s ? setTitle(s) : id, !miss.length, miss.length ? L('Words to review: {list}','Tekrar edilecek kelimeler: {list}','کلمه‌هایی برای مرور: {list}','Palabras para repasar: {list}').replace('{list}', miss.join(L(', ', ', ', '، ', ', '))) : ''); });
+    const sub = miss.length ? L('Words to review: {list}','Tekrar edilecek kelimeler: {list}','کلمه‌هایی برای مرور: {list}','Palabras para repasar: {list}').replace('{list}', miss.join(L(', ', ', ', '، ', ', '))) : '';
+    return row(s ? setTitle(s) : id, !miss.length, wCarry[id] ? (sub ? carryTag() + ' · ' + sub : carryTag()) : sub); });
   const anyMiss = q.correct < total;
   return `<div class="fade-in game-screen" style="gap:0;">
     ${gameTopHtml(L('Quick check: {stage}','Kısa kontrol: {stage}','مرور کوتاه: {stage}','Repaso rápido: {stage}').replace('{stage}', q.scKey || ''))}
@@ -22032,7 +22142,7 @@ function renderStageCheckResults(){
 function completeStageCheck(q){
   const pr = state.progress, today = todayISO();
   if(!pr.stageChecks || typeof pr.stageChecks !== 'object') pr.stageChecks = {};
-  const rec = {v:1, date:today, skipped:false, score:q.correct, total:q.questions.length, grammar:{}, words:{}};
+  const rec = {v:2, date:today, skipped:false, score:q.correct, total:q.questions.length, grammar:{}, words:{}, carry:q.questions.filter(x=>x.scCarry).map(x=>x.itemId)};   // v2: LXD READY-6 R4 carry ids
   const missedWords = {};
   q.questions.forEach((qq, i)=>{
     const ok = !!q.results[i];
@@ -22209,6 +22319,7 @@ function proveWhy(q){
 }
 function proveArm(q, firstTryCorrect){
   if(q.proveAt != null || !proveWhy(q)) return;
+  if(q.questions && q.questions[q.index] && q.questions[q.index].carry) return;   // LXD READY-6 R2
   if(firstTryCorrect || q.index >= 3){ q.proveAt = q.index; q.proveOrder = shuffle([0,1,2]); q.proveOk = !!firstTryCorrect; }
 }
 function proveFirstPct(q){ return (q.round >= 2 && q.firstPct != null) ? q.firstPct : q.correct / (q.questions.length || 1); }
@@ -22314,7 +22425,7 @@ function renderQuiz(){
     ${gameTopHtml(quizKindTitle(q))}
     <div class="game-status">
       ${quizTimerRingHtml(q, item, CAT)}
-      <span class="game-status-text">${q.kind === 'stagecheck' ? esc(scEyebrow(q)) : L(`Question ${a} of ${b}`, `Soru ${a}/${b}`, `سوال ${a} از ${b}`, `Pregunta ${a} de ${b}`)}</span>
+      <span class="game-status-text">${q.kind === 'stagecheck' ? esc(scEyebrow(q)) : (q.questions[q.index] && q.questions[q.index].carry ? esc(carryEyebrow(q.questions[q.index].carry)) : L(`Question ${a} of ${b}`, `Soru ${a}/${b}`, `سوال ${a} از ${b}`, `Pregunta ${a} de ${b}`))}</span>
       <span class="game-status-end">${q.kind === 'stagecheck' ? '' : quizStreakChip(q)}</span>
     </div>
     ${q.kind === 'stagecheck' ? `<div class="progress-track" style="margin:0;"><div class="progress-fill" style="width:${((a-1)/b)*100}%; background:var(--clay-orange);"></div></div>` : ''}
@@ -24537,7 +24648,10 @@ const HANDLERS = {
     const effective = effectiveGrammarItem(t, variant);
     const backView = goal ? 'goal-level-detail' : 'grammar-list';
     const backParams = goal ? {goal, level: state.viewParams.level, tab:'grammar'} : {level: state.viewParams.level};
-    startQuiz('grammar', t.id, grammarQuizQuestions(effective, variant ? goal : 'base'), backView, backParams, {goal: variant ? goal : null});
+    const qs = grammarQuizQuestions(effective, variant ? goal : 'base');
+    const cq = carryQuestionFor(t.id);                       // LXD READY-6 R2
+    if(cq) qs.splice(Math.min(4, qs.length), 0, cq);         // 5th of 9: after the item's own first questions
+    startQuiz('grammar', t.id, qs, backView, backParams, {goal: variant ? goal : null});
   },
   // Slang "Say it?" (uVzMAAGg): one tap per scene; right = cheer, wrong = a plain line naming the scene.
   'slang-say'(el, e){
@@ -24713,7 +24827,7 @@ const HANDLERS = {
   'quiz-retry'(){
     const q = state.quiz;
     if(!q || !q.retryOffered || !q.contextId) return;
-    const misses = q.questions.filter((_,i)=>!q.results[i]).map(m=>{
+    const misses = q.questions.filter((m,i)=>!q.results[i] && !m.carry).map(m=>{   // LXD READY-6 R2: the carry question stays in round 1
       const order = shuffle(m.options.map((_, i)=>i));
       return Object.assign({}, m, {options:order.map(i=>m.options[i]), correct:order.indexOf(m.correct)}, m.hints ? {hints:order.map(i=>m.hints[i])} : {});
     });

@@ -694,9 +694,9 @@
   .song-vinyl.big{width:56%; max-width:240px; aspect-ratio:1; margin:0 auto;}
   .song-vinyl.spin{animation:song-spin 8s linear infinite;}
   @keyframes song-spin{to{transform:rotate(360deg);}}
-  .song-vinyl.card{position:absolute; inset-inline-end:16px; bottom:16px; width:88px; height:88px; pointer-events:none;}
-  .song-vinyl.card .song-vinyl-label{background:#fff;}
-  .song-vinyl.card .song-vinyl-label::after{content:""; position:absolute; width:34%; height:34%; border-radius:50%; background:var(--cat-lis);}
+  .song-vinyl.rm-disc{position:absolute; inset-inline-end:16px; bottom:16px; width:88px; height:88px; pointer-events:none;}
+  .song-vinyl.rm-disc .song-vinyl-label{background:#fff;}
+  .song-vinyl.rm-disc .song-vinyl-label::after{content:""; position:absolute; width:34%; height:34%; border-radius:50%; background:var(--cat-lis);}
   .song-card-credit{margin-top:8px; font-size:12px; font-style:italic; font-weight:700; color:rgba(255,255,255,.92);}
   .song-card-intro{margin-top:6px; font-size:13.5px; font-weight:600; line-height:1.4; color:rgba(255,255,255,.95);}
   .song-page{background:linear-gradient(180deg, color-mix(in srgb, var(--song-tint) 14%, var(--bg)) 0%, var(--bg) 60%); min-height:100vh;}
@@ -9325,8 +9325,8 @@ function markMediaWatched(m){
      markMediaWatched), the node's souvenir, gold ring + sparks on the disc, then "Keep one line?" (the tapped line becomes
      the souvenir's flip side). The celebration waits for Home, like media.
    - Placement (GAMIFICATION-NOTES §3-4): right after the Writing node, before game position 5, on the page the song is
-     placed on (level + stage below). Saved roadmaps get the node through ensureRoadmapSong() only where nothing at or after
-     that point is done yet, never next to a watch/listen node.
+     placed on (SONG_PAGE below: every level page has one). Saved roadmaps get the node through ensureRoadmapSong(): after
+     Writing, or after the open step when the learner is past it, never next to a watch/listen node. Songs shelf = all songs.
    - The Spanish app ships the same code with an empty SONG_LIBRARY: no English song ever goes on a Spanish roadmap. */
 const SONG_BASE = 'songs/';
 const SONG_CREDIT = 'Original song by Farin Rasouli · © FEschool';
@@ -9334,26 +9334,52 @@ const SONG_LIBRARY = [
 /* none on the Spanish side: no English song on a Spanish roadmap (UI-DIRECTION §10.5) */
 ];
 function songById(id){ return SONG_LIBRARY.find(s=>s.id===id) || null; }
-function songForStage(profile, stage){ return (profile && profile.level) ? (SONG_LIBRARY.find(s=>s.level===profile.level && s.stage===stage) || null) : null; }
+// Every level page has a song (Farin OngcvWIs, 2026-10-22): the nearest-level song where a level has no song of its own.
+// One song per page; ids unchanged, so songsHeard and souvenirs keep working. Empty SONG_LIBRARY (Spanish) = no song.
+const SONG_PAGE = {'A1.1':'the-world-is-still-beautiful','A1.2':'the-world-is-still-beautiful','A2.1':'california-daydream','A2.2':'california-daydream',
+  'B1.1':'if-i-could-keep-one-moment','B1.2':'midnight-train-to-anywhere','B2.1':'your-voice-after-midnight','B2.2':'your-voice-after-midnight',
+  'C1.1':'when-the-world-falls-away','C1.2':'when-the-world-falls-away'};
+const SONG_LEVELS = ['A1','A2','B1','B2','C1'];
+// The page's song; if the learner has already heard it, the next unheard song of the same or a neighbouring level
+// (higher level first at the same distance), else the page's own song again.
+function songForStage(profile, stage){
+  if(!profile || !profile.level) return null;
+  const base = songById(SONG_PAGE[profile.level + '.' + (stage === 2 ? 2 : 1)]);
+  if(!base || !songHeard(base.id)) return base;
+  const li = SONG_LEVELS.indexOf(profile.level);
+  const alt = SONG_LIBRARY.filter(x=>x.id !== base.id && !songHeard(x.id) && Math.abs(SONG_LEVELS.indexOf(x.level) - li) <= 1)
+    .map((x,i)=>({x, i, d:SONG_LEVELS.indexOf(x.level) - li}))
+    .sort((a,b)=>Math.abs(a.d) - Math.abs(b.d) || b.d - a.d || a.i - b.i);
+  return alt.length ? alt[0].x : base;
+}
 function songMinutes(s){ return Math.max(1, Math.round((s.durationSec || 180) / 60)); }
 function songSubLabel(s){ return L('Song','Şarkı','آهنگ','Canción') + ' · ' + songMinutes(s) + ' ' + L('min','dk','دقیقه','min'); }
 function songRoadmapNode(s){ return {type:'song', refId:s.id, goal:null, title:L('Song','Şarkı','آهنگ','Canción')+': '+s.title}; }
 function songHeard(id){ const sh = state.progress && state.progress.songsHeard; return Array.isArray(sh) && sh.includes(id); }
-// Saved roadmaps (and goal-edit merges): the page's song goes right after its Writing node, only where it can't disturb
-// anything (same safety rules as ensureRoadmapMedia) and never within 2 nodes of a watch/listen node.
+// Saved roadmaps (and goal-edit merges), Farin OngcvWIs 2026-10-22: every page gets its song once. Right after Writing
+// when nothing after Writing is done; otherwise right after the open step (the first unfinished node), or after the last
+// node when the page is complete but not advanced yet. A spot within 2 nodes of a watch/listen node moves forward to the
+// next spot that isn't, or backward (not before the open step) if there is none ahead. Done nodes stay done (ids are
+// type:refId), and the one-open-step lock is unchanged: the song is simply the next locked card.
+function songInsertAt(rm){
+  const wi = rm.findIndex(n=>n.type==='writing');
+  const fu = rm.findIndex(n=>!isRoadmapNodeDone(n));
+  let at;
+  if(wi >= 0 && !rm.slice(wi + 1).some(n=>isRoadmapNodeDone(n))) at = wi + 1;
+  else at = fu >= 0 ? fu + 1 : rm.length;
+  const nearMedia = a => rm.slice(Math.max(0, a - 2), a + 2).some(n=>n.type==='media');
+  if(!nearMedia(at)) return at;
+  for(let a = at + 1; a <= rm.length; a++) if(!nearMedia(a)) return a;
+  for(let a = at - 1; a >= Math.max(1, fu >= 0 ? fu : 0); a--) if(!nearMedia(a)) return a;
+  return at;
+}
 function ensureRoadmapSong(){
   const rm = state.roadmap;
   if(!rm || !rm.length || !state.profile || !state.profile.completedDiagnostic) return false;
   if(rm.some(n=>n.type==='song')) return false;
   const s = songForStage(state.profile, state.profile.levelStage===2 ? 2 : 1);
   if(!s) return false;
-  if(rm.every(n=>isRoadmapNodeDone(n))) return false;
-  const wi = rm.findIndex(n=>n.type==='writing');
-  if(wi < 0) return false;
-  const at = wi + 1;
-  if(rm.slice(at).some(n=>isRoadmapNodeDone(n))) return false;
-  if(rm.slice(Math.max(0, at - 2), at + 2).some(n=>n.type==='media')) return false;
-  rm.splice(at, 0, songRoadmapNode(s));
+  rm.splice(songInsertAt(rm), 0, songRoadmapNode(s));
   rm.forEach((n,i)=>{ n.n = i+1; });
   const g = state.progress && state.progress.roadmapGolden;
   if(g && g.nodeId){ const gi = rm.findIndex(n=>roadmapNodeId(n)===g.nodeId); if(gi > -1) g.goldenIdx = gi; }
@@ -9367,7 +9393,8 @@ function markSongHeard(s){
   const sh = Array.isArray(p.songsHeard) ? p.songsHeard : (p.songsHeard = []);
   let changed = false;
   if(!sh.includes(s.id)){ sh.push(s.id); changed = true; }
-  if(!rc[id]){
+  // Played from the Songs shelf: heard, but the roadmap's song card is only ticked when played from the roadmap.
+  if(!rc[id] && !(state.viewParams && state.viewParams.shelf)){
     rc[id] = true; changed = true;
     const node = currentRoadmap().find(n=>roadmapNodeId(n)===id);
     if(node){
@@ -11815,6 +11842,14 @@ function renderProfile(){
         </div>
         <span class="chevron">${ICONS.chev}</span>
       </button>
+      ${SONG_LIBRARY.length ? `<button class="item-row" data-action="nav" data-view="songs-shelf" style="margin-top:10px; cursor:pointer;">
+        <span class="item-ic" style="background:var(--clay-coral); color:#fff;">${ICONS.play}</span>
+        <div class="item-body">
+          <div class="item-title">${L('Songs','Şarkılar','آهنگ‌ها','Canciones')}</div>
+          <div class="item-sub">${songsShelfSubLine()}</div>
+        </div>
+        <span class="chevron">${ICONS.chev}</span>
+      </button>` : ''}
       <button class="item-row" data-action="nav" data-view="studio-lab" style="margin-top:10px; cursor:pointer;">
         <span class="item-ic" style="background:var(--clay-sky); color:#fff;">${ICONS.mic}</span>
         <div class="item-body">
@@ -12968,7 +13003,7 @@ function renderRoadmapCard(p){
     const iconBig = m.img === 'studio-icon-cutout.png';
     // the current card is a bit bigger (2026-10-18), its icon grows with it
     const iconPx = iconBig ? (isCurrent ? 152 : 140) : (isCurrent ? 116 : 104);
-    const cardIcon = item.type === 'song' ? `<span class="song-vinyl card" aria-hidden="true"${checked ? ' style="opacity:.5;"' : ''}><span class="song-vinyl-label"></span></span>` : m.img
+    const cardIcon = item.type === 'song' ? `<span class="song-vinyl rm-disc" aria-hidden="true"${checked ? ' style="opacity:.5;"' : ''}><span class="song-vinyl-label"></span></span>` : m.img
       ? `<img src="${m.img}" alt="" class="rm2-icon-float" style="position:absolute; inset-inline-end:${iconBig?'-6px':'10px'}; bottom:${iconBig?'-4px':'12px'}; width:${iconPx}px; height:${iconPx}px; object-fit:contain; pointer-events:none; filter:drop-shadow(0 6px 12px rgba(0,0,0,.28)); ${checked?'opacity:.5;':''}">`
       : '';
     // Gamification v2 (2026-09-30): the v1 "⚡ GAME" corner pill and the streak
@@ -14838,6 +14873,33 @@ function gameBlurb(kind){
   if(kind === 'echo') return L('Listen to a line and say it back.','Bir cümle dinle ve tekrar et.','یک جمله گوش کن و همان را بگو.','Escucha una frase y repítela.');
   if(kind === 'chores') return L('Tidy a room by following the sentences.','Cümleleri takip ederek bir odayı topla.','با دنبال‌کردن جمله‌ها یک اتاق را مرتب کن.','Ordena una habitación siguiendo las frases.');
   return '';
+}
+// Songs shelf (Farin OngcvWIs, 2026-10-22): every ready FEschool song, any time, next to the Games shelf. The entry is
+// hidden when SONG_LIBRARY is empty (Spanish). Playing here records songsHeard only (see markSongHeard).
+function songsShelfSubLine(){
+  const n = SONG_LIBRARY.length;
+  return L(`${n} original song${n===1?'':'s'} to listen to any time`, `${n} özgün şarkı, istediğin zaman dinle`, `${n} آهنگ اورجینال برای هر وقت که بخواهی`, `${n} ${n===1?'canción original':'canciones originales'} para escuchar cuando quieras`);
+}
+function renderSongsShelf(){
+  const rows = SONG_LIBRARY.map(sg=>{
+    const heard = songHeard(sg.id);
+    return `<button class="item-row" data-action="nav" data-view="song-session" data-id="${esc(sg.id)}" data-shelf="1">
+      <span class="song-vinyl${heard ? ' gold' : ''}" aria-hidden="true" style="flex:0 0 auto; width:52px; height:52px; --song-label:var(${sg.label || sg.tint});"><span class="song-vinyl-label"></span></span>
+      <div class="item-body">
+        <div class="item-title">${esc(sg.title)}</div>
+        <div class="item-sub" style="color:var(--ink-soft);" dir="auto">${esc(svText(sg.intro))}</div>
+        <div class="item-sub" style="color:var(--ink-faint); font-size:12px; margin-top:2px;">${esc(sg.level)} · ${esc(songSubLabel(sg))}</div>
+      </div>
+      <span class="chevron">${ICONS.play}</span>
+    </button>`;
+  }).join('');
+  return `<div class="fade-in">
+    ${sectionHead(L('Songs','Şarkılar','آهنگ‌ها','Canciones'), L('Listen to every FEschool song, as often as you like.','Tüm FEschool şarkılarını istediğin kadar dinle.','همهٔ آهنگ‌های FEschool رو هر چند بار که خواستی گوش کن.','Escucha todas las canciones de FEschool, tantas veces como quieras.'))}
+    <div class="screen" style="padding-top:0;">
+      <div class="stack" style="gap:10px;">${rows}</div>
+      <div class="song-credit" style="margin-top:16px;">♪ ${esc(SONG_CREDIT)}</div>
+    </div>
+  </div>`;
 }
 function renderGamesShelf(){
   const kinds = shelfGames(), met = gamesMet();
@@ -22551,6 +22613,7 @@ const screens = {
   'review-home': renderReviewHome,
   'profile': renderProfile,
   'games-shelf': renderGamesShelf,
+  'songs-shelf': renderSongsShelf,
   'settings': renderSettings,
   'student-club': renderStudentClub,
   'student-club-login': renderStudentClubLogin,
@@ -23823,6 +23886,7 @@ const HANDLERS = {
       if(goal) params.goal = goal;
     }
     if(view==='goal-level-detail'){ params.level = el.dataset.level || state.viewParams.level || state.profile.level; params.tab = 'grammar'; }
+    if(view==='song-session' && el.dataset.shelf) params.shelf = 1;
     if(view==='studio-setup'){
       params.mode = el.dataset.mode || 'writing';
       if(el.dataset.goal) params.goal = el.dataset.goal;

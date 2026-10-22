@@ -697,25 +697,82 @@
   .song-vinyl.rm-disc{position:absolute; inset-inline-end:16px; bottom:16px; width:88px; height:88px; pointer-events:none;}
   .song-vinyl.rm-disc .song-vinyl-label{background:#fff;}
   .song-vinyl.rm-disc .song-vinyl-label::after{content:""; position:absolute; width:34%; height:34%; border-radius:50%; background:var(--cat-lis);}
-  /* Sparkly song card (Farin 2026-10-22: vivid, bold, shiny + sparkly). Glossy sheen on the disc, twinkling stars
-     around it, a soft shimmer sweep across the card. Reduced motion: the stars stay put (visible), no sweep. */
-  .song-vinyl.rm-disc::before{content:""; position:absolute; inset:0; border-radius:50%; background:conic-gradient(from 20deg, rgba(255,255,255,0) 0 6%, rgba(255,255,255,.34) 11%, rgba(255,255,255,0) 17% 48%, rgba(255,255,255,.26) 58%, rgba(255,255,255,0) 65% 100%); pointer-events:none;}
-  .song-vinyl.rm-disc{box-shadow:0 12px 26px -8px rgba(0,0,0,.45), 0 0 0 3px rgba(255,255,255,.55), 0 0 22px 4px rgba(255,255,255,.35);}
+  /* Song card + player, brand look (Farin 2026-10-22, template5): the FE gradient (purple #7c5cff -> violet -> coral ->
+     orange #ffa53d), frosted glass with white text, gold four-point sparkles (the logo's star), a record whose label is the
+     FE logo in a gold glow ring. One look in light and dark mode. Reduced motion: stars stay, nothing moves. */
+  .song-star{position:absolute; display:block; width:var(--s, 12px); height:var(--s, 12px); background:#ffc53d; clip-path:polygon(50% 0,62% 38%,100% 50%,62% 62%,50% 100%,38% 62%,0 50%,38% 38%); filter:drop-shadow(0 0 6px rgba(255,197,61,.9)); animation:song-twinkle 2.6s ease-in-out infinite; pointer-events:none;}
+  @keyframes song-twinkle{0%,100%{transform:scale(.75); opacity:.55;} 50%{transform:scale(1.1); opacity:1;}}
   .song-stars{position:absolute; inset-inline-end:2px; bottom:2px; width:118px; height:118px; pointer-events:none; z-index:2;}
-  .song-star{position:absolute; display:block; background:#fff; clip-path:polygon(50% 0%,61% 35%,100% 50%,61% 65%,50% 100%,39% 65%,0% 50%,39% 35%); opacity:.95; filter:drop-shadow(0 0 4px rgba(255,255,255,.9)); animation:song-twinkle 2.2s ease-in-out infinite;}
-  .song-star.gold{background:#ffd166; filter:drop-shadow(0 0 5px rgba(255,209,102,.95));}
-  @keyframes song-twinkle{0%,100%{opacity:.35; transform:scale(.55) rotate(0deg);} 50%{opacity:1; transform:scale(1.1) rotate(20deg);}}
   .song-shimmer{position:absolute; inset:0; overflow:hidden; border-radius:inherit; pointer-events:none; z-index:0;}
-  .song-shimmer::after{content:""; position:absolute; top:-20%; bottom:-20%; width:42%; left:-60%; background:linear-gradient(105deg, rgba(255,255,255,0) 0%, rgba(255,255,255,.32) 50%, rgba(255,255,255,0) 100%); transform:skewX(-14deg); animation:song-sweep 4.8s ease-in-out infinite;}
+  .song-shimmer::after{content:""; position:absolute; top:-20%; bottom:-20%; width:42%; left:-60%; background:linear-gradient(105deg, rgba(255,255,255,0) 0%, rgba(255,255,255,.22) 50%, rgba(255,255,255,0) 100%); transform:skewX(-14deg); animation:song-sweep 5.2s ease-in-out infinite;}
   @keyframes song-sweep{0%{left:-60%;} 45%,100%{left:130%;}}
-  .rm2-node.song-node{background:linear-gradient(140deg, color-mix(in srgb, var(--cat-lis) 80%, #fff) 0%, var(--cat-lis) 42%, color-mix(in srgb, var(--cat-lis) 72%, var(--clay-coral, #ff7a6b)) 100%) !important; box-shadow:0 14px 34px -12px color-mix(in srgb, var(--cat-lis) 70%, transparent), 0 0 0 2px rgba(255,255,255,.5) inset !important;}
-  .song-cover .song-stars{inset-inline-end:auto; left:50%; bottom:auto; top:50%; width:min(70%, 300px); height:auto; aspect-ratio:1; transform:translate(-50%,-50%); z-index:1;}
-  .song-line{position:relative;}
-  .song-line.on{box-shadow:inset 0 1px 0 rgba(255,255,255,.6), 0 0 0 2px color-mix(in srgb, var(--song-tint, var(--cat-lis)) 40%, transparent), 0 8px 22px -8px color-mix(in srgb, var(--song-tint, var(--cat-lis)) 75%, transparent) !important;}
-  .song-line.on::before, .song-line.on::after{content:""; position:absolute; width:9px; height:9px; background:#ffd166; clip-path:polygon(50% 0%,61% 35%,100% 50%,61% 65%,50% 100%,39% 65%,0% 50%,39% 35%); filter:drop-shadow(0 0 3px rgba(255,209,102,.9)); animation:song-twinkle 1.8s ease-in-out infinite; pointer-events:none;}
-  .song-line.on::before{top:-3px; inset-inline-end:8px;}
-  .song-line.on::after{bottom:-2px; inset-inline-end:26px; width:6px; height:6px; animation-delay:.7s;}
-  @media (prefers-reduced-motion: reduce){ .song-star, .song-line.on::before, .song-line.on::after{animation:none !important; opacity:.9; transform:none;} .song-shimmer::after{display:none;} }
+  .rm2-node.song-node{background:linear-gradient(150deg,#7c5cff 0%,#9b5cf0 38%,#ff7a8a 74%,#ffa53d 100%) !important; box-shadow:0 16px 36px -14px rgba(91,63,217,.65), inset 0 0 0 1.5px rgba(255,255,255,.28) !important; color:#fff;}
+  .rm2-node.song-node .rm2-title{font-family:'Fredoka',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif !important; font-weight:600 !important; letter-spacing:0 !important; text-shadow:0 3px 14px rgba(40,10,90,.35);}
+  .song-vinyl.rm-disc{background:repeating-radial-gradient(circle,#1d1a24 0 1.6px,#2a2533 1.6px 3.4px); box-shadow:inset 0 2px 3px rgba(255,255,255,.35), 0 14px 28px -10px rgba(30,10,80,.6);}
+  .song-vinyl.rm-disc::before{content:""; position:absolute; inset:0; border-radius:50%; background:conic-gradient(from 210deg,transparent 0 12%,rgba(255,255,255,.22) 18%,transparent 26% 64%,rgba(255,255,255,.12) 70%,transparent 78%); pointer-events:none; z-index:1;}
+  .song-vinyl.rm-disc::after{display:none;}
+  .song-vinyl.rm-disc .song-vinyl-label{inset:30%; padding:0; background:#fff; box-shadow:0 0 0 3px #ffc53d, 0 0 14px 3px rgba(255,197,61,.6); z-index:2;}
+  .song-vinyl.rm-disc .song-vinyl-label::before, .song-vinyl.rm-disc .song-vinyl-label::after{display:none;}
+  .song-vinyl.rm-disc .song-vinyl-label img{width:78%; height:78%; object-fit:contain;}
+  body.song-body, body.song-body #app{background:linear-gradient(160deg,#7c5cff 0%,#9b5cf0 38%,#ff7a8a 72%,#ffa53d 100%) fixed;}
+  .song-card-tag{display:inline-flex; align-items:center; gap:7px; margin-top:10px; max-width:calc(100% - 96px); white-space:nowrap; font-size:11.5px; font-weight:800; color:#fff; background:rgba(255,255,255,.18); padding:3px 11px 3px 3px; border-radius:999px;}
+  .song-card-tag img{width:20px; height:20px; background:#fff; border-radius:50%; object-fit:contain;}
+  /* Player */
+  .song-page.sp5{position:relative; isolation:isolate; min-height:100vh; color:#fff; background:transparent; padding-bottom:40px;}
+  .sp5 .song-sky{position:absolute; inset:0; overflow:hidden; pointer-events:none; z-index:-1;}
+  .sp5 .song-top{padding:18px 16px 4px;}
+  .sp5 .song-top .back{color:#fff;}
+  .sp5 .song-glass{position:relative; max-width:520px; margin:0 auto; background:rgba(255,255,255,.12); border-radius:28px; box-shadow:0 0 0 1px rgba(255,255,255,.22), 0 24px 50px -24px rgba(30,10,80,.6); overflow:hidden; backdrop-filter:blur(16px); -webkit-backdrop-filter:blur(16px);}
+  .sp5 .song-hero{display:flex; flex-direction:column; align-items:center; gap:12px; text-align:center; padding:24px 22px 20px; background:radial-gradient(90% 70% at 50% 30%, rgba(255,197,61,.22), transparent 70%);}
+  .sp5 .song-tag{display:flex; align-items:center; gap:8px; font-size:12px; font-weight:800; letter-spacing:.12em; text-transform:uppercase; color:#fff; background:rgba(255,255,255,.16); padding:4px 12px 4px 4px; border-radius:999px;}
+  .sp5 .song-tag img{width:26px; height:26px; background:#fff; border-radius:50%; object-fit:contain;}
+  .sp5 .song-deck{position:relative; width:188px; height:188px; margin-top:4px;}
+  .sp5 .song-rec{position:absolute; inset:0; border-radius:50%; background:repeating-radial-gradient(circle,#1d1a24 0 1.6px,#2a2533 1.6px 3.4px); box-shadow:inset 0 2px 3px rgba(255,255,255,.45), inset 0 -14px 22px -10px rgba(0,0,0,.25), 0 16px 32px -12px rgba(30,10,80,.55);}
+  .sp5 .song-rec.spin{animation:song-spin 5.5s linear infinite;}
+  .sp5 .song-rec-label{position:absolute; inset:30%; border-radius:50%; background:#fff; display:grid; place-items:center; box-shadow:0 0 0 4px #ffc53d, 0 0 18px 4px rgba(255,197,61,.55);}
+  .sp5 .song-rec-label img{width:78%; height:78%; object-fit:contain;}
+  .sp5 .song-rec-sheen{position:absolute; inset:0; border-radius:50%; background:conic-gradient(from 210deg,transparent 0 12%,rgba(255,255,255,.2) 18%,transparent 26% 64%,rgba(255,255,255,.1) 70%,transparent 78%); pointer-events:none;}
+  .sp5 .song-rec-ring{position:absolute; inset:-9px; border-radius:50%; border:3px solid #ffc53d; box-shadow:0 0 16px rgba(255,197,61,.7); opacity:0; transition:opacity .6s; pointer-events:none;}
+  .sp5 .song-rec.gold ~ .song-rec-ring{opacity:1;}
+  .sp5 .song-deck .song-star.a{--s:26px; top:-8px; right:-6px;} .sp5 .song-deck .song-star.b{--s:14px; top:34px; left:-18px; animation-delay:.9s;}
+  .sp5 .song-deck .song-star.c{--s:16px; bottom:4px; right:-20px; animation-delay:1.7s;} .sp5 .song-deck .song-star.d{--s:11px; bottom:-6px; left:18px; animation-delay:.4s;}
+  .sp5 .song-deck .song-star.e{--s:9px; top:-12px; left:40px; animation-delay:2.1s;}
+  .sp5 .song-level{display:inline-block; font-size:12px; font-weight:800; padding:3px 12px; border-radius:999px; background:#ffc53d; color:#3b2600;}
+  .sp5 .song-title{margin:0; font-family:'Fredoka',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; font-weight:600; font-size:clamp(28px,7.5vw,36px); line-height:1.1; color:#fff; text-wrap:balance; text-shadow:0 3px 16px rgba(40,10,90,.35);}
+  .sp5 .song-credit-line{margin:0; font-size:13px; color:rgba(255,255,255,.82);}
+  .sp5 .song-credit-line b{color:#fff;}
+  .sp5 .song-ctrl{display:flex; align-items:center; gap:12px; padding:14px 18px; border-top:1px solid rgba(255,255,255,.18); border-bottom:1px solid rgba(255,255,255,.18);}
+  .sp5 .song-play{width:56px; height:56px; flex:none; border:0; border-radius:50%; background:linear-gradient(145deg,#ffb15c,#ff7a59); display:grid; place-items:center; cursor:pointer; box-shadow:inset 0 2px 3px rgba(255,255,255,.45), inset 0 -14px 22px -10px rgba(0,0,0,.25), 0 16px 32px -12px rgba(30,10,80,.55);}
+  .sp5 .song-play svg{width:22px; height:22px;}
+  .sp5 .song-play[disabled]{opacity:.55;}
+  .sp5 .song-seek{flex:1 1 auto; min-width:0; height:20px; margin:0; background:transparent; -webkit-appearance:none; appearance:none; cursor:pointer;}
+  .sp5 .song-seek::-webkit-slider-runnable-track{height:8px; border-radius:4px; background:linear-gradient(90deg,#fff,#ffc53d) 0 0/var(--p,0%) 100% no-repeat, rgba(20,10,60,.28); box-shadow:0 0 12px rgba(255,197,61,.45);}
+  .sp5 .song-seek::-moz-range-track{height:8px; border-radius:4px; background:rgba(20,10,60,.28);}
+  .sp5 .song-seek::-moz-range-progress{height:8px; border-radius:4px; background:linear-gradient(90deg,#fff,#ffc53d); box-shadow:0 0 12px rgba(255,197,61,.8);}
+  .sp5 .song-seek::-webkit-slider-thumb{-webkit-appearance:none; width:16px; height:16px; margin-top:-4px; border-radius:50%; background:#fff; border:0; box-shadow:0 2px 6px rgba(20,10,60,.35);}
+  .sp5 .song-seek::-moz-range-thumb{width:16px; height:16px; border-radius:50%; background:#fff; border:0; box-shadow:0 2px 6px rgba(20,10,60,.35);}
+  .sp5 .song-time{color:rgba(255,255,255,.82); font-size:13px; min-width:0;}
+  .sp5 .song-pills{margin-top:12px;}
+  .sp5 .song-pills .game-chip{background:rgba(255,255,255,.18); color:#fff; border-color:rgba(255,255,255,.4);}
+  .sp5 .song-gloss-row{position:relative; margin:12px 16px 0; padding:12px 16px; border-radius:18px; background:rgba(255,255,255,.16); color:#fff; font-size:14px; font-weight:600; line-height:1.5;}
+  .sp5 .song-gloss-row b{font-family:'Fredoka',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; font-size:19px; font-weight:600; color:#ffc53d;}
+  .sp5 .song-gloss-x{display:block; margin:4px 0 0 auto; border:0; background:none; color:rgba(255,255,255,.82); font:inherit; font-size:12px; font-weight:700; cursor:pointer; padding:0;}
+  .sp5 .song-lyrics-wrap{margin-top:12px; background:rgba(20,10,60,.28); border-radius:0; box-shadow:none;}
+  .sp5 .song-lyrics{height:min(46vh,420px); padding:16vh 18px; text-align:center; scrollbar-width:none; -webkit-mask-image:linear-gradient(transparent,#000 16%,#000 84%,transparent); mask-image:linear-gradient(transparent,#000 16%,#000 84%,transparent);}
+  .sp5 .song-lyrics::-webkit-scrollbar{display:none;}
+  .sp5 .song-line{margin:0; padding:5px 6px; border-radius:12px; font-family:'Fredoka',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; font-weight:600; font-size:clamp(19px,5vw,22px); line-height:1.45; color:rgba(255,255,255,.42); text-align:center; background:none !important; box-shadow:none !important; transition:color .3s;}
+  .sp5 .song-line.past{color:rgba(255,255,255,.5);}
+  .sp5 .song-line.on{color:rgba(255,255,255,.82);}
+  .sp5 .song-line.song-lineonly.on{color:#fff;}
+  .sp5 .song-line.on .song-w.sung{color:#fff;}
+  .sp5 .song-line.on .song-w.on{color:#ffc53d; font-weight:600; border-bottom-color:transparent; text-shadow:0 0 14px rgba(255,197,61,.9);}
+  .sp5 .song-gloss{border-bottom:0; text-decoration:underline dotted #ffc53d; text-decoration-thickness:2px; text-underline-offset:5px;}
+  .sp5 .sp-gloss.on{background:rgba(255,197,61,.2);}
+  .sp5 .song-line.keepable{outline:0; cursor:pointer;}
+  .sp5 .game-why{background:rgba(255,255,255,.16) !important; color:#fff; max-width:520px; margin-inline:auto;}
+  .sp5.song-sing .song-deck, .sp5.song-sing .song-tag{display:none;}
+  .sp5.song-sing .song-line{font-size:24px;}
+  @media (prefers-reduced-motion: reduce){ .song-star, .sp5 .song-rec.spin{animation:none !important; opacity:.95; transform:none;} .song-shimmer::after{display:none;} }
   .song-card-credit{margin-top:8px; font-size:12px; font-style:italic; font-weight:700; color:rgba(255,255,255,.92);}
   .song-card-intro{margin-top:6px; font-size:13.5px; font-weight:600; line-height:1.4; color:rgba(255,255,255,.95);}
   .song-page{background:linear-gradient(180deg, color-mix(in srgb, var(--song-tint) 14%, var(--bg)) 0%, var(--bg) 60%); min-height:100vh;}
@@ -9496,7 +9553,7 @@ function renderSongSession(id){
   if(d && d.lines){
     let prevSec = null;
     lyrics = d.lines.map((ln, i)=>{
-      const head = ln.sec && ln.sec !== prevSec ? `<div class="song-sec">${esc(ln.sec)}</div>` : '';
+      const head = '';
       prevSec = ln.sec;
       return head + songLineHtml(ln, i);
     }).join('');
@@ -9506,31 +9563,38 @@ function renderSongSession(id){
   } else {
     lyrics = `<p class="game-hint" style="text-align:center; margin:24px 0;">${L('Loading the song…','Şarkı yükleniyor…','آهنگ در حال بارگذاری است…','Cargando la canción…')}</p>`;
   }
-  const playIc = `<svg width="30" height="30" viewBox="0 0 24 24" style="margin-inline-start:4px;"><path d="M7 4.5v15l13-7.5z" fill="#fff"/></svg>`;
+  const playIc = `<svg width="30" height="30" viewBox="0 0 24 24" style="margin-inline-start:3px;"><path d="M7 4.5v15l13-7.5z" fill="#fff"/></svg>`;
   const pauseIc = `<svg width="28" height="28" viewBox="0 0 24 24"><rect x="6" y="4.5" width="4" height="15" rx="1.2" fill="#fff"/><rect x="14" y="4.5" width="4" height="15" rx="1.2" fill="#fff"/></svg>`;
-  return `<div class="fade-in song-page${songUi.sing ? ' song-sing' : ''}" style="--song-tint:var(${s.tint}); --song-label:var(${s.label || s.tint});">
-    ${sectionHead(s.title, songSubLabel(s))}
+  const credit = esc(SONG_CREDIT).replace('Farin Rasouli', '<b>Farin Rasouli</b>');
+  return `<div class="fade-in song-page sp5${songUi.sing ? ' song-sing' : ''}" style="--song-tint:var(${s.tint});">
+    ${songSkyHtml()}
+    <div class="song-top"><button class="back" data-action="back">${ICONS.back} ${L('Back','Geri','برگشت','Atrás')}</button></div>
     <div class="screen" style="padding-top:0;">
-      <div class="song-cover">
-        <svg class="song-wave" viewBox="0 0 400 120" preserveAspectRatio="none" aria-hidden="true"><path d="M0 70 C 60 30, 120 30, 180 62 S 300 100, 400 52 L400 120 L0 120 Z" fill="var(--song-tint)"/></svg>
-        <div class="song-vinyl big${playing ? ' spin' : ''}${heard ? ' gold' : ''}" id="song-disc" aria-hidden="true"><span class="song-vinyl-label"><b>${esc(s.title)}</b></span></div>
-        ${songStarsHtml()}
-      </div>
-      <div class="song-credit" id="song-credit">♪ ${esc(SONG_CREDIT)}</div>
-      <p class="song-intro" dir="auto">${esc(svText(s.intro))}</p>
-      <div class="song-transport">
-        <button type="button" class="song-play" id="song-play" data-action="song-play" data-id="${esc(id)}" aria-label="${esc(playing ? L('Pause','Duraklat','توقف','Pausa') : L('Play','Oynat','پخش کن','Reproducir'))}"${d && d.lines ? '' : ' disabled'}>${playing ? pauseIc : playIc}</button>
-        <span class="song-time" id="song-el">${songClock(pos)}</span>
-        <input type="range" class="song-seek" id="song-seek" min="0" max="${Math.round(dur * 10) / 10}" step="0.1" value="${Math.round(pos * 10) / 10}" aria-label="${esc(L('Position','Konum','موقعیت','Posición'))}" dir="ltr">
-        <span class="song-time" id="song-tot">${songClock(dur)}</span>
-      </div>
-      <div class="song-pills" id="song-pills">${heard ? `<button type="button" class="game-chip" data-action="song-sing">${songUi.sing ? L('Normal view','Normal görünüm','نمای معمولی','Vista normal') : L('Sing along','Birlikte söyle','با آهنگ بخوان','Canta con ella')}</button>` : ''}</div>
-      <div class="song-lyrics-wrap">
-        <div class="song-lyrics" id="song-lyrics">${lyrics}</div>
-        <div class="game-why sp-gloss-row song-gloss-row" id="song-gloss-row" hidden></div>
-      </div>
+      <article class="song-glass">
+        <header class="song-hero">
+          <div class="song-tag"><img src="logo-fe-cutout.png" alt="">${L('Original FEschool song','Özgün FEschool şarkısı','آهنگ اورجینال FEschool','Canción original de FEschool')}</div>
+          <div class="song-deck">
+            <div class="song-rec${playing && !reducedMotion() ? ' spin' : ''}${heard ? ' gold' : ''}" id="song-disc" aria-hidden="true"><div class="song-rec-label"><img src="logo-fe-cutout.png" alt="FEschool"></div></div>
+            <div class="song-rec-sheen"></div>
+            <span class="song-star a"></span><span class="song-star b"></span><span class="song-star c"></span><span class="song-star d"></span><span class="song-star e"></span>
+            <div class="song-rec-ring"></div>
+          </div>
+          <span class="song-level">${L('Level','Seviye','سطح','Nivel')} ${esc(s.level)}</span>
+          <h1 class="song-title">${esc(s.title)}</h1>
+          <p class="song-credit-line" id="song-credit">${credit}</p>
+        </header>
+        <div class="song-ctrl">
+          <button type="button" class="song-play" id="song-play" data-action="song-play" data-id="${esc(id)}" aria-label="${esc(playing ? L('Pause','Duraklat','توقف','Pausa') : L('Play','Oynat','پخش کن','Reproducir'))}"${d && d.lines ? '' : ' disabled'}>${playing ? pauseIc : playIc}</button>
+          <input type="range" class="song-seek" id="song-seek" min="0" max="${Math.round(dur * 10) / 10}" step="0.1" value="${Math.round(pos * 10) / 10}" style="--p:${dur ? Math.min(100, pos / dur * 100) : 0}%;" aria-label="${esc(L('Position','Konum','موقعیت','Posición'))}" dir="ltr">
+          <span class="song-time" dir="ltr"><span id="song-el">${songClock(pos)}</span> / <span id="song-tot">${songClock(dur)}</span></span>
+        </div>
+        <div class="song-pills" id="song-pills">${heard ? `<button type="button" class="game-chip" data-action="song-sing">${songUi.sing ? L('Normal view','Normal görünüm','نمای معمولی','Vista normal') : L('Sing along','Birlikte söyle','با آهنگ بخوان','Canta con ella')}</button>` : ''}</div>
+        <div class="song-gloss-row" id="song-gloss-row" hidden></div>
+        <div class="song-lyrics-wrap">
+          <div class="song-lyrics" id="song-lyrics">${lyrics}</div>
+        </div>
+      </article>
       <div id="song-keep"></div>
-      <div class="game-why media-enjoy" style="margin-top:16px; background:var(--cat-lis-soft); font-size:16px;"><img src="char-${learnerCharKey()}.png" alt=""><div dir="auto">${L('Enjoy the song!','Şarkının tadını çıkar!','از آهنگ لذت ببر!','¡Disfruta la canción!')}</div></div>
     </div>
   </div>`;
 }
@@ -9614,6 +9678,7 @@ function songPaint(force){
   const el = document.getElementById('song-el'), seek = document.getElementById('song-seek');
   if(el) el.textContent = songClock(t);
   if(seek && document.activeElement !== seek) seek.value = String(Math.round(t * 10) / 10);
+  if(seek){ const mx = Number(seek.max) || 0; seek.style.setProperty('--p', (mx ? Math.min(100, t / mx * 100) : 0) + '%'); }
   const {li, wi} = songActive(d, t);
   if(force || li !== songUi.line){
     d.lines.forEach((ln, i)=>{
@@ -9626,6 +9691,9 @@ function songPaint(force){
   if(force || li !== songUi.line || wi !== songUi.word){
     document.querySelectorAll('.song-w.on').forEach(x=>x.classList.remove('on'));
     if(li > -1 && wi > -1){ const p = document.getElementById('song-l' + li); const w = p && p.querySelector('[data-w="' + wi + '"]'); if(w) w.classList.add('on'); }
+    // sung words of the active line turn white (the current one is gold)
+    document.querySelectorAll('.song-w.sung').forEach(x=>{ if(!(li > -1 && x.closest('#song-l' + li))) x.classList.remove('sung'); });
+    if(li > -1 && d.lines[li].timed){ const p = document.getElementById('song-l' + li); d.lines[li].toks.forEach((tk, j)=>{ const w = p && p.querySelector('[data-w="' + j + '"]'); if(w) w.classList.toggle('sung', t >= tk.t0); }); }
   }
   songUi.line = li; songUi.word = wi;
   // keep the active line centred; after the learner scrolls, wait 3 s before easing back
@@ -9677,15 +9745,19 @@ function songKeepLine(s, text){
   if(k) k.innerHTML = `<div class="game-why" style="margin-top:12px;"><img src="char-${learnerCharKey()}.png" alt=""><div><span dir="auto">${L('Kept in your collection:','Koleksiyonuna eklendi:','به مجموعه‌ات اضافه شد:','Guardada en tu colección:')}</span> <b dir="ltr">${esc(text)}</b></div></div>`;
   sfx('reveal');
 }
-// Twinkling stars around a disc (roadmap card + player). Positions in % of the .song-stars box.
+// Gold four-point stars (the logo's star): around the roadmap card's disc, and scattered over the player's sky.
 function songStarsHtml(){
-  const st = [[2,8,18,0,1],[84,0,14,.5,0],[97,56,12,1.1,1],[-2,68,10,1.6,0],[48,-8,10,.9,0],[62,96,13,1.3,1]];
-  return '<span class="song-stars" aria-hidden="true">' + st.map(([x,y,sz,d,g])=>'<i class="song-star' + (g ? ' gold' : '') + '" style="left:' + x + '%; top:' + y + '%; width:' + sz + 'px; height:' + sz + 'px; animation-delay:' + d + 's;"></i>').join('') + '</span>';
+  const st = [[2,8,18,0],[84,0,14,.5],[97,56,12,1.1],[-2,68,10,1.6],[48,-8,10,.9],[62,96,13,1.3]];
+  return '<span class="song-stars" aria-hidden="true">' + st.map(([x,y,sz,d])=>'<i class="song-star" style="left:' + x + '%; top:' + y + '%; --s:' + sz + 'px; animation-delay:' + d + 's;"></i>').join('') + '</span>';
+}
+function songSkyHtml(){
+  const st = [[6,4,9,0],[88,7,12,.8],[18,22,6,1.6],[72,19,8,2.2],[94,35,7,.4],[4,44,10,1.2],[58,40,5,2],[30,58,7,.6],[86,62,11,1.8],[12,76,8,1],[64,80,6,2.4],[40,92,9,.2],[92,90,7,1.4],[50,12,6,2.8]];
+  return '<div class="song-sky" aria-hidden="true">' + st.map(([x,y,sz,d])=>'<i class="song-star" style="left:' + x + '%; top:' + y + '%; --s:' + sz + 'px; animation-delay:' + d + 's;"></i>').join('') + '</div>';
 }
 function songCardFaceHtml(item){
   const s = songById(item.refId);
   if(!s) return '';
-  return `<div class="song-card-intro" dir="auto" style="padding-inline-end:100px;">${esc(svText(s.intro))}</div><div class="song-card-credit" style="padding-inline-end:100px;">${esc(SONG_CREDIT)}</div>`;
+  return `<div class="song-card-tag"><img src="logo-fe-cutout.png" alt="">${L('Original FEschool song','Özgün FEschool şarkısı','آهنگ اورجینال FEschool','Canción original de FEschool')}</div>`;
 }
 
 /* ============================= GAMIFY EVERY CARD TYPE (2026-10-07, Trello tobT7nwI) =============================
@@ -11333,6 +11405,7 @@ function render(){
   }
   // Song card: leaving the player stops the song; on the player, wire the seek bar and the highlight after the render
   if(state.view !== 'song-session' && songUi.audio){ try{ songStop(); }catch(e){} }
+  try{ document.body.classList.toggle('song-body', state.view === 'song-session'); }catch(e){}
   if(state.view === 'song-session') queueFx(songBindDom);
   // Magic Words: leaving the doors closes the microphone
   if(state.view !== 'game-spell'){ try{ spellStopRec(); }catch(e){} }
@@ -13037,7 +13110,7 @@ function renderRoadmapCard(p){
     const iconBig = m.img === 'studio-icon-cutout.png';
     // the current card is a bit bigger (2026-10-18), its icon grows with it
     const iconPx = iconBig ? (isCurrent ? 152 : 140) : (isCurrent ? 116 : 104);
-    const cardIcon = item.type === 'song' ? (checked ? '' : `<span class="song-shimmer" aria-hidden="true"></span>`) + `<span class="song-vinyl rm-disc" aria-hidden="true"${checked ? ' style="opacity:.5;"' : ''}><span class="song-vinyl-label"></span></span>` + (checked ? '' : songStarsHtml()) : m.img
+    const cardIcon = item.type === 'song' ? (checked ? '' : `<span class="song-shimmer" aria-hidden="true"></span>`) + `<span class="song-vinyl rm-disc" aria-hidden="true"${checked ? ' style="opacity:.5;"' : ''}><span class="song-vinyl-label"><img src="logo-fe-cutout.png" alt=""></span></span>` + (checked ? '' : songStarsHtml()) : m.img
       ? `<img src="${m.img}" alt="" class="rm2-icon-float" style="position:absolute; inset-inline-end:${iconBig?'-6px':'10px'}; bottom:${iconBig?'-4px':'12px'}; width:${iconPx}px; height:${iconPx}px; object-fit:contain; pointer-events:none; filter:drop-shadow(0 6px 12px rgba(0,0,0,.28)); ${checked?'opacity:.5;':''}">`
       : '';
     // Gamification v2 (2026-09-30): the v1 "⚡ GAME" corner pill and the streak
@@ -13053,7 +13126,7 @@ function renderRoadmapCard(p){
             <!-- only the title clears the bottom-corner icon; the subtitle above it
                  sits clear of the icon already, so reserving space there just made
                  short labels wrap for no reason. -->
-            <div style="${titleFont} margin-top:8px; color:${titleColor}; line-height:1.28; padding-inline-end:${(m.img || item.type === 'song')?'100px':'0'}; ${checked?'text-decoration:line-through; opacity:.62;':''}">${esc(nodeTitle(item))}</div>
+            <div class="rm2-title" style="${titleFont} margin-top:8px; color:${titleColor}; line-height:1.28; padding-inline-end:${(m.img || item.type === 'song')?'100px':'0'}; ${checked?'text-decoration:line-through; opacity:.62;':''}">${esc(nodeTitle(item))}</div>
             ${item.type === 'song' ? songCardFaceHtml(item) : ''}
           </div>
           <span style="flex:0 0 auto; margin-top:3px; color:${chevColor}; opacity:${checked?1:.65};${locked?' visibility:hidden;':''}">${checked?ICONS.check:ICONS.chev}</span>
@@ -23696,11 +23769,15 @@ const HANDLERS = {
     const d = songData[state.viewParams.id], g = d && d.gloss && d.gloss[Number(el.dataset.g)];
     if(!g) return;
     const row = document.getElementById('song-gloss-row');
-    if(row){ row.hidden = false; row.innerHTML = pathGlossRowHtml({g:Object.assign({word:g.w}, g.m)}, 'g'); }
+    if(row){ row.hidden = false; row.innerHTML = pathGlossRowHtml({g:Object.assign({word:g.w}, g.m)}, 'g') + `<button type="button" class="song-gloss-x" data-action="song-gloss-close">${L('Close','Kapat','بستن','Cerrar')}</button>`; }
     document.querySelectorAll('.song-page .sp-gloss.on').forEach(x=>x.classList.remove('on'));
     if(el.classList) el.classList.add('on');
     sfx('tick');
     if(!(songUi.audio && !songUi.audio.paused) && !sfxMuted) speakTarget(g.w);   // never over the music
+  },
+  'song-gloss-close'(){
+    const row = document.getElementById('song-gloss-row'); if(row){ row.hidden = true; row.innerHTML = ''; }
+    document.querySelectorAll('.song-page .sp-gloss.on').forEach(x=>x.classList.remove('on'));
   },
   'song-line'(el){
     if(!songUi.keep) return;

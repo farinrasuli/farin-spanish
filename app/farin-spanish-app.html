@@ -23269,7 +23269,7 @@ let gcBubble = null, gcBubbleTimer = null;
    (offline before the first use) the game opens the old way. x = the old Back, all the way out of the game's views. */
 const THEATRE_KINDS = ['path','chores','mystery','order','desk','spell'];
 const THEATRE_VIEWS = ['game-path','game-chores-building','game-chores-room','game-mystery','game-order','game-desk','game-spell'];
-const THEATRE_VER = '1';
+const THEATRE_VER = '2';
 let theatreLoading = null;
 function theatreLoad(){
   if(window.Theatre) return Promise.resolve(window.Theatre);
@@ -23284,8 +23284,10 @@ function theatreLoad(){
 }
 function theatreGate(el, handler){
   const ds = (el && el.dataset) || {};
-  // course lesson cards keep their lesson shell (courseOpenStep needs the game open synchronously): no Theatre there
-  if(ds.theatre || !THEATRE_KINDS.includes(ds.kind) || state.courseReturn) return false;
+  // No Theatre: inside a course lesson (courseOpenStep needs the game open synchronously), when one is already open,
+  // for shelf entries other than Your Call (they reach start-game, gated there), or when this round falls back to another game.
+  if(ds.theatre || !THEATRE_KINDS.includes(ds.kind) || state.courseReturn || (window.Theatre && Theatre.isOpen())) return false;
+  if((handler === 'shelf-play' && ds.kind !== 'path') || theatreFallsBack(ds, handler)) return false;
   const kind = ds.kind, from = (el.isConnected && el.getBoundingClientRect) ? el.getBoundingClientRect() : null;
   hideCharTip(true); gcBubble = null;
   const cover = document.createElement('div');
@@ -23297,10 +23299,21 @@ function theatreGate(el, handler){
   theatreLoad().then(T=>T.open({kind, cover, from, views:THEATRE_VIEWS, seen:!!seen[kind],
     app:{lang:LANG, name:(state.profile && state.profile.name) || '', level:(state.profile && state.profile.level) || '', gameName:gameDisplayName(kind),
       view:()=>state.view, muted:()=>sfxMuted, setMuted:m=>{ sfxMuted = !!m; localStorage.setItem('farinSfxMuted', m ? '1' : '0'); }},
-    onPlay:()=>{ seen[kind] = 1; play(); },
+    onPlay:(info)=>{ if(!info || info.poster) seen[kind] = 1; play(); },   // no art yet = no poster shown, not "seen"
     onExit:theatreExit}))
   .catch(()=>{ cover.remove(); play(); });
   return true;
+}
+// The same builders start-game uses (all read-only, seeded by refId): null = the card plays another game this time.
+function theatreFallsBack(ds, handler){
+  const ref = ds.free ? null : ds.refId;
+  try{
+    if(ds.kind === 'path') return !(handler === 'shelf-play' ? pathShelfRound() : pathRoundForRef(ds.refId));
+    if(ds.kind === 'mystery') return !buildCaseRound(ref);
+    if(ds.kind === 'desk') return !buildDeskRound(ref);
+    if(ds.kind === 'spell'){ const set = VOCAB_SETS.find(x=>x.id===ds.setId); return !set || !buildSpellRound(set, ref); }
+  }catch(e){ return true; }
+  return false;
 }
 function theatreExit(){
   stopAllSpeech();

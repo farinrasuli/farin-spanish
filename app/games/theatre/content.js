@@ -2,15 +2,17 @@
    Posters from the games-expansion proposal 2026-10-22, section 03 table, in Spanish. Titles and taglines are in the language the
    learner is learning (a real film poster); the kicker above the title is the game's name in the UI language (the app
    passes gameDisplayName). Key art: one swappable WebP per poster at games/posters/<kind>.webp - drop the file in and
-   set artReady:true (artWide = optional landscape crop for the blurred tablet/desktop sides). Until then the frame shows
-   a gradient placeholder with the title's first letter set large. Palettes stay light (no dark posters).
+   set artReady:true (artWide = optional landscape crop for the blurred tablet/desktop sides). Until then there is
+   no poster at all: the Theatre goes straight into the game (Farin: "nothing low designed"). Palettes stay light.
    HUD/poster strings: {en, tr, fa, es}; Persian is informal (to). */
 window.THEATRE_CONTENT = {
   side:'es', target:'es', quotes:['«', '»'],   // the poster's own language and its quote marks
   posters:{
     path:{
-      title:{A1:'La cámara', A2:'El último barco', B1:'Setenta y dos horas', B2:'Testimonio', 'default':'Testimonio'},
-      tagline:'Una cámara. Dos veranos.',
+      // Your Call v1 (live): one summer in Cudillero at every level. Your Call v2 swaps in its own titles when it ships
+      // (La cámara A1 / El último barco A2 / Setenta y dos horas B1 / Testimonio B2, «Una cámara. Dos veranos.»).
+      title:'Un verano en Cudillero',
+      tagline:'Un pueblo nuevo. Una decisión cada vez.',
       art:'games/posters/path.webp', artReady:false,
       palette:{sky:'#fdf3e1', sky2:'#f4dcb8', glow:'#fff3d6', ground:'#8fcfcc', ink:'#1c3533', accent:'#c8352e', accentInk:'#ffffff'}
     },

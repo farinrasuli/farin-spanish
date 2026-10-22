@@ -15,10 +15,11 @@
      controls,           // optional extra HUD buttons, right of sound: [{id, label, icon(svg string), onTap(btn)}]
      stage,              // 'portrait' (default, full-height tall column) | '4:5' (wider column for 4:5 art)
      seen,               // true = the learner has met this poster: show it at rest with Continue, no sequence
+     forcePoster,        // show the poster even without artReady (previews only; learners never see a placeholder)
      cover, from,        // the app's loading cover element (adopted) and the tapped card's DOMRect
      views,              // app view names that belong to the game; leaving them closes the Theatre (see sync)
      app,                // {lang, name, level, gameName, view(), muted(), setMuted(bool)}
-     onPlay(),           // Play / Continue tapped: start the game (the app renders it in #app, now full screen)
+     onPlay(info),       // Play / Continue tapped (info.poster true), or at once when there is no art yet (info.poster false)
      onExit(),           // HUD x while the game runs: save and leave the way the game's Back does
      onClose()           // after the Theatre has fully closed, for any reason
    })
@@ -60,7 +61,8 @@ function pick(v, level){
   if(v == null || typeof v === 'string') return v || '';
   return v[level] || v['default'] || v.A1 || '';
 }
-function vt(fn){ var de = D.documentElement; de.classList.add('th-vt'); var t = D.startViewTransition(fn); var off = function(){ de.classList.remove('th-vt'); }; t.finished.then(off, off); return t; }
+function vt(fn){ var de = D.documentElement; de.classList.add('th-vt'); var t = D.startViewTransition(fn); var off = function(){ de.classList.remove('th-vt'); }; var no = function(){};
+  t.ready.catch(no); t.updateCallbackDone.catch(no); t.finished.then(off, off); return t; }
 function anim(n, frames, o){ try{ return n && n.animate ? n.animate(frames, o) : null; }catch(e){ return null; } }
 
 /* ---------- poster ---------- */
@@ -133,7 +135,9 @@ function buildPoster(s){
 function backdropHtml(s){
   var p = s.poster, title = pick(p.title, s.app.level);
   var src = p.artReady ? (p.artWide || p.art) : null;
-  return '<div class="th-bd-art" style="' + paletteStyle(p.palette) + '">' + (src ? '<img src="' + esc(src) + '" alt="">' : artHtml(p, s.kind, title)) + '</div><div class="th-bd-veil"></div>';
+  // no art yet: the sides are just the palette's soft light (no placeholder plate)
+  var bare = '<div class="th-ph th-ph-bare" aria-hidden="true"><span class="th-ph-sun"></span></div>';
+  return '<div class="th-bd-art" style="' + paletteStyle(p.palette) + '">' + (src ? '<img src="' + esc(src) + '" alt="">' : (s.noPoster ? bare : artHtml(p, s.kind, title))) + '</div><div class="th-bd-veil"></div>';
 }
 
 /* ---------- HUD ---------- */
@@ -230,6 +234,10 @@ function open(o){
   var app = o.app || {};
   var s = cur = {kind:o.kind, opts:o, app:app, poster:posterData(o), strip:o.strip || null, controls:o.controls || [],
     seen:!!o.seen, views:o.views || null, phase:'poster', openView:app.view ? app.view() : null, localMuted:false};
+  // Farin's rule "nothing low designed": the poster only shows once its real key art exists (artReady). Until then
+  // the Theatre still takes over (full screen, HUD, wake lock, transition) but goes straight into the game: no poster,
+  // no billing, no sound swell, and the first view is not marked seen (onPlay gets {poster:false}).
+  s.noPoster = !(s.poster.art && s.poster.artReady) && !o.forcePoster;
   var stage = o.stage === '4:5' ? 'th-4x5' : 'th-portrait';
   var body = D.body;
   body.classList.add('theatre-on', stage);
@@ -240,12 +248,12 @@ function open(o){
 
   var root = o.cover && o.cover.parentNode ? o.cover : el('div');
   root.className = 'th-root'; root.removeAttribute('style');
+  if(s.noPoster) root.style.background = s.poster.palette.sky || '#f6f1e7';   // the cover stays until the game is drawn
   if(!root.parentNode) body.appendChild(root);
   s.root = root;
-  s.frame = buildPoster(s);
   root.innerHTML = '';
-  root.appendChild(s.frame);
-  if(o.cover && o.cover.parentNode && o.from && !reduced()){
+  if(!s.noPoster){ s.frame = buildPoster(s); root.appendChild(s.frame); }
+  if(!s.noPoster && o.cover && o.cover.parentNode && o.from && !reduced()){
     // the cover grew from the card; settle the poster in under it
     anim(s.frame, [{opacity:0}, {opacity:1}], {duration:180, easing:'ease-out'});
   }
@@ -254,6 +262,16 @@ function open(o){
   body.appendChild(s.hud);
   paintSound(); paintControls();
 
+  s.onKey = function(e){
+    if(e.key === 'Escape' && cur === s){ e.preventDefault(); exit(); }
+  };
+  D.addEventListener('keydown', s.onKey, true);
+  D.addEventListener('visibilitychange', onVis);
+  s.returnFocus = D.activeElement;
+  wake();
+  enterFullscreen();
+  if(s.noPoster){ start(); return api; }
+
   var play = s.frame.querySelector('.th-play');
   play.addEventListener('click', function(e){ e.stopPropagation(); start(); });
   s.frame.addEventListener('click', function(e){
@@ -261,19 +279,12 @@ function open(o){
     if(it){ e.stopPropagation(); var item = (s.strip || [])[+it.dataset.i]; if(item && item.state !== 'locked' && item.onTap) item.onTap(item); return; }
     skip();
   });
-  s.onKey = function(e){
-    if(e.key === 'Escape' && cur === s){ e.preventDefault(); exit(); }
-  };
-  D.addEventListener('keydown', s.onKey, true);
-  D.addEventListener('visibilitychange', onVis);
-  try{ s.returnFocus = D.activeElement; play.focus({preventScroll:true}); }catch(e){}
+  try{ play.focus({preventScroll:true}); }catch(e){}
   if(s.frame.classList.contains('th-intro')) s.introTimer = setTimeout(function(){ if(cur === s) s.frame.classList.add('th-done'); }, 2600);
-  wake();
-  enterFullscreen();
   return api;
 }
 function skip(){
-  if(!cur || cur.phase !== 'poster') return;
+  if(!cur || cur.phase !== 'poster' || !cur.frame) return;
   var f = cur.frame;
   if(f.classList.contains('th-intro') && !f.classList.contains('th-done')){ f.classList.add('th-skip', 'th-done'); }
 }
@@ -281,21 +292,30 @@ function start(){
   var s = cur; if(!s || s.phase !== 'poster') return;
   s.phase = 'running';
   clearTimeout(s.introTimer);
-  swell(s.kind);
+  if(!s.noPoster) swell(s.kind);
   var frame = s.frame;
-  var update = function(){
+  var update = function(keepCover){
     D.body.classList.add('th-running');
-    if(frame.parentNode) frame.remove();
-    s.root.classList.add('th-root-run');
-    try{ s.opts.onPlay && s.opts.onPlay(); }catch(e){ console.error('[theatre] onPlay', e); }
+    if(frame && frame.parentNode) frame.remove();
+    if(!keepCover) s.root.classList.add('th-root-run');
+    try{ s.opts.onPlay && s.opts.onPlay({poster:!s.noPoster}); }catch(e){ console.error('[theatre] onPlay', e); }
     W.scrollTo(0, 0);
     // a fallback game outside the Theatre's views (e.g. Case Closed -> Build It) leaves the Theatre straight away
     if(cur === s && s.views && s.app.view && s.views.indexOf(s.app.view()) < 0) close();
   };
-  if(!reduced() && D.startViewTransition){
-    try{ vt(update); return; }catch(e){}
+  // with a poster: View Transition (dissolve poster -> game); without one the cover simply fades off the game (WAAPI)
+  if(frame && !reduced() && D.startViewTransition){
+    try{ vt(function(){ update(); }); return; }catch(e){}
   }
   if(reduced()){ update(); return; }
+  if(!frame){
+    // no poster: the loading cover dissolves over the freshly rendered game
+    update(true);
+    var root = s.root, c = anim(root, [{opacity:1}, {opacity:0}], {duration:320, easing:'ease-out', fill:'forwards'});
+    var hide = function(){ root.classList.add('th-root-run'); root.style.opacity = ''; if(c) try{ c.cancel(); }catch(e){} };
+    if(c) c.onfinish = hide; else hide();
+    return;
+  }
   // WAAPI fallback: the poster lifts off over the freshly rendered game
   var ghost = frame;
   D.body.appendChild(ghost); ghost.classList.add('th-ghost');

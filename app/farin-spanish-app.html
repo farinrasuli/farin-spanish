@@ -684,6 +684,51 @@
   .sp-feelchip{display:inline-block; margin-inline-start:4px; padding:1px 8px; border-radius:999px; border:0; background:var(--bg-elevated); font-size:13.5px;}
   .sp-gloss-row{margin-top:12px;}
   .sp-gloss-row[hidden]{display:none;}
+  /* Song card (yCRJ6eDc, Claude/specs/song-cards/UI-DIRECTION.md): CSS vinyl, karaoke lyrics, light page wash in the song's tint */
+  .song-vinyl{position:relative; display:block; border-radius:50%; background:radial-gradient(circle, #2b2633 0 30%, #3a3442 31% 33%, #26212d 34% 46%, #3a3442 47% 49%, #26212d 50% 62%, #3a3442 63% 65%, #221e29 66% 100%); box-shadow:0 10px 24px -8px rgba(0,0,0,.35), inset 0 0 0 2px rgba(255,255,255,.06);}
+  .song-vinyl::after{content:""; position:absolute; inset:0; border-radius:50%; background:linear-gradient(135deg, rgba(255,255,255,.18), rgba(255,255,255,0) 40%, rgba(255,255,255,0) 60%, rgba(255,255,255,.1)); pointer-events:none;}
+  .song-vinyl-label{position:absolute; inset:32%; border-radius:50%; background:var(--song-label, var(--cat-lis)); display:flex; align-items:center; justify-content:center; text-align:center; padding:6%; box-shadow:inset 0 0 0 3px rgba(255,255,255,.35); transition:box-shadow .3s;}
+  .song-vinyl-label b{font-family:'Fredoka',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; font-weight:700; font-size:11px; line-height:1.15; color:#fff; text-shadow:0 1px 2px rgba(0,0,0,.25);}
+  .song-vinyl-label::before{content:""; position:absolute; width:8%; height:8%; left:46%; top:46%; border-radius:50%; background:#221e29;}
+  .song-vinyl.gold .song-vinyl-label{box-shadow:inset 0 0 0 3px rgba(255,255,255,.35), 0 0 0 4px var(--cat-review), 0 0 18px 2px color-mix(in srgb, var(--cat-review) 60%, transparent);}
+  .song-vinyl.big{width:56%; max-width:240px; aspect-ratio:1; margin:0 auto;}
+  .song-vinyl.spin{animation:song-spin 8s linear infinite;}
+  @keyframes song-spin{to{transform:rotate(360deg);}}
+  .song-vinyl.card{position:absolute; inset-inline-end:16px; bottom:16px; width:88px; height:88px; pointer-events:none;}
+  .song-vinyl.card .song-vinyl-label{background:#fff;}
+  .song-vinyl.card .song-vinyl-label::after{content:""; position:absolute; width:34%; height:34%; border-radius:50%; background:var(--cat-lis);}
+  .song-card-credit{margin-top:8px; font-size:12px; font-style:italic; font-weight:700; color:rgba(255,255,255,.92);}
+  .song-card-intro{margin-top:6px; font-size:13.5px; font-weight:600; line-height:1.4; color:rgba(255,255,255,.95);}
+  .song-page{background:linear-gradient(180deg, color-mix(in srgb, var(--song-tint) 14%, var(--bg)) 0%, var(--bg) 60%); min-height:100vh;}
+  .song-cover{position:relative; padding:8px 0 4px;}
+  .song-wave{position:absolute; left:0; right:0; bottom:0; width:100%; height:55%; opacity:.08; pointer-events:none;}
+  .song-credit{margin-top:12px; text-align:center; font-size:12px; color:var(--ink-faint); font-weight:600;}
+  .song-intro{margin:8px 0 0; text-align:center; font-size:14.5px; line-height:1.5; color:var(--ink-soft); font-weight:600;}
+  .song-transport{display:flex; align-items:center; gap:10px; margin-top:16px;}
+  .song-play{flex:0 0 auto; width:72px; height:72px; border-radius:50%; border:0; background:var(--cat-lis); box-shadow:0 6px 20px -6px color-mix(in srgb, var(--cat-lis) 70%, transparent); display:flex; align-items:center; justify-content:center; cursor:pointer;}
+  .song-play[disabled]{opacity:.5; cursor:default;}
+  .song-time{flex:0 0 auto; font-size:12.5px; font-weight:700; color:var(--ink-soft); font-variant-numeric:tabular-nums; min-width:34px; text-align:center;}
+  .song-seek{flex:1 1 auto; min-width:0; accent-color:var(--song-tint, var(--cat-lis)); height:18px;}
+  .song-pills{display:flex; justify-content:center; gap:8px; margin-top:10px; min-height:0;}
+  .song-pills:empty{display:none;}
+  .song-lyrics-wrap{position:relative; margin-top:14px; background:var(--bg-elevated); border-radius:var(--radius); box-shadow:var(--clay-shadow-soft, none);}
+  .song-lyrics{position:relative; height:46vh; overflow-y:auto; padding:16px 16px 40px; overscroll-behavior:contain;}
+  .song-sec{margin:14px 0 4px; font-size:11px; font-weight:800; text-transform:uppercase; letter-spacing:.06em; color:var(--ink-faint);}
+  .song-sec:first-child{margin-top:0;}
+  .song-line{margin:2px 0; padding:4px 10px; border-radius:14px; font-size:18px; line-height:1.6; font-weight:600; color:var(--ink-faint); transition:color .2s, background-color .2s; text-align:start;}
+  .song-line.past{color:var(--ink-soft);}
+  .song-line.on{color:var(--ink); font-weight:700; background:color-mix(in srgb, var(--song-tint, var(--cat-lis)) 18%, var(--bg-elevated)); box-shadow:inset 0 1px 0 rgba(255,255,255,.6);}
+  .song-line.keepable{cursor:pointer; outline:2px dashed color-mix(in srgb, var(--cat-review) 55%, transparent); outline-offset:-2px;}
+  .song-w{border-bottom:2px solid transparent; transition:border-color .12s;}
+  .song-line.on .song-w.on{font-weight:800; border-bottom-color:var(--song-tint, var(--cat-lis));}
+  .song-page .sp-gloss{border-bottom-color:var(--song-tint, var(--cat-lis));}
+  .song-page .sp-gloss.on{background:color-mix(in srgb, var(--song-tint, var(--cat-lis)) 20%, transparent);}
+  .song-gloss-row{position:sticky; bottom:0; margin:0; border-radius:0 0 var(--radius) var(--radius);}
+  .song-sing .song-cover{display:none;}
+  .song-sing .song-intro{display:none;}
+  .song-sing .song-line{font-size:22px;}
+  .song-sing .song-lyrics{height:58vh;}
+  @media (prefers-reduced-motion: reduce){ .song-vinyl.spin{animation:none;} .song-line, .song-w{transition:none;} }
   .sp-feel{margin-top:14px; display:flex; gap:10px; align-items:flex-start; background:var(--cat-story-soft); border-radius:18px; padding:12px 14px; font-size:15.5px; font-weight:700; line-height:1.5; color:var(--ink);}
   .sp-feel-ic{flex:0 0 auto; color:var(--cat-story); font-size:18px; line-height:1.3;}
   .sp-prompt{margin:0; font-family:'Fredoka',-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; font-weight:700; font-size:20px; line-height:1.4; color:var(--ink);}
@@ -7949,6 +7994,7 @@ function openRoadmapNode(n){
   if(n.type === 'story') return nav({view:'story-detail', id:n.refId});
   if(n.type === 'writing' || n.type === 'speaking') return nav({view:'studio-setup', mode:n.type, goal:n.goal||'', difficulty:n.difficulty||''});
   if(n.type === 'media') return nav({view:'media-session', id:n.refId});
+  if(n.type === 'song') return nav({view:'song-session', id:n.refId});
   if(n.type === 'dialogue') return nav({view:'dialogue', id:n.refId});
   if(n.type === 'box') return HANDLERS['open-box']({dataset:{node:n.refId}});
   if(n.type === 'session') return nav({view:'session-prep', idx:String(currentRoadmap().indexOf(n))});
@@ -8683,7 +8729,7 @@ function nodeTitle(it){
     const set = id => VOCAB_SETS.find(x=>x.id===id);
     const pre = {
       grammar:L('Grammar','Dilbilgisi','گرامر','Gramática'), vocab:L('Vocab','Kelime','کلمات','Vocabulario'), slang:L('Slang','Argo','اصطلاحات','Argot'),
-      story:L('Story','Hikaye','داستان','Historia'), media:L('Watch or listen','İzle veya dinle','تماشا یا گوش‌کن','Mira o escucha'),
+      song:L('Song','Şarkı','آهنگ','Canción'), story:L('Story','Hikaye','داستان','Historia'), media:L('Watch or listen','İzle veya dinle','تماشا یا گوش‌کن','Mira o escucha'),
       writing:L('Writing practice','Yazma pratiği','تمرین نوشتن','Práctica de escritura'), speaking:L('Speaking practice','Konuşma pratiği','تمرین صحبت‌کردن','Práctica de conversación'),
       game:L('Game','Oyun','بازی','Juego'), box:L('Vocab Box','Kelime Kutusu','جعبهٔ لغات','Caja de palabras')
     };
@@ -8695,6 +8741,7 @@ function nodeTitle(it){
     }
     else if(it.type==='story'){ const st = STORY_LIBRARY.find(x=>x.id===it.refId); if(st) tail = L(st.title.en, st.title.tr, st.title.fa, st.title.es); }
     else if(it.type==='dialogue'){ p = L('Dialogue','Diyalog','گفت‌وگو','Diálogo'); const dl = DIALOGUES.find(x=>x.id===it.refId); if(dl) tail = svText(dl.title); }
+    else if(it.type==='song'){ const sg = songById(it.refId); if(sg) tail = sg.title; }
     else if(it.type==='media'){ const m = MEDIA_LIBRARY.find(x=>x.id===it.refId); if(m) tail = L(m.title.en, m.title.tr, m.title.fa, m.title.es); }
     else if(it.type==='writing' || it.type==='speaking'){ const dl = STUDIO_DIFFICULTY_LABEL[it.difficulty]; if(dl) tail = L(dl.en, dl.tr, dl.fa, dl.es); }
     else if(it.type==='box'){ tail = L('review','tekrar','مرور','repaso'); }
@@ -9260,6 +9307,314 @@ function markMediaWatched(m){
   }
   if(changed) save();
 }
+/* ============================= SONG CARD (Farin, me card OngcvWIs "song - app", 2026-10-21; Trello yCRJ6eDc) =============================
+   One roadmap node per FEschool original song: a player with karaoke lyrics, a few tappable words and nothing to answer.
+   Specs: Claude/specs/song-cards/ (UI-DIRECTION.md = player and look, GAMIFICATION-NOTES.md = placement, gold ring, kept line).
+   - Audio and lyrics live next to the page as files (songs/<id>.mp3 + songs/<id>.json, like the natural-voice clips under
+     audio/), fetched only when the player opens, so the HTML only carries SONG_LIBRARY below.
+   - Highlight: the line from t0; the sung word from its own t0..t1. A line with fb:1 (alignment fallback) has no word
+     times and gets the whole-line highlight only.
+   - Glossed words: the song's 6 "core" words are tappable (Story Path's sp-gloss markup + gloss row), meaning in the app
+     language. The word is spoken only while the song is paused.
+   - Completion: 80 % played or the track ended -> progress.songsHeard + roadmapChecked (the watch/listen store, see
+     markMediaWatched), the node's souvenir, gold ring + sparks on the disc, then "Keep one line?" (the tapped line becomes
+     the souvenir's flip side). The celebration waits for Home, like media.
+   - Placement (GAMIFICATION-NOTES §3-4): right after the Writing node, before game position 5, on the page the song is
+     placed on (level + stage below). Saved roadmaps get the node through ensureRoadmapSong() only where nothing at or after
+     that point is done yet, never next to a watch/listen node.
+   - The Spanish app ships the same code with an empty SONG_LIBRARY: no English song ever goes on a Spanish roadmap. */
+const SONG_BASE = 'songs/';
+const SONG_CREDIT = 'Original song by Farin Rasouli · © FEschool';
+const SONG_LIBRARY = [
+/* none on the Spanish side: no English song on a Spanish roadmap (UI-DIRECTION §10.5) */
+];
+function songById(id){ return SONG_LIBRARY.find(s=>s.id===id) || null; }
+function songForStage(profile, stage){ return (profile && profile.level) ? (SONG_LIBRARY.find(s=>s.level===profile.level && s.stage===stage) || null) : null; }
+function songMinutes(s){ return Math.max(1, Math.round((s.durationSec || 180) / 60)); }
+function songSubLabel(s){ return L('Song','Şarkı','آهنگ','Canción') + ' · ' + songMinutes(s) + ' ' + L('min','dk','دقیقه','min'); }
+function songRoadmapNode(s){ return {type:'song', refId:s.id, goal:null, title:L('Song','Şarkı','آهنگ','Canción')+': '+s.title}; }
+function songHeard(id){ const sh = state.progress && state.progress.songsHeard; return Array.isArray(sh) && sh.includes(id); }
+// Saved roadmaps (and goal-edit merges): the page's song goes right after its Writing node, only where it can't disturb
+// anything (same safety rules as ensureRoadmapMedia) and never within 2 nodes of a watch/listen node.
+function ensureRoadmapSong(){
+  const rm = state.roadmap;
+  if(!rm || !rm.length || !state.profile || !state.profile.completedDiagnostic) return false;
+  if(rm.some(n=>n.type==='song')) return false;
+  const s = songForStage(state.profile, state.profile.levelStage===2 ? 2 : 1);
+  if(!s) return false;
+  if(rm.every(n=>isRoadmapNodeDone(n))) return false;
+  const wi = rm.findIndex(n=>n.type==='writing');
+  if(wi < 0) return false;
+  const at = wi + 1;
+  if(rm.slice(at).some(n=>isRoadmapNodeDone(n))) return false;
+  if(rm.slice(Math.max(0, at - 2), at + 2).some(n=>n.type==='media')) return false;
+  rm.splice(at, 0, songRoadmapNode(s));
+  rm.forEach((n,i)=>{ n.n = i+1; });
+  const g = state.progress && state.progress.roadmapGolden;
+  if(g && g.nodeId){ const gi = rm.findIndex(n=>roadmapNodeId(n)===g.nodeId); if(gi > -1) g.goldenIdx = gi; }
+  return true;
+}
+// Same store as markMediaWatched: songsHeard + roadmapChecked + the node's souvenir. Idempotent.
+function markSongHeard(s){
+  const p = state.progress;
+  const id = roadmapNodeId({type:'song', refId:s.id});
+  const rc = p.roadmapChecked || (p.roadmapChecked = {});
+  const sh = Array.isArray(p.songsHeard) ? p.songsHeard : (p.songsHeard = []);
+  let changed = false;
+  if(!sh.includes(s.id)){ sh.push(s.id); changed = true; }
+  if(!rc[id]){
+    rc[id] = true; changed = true;
+    const node = currentRoadmap().find(n=>roadmapNodeId(n)===id);
+    if(node){
+      const fresh = awardSouvenirs({node});
+      ui.mediaCeleb = {type:'song', sv:fresh[0] || null};
+      ui.holdAdvance = true;
+    }
+  }
+  if(changed) save();
+}
+const songData = {};          // id -> parsed songs/<id>.json, or {error:true}
+const songUi = {id:null, audio:null, raf:0, line:-1, word:-1, userScrollAt:0, progScrollUntil:0, recenter:false, done:false, keep:false, sing:false, keepTimer:0, pos:0};
+function songLoad(id){
+  if(songData[id] && !songData[id].error) return;
+  songData[id] = {loading:true};
+  fetch(SONG_BASE + id + '.json').then(r=>{ if(!r.ok) throw new Error(r.status); return r.json(); }).then(d=>{
+    songData[id] = songPrepare(d);
+  }).catch(()=>{ songData[id] = {error:true}; }).then(()=>{ if(state.view === 'song-session' && state.viewParams.id === id) render(); });
+}
+// Tokens of each line (split on spaces, the same tokens as the timing file's words) + the gloss spans on them.
+function songPrepare(d){
+  const lines = (d.lines || []).map(l=>{
+    const toks = [];
+    const re = /\S+/g; let m;
+    while((m = re.exec(l.text))) toks.push({w:m[0], a:m.index, b:m.index + m[0].length});
+    const timed = !l.fb && Array.isArray(l.w) && l.w.length === toks.length;
+    if(timed) toks.forEach((t,j)=>{ t.t0 = l.w[j][0]; t.t1 = l.w[j][1]; });
+    return {t0:l.t0, t1:l.t1, sec:l.sec || '', text:l.text, timed, toks, glossAt:[]};
+  });
+  (d.gloss || []).forEach((g, gi)=>{
+    (g.at || []).forEach(([li, sub])=>{
+      const ln = lines[li]; if(!ln) return;
+      const a = ln.text.indexOf(sub); if(a < 0) return;
+      const b = a + sub.length;
+      const from = ln.toks.findIndex(t=>t.b > a), to = ln.toks.reduce((k,t,j)=>t.a < b ? j : k, -1);
+      if(from < 0 || to < from) return;
+      if(ln.glossAt.some(x=>!(to < x.from || from > x.to))) return;
+      ln.glossAt.push({gi, from, to});
+    });
+  });
+  return {lines, gloss:d.gloss || []};
+}
+function songClock(s){ s = Math.max(0, Math.floor(s || 0)); return Math.floor(s/60) + ':' + String(s%60).padStart(2,'0'); }
+function songLineHtml(ln, i){
+  let out = '', j = 0;
+  const tok = k => `<span class="song-w" data-w="${k}">${esc(ln.toks[k].w)}</span>`;
+  const gl = ln.glossAt.slice().sort((x,y)=>x.from - y.from);
+  while(j < ln.toks.length){
+    const g = gl.find(x=>x.from === j);
+    if(g){
+      const parts = []; for(let k = g.from; k <= g.to; k++) parts.push(tok(k));
+      out += (j ? ' ' : '') + `<span class="sp-gloss song-gloss" data-action="song-gloss" data-g="${g.gi}">${parts.join(' ')}</span>`;
+      j = g.to + 1;
+    } else { out += (j ? ' ' : '') + tok(j); j++; }
+  }
+  return `<p class="song-line${ln.timed ? '' : ' song-lineonly'}" id="song-l${i}" data-action="song-line" data-i="${i}" dir="ltr">${out}</p>`;
+}
+function renderSongSession(id){
+  const s = songById(id);
+  if(!s) return renderNotFound();
+  const d = songData[id];
+  if(!d) songLoad(id);
+  const heard = songHeard(id);
+  const live = songUi.id === id && songUi.audio;
+  const playing = !!(live && !songUi.audio.paused);
+  const dur = (live && songUi.audio.duration) || s.durationSec || 0;
+  const pos = live ? songUi.audio.currentTime : 0;
+  let lyrics;
+  if(d && d.lines){
+    let prevSec = null;
+    lyrics = d.lines.map((ln, i)=>{
+      const head = ln.sec && ln.sec !== prevSec ? `<div class="song-sec">${esc(ln.sec)}</div>` : '';
+      prevSec = ln.sec;
+      return head + songLineHtml(ln, i);
+    }).join('');
+  } else if(d && d.error){
+    lyrics = `<p class="game-hint" style="text-align:center; margin:24px 0;">${L('The song needs an internet connection. Try again in a moment.','Şarkı için internet bağlantısı gerekiyor. Birazdan tekrar dene.','آهنگ به اینترنت نیاز دارد. چند لحظه بعد دوباره امتحان کن.','La canción necesita conexión a internet. Inténtalo de nuevo en un momento.')}</p>
+      <button class="btn btn-ghost" data-action="song-retry" data-id="${esc(id)}">${L('Try again','Tekrar dene','دوباره امتحان کن','Reintentar')}</button>`;
+  } else {
+    lyrics = `<p class="game-hint" style="text-align:center; margin:24px 0;">${L('Loading the song…','Şarkı yükleniyor…','آهنگ در حال بارگذاری است…','Cargando la canción…')}</p>`;
+  }
+  const playIc = `<svg width="30" height="30" viewBox="0 0 24 24" style="margin-inline-start:4px;"><path d="M7 4.5v15l13-7.5z" fill="#fff"/></svg>`;
+  const pauseIc = `<svg width="28" height="28" viewBox="0 0 24 24"><rect x="6" y="4.5" width="4" height="15" rx="1.2" fill="#fff"/><rect x="14" y="4.5" width="4" height="15" rx="1.2" fill="#fff"/></svg>`;
+  return `<div class="fade-in song-page${songUi.sing ? ' song-sing' : ''}" style="--song-tint:var(${s.tint}); --song-label:var(${s.label || s.tint});">
+    ${sectionHead(s.title, songSubLabel(s))}
+    <div class="screen" style="padding-top:0;">
+      <div class="song-cover">
+        <svg class="song-wave" viewBox="0 0 400 120" preserveAspectRatio="none" aria-hidden="true"><path d="M0 70 C 60 30, 120 30, 180 62 S 300 100, 400 52 L400 120 L0 120 Z" fill="var(--song-tint)"/></svg>
+        <div class="song-vinyl big${playing ? ' spin' : ''}${heard ? ' gold' : ''}" id="song-disc" aria-hidden="true"><span class="song-vinyl-label"><b>${esc(s.title)}</b></span></div>
+      </div>
+      <div class="song-credit" id="song-credit">♪ ${esc(SONG_CREDIT)}</div>
+      <p class="song-intro" dir="auto">${esc(svText(s.intro))}</p>
+      <div class="song-transport">
+        <button type="button" class="song-play" id="song-play" data-action="song-play" data-id="${esc(id)}" aria-label="${esc(playing ? L('Pause','Duraklat','توقف','Pausa') : L('Play','Oynat','پخش کن','Reproducir'))}"${d && d.lines ? '' : ' disabled'}>${playing ? pauseIc : playIc}</button>
+        <span class="song-time" id="song-el">${songClock(pos)}</span>
+        <input type="range" class="song-seek" id="song-seek" min="0" max="${Math.round(dur * 10) / 10}" step="0.1" value="${Math.round(pos * 10) / 10}" aria-label="${esc(L('Position','Konum','موقعیت','Posición'))}" dir="ltr">
+        <span class="song-time" id="song-tot">${songClock(dur)}</span>
+      </div>
+      <div class="song-pills" id="song-pills">${heard ? `<button type="button" class="game-chip" data-action="song-sing">${songUi.sing ? L('Normal view','Normal görünüm','نمای معمولی','Vista normal') : L('Sing along','Birlikte söyle','با آهنگ بخوان','Canta con ella')}</button>` : ''}</div>
+      <div class="song-lyrics-wrap">
+        <div class="song-lyrics" id="song-lyrics">${lyrics}</div>
+        <div class="game-why sp-gloss-row song-gloss-row" id="song-gloss-row" hidden></div>
+      </div>
+      <div id="song-keep"></div>
+      <div class="game-why media-enjoy" style="margin-top:16px; background:var(--cat-lis-soft); font-size:16px;"><img src="char-${learnerCharKey()}.png" alt=""><div dir="auto">${L('Enjoy the song!','Şarkının tadını çıkar!','از آهنگ لذت ببر!','¡Disfruta la canción!')}</div></div>
+    </div>
+  </div>`;
+}
+// After every render of the player: wire the seek bar and the lyrics scroll, restore the highlight.
+function songBindDom(){
+  if(state.view !== 'song-session') return;
+  const id = state.viewParams.id, s = songById(id);
+  const seek = document.getElementById('song-seek'), box = document.getElementById('song-lyrics');
+  if(seek) seek.addEventListener('input', ()=>{
+    const v = Number(seek.value) || 0;
+    if(songUi.id === id && songUi.audio){ try{ songUi.audio.currentTime = v; }catch(e){} }
+    else songUi.pos = v;
+    const el = document.getElementById('song-el'); if(el) el.textContent = songClock(v);
+    songUi.recenter = true; songUi.userScrollAt = 0; songPaint(true);
+  });
+  if(box) box.addEventListener('scroll', ()=>{ if(Date.now() > songUi.progScrollUntil){ songUi.userScrollAt = Date.now(); songUi.recenter = true; } }, {passive:true});
+  songUi.line = -1; songUi.word = -1;
+  if(s && songUi.id === id && songUi.audio) songPaint(true);
+}
+function songStop(){
+  if(songUi.raf){ cancelAnimationFrame(songUi.raf); songUi.raf = 0; }
+  if(songUi.audio){ try{ songUi.audio.pause(); songUi.audio.removeAttribute('src'); songUi.audio.load(); }catch(e){} }
+  clearTimeout(songUi.keepTimer);
+  Object.assign(songUi, {id:null, audio:null, line:-1, word:-1, done:false, keep:false, sing:false, pos:0});
+}
+function songAudioFor(s){
+  if(songUi.id === s.id && songUi.audio) return songUi.audio;
+  const sing = songUi.sing;
+  songStop();
+  songUi.sing = sing;
+  const a = new Audio();
+  a.preload = 'metadata';
+  a.src = SONG_BASE + s.file;
+  songUi.id = s.id; songUi.audio = a; songUi.done = songHeard(s.id);
+  a.addEventListener('timeupdate', ()=>{ if(a.duration && a.currentTime >= a.duration * 0.8) songComplete(s); });
+  a.addEventListener('ended', ()=>{ songComplete(s); songSetPlaying(false); songPaint(true); });
+  a.addEventListener('pause', ()=>songSetPlaying(false));
+  a.addEventListener('play', ()=>songSetPlaying(true));
+  a.addEventListener('loadedmetadata', ()=>{
+    const seek = document.getElementById('song-seek'), tot = document.getElementById('song-tot');
+    if(seek && a.duration) seek.max = String(Math.round(a.duration * 10) / 10);
+    if(tot && a.duration) tot.textContent = songClock(a.duration);
+  });
+  return a;
+}
+function songSetPlaying(on){
+  const b = document.getElementById('song-play'), disc = document.getElementById('song-disc');
+  if(disc) disc.classList.toggle('spin', !!on && !reducedMotion());
+  if(b){
+    b.setAttribute('aria-label', on ? L('Pause','Duraklat','توقف','Pausa') : L('Play','Oynat','پخش کن','Reproducir'));
+    b.innerHTML = on ? `<svg width="28" height="28" viewBox="0 0 24 24"><rect x="6" y="4.5" width="4" height="15" rx="1.2" fill="#fff"/><rect x="14" y="4.5" width="4" height="15" rx="1.2" fill="#fff"/></svg>`
+      : `<svg width="30" height="30" viewBox="0 0 24 24" style="margin-inline-start:4px;"><path d="M7 4.5v15l13-7.5z" fill="#fff"/></svg>`;
+  }
+  if(on && !songUi.raf) songUi.raf = requestAnimationFrame(songTick);
+}
+function songTick(){
+  songUi.raf = 0;
+  if(state.view !== 'song-session' || !songUi.audio){ songStop(); return; }
+  songPaint(false);
+  if(!songUi.audio.paused) songUi.raf = requestAnimationFrame(songTick);
+}
+// Which line and word are active at time t: a line from its t0 until the next line starts (or 2.5 s after its own end).
+function songActive(d, t){
+  let li = -1;
+  for(let i = 0; i < d.lines.length; i++){
+    const ln = d.lines[i], next = d.lines[i + 1];
+    if(t >= ln.t0 && t < (next ? Math.min(next.t0, ln.t1 + 2.5) : ln.t1 + 2.5)){ li = i; break; }
+  }
+  let wi = -1;
+  if(li > -1 && d.lines[li].timed){
+    const toks = d.lines[li].toks;
+    for(let j = toks.length - 1; j >= 0; j--) if(t >= toks[j].t0){ wi = (t < toks[j].t1 || j === toks.length - 1 || t < toks[j + 1].t0) ? j : -1; break; }
+  }
+  return {li, wi};
+}
+function songPaint(force){
+  const id = state.viewParams && state.viewParams.id, d = songData[id];
+  if(!d || !d.lines) return;
+  const a = songUi.id === id ? songUi.audio : null;
+  const t = a ? a.currentTime : (songUi.pos || 0);
+  const el = document.getElementById('song-el'), seek = document.getElementById('song-seek');
+  if(el) el.textContent = songClock(t);
+  if(seek && document.activeElement !== seek) seek.value = String(Math.round(t * 10) / 10);
+  const {li, wi} = songActive(d, t);
+  if(force || li !== songUi.line){
+    d.lines.forEach((ln, i)=>{
+      const p = document.getElementById('song-l' + i); if(!p) return;
+      p.classList.toggle('on', i === li);
+      p.classList.toggle('past', i !== li && t >= ln.t1);
+    });
+    if(li > -1 && (force || li !== songUi.line)) songUi.recenter = true;
+  }
+  if(force || li !== songUi.line || wi !== songUi.word){
+    document.querySelectorAll('.song-w.on').forEach(x=>x.classList.remove('on'));
+    if(li > -1 && wi > -1){ const p = document.getElementById('song-l' + li); const w = p && p.querySelector('[data-w="' + wi + '"]'); if(w) w.classList.add('on'); }
+  }
+  songUi.line = li; songUi.word = wi;
+  // keep the active line centred; after the learner scrolls, wait 3 s before easing back
+  if(songUi.recenter && li > -1 && Date.now() - songUi.userScrollAt > 3000){
+    const box = document.getElementById('song-lyrics'), p = document.getElementById('song-l' + li);
+    if(box && p){
+      songUi.progScrollUntil = Date.now() + 900;
+      const top = p.offsetTop - box.clientHeight / 2 + p.offsetHeight / 2;
+      try{ box.scrollTo({top:Math.max(0, top), behavior:reducedMotion() ? 'auto' : 'smooth'}); }catch(e){ box.scrollTop = Math.max(0, top); }
+    }
+    songUi.recenter = false;
+  }
+}
+// 80 % played or ended: the node is done (once). Gold ring + sparks on the disc, then "Keep one line?" (5 s bubble).
+function songComplete(s){
+  if(songUi.done) return;
+  songUi.done = true;
+  markSongHeard(s);
+  if(state.view !== 'song-session') return;
+  const disc = document.getElementById('song-disc');
+  if(disc){
+    disc.classList.add('gold');
+    if(!reducedMotion()){ const c = centerOf(disc); sparkBurst(c.x, c.y, 8, '#ffd166', 90); }
+  }
+  const pills = document.getElementById('song-pills');
+  if(pills && !pills.innerHTML.trim()) pills.innerHTML = `<button type="button" class="game-chip" data-action="song-sing">${L('Sing along','Birlikte söyle','با آهنگ بخوان','Canta con ella')}</button>`;
+  songUi.keep = true;
+  document.querySelectorAll('.song-line').forEach(p=>p.classList.add('keepable'));
+  const k = document.getElementById('song-keep');
+  if(k){
+    k.innerHTML = `<div class="game-why song-keep-bubble" style="margin-top:12px; background:color-mix(in srgb, var(--cat-review) 22%, var(--bg-elevated));"><img src="char-${learnerCharKey()}.png" alt=""><div dir="auto">${L('Keep one line? Tap the line you like best.','Bir satır saklamak ister misin? En sevdiğin satıra dokun.','یک خط را نگه می‌داری؟ روی خطی که بیشتر دوست داری بزن.','¿Guardas una frase? Toca la que más te guste.')}</div></div>`;
+    clearTimeout(songUi.keepTimer);
+    songUi.keepTimer = setTimeout(()=>{ const b = document.querySelector('.song-keep-bubble'); if(b) b.remove(); }, 5000);
+  }
+}
+// The tapped lyric line becomes the song souvenir's flip side (same keep shape as the media souvenir).
+function songKeepLine(s, text){
+  (state.progress.souvenirs || []).forEach(sv=>{ if(sv.type === 'song' && svRefId(sv) === s.id) sv.keep = {text, say:text, note:s.title}; });
+  const pr = state.progress; const kl = pr.songLines || (pr.songLines = {}); kl[s.id] = text;
+  save();
+  songUi.keep = false;
+  document.querySelectorAll('.song-line.keepable').forEach(p=>p.classList.remove('keepable'));
+  const k = document.getElementById('song-keep');
+  if(k) k.innerHTML = `<div class="game-why" style="margin-top:12px;"><img src="char-${learnerCharKey()}.png" alt=""><div><span dir="auto">${L('Kept in your collection:','Koleksiyonuna eklendi:','به مجموعه‌ات اضافه شد:','Guardada en tu colección:')}</span> <b dir="ltr">${esc(text)}</b></div></div>`;
+  sfx('reveal');
+}
+function songCardFaceHtml(item){
+  const s = songById(item.refId);
+  if(!s) return '';
+  return `<div class="song-card-intro" dir="auto" style="padding-inline-end:100px;">${esc(svText(s.intro))}</div><div class="song-card-credit" style="padding-inline-end:100px;">${esc(SONG_CREDIT)}</div>`;
+}
+
 /* ============================= GAMIFY EVERY CARD TYPE (2026-10-07, Trello tobT7nwI) =============================
    Spec: Claude/specs/gamify-every-card-type-DRAFT.md (§3, §4.7, §4.2, §4.5) with the LXD
    corrections in lxd-review-story-path-every-card-cozy.md §B. Nothing is added to any
@@ -9695,6 +10050,8 @@ function buildRoadmap(profile){
     pushGame(gameKindForPosition(profile.level, stage, 4), 4);   // position 4: right after the story (+ media)
   }
   pushPractice('writing');
+  // Song card (yCRJ6eDc): the page's FEschool song right after Writing, before game position 5 (GAMIFICATION-NOTES §3)
+  { const songPick = songForStage(profile, stage); if(songPick) items.push(songRoadmapNode(songPick)); }
   // Position 5 (end): after writing.
   pushGame(gameKindForPosition(profile.level, stage, 5), 5);
   // Talkers (and anyone who said listening/speaking is their weak spot) get an extra
@@ -9839,7 +10196,7 @@ function migrateRoadmapChecked(){
   if(!state.profile || !state.profile.completedDiagnostic) return;
   try{
     // media nodes (2026-10-04) didn't exist when index keys were written
-    const roadmap = buildRoadmap(state.profile).filter(n=>n.type!=='media' && n.type!=='box');
+    const roadmap = buildRoadmap(state.profile).filter(n=>n.type!=='media' && n.type!=='box' && n.type!=='song');
     numericKeys.forEach(k=>{
       const idx = Number(k);
       if(rc[k] && roadmap[idx]) rc[roadmapNodeId(roadmap[idx])] = true;
@@ -9897,6 +10254,7 @@ function ensureRoadmap(){
   let mediaAdded = false;
   if(state.profile && state.profile.completedDiagnostic){ try{ mediaAdded = ensureRoadmapMedia(); }catch(e){} }
   if(state.profile && state.profile.completedDiagnostic){ try{ if(ensureRoadmapBox()) mediaAdded = true; }catch(e){} }
+  if(state.profile && state.profile.completedDiagnostic){ try{ if(ensureRoadmapSong()) mediaAdded = true; }catch(e){} }
   if(state.profile && state.profile.completedDiagnostic){ try{ awardSouvenirs(null); }catch(e){} }
   return mediaAdded;
 }
@@ -9928,10 +10286,11 @@ function mergeRoadmapForGoalChange(){
   try{ target = buildRoadmap(state.profile); }catch(e){ return; }
   const keptIds = new Set(kept.map(roadmapNodeId));
   // media: never appended at the end; ensureRoadmapMedia() puts it after the story
-  const newNodes = target.filter(it=>!keptIds.has(roadmapNodeId(it)) && !(legacyGames && it.type==='game') && it.type!=='media' && it.type!=='box');
+  const newNodes = target.filter(it=>!keptIds.has(roadmapNodeId(it)) && !(legacyGames && it.type==='game') && it.type!=='media' && it.type!=='box' && it.type!=='song');
   state.roadmap = kept.concat(newNodes).map((it,idx)=>Object.assign({}, it, {n:idx+1}));
   try{ ensureRoadmapMedia(); }catch(e){}
   try{ ensureRoadmapBox(); }catch(e){}
+  try{ ensureRoadmapSong(); }catch(e){}
 }
 
 function learnerCharKey(){
@@ -10001,6 +10360,7 @@ function celebrationText(kind, low){
     story:[L('What a reader, {name}! Story done!','Ne okuyucu, {name}! Hikaye bitti!','چه خواننده‌ای، {name}! داستان تمام شد!','¡Qué gran lector, {name}! ¡Historia terminada!')],
     review:[L('Memory refreshed, {name}!','Hafıza tazelendi, {name}!','حافظه تازه شد، {name}!','¡Memoria renovada, {name}!')],
     path:[L('Chapter done, {name}! The story goes on.','Bölüm bitti, {name}! Hikâye devam ediyor.','فصل تمام شد، {name}! داستان ادامه دارد.','¡Capítulo terminado, {name}! La historia sigue.')],
+    song:[L('What a song, {name}! You listened all the way.','Ne şarkı ama, {name}! Sonuna kadar dinledin.','چه آهنگی، {name}! تا آخرش گوش دادی.','¡Qué canción, {name}! La escuchaste entera.')],
     game:[L('Game won, {name}! You rock!','Oyunu kazandın, {name}! Harikasın!','بازی را بردی، {name}! فوق‌العاده‌ای!','¡Juego ganado, {name}! ¡Eres genial!')],
     writing:[L('Beautiful writing, {name}!','Harika yazdın, {name}!','عالی نوشتی، {name}!','¡Qué bien escribes, {name}!')],
     speaking:[L('You sounded great, {name}!','Harika konuştun, {name}!','عالی صحبت کردی، {name}!','¡Sonaste genial, {name}!')]
@@ -10195,6 +10555,7 @@ function svTypeMeta(t){
     writing: {c:'gram',  img:'studio-icon-cutout.png', ic:ICONS.pen, label:L('Writing','Yazma','نوشتن','Escritura')},
     speaking:{c:'lis',   img:'studio-icon-cutout.png', ic:ICONS.mic, label:L('Speaking','Konuşma','صحبت','Conversación')},
     game:    {c:'review',ic:ICONS.bolt, label:L('Game','Oyun','بازی','Juego')},
+    song:    {c:'lis',   ic:ICONS.play, label:L('Song','Şarkı','آهنگ','Canción')},
     media:   {c:'story', ic:ICONS.play, label:L('Watch','İzle','تماشا','Ver')},
     dialogue:{c:'lis',   ic:ICONS.chat, label:L('Dialogue','Diyalog','گفت‌وگو','Diálogo')},
     start:   {c:'diag',  ic:ICONS.star, label:L('Level start','Seviye başı','شروع سطح','Inicio de nivel')}
@@ -10410,6 +10771,14 @@ function souvenirContent(node, ctx){
     // LXD answer 9: the card's flip side keeps one piece of the round's language.
     const keep = ctx.round ? gameKeep(kind, ctx.round) : null;
     if(keep) out.keep = keep;
+  } else if(t === 'song'){
+    // Song card: the title, its one-line intro; the line the learner kept is the flip side
+    const sg = songById(node.refId);
+    if(sg){
+      out.text = sg.title; out.meaning = sg.intro;
+      const kl = state.progress && state.progress.songLines && state.progress.songLines[sg.id];
+      if(kl) out.keep = {text:kl, say:kl, note:sg.title};
+    }
   } else if(t === 'media'){
     const m = MEDIA_LIBRARY.find(x=>x.id===node.refId);
     if(m && m.vocab && m.vocab.length){
@@ -10820,6 +11189,9 @@ function render(){
   if(state.view !== 'studio-round' && studioRecognition){
     stopStudioMic();
   }
+  // Song card: leaving the player stops the song; on the player, wire the seek bar and the highlight after the render
+  if(state.view !== 'song-session' && songUi.audio){ try{ songStop(); }catch(e){} }
+  if(state.view === 'song-session') queueFx(songBindDom);
   // Magic Words: leaving the doors closes the microphone
   if(state.view !== 'game-spell'){ try{ spellStopRec(); }catch(e){} }
   bindEvents(root);
@@ -12316,6 +12688,8 @@ function renderRoadmapCard(p){
     // Linked YouTube/podcast session type (Trello yEgfxsWL). Since 2026-10-04
     // (96gUMgAB) buildRoadmap() adds one per stage, right after the story node,
     // picked from MEDIA_LIBRARY by pickRoadmapMedia().
+    // Song card (yCRJ6eDc): pink listening card with a CSS vinyl, credit on the face
+    song:{ic:ICONS.play, c:'lis', label:L('Song','Şarkı','آهنگ','Canción')},
     media:{ic:ICONS.play, c:'story', label:L('Watch or listen','İzle veya dinle','تماشا یا گوش‌کن','Mira o escucha')},
     // Teaching redesign phase 2 (S7): one dialogue per theme-built stage, after the 4th grammar item
     dialogue:{ic:ICONS.chat, c:'lis', label:L('Dialogue','Diyalog','گفت‌وگو','Diálogo')}
@@ -12406,7 +12780,7 @@ function renderRoadmapCard(p){
       ? esc(L('Recommended — see prep, then message on WhatsApp',"Önerilir — önce hazırlığa bak, sonra WhatsApp'tan mesaj at",'پیشنهادی — اول آماده‌سازی را ببین، بعد در واتس‌اپ پیام بده','Recomendado — mira la preparación y luego escribe por WhatsApp'))
       : (hasGoalLabel
           ? `<span class="goal-label-gold">${esc(goalMetaLabel(item.goal))}<span class="sparkle" style="top:-4px; right:-5px; left:auto; width:5px; height:5px; animation-delay:.3s;"></span></span> · ${esc(m.label)}`
-          : esc(m.label));
+          : esc(item.type === 'song' && songById(item.refId) ? songSubLabel(songById(item.refId)) : m.label));
     // Gamification v2 (Journey Journal, approved 2026-09-30): card faces carry no
     // gamification labels at all — the v1 "+10 XP" chip was removed (Farin: it
     // "ruined the design of the card"). XP still accumulates silently in
@@ -12433,6 +12807,9 @@ function renderRoadmapCard(p){
       studyCloseTag = '</button>';
     } else if(item.type==='box'){
       studyOpenTag = '<button class="roadmap-study" data-action="open-box" data-node="'+item.refId+'" style="'+studyStyle+'">';
+      studyCloseTag = '</button>';
+    } else if(item.type==='song'){
+      studyOpenTag = '<button class="roadmap-study" data-action="nav" data-view="song-session" data-id="'+item.refId+'" style="'+studyStyle+'">';
       studyCloseTag = '</button>';
     } else if(item.type==='media'){
       studyOpenTag = '<button class="roadmap-study" data-action="nav" data-view="media-session" data-id="'+item.refId+'" style="'+studyStyle+'">';
@@ -12517,7 +12894,7 @@ function renderRoadmapCard(p){
     const iconBig = m.img === 'studio-icon-cutout.png';
     // the current card is a bit bigger (2026-10-18), its icon grows with it
     const iconPx = iconBig ? (isCurrent ? 152 : 140) : (isCurrent ? 116 : 104);
-    const cardIcon = m.img
+    const cardIcon = item.type === 'song' ? `<span class="song-vinyl card" aria-hidden="true"${checked ? ' style="opacity:.5;"' : ''}><span class="song-vinyl-label"></span></span>` : m.img
       ? `<img src="${m.img}" alt="" class="rm2-icon-float" style="position:absolute; inset-inline-end:${iconBig?'-6px':'10px'}; bottom:${iconBig?'-4px':'12px'}; width:${iconPx}px; height:${iconPx}px; object-fit:contain; pointer-events:none; filter:drop-shadow(0 6px 12px rgba(0,0,0,.28)); ${checked?'opacity:.5;':''}">`
       : '';
     // Gamification v2 (2026-09-30): the v1 "⚡ GAME" corner pill and the streak
@@ -12533,7 +12910,8 @@ function renderRoadmapCard(p){
             <!-- only the title clears the bottom-corner icon; the subtitle above it
                  sits clear of the icon already, so reserving space there just made
                  short labels wrap for no reason. -->
-            <div style="${titleFont} margin-top:8px; color:${titleColor}; line-height:1.28; padding-inline-end:${m.img?'100px':'0'}; ${checked?'text-decoration:line-through; opacity:.62;':''}">${esc(nodeTitle(item))}</div>
+            <div style="${titleFont} margin-top:8px; color:${titleColor}; line-height:1.28; padding-inline-end:${(m.img || item.type === 'song')?'100px':'0'}; ${checked?'text-decoration:line-through; opacity:.62;':''}">${esc(nodeTitle(item))}</div>
+            ${item.type === 'song' ? songCardFaceHtml(item) : ''}
           </div>
           <span style="flex:0 0 auto; margin-top:3px; color:${chevColor}; opacity:${checked?1:.65};${locked?' visibility:hidden;':''}">${checked?ICONS.check:ICONS.chev}</span>
         </div>
@@ -22100,6 +22478,7 @@ const screens = {
   'story-list': renderStoryList,
   'story-detail': ()=>renderStoryDetail(state.viewParams.id),
   'media-session': ()=>renderMediaSession(state.viewParams.id),
+  'song-session': ()=>renderSongSession(state.viewParams.id),
   'dialogue': ()=>renderDialogue(state.viewParams.id),
   'quiz': ()=> state.quiz.index < state.quiz.questions.length ? renderQuiz() : (state.quiz.kind === 'stagecheck' ? renderStageCheckResults() : renderQuizResults())
 };
@@ -23118,6 +23497,40 @@ const HANDLERS = {
   // Watch / listen card (Farin, 2026-10-17): tapping play completes the node, then the
   // poster turns into the player (autoplay - the tap is the user gesture). A podcast link
   // opens normally (no preventDefault). Never re-renders: that would reload the player.
+  // Song card (yCRJ6eDc): play/pause, glossed word, keep a line, sing along. None of these re-render (the audio keeps playing).
+  'song-play'(el){
+    const s = songById(el.dataset.id), d = s && songData[s.id];
+    if(!s || !d || !d.lines) return;
+    const a = songAudioFor(s);
+    if(a.paused){
+      if(songUi.pos && !a.currentTime){ try{ a.currentTime = songUi.pos; }catch(e){} songUi.pos = 0; }
+      try{ ttsStop(); }catch(e){}
+      const p = a.play(); if(p && p.catch) p.catch(()=>songSetPlaying(false));
+      songSetPlaying(true);
+    } else a.pause();
+  },
+  'song-gloss'(el){
+    const d = songData[state.viewParams.id], g = d && d.gloss && d.gloss[Number(el.dataset.g)];
+    if(!g) return;
+    const row = document.getElementById('song-gloss-row');
+    if(row){ row.hidden = false; row.innerHTML = pathGlossRowHtml({g:Object.assign({word:g.w}, g.m)}, 'g'); }
+    document.querySelectorAll('.song-page .sp-gloss.on').forEach(x=>x.classList.remove('on'));
+    if(el.classList) el.classList.add('on');
+    sfx('tick');
+    if(!(songUi.audio && !songUi.audio.paused) && !sfxMuted) speakTarget(g.w);   // never over the music
+  },
+  'song-line'(el){
+    if(!songUi.keep) return;
+    const s = songById(state.viewParams.id), d = s && songData[s.id], ln = d && d.lines && d.lines[Number(el.dataset.i)];
+    if(s && ln) songKeepLine(s, ln.text);
+  },
+  'song-sing'(el){
+    songUi.sing = !songUi.sing;
+    const pg = document.querySelector('.song-page'); if(pg) pg.classList.toggle('song-sing', songUi.sing);
+    if(el) el.textContent = songUi.sing ? L('Normal view','Normal görünüm','نمای معمولی','Vista normal') : L('Sing along','Birlikte söyle','با آهنگ بخوان','Canta con ella');
+    songUi.recenter = true; songUi.userScrollAt = 0; songPaint(true);
+  },
+  'song-retry'(el){ delete songData[el.dataset.id]; render(); },
   'media-play'(el){
     const m = MEDIA_LIBRARY.find(x=>x.id===el.dataset.id);
     if(!m) return;

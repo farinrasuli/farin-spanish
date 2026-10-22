@@ -1065,6 +1065,7 @@
   .cq-ins{font-size:12.5px; font-weight:800; color:var(--ink-soft); margin:0 0 6px; line-height:1.45;}
   .cq-q{display:flex; gap:10px; align-items:flex-start; padding:10px 0; border-top:1px solid var(--border-soft);}
   .cq-n{flex:0 0 26px; height:26px; border-radius:50%; background:var(--bg-sunken); font-weight:900; font-size:12.5px; display:flex; align-items:center; justify-content:center; margin-top:2px;}
+  .cq-n.two{flex:0 0 auto; min-width:26px; padding:0 7px; border-radius:13px; white-space:nowrap; font-size:11.5px;}
   .cq-q.is-ok .cq-n{background:var(--success); color:#fff;}
   .cq-q.is-bad .cq-n{background:var(--error); color:#fff;}
   .cq-body{flex:1; min-width:0;}
@@ -25113,10 +25114,26 @@ function courseUnitItems(uid){
 // The B2 extra grammar item, only for learners on the B2 track.
 function courseB2(cid, uid){ return courseTrack(cid)==='B2' ? (courseUnitItems(uid).b2 || null) : null; }
 function courseUnitReady(uid){ const it = courseUnitItems(uid); return Object.keys(it).some(k=>!!it[k]); }
+// Progress versions. When a course's lessons are rebuilt under the same unit ids (IELTS, exam-corpus version 2026-10-21: v3),
+// an old record would show wrong ticks and an old error log. On the first use after the change the old record moves to
+// progress.coursesOld[cid] (kept for admin) and a fresh one starts; course access, track, intro and sent writing reviews
+// (their docs stay in Firestore) are untouched. A record that was never used just gets the version. The learner sees the
+// note once on the course page (COURSE_PROG_NOTE), with an OK button.
+const COURSE_PROG_V = {ielts:3};
+const COURSE_PROG_NOTE = {ielts:{en:'The IELTS course has been rebuilt around the real exam. Your access is unchanged; the lessons start again from Listening Part 1.', tr:"IELTS kursu gerçek sınava göre yeniden kuruldu. Erişimin aynı; dersler Listening Part 1'den yeniden başlıyor.", fa:'دوره‌ی آیلتس بر اساس آزمون واقعی از نو ساخته شد. دسترسی‌ات همان است؛ درس‌ها دوباره از Listening Part 1 شروع می‌شوند.', es:'El curso IELTS se ha reconstruido en torno al examen real. Tu acceso no cambia; las lecciones empiezan de nuevo desde Listening Part 1.'}};
+function courseProgRebuilt(cid){
+  const pr = state.progress, v = COURSE_PROG_V[cid], cp = pr.courses[cid];
+  const used = ['done', 'scores', 'answers', 'errlog', 'srs'].some(k=>cp[k] && typeof cp[k] === 'object' && Object.keys(cp[k]).length > 0);
+  if(!used){ cp.v = v; return; }
+  if(!pr.coursesOld || typeof pr.coursesOld !== 'object') pr.coursesOld = {};
+  pr.coursesOld[cid] = Object.assign({movedAt:Date.now()}, cp);
+  pr.courses[cid] = {v, done:{}, answers:{}, scores:{}, rebuiltNote:1};
+}
 function courseProg(cid){
   const pr = state.progress;
   if(!pr.courses) pr.courses = {};
   if(!pr.courses[cid]) pr.courses[cid] = {done:{}, answers:{}, scores:{}};
+  if(COURSE_PROG_V[cid] && pr.courses[cid].v !== COURSE_PROG_V[cid]) courseProgRebuilt(cid);
   const cp = pr.courses[cid];
   if(!cp.done) cp.done = {}; if(!cp.answers) cp.answers = {}; if(!cp.scores) cp.scores = {}; if(!cp.srs) cp.srs = {};
   return cp;
@@ -26365,6 +26382,12 @@ function courseErrLogHtml(cid){
       <p style="margin:4px 0 0; font-size:12.5px;">${e.given ? `${CL('You','Sen','تو','Tú')}: <s dir="ltr" translate="no">${esc(e.given)}</s> · ` : ''}${CL('Right','Doğrusu','درست','Correcto')}: <b dir="ltr" translate="no">${esc(e.right)}</b></p>
       <div class="cs-slotsub">${esc(courseLessonName(cid, e.uid))}${e.date ? ' · '+esc(courseReviewDate(new Date(e.date+'T12:00:00').getTime())) : ''}</div></div>`).join('')}</div>`;
 }
+// Shown once after a course rebuild (COURSE_PROG_V): the old progress has moved aside, access is unchanged.
+function courseRebuiltNoteHtml(c){
+  const cp = courseProg(c.id), note = COURSE_PROG_NOTE[c.id]; if(!cp.rebuiltNote || !note) return '';
+  return `<div class="card-flat cp-rebuilt" style="margin:0 0 12px; background:var(--cat-review-soft); border-color:var(--cat-review-soft);"><p style="margin:0; font-size:13.5px; line-height:1.5;">${esc(cl(note))}</p>
+    <button class="btn btn-sm" style="margin-top:8px;" data-action="course-rebuilt-ok" data-cid="${c.id}">${CL('OK','Tamam','باشد','Vale')}</button></div>`;
+}
 function courseComingSoonHtml(c){
   return `<div class="hero-card" style="${COURSE_HERO_BG} cursor:default;">${claySparkles()}
     <div class="hero-eyebrow">${CL('Coming soon','Yakında','به‌زودی','Próximamente')}</div>
@@ -26387,6 +26410,7 @@ function renderCourseDetail(cid, sheetUid){
     ${content ? '' : `<h1 class="display cp-title">${esc(cl(c.title))}</h1>`}
     <div class="screen" style="padding-top:0;">
       ${content ? coursePageHeroHtml(c, nx) : ''}
+      ${content ? courseRebuiltNoteHtml(c) : ''}
       ${content ? courseOutcomesHtml(c, true) : ''}
       ${courseReviewNoticeHtml(c)}
       ${body}
@@ -26590,6 +26614,9 @@ function renderCoursePause(){
    voice (the existing TTS), the self-check ticks (saved as self-report) and the culture note, then Continue. Nothing
    blocks: a round can be ended early, and Continue is always on the Check step. Screen state lives in courseUi.sp. */
 const COURSE_SP_ROUNDS = [90, 60, 45];
+// IELTS Speaking Part 2 lessons (speaking.part === 'Part 2'): one minute of notes, then the two-minute talk, then once more.
+const COURSE_SP_ROUNDS_P2 = [60, 120, 120];
+function courseSpRounds(sp){ return sp && sp.part === 'Part 2' ? COURSE_SP_ROUNDS_P2 : COURSE_SP_ROUNDS; }
 function courseRecSupported(){ try{ return typeof MediaRecorder !== 'undefined' && !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia); }catch(e){ return false; } }
 function courseSpState(uid){
   let st = courseUi.sp;
@@ -26602,20 +26629,21 @@ function courseSpStop(quiet){
   if(st.timer){ clearInterval(st.timer); st.timer = null; }
   if(st.recorder){ try{ if(st.recorder.state !== 'inactive') st.recorder.stop(); }catch(e){} st.recorder = null; }
   if(st.stream){ try{ st.stream.getTracks().forEach(t=>t.stop()); }catch(e){} st.stream = null; }
-  if(st.running){ st.running = false; st.used[st.round] = COURSE_SP_ROUNDS[st.round] - Math.max(0, st.left); }
+  if(st.running){ st.running = false; st.used[st.round] = (st.R || COURSE_SP_ROUNDS)[st.round] - Math.max(0, st.left); }
   if(!quiet) render();
 }
 // Leaving the speaking card (another view, another unit): stop everything and free the recordings.
 function courseSpLeave(){ const st = courseUi.sp; if(!st) return; courseSpStop(true); (st.clips || []).forEach(u=>{ try{ if(u) URL.revokeObjectURL(u); }catch(e){} }); courseUi.sp = null; }
 function courseSpStart(){
   const st = courseUi.sp; if(!st || st.running) return;
-  if(st.round + 1 >= COURSE_SP_ROUNDS.length) return;
+  const R = st.R || COURSE_SP_ROUNDS;
+  if(st.round + 1 >= R.length) return;
   st.round = st.round + 1;
-  st.stage = 1; st.running = true; st.left = COURSE_SP_ROUNDS[st.round]; const round = st.round;
+  st.stage = 1; st.running = true; st.left = R[st.round]; const round = st.round;
   st.timer = setInterval(()=>{
     if(courseUi.sp !== st || !st.running){ clearInterval(st.timer); return; }
     st.left--; const el = document.querySelector('.cs-count b'); if(el) el.textContent = courseClock(st.left);
-    const bar = document.querySelector('.cs-count i'); if(bar) bar.style.width = Math.max(0, 100 * st.left / COURSE_SP_ROUNDS[round]) + '%';
+    const bar = document.querySelector('.cs-count i'); if(bar) bar.style.width = Math.max(0, 100 * st.left / R[round]) + '%';
     if(st.left <= 0) courseSpStop();
   }, 1000);
   if(st.rec && courseRecSupported()){
@@ -26635,7 +26663,7 @@ function courseSpStart(){
 }
 function courseClock(s){ s = Math.max(0, s|0); return Math.floor(s/60) + ':' + String(s%60).padStart(2,'0'); }
 function renderCourseSpeaking(cid, uid, sp){
-  const st = courseSpState(uid), R = COURSE_SP_ROUNDS, last = R.length - 1;
+  const st = courseSpState(uid), R = st.R = courseSpRounds(sp), last = R.length - 1, p2 = R === COURSE_SP_ROUNDS_P2;
   const phrase = (e, i)=>`<button class="cs-phr${st.notes.includes(i) ? ' on' : ''}" data-action="course-sp-note" data-i="${i}"><b dir="ltr" translate="no">${esc(e.phrase)}</b><span>${esc(cl(e.meaning))}</span></button>`;
   const notes = st.notes.length ? `<div class="card-flat cs-notes"><div class="eyebrow">${CL('Your notes','Notların','یادداشت‌های تو','Tus notas')}</div>
       <div dir="ltr" translate="no">${st.notes.map(i=>`<span class="cs-note">${esc((sp.expressions[i] || {}).phrase || '')}</span>`).join('')}</div></div>` : '';
@@ -26654,8 +26682,8 @@ function renderCourseSpeaking(cid, uid, sp){
       <div class="stack" style="gap:8px;">${(sp.expressions||[]).map(phrase).join('')}</div>
       ${notes}
       ${recRow}
-      <p style="font-size:12.5px; color:var(--ink-soft); margin:14px 0 0;">${CL('Say your answers out loud three times: 90 seconds, then 60, then 45. Same facts, fewer words each time.','Cevaplarını üç kez yüksek sesle söyle: 90 saniye, sonra 60, sonra 45. Aynı bilgiler, her seferinde daha az kelime.','پاسخ‌هایت را سه بار با صدای بلند بگو: ۹۰ ثانیه، بعد ۶۰ و بعد ۴۵ ثانیه. همان نکته‌ها، هر بار با کلمه‌های کمتر.','Di tus respuestas en voz alta tres veces: 90 segundos, luego 60 y luego 45. Los mismos datos, cada vez con menos palabras.')}</p>
-      ${btn('course-sp-go', CL('Start round 1 · 90 s','1. tura başla · 90 sn','شروع دور ۱ · ۹۰ ثانیه','Empezar la ronda 1 · 90 s'))}`;
+      <p style="font-size:12.5px; color:var(--ink-soft); margin:14px 0 0;">${p2 ? CL('As in the test: one minute to make notes on the card, then talk for two minutes. Then do the talk once more, better.','Sınavdaki gibi: karta bakıp bir dakika not al, sonra iki dakika konuş. Sonra konuşmayı bir kez daha, daha iyi yap.','مثل آزمون: یک دقیقه روی کارت یادداشت بردار، بعد دو دقیقه حرف بزن. بعد یک بار دیگر، بهتر، همان را بگو.','Como en el examen: un minuto para tomar notas sobre la tarjeta y luego habla dos minutos. Después repite la charla, mejor.') : CL('Say your answers out loud three times: 90 seconds, then 60, then 45. Same facts, fewer words each time.','Cevaplarını üç kez yüksek sesle söyle: 90 saniye, sonra 60, sonra 45. Aynı bilgiler, her seferinde daha az kelime.','پاسخ‌هایت را سه بار با صدای بلند بگو: ۹۰ ثانیه، بعد ۶۰ و بعد ۴۵ ثانیه. همان نکته‌ها، هر بار با کلمه‌های کمتر.','Di tus respuestas en voz alta tres veces: 90 segundos, luego 60 y luego 45. Los mismos datos, cada vez con menos palabras.')}</p>
+      ${btn('course-sp-go', p2 ? CL('Start · 1 minute of notes','Başla · 1 dakika not','شروع: یک دقیقه یادداشت','Empezar · 1 minuto de notas') : CL('Start round 1 · 90 s','1. tura başla · 90 sn','شروع دور ۱ · ۹۰ ثانیه','Empezar la ronda 1 · 90 s'))}`;
   }
   // The three rounds
   if(st.stage === 1){
@@ -26663,13 +26691,13 @@ function renderCourseSpeaking(cid, uid, sp){
     const rounds = R.map((s,i)=>`<span class="cs-rdot${i < r || (i === r && !st.running) ? ' done' : i === r ? ' cur' : ''}">${s}</span>`).join('');
     const clip = !st.running && st.clips[r] ? `<div class="card-flat cs-clip"><div class="eyebrow">${CL('Listen to yourself','Kendini dinle','به صدای خودت گوش کن','Escúchate')} · ${CL('Round','Tur','دور','Ronda')} ${r+1}</div><audio controls preload="auto" src="${st.clips[r]}"></audio></div>` : '';
     const recNote = st.recErr ? `<p style="font-size:12px; color:var(--ink-soft); margin:8px 0 0;">${CL('The microphone is off, so this round is not recorded. The timer still works.','Mikrofon kapalı, bu yüzden tur kaydedilmiyor. Süre yine çalışır.','میکروفون خاموش است، پس این دور ضبط نمی‌شود. زمان‌سنج همچنان کار می‌کند.','El micrófono está apagado, así que esta ronda no se graba. El temporizador sigue funcionando.')}</p>` : '';
-    const tip = r > 0 ? `<p class="cs-rtip">${CL('Same facts, fewer words.','Aynı bilgiler, daha az kelime.','همان نکته‌ها، با کلمه‌های کمتر.','Los mismos datos, menos palabras.')}</p>` : '';
+    const tip = p2 ? `<p class="cs-rtip">${r === 0 ? CL('Make notes: one or two words for each line of the card.','Not al: kartın her satırı için bir iki kelime.','یادداشت بردار: برای هر خط کارت یکی دو کلمه.','Toma notas: una o dos palabras por cada línea de la tarjeta.') : r === 1 ? CL('Talk for the whole two minutes. Cover every line, then the "explain" line.','İki dakikanın tamamını konuş. Her satırı, sonra "explain" satırını ele al.','تمام دو دقیقه حرف بزن. همه‌ی خط‌ها و بعد خط «explain» را بگو.','Habla los dos minutos completos. Cubre cada línea y luego la línea de "explain".') : CL('Once more: the same card, better words, no stops.','Bir kez daha: aynı kart, daha iyi kelimeler, duraksamadan.','یک بار دیگر: همان کارت، کلمه‌های بهتر، بدون توقف.','Otra vez: la misma tarjeta, mejores palabras, sin paradas.')}</p>` : r > 0 ? `<p class="cs-rtip">${CL('Same facts, fewer words.','Aynı bilgiler, daha az kelime.','همان نکته‌ها، با کلمه‌های کمتر.','Los mismos datos, menos palabras.')}</p>` : '';
     let action, label;
     if(st.running){ action = 'course-sp-done'; label = CL('Done','Bitti','تمام','Listo'); }
-    else if(r < last){ action = 'course-sp-go'; label = CL('Start round '+(r+2)+' · '+R[r+1]+' s', (r+2)+'. tura başla · '+R[r+1]+' sn', 'شروع دور '+(r+2)+' · '+R[r+1]+' ثانیه', 'Empezar la ronda '+(r+2)+' · '+R[r+1]+' s'); }
+    else if(r < last){ action = 'course-sp-go'; label = p2 && r === 0 ? CL('Start the talk · 2 minutes','Konuşmaya başla · 2 dakika','شروع صحبت: دو دقیقه','Empezar la charla · 2 minutos') : p2 ? CL('Talk once more · 2 minutes','Bir kez daha konuş · 2 dakika','یک بار دیگر بگو: دو دقیقه','Habla otra vez · 2 minutos') : CL('Start round '+(r+2)+' · '+R[r+1]+' s', (r+2)+'. tura başla · '+R[r+1]+' sn', 'شروع دور '+(r+2)+' · '+R[r+1]+' ثانیه', 'Empezar la ronda '+(r+2)+' · '+R[r+1]+' s'); }
     else { action = 'course-sp-check'; label = CL('Check yourself','Kendini değerlendir','خودت را ارزیابی کن','Evalúate'); }
     return `<div class="cs-rounds">${rounds}</div>
-      <div class="cs-count${st.running ? ' on' : ''}"><div class="eyebrow">${CL('Round','Tur','دور','Ronda')} ${r+1} · ${secs} ${CL('seconds','saniye','ثانیه','segundos')}</div><b>${courseClock(st.running ? left : 0)}</b><span class="cs-cbar"><i style="width:${st.running ? 100 * left / secs : 0}%;"></i></span></div>
+      <div class="cs-count${st.running ? ' on' : ''}"><div class="eyebrow">${p2 && r === 0 ? CL('Notes','Notlar','یادداشت','Notas') : p2 ? CL('Talk','Konuşma','صحبت','Charla') : CL('Round','Tur','دور','Ronda')+' '+(r+1)} · ${secs} ${CL('seconds','saniye','ثانیه','segundos')}</div><b>${courseClock(st.running ? left : 0)}</b><span class="cs-cbar"><i style="width:${st.running ? 100 * left / secs : 0}%;"></i></span></div>
       ${tip}${recNote}${clip}
       ${notes || ''}
       <details class="cs-why" style="margin-top:12px;"><summary>${esc(courseSpeakingHeading(sp).replace(/[:：]\s*$/, ''))}</summary><div style="margin-top:6px;">${sp.questions.map((q,i)=>`<p style="margin:4px 0 0; font-size:13.5px;"><b>${i+1}.</b> ${esc(cl(q))}</p>`).join('')}</div></details>
@@ -27238,17 +27266,26 @@ function courseQRight(q, a, bank){
   if(a === undefined || a === null || a === '') return false;
   if(q.kind === 'gap'){ const v = courseNorm(a); if(q.limit && v.split(' ').filter(Boolean).length > q.limit) return false; return (q.accept || []).some(x=>courseNorm(x) === v); }
   if(q.kind === 'mcq' || q.kind === 'match') return Number(a) === q.correct;
+  if(q.kind === 'mcq2'){ const arr = Array.isArray(a) ? a : []; return arr.length === 2 && (q.correct || []).every(i=>arr.includes(i)); }
   return String(a) === String(q.correct);
 }
+// Marks per question: "Choose TWO letters" (kind mcq2, {n, n2, options[5], correct:[i,j]}) is one question worth two marks,
+// one per correct letter in any order; every other kind is one mark. Scores and the band estimate count marks (40 a paper).
+function courseQMarks(q){ return q.kind === 'mcq2' ? 2 : 1; }
+function courseQPoints(q, a, bank){ if(q.kind === 'mcq2'){ const arr = Array.isArray(a) ? a : []; return (q.correct || []).filter(i=>arr.includes(i)).length; } return courseQRight(q, a, bank) ? 1 : 0; }
+function courseQAnswered(q, a){ return q.kind === 'mcq2' ? Array.isArray(a) && a.length > 0 : a !== undefined && a !== null && a !== ''; }
+function courseQMarksTotal(groups){ return courseQList(groups).reduce((n, x)=>n + courseQMarks(x.q), 0); }
 function courseQRightText(q, bank){
   if(q.kind === 'gap') return (q.accept || [])[0] || '';
   if(q.kind === 'mcq') return (q.options || [])[q.correct] || '';
+  if(q.kind === 'mcq2') return (q.correct || []).map(i=>(q.options || [])[i] || '').join(' + ');
   if(q.kind === 'match') return (bank || [])[q.correct] || '';
   return String(q.correct);
 }
 function courseQGivenText(q, a, bank){
   if(a === undefined || a === null || a === '') return '';
   if(q.kind === 'mcq') return (q.options || [])[Number(a)] || '';
+  if(q.kind === 'mcq2') return (Array.isArray(a) ? a : []).map(i=>(q.options || [])[i] || '').join(' + ');
   if(q.kind === 'match') return (bank || [])[Number(a)] || '';
   return String(a);
 }
@@ -27268,6 +27305,11 @@ function courseQHtml(key, x, st, lockAll, whyEnOnly){
     body = `<p class="cq-prompt" dir="ltr" translate="no">${esc(q.prompt || '')}</p><div class="stack" style="gap:6px;">${(q.options || []).map((o,i)=>{
       const cls = done ? (i === q.correct ? ' ok' : (Number(a) === i ? ' bad' : '')) : (a !== undefined && Number(a) === i ? ' on' : '');
       return `<button class="cj-part wide cq-opt${cls}" dir="ltr" translate="no" data-action="course-q-pick" data-cq="${esc(key)}" data-n="${q.n}" data-v="${i}" ${dis}>${esc(o)}</button>`; }).join('')}</div>`;
+  } else if(q.kind === 'mcq2'){
+    const picked = Array.isArray(a) ? a : [], oks = q.correct || [];
+    body = `<p class="cq-prompt" dir="ltr" translate="no">${esc(q.prompt || '')}</p><div class="stack" style="gap:6px;">${(q.options || []).map((o,i)=>{
+      const cls = done ? (oks.includes(i) ? ' ok' : (picked.includes(i) ? ' bad' : '')) : (picked.includes(i) ? ' on' : '');
+      return `<button class="cj-part wide cq-opt${cls}" dir="ltr" translate="no" data-action="course-q-pick" data-cq="${esc(key)}" data-n="${q.n}" data-v="${i}" aria-pressed="${picked.includes(i) ? 'true' : 'false'}" ${dis}>${esc(o)}</button>`; }).join('')}</div>`;
   } else if(COURSE_TFNG[q.kind]){
     body = `<p class="cq-prompt" dir="ltr" translate="no">${esc(q.prompt || '')}</p><div class="row cq-tf" style="gap:6px; flex-wrap:wrap;">${COURSE_TFNG[q.kind].map(o=>{
       const cls = done ? (o === q.correct ? ' ok' : (a === o ? ' bad' : '')) : (a === o ? ' on' : '');
@@ -27282,9 +27324,10 @@ function courseQHtml(key, x, st, lockAll, whyEnOnly){
   let fb = '';
   if(done){
     const why = q.why ? (whyEnOnly ? (q.why.en || '') : cl(q.why)) : '';
-    fb = `<div class="cq-fb ${right ? 'ok' : 'bad'}"><b>${right ? CL('Right','Doğru','درست','Correcto') : (a === undefined || a === '' ? CL('No answer','Cevap yok','بی‌پاسخ','Sin respuesta') : CL('Not this time','Bu sefer olmadı','این بار نه','Esta vez no'))}</b>${right ? '' : ` · <span dir="ltr" translate="no">${esc(courseQRightText(q, bank))}</span>`}${q.kind === 'gap' && !right && a && q.limit && courseNorm(a).split(' ').length > q.limit ? ` · ${esc(CL('too many words','fazla kelime','کلمه‌ها زیاد است','demasiadas palabras'))}` : ''}${why ? `<p dir="${whyEnOnly ? 'ltr' : 'auto'}">${esc(why)}</p>` : ''}</div>`;
+    const pts = q.kind === 'mcq2' ? courseQPoints(q, a, bank) : null;
+    fb = `<div class="cq-fb ${right ? 'ok' : 'bad'}"><b>${pts !== null ? pts + '/2' : right ? CL('Right','Doğru','درست','Correcto') : (a === undefined || a === '' ? CL('No answer','Cevap yok','بی‌پاسخ','Sin respuesta') : CL('Not this time','Bu sefer olmadı','این بار نه','Esta vez no'))}</b>${right ? '' : ` · <span dir="ltr" translate="no">${esc(courseQRightText(q, bank))}</span>`}${q.kind === 'gap' && !right && a && q.limit && courseNorm(a).split(' ').length > q.limit ? ` · ${esc(CL('too many words','fazla kelime','کلمه‌ها زیاد است','demasiadas palabras'))}` : ''}${why ? `<p dir="${whyEnOnly ? 'ltr' : 'auto'}">${esc(why)}</p>` : ''}</div>`;
   }
-  return `<div class="cq-q${done ? (right ? ' is-ok' : ' is-bad') : ''}" data-qn="${q.n}"><span class="cq-n">${q.n}</span><div class="cq-body">${body}${fb}</div></div>`;
+  return `<div class="cq-q${done ? (right ? ' is-ok' : ' is-bad') : ''}" data-qn="${q.n}"><span class="cq-n${q.kind === 'mcq2' ? ' two' : ''}"${q.kind === 'mcq2' ? ' dir="ltr"' : ''}>${q.kind === 'mcq2' ? q.n + '–' + (q.n2 || q.n + 1) : q.n}</span><div class="cq-body">${body}${fb}</div></div>`;
 }
 function courseQGroupsHtml(key, groups, st, lockAll, whyEnOnly){
   return (groups || []).map((g, gi)=>`<div class="cq-group">${g.instruction ? `<p class="cq-ins" dir="ltr" translate="no">${esc(g.instruction)}</p>` : ''}
@@ -27308,12 +27351,19 @@ function courseScriptHtml(script, phrases){
 }
 // A drill whose source is a chart or a map needs the chart build (COURSE_BUILT.art).
 function courseSourceNeedsArt(d){ return !!(d && (d.chart || d.map)); }
-function courseQScore(groups, ans){ const all = courseQList(groups); return {right:all.filter(x=>courseQRight(x.q, ans[x.q.n], x.g.bank)).length, total:all.length}; }
+function courseQScore(groups, ans){ const all = courseQList(groups); return {right:all.reduce((n, x)=>n + courseQPoints(x.q, ans[x.q.n], x.g.bank), 0), total:all.reduce((n, x)=>n + courseQMarks(x.q), 0)}; }
 // Wrong answers into the error log (newest wins per question) and the course's spaced review store.
 function courseErrLog(cid){ const cp = courseProg(cid); if(!cp.errlog || typeof cp.errlog !== 'object') cp.errlog = {}; return cp.errlog; }
 function courseLogAnswers(cid, uid, setId, groups, ans, src){
   const log = courseErrLog(cid);
-  courseQList(groups).forEach(x=>{ const key = setId + '#' + x.q.n, right = courseQRight(x.q, ans[x.q.n], x.g.bank);
+  courseQList(groups).forEach(x=>{
+    if(x.q.kind === 'mcq2'){   // one entry per missed mark (keys setId#n and setId#n2), so the spaced review counts them like other items
+      const pts = courseQPoints(x.q, ans[x.q.n], x.g.bank);
+      [x.q.n, x.q.n2 || x.q.n + 1].forEach((num, k)=>{ const key2 = setId + '#' + num, ok2 = k < pts; courseItemSeen(cid, key2, ok2);
+        if(ok2){ if(log[key2]) log[key2].fixed = todayISO(); return; }
+        log[key2] = {uid, src:src || 'drill', kind:x.q.kind, prompt:String(x.q.prompt || ''), given:courseQGivenText(x.q, ans[x.q.n], x.g.bank), right:courseQRightText(x.q, x.g.bank), date:todayISO()}; });
+      return; }
+    const key = setId + '#' + x.q.n, right = courseQRight(x.q, ans[x.q.n], x.g.bank);
     courseItemSeen(cid, key, right);
     if(right){ if(log[key]) log[key].fixed = todayISO(); return; }
     log[key] = {uid, src:src || 'drill', kind:x.q.kind, prompt:String(x.q.prompt || ''), given:courseQGivenText(x.q, ans[x.q.n], x.g.bank), right:courseQRightText(x.q, x.g.bank), date:todayISO()};
@@ -27384,6 +27434,14 @@ function courseQBind(root){
 }
 // The screen state behind a question key: the drill (its id) or a mock section part (courseMockQState, IELTS phase 5).
 function courseQState(key){ const d = courseUi.dr; if(d && d.id === key) return d; return typeof courseMockQState === 'function' ? courseMockQState(key) : null; }
+// The question behind a key and number (drill: its groups; mock section: the section's groups on the learner's track).
+function courseQFind(key, n){
+  const st = courseQState(key); if(!st) return null;
+  let groups = [];
+  if(st === courseUi.dr){ const d = courseUnitItems(st.uid).drill; groups = d ? d.groups : []; }
+  else if(typeof courseMockData === 'function'){ const mk = courseMockData(st.uid), sec = courseMockSecOf(st.type || ''); if(mk && mk.sections && mk.sections[sec]) groups = courseMockGroups(st.cid, mk, sec); }
+  return courseQList(groups).find(x=>x.q.n === n) || null;
+}
 /* ---------- IELTS charts and maps, drawn on the device (Academic Task 1, Trello 22PCxJWz) ----------
    chart {type:'line'|'bar', title, unit, labels, series:[{name, values}]}; 'pie' (two series = two pies side by side, one per series
    name); 'table' (labels as rows, series as columns); 'process' (numbered stages joined by arrows, from labels); 'map' with maps:[{name,
@@ -27488,7 +27546,7 @@ function courseWritingTaskHtml(w){ return w && w.chart ? courseChartHtml(w.chart
    Results: a band RANGE per skill from courses bandTable (labelled estimate), the learner's own writing / speaking checks,
    the weakest point, lessons to repeat; wrong answers go to the error log. */
 const COURSE_MOCK_NAMES = {listening:{en:'Listening', tr:'Listening', fa:'لیسنینگ', es:'Comprensión auditiva'}, reading:{en:'Reading', tr:'Reading', fa:'ریدینگ', es:'Comprensión lectora'}, writing:{en:'Writing', tr:'Writing', fa:'رایتینگ', es:'Expresión escrita'}, speaking:{en:'Speaking', tr:'Speaking', fa:'اسپیکینگ', es:'Expresión oral'}};
-const COURSE_SPK_CRIT = {FC:{en:'Fluency and coherence', tr:'Akıcılık ve tutarlılık', fa:'روانی و انسجام', es:'Fluidez y coherencia'}, LR:{en:'Vocabulary', tr:'Kelime bilgisi', fa:'دامنه‌ی واژگان', es:'Vocabulario'}, GRA:{en:'Grammar', tr:'Dilbilgisi', fa:'گرامر', es:'Gramática'}, P:{en:'Pronunciation', tr:'Telaffuz', fa:'تلفظ', es:'Pronunciación'}};
+const COURSE_SPK_CRIT = {FC:{en:'Keeping going, clearly', tr:'Akıcı ve anlaşılır konuşmak', fa:'روان و روشن حرف زدن', es:'Hablar con fluidez y claridad'}, LR:{en:'Vocabulary', tr:'Kelime bilgisi', fa:'دامنه‌ی واژگان', es:'Vocabulario'}, GRA:{en:'Grammar', tr:'Dilbilgisi', fa:'گرامر', es:'Gramática'}, P:{en:'Pronunciation', tr:'Telaffuz', fa:'تلفظ', es:'Pronunciación'}};
 const COURSE_WR_CRIT = [{en:'Task', tr:'Görev', fa:'پاسخ به تکلیف', es:'Tarea'}, {en:'Coherence', tr:'Tutarlılık', fa:'انسجام', es:'Coherencia'}, {en:'Vocabulary', tr:'Kelime bilgisi', fa:'واژگان', es:'Vocabulario'}, {en:'Grammar', tr:'Dilbilgisi', fa:'گرامر', es:'Gramática'}];
 function courseMockData(uid){ return courseUnitItems(uid).mock || null; }
 function courseMockSecOf(type){ return type === 'mock' ? 'writing' : type.slice(5); }
@@ -27541,7 +27599,7 @@ function courseMockBand(cid, sec, raw){
   return courseBandRange(sec === 'listening' ? t.listening : (courseMockTrackKey(cid) === 'gt' ? t.readingGT : t.readingAcademic), raw);
 }
 function courseMockIntroHtml(cid, uid, type, mk, sec){
-  const s = mk.sections[sec], n = sec === 'listening' ? courseQList(courseMockGroups(cid, mk, sec)).length : sec === 'reading' ? courseQList(courseMockGroups(cid, mk, sec)).length : 0;
+  const s = mk.sections[sec], n = sec === 'listening' || sec === 'reading' ? courseQMarksTotal(courseMockGroups(cid, mk, sec)) : 0;
   let what = '';
   if(sec === 'listening') what = CL(courseMockParts(cid, mk, sec).length+' parts, '+n+' questions, about '+(s.minutes || 30)+' minutes. The recording plays straight through, once. Then you have '+(s.review || 2)+' minutes to check your answers.',
     courseMockParts(cid, mk, sec).length+' kısım, '+n+' soru, yaklaşık '+(s.minutes || 30)+' dakika. Kayıt ara vermeden, bir kez çalar. Sonra cevaplarını kontrol etmek için '+(s.review || 2)+' dakikan var.',
@@ -27597,8 +27655,8 @@ function renderCourseMockReading(cid, uid, type, mk){
   const done = st.checked, sc = done ? courseQScore(groups, st.ans) : null, tab = Math.min(st.tab || 0, parts.length - 1), p = parts[tab] || {};
   const ev = done ? courseQList(p.groups).map(x=>x.q.evidence).filter(Boolean) : [];
   if(!done) courseUi.qClockEnd = ()=>HANDLERS['course-mock-submit']({dataset:{cid, uid, type}});
-  const tabs = `<div class="cm-tabs" role="tablist">${parts.map((x,i)=>{ const qs = courseQList(x.groups), n = qs.filter(q=>st.ans[q.q.n] !== undefined && st.ans[q.q.n] !== '').length;
-    return `<button class="cm-tab${i === tab ? ' on' : ''}" role="tab" aria-selected="${i === tab}" data-action="course-mock-tab" data-i="${i}">${esc(x.title || ('Section '+(i+1)))}<small>${done ? qs.filter(q=>courseQRight(q.q, st.ans[q.q.n], q.g.bank)).length : n}/${qs.length}</small></button>`; }).join('')}</div>`;
+  const tabs = `<div class="cm-tabs" role="tablist">${parts.map((x,i)=>{ const qs = courseQList(x.groups), n = qs.reduce((m, q)=>m + (courseQAnswered(q.q, st.ans[q.q.n]) ? courseQMarks(q.q) : 0), 0);
+    return `<button class="cm-tab${i === tab ? ' on' : ''}" role="tab" aria-selected="${i === tab}" data-action="course-mock-tab" data-i="${i}">${esc(x.title || ('Section '+(i+1)))}<small>${done ? qs.reduce((m, q)=>m + courseQPoints(q.q, st.ans[q.q.n], q.g.bank), 0) : n}/${courseQMarksTotal(x.groups)}</small></button>`; }).join('')}</div>`;
   const src = (p.passage ? coursePassageHtml(p.passage, ev) : '') + (p.texts ? courseTextsHtml(p.texts, ev) : '');
   return `${done ? '' : courseClockLeftHtml(a.startedAt, s.minutes || 60, true)}${done ? courseMockScoreLine(cid, 'reading', sc) : ''}${tabs}${src}
     <div class="cq-set">${courseQGroupsHtml(st.qkey, p.groups, st, false, true)}</div>
@@ -27803,7 +27861,13 @@ Object.assign(HANDLERS, {
     courseListenPlay(d.script, i=>{ st.line = i; const b = document.querySelector('.cq-lbar i'); if(b) b.style.width = Math.round(100 * i / d.script.length) + '%'; },
       ()=>{ if(courseUi.dr !== st) return; st.playing = false; st.played = true; if(state.view==='course-step') render(); });
   },
-  'course-q-pick'(el){ const st = courseQState(el.dataset.cq); if(!st || st.checked || st.locked) return; const v = el.dataset.v; st.ans[Number(el.dataset.n)] = /^\d+$/.test(v) ? Number(v) : v; if(st.persist) st.persist(); render(); },
+  'course-q-pick'(el){ const st = courseQState(el.dataset.cq); if(!st || st.checked || st.locked) return; const v = el.dataset.v, n = Number(el.dataset.n), x = courseQFind(el.dataset.cq, n);
+    if(x && x.q.kind === 'mcq2'){   // choose TWO: tap adds a letter (up to two), tapping a chosen letter removes it
+      const cur = Array.isArray(st.ans[n]) ? st.ans[n].slice() : [], i = Number(v), at = cur.indexOf(i);
+      if(at >= 0) cur.splice(at, 1); else if(cur.length < 2) cur.push(i); else return;
+      if(cur.length) st.ans[n] = cur; else delete st.ans[n]; }
+    else st.ans[n] = /^\d+$/.test(v) ? Number(v) : v;
+    if(st.persist) st.persist(); render(); },
   'course-drill-check'(el){
     const cid = el.dataset.cid, uid = el.dataset.uid, d = courseUnitItems(uid).drill, st = courseUi.dr; if(!d || !st || st.checked) return;
     document.querySelectorAll('input.cq-gap').forEach(i=>{ if(i.dataset.cq===d.id) st.ans[Number(i.dataset.n)] = i.value; });   // what is typed on screen
@@ -27914,6 +27978,7 @@ Object.assign(HANDLERS, {
   },
   'course-track-toggle'(){ courseUi.trackOpen = !courseUi.trackOpen; render(); },
   'course-chapter-toggle'(el){ const cid = el.dataset.cid, mi = Number(el.dataset.mi), c = courseGet(cid); if(!c) return; const open = courseChapterOpen(c, mi, courseNext(cid)); courseUi.chapter = {cid, mi:open ? -1 : mi}; render(); },
+  'course-rebuilt-ok'(el){ const cp = courseProg(el.dataset.cid); delete cp.rebuiltNote; save(); render(); },
   'course-outcomes-toggle'(el){ const cid = el.dataset.cid; if(!courseUi.outcomesOpen) courseUi.outcomesOpen = {}; courseUi.outcomesOpen[cid] = !courseOutcomesOpen(cid); render(); },
   'course-step'(el){ courseOpenStep(el.dataset.cid, el.dataset.uid, el.dataset.type); },
   'course-mark-done'(el){ courseMarkDone(el.dataset.cid, el.dataset.uid, el.dataset.type); courseAdvance(el.dataset.cid, el.dataset.uid); },
@@ -27984,7 +28049,7 @@ Object.assign(HANDLERS, {
   'course-sp-tick'(el){ const st = courseUi.sp; if(!st) return; const i = Number(el.dataset.i); st.ticks[i] = !st.ticks[i]; render(); },
   'course-sp-finish'(el){
     const cid = el.dataset.cid, uid = el.dataset.uid, st = courseUi.sp, sp = courseUnitItems(uid).speaking;
-    if(st && st.uid===uid) courseProg(cid).scores[uid+':speaking'] = {ticks:((sp && sp.selfCheck) || []).map((_,i)=>!!st.ticks[i]), rounds:COURSE_SP_ROUNDS.map((_,i)=>st.used[i] || 0), notes:st.notes.length, recorded:st.clips.filter(Boolean).length, date:todayISO()};
+    if(st && st.uid===uid) courseProg(cid).scores[uid+':speaking'] = {ticks:((sp && sp.selfCheck) || []).map((_,i)=>!!st.ticks[i]), rounds:(st.R || COURSE_SP_ROUNDS).map((_,i)=>st.used[i] || 0), notes:st.notes.length, recorded:st.clips.filter(Boolean).length, date:todayISO()};
     courseSpLeave(); courseMarkDone(cid, uid, 'speaking'); courseAdvance(cid, uid);
   },
   // Writing (Build 2): a checklist tick after Check = the self-score; the text on screen is kept across the re-render.

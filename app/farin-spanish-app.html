@@ -10983,6 +10983,7 @@ function viewGameKind(view){
   if(view === 'game-mystery') return 'mystery';
   if(view === 'game-spell') return 'spell';
   if(view === 'game-path') return 'path';
+  if(view === 'game-yc') return 'path';
   if(view === 'game-hunt') return 'hunt';
   if(view === 'game-echo') return 'echo';
   if(view === 'game-chores-room' || view === 'game-chores-building') return 'chores';
@@ -11516,7 +11517,7 @@ function maybeCelebrate(){
     low = state.quiz.correct/state.quiz.questions.length < .5;
   } else if(v==='game-match' && vp.round && vp.round.matchedKeys && vp.round.matchedKeys.length === vp.round.pairCount){
     target = vp.round; kind = 'game';
-  } else if((v==='game-dictation' || v==='game-trap' || v==='game-build' || v==='game-bingo' || v==='game-cross' || v==='game-order' || v==='game-desk' || v==='game-mystery' || v==='game-spell' || v==='game-hunt' || v==='game-echo' || v==='game-chores-room' || v==='game-path') && vp.round && vp.round.finished && !(v==='game-path' && vp.round.next && !vp.free)){
+  } else if((v==='game-dictation' || v==='game-trap' || v==='game-build' || v==='game-bingo' || v==='game-cross' || v==='game-order' || v==='game-desk' || v==='game-mystery' || v==='game-spell' || v==='game-hunt' || v==='game-echo' || v==='game-chores-room' || v==='game-path' || v==='game-yc') && vp.round && vp.round.finished && !(v==='game-path' && vp.round.next && !vp.free)){
     target = vp.round; kind = 'game';
   } else if(v==='studio-round' && vp.checked && vp.result && vp.result.passed){
     target = vp.result; kind = vp.mode;
@@ -11527,7 +11528,7 @@ function maybeCelebrate(){
   const extra = celebrationExtras(v, vp, kind);
   if(v === 'quiz'){ const ytGo = yourTurnExit(state.quiz) || useItExit(state.quiz); if(ytGo) extra.onExit = ytGo; }   // teaching redesign phase 2: Try, then Your turn / Use it
   save();
-  setTimeout(()=>{ if(state.view===v) showCelebration(v === 'game-path' ? 'path' : kind, detail, low, extra); }, 900);
+  setTimeout(()=>{ if(state.view===v) showCelebration(v === 'game-path' || v === 'game-yc' ? 'path' : kind, detail, low, extra); }, 900);
 }
 
 /* ============================= RENDER: SHELL ============================= */
@@ -19673,12 +19674,14 @@ function pathGlossRowHtml(ch, g){
 }
 // The souvenir of a chapter node: its glossed feeling word.
 function pathSouvenirWord(node){
+  const yw = ycSouvenirWord(node); if(yw) return yw;   // Your Call v2
   const r = node && pathRefParts(node.refId), c = r && pathChapter(r.level, r.chB), gl = c && c[c.souvenir];   // a pair: its last chapter
   return gl ? {id:pathSrsId(r.level, r.chB), word:String(gl.word), meaning:pathMeaning(gl), ch:r.chB} : null;
 }
 // Review source for an sp- id: the chapter's glosses as a small vocab set (srsSource / the Shuffle).
 const pathSetCache = {};
 function pathVocabSet(id){
+  if(typeof id === 'string' && id.indexOf('yc-') === 0) return ycVocabSet(id);   // Your Call v2 souvenirs
   if(typeof id !== 'string' || id.indexOf('sp-') !== 0) return null;
   if(pathSetCache[id]) return pathSetCache[id];
   const m = /^sp-(A1|A2|B1|B2|C1)-ch([1-6])$/.exec(id), c = m && pathChapter(m[1], Number(m[2]));
@@ -19740,6 +19743,138 @@ function pathMountStage(){
 }
 function pathTr(o, show){ const u = pathUiLine(o); return show && u ? `<small class="sp-tr" dir="auto">${esc(u)}</small>` : ''; }
 function pathSayBtn(text){ return text ? `<button class="tts-btn sp-say" data-action="speak-sentence" data-text="${esc(text)}" aria-label="${esc(L('Listen','Dinle','گوش کن','Escuchar'))}">${ICONS.soundOn}</button>` : ''; }
+/* ---- Your Call v2 (Trello 1qmETa3h / aU8yvAKC / x35crL5M, staged in Claude/specs/your-call-v2/engine) ----
+   The comic-album Your Call. Engine lazy-loaded from games/your-call/ (your-call.js + .css byte-identical EN/ES;
+   content-<side>.js generated from the farin-lxd scripts). A card plays v2 only when YourCall.ready() says every
+   panel of its chapters has final art; otherwise the v1 round below runs unchanged. */
+const YC_VER = '1';
+const YC_LEVELS = ['A1'];
+let ycLoading = null, ycGame = null, ycPending = null;
+function ycSide(){ return TTS_LANG.slice(0, 2); }
+function ycLoad(){
+  if(window.YourCall && window.YC_CONTENT) return Promise.resolve(window.YourCall);
+  if(!ycLoading){
+    const add = (tag, a)=>new Promise((ok, no)=>{ const n = document.createElement(tag); Object.assign(n, a); n.onload = ok; n.onerror = ()=>{ n.remove(); no(new Error(a.src || a.href)); }; document.head.appendChild(n); });
+    const v = '?v=' + YC_VER;
+    ycLoading = Promise.all([add('link', {rel:'stylesheet', href:'games/your-call/your-call.css' + v}), add('script', {src:'games/your-call/content-' + ycSide() + '.js' + v})])
+      .then(()=>add('script', {src:'games/your-call/your-call.js' + v}))
+      .then(()=>{ if(!window.YourCall || !window.YC_CONTENT) throw new Error('your-call'); return window.YourCall; })
+      .catch(e=>{ ycLoading = null; throw e; });
+  }
+  return ycLoading;
+}
+function ycIsV2Arc(){ const p = pathState(); return p.v === 2 && YC_LEVELS.includes(p.level); }
+// a learner in the middle of the old A1 story keeps it until that arc ends
+function ycEligible(refId){
+  const r = pathRefParts(refId); if(!r || !YC_LEVELS.includes(r.level)) return false;
+  const p = pathState();
+  if(p.level === r.level && p.v !== 2 && p.choices.some(Boolean) && !p.history.some(h=>h && h.level === r.level && h.done)) return false;
+  return true;
+}
+function ycCard(refId){ const r = pathRefParts(refId); return r ? (r.chB !== r.ch ? [r.ch, r.chB] : [r.ch]) : null; }
+function ycReadyFor(refId){ return !!(window.YourCall && window.YC_CONTENT && ycEligible(refId) && YourCall.ready(YC_CONTENT, ycCard(refId))); }
+function ycPathView(){
+  const p = pathState();
+  if(ycIsV2Arc()) return {choices:p.choices, prints:p.prints || {}, notes:p.notes || {}};
+  const h = p.history.filter(x=>x && x.v === 2).pop();
+  return h ? {choices:h.choices, prints:h.prints || {}, notes:h.notes || {}} : {choices:[], prints:{}, notes:{}};
+}
+// the first v2 chapter starts a v2 arc; the old A1 arc (finished or never started) goes to history first
+function ycBegin(level){
+  const p = pathState();
+  if(p.v === 2 && p.level === level) return p;
+  if(p.level && p.choices.some(Boolean) && !p.history.some(h=>h && h.level === p.level && h.done && h.v === p.v)){
+    p.history = p.history.filter(h=>!(h && h.level === p.level && !h.done));
+    p.history.push({level:p.level, choices:p.choices.slice(), stance:Object.assign({}, p.stance), date:todayISO(), done:false});
+  }
+  Object.assign(p, {level, v:2, chapter:0, choices:[], stance:{jean:0, town:0}, prints:{}, notes:{}, secrets:p.secrets || [], ycRun:null});
+  if(!p.souvenirs) p.souvenirs = {};
+  return p;
+}
+function ycCommit(res){
+  const p = ycBegin(res.level), pr = state.progress;
+  while(p.choices.length <= PATH_CH) p.choices.push('');
+  p.choices[res.ch] = res.picks; p.chapter = res.ch;
+  p.prints[res.level + ':ch' + res.ch] = {found:res.found || [], date:todayISO()};
+  if(res.note) p.notes[res.level + ':ch' + res.ch] = res.note;
+  p.stance = YourCall.stance(YC_CONTENT, p.choices);
+  if(res.souvenir){
+    p.souvenirs[res.souvenir.id] = res.souvenir;
+    if(!pr.srs) pr.srs = {};
+    if(!pr.srs[res.souvenir.id]){ const e = pr.srs[res.souvenir.id] = {kind:'vocab', box:0, hi:0, vi:0}; srsSetBox(e, 0); }   // the souvenir enters review at box 0
+  }
+  if(res.ch === PATH_CH){
+    p.history = p.history.filter(h=>!(h && h.level === res.level));
+    p.history.push({level:res.level, v:2, choices:p.choices.slice(), stance:Object.assign({}, p.stance), prints:p.prints, notes:p.notes, endings:res.endings, date:todayISO(), done:true});
+  }
+  save();
+}
+// Theatre.open extras for the gate: the cover poster, the 6-photo strip, the album button, the 4:5 column
+function ycExtra(ds, handler){
+  if(ds.kind !== 'path') return Promise.resolve({});
+  const shelf = handler === 'shelf-play';
+  if(!shelf && !ycEligible(ds.refId)) return Promise.resolve({});
+  if(shelf && !ycIsV2Arc()) return Promise.resolve({});
+  return ycLoad().then(()=>{
+    const card = shelf ? [] : ycCard(ds.refId);
+    if(!shelf && !ycReadyFor(ds.refId)) return {};
+    return YourCall.poster(YC_CONTENT, ycPathView(), {ui:LANG, card,
+      onChapter:(n, o)=>{ ycPending = {n, replay:!!(o && o.replay)}; Theatre.play(); },
+      onAlbum:()=>YourCall.album({root:(window.Theatre && Theatre.stageEl()) || document.body, content:YC_CONTENT, path:ycPathView(), ui:LANG})})
+      .then(cfg=>Object.assign(cfg, {onClose:()=>{ if(ycGame){ ycGame.destroy(); ycGame = null; } }}));
+  }).catch(()=>({}));
+}
+function ycStart(params){
+  if(!params.free) ycBegin('A1');
+  go('game-yc', Object.assign({round:{level:'A1', ch:0, finished:false}}, params));
+}
+// Games shelf: a v2 chapter already played, nothing saved
+function ycShelf(ds){
+  if(!(ycIsV2Arc() && window.YourCall && window.YC_CONTENT)) return false;
+  const ch = pathState().choices, played = [1, 2, 3, 4, 5, 6].filter(n=>ch[n]);
+  if(!played.length) return false;
+  ycPending = {n:played[Math.floor(Math.random() * played.length)], replay:true};
+  go('game-yc', {round:{level:'A1', ch:0, finished:false}, refId:ds.refId, goal:'', free:true, shelf:true});
+  return true;
+}
+function renderGameYc(){
+  queueFx(ycMount);
+  return '<div class="game-screen yc-host-screen" style="padding:0"><div id="yc-host" style="position:relative;min-height:100dvh"></div></div>';
+}
+function ycMount(){
+  const vp = state.viewParams || {}, round = vp.round;
+  if(state.view !== 'game-yc' || !round || round.finished || (ycGame && YourCall.debug.game === ycGame)) return;
+  const root = (window.Theatre && Theatre.isOpen() && Theatre.stageEl()) || document.getElementById('yc-host');
+  if(!root || !window.YourCall) return;
+  const pend = ycPending; ycPending = null;
+  const p = pathState(), card = vp.free ? [pend ? pend.n : 1] : ycCard(vp.refId);
+  const replay = !!vp.free || !!(pend && pend.replay);
+  const startCh = pend ? pend.n : (card.every(n=>p.choices[n]) ? card[0] : card.find(n=>!p.choices[n]));
+  const resume = !replay && p.ycRun && card.includes(p.ycRun.ch) ? p.ycRun : null;
+  ycGame = YourCall.start({root, content:YC_CONTENT, ui:LANG, chapters:card, start:startCh, mode:replay ? 'replay' : 'card', resume, theatre:window.Theatre || null,
+    host:{
+      speak:(t, o)=>new Promise(ok=>{ try{ ttsSpeak(t, o && o.rate ? o.rate * 0.92 : 0.92, {end:ok, error:ok}); }catch(e){ ok(); } }),
+      stopSpeech:stopAllSpeech, muted:()=>sfxMuted, reduced:reducedMotion, path:ycPathView,
+      saveRun:r=>{ pathState().ycRun = r; save(); }, commit:ycCommit},
+    onPause:()=>{ ycGame = null; backToRoadmap(); },
+    onCardDone:(res)=>{
+      ycGame = null;
+      if(replay){ backToRoadmap(); return; }
+      vp.round = {level:'A1', ch:res.ch, finished:true};
+      markGameComplete(vp.refId);
+      save(); render();   // maybeCelebrate: the path celebration with the chapter souvenir
+    }});
+}
+function ycVocabSet(id){
+  const s = (pathState().souvenirs || {})[id];
+  return s ? {id, level:'A1', category:'vocab', path:true, title:s.title || {en:id}, cards:s.cards || [{word:s.word, meaning:s.meaning}]} : null;
+}
+function ycSouvenirWord(node){
+  const r = node && pathRefParts(node.refId);
+  if(!r || !YC_LEVELS.includes(r.level) || !ycIsV2Arc()) return null;
+  const s = (pathState().souvenirs || {})['yc-' + r.level + '-ch' + r.chB];
+  return s ? {id:s.id, word:String(s.word), meaning:s.meaning, ch:r.chB} : null;
+}
 function renderGamePath(){
   const vp = state.viewParams || {}, round = vp.round;
   const title = gameDisplayName('path');
@@ -22937,6 +23072,7 @@ const screens = {
   'game-mystery': renderGameMystery,
   'game-spell': renderGameSpell,
   'game-path': renderGamePath,
+  'game-yc': renderGameYc,
   'game-hunt': renderGameHunt,
   'game-echo': renderGameEcho,
   'game-chores-building': renderGameChoresBuilding,
@@ -23429,7 +23565,7 @@ let gcBubble = null, gcBubbleTimer = null;
    strings; API in theatre.js's header). While it loads, a cover grows from the tapped card. If the files can't load
    (offline before the first use) the game opens the old way. x = the old Back, all the way out of the game's views. */
 const THEATRE_KINDS = ['path','chores','mystery','order','desk','spell'];
-const THEATRE_VIEWS = ['game-path','game-chores-building','game-chores-room','game-mystery','game-order','game-desk','game-spell'];
+const THEATRE_VIEWS = ['game-path','game-yc','game-chores-building','game-chores-room','game-mystery','game-order','game-desk','game-spell'];
 const THEATRE_VER = '2';
 let theatreLoading = null;
 function theatreLoad(){
@@ -23457,11 +23593,11 @@ function theatreGate(el, handler){
   if(from && from.width && !reducedMotion()) anim(cover, [{clipPath:`inset(${from.top}px ${innerWidth-from.right}px ${innerHeight-from.bottom}px ${from.left}px round 22px)`}, {clipPath:'inset(0px 0px 0px 0px round 0px)'}], {duration:400, easing:'cubic-bezier(.2,.7,.2,1)'});
   const play = ()=>HANDLERS[handler]({dataset:Object.assign({}, ds, {theatre:'1'})});
   const seen = state.progress.theatreSeen || (state.progress.theatreSeen = {});
-  theatreLoad().then(T=>T.open({kind, cover, from, views:THEATRE_VIEWS, seen:!!seen[kind],
+  theatreLoad().then(T=>ycExtra(ds, handler).then(yx=>T.open(Object.assign({kind, cover, from, views:THEATRE_VIEWS, seen:!!seen[kind],
     app:{lang:LANG, name:(state.profile && state.profile.name) || '', level:(state.profile && state.profile.level) || '', gameName:gameDisplayName(kind),
       view:()=>state.view, muted:()=>sfxMuted, setMuted:m=>{ sfxMuted = !!m; localStorage.setItem('farinSfxMuted', m ? '1' : '0'); }},
     onPlay:(info)=>{ if(!info || info.poster) seen[kind] = 1; play(); },   // no art yet = no poster shown, not "seen"
-    onExit:theatreExit}))
+    onExit:theatreExit}, yx))))
   .catch(()=>{ cover.remove(); play(); });
   return true;
 }
@@ -24642,6 +24778,7 @@ const HANDLERS = {
     const ds = {kind, refId:'shelf-'+kind, goal:'', free:'1', shelf:'1', setId:''};
     if(kind === 'path'){
       // a chapter already played, fresh choices, nothing saved; none yet -> Word Rush
+      if(ycShelf(ds)) return;   // Your Call v2: replay a played chapter
       const pr = pathShelfRound();
       if(pr){ go('game-path', {round:pr, refId:ds.refId, goal:'', free:true, shelf:true}); return; }
       ds.kind = 'match';
@@ -24713,6 +24850,7 @@ const HANDLERS = {
     }
     if(kind === 'path'){
       // Story Path: one chapter per node (refId path-lane-<level>-e<n>); no score, no timer, no right answer.
+      if(!params.free && ycReadyFor(params.refId)){ ycStart(params); return; }   // Your Call v2 (comic album) when the card is learner-ready
       const pathRound = pathRoundForRef(params.refId);
       if(pathRound){ go('game-path', Object.assign({round: pathRound}, params)); return; }
       const fbp = fallbackGameSet();

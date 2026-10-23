@@ -13614,6 +13614,23 @@ function courseStatusLabelL(status){
 // glance instead of a flat list of identical boxes. Kept the plain (non-card-flat)
 // wrapper so each course card can carry its own distinct treatment rather than
 // nesting colorful cards inside another card.
+// Level exam card (Farin 2026-10-23): shown on a course that carries exam links (see courseExamLinks).
+function renderLevelExamCard(c, mt){
+  const ex = courseExamLinks(c);
+  if(!ex.brief && !ex.test) return '';
+  const btn = 'flex:1; min-width:130px; text-align:center; box-sizing:border-box; background:#fff; color:var(--clay-coral-deep); border:none; font-weight:800; text-decoration:none;';
+  return `<div class="level-exam-card" style="margin-top:${mt||'8px'}; position:relative; overflow:hidden; border-radius:20px; padding:16px; color:#fff; background:radial-gradient(circle at 14% 0%, rgba(255,255,255,.38), transparent 52%), linear-gradient(140deg, var(--clay-coral), var(--clay-orange)); box-shadow:0 14px 28px -14px color-mix(in srgb, var(--clay-coral) 60%, transparent);">
+    <span class="sparkle" style="top:12px; right:18px; left:auto; color:#fff;"></span>
+    <span class="sparkle" style="bottom:14px; right:44px; left:auto; width:5px; height:5px; animation-delay:.7s; color:#fff;"></span>
+    <div style="font-size:11px; font-weight:800; text-transform:uppercase; letter-spacing:.05em; color:rgba(255,255,255,.9);">📝 ${L('Level exam','Seviye sınavı','آزمون سطح','Examen de nivel')}</div>
+    <div class="display" style="font-size:19px; margin-top:2px; color:#fff;">${esc(courseExamLevelLabel(c))}</div>
+    <p style="font-size:12.5px; margin:4px 0 0; color:rgba(255,255,255,.95); font-weight:600;">${L('Two short talks you prepare at home, then a short test.','Evde hazırladığın iki kısa konuşma, ardından kısa bir test.','دو صحبت کوتاه که در خانه آماده می‌کنی، بعد یک آزمون کوتاه.','Dos charlas cortas que preparas en casa y luego una prueba corta.')}</p>
+    <div class="row" style="gap:8px; margin-top:12px; flex-wrap:wrap;">
+      ${ex.brief ? `<a href="${esc(ex.brief)}" target="_blank" rel="noopener" class="btn btn-sm" style="${btn}">📋 ${L('Exam brief','Sınav rehberi','راهنمای آزمون','Guía del examen')}</a>` : ''}
+      ${ex.test ? `<a href="${esc(ex.test)}" target="_blank" rel="noopener" class="btn btn-sm" style="${btn}">✏️ ${L('Take the test','Teste başla','شروع آزمون','Hacer la prueba')}</a>` : ''}
+    </div>
+  </div>`;
+}
 function renderCourseJourney(courses, roadmap){
   const sorted = courses.slice().sort((a,b)=>(a.order||a.number||0)-(b.order||b.number||0));
   return `
@@ -13661,6 +13678,7 @@ function renderCourseJourney(courses, roadmap){
           <div style="font-size:11px; color:${subColor}; margin-top:6px; font-weight:${isActive?700:600};">${done}/${ids.length} ${L('sessions','seans','جلسه', 'sesiones')}</div>
         </button>
         ${report ? `<a href="${esc(report)}" target="_blank" rel="noopener" class="btn btn-ghost btn-sm" style="margin-top:6px; width:100%; text-align:center; box-sizing:border-box;">📄 ${L('Course report','Kurs raporu','گزارش دوره','Informe del curso')}</a>` : ''}
+        ${renderLevelExamCard(c)}
         </div>`;
       }).join('')}
     </div>
@@ -13679,6 +13697,7 @@ function renderCourseView(courseId){
   return `<div class="fade-in">
     ${sectionHead('Course '+course.number+' — '+course.level, courseStatusLabelL(course.status), 'student-panel')}
     <div class="screen" style="padding-top:0;">
+      ${renderLevelExamCard(course, '12px')}
       ${courseReportUrl(course) ? `
       <div class="card-flat" style="margin-top:12px; border-left:4px solid var(--success); background:var(--cat-diag-soft);">
         <div class="eyebrow">${L('Course report','Kurs raporu','گزارش دوره','Informe del curso')}</div>
@@ -29432,6 +29451,7 @@ let adminActiveCourseId = null;
 let adminAddingCourse = false;
 let adminPlacementTest = null;
 let adminStudentTab = 'info';
+let adminRoadmapView = 'sessions'; // Roadmap section sub-tab: 'sessions' | 'exam' (Level exam links, 2026-10-23)
 function studentSectionRow(key, icon, label, summary){
   const open = adminStudentOpenSection === key;
   return `<button type="button" class="item-row" data-admin-action="toggle-student-section" data-section="${key}" style="margin-bottom:0; ${open?'border-radius:14px 14px 0 0;':''}">
@@ -29982,6 +30002,76 @@ function renderCourseReportAdmin(course){
     </div>
   </div>`;
 }
+/* ---- Level exam links (Farin 2026-10-23): the end-of-level exam (english app/level-exam/) is two
+   published pages, an exam brief and a level test. Stored on the course the exam belongs to (normally
+   the level's last course, e.g. B1.2) as courses[].examBriefLink / examTestLink / examAt, with the same
+   scoped merge write on `courses` as the Course Report link. Shown in the admin Roadmap section's
+   "Level exam" tab and as a Level exam card on that course in the Student Club. ---- */
+function courseExamLinks(c){
+  const ok = u => { u = (u || '').trim(); return /^https:\/\//i.test(u) ? u : ''; };
+  return { brief: ok(c && c.examBriefLink), test: ok(c && c.examTestLink) };
+}
+function courseExamLevelLabel(c){
+  const level = (c && c.level) || '';
+  const base = level.replace(/\.2$/, '');
+  const idx = LEVEL_STAGES.indexOf(level);
+  const next = /\.2$/.test(level) && idx >= 0 ? LEVEL_STAGES[idx + 1] : '';
+  return next ? base + ' → ' + next : base;
+}
+function saveCourseExamLinks(courseId, brief, test){
+  const s = adminEditingStudent;
+  if(!s) return;
+  const coll = STUDENT_COLLECTION[s.course === 'es' ? 'es' : 'en'];
+  const code = s.code;
+  if(!code) return;
+  const courses = (Array.isArray(s.courses) ? s.courses : []).map(c=>{
+    if(c.id !== courseId) return c;
+    const next = Object.assign({}, c);
+    if(brief) next.examBriefLink = brief; else delete next.examBriefLink;
+    if(test) next.examTestLink = test; else delete next.examTestLink;
+    if(brief || test) next.examAt = Date.now(); else delete next.examAt;
+    return next;
+  });
+  adminStudentError = '';
+  firebase.firestore().collection(coll).doc(code).set({courses, updatedAt: Date.now()}, {merge:true}).then(()=>{
+    adminEditingStudent.courses = courses;
+    adminStudentInfo = (brief || test) ? 'Level exam links saved.' : 'Level exam links removed.';
+    renderAdminPage();
+  }).catch(err=>{
+    adminStudentError = err.message || String(err);
+    renderAdminPage();
+  });
+}
+function renderLevelExamAdmin(courses){
+  const sorted = courses.slice().sort((a,b)=>(a.order||a.number||0)-(b.order||b.number||0));
+  if(!sorted.length) return `<p style="font-size:12.5px; color:var(--ink-soft); margin:0 0 10px;">No courses yet. Add a course in Sessions first; the exam links go on a course.</p>`;
+  const field = (cls, id, val, ph) => `<input id="${id}" type="url" value="${esc(val)}" placeholder="${ph}" style="flex:1; min-width:0; box-sizing:border-box; padding:9px 12px; border-radius:10px; border:1.5px solid var(--border); font-size:13px; background:var(--bg-elevated); color:var(--ink);">`;
+  return `<p style="font-size:12px; color:var(--ink-soft); margin:0 0 10px;">The level exam goes on the <b>level's last course</b> (the .2 course, e.g. B1.2). Paste the two published pages there and press Save: the student then sees a 📝 Level exam card on that course in the Student Club. Tip: also put them on the exam session in Sessions (Lesson = brief, Homework = test) so it shows on their roadmap.</p>
+    ${sorted.map(c=>{
+      const ex = courseExamLinks(c);
+      const levelEnd = /\.2$/.test(c.level || '');
+      const saved = c.examAt ? new Date(c.examAt).toLocaleDateString() : '';
+      const row = (label, val, id, openLabel) => `
+        <div style="font-size:12px; font-weight:800; color:var(--ink-soft); margin:8px 0 4px;">${label}</div>
+        <div class="row" style="gap:8px; align-items:center;">
+          ${field('', id, val, 'https://claude.ai/artifact/…')}
+          ${val ? `<a href="${esc(val)}" target="_blank" rel="noopener" class="btn btn-ghost btn-sm" style="flex:0 0 auto; padding:8px 10px;">${openLabel} ↗</a>` : ''}
+        </div>`;
+      return `<div class="level-exam-admin" data-course-id="${esc(c.id)}" style="border:${levelEnd?'2px solid var(--clay-coral)':'1.5px solid var(--border)'}; border-radius:12px; padding:12px; margin-bottom:10px; background:${levelEnd?'var(--accent-soft)':'var(--bg-sunken)'};">
+        <div class="row between" style="align-items:center; gap:8px; flex-wrap:wrap;">
+          <div style="font-weight:800; font-size:13.5px;">Course ${c.number} — ${esc(c.level)} <span style="font-weight:400; color:var(--ink-faint);">(${courseStatusLabel(c.status)})</span></div>
+          ${levelEnd ? `<span style="font-size:11px; font-weight:800; color:#fff; background:var(--clay-coral); border-radius:999px; padding:3px 9px;">🎓 End of ${esc((c.level||'').replace(/\.2$/,''))}: exam goes here</span>` : ''}
+        </div>
+        ${(ex.brief || ex.test) ? `<p style="font-size:11.5px; color:var(--success); font-weight:700; margin:6px 0 0;">✓ Student sees the Level exam card${saved ? ' · saved ' + esc(saved) : ''}</p>` : ''}
+        ${row('📋 Exam brief', ex.brief, 'exam-brief-' + c.id, 'Open')}
+        ${row('📝 Level test', ex.test, 'exam-test-' + c.id, 'Open')}
+        <div class="row" style="gap:8px; margin-top:10px;">
+          <button type="button" class="btn btn-primary btn-sm" style="flex:1;" data-admin-action="save-course-exam" data-course-id="${esc(c.id)}">💾 ${(ex.brief||ex.test) ? 'Update' : 'Save'}</button>
+          ${(ex.brief||ex.test) ? `<button type="button" class="btn btn-ghost btn-sm" data-admin-action="remove-course-exam" data-course-id="${esc(c.id)}">Remove</button>` : ''}
+        </div>
+      </div>`;
+    }).join('')}`;
+}
 function renderAdminStudentsTab(){
   if(adminEditingStudent){
     const s = adminEditingStudent;
@@ -30053,6 +30143,11 @@ function renderAdminStudentsTab(){
       ${adminStudentTab==='roadmap' ? `
       ${studentSectionRow('roadmap','🗺️','Roadmap', roadmap.filter(r=>r.done).length+'/'+roadmap.length+' sessions done')}
       ${studentSectionOpen('roadmap')}
+      <div class="row" style="gap:6px; margin-bottom:12px;">
+        <button type="button" class="btn btn-sm ${adminRoadmapView!=='exam'?'btn-primary':'btn-ghost'}" style="flex:1;" data-admin-action="admin-roadmap-view" data-view="sessions">🗺️ Sessions</button>
+        <button type="button" class="btn btn-sm ${adminRoadmapView==='exam'?'btn-primary':'btn-ghost'}" style="flex:1;" data-admin-action="admin-roadmap-view" data-view="exam">📝 Level exam${courses.some(c=>{ const e = courseExamLinks(c); return e.brief || e.test; }) ? ' ✓' : ''}</button>
+      </div>
+      ${adminRoadmapView==='exam' ? renderLevelExamAdmin(courses) : `
       ${!s.isNew ? adminPinsHtml(s) : ''}
       ${courses.length ? renderCourseChips(courses, adminActiveCourseId) : `<p style="font-size:11.5px; color:var(--ink-faint); margin:-2px 0 10px;">No courses yet — add sessions below, or tap "+ Add Course" once one exists.</p>`}
       ${adminAddingCourse ? renderCourseAddForm() : ''}
@@ -30117,6 +30212,7 @@ function renderAdminStudentsTab(){
       <div class="row" style="gap:8px; margin-bottom:14px;">
         <button class="btn btn-ghost btn-sm" data-admin-action="parse-roadmap-paste">📋 Add pasted sessions</button>
       </div>
+      `}
       ${studentSectionClose()}
       ` : ''}
 
@@ -30531,6 +30627,23 @@ function bindAdminActions(root){
           renderAdminPage();
         } else {
           saveCourseSummaryLink(el.dataset.courseId, url);
+        }
+      } else if(action === 'admin-roadmap-view'){
+        // Keep typed session edits: only the visible view's inputs exist in the DOM.
+        captureStudentInfoFromDOM();
+        adminEditingStudent.roadmap = harvestRoadmapFromDOM();
+        adminRoadmapView = el.dataset.view === 'exam' ? 'exam' : 'sessions';
+        renderAdminPage();
+      } else if(action === 'save-course-exam' || action === 'remove-course-exam'){
+        const cid = el.dataset.courseId;
+        const get = id => { const inp = document.getElementById(id); return inp ? inp.value.trim() : ''; };
+        const brief = action === 'remove-course-exam' ? '' : get('exam-brief-' + cid);
+        const test = action === 'remove-course-exam' ? '' : get('exam-test-' + cid);
+        if((brief && !/^https:\/\//i.test(brief)) || (test && !/^https:\/\//i.test(test))){
+          adminStudentError = 'Exam links must start with https://';
+          renderAdminPage();
+        } else {
+          saveCourseExamLinks(cid, brief, test);
         }
       } else if(action === 'remove-course-report'){
         saveCourseSummaryLink(el.dataset.courseId, '');

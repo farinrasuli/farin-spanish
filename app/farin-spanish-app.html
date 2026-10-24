@@ -25999,7 +25999,7 @@ function courseUnitReady(uid){ const it = courseUnitItems(uid); return Object.ke
 // note once on the course page (COURSE_PROG_NOTE), with an OK button.
 // v4 (2026-10-23): IELTS rebuilt as 10 full exams (lesson ids x01-l1 ... x10-s); the 24-lesson course's progress moves aside.
 const COURSE_PROG_V = {ielts:4};
-const COURSE_PROG_NOTE = {ielts:{en:'The IELTS course has been rebuilt around 10 full exams, each a close copy of a recent Cambridge test. Your access is unchanged; you start again at Exam 1.', tr:"IELTS kursu, her biri yakın tarihli bir Cambridge sınavının yakın kopyası olan 10 tam sınav üzerine yeniden kuruldu. Erişimin aynı; 1. sınavdan yeniden başlıyorsun.", fa:'دوره‌ی آیلتس بر اساس ۱۰ آزمون کامل از نو ساخته شد که هر کدام کپی نزدیکی از یک آزمون اخیر کمبریج است. دسترسی‌ات همان است؛ دوباره از آزمون ۱ شروع می‌کنی.', es:'El curso IELTS se ha reconstruido en torno a 10 exámenes completos, cada uno una copia fiel de un examen reciente de Cambridge. Tu acceso no cambia; empiezas de nuevo en el examen 1.'}};
+const COURSE_PROG_NOTE = {ielts:{en:'The IELTS course has been rebuilt around 10 full exams that follow the structure, question types and timing of recent IELTS tests. Your access is unchanged; you start again at Exam 1.', tr:"IELTS kursu, yakın tarihli IELTS sınavlarının yapısını, soru türlerini ve sürelerini izleyen 10 tam sınav üzerine yeniden kuruldu. Erişimin aynı; 1. sınavdan yeniden başlıyorsun.", fa:'دوره‌ی آیلتس بر اساس ۱۰ آزمون کامل از نو ساخته شد که ساختار، نوع سؤال‌ها و زمان‌بندی آزمون‌های اخیر آیلتس را دنبال می‌کنند. دسترسی‌ات همان است؛ دوباره از آزمون ۱ شروع می‌کنی.', es:'El curso IELTS se ha reconstruido en torno a 10 exámenes completos que siguen la estructura, los tipos de pregunta y los tiempos de los exámenes IELTS recientes. Tu acceso no cambia; empiezas de nuevo en el examen 1.'}};
 function courseProgRebuilt(cid){
   const pr = state.progress, v = COURSE_PROG_V[cid], cp = pr.courses[cid];
   const used = ['done', 'scores', 'answers', 'errlog', 'srs'].some(k=>cp[k] && typeof cp[k] === 'object' && Object.keys(cp[k]).length > 0);
@@ -29028,7 +29028,8 @@ function courseHeroHtml(c){
       <div class="lx-stat"><span>${CL('Lessons','Ders','درس','Lecciones')}</span><b class="display">${total}</b></div>
       <div class="lx-stat"><span>${c.chapterWords ? esc(cl(c.chapterWords)) : CL('Chapters','Bölüm','فصل','Capítulos')}</span><b class="display">${mods}</b></div>
       <div class="lx-stat"><span>${CL('Minutes per lesson','Ders başına dakika','دقیقه برای هر درس','Minutos por lección')}</span><b class="display">${mins ? '<bdi dir="ltr">~'+mins+'</bdi>' : '—'}</b></div>
-    </div>`;
+    </div>
+    ${c.disclaimer ? `<p class="cd-disc" dir="${courseTD()}" style="margin:8px 2px 0; font-size:12px; line-height:1.45; color:var(--ink-soft);">${esc(cl(c.disclaimer))}</p>` : ''}`;
 }
 // A 3-dot step row: Learn ✓ · Practise ● · Check.
 function courseMiniStepsHtml(cid, uid){

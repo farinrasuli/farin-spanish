@@ -13,7 +13,7 @@
 <meta name="apple-mobile-web-app-title" content="Farin Spanish">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
   :root{
     --bg:#fdf1e2; --bg-elevated:#fffaf2; --bg-sunken:#f6e3c6;
@@ -2179,6 +2179,153 @@
 .sp-free{margin-top:6px; min-height:110px;}
 .sp-own{margin:6px 0 10px;}
 .sp-own p{margin:4px 0 0; font-size:15px; line-height:1.55;}
+  /* FEschool course design v4 (Farin approved 2026-10-27, artifact 5kYyAPZ8: "all good, also remember give more free space to not seem
+     crowded"): the Course Report look on the course page and the lesson page (.fs-scr), the IELTS skill tiles, numbered rows, the
+     purple-soft goal box, the next-lesson strip and the selection rows (pattern 4, .fs-opt; also the onboarding goals). More room than
+     the preview: sections 40px apart, short lines clamped. Light + dark. Byte-identical in the English and Spanish apps. */
+  :root{--fs-purple:#7C5CFC; --fs-purple-2:#5A3FD6; --fs-purple-ink:#5A3FD6; --fs-purple-soft:#EEE9FF; --fs-orange:#FFA53D; --fs-orange-ink:#A85A05; --fs-orange-soft:#FFF0DA; --fs-green:#85957A; --fs-cta-ink:#1A1410; --fs-sel:#FCFBFF;}
+  @media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){--fs-purple-ink:#BDAEFF; --fs-purple-soft:color-mix(in srgb, #7C5CFC 26%, var(--bg-elevated)); --fs-orange-ink:#FFC27A; --fs-orange-soft:color-mix(in srgb, #FFA53D 20%, var(--bg-elevated)); --fs-sel:color-mix(in srgb, #7C5CFC 12%, var(--bg-elevated));} }
+  :root[data-theme="dark"]{--fs-purple-ink:#BDAEFF; --fs-purple-soft:color-mix(in srgb, #7C5CFC 26%, var(--bg-elevated)); --fs-orange-ink:#FFC27A; --fs-orange-soft:color-mix(in srgb, #FFA53D 20%, var(--bg-elevated)); --fs-sel:color-mix(in srgb, #7C5CFC 12%, var(--bg-elevated));}
+  .fs-scr{font-family:'Nunito',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;}
+  .fs-scr .btn, .fs-scr button{font-family:inherit;}
+  .fs-scr .screen{padding-bottom:64px;}
+  .fs-scr .lx-sec{margin-top:40px;}
+  .fs-scr .lx-head{gap:6px; margin-bottom:16px;}
+  .fs-scr .lx-eyebrow{color:var(--fs-orange-ink);}
+  .fs-scr .lx-head h2{font-size:23px; letter-spacing:-.01em;}
+  .fs-scr .dot, .fs-scr .lx-head h2 .dot, .fs-scr .lx-oc-head b .dot{color:var(--fs-orange);}
+  .fs-scr .btn-primary{background:var(--fs-orange); color:var(--fs-cta-ink); border-color:transparent; font-weight:800; box-shadow:0 8px 16px -8px rgba(168,90,5,.5);}
+  .fs-cta::after{content:"\2192"; font-weight:800;}
+  html[dir="rtl"] .fs-cta::after{content:"\2190";}
+  .fs-top{justify-content:space-between; gap:12px; padding-bottom:12px;}
+  .fs-top .cp-back{min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; text-align:start;}
+  .fs-top-r{flex:0 0 auto; font-weight:800; font-size:13px; color:var(--ink-soft);}
+  /* hero (Course Report): purple gradient, orange + white dot texture, the clay character on its goal disc */
+  .fs-hero{position:relative; overflow:hidden; border-radius:26px; color:#fff; background:linear-gradient(140deg, var(--fs-purple), var(--fs-purple-2)); padding:22px 20px 56px; min-height:216px; box-shadow:0 18px 34px -20px rgba(90,63,214,.6);}
+  .fs-hero::before{content:""; position:absolute; inset:0; pointer-events:none; background-image:radial-gradient(circle, rgba(255,165,61,.55) 0 2.5px, transparent 3px), radial-gradient(circle, rgba(255,255,255,.28) 0 2px, transparent 2.5px); background-size:160px 130px, 110px 96px; background-position:20px 26px, 70px 70px;}
+  .fs-hero > :not(.fs-art){position:relative; z-index:1;}
+  .fs-pill{display:inline-flex; align-items:center; gap:7px; max-width:64%; background:rgba(0,0,0,.26); color:#fff; border-radius:999px; padding:5px 12px; font-weight:800; font-size:10.5px; letter-spacing:.1em; text-transform:uppercase; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .fs-hero h1{font-size:30px; font-weight:700; line-height:1.1; letter-spacing:-.02em; margin:14px 0 0; max-width:62%; color:#fff; text-wrap:balance; text-shadow:none;}
+  .fs-hero h1 .dot{color:var(--fs-orange);}
+  .fs-sub{font-family:'Fredoka',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; font-weight:500; font-size:14px; line-height:1.4; color:#fff; opacity:.95; margin:8px 0 0; max-width:58%; display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden;}
+  .fs-art{position:absolute; inset-inline-end:-6px; bottom:-6px; width:132px; height:150px; pointer-events:none;}
+  .fs-disc{position:absolute; left:50%; bottom:-30px; width:150px; aspect-ratio:1; border-radius:50%; background:var(--g); opacity:.95; transform:translateX(-50%);}
+  .fs-art img{position:absolute; inset:0; width:100%; height:100%; object-fit:contain; object-position:bottom; filter:drop-shadow(0 8px 12px rgba(0,0,0,.25));}
+  .fs-art.sm{width:116px; height:134px;}
+  .fs-art.sm .fs-disc{width:130px;}
+  .fs-stats{margin:-30px 10px 0; gap:10px; z-index:2;}
+  .fs-stats .lx-stat{border-radius:16px; padding:10px 12px; box-shadow:0 1px 2px rgba(26,20,16,.05), 0 10px 28px -14px rgba(26,20,16,.18);}
+  .fs-stats .lx-stat span{font-size:9.5px;}
+  .fs-stats .lx-stat b small{font-family:'Nunito',-apple-system,sans-serif; font-weight:600; font-size:11px; color:var(--ink-soft); margin-inline-start:3px;}
+  /* next step */
+  .fs-scr .cd-next-card{margin-top:24px; border:1px solid var(--border-soft); border-radius:22px; padding:20px 18px 18px; box-shadow:0 1px 2px rgba(26,20,16,.05), 0 10px 28px -14px rgba(26,20,16,.18); display:flex; flex-direction:column; gap:10px;}
+  .fs-scr .cd-next-card .cd-next-eb{color:var(--fs-orange-ink);}
+  .fs-scr .cd-next-card h2{font-size:20px; line-height:1.2; margin:0;}
+  .fs-scr .cd-obj{font-size:14px; line-height:1.55; display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden;}
+  .fs-chips{display:flex; flex-wrap:wrap; gap:6px; margin:2px 0 0;}
+  .fs-chips span{display:inline-flex; align-items:center; gap:4px; font-weight:800; font-size:11.5px; padding:4px 10px; border-radius:999px; background:var(--bg-sunken); color:var(--ink-soft);}
+  .fs-chips span svg{width:12px; height:12px;}
+  .fs-chips span.cur{background:var(--fs-orange-soft); color:var(--fs-orange-ink);}
+  .fs-chips span.done{background:color-mix(in srgb, var(--fs-green) 24%, var(--bg-elevated)); color:var(--ink);}
+  .fs-btnrow{margin-top:6px;}
+  /* IELTS: four skills */
+  .fs-tiles{display:grid; grid-template-columns:1fr 1fr; gap:14px;}
+  .fs-tile{all:unset; box-sizing:border-box; cursor:pointer; min-width:0; background:var(--bg-elevated); border:1px solid var(--border-soft); border-radius:20px; padding:14px; box-shadow:0 1px 2px rgba(26,20,16,.05), 0 10px 28px -14px rgba(26,20,16,.18); display:flex; flex-direction:column; gap:8px; color:var(--ink); text-align:start; -webkit-tap-highlight-color:transparent;}
+  .fs-tile.on{border:2px solid var(--fs-purple); padding:13px;}
+  .fs-tile:focus-visible, .fs-opt:focus-visible, .fs-nextrow:focus-visible{outline:2px solid var(--fs-purple); outline-offset:2px;}
+  .fs-tt{display:flex; justify-content:space-between; align-items:flex-start; gap:6px;}
+  .fs-ico{flex:none; width:40px; height:40px; border-radius:13px; display:grid; place-items:center; background:color-mix(in srgb, var(--c) 22%, var(--bg-elevated)); color:color-mix(in srgb, var(--c) 70%, var(--ink));}
+  .fs-ico svg{width:22px; height:22px;}
+  .fs-ring{position:relative; flex:none; width:46px; height:46px;}
+  .fs-ring svg{width:46px; height:46px; transform:rotate(-90deg);}
+  html[dir="rtl"] .fs-ring svg{transform:scaleX(-1) rotate(-90deg);}
+  .fs-ring circle{fill:none; stroke-width:4.5;}
+  .fs-ring .bg{stroke:var(--fs-purple-soft);}
+  .fs-ring .fg{stroke:var(--fs-purple); stroke-linecap:round;}
+  .fs-ring .fg.z{display:none;}
+  .fs-ring b{position:absolute; inset:0; display:grid; place-items:center; font-weight:800; font-size:10.5px; font-variant-numeric:tabular-nums; color:var(--ink);}
+  .fs-tn{font-size:16px; line-height:1.15; margin-top:4px;}
+  .fs-tile small{font-size:12px; line-height:1.35; color:var(--ink-soft);}
+  .fs-tbtn{margin-top:auto; display:flex; align-items:center; justify-content:center; border-radius:999px; padding:9px; font-weight:800; font-size:12.5px; background:var(--fs-orange); color:var(--fs-cta-ink); box-shadow:0 8px 16px -8px rgba(168,90,5,.5);}
+  .fs-tbtn.soft{background:var(--fs-orange-soft); color:var(--fs-orange-ink); box-shadow:none;}
+  /* the course map: numbered rows */
+  .fs-scr .cd-chapters .cp-ch{margin-top:10px; border-radius:16px; border:1px solid var(--border-soft); box-shadow:none;}
+  .fs-scr .cd-chapters .cp-ch.cur{border-color:color-mix(in srgb, var(--fs-orange) 70%, var(--border-soft));}
+  .fs-scr .cp-ch > .cp-band{background:none; color:var(--ink); padding:13px 14px; gap:12px;}
+  .fs-scr .cp-band .cp-ch-n{width:32px; height:32px; background:var(--fs-purple-soft); color:var(--fs-purple-ink); font-size:15px; box-shadow:none;}
+  .fs-scr .cp-band .cp-ch-n svg{width:15px; height:15px;}
+  .fs-scr .cp-ch.locked > .cp-band .cp-ch-n{background:var(--bg-sunken); color:var(--ink-faint);}
+  .fs-scr .cp-ch.done > .cp-band .cp-ch-n{background:var(--fs-green); color:#fff;}
+  .fs-scr .cp-ch.cur > .cp-band .cp-ch-n{background:var(--fs-orange); color:var(--fs-cta-ink); box-shadow:none;}
+  .fs-scr .cd-chapters .cp-band .cp-ch-text small{display:block; font-size:10px; font-weight:800; letter-spacing:.1em; text-transform:uppercase; color:var(--ink-soft); opacity:1; margin:0 0 3px;}
+  .fs-scr .cp-band .cp-ch-text b{display:block; font-size:14.5px; font-weight:700; line-height:1.3;}
+  .fs-scr .cp-band .cp-ch-chev{width:26px; height:26px; background:var(--bg-sunken); color:var(--ink-soft);}
+  .fs-now{flex:none; font-weight:800; font-size:11px; color:var(--fs-orange-ink); background:var(--fs-orange-soft); border-radius:999px; padding:3px 9px;}
+  .fs-scr .cl-rows{padding:2px 14px 10px;}
+  .fs-scr .cl-no{width:32px; height:32px; border:none; background:var(--fs-purple-soft); color:var(--fs-purple-ink);}
+  .fs-scr .cl-row.cp .cl-no, .fs-scr .cl-row.mk .cl-no{border:1.5px dashed #F5B92E; background:none; color:#b07a00;}
+  .fs-scr .cl-row.lock .cl-no{border:none; background:var(--bg-sunken); color:var(--ink-faint);}
+  .fs-scr .cl-row.done .cl-no{border:none; background:var(--fs-green); color:#fff;}
+  .fs-scr .cl-row.cur .cl-no{border:none; background:var(--fs-orange); color:var(--fs-cta-ink);}
+  .fs-scr .cl-tag{color:var(--fs-orange-ink); background:var(--fs-orange-soft);}
+  .fs-scr .cd-exgoal{padding:10px 0 12px;}
+  .fs-scr .cd-exgoal p{font-size:14px; font-weight:600; color:var(--ink-soft);}
+  .fs-scr .cd-final{margin-top:10px; border-radius:16px; border:1px solid var(--border-soft); box-shadow:none;}
+  .fs-scr .cd-life, .fs-scr .cd-chapters{margin-top:40px;}
+  .fs-scr .cd-src{margin-top:16px;}
+  /* lesson page: episode header, goal box, lesson plan rows, next lesson */
+  .fs-ep{padding-bottom:24px; min-height:200px;}
+  .fs-ep h1.cl-title{font-size:32px; line-height:1.08;}
+  .fs-ep.long h1.cl-title{font-size:25px; line-height:1.12;}
+  .fs-ep .fs-sub{-webkit-line-clamp:2;}
+  .course-lesson .fs-trackbox .fs-opt{padding:10px 12px;}
+  .course-lesson .fs-trackbox .fs-ot small{display:none;}
+  .course-lesson .fs-trackbox .fs-gic{width:30px; height:30px; border-radius:9px;}
+  .fs-scr .cd-exgoal p{display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden;}
+  .fs-chip{display:inline-flex; align-items:center; gap:6px; background:rgba(255,255,255,.95); color:#1A1410; border-radius:999px; padding:5px 11px; font-weight:800; font-size:11.5px; margin-top:16px; max-width:62%;}
+  .fs-chip svg{flex:none;}
+  .fs-goal{margin-top:24px; background:var(--fs-purple-soft); border-radius:22px; padding:18px 20px 20px; position:relative; overflow:hidden;}
+  .fs-goal::after{content:""; position:absolute; inset-inline-end:-22px; top:-22px; width:76px; height:76px; border-radius:50%; background:var(--fs-orange); opacity:.85;}
+  .fs-goal .lx-eyebrow, .fs-scr .fs-goal .lx-eyebrow{color:var(--fs-purple-ink); position:relative;}
+  .fs-goal p{margin:8px 0 0; font-family:'Fredoka',-apple-system,sans-serif; font-weight:600; font-size:17px; line-height:1.4; color:var(--fs-purple-ink); max-width:88%; position:relative;}
+  .fs-scr .cl-steps{gap:10px;}
+  .fs-scr .cl-step{align-items:center; gap:12px; padding:14px; border-radius:16px; border:1px solid var(--border-soft); box-shadow:none;}
+  .fs-scr .cl-step.cur{border:2px solid var(--fs-orange); padding:13px; box-shadow:0 12px 24px -18px rgba(168,90,5,.55);}
+  .fs-scr .cl-sn{width:32px; height:32px; background:var(--fs-purple-soft); color:var(--fs-purple-ink); font-size:15px; font-weight:600;}
+  .fs-scr .cl-sn svg{width:15px; height:15px;}
+  .fs-scr .cl-step.cur .cl-sn{background:var(--fs-orange); color:var(--fs-cta-ink);}
+  .fs-scr .cl-step.done .cl-sn{background:var(--fs-green); color:#fff;}
+  .fs-k{display:block; font-size:10px; font-weight:800; letter-spacing:.1em; text-transform:uppercase; color:var(--ink-soft); margin-bottom:2px;}
+  .fs-scr .cl-step.cur .fs-k{color:var(--fs-orange-ink);}
+  .fs-scr .cl-sb b{font-size:15.5px; font-weight:600; line-height:1.2;}
+  .fs-scr .cl-sb p{font-size:12.5px; margin-top:2px; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;}
+  .fs-scr .cl-step.done .cl-sb b, .fs-scr .cl-step.done .cl-sb p{opacity:.8;}
+  .fs-scr .cl-min{padding-top:0; font-size:11.5px; color:var(--ink-soft);}
+  .fs-scr .cl-redo{color:var(--fs-purple-ink);}
+  .fs-nextrow{display:flex; align-items:center; gap:12px; width:100%; box-sizing:border-box; background:var(--bg-elevated); border:1px solid var(--border-soft); border-radius:18px; padding:13px 14px; box-shadow:0 1px 2px rgba(26,20,16,.05), 0 10px 28px -14px rgba(26,20,16,.18); color:var(--ink); text-align:start; cursor:pointer;}
+  .fs-n{flex:none; width:32px; height:32px; border-radius:50%; background:var(--fs-purple-soft); color:var(--fs-purple-ink); display:grid; place-items:center; font-family:'Fredoka',-apple-system,sans-serif; font-weight:600; font-size:15px;}
+  .fs-n svg{width:15px; height:15px;}
+  .fs-nr-t{flex:1; min-width:0; display:flex; flex-direction:column; gap:2px;}
+  .fs-nr-t small{font-size:10px; font-weight:800; letter-spacing:.12em; text-transform:uppercase; color:var(--ink-soft);}
+  .fs-nr-t b{font-size:15px; font-weight:600; line-height:1.25; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .fs-go{flex:none; width:32px; height:32px; border-radius:50%; background:var(--ink); color:var(--bg); display:grid; place-items:center; font-weight:800;}
+  .course-lesson.fs-scr .screen{padding-bottom:132px;}
+  /* selection rows (approved pattern 4) */
+  .fs-opts, .lx-course .lx-track{display:flex; flex-direction:column; gap:10px;}
+  .fs-opt{display:flex; align-items:center; gap:12px; width:100%; box-sizing:border-box; margin:0; background:var(--bg-elevated); border:2px solid var(--border-soft); border-radius:18px; padding:13px 14px; color:var(--ink); font:inherit; text-align:start; cursor:pointer; box-shadow:none; transition:border-color .15s ease, background-color .15s ease; -webkit-tap-highlight-color:transparent;}
+  .fs-opt:active{transform:scale(.99);}
+  .fs-gic{flex:none; width:36px; height:36px; border-radius:11px; display:grid; place-items:center; background:color-mix(in srgb, var(--c) 18%, var(--bg-elevated)); color:var(--c);}
+  .fs-gic svg{width:18px; height:18px;}
+  .fs-ot{flex:1; min-width:0; display:flex; flex-direction:column; gap:2px;}
+  .fs-ot b{font-weight:800; font-size:15px; line-height:1.25;}
+  .fs-ot small{font-weight:600; font-size:12.5px; line-height:1.35; color:var(--ink-soft);}
+  .fs-chk{flex:none; width:22px; height:22px; box-sizing:border-box; border-radius:50%; border:2px solid var(--border); display:grid; place-items:center; color:#fff;}
+  .fs-chk svg{width:13px; height:13px;}
+  .fs-opt.on{border-color:var(--fs-purple); background:var(--fs-sel);}
+  .fs-opt.on .fs-chk{border-color:var(--fs-purple); background:var(--fs-purple); box-shadow:inset 0 0 0 4px var(--bg-elevated);}
+  .fs-opt.on .fs-chk.multi{box-shadow:none;}
+  .fs-trackbox p{font-size:12.5px; color:var(--ink-soft); margin:12px 2px 0; line-height:1.45;}
+  .course-lesson .fs-trackbox{margin-top:20px;}
 </style>
 
 <div id="app"></div>
@@ -11912,10 +12059,10 @@ function renderDiagMotivation(){
           const isSel = sel.includes(o.value);
           const atCap = sel.length>=3 && !isSel;
           return `
-          <button class="opt ${isSel?'selected':''}" data-action="diag-goal-toggle" data-value="${o.value}" ${atCap?'disabled':''} style="${atCap?'opacity:.4;':''}">
-            <span class="opt-ic">${ICONS[o.icon]}</span>
-            <span><span class="opt-main">${esc(L(o.label.en,o.label.tr,o.label.fa,o.label.es))}</span><br><span class="opt-sub">${esc(L(o.sub.en,o.sub.tr,o.sub.fa,o.sub.es))}</span></span>
-            ${isSel ? `<span style="margin-left:auto; flex-shrink:0; color:var(--accent-strong);">${ICONS.check}</span>` : ''}
+          <button class="fs-opt${isSel?' on':''}" data-action="diag-goal-toggle" data-value="${o.value}" aria-pressed="${isSel?'true':'false'}" ${atCap?'disabled':''} style="${atCap?'opacity:.4;':''}">
+            <span class="fs-gic" style="--c:${({career:'#CB7D4D', everyday:'#C9978A', exam:'#8B7273', immigration:'#48796B', travel:'#4C6C82'})[o.value] || '#7C5CFC'};">${ICONS[o.icon]}</span>
+            <span class="fs-ot"><b>${esc(L(o.label.en,o.label.tr,o.label.fa,o.label.es))}</b><small>${esc(L(o.sub.en,o.sub.tr,o.sub.fa,o.sub.es))}</small></span>
+            <span class="fs-chk multi" aria-hidden="true">${isSel ? ICONS.check : ''}</span>
           </button>`;
         }).join('')}
       </div>
@@ -26847,7 +26994,7 @@ function courseExamIntroHtml(c){
     </div>
   </div>`;
   const chev = LANG==='fa' ? '‹' : '›', cur = (state.progress.courseTrack || {})[c.id];
-  const pick = a=>{ const s = cl(a), i = s.indexOf(':'); return `<button class="cs-pick${cur===a.track ? ' rec' : ''}" data-action="course-intro-pick" data-cid="${c.id}" data-track="${a.track}"><b>${esc(i > 0 ? s.slice(0, i) : s)} ${chev}</b>${i > 0 ? `<span>${esc(s.slice(i+1).trim())}</span>` : ''}</button>`; };
+  const pick = a=>{ const s = cl(a), i = s.indexOf(':'); return courseOptRowHtml(c, a.track, cur===a.track, 'course-intro-pick', i > 0 ? s.slice(0, i) : s, i > 0 ? s.slice(i+1).trim() : ''); };
   return `<div class="fade-in course-intro lx-page lx-course">
     ${coursePathHeadHtml()}
     <h1 class="display cp-title" style="padding-bottom:10px;">${esc(cl(c.title))}</h1>
@@ -26963,14 +27110,22 @@ function renderCourseAbout(c){
 }
 // The course level answers (spec v2 S1 intro.b1 / intro.b2), shared by the first-open intro and the "Course level" footer link.
 // `mark` gets the recommended style (orange outline + tint): the placement level on first open, the saved level later.
+// Selection rows (FEschool design v4, approved pattern 4): a goal-colour icon tile, the name and one short line, a check that fills
+// purple when chosen. Used for every version / test-type choice (IELTS Academic / General Training, HR's two versions).
+const COURSE_TRACK_ICONS = {academic:['#8B7273','M2 9l10-5 10 5-10 5zM6 11v5c3.5 2.5 8.5 2.5 12 0v-5'], gt:['#48796B','M12 3a9 9 0 100 18 9 9 0 000-18zM3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18'],
+  B1:['', 'M9 6h11M9 12h11M9 18h11M4 6h.01M4 12h.01M4 18h.01'], B2:['', 'M3 18l6-6 4 4 8-9M15 7h6v6'], full:['', 'M5 12l5 5 9-10'], express:['', 'M13 3L5 13h6l-1 8 8-10h-6z']};
+function courseTrackIconHtml(c, t){ const ic = COURSE_TRACK_ICONS[t] || ['', 'M12 7a5 5 0 100 10 5 5 0 000-10z'], col = ic[0] || COURSE_GOAL_COLORS[courseGoalKey(c)];
+  return `<span class="fs-gic" style="--c:${col};"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${ic[1]}"/></svg></span>`; }
+function courseOptRowHtml(c, t, on, action, name, sub, extra){
+  return `<button class="fs-opt${on ? ' on' : ''}" data-action="${action}" data-cid="${c.id}" data-track="${t}" aria-pressed="${on ? 'true' : 'false'}"${extra || ''}>${courseTrackIconHtml(c, t)}<span class="fs-ot"><b dir="${courseTD()}">${esc(name)}</b>${sub ? `<small dir="${courseTD()}">${esc(sub)}</small>` : ''}</span><span class="fs-chk" aria-hidden="true"></span></button>`; }
 function courseTrackPicksHtml(c, mark, action){
-  const chev = LANG==='fa' ? '‹' : '›';
   const names = {B1:[CL('Examples first','Önce örnekler','اول نمونه‌ها','Primero ejemplos'), CL('Model texts and sentence starters when you write.','Yazarken örnek metin ve cümle başlangıçları.','موقع نوشتن، متن نمونه و شروع جمله داری.','Textos modelo y comienzos de frase cuando escribes.')],
     B2:[CL('The harder version','Daha zor versiyon','نسخه‌ی سخت‌تر','La versión más difícil'), CL('Extra B2 grammar, no sentence starters.','Ek B2 dilbilgisi, cümle başlangıcı yok.','گرامر اضافه‌ی B2، بدون شروع جمله.','Gramática B2 extra, sin comienzos de frase.')],
-    full:[CL('Every lesson','Her ders','همه‌ی درس‌ها','Todas las lecciones'), ''], express:[CL('The essentials','Temel olanlar','نکته‌های اصلی','Lo esencial'), '']};
+    full:[CL('Every lesson','Her ders','همه‌ی درس‌ها','Todas las lecciones'), ''], express:[CL('The essentials','Temel olanlar','نکته‌های اصلی','Lo esencial'), ''],
+    academic:[CL('Academic','Academic','آکادمیک','Academic'), ''], gt:[CL('General Training','General Training','جنرال (General Training)','General Training'), '']};
   return (c.tracks || []).map(t=>{ const ta = courseTrackAnswer(c, t), ts = ta ? cl(ta) : '', ti = ts.indexOf(':');
     const n = ta ? (ti > 0 ? [ts.slice(0, ti), ts.slice(ti+1).trim()] : [ts, '']) : (names[t] || [t, '']);
-    return `<button class="cs-pick${mark===t ? ' rec' : ''}" data-action="${action}" data-cid="${c.id}" data-track="${t}"><b>${esc(n[0])} ${chev}</b>${n[1] ? `<span>${esc(n[1])}</span>` : ''}</button>`; }).join('');
+    return courseOptRowHtml(c, t, mark===t, action, n[0], n[1]); }).join('');
 }
 function courseTrackQuestionHtml(c){
   const tracks = c.tracks || []; if(!tracks.length) return '';
@@ -28810,49 +28965,80 @@ function courseLessonTitleLine(cid, uid){
 // The length of a mock test as "2 h 46 min".
 function courseHoursText(min){ const h = Math.floor(min / 60), m = min % 60; return h ? CL(h+' h'+(m ? ' '+m+' min' : ''), h+' sa'+(m ? ' '+m+' dk' : ''), h+' ساعت'+(m ? ' و '+m+' دقیقه' : ''), h+' h'+(m ? ' '+m+' min' : '')) : courseMinText(m); }
 
-/* ---------- the lesson page (BUILD-PLAN B3; replaces the pause screen and the lesson-map sheet) ---------- */
+/* ---------- the lesson page (BUILD-PLAN B3; replaces the pause screen and the lesson-map sheet) ----------
+   FEschool design v4 (Farin approved 2026-10-27, artifact 5kYyAPZ8): episode header (pill "01 · Lesson 1.1", big title with the
+   orange dot, the hook question, "~N min · 3 steps", the course character on its goal disc), the purple-soft goal box, "3 steps ·
+   Lesson plan." as numbered rows, the next-lesson strip and one orange button pinned at the bottom. */
+// "01": the lesson's place among the course's lessons (chapter reviews and mock tests are not counted).
+function courseLessonSeq(cid, uid){ const o = courseOrder(cid).filter(id=>!courseIsMock(cid, id) && !courseIsCp(cid, id)), i = o.indexOf(uid); return i >= 0 ? String(i + 1).padStart(2, '0') : ''; }
+// The hook line: the Learn page's hook, else the objective's first clause (Turkish and Persian put the verb last, so they are cut
+// only at a colon; English and Spanish at the first comma, semicolon or colon).
+function courseHookText(cid, uid){
+  const ex = courseUnitItems(uid).explain, h = ex && ex.hook ? cl(courseGt(cid, ex, 'hook')) : '';
+  if(h) return h;
+  const o = courseUnitObjective(cid, uid); if(!o) return '';
+  const m = (LANG==='tr' || LANG==='fa') ? o.match(/^[^:؛]+(?=[:؛])/) : o.match(/^[^,;:]+(?=[,;:])/);
+  return m ? m[0].trim() + '.' : o;
+}
+const COURSE_CLOCK_SVG = '<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2M9 2h6"/></svg>';
+// The next-lesson strip under the lesson plan: number, "Lesson 1.2", its title, an arrow; opens that lesson page (or the gate).
+function courseNextStripHtml(c, nu){
+  const cid = c.id, f = courseFindUnit(cid, nu); if(!f) return '';
+  const isCp = courseIsCp(cid, nu), isMk = courseIsMock(cid, nu), ui = f.m.units.findIndex(u=>u.id===nu);
+  const n = isCp ? ICONS.star : isMk ? ICONS.pen : '<bdi>' + (ui + 1) + '</bdi>';
+  const small = isCp ? courseFinaleName(cid) : courseLessonHeadName(cid, nu), t = isCp ? courseLessonLine(cid, nu) : cl(f.u.title);
+  return `<div class="lx-sec fs-sec fs-nextsec"><div class="lx-head"><div class="lx-eyebrow">${CL('Next lesson','Sıradaki ders','درس بعدی','Siguiente lección')}</div></div>
+    <button class="fs-nextrow" data-action="course-lesson-open" data-cid="${cid}" data-uid="${esc(nu)}"><span class="fs-n">${n}</span><span class="fs-nr-t"><small>${esc(small)}</small><b class="display" dir="${courseTD()}">${esc(t)}</b></span><span class="fs-go" aria-hidden="true">${LANG==='fa' ? '←' : '→'}</span></button></div>`;
+}
 function renderCourseLesson(){
   const vp = state.viewParams || {}, cid = vp.cid, uid = vp.uid, f = courseFindUnit(cid, uid);
   if(!f) return renderNotFound();
   const c = f.c;
   if(!courseUnitAccess(c, uid)) return renderCourseGate();
   const isCp = courseIsCp(cid, uid), isMk = !!f.u.isMock, mi = courseModuleIndex(c, uid), parts = courseParts(cid, uid), nx = courseNextInUnit(cid, uid);
-  const eyebrow = isMk ? courseLessonName(cid, uid) : courseChapterName(mi, c) + courseSep() + (isCp ? courseFinaleName(cid) : CL('Lesson '+courseUnitNo(cid, uid), 'Ders '+courseUnitNo(cid, uid), 'درس '+courseUnitNo(cid, uid), 'Lección '+courseUnitNo(cid, uid)));
+  const seq = isCp || isMk ? '' : courseLessonSeq(cid, uid);
+  const pill = isMk ? courseLessonName(cid, uid) : isCp ? courseFinaleName(cid) : (seq ? seq + courseSep() : '') + CL('Lesson '+courseUnitNo(cid, uid), 'Ders '+courseUnitNo(cid, uid), 'درس '+courseUnitNo(cid, uid), 'Lección '+courseUnitNo(cid, uid));
   const title = isMk ? cl(f.u.title) : isCp ? courseLessonLine(cid, uid) : cl(f.u.title);
-  const obj = courseUnitObjective(cid, uid), scene = (isCp || isMk) ? courseSceneText(cid, f.u) : '';
-  const objBox = obj ? `<div class="cl-obj"><div class="lx-eyebrow"><span aria-hidden="true">🎯</span> ${CL('Your goal in this lesson','Bu dersteki hedefin','هدفت در این درس','Tu objetivo en esta lección')}</div><p dir="${courseTD()}">${esc(obj)}</p></div>`
-    : scene ? `<div class="cl-obj"><div class="lx-eyebrow">${isMk ? CL('This mock test','Bu deneme sınavı','این آزمون آزمایشی','Este simulacro') : CL('This chapter review','Bu bölüm tekrarı','این مرور فصل','Este repaso del capítulo')}</div><p dir="${courseTD()}">${esc(scene)}</p></div>`
-    : f.u.cando ? `<div class="cl-obj"><div class="lx-eyebrow">${CL('By the end you can say','Sonunda şunu söyleyebilirsin','در پایان می‌توانی بگویی','Al final podrás decir')}</div><p dir="${courseTD()}">${esc(courseQuote(cl(f.u.cando)))}</p></div>` : '';
+  const obj = courseUnitObjective(cid, uid), scene = (isCp || isMk) ? courseSceneText(cid, f.u) : '', hook = isCp || isMk ? '' : courseHookText(cid, uid);
+  const objBox = obj ? `<div class="cl-obj fs-goal"><div class="lx-eyebrow">${CL('Your goal in this lesson','Bu dersteki hedefin','هدفت در این درس','Tu objetivo en esta lección')}</div><p dir="${courseTD()}">${esc(obj)}</p></div>`
+    : scene ? `<div class="cl-obj fs-goal"><div class="lx-eyebrow">${isMk ? CL('This mock test','Bu deneme sınavı','این آزمون آزمایشی','Este simulacro') : CL('This chapter review','Bu bölüm tekrarı','این مرور فصل','Este repaso del capítulo')}</div><p dir="${courseTD()}">${esc(scene)}</p></div>`
+    : f.u.cando ? `<div class="cl-obj fs-goal"><div class="lx-eyebrow">${CL('By the end you can say','Sonunda şunu söyleyebilirsin','در پایان می‌توانی بگویی','Al final podrás decir')}</div><p dir="${courseTD()}">${esc(courseQuote(cl(f.u.cando)))}</p></div>` : '';
   const rows = parts.map((p, i)=>{
     const done = p.cards.every(x=>x.done), cur = !!(nx && nx.si===p.si), mins = coursePartMinutes(cid, uid, p.si);
     const redo = done && typeof HANDLERS['course-redo'] === 'function' ? `<button class="cl-redo" data-action="course-redo" data-cid="${cid}" data-uid="${esc(uid)}" data-si="${p.si}" data-back="lesson">${CL('Do it again','Yeniden yap','دوباره انجامش بده','Hazlo otra vez')}</button>` : '';
     const review = p.cards.some(x=>x.type==='writing') ? courseReviewBadgeHtml(cid, uid) : '';
-    return `<div class="cl-step${done ? ' done' : cur ? ' cur' : ''}" data-si="${p.si}">
+    const k = cur ? CL('You are here','Buradasın','اینجایی','Estás aquí') : done ? CL('Done','Bitti','انجام شد','Hecho') : '';
+    return `<div class="cl-step fs-row${done ? ' done' : cur ? ' cur' : ''}" data-si="${p.si}">
       <span class="cl-sn">${done ? ICONS.check : i+1}</span>
-      <div class="cl-sb">${cur ? `<span class="cl-here">${esc(courseUp(CL('You are here','Buradasın','اینجایی','Estás aquí')))}</span>` : ''}
-        <b class="display">${esc(courseStepName(cid, uid, p.si))}</b><p dir="${courseTD()}">${esc(courseStepLine(cid, uid, p))}</p>${review}${redo}</div>
+      <div class="cl-sb">${k ? `<span class="fs-k">${esc(k)}</span>` : ''}<b class="display">${esc(courseStepName(cid, uid, p.si))}</b><p dir="${courseTD()}">${esc(courseStepLine(cid, uid, p))}</p>${review}${redo}</div>
       <span class="cl-min">${esc(courseMinText(mins))}</span>
     </div>`;
   }).join('');
   let btn;
-  if(nx) btn = `<button class="btn btn-primary cs-main" data-action="course-lesson-go" data-cid="${cid}" data-uid="${esc(uid)}">${esc(courseStepBtnLabel(cid, uid, nx))}</button>`;
-  else {
-    const nu = courseUnitAfter(cid, uid);
-    btn = nu ? `<button class="btn btn-primary cs-main" data-action="course-go" data-cid="${cid}" data-uid="${esc(nu)}">${esc(courseNextLabel(cid, nu))}</button>`
-      : `<button class="btn btn-primary cs-main" data-action="course-close" data-cid="${cid}">${CL('Back to the course','Kursa dön','برگشت به دوره','Volver al curso')}</button>`;
-  }
-  return `<div class="fade-in course-lesson lx-page lx-course">
-    <div class="cp-head"><button class="cp-back" data-action="course-close" data-cid="${cid}">${LANG==='fa' ? '›' : '‹'} <bdi>${esc(cl(c.title))}</bdi></button></div>
+  const nu = courseUnitAfter(cid, uid);
+  if(nx) btn = `<button class="btn btn-primary cs-main fs-cta" data-action="course-lesson-go" data-cid="${cid}" data-uid="${esc(uid)}">${esc(courseStepBtnLabel(cid, uid, nx))}</button>`;
+  else btn = nu ? `<button class="btn btn-primary cs-main fs-cta" data-action="course-go" data-cid="${cid}" data-uid="${esc(nu)}">${esc(courseNextLabel(cid, nu))}</button>`
+      : `<button class="btn btn-primary cs-main fs-cta" data-action="course-close" data-cid="${cid}">${CL('Back to the course','Kursa dön','برگشت به دوره','Volver al curso')}</button>`;
+  const total = coursePartMinutes(cid, uid, -1), n = parts.length;
+  const chip = (total ? (isMk ? courseHoursText(total) : '~' + courseMinText(Math.max(5, Math.round(total / 5) * 5))) : '') + (total && n ? courseSep() : '') + (n ? CL(n+' steps', n+' adım', n+' قدم', n+' pasos') : '');
+  const plan = n ? `<div class="lx-sec fs-sec fs-plan"><div class="lx-head"><div class="lx-eyebrow">${esc(CL(n+' steps', n+' adım', n+' قدم', n+' pasos'))}</div><h2 class="display">${CL('Lesson plan','Ders planı','برنامه‌ی درس','Plan de la lección')}<span class="dot">.</span></h2></div>
+      <div class="cl-steps">${rows}</div></div>` : '';
+  return `<div class="fade-in course-lesson lx-page lx-course fs-scr">
+    <div class="cp-head fs-top"><button class="cp-back" data-action="course-close" data-cid="${cid}">${LANG==='fa' ? '›' : '‹'} <bdi>${esc(cl(c.title))}</bdi></button>${mi >= 0 && !isMk ? `<span class="fs-top-r"><bdi>${esc(courseChapterName(mi, c))}</bdi></span>` : ''}</div>
     <div class="screen" style="padding-top:0;">
-      <div class="cl-eyebrow">${esc(courseUp(eyebrow))}</div>
-      <h1 class="display cl-title"><bdi>${esc(title)}</bdi><span class="dot">.</span></h1>
+      <header class="fs-hero fs-ep${title.length > 22 ? ' long' : ''}">
+        <span class="fs-pill"><bdi>${esc(pill)}</bdi></span>
+        <h1 class="display cl-title"><bdi>${esc(title)}</bdi><span class="dot">.</span></h1>
+        ${hook ? `<p class="fs-sub" dir="${courseTD()}">${esc(hook)}</p>` : ''}
+        ${chip ? `<span class="fs-chip">${COURSE_CLOCK_SVG}<span dir="${courseTD()}">${esc(chip)}</span></span>` : ''}
+        ${courseArtHtml(c, true)}
+      </header>
       ${f.u.gt && c.trackSwitch ? courseIeTrackBoxHtml(c, false) : ''}
       ${objBox}
       ${courseLazyLessonNote(c, uid)}
       ${isMk ? courseMockRulesHtml(cid, uid) : ''}
-      <div class="cl-steps-h">${esc(courseUp(CL(parts.length+' steps', parts.length+' adım', parts.length+' قدم', parts.length+' pasos')))}</div>
-      <div class="cl-steps">${rows}</div>
-      <p class="cl-stop">${nx ? CL('You can stop after any step. We keep your place.','Her adımdan sonra durabilirsin. Kaldığın yeri saklarız.','بعد از هر قدم می‌توانی دست نگه داری. جایت را نگه می‌داریم.','Puedes parar después de cada paso. Guardamos tu sitio.') : CL('Lesson done. Every step stays open to do again.','Ders bitti. Her adımı yeniden yapabilirsin.','درس تمام شد. هر قدم را می‌توانی دوباره انجام بدهی.','Lección terminada. Puedes repetir cada paso.')}</p>
+      ${plan}
+      ${nu ? courseNextStripHtml(c, nu) : ''}
     </div>
     <div class="cs-foot">${btn}</div>
   </div>`;
@@ -29018,53 +29204,113 @@ function courseLessonMinutes(c){
   return first ? Math.max(5, Math.round(coursePartMinutes(c.id, first, -1) / 5) * 5) : 0;
 }
 function coursePromiseLead(c){ const s = cl(c.promise), m = s.match(/^[\s\S]*?[.!?](?=\s|$)/); return m ? m[0] : s; }
+/* ---------- FEschool design v4 (Farin approved 2026-10-27, artifact 5kYyAPZ8: "all good, also remember give more free space") ----------
+   The Course Report look: purple hero with the orange dot texture, the course's clay character on its goal-colour disc (PNG alpha
+   kept), stat tiles over the hero edge, the next-step card with its 3 step chips, the IELTS skill tiles with progress rings, numbered
+   chapter rows. Goal colours = english app/course-summary GOAL_COLORS. */
+const COURSE_GOAL_COLORS = {career:'#CB7D4D', everyday:'#C9978A', exam:'#8B7273', immigration:'#48796B', travel:'#4C6C82'};
+function courseGoalKey(c){ const id = String((c && c.id) || '');
+  if(courseIsExam(c) || /ielts|dele|toefl|exam/.test(id)) return 'exam';
+  if(/^hr($|-)|business|interview|career|market|sales/.test(id)) return 'career';
+  if(/travel|trip/.test(id)) return 'travel';
+  if(/immig|abroad/.test(id)) return 'immigration';
+  return 'everyday'; }
+function courseArtHtml(c, small){ const g = courseGoalKey(c);
+  return `<div class="fs-art${small ? ' sm' : ''}" aria-hidden="true" style="--g:${COURSE_GOAL_COLORS[g]};"><i class="fs-disc"></i><img src="char-${g}.png" alt="" decoding="async"></div>`; }
+// "IELTS: 10 full exams" -> pill tag "IELTS", hero title "10 full exams"; a title without a colon stays whole.
+function courseHeroTitleParts(c){ const t = cl(c.title), i = t.indexOf(':'); return i > 0 && i < t.length - 1 ? [t.slice(0, i).trim(), t.slice(i + 1).trim()] : ['', t]; }
+// One line under the hero title: the course's own short line, else the promise's first sentence up to a colon.
+const COURSE_HERO_SUB = {ielts:{en:'The structure and timing of recent IELTS tests.', tr:'Son IELTS sınavlarının yapısı ve süresiyle.', fa:'با ساختار و زمان‌بندی آزمون‌های اخیر آیلتس.', es:'Con la estructura y los tiempos de los IELTS recientes.'}};
+function courseHeroSub(c){ if(COURSE_HERO_SUB[c.id]) return cl(COURSE_HERO_SUB[c.id]); if(!c.promise) return '';
+  const s = coursePromiseLead(c).trim().replace(/[.!?]+$/, ''), i = s.indexOf(':'); return (i > 0 ? s.slice(0, i) : s).trim() + '.'; }
 function courseHeroHtml(c){
-  const total = courseUnitsTotal(c), mods = c.modules.length, mins = courseLessonMinutes(c);
-  return `<div class="lx-hero compact cd-hero">${claySparkles()}
-      <span class="lx-pill">${CL('Premium course','Premium kurs','دوره‌ی ویژه','Curso premium')}</span>
-      <h1 class="display"><bdi>${esc(cl(c.title))}</bdi><span class="dot">.</span></h1>
-      ${c.promise ? `<p class="lx-hook" dir="${courseTD()}">${esc(coursePromiseLead(c))}</p>` : ''}
-    </div>
-    <div class="lx-stats">
+  const total = courseUnitsTotal(c), mods = c.modules.length, mins = courseLessonMinutes(c), tp = courseHeroTitleParts(c), sub = courseHeroSub(c);
+  const pill = tp[0] ? CL('Premium','Premium','ویژه','Premium') + courseSep() + tp[0] : CL('Premium course','Premium kurs','دوره‌ی ویژه','Curso premium');
+  return `<header class="fs-hero cd-hero">
+      <span class="fs-pill"><bdi>${esc(pill)}</bdi></span>
+      <h1 class="display"><bdi>${esc(tp[1])}</bdi><span class="dot">.</span></h1>
+      ${sub ? `<p class="fs-sub" dir="${courseTD()}">${esc(sub)}</p>` : ''}
+      ${courseArtHtml(c)}
+    </header>
+    <div class="lx-stats fs-stats">
       <div class="lx-stat"><span>${CL('Lessons','Ders','درس','Lecciones')}</span><b class="display">${total}</b></div>
       <div class="lx-stat"><span>${c.chapterWords ? esc(cl(c.chapterWords)) : CL('Chapters','Bölüm','فصل','Capítulos')}</span><b class="display">${mods}</b></div>
-      <div class="lx-stat"><span>${CL('Minutes per lesson','Ders başına dakika','دقیقه برای هر درس','Minutos por lección')}</span><b class="display">${mins ? '<bdi dir="ltr">~'+mins+'</bdi>' : '—'}</b></div>
+      <div class="lx-stat"><span>${CL('Per lesson','Ders başına','هر درس','Por lección')}</span><b class="display">${mins ? '<bdi dir="ltr">~'+mins+'</bdi><small>'+CL('min','dk','دقیقه','min')+'</small>' : '—'}</b></div>
     </div>
-    ${c.disclaimer ? `<p class="cd-disc" dir="${courseTD()}" style="margin:8px 2px 0; font-size:12px; line-height:1.45; color:var(--ink-soft);">${esc(cl(c.disclaimer))}</p>` : ''}`;
+    ${c.disclaimer ? `<p class="cd-disc" dir="${courseTD()}" style="margin:10px 4px 0; font-size:12px; line-height:1.45; color:var(--ink-soft);">${esc(cl(c.disclaimer))}</p>` : ''}`;
 }
-// A 3-dot step row: Learn ✓ · Practise ● · Check.
+// The 3 step chips: "1 Learn" (orange = the next one), "✓ Practise" when done.
 function courseMiniStepsHtml(cid, uid){
-  const nx = courseNextInUnit(cid, uid);
-  return `<div class="cd-mini">${courseParts(cid, uid).map(p=>{ const done = p.cards.every(x=>x.done), cur = !!(nx && nx.si===p.si);
-    return `<span class="${done ? 'done' : cur ? 'cur' : ''}">${done ? ICONS.check : ''}${esc(courseStepName(cid, uid, p.si))}</span>`; }).join('')}</div>`;
+  const nx = courseNextInUnit(cid, uid), parts = courseParts(cid, uid); if(!parts.length) return '';
+  return `<div class="cd-mini fs-chips">${parts.map((p, i)=>{ const done = p.cards.every(x=>x.done), cur = !!(nx && nx.si===p.si);
+    return `<span class="${done ? 'done' : cur ? 'cur' : ''}">${done ? ICONS.check : '<bdi>'+(i+1)+'</bdi>'} ${esc(courseStepName(cid, uid, p.si))}</span>`; }).join('')}</div>`;
 }
 function courseNextCardHtml(c, nx){
   const cid = c.id, started = courseStarted(cid);
-  let title = '', obj = '', btn = '', mini = '';
+  let title = '', obj = '', btn = '', mini = '', titleHtml = '';
   if(!nx){
     const pd = courseFinalData(c), cert = pd && courseFinalPassed(cid, pd)===pd.parts.length;
     title = CL('Course complete','Kurs tamamlandı','دوره تمام شد','Curso completado');
-    btn = cert ? `<button class="btn btn-primary" data-action="course-open" data-view="course-cert" data-cid="${cid}">${CL('Your certificate','Sertifikan','گواهی‌نامه‌ی تو','Tu certificado')}</button>` : '';
+    btn = cert ? `<button class="btn btn-primary fs-cta" data-action="course-open" data-view="course-cert" data-cid="${cid}">${CL('Your certificate','Sertifikan','گواهی‌نامه‌ی تو','Tu certificado')}</button>` : '';
   } else if(nx.final){
     const pd = courseFinalData(c);
     title = CL('Final project','Final projesi','پروژه‌ی پایانی','Proyecto final'); obj = pd ? cl(pd.title).replace(/^[^:]+:\s*/, '') : '';
-    btn = `<button class="btn btn-primary" data-action="course-open" data-view="${nx.locked ? 'course-gate' : 'course-final'}" data-cid="${cid}">${nx.locked ? CL('In the full course','Tam kursta','در دوره‌ی کامل','En el curso completo') : CL('Open the final project','Final projesini aç','باز کردن پروژه‌ی پایانی','Abrir el proyecto final')}</button>`;
+    btn = `<button class="btn btn-primary fs-cta" data-action="course-open" data-view="${nx.locked ? 'course-gate' : 'course-final'}" data-cid="${cid}">${nx.locked ? CL('In the full course','Tam kursta','در دوره‌ی کامل','En el curso completo') : CL('Open the final project','Final projesini aç','باز کردن پروژه‌ی پایانی','Abrir el proyecto final')}</button>`;
   } else {
     const uid = nx.uid, f = courseFindUnit(cid, uid);
     title = courseLessonTitleLine(cid, uid); obj = courseUnitObjective(cid, uid) || (courseIsCp(cid, uid) || courseIsMock(cid, uid) ? courseSceneText(cid, f.u) : courseLessonLine(cid, uid));
+    // "Lesson 1.3 · <title>" with the title isolated, so an English title keeps its order inside a Persian line
+    { const t = f.u.isMock ? cl(f.u.title) : courseIsCp(cid, uid) ? courseLessonLine(cid, uid) : cl(f.u.title); titleHtml = esc(courseLessonHeadName(cid, uid)) + (t ? esc(courseSep()) + '<bdi>' + esc(t) + '</bdi>' : ''); }
     const label = nx.locked ? CL('In the full course','Tam kursta','در دوره‌ی کامل','En el curso completo')
       : !started ? (courseIsCp(cid, uid) ? CL('Start the chapter review','Bölüm tekrarına başla','شروع مرور فصل','Empezar el repaso del capítulo') : CL('Start '+courseLessonHeadName(cid, uid), 'Başla: '+courseLessonHeadName(cid, uid), 'شروع '+courseLessonHeadName(cid, uid), 'Empezar: '+courseLessonHeadName(cid, uid)))
       : CL('Continue: '+courseLessonHeadName(cid, uid), 'Devam et: '+courseLessonHeadName(cid, uid), 'ادامه: '+courseLessonHeadName(cid, uid), 'Sigue: '+courseLessonHeadName(cid, uid));
-    btn = nx.locked ? `<button class="btn btn-primary" data-action="course-open" data-view="course-gate" data-cid="${cid}" data-uid="${esc(uid)}">${esc(label)}</button>`
-      : `<button class="btn btn-primary cd-go" data-action="course-go" data-cid="${cid}" data-uid="${esc(uid)}">${esc(label)}</button>`;
-    if(nx.started) mini = courseMiniStepsHtml(cid, uid);
+    btn = nx.locked ? `<button class="btn btn-primary fs-cta" data-action="course-open" data-view="course-gate" data-cid="${cid}" data-uid="${esc(uid)}">${esc(label)}</button>`
+      : `<button class="btn btn-primary cd-go fs-cta" data-action="course-go" data-cid="${cid}" data-uid="${esc(uid)}">${esc(label)}</button>`;
+    mini = courseMiniStepsHtml(cid, uid);
   }
   return `<div class="cd-next-card">
     <div class="lx-eyebrow cd-next-eb">${CL('Your next step','Sıradaki adımın','قدم بعدی تو','Tu siguiente paso')}</div>
-    <h2 class="display" dir="${courseTD()}"><bdi>${esc(title)}</bdi></h2>
+    <h2 class="display" dir="${courseTD()}">${titleHtml || '<bdi>' + esc(title) + '</bdi>'}<span class="dot">.</span></h2>
     ${obj ? `<p class="cd-obj" dir="${courseTD()}">${esc(obj)}</p>` : ''}${mini}
-    ${btn ? `<div style="margin-top:12px;">${btn}</div>` : ''}
+    ${btn ? `<div class="fs-btnrow">${btn}</div>` : ''}
   </div>`;
+}
+/* IELTS skill tiles ("Skills · Four skills."): one tile per skill with a purple ring = lessons done / lessons of that skill across the
+   10 exams (L1-L4 Listening, R1-R3 Reading, W1-W2 Writing, S Speaking). The skill of the next step is outlined with the solid button;
+   a tap opens that skill's next unfinished lesson (its first lesson when all are done; the gate when it is locked). */
+const COURSE_SKILLS = [
+  {k:'l', c:'#FF8FB3', name:{en:'Listening', tr:'Listening', fa:'لیسنینگ', es:'Listening'}, line:{en:'Forms, maps, talks.', tr:'Formlar, haritalar, konuşmalar.', fa:'فرم، نقشه، سخنرانی.', es:'Formularios, mapas, charlas.'}, d:'M5 13a7 7 0 0114 0v3a2 2 0 01-2 2h-1v-6h3M5 13v3a2 2 0 002 2h1v-6H5'},
+  {k:'r', c:'#5FC9B8', name:{en:'Reading', tr:'Reading', fa:'ریدینگ', es:'Reading'}, line:{en:'Find the answer fast.', tr:'Cevabı metinde hızlı bul.', fa:'جواب را سریع در متن پیدا کن.', es:'Encuentra la respuesta rápido.'}, d:'M4 6c3-1.5 5-1.5 8 0v12c-3-1.5-5-1.5-8 0zM12 6c3-1.5 5-1.5 8 0v12c-3-1.5-5-1.5-8 0z'},
+  {k:'w', c:'#FFA53D', name:{en:'Writing', tr:'Writing', fa:'رایتینگ', es:'Writing'}, line:{en:'Plan, structure, feedback from Farin.', tr:'Plan, yapı, Farin’den geri bildirim.', fa:'برنامه، ساختار، بازخورد از فارین.', es:'Plan, estructura y comentarios de Farin.'}, d:'M5 19l1-4 9-9 3 3-9 9zM14 7l3 3'},
+  {k:'s', c:'#7C93FF', name:{en:'Speaking', tr:'Speaking', fa:'اسپیکینگ', es:'Speaking'}, line:{en:'Parts 1–3, timed practice.', tr:'Kısım 1–3, süreli pratik.', fa:'بخش ۱ تا ۳، تمرین زمان‌دار.', es:'Partes 1–3, práctica con tiempo.'}, d:'M12 4a3 3 0 013 3v4a3 3 0 01-6 0V7a3 3 0 013-3zM6 11a6 6 0 0012 0M12 17v3'}];
+function courseSkillOf(c, uid){ if(!c || !c.chapterName || !courseIsExam(c)) return ''; const m = /-(l|r|w|s)\d*$/.exec(String(uid || '')); return m ? m[1] : ''; }
+// Done = every step done; an exam whose files are not loaded yet is read from the saved step marks (sessions are in the course entry).
+function courseUnitFinished(cid, uid){
+  const s = courseUnitSteps(cid, uid); if(s.length) return s.every(x=>x.done);
+  const f = courseFindUnit(cid, uid), types = f && f.u.sessions ? [].concat(...f.u.sessions) : [], d = courseProg(cid).done;
+  return types.length > 0 && types.every(t=>!!d[uid+':'+t]);
+}
+function courseSkillStats(c){
+  const out = {}; COURSE_SKILLS.forEach(s=>{ out[s.k] = {done:0, total:0, next:null, first:null}; });
+  c.modules.forEach(m=>m.units.forEach(u=>{ const k = courseSkillOf(c, u.id), o = out[k]; if(!o) return;
+    o.total++; if(!o.first) o.first = u.id;
+    if(courseUnitFinished(c.id, u.id)) o.done++; else if(!o.next) o.next = u.id; }));
+  return out;
+}
+function courseRingHtml(d, t){ const r = 18, cc = 2 * Math.PI * r, f = t ? Math.min(1, d / t) : 0;
+  return `<span class="fs-ring"><svg viewBox="0 0 46 46" aria-hidden="true"><circle class="bg" cx="23" cy="23" r="${r}"/><circle class="fg${f ? '' : ' z'}" cx="23" cy="23" r="${r}" stroke-dasharray="${(cc * f).toFixed(1)} ${cc.toFixed(1)}"/></svg><b dir="ltr">${d}/${t}</b></span>`; }
+function courseSkillTilesHtml(c, nx){
+  if(!courseIsExam(c) || !c.chapterName) return '';
+  const st = courseSkillStats(c), list = COURSE_SKILLS.filter(s=>st[s.k].total); if(!list.length) return '';
+  const cur = nx && !nx.final && nx.uid ? courseSkillOf(c, nx.uid) : '';
+  const tiles = list.map(s=>{ const o = st[s.k], on = s.k === cur, all = o.done >= o.total;
+    return `<button class="fs-tile${on ? ' on' : ''}" data-action="course-skill-open" data-cid="${c.id}" data-skill="${s.k}" aria-pressed="${on ? 'true' : 'false'}" aria-label="${esc(cl(s.name) + ', ' + o.done + ' / ' + o.total)}">
+      <span class="fs-tt"><span class="fs-ico" style="--c:${s.c};"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${s.d}"/></svg></span>${courseRingHtml(o.done, o.total)}</span>
+      <b class="display fs-tn">${esc(cl(s.name))}<span class="dot">.</span></b>
+      <small dir="${courseTD()}">${esc(cl(s.line))}</small>
+      <span class="fs-tbtn${on ? '' : ' soft'}">${all ? CL('Do it again','Yeniden yap','دوباره انجامش بده','Hazlo otra vez') : CL('Practise','Pratik yap','تمرین کن','Practica')}</span></button>`; }).join('');
+  return `<div class="lx-sec fs-sec fs-skills"><div class="lx-head"><div class="lx-eyebrow">${CL('Skills','Beceriler','مهارت‌ها','Destrezas')}</div><h2 class="display">${CL('Four skills','Dört beceri','چهار مهارت','Cuatro destrezas')}<span class="dot">.</span></h2></div>
+    <div class="fs-tiles">${tiles}</div></div>`;
 }
 // "What you'll be able to do": outcomes.life (3, then Show all), the skills list and the honest note behind Show all.
 function courseLifeHtml(c){
@@ -29121,16 +29367,17 @@ function courseChapterCardHtml(c, m, mi, nx){
   const cur = !!(nx && !nx.final && nx.uid && ids.includes(nx.uid));
   const done = !locked && ids.filter(uid=>!courseIsMock(c.id, uid)).every(uid=>{ const s = courseUnitSteps(c.id, uid); return s.length > 0 && s.every(x=>x.done); });
   const badge = locked ? COURSE_LOCK_SVG : done ? ICONS.check : String(mi+1);
-  const goal = c.chapterName ? '' : m.goal ? cl(courseGt(c.id, m, 'goal')) : m.blurb ? cl(courseGt(c.id, m, 'blurb')) : '';
-  // named chapters (IELTS exams): the goal is in the open card, under "Exam goal" (the same goal on 10 bands would only repeat)
-  const goalIn = c.chapterName && m.goal && open ? `<div class="cd-exgoal"><div class="lx-eyebrow">🎯 ${CL('Exam goal','Sınav hedefi','هدف آزمون','Objetivo del examen')}</div><p dir="${courseTD()}">${esc(cl(courseGt(c.id, m, 'goal')))}</p></div>` : '';
-  const n = m.units.length, count = CL(n+' lessons', n+' ders', n+' درس', n+' lecciones') + (m.checkpoint ? courseSep() + CL('chapter review','bölüm tekrarı','مرور فصل','repaso del capítulo') : '') + ((m.mocks || []).length ? courseSep() + CL((m.mocks.length)+' mock test'+(m.mocks.length > 1 ? 's' : ''), m.mocks.length+' deneme sınavı', m.mocks.length+' آزمون آزمایشی', m.mocks.length+' simulacro'+(m.mocks.length > 1 ? 's' : '')) : '');
+  // FEschool design v4: a numbered row (orange = current, green = done, lock or purple = later); its goal moves into the open card
+  const goalTxt = m.goal ? cl(courseGt(c.id, m, 'goal')) : m.blurb ? cl(courseGt(c.id, m, 'blurb')) : '';
+  const goalIn = goalTxt && open ? `<div class="cd-exgoal"><div class="lx-eyebrow">${c.chapterName ? CL('Exam goal','Sınav hedefi','هدف آزمون','Objetivo del examen') : CL('Chapter goal','Bölüm hedefi','هدف فصل','Objetivo del capítulo')}</div><p dir="${courseTD()}">${esc(goalTxt)}</p></div>` : '';
+  const n = m.units.length, count = CL(n+' lessons', n+' ders', n+' درس', n+' lecciones');   // short: the chapter review and mock tests are rows inside
   const head = `<button class="cp-band" data-action="course-chapter-toggle" data-cid="${c.id}" data-mi="${mi}" aria-expanded="${open ? 'true' : 'false'}">
       <span class="cp-ch-n">${badge}</span>
-      <span class="cp-ch-text"><b><bdi>${esc(courseChapterName(mi, c) + courseSep() + cl(m.title))}</bdi></b>${goal ? `<span dir="${courseTD()}">${esc(goal)}</span>` : ''}<small>${esc(count)}</small></span>
+      <span class="cp-ch-text"><small dir="${courseTD()}">${esc(courseChapterName(mi, c) + courseSep() + count)}</small><b dir="${courseTD()}"><bdi>${esc(cl(m.title))}</bdi></b></span>
+      ${cur ? `<span class="fs-now">${CL('Now','Şimdi','الان','Ahora')}</span>` : ''}
       <span class="cp-ch-chev">${ICONS.chev}</span></button>`;
   // IELTS (D3): the Reading and Writing version question is asked once, on the Chapter 2 card, the first time it opens.
-  const trackQ = open && mi === 1 && courseTrackQ(c) && !c.trackSwitch && !((state.progress.courseTrack || {})[c.id]) ? `<div class="cd-trackq"><b dir="${courseTD()}">${esc(cl(c.intro.trackQuestion.q))}</b><div class="stack" style="gap:8px; margin-top:8px;">${courseTrackPicksHtml(c, courseTrack(c.id), 'course-track')}</div></div>` : '';
+  const trackQ = open && mi === 1 && courseTrackQ(c) && !c.trackSwitch && !((state.progress.courseTrack || {})[c.id]) ? `<div class="cd-trackq"><b dir="${courseTD()}">${esc(cl(c.intro.trackQuestion.q))}</b><div class="fs-opts" style="margin-top:10px;">${courseTrackPicksHtml(c, courseTrack(c.id), 'course-track')}</div></div>` : '';
   const rows = open ? `<div class="cl-rows">${goalIn}${trackQ}${ids.map(id=>courseRowHtml(c, id, mi, nx, locked)).join('')}</div>` : '';
   return `<div class="cp-ch${open ? ' open' : ''}${locked ? ' locked' : ''}${cur ? ' cur' : ''}${done ? ' done' : ''}">${head}${rows}</div>`;
 }
@@ -29173,18 +29420,21 @@ function renderCourseDetail(cid){
   const chapters = content ? `<div class="lx-sec cd-chapters"><div class="lx-head"><div class="lx-eyebrow">${chHead}</div><h2 class="display">${esc(chTitle)}<span class="dot">.</span></h2></div>
       ${c.modules.map((m,mi)=>courseChapterCardHtml(c, m, mi, nx)).join('')}${courseFinalRowHtml(c, nx)}</div>` : '';
   const warn = courseUnlocked(cid) && courseAccessDaysLeft(cid) !== null && courseAccessDaysLeft(cid) <= 7;
-  return `<div class="fade-in course-path lx-page lx-course">
+  // FEschool design v4 order: hero + tiles, next step, (IELTS) four skills and the test type, the course map, then what you will be
+  // able to do and the sources, the rest as before.
+  return `<div class="fade-in course-path lx-page lx-course${content ? ' fs-scr' : ''}">
     ${coursePathHeadHtml()}
     ${content ? '' : `<h1 class="display cp-title">${esc(cl(c.title))}</h1>`}
     <div class="screen" style="padding-top:0;">
       ${content ? courseHeroHtml(c) : ''}
       ${content ? courseRebuiltNoteHtml(c) : ''}
       ${content ? courseNextCardHtml(c, nx) : courseComingSoonHtml(c)}
-      ${content && c.trackSwitch ? courseIeTrackBoxHtml(c, true) : ''}
       ${courseReviewNoticeHtml(c)}
+      ${content ? courseSkillTilesHtml(c, nx) : ''}
+      ${content && c.trackSwitch ? courseIeTrackBoxHtml(c, true) : ''}
+      ${chapters}
       ${content ? courseLifeHtml(c) : courseOutcomesHtml(c)}
       ${content ? courseSourcesHtml(c) : ''}
-      ${chapters}
       ${courseWorkRowHtml(c)}
       ${warn ? courseAccessLineHtml(c) : ''}
       ${courseUnlockBoxHtml(c)}
@@ -29280,10 +29530,12 @@ function courseLazyLessonNote(c, uid){
 /* ---------- Academic / General Training switch ("Your version"; course page and the lesson page of R1-R3 and W1) ---------- */
 function courseIeTrackBoxHtml(c, withNote){
   const t = courseTrack(c.id) === 'gt' ? 'gt' : 'academic';
-  const lbl = k=>k === 'gt' ? CL('General Training','General Training','جنرال (General Training)','General Training') : CL('Academic','Academic','آکادمیک','Academic');
-  return `<div class="ie-trackbox">${withNote ? `<div class="lx-eyebrow">${CL('Your version','Sürümün','نسخه‌ی تو','Tu versión')}</div>` : ''}
-    <div class="ie-seg2" role="group" aria-label="${esc(CL('Test type','Sınav türü','نوع آزمون','Tipo de examen'))}">${['academic','gt'].map(k=>`<button class="${t===k ? 'on' : ''}" data-action="course-ie-track" data-cid="${c.id}" data-track="${k}" aria-pressed="${t===k ? 'true' : 'false'}">${lbl(k)}</button>`).join('')}</div>
-    ${withNote && c.trackNote ? `<p dir="${courseTD()}">${esc(cl(c.trackNote))}</p>` : ''}</div>`;
+  const rows = `<div class="fs-opts" role="group" aria-label="${esc(CL('Test type','Sınav türü','نوع آزمون','Tipo de examen'))}">${courseTrackPicksHtml(Object.assign({}, c, {tracks:['academic','gt']}), t, 'course-ie-track')}</div>`;
+  // FEschool design v4: selection rows; on the course page a section of its own ("Your version · Test type."), on a lesson page just the rows
+  if(!withNote) return `<div class="ie-trackbox fs-trackbox">${rows}</div>`;
+  return `<div class="lx-sec fs-sec ie-trackbox fs-trackbox"><div class="lx-head"><div class="lx-eyebrow">${CL('Your version','Sürümün','نسخه‌ی تو','Tu versión')}</div><h2 class="display">${esc(courseTrackWord(c))}<span class="dot">.</span></h2></div>
+    ${rows}
+    ${c.trackNote ? `<p dir="${courseTD()}">${esc(cl(c.trackNote))}</p>` : ''}</div>`;
 }
 
 /* ---------- lesson page lines, lesson done ---------- */
@@ -29808,6 +30060,8 @@ Object.assign(HANDLERS, {
   // A lesson row on the course page / chapter card: its lesson page.
   'course-lesson-open'(el){ const cid = el.dataset.cid, uid = el.dataset.uid, c = courseGet(cid); if(!c || !courseFindUnit(cid, uid)) return;
     courseSheetRemove(); if(!courseUnitAccess(c, uid)) return go('course-gate', {cid, uid}); courseShow('course-lesson', {cid, uid}, cid, true); window.scrollTo(0, 0); },
+  // FEschool design v4: an IELTS skill tile opens that skill's next unfinished lesson (its first lesson when all are done; the gate when locked).
+  'course-skill-open'(el){ const c = courseGet(el.dataset.cid); if(!c) return; const o = courseSkillStats(c)[el.dataset.skill], uid = o && (o.next || o.first); if(uid) HANDLERS['course-lesson-open']({dataset:{cid:c.id, uid}}); },
   // The lesson page's orange button: the first card that is not done yet (Start: Learn / Next: Practise / Next: Check).
   'course-lesson-go'(el){ const cid = el.dataset.cid, uid = el.dataset.uid, nx = courseNextInUnit(cid, uid); if(nx) courseOpenStep(cid, uid, nx.type); else courseGo(cid, uid); },
   // Learn: the quick check (screen-only, never scored) and Next: Practise.

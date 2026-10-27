@@ -2326,6 +2326,43 @@
   .fs-opt.on .fs-chk.multi{box-shadow:none;}
   .fs-trackbox p{font-size:12.5px; color:var(--ink-soft); margin:12px 2px 0; line-height:1.45;}
   .course-lesson .fs-trackbox{margin-top:20px;}
+  /* Language-choice screen, the first onboarding step (Farin approved 2026-10-27, "Both rows"; artifact 5kYyAPZ8 screen 3):
+     native language rows (sets the interface language at once) + language-to-learn rows (the other one opens the other app),
+     flags only for languages, one pinned orange button, lots of free space. Byte-identical in the English and Spanish apps. */
+  .onb-lang .screen{padding:10px 22px calc(160px + env(safe-area-inset-bottom, 0px));}
+  .onb-top{display:flex; align-items:center; justify-content:space-between; padding:12px 0 30px;}
+  .onb-eb{font-size:11px; font-weight:800; letter-spacing:.16em; text-transform:uppercase; color:var(--fs-orange-ink);}
+  html[dir="rtl"] .onb-eb{letter-spacing:0; font-size:12.5px;}
+  .onb-h1{font-family:'Fredoka',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; font-weight:700; font-size:31px; line-height:1.1; letter-spacing:-.02em; margin:6px 0 0; color:var(--ink);}
+  .onb-h1 .dot{color:var(--fs-orange);}
+  .onb-q{font-family:'Fredoka',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; font-weight:600; font-size:18px; line-height:1.25; margin:38px 0 14px; color:var(--ink);}
+  .onb-lang .fs-opts{gap:12px;}
+  .onb-opt{padding:15px 16px; gap:14px;}
+  .onb-opt .fs-ot b{font-size:16px;}
+  .onb-flag{flex:none; width:34px; height:24px; border-radius:6px; overflow:hidden; box-shadow:0 0 0 1px rgba(0,0,0,.08);}
+  .onb-go{display:flex; align-items:center; gap:10px; margin:18px 2px 0; font-weight:800; font-size:14px; line-height:1.4; color:var(--fs-purple-ink);}
+  .onb-go i{flex:none; width:16px; height:16px; border-radius:50%; border:2.5px solid currentColor; border-right-color:transparent; animation:onbSpin .8s linear infinite;}
+  @keyframes onbSpin{to{transform:rotate(360deg);}}
+  @media (prefers-reduced-motion: reduce){ .onb-go i{animation:none;} }
+  .onb-foot{position:fixed; left:0; right:0; bottom:0; max-width:480px; margin:0 auto; z-index:30; box-sizing:border-box; padding:22px 22px calc(12px + env(safe-area-inset-bottom, 0px)); background:linear-gradient(to top, var(--bg) 76%, transparent); display:flex; flex-direction:column; align-items:center; gap:4px;}
+  .onb-lang .onb-cta{background:var(--fs-orange); color:var(--fs-cta-ink); border-color:transparent; font-weight:800; font-size:16px; box-shadow:0 8px 16px -8px rgba(168,90,5,.5);}
+  .onb-login{all:unset; box-sizing:border-box; cursor:pointer; padding:10px 12px; font-weight:700; font-size:13.5px; color:var(--ink-soft); text-align:center; text-decoration:underline; text-underline-offset:3px;}
+  .onb-login:focus-visible{outline:2px solid var(--fs-purple); outline-offset:2px; border-radius:8px;}
+  /* header language control (Farin 2026-10-27): learning-language flag + interface code; opens the language sheet */
+  .lang-pill{display:inline-flex; align-items:center; gap:6px; height:34px; box-sizing:border-box; padding:0 11px 0 8px; border-radius:999px; background:var(--bg-elevated); border:1px solid var(--border-soft); box-shadow:var(--clay-shadow-soft); color:var(--ink-soft); font:inherit; font-weight:800; font-size:12px; letter-spacing:.03em; flex:0 0 auto; cursor:pointer; -webkit-tap-highlight-color:transparent;}
+  html[dir="rtl"] .lang-pill{padding:0 8px 0 11px;}
+  .lang-pill .onb-flag{width:21px; height:15px; border-radius:4px;}
+  .lang-pill i{font-style:normal; opacity:.45;}
+  .lang-pill:active{transform:scale(.97);}
+  .lang-pill:focus-visible, .lsh-x:focus-visible{outline:2px solid var(--fs-purple); outline-offset:2px;}
+  .lsh-wrap{position:fixed; inset:0; z-index:45; background:rgba(20,16,40,.42); display:flex; align-items:flex-end; justify-content:center; animation:fadeIn .2s ease;}
+  .lsh{width:100%; max-width:480px; max-height:90vh; overflow:auto; box-sizing:border-box; background:var(--bg); border-radius:28px 28px 0 0; padding:24px 22px calc(30px + env(safe-area-inset-bottom, 0px)); box-shadow:0 -12px 34px -12px rgba(0,0,0,.35); animation:lshUp .25s ease;}
+  @keyframes lshUp{from{transform:translateY(40px);}to{transform:none;}}
+  @media (prefers-reduced-motion: reduce){ .lsh, .lsh-wrap{animation:none;} }
+  .lsh-head{display:flex; align-items:center; justify-content:space-between; gap:12px;}
+  .lsh-head .onb-h1{margin:0; font-size:28px;}
+  .lsh-x{flex:none; width:40px; height:40px; border-radius:50%; border:1px solid var(--border-soft); background:var(--bg-elevated); color:var(--ink); font-size:22px; line-height:1; display:grid; place-items:center; cursor:pointer;}
+  .lsh .onb-q{margin-top:28px;}
 </style>
 
 <div id="app"></div>
@@ -2585,7 +2622,8 @@ function L(en, tr, fa, es){ if(LANG==='tr') return tr; if(LANG==='fa') return fa
 
 /* ============================= CONFIG ============================= */
 const WHATSAPP_NUMBER = '905455783260'; // country code (90) + number, no + or spaces
-const APP_URL = 'https://farinrasuli.github.io/farin-english/app/farin-english-app.html';
+const APP_URL = 'https://farinrasuli.github.io/farin-english-app/farin-english-app.html';
+const ONB_APP = {self:'es', other:'en', word:'Spanish', natives:['tr','fa','en','es'], otherUrl:'https://farinrasuli.github.io/farin-english-app/farin-english-app.html', otherLangs:['tr','fa','en']};   // language-choice screen (renderLangPick)
 const COURSE_LABEL = 'Spanish';
 const STUDENT_COLLECTION = {en:'studentPanels', es:'studentPanelsEs'};
 function adminCourseLabel(course){ return course==='es' ? 'Spanish' : 'English'; }
@@ -11878,6 +11916,8 @@ function render(){
   const bottomNavViews = ['dashboard','goals-list','student-club'];
   const nav = bottomNavViews.includes(state.view) ? bottomNav() : '';
   root.insertAdjacentHTML('beforeend', nav);
+  if(langSheet && langSheet.view !== state.view) langSheet = null;   // the header language sheet belongs to the screen it was opened on
+  langSheetPaint();
   const noHomeButtonViews = bottomNavViews.concat(['diagnostic-intro','diagnostic-step']);
   if(!noHomeButtonViews.includes(state.view)){
     root.insertAdjacentHTML('beforeend', `<div class="home-fab-wrap"><button class="home-fab" data-action="nav" data-view="dashboard" aria-label="${L('Home','Ana Sayfa','خانه', 'Inicio')}">${ICONS.home}</button></div>`);
@@ -11909,18 +11949,18 @@ function render(){
   try{ maybeShowPageKept(); }catch(e){}
 }
 function langToggle(){
-  return `<button class="lang-btn" data-action="toggle-lang">${LANG.toUpperCase()}</button>`;
+  // 2026-10-27 (Farin): one language control in the header = the learning language's flag + the interface language code.
+  // It opens the language sheet (same two blocks as the onboarding language screen). Replaces the EN/TR/FA toggle and the
+  // separate switch-to-the-other-app flag button. Byte-identical in both apps.
+  return `<button class="lang-pill" data-action="lang-sheet-open" aria-haspopup="dialog" aria-label="${esc(L('Language','Dil','زبان','Idioma') + ': ' + onbLearnName(ONB_APP.self) + ', ' + ONB_NATIVE[LANG])}">${ONB_FLAGS[ONB_APP.self]}<i aria-hidden="true">·</i><span>${LANG.toUpperCase()}</span></button>`;
 }
 function topbar(showGear, showEnglishLink){
-  // English-app switch lives here now (small icon, header controls row) instead of as
-  // its own dashboard tile — ported from the English app's Spanish-switch button
-  // (Farin, 2026-09-29: "smaller and in a better place"). Only passed true from the
-  // dashboard, same as showGear.
+  // 2026-10-27 (Farin): the switch to the other app now lives in the header language pill (langToggle -> language sheet),
+  // together with the interface language; the second argument is no longer used.
   return `<div class="topbar">
     <div class="wordmark">Farin<span>Spanish</span></div>
     <div class="row" style="gap:8px;">
       ${weekChipHtml()}
-      ${showEnglishLink ? `<a class="icon-btn" href="https://farinrasuli.github.io/farin-english/app/farin-english-app.html?lang=${LANG}" target="_top" rel="noopener" aria-label="${L('Learn English','İngilizce Öğren','انگلیسی یاد بگیر', 'Aprende inglés')}">🇬🇧</a>` : ''}
       ${langToggle()}
       ${showGear ? `<button class="icon-btn" data-action="open-settings" aria-label="Settings">${ICONS.gear}</button>` : ''}
     </div>
@@ -11972,20 +12012,67 @@ function renderDiagIntro(){
       </div>
     </div>`;
   }
-  return `<div class="fade-in">
-    <div class="diag-hero">
-      <div class="row between" style="position:absolute; top:16px; left:16px; right:16px;">
-        <span></span>${langToggle()}
-      </div>
-      <div class="compass-mark">${ICONS.compass}</div>
-      <h1 class="display">${L("Let's cook up your plan","Hadi planını hazırlayalım",'بیا برنامه‌ات را آماده کنیم', 'Preparemos tu plan')}</h1>
-      <p style="color:var(--ink-soft); margin-top:10px; font-size:14.5px;">${L('A handful of quick questions about you, your goals, and how your brain likes to learn — then boom, your free plan unlocks.','Senin hakkında, hedeflerin ve beyninin nasıl öğrenmeyi sevdiği hakkında birkaç hızlı soru — sonra pat diye ücretsiz planın açılıyor.','چند سوال کوتاه درباره تو، هدف‌هایت و اینکه مغزت چطور دوست دارد یاد بگیرد — بعد برنامه رایگانت باز می‌شود.', 'Unas cuantas preguntas rápidas sobre ti, tus metas y cómo le gusta aprender a tu cerebro — y listo, se desbloquea tu plan gratis.')}</p>
-    </div>
+  return renderLangPick();
+}
+/* Language-choice screen (Farin approved 2026-10-27, "Both rows"): the first onboarding step for new users (the landing
+   screen, view 'diagnostic-intro'; finished or restored accounts never land here). Block 1 "native language" sets the
+   interface language at once. Block 2 "language to learn": the other language shows a confirm line and opens the other app
+   (its own address, carrying ?lang= when it reads that language); no storage is shared between the apps. "Continue" starts
+   the existing onboarding. The same two blocks open as a sheet from the header pill (langToggle, Farin 2026-10-27: one place
+   for both the interface language and the learning language). ONB_APP is per app; this block is byte-identical in the
+   English and Spanish apps. */
+const ONB_FLAGS = {
+  tr:'<svg class="onb-flag" viewBox="0 0 34 24" aria-hidden="true"><rect width="34" height="24" fill="#E30A17"/><circle cx="13" cy="12" r="6" fill="#fff"/><circle cx="14.6" cy="12" r="4.8" fill="#E30A17"/><path d="M19.2 12l4.6-1.5-2.8 3.9V9.6l2.8 3.9z" fill="#fff"/></svg>',
+  fa:'<svg class="onb-flag" viewBox="0 0 34 24" aria-hidden="true"><rect width="34" height="24" fill="#fff"/><rect width="34" height="8" fill="#239F40"/><rect y="16" width="34" height="8" fill="#DA0000"/><path d="M17 8.9c-1.4.9-1.9 2.3-1.2 3.6.3.5.7.9 1.2 1.1.5-.2.9-.6 1.2-1.1.7-1.3.2-2.7-1.2-3.6zM17 13.6v1.6" fill="#DA0000" stroke="#DA0000" stroke-width=".6"/></svg>',
+  en:'<svg class="onb-flag" viewBox="0 0 34 24" aria-hidden="true"><rect width="34" height="24" fill="#012169"/><path d="M0 0l34 24M34 0L0 24" stroke="#fff" stroke-width="5"/><path d="M0 0l34 24M34 0L0 24" stroke="#C8102E" stroke-width="2"/><path d="M17 0v24M0 12h34" stroke="#fff" stroke-width="7"/><path d="M17 0v24M0 12h34" stroke="#C8102E" stroke-width="4"/></svg>',
+  es:'<svg class="onb-flag" viewBox="0 0 34 24" aria-hidden="true"><rect width="34" height="24" fill="#AA151B"/><rect y="6" width="34" height="12" fill="#F1BF00"/></svg>'
+};
+const ONB_NATIVE = {tr:'Türkçe', fa:'فارسی', en:'English', es:'Español'};
+function onbLearnName(k){ return k === 'es' ? L('Spanish','İspanyolca','اسپانیایی','Español') : L('English','İngilizce','انگلیسی','Inglés'); }
+function onbOtherUrl(){ return ONB_APP.otherUrl + '?lang=' + (ONB_APP.otherLangs.includes(LANG) ? LANG : 'en'); }
+function onbOpenApp(url){ try{ window.top.location.href = url; }catch(e){ window.location.href = url; } }
+let onbLeaveTimer = 0;
+let langSheet = null;   // header language sheet: {view, learn} while open
+function onbLearnPick(){ return langSheet ? (langSheet.learn || ONB_APP.self) : ((state.viewParams || {}).onbLearn || ONB_APP.self); }
+function onbLeave(){
+  clearTimeout(onbLeaveTimer);
+  const here = langSheet ? langSheet.view === state.view : state.view === 'diagnostic-intro';
+  if(!here || onbLearnPick() !== ONB_APP.other) return;
+  onbOpenApp(onbOtherUrl());
+}
+function onbBlocksHtml(){
+  const learn = onbLearnPick(), leaving = learn !== ONB_APP.self;
+  const row = (act, key, k, name, on)=>`<button class="fs-opt onb-opt${on ? ' on' : ''}" data-action="${act}" data-${key}="${k}" aria-pressed="${on ? 'true' : 'false'}">${ONB_FLAGS[k]}<span class="fs-ot"><b><bdi>${esc(name)}</bdi></b></span><span class="fs-chk" aria-hidden="true"></span></button>`;
+  const qNative = L('Your native language','Ana dilin','زبان مادری‌ات','Tu lengua materna'), qLearn = L('The language you want to learn','Öğrenmek istediğin','زبانی که می‌خواهی یاد بگیری','El idioma que quieres aprender');
+  return `<h2 class="onb-q">${qNative}</h2>
+      <div class="fs-opts" role="group" aria-label="${esc(qNative)}">${ONB_APP.natives.map(k=>row('onb-native', 'lang', k, ONB_NATIVE[k], LANG===k)).join('')}</div>
+      <h2 class="onb-q">${qLearn}</h2>
+      <div class="fs-opts" role="group" aria-label="${esc(qLearn)}">${['en','es'].map(k=>row('onb-learn', 'learn', k, onbLearnName(k), learn===k)).join('')}</div>
+      ${leaving ? `<p class="onb-go" role="status"><i aria-hidden="true"></i><span>${learn === 'es' ? L('Switching to the Spanish app…','İspanyolca uygulamasına geçiyoruz…','داریم به اپ اسپانیایی می‌رویم…','Pasamos a la app de español…') : L('Switching to the English app…','İngilizce uygulamasına geçiyoruz…','داریم به اپ انگلیسی می‌رویم…','Pasamos a la app de inglés…')}</span></p>` : ''}`;
+}
+function renderLangPick(){
+  return `<div class="fade-in fs-scr onb-lang">
     <div class="screen">
-      <button class="btn btn-primary" data-action="diag-start">${L("Let's go (2 min)","Hadi başlayalım (2 dk)",'بزن بریم (۲ دقیقه)', '¡Empecemos! (2 min)')}</button>
-      <button class="btn btn-ghost" style="margin-top:10px;" data-action="nav" data-view="restore-code">${L('Already have an account? Log in', 'Zaten hesabın var mı? Giriş yap', 'قبلاً حساب ساختی؟ وارد شو', '¿Ya tienes una cuenta? Inicia sesión')}</button>
+      <div class="onb-top"><div class="wordmark">Farin<span>${ONB_APP.word}</span></div></div>
+      <div class="onb-eb">${L('2 minutes','2 dakika','۲ دقیقه','2 minutos')}</div>
+      <h1 class="onb-h1">${L("Let's begin",'Başlayalım','بیا شروع کنیم','Empecemos')}<span class="dot">.</span></h1>
+      ${onbBlocksHtml()}
+    </div>
+    <div class="onb-foot">
+      <button class="btn btn-primary fs-cta onb-cta" data-action="onb-continue">${L('Continue','Devam','ادامه','Continuar')}</button>
+      <button class="onb-login" data-action="nav" data-view="restore-code">${L('Already have an account? Log in','Zaten hesabın var mı? Giriş yap','قبلاً حساب ساختی؟ وارد شو','¿Ya tienes una cuenta? Inicia sesión')}</button>
     </div>
   </div>`;
+}
+// the header sheet: painted into #app on top of the current screen (render() repaints it, so a language change re-renders it)
+function langSheetPaint(){
+  const app = document.getElementById('app'); if(!app) return;
+  app.querySelectorAll('.lsh-wrap').forEach(n=>n.remove());
+  if(!langSheet) return;
+  app.insertAdjacentHTML('beforeend', `<div class="lsh-wrap" data-action="lang-sheet-close" data-quiet="1"><div class="lsh fs-scr onb-lang" role="dialog" aria-modal="true" aria-labelledby="lsh-t" data-action="lang-sheet-noop" data-quiet="1">
+    <div class="lsh-head"><h2 class="onb-h1" id="lsh-t">${L('Language','Dil','زبان','Idioma')}<span class="dot">.</span></h2><button class="lsh-x" data-action="lang-sheet-close" aria-label="${esc(L('Close','Kapat','بستن','Cerrar'))}">×</button></div>
+    ${onbBlocksHtml()}
+  </div></div>`);
 }
 function renderRestoreCode(){
   const vp = state.viewParams || {};
@@ -24345,6 +24432,23 @@ const HANDLERS = {
     }).catch(()=>{ farinPwBusy = false; farinPwSettingsStatus = {error:'network'}; render(); });
   },
   'diag-start'(){ go('diagnostic-step'); },
+  // Language-choice screen + header language sheet (2026-10-27): byte-identical in both apps
+  'onb-native'(el){ LANG = el.dataset.lang; save(); render(); },
+  'onb-learn'(el){
+    const k = el.dataset.learn;
+    if(langSheet) langSheet.learn = k; else state.viewParams = Object.assign({}, state.viewParams, {onbLearn:k});
+    clearTimeout(onbLeaveTimer);
+    if(langSheet) langSheetPaint(); else render();
+    if(k !== ONB_APP.self) onbLeaveTimer = setTimeout(onbLeave, 1100);
+  },
+  'onb-continue'(){
+    const vp = state.viewParams || {};
+    if(vp.onbLearn && vp.onbLearn !== ONB_APP.self){ onbLeave(); return; }
+    HANDLERS['diag-start']();
+  },
+  'lang-sheet-open'(){ langSheet = {view: state.view, learn: ONB_APP.self}; langSheetPaint(); const x = document.querySelector('.lsh-x'); if(x) x.focus({preventScroll:true}); },
+  'lang-sheet-close'(){ langSheet = null; clearTimeout(onbLeaveTimer); langSheetPaint(); },
+  'lang-sheet-noop'(){},
   'diag-goal-toggle'(el){
     if(el.disabled) return;
     const v = el.dataset.value;

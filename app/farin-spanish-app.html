@@ -274,9 +274,9 @@
   .rm2-node-current .rm2-cozy{bottom:16px; height:44px;}
   /* Farin on 2-3 roadmap cards (2026-10-28): bottom-end, left of the chevron column, never over the text (title keeps 100px clear) */
   .rm2-farin{position:absolute; inset-inline-end:54px; bottom:0; height:112px; width:auto; max-width:72px; object-fit:contain; object-position:bottom; pointer-events:none; filter:drop-shadow(0 6px 8px rgba(0,0,0,.2));}
-  .rm2-farin.rm2-farin-head{height:76px; max-width:76px; bottom:12px;}
+  .rm2-farin.rm2-farin-wide{height:92px; max-width:104px; bottom:6px; inset-inline-end:40px;}
   .rm2-node-current .rm2-farin{height:120px;}
-  .rm2-node-current .rm2-farin.rm2-farin-head{height:80px;}
+  .rm2-node-current .rm2-farin.rm2-farin-wide{height:100px; max-width:112px;}
   .rm2-node-done .rm2-farin, .rm2-node-done .rm2-cozy{opacity:.5;}
   /* Game cards as mini posters (2026-10-28): the game's key art full-bleed, the words on a dark frosted panel (white text >= 4.5:1) */
   .rm2-poster-img{position:absolute; inset:0; width:100%; height:100%; object-fit:cover; object-position:50% 55%; border-radius:inherit; pointer-events:none;}
@@ -1057,6 +1057,10 @@
   .screen{padding:12px 20px 40px;}
   .stack{display:flex; flex-direction:column; gap:16px;}
   .row{display:flex; align-items:center; gap:10px;}
+  .starter-row{min-height:28px;}
+  .starter-line{flex:1 1 auto; min-width:0; font-size:14px; line-height:1.55; text-align:start; unicode-bidi:isolate; overflow-wrap:break-word;}
+  .studio-hint-line{line-height:1.6;}
+  .studio-hint-line bdi{unicode-bidi:isolate;}
   .between{justify-content:space-between;}
 
   .card{background:var(--bg-elevated); border:1px solid var(--border-soft); border-radius:var(--radius); padding:22px; box-shadow:var(--surface-shadow);}
@@ -11208,6 +11212,8 @@ function rmTopicText(it){
   const s = VOCAB_SETS.find(x=>x.id === (it.setId || it.refId)); if(s && s.title) parts.push(s.title.en || '');
   return parts.join(' ');
 }
+// Roadmap cards only ever show Farin full-body (Farin 2026-10-28): a head/face/mood asset falls back to a standing pose.
+function rmFarinBody(p){ return /^(face|head|mood)-/.test(String(p || '')) ? 'body-34' : p; }
 function roadmapCardArt(rm){
   const art = rm.map(it=>{ const p = gamePosterSrc(it); return p ? {poster:p} : null; });
   const free = i => i >= 0 && i < rm.length && !art[i] && !RM_OWN_ART[rm[i].type];
@@ -11219,7 +11225,7 @@ function roadmapCardArt(rm){
   const games = rm.map((it,i)=>i).filter(i=>rm[i].type === 'game' && fits(i)).sort((x,y)=>(rm[y].pos === 3) - (rm[x].pos === 3) || Math.abs(x - midAt) - Math.abs(y - midAt));
   const mid = games.length ? games[0] : rm.map((it,i)=>i).filter(fits).sort((x,y)=>Math.abs(x - midAt) - Math.abs(y - midAt))[0];
   if(mid != null && mid > first + 1) put(mid, {farin:farinOutfit(rmTopicText(rm[mid]), rm[mid].refId)});
-  for(let i = rm.length - 1; i >= Math.max(0, rm.length - 4); i--) if(fits(i) && i > (mid == null ? first : mid) + 1){ put(i, {farin:'face-proud', head:true}); break; }
+  for(let i = rm.length - 1; i >= Math.max(0, rm.length - 4); i--) if(fits(i) && i > (mid == null ? first : mid) + 1){ put(i, {farin:'dog-hug', wide:true}); break; }   // Farin 2026-10-28: never a head on the roadmap, a happy full-body pose
   let items = 0;
   rm.forEach((it, i)=>{
     if(items >= 5 || !fits(i)) return;
@@ -13894,7 +13900,7 @@ function renderRoadmapCard(p){
     // labels). A game's identity is its GAME subtitle; the streak stays in the top bar.
     return `<div class="${cls}"${locked ? ' data-action="roadmap-locked"' : ''} style="border-radius:32px; padding:${isCurrent ? '66px 30px 68px' : '58px 28px 60px'}; min-height:${isCurrent ? 196 : 176}px; background:${bg}; border:none; box-shadow:${shadow}; color:#fff;">
       ${sparkles}
-      ${poster ? `<img class="rm2-poster-img" src="${poster}" alt="" style="object-position:50% ${/yc-/.test(poster) ? 78 : (/facade/.test(poster) ? 38 : 55)}%;" loading="lazy" decoding="async">` : ''}${cardIcon}${art && art.item ? farinImg('item-' + art.item, 'rm2-cozy') : ''}${art && art.farin ? farinImg(art.farin, 'rm2-farin' + (art.head ? ' rm2-farin-head' : '')) : ''}
+      ${poster ? `<img class="rm2-poster-img" src="${poster}" alt="" style="object-position:50% ${/yc-/.test(poster) ? 78 : (/facade/.test(poster) ? 38 : 55)}%;" loading="lazy" decoding="async">` : ''}${cardIcon}${art && art.item ? farinImg('item-' + art.item, 'rm2-cozy') : ''}${art && art.farin ? farinImg(rmFarinBody(art.farin), 'rm2-farin' + (art.wide ? ' rm2-farin-wide' : '')) : ''}
       ${studyOpenTag}
         <div class="row between" style="align-items:flex-start; gap:10px;">
           <div style="min-width:0;">
@@ -14981,6 +14987,22 @@ function checkPracticeAnswer(round, text){
 
   return {wordsHit, wordsMissed, wc, sc, lengthOk, grammarSpotted, errorWatch, slangSpotted, looksReal, hasStructure, score, passed: score>=60 && looksReal && hasStructure};
 }
+// Bidi (2026-10-28, video 13): Latin bits inside fa feedback text (grammar titles, words, phrases) are wrapped in
+// FSI/PDI isolates so they never reorder with the Persian around them; plain text, so esc() keeps them.
+function biso(s){ return '\u2068' + s + '\u2069'; }
+// Starter lines: a trailing "..." stays glued to the last word (it used to wrap alone and crowd the next line).
+function starterText(t){ return String(t || '').replace(/\s*(\.\.\.|\u2026)\s*$/, '\u00A0\u2026'); }
+// Escaped HTML for a Persian label with Latin inside (e.g. "\u0627\u062F\u0627\u062A \u0631\u0628\u0637 (sin embargo\u060C aunque)"): each Latin run, with its
+// opening bracket, becomes an LTR isolate, so brackets and line ends never scramble. Text with no Persian is just escaped.
+function bidiMix(s){
+  s = String(s == null ? '' : s);
+  if(!/[\u0600-\u06FF]/.test(s)) return esc(s);
+  return s.split(/(\(?[A-Za-z\u00C0-\u024F][^\u0600-\u060B\u060D-\u06FF\u2066-\u2069\u00AB\u00BB]*)/).map((p, i)=>{
+    if(!(i % 2)) return esc(p);
+    const m = /^([\s\S]*?)([\s(]*)$/.exec(p);
+    return `<bdi dir="ltr">${esc(m[1])}</bdi>${esc(m[2])}`;
+  }).join('');
+}
 function practiceFeedback(result, round){
   const lines = [];
   if(!result.looksReal){
@@ -15004,9 +15026,9 @@ function practiceFeedback(result, round){
     )});
   } else if(round.words.length){
     lines.push({ok:false, text: L(
-      `Missing: ${result.wordsMissed.join(', ')}. Try working ${result.wordsMissed.length>1?'them':'it'} into your ${round.words.length>1?'sentences':'sentence'}.`,
-      `Eksik: ${result.wordsMissed.join(', ')}. Bunları cümlelerine eklemeyi dene.`,
-      `کم داری: ${result.wordsMissed.join(', ')}. سعی کن این‌ها را در جمله‌هایت بگنجانی.`, `Faltan: ${result.wordsMissed.join(', ')}. Intenta incluir${result.wordsMissed.length>1?'las':'la'} en tu${round.words.length>1?'s oraciones':' oración'}.`
+      `Missing: ${biso(result.wordsMissed.join(', '))}. Try working ${result.wordsMissed.length>1?'them':'it'} into your ${round.words.length>1?'sentences':'sentence'}.`,
+      `Eksik: ${biso(result.wordsMissed.join(', '))}. Bunları cümlelerine eklemeyi dene.`,
+      `کم داری: ${biso(result.wordsMissed.join(', '))}. سعی کن این‌ها را در جمله‌هایت بگنجانی.`, `Faltan: ${biso(result.wordsMissed.join(', '))}. Intenta incluir${result.wordsMissed.length>1?'las':'la'} en tu${round.words.length>1?'s oraciones':' oración'}.`
     )});
   }
   if(result.lengthOk){
@@ -15024,33 +15046,33 @@ function practiceFeedback(result, round){
   }
   if(round.grammar){
     // S3 error watch: "Check this" with the item's fix line. Never blocks, never scores.
-    (result.errorWatch || []).slice(0, 2).forEach(h=>lines.push({ok:false, text: L('Check this: ','Şuna bak: ','این را بررسی کن: ','Revisa esto: ') + '"' + h.phrase + '" — ' + trLine(h.fix)}));
+    (result.errorWatch || []).slice(0, 2).forEach(h=>lines.push({ok:false, text: L('Check this: ','Şuna bak: ','این را بررسی کن: ','Revisa esto: ') + '"' + biso(h.phrase) + '" — ' + trLine(h.fix)}));
     if(result.grammarSpotted){
       lines.push({ok:true, text: L(
-        `Try using "${round.grammar.title}" in a full sentence. Check that it follows the rule.`,
-        `"${round.grammar.title}" yapısını tam bir cümlede kullanmayı dene. Kurala uyduğundan emin ol.`,
-        `سعی کن از «${round.grammar.title}» در یک جمله کامل استفاده کنی. مطمئن شو با قاعده می‌خواند.`, `Intenta usar "${round.grammar.title}" en una frase completa. Comprueba que sigue la regla.`
+        `Try using "${biso(round.grammar.title)}" in a full sentence. Check that it follows the rule.`,
+        `"${biso(round.grammar.title)}" yapısını tam bir cümlede kullanmayı dene. Kurala uyduğundan emin ol.`,
+        `سعی کن از «${biso(round.grammar.title)}» در یک جمله کامل استفاده کنی. مطمئن شو با قاعده می‌خواند.`, `Intenta usar "${biso(round.grammar.title)}" en una frase completa. Comprueba que sigue la regla.`
       )});
     } else {
       lines.push({ok:false, text: L(
-        `Bonus: weave in "${round.grammar.title}" for extra polish — ${round.grammar.exp}`,
-        `Bonus: daha parlak olması için "${round.grammar.title}" yapısını ekle — ${round.grammar.exp}`,
-        `امتیاز اضافه: «${round.grammar.title}» را هم اضافه کن — ${round.grammar.exp}`, `Extra: incluye "${round.grammar.title}" para un toque más pulido — ${round.grammar.exp}`
+        `Bonus: weave in "${biso(round.grammar.title)}" for extra polish — ${round.grammar.exp}`,
+        `Bonus: daha parlak olması için "${biso(round.grammar.title)}" yapısını ekle — ${round.grammar.exp}`,
+        `امتیاز اضافه: «${biso(round.grammar.title)}» را هم اضافه کن — ${round.grammar.exp}`, `Extra: incluye "${biso(round.grammar.title)}" para un toque más pulido — ${round.grammar.exp}`
       )});
     }
   }
   if(round.slang){
     if(result.slangSpotted){
       lines.push({ok:true, text: L(
-        `Great — you used the slang "${round.slang.word}"!`,
-        `Harika — "${round.slang.word}" argosunu kullandın!`,
-        `عالی — از اصطلاح «${round.slang.word}» استفاده کردی!`, `¡Genial — usaste el argot "${round.slang.word}"!`
+        `Great — you used the slang "${biso(round.slang.word)}"!`,
+        `Harika — "${biso(round.slang.word)}" argosunu kullandın!`,
+        `عالی — از اصطلاح «${biso(round.slang.word)}» استفاده کردی!`, `¡Genial — usaste el argot "${biso(round.slang.word)}"!`
       )});
     } else {
       lines.push({ok:false, text: L(
-        `Bonus: try the slang "${round.slang.word}" (${round.slang.meaning}) next time.`,
-        `Bonus: bir dahaki sefere "${round.slang.word}" argosunu dene (${round.slang.meaning}).`,
-        `امتیاز اضافه: دفعه بعد اصطلاح «${round.slang.word}» را امتحان کن (${round.slang.meaning}).`, `Extra: prueba el argot "${round.slang.word}" (${round.slang.meaning}) la próxima vez.`
+        `Bonus: try the slang "${biso(round.slang.word)}" (${biso(round.slang.meaning)}) next time.`,
+        `Bonus: bir dahaki sefere "${biso(round.slang.word)}" argosunu dene (${biso(round.slang.meaning)}).`,
+        `امتیاز اضافه: دفعه بعد اصطلاح «${biso(round.slang.word)}» را امتحان کن (${biso(round.slang.meaning)}).`, `Extra: prueba el argot "${biso(round.slang.word)}" (${biso(round.slang.meaning)}) la próxima vez.`
       )});
     }
   }
@@ -15159,8 +15181,8 @@ function writingTaskResultHtml(round, text){
   if(task.linkers && task.linkers.length){
     const found = writingTaskLinkersFound(task, text), okL = found.length >= 2;
     out += `<div class="row wt-linkers" style="gap:8px; align-items:flex-start; margin-top:10px;"><span style="flex:0 0 auto; margin-top:2px; color:${okL ? 'var(--success)' : 'var(--error)'};">${okL ? ICONS.check : '×'}</span><span style="font-size:13.5px; line-height:1.5;">${esc(okL
-      ? L('You joined your ideas: ','Fikirlerini bağladın: ','ایده‌هایت را به هم وصل کردی: ','Has unido tus ideas: ') + found.join(', ')
-      : L('Join your ideas with two of: ','Fikirlerini şunlardan ikisiyle bağla: ','ایده‌هایت را با دو تا از این‌ها وصل کن: ','Une tus ideas con dos de estas: ') + task.linkers.join(', '))}</span></div>`;
+      ? L('You joined your ideas: ','Fikirlerini bağladın: ','ایده‌هایت را به هم وصل کردی: ','Has unido tus ideas: ') + biso(found.join(', '))
+      : L('Join your ideas with two of: ','Fikirlerini şunlardan ikisiyle bağla: ','ایده‌هایت را با دو تا از این‌ها وصل کن: ','Une tus ideas con dos de estas: ') + biso(task.linkers.join(', ')))}</span></div>`;
   }
   if(task.model) out += `<div class="gx-tip wt-model" style="margin-top:12px;"><button type="button" class="icon-btn" data-action="speak-sentence" data-text="${esc(task.model)}" style="flex:0 0 auto; background:var(--cat-gram-soft); color:var(--cat-gram); border-radius:50%; width:30px; height:30px; display:flex; align-items:center; justify-content:center; border:none;">${ICONS.soundOn}</button><div style="min-width:0;"><div class="gx-label" style="margin-bottom:4px;">${L('One way to write it','Yazmanın bir yolu','یک راه برای نوشتنش','Una forma de escribirlo')}</div><div dir="ltr" style="font-size:14px; line-height:1.6;">${esc(task.model)}</div></div></div>`;
   return out;
@@ -15539,7 +15561,7 @@ function speakNextHtml(vp){
   }
   if(vp.takes.length >= 2) return '';
   const r = vp.takes[0].result || {}, missed = r.wordsMissed || [];
-  const hint = missed.length ? L('Try to fit in: ','Şunları da katmayı dene: ','سعی کن این‌ها را هم بگویی: ','Intenta meter: ') + missed.join(', ')
+  const hint = missed.length ? L('Try to fit in: ','Şunları da katmayı dene: ','سعی کن این‌ها را هم بگویی: ','Intenta meter: ') + biso(missed.join(', '))
     : (!r.hasStructure ? L('Make it a full sentence this time.','Bu sefer tam bir cümle kur.','این بار یک جملهٔ کامل بگو.','Esta vez, haz una frase completa.') : L('Add one more detail this time.','Bu sefer bir detay daha ekle.','این بار یک جزئیات دیگر هم اضافه کن.','Esta vez, añade un detalle más.'));
   return `<div class="card-flat speak-again" style="margin-top:14px;">
     <div class="eyebrow" style="color:var(--cat-lis);">${speakTakeLabel(1)}</div>
@@ -15576,7 +15598,7 @@ function renderStudioRound(){
   const litRes = result || (mode==='speaking' && vp.transcript ? checkPracticeAnswer(round, vp.transcript) : null);
   const wordPills = round.words.map((w,k)=>`<span class="pill vocab-hl fill-pill${litRes && litRes.wordsHit.includes(w.word) ? ' lit' : ''}" id="fill-pill-${k}" data-action="show-word-meaning" data-word="${esc(w.word)}" data-meaning="${esc(w.meaning)}" style="background:var(--cat-voc-soft); color:var(--cat-voc); margin:3px 4px 3px 0;">${esc(w.word)}</span>`).join('');
   const starters = studioReflection(vp) ? [] : (round.starters || []);
-  const starterRows = starters.map(t=>`<div class="row" style="gap:8px; align-items:center;"><button type="button" class="icon-btn" data-action="speak-sentence" data-text="${esc(t)}" aria-label="${esc(L('Listen','Dinle','گوش بده','Escuchar'))}" style="flex:0 0 auto; background:var(--accent-soft); color:var(--accent-strong); border-radius:50%; width:28px; height:28px; display:flex; align-items:center; justify-content:center; border:none;">${ICONS.soundOn}</button><span dir="ltr" style="font-size:14px; line-height:1.5;">${esc(t)}</span></div>`).join('');
+  const starterRows = starters.map(t=>`<div class="row starter-row" style="gap:8px; align-items:center;"><button type="button" class="icon-btn" data-action="speak-sentence" data-text="${esc(t)}" aria-label="${esc(L('Listen','Dinle','گوش بده','Escuchar'))}" style="flex:0 0 auto; background:var(--accent-soft); color:var(--accent-strong); border-radius:50%; width:28px; height:28px; display:flex; align-items:center; justify-content:center; border:none;">${ICONS.soundOn}</button><span class="starter-line" dir="ltr">${esc(starterText(t))}</span></div>`).join('');
   return `<div class="fade-in">
     ${sectionHead(
       mode==='writing' ? L('Writing Practice','Yazma Pratiği','تمرین نوشتن', 'Práctica de escritura') : L('Speaking Practice','Konuşma Pratiği','تمرین صحبت‌کردن', 'Práctica de conversación'),
@@ -15585,7 +15607,7 @@ function renderStudioRound(){
     <div class="screen" style="padding-top:0;">
       ${(()=>{ const rf = studioReflection(vp); if(rf) return studioReflectionCardHtml(rf); return round.topic ? `<div class="card-flat" style="background:var(--accent-soft); border-color:var(--accent-soft); margin-bottom:10px;">
         <div class="eyebrow" style="color:var(--accent-strong);">${L('Your topic','Konun','موضوع تو', 'Tu tema')}</div>
-        <p style="margin-top:6px; font-size:14.5px; font-weight:600; line-height:1.5;">${esc(round.topic)}</p>
+        <p dir="auto" style="margin-top:6px; font-size:14.5px; font-weight:600; line-height:1.5; unicode-bidi:plaintext;">${esc(round.topic)}</p>
       </div>` : ''; })()}
       ${writingTaskPlanHtml(round, vp)}
       <div class="card-flat">
@@ -15593,8 +15615,8 @@ function renderStudioRound(){
         <div class="stack" style="gap:8px; margin-top:8px;">${starterRows}</div>` : ''}
         ${round.words.length ? `<div class="eyebrow"${starters.length ? ' style="margin-top:12px;"' : ''}>${L('Use these words','Bu kelimeleri kullan','از این کلمات استفاده کن','Usa estas palabras')}</div>
         <div style="margin-top:6px;">${wordPills}</div>` : ''}
-        ${round.grammar ? `<div style="margin-top:12px; font-size:13px; color:var(--ink-soft);"><b>${L('Try this grammar:','Bu yapıyı dene:','این ساختار را امتحان کن:', 'Prueba esta gramática:')}</b> ${esc(round.grammar.title)}</div>` : ''}
-        ${round.slang ? `<div style="margin-top:6px; font-size:13px; color:var(--ink-soft);"><b>${L('Bonus slang:','Bonus argo:','اصطلاح اضافه:', 'Argot extra:')}</b> ${esc(round.slang.word)} — ${esc(round.slang.meaning)}</div>` : ''}
+        ${round.grammar ? `<div class="studio-hint-line" style="margin-top:12px; font-size:13px; color:var(--ink-soft);"><b>${L('Try this grammar:','Bu yapıyı dene:','این ساختار را امتحان کن:', 'Prueba esta gramática:')}</b> <bdi>${bidiMix(round.grammar.title)}</bdi></div>` : ''}
+        ${round.slang ? `<div class="studio-hint-line" style="margin-top:6px; font-size:13px; color:var(--ink-soft);"><b>${L('Bonus slang:','Bonus argo:','اصطلاح اضافه:', 'Argot extra:')}</b> <bdi>${esc(round.slang.word)}</bdi> — <bdi>${bidiMix(round.slang.meaning)}</bdi></div>` : ''}
         <div style="margin-top:10px; font-size:12px; color:var(--ink-soft);">${L(`Aim for at least ${round.minWords} words.`,`En az ${round.minWords} kelime hedefle.`,`حداقل ${round.minWords} کلمه هدف بگیر.`, `Apunta a escribir al menos ${round.minWords} palabras.`)}</div>
         ${mode==='writing' ? fillBarHtml(round, vp.transcript || '') : ''}
       </div>

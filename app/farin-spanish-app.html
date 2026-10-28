@@ -272,6 +272,16 @@
   .farin-empty.farin-empty-scene{height:118px; border-radius:14px;}
   .rm2-cozy{position:absolute; inset-inline-end:24px; bottom:12px; height:40px; width:auto; max-width:64px; object-fit:contain; pointer-events:none; opacity:.95; filter:drop-shadow(0 4px 6px rgba(0,0,0,.2));}
   .rm2-node-current .rm2-cozy{bottom:16px; height:44px;}
+  /* Farin on 2-3 roadmap cards (2026-10-28): bottom-end, left of the chevron column, never over the text (title keeps 100px clear) */
+  .rm2-farin{position:absolute; inset-inline-end:54px; bottom:0; height:112px; width:auto; max-width:72px; object-fit:contain; object-position:bottom; pointer-events:none; filter:drop-shadow(0 6px 8px rgba(0,0,0,.2));}
+  .rm2-farin.rm2-farin-head{height:76px; max-width:76px; bottom:12px;}
+  .rm2-node-current .rm2-farin{height:120px;}
+  .rm2-node-current .rm2-farin.rm2-farin-head{height:80px;}
+  .rm2-node-done .rm2-farin, .rm2-node-done .rm2-cozy{opacity:.5;}
+  /* Game cards as mini posters (2026-10-28): the game's key art full-bleed, the words on a dark frosted panel (white text >= 4.5:1) */
+  .rm2-poster-img{position:absolute; inset:0; width:100%; height:100%; object-fit:cover; object-position:50% 55%; border-radius:inherit; pointer-events:none;}
+  .rm2-poster .roadmap-study{position:relative; z-index:1; width:fit-content !important; max-width:100%; box-sizing:border-box; padding:14px 16px !important; margin:-14px -12px; background:rgba(20,15,36,.84) !important; -webkit-backdrop-filter:blur(6px); backdrop-filter:blur(6px); border-radius:20px !important;}
+  .rm2-poster .rm2-title{padding-inline-end:0 !important;}
   .game-screen .flash-wrap{margin:0;}
   .game-screen .flashcard{min-height:280px; border-radius:26px;}
   .game-screen .flash-face{min-height:280px; border-radius:26px; border:0; padding:30px 22px; box-shadow:var(--clay-shadow-soft);}
@@ -11037,8 +11047,8 @@ function migrateRoadmapChecked(){
    place (insert/reorder nodes for the new goal) rather than replacing it, so
    completed nodes are never recomputed away. */
 function currentRoadmap(){
-  if(state.roadmap && state.roadmap.length) return state.roadmap;
-  return (state.profile && state.profile.completedDiagnostic) ? buildRoadmap(state.profile) : [];
+  const rm = (state.roadmap && state.roadmap.length) ? state.roadmap : ((state.profile && state.profile.completedDiagnostic) ? buildRoadmap(state.profile) : []);
+  return roadmapShown(rm);
 }
 /* Regenerates state.roadmap from the current profile and clears roadmapChecked —
    call this ONLY at genuine full-regeneration points (diagnostic completion, or a
@@ -11165,8 +11175,59 @@ function farinHelloHtml(){
     + L("I'm your teacher here. Two quick choices and we start.", 'Burada senin öğretmeninim. İki kısa seçim yapalım, sonra başlıyoruz.', 'اینجا معلمت هستم. دو انتخاب کوتاه داریم و بعد شروع می‌کنیم.', 'Aquí soy tu profe. Dos elecciones rápidas y empezamos.')
     + '</p></div>';
 }
-// Cosy details on the roadmap: small items from her sheet, on every other card that has no art of its own.
-const FARIN_COZY = ['coffee', 'flower', 'notebook', 'headphones', 'laptop', 'tote'];
+/* Roadmap card art (Farin 2026-10-28). Worked out once per draw, the same every time for the same page:
+   - Game cards with their own key art use it as a full-bleed poster (text on a dark frosted panel); no Farin or item on them.
+   - Farin herself on 2-3 cards: the first free card (hello, body-front), a game near the middle (topic outfit), a card at the
+     end (proud face). Never two decorated cards side by side, never Farin and an item on one card.
+   - A sheet item only where it means something (FARIN_ITEM_RULES); no match = no item; at most 5 a page.
+   Cards with their own art (vocab/story book, writing/speaking studio art, song vinyl) get nothing extra. */
+const YC_POSTER = '';
+const RM_OWN_ART = {vocab:1, story:1, writing:1, speaking:1, song:1};
+const FARIN_ITEM_RULES = [
+  ['headphones', it => it.type === 'media' || it.type === 'dialogue'],
+  ['notebook', it => it.type === 'grammar' || it.type === 'writing'],
+  ['laptop', (it, t) => /\b(career|work|job|office|business|meeting|interview|e-?mail|hr|compan|course|trabaj|oficina|negocio|entrevista|empleo)/i.test(t)],
+  ['coffee', (it, t) => /caf[eé]|coffee|food|restaurant|meal|cook|kitchen|breakfast|daily|routine|chore|comida|cocina|rutina|desayuno|diari/i.test(t)],
+  ['tote', (it, t) => /travel|trip|airport|hotel|holiday|shop|market|clothes|\bbuy|viaje|compras|tienda|ropa|vacacion/i.test(t)],
+  ['flower', (it, t) => it.type === 'story' || /\bstor(y|ies)|journal|diary|historia|diario/i.test(t)]
+];
+function gamePosterSrc(it){
+  if(!it || it.type !== 'game') return '';
+  if(it.gameKind === 'chores') return 'art/posters/plate-facade.webp';
+  if(it.gameKind !== 'path') return '';
+  const r = pathRefParts(it.refId); if(!r) return '';
+  if(YC_POSTER && typeof YC_LEVELS !== 'undefined' && YC_LEVELS.includes(r.level)) return YC_POSTER;
+  const sc = (typeof PATH_SCENES !== 'undefined') && PATH_SCENES['lane-ch' + r.ch + '-1'];
+  const plate = sc && sc.layers && sc.layers.find(l=>l.plate);
+  const m = plate && /(plate-lane-ch\d-\d)\.webp$/.exec(plate.src);
+  return m ? 'art/posters/' + m[1] + '.webp' : '';
+}
+function rmTopicText(it){
+  // the card's own content in English (never the saved title: that is in the UI language and would change the pick per language)
+  const parts = [it.refId, it.type === 'game' ? ({desk:'travel airport', order:'cafe restaurant food', chores:'home chore', hunt:'story', path:'story'}[it.gameKind] || '') : ''];
+  const s = VOCAB_SETS.find(x=>x.id === (it.setId || it.refId)); if(s && s.title) parts.push(s.title.en || '');
+  return parts.join(' ');
+}
+function roadmapCardArt(rm){
+  const art = rm.map(it=>{ const p = gamePosterSrc(it); return p ? {poster:p} : null; });
+  const free = i => i >= 0 && i < rm.length && !art[i] && !RM_OWN_ART[rm[i].type];
+  const deco = i => !!(art[i] && !art[i].poster);
+  const fits = i => free(i) && !deco(i - 1) && !deco(i + 1);
+  const put = (i, a) => { art[i] = a; return i; };
+  let first = -1; for(let i = 0; i < Math.min(4, rm.length); i++) if(fits(i)){ first = put(i, {farin:'body-front'}); break; }
+  const midAt = rm.length / 2;
+  const games = rm.map((it,i)=>i).filter(i=>rm[i].type === 'game' && fits(i)).sort((x,y)=>(rm[y].pos === 3) - (rm[x].pos === 3) || Math.abs(x - midAt) - Math.abs(y - midAt));
+  const mid = games.length ? games[0] : rm.map((it,i)=>i).filter(fits).sort((x,y)=>Math.abs(x - midAt) - Math.abs(y - midAt))[0];
+  if(mid != null && mid > first + 1) put(mid, {farin:farinOutfit(rmTopicText(rm[mid]), rm[mid].refId)});
+  for(let i = rm.length - 1; i >= Math.max(0, rm.length - 4); i--) if(fits(i) && i > (mid == null ? first : mid) + 1){ put(i, {farin:'face-proud', head:true}); break; }
+  let items = 0;
+  rm.forEach((it, i)=>{
+    if(items >= 5 || !fits(i)) return;
+    const t = rmTopicText(it), rule = FARIN_ITEM_RULES.find(([, ok])=>ok(it, t));
+    if(rule){ put(i, {item:rule[0]}); items++; }
+  });
+  return art;
+}
 function learnerCharKey(){
   const p = state.profile || {};
   return (p.motivationTag && ARCHETYPES[p.motivationTag]) ? p.motivationTag : 'everyday';
@@ -13624,6 +13685,7 @@ function renderRoadmapCard(p){
   const doneCount = roadmap.filter(it=>isRoadmapNodeDone(it)).length;
   const allDone = roadmap.every(it=>!rmRequired(it) || isRoadmapNodeDone(it));
   const currentIndex = roadmap.findIndex(it=>rmRequired(it) && !isRoadmapNodeDone(it));
+  const cardArt = roadmapCardArt(roadmap);
   // Lock rule (Farin 2026-10-18, "lets just for now make the current card a bit bigger and lock
   // the others with lower opacity"): a node is locked when it is not done AND it comes after the
   // current one. Done nodes after the current (finished out of order) stay done, never locked.
@@ -13693,6 +13755,7 @@ function renderRoadmapCard(p){
 
   function cardFn(idx){
     const item = roadmap[idx], m = TYPE_META[item.type], checked = isRoadmapNodeDone(item);
+    const art = cardArt[idx] || null, poster = art && art.poster;
     const isSession = item.type === 'session';
     const isGame = item.type === 'game';
     const isCurrent = idx === currentIndex;
@@ -13770,7 +13833,7 @@ function renderRoadmapCard(p){
     // token), the current card gets the full solid brand color, and titles switch
     // to the app's existing Fredoka "display" treatment (same font used for hero
     // headings like the profile name) instead of the default body font.
-    const cls = 'rm2-node' + (item.type === 'song' && !checked ? ' song-node' : '') + (isCurrent ? ' rm2-node-current' : '') + (checked ? ' rm2-node-done' : '') + (locked ? ' rm2-node-locked' : '');
+    const cls = 'rm2-node' + (poster ? ' rm2-poster' : '') + (item.type === 'song' && !checked ? ' song-node' : '') + (isCurrent ? ' rm2-node-current' : '') + (checked ? ' rm2-node-done' : '') + (locked ? ' rm2-node-locked' : '');
     // 2026-09-30, Farin (3rd correction, emphatic): "DO YOU SEE THE COLORS AND GOAL
     // TABS? I WANT THOSE COLORS AND SPARKLE IN THE ROADMAP TOO". The Goals screen's
     // .goal-card is the reference: a FULL-STRENGTH var(--cat-x) fill + white text +
@@ -13807,7 +13870,7 @@ function renderRoadmapCard(p){
     const titleFont = `font-family:'Fredoka',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; font-weight:800; font-size:${isCurrent?20.5:18.5}px; letter-spacing:-.01em;`;
     // Sparkles on every card now (see the block comment above), reusing the same
     // .sparkle/@sparkle-twinkle stars the goal cards use via claySparkles().
-    const sparkles = (checked || locked) ? '' : `
+    const sparkles = (checked || locked || poster) ? '' : `
         <span class="sparkle" style="top:10px; left:16px; animation-delay:0s;"></span>
         <span class="sparkle" style="top:22px; right:22px; left:auto; width:6px; height:6px; animation-delay:.5s;"></span>
         <span class="sparkle" style="bottom:16px; right:44px; left:auto; width:5px; height:5px; animation-delay:1s;"></span>
@@ -13823,7 +13886,6 @@ function renderRoadmapCard(p){
     const iconPx = iconBig ? (isCurrent ? 152 : 140) : (isCurrent ? 116 : 104);
     // Cosy details (Farin 2026-10-28): a small item from Farin's sheet on every other card without its own art,
     // in the card's empty bottom band (never over the title, the pill or the chevron); decorative only.
-    const cozy = (!m.img && item.type !== 'song' && idx % 2 === 0) ? FARIN_COZY[Math.floor(idx / 2) % FARIN_COZY.length] : '';
     const cardIcon = item.type === 'song' ? (checked ? '' : `<span class="song-shimmer" aria-hidden="true"></span>`) + `<span class="song-vinyl rm-disc" aria-hidden="true"${checked ? ' style="opacity:.5;"' : ''}><span class="song-vinyl-label"><img src="logo-fe-cutout.png" alt=""></span></span>` + (checked ? '' : songStarsHtml()) : m.img
       ? `<img src="${m.img}" alt="" class="rm2-icon-float" style="position:absolute; inset-inline-end:${iconBig?'-6px':'10px'}; bottom:${iconBig?'-4px':'12px'}; width:${iconPx}px; height:${iconPx}px; object-fit:contain; pointer-events:none; filter:drop-shadow(0 6px 12px rgba(0,0,0,.28)); ${checked?'opacity:.5;':''}">`
       : '';
@@ -13832,7 +13894,7 @@ function renderRoadmapCard(p){
     // labels). A game's identity is its GAME subtitle; the streak stays in the top bar.
     return `<div class="${cls}"${locked ? ' data-action="roadmap-locked"' : ''} style="border-radius:32px; padding:${isCurrent ? '66px 30px 68px' : '58px 28px 60px'}; min-height:${isCurrent ? 196 : 176}px; background:${bg}; border:none; box-shadow:${shadow}; color:#fff;">
       ${sparkles}
-      ${cardIcon}${cozy ? farinImg('item-' + cozy, 'rm2-cozy') : ''}
+      ${poster ? `<img class="rm2-poster-img" src="${poster}" alt="" style="object-position:50% ${/yc-/.test(poster) ? 78 : (/facade/.test(poster) ? 38 : 55)}%;" loading="lazy" decoding="async">` : ''}${cardIcon}${art && art.item ? farinImg('item-' + art.item, 'rm2-cozy') : ''}${art && art.farin ? farinImg(art.farin, 'rm2-farin' + (art.head ? ' rm2-farin-head' : '')) : ''}
       ${studyOpenTag}
         <div class="row between" style="align-items:flex-start; gap:10px;">
           <div style="min-width:0;">
@@ -13840,7 +13902,7 @@ function renderRoadmapCard(p){
             <!-- only the title clears the bottom-corner icon; the subtitle above it
                  sits clear of the icon already, so reserving space there just made
                  short labels wrap for no reason. -->
-            <div class="rm2-title" style="${titleFont} margin-top:8px; color:${titleColor}; line-height:1.28; padding-inline-end:${(m.img || item.type === 'song')?'100px':'0'}; ${checked?'text-decoration:line-through; opacity:.62;':''}">${esc(nodeTitle(item))}</div>
+            <div class="rm2-title" style="${titleFont} margin-top:8px; color:${titleColor}; line-height:1.28; padding-inline-end:${(m.img || item.type === 'song' || (art && art.farin))?'100px':'0'}; ${checked?'text-decoration:line-through; opacity:.62;':''}">${esc(nodeTitle(item))}</div>
             ${item.type === 'song' ? songCardFaceHtml(item) : ''}
           </div>
           <span style="flex:0 0 auto; margin-top:3px; color:${chevColor}; opacity:${checked?1:.65};${locked?' visibility:hidden;':''}">${checked?ICONS.check:ICONS.chev}</span>
@@ -13866,7 +13928,7 @@ function renderRoadmapCard(p){
             <div style="font-weight:700; font-size:14px;">${esc(displayLevel(p))} ${L('roadmap','yol haritası','نقشه راه', 'hoja de ruta')}</div>
             ${(() => { const th = roadmapThemeLabel(p); return th ? `<div class="rm2-theme" style="font-size:12.5px; font-weight:800; color:${archColor}; margin-top:2px;">${esc(th)}</div>` : ''; })()}
             <div style="font-size:12px; color:var(--ink-soft); margin-top:2px;">${doneCount===0 ? L('Your first souvenir is waiting','İlk hatıran seni bekliyor','اولین یادگاری‌ات منتظرت است','Tu primer recuerdo te espera') : L('Check everything off to reach','Hepsini işaretle ve şuraya ulaş:','همه را علامت بزن تا برسی به','Marca todo para llegar a')+' '+esc(nextDisplayLevel(p))}</div>
-            <div class="rm2-links"><button class="rm2-link" data-action="nav" data-view="journal">${esc(journalName())}</button></div>
+            <div class="rm2-links"><button class="rm2-link" data-action="nav" data-view="journal">${esc(journalName())}</button><span aria-hidden="true" style="color:var(--ink-faint);">·</span><button class="rm2-link" data-action="open-box">${L('Vocab Box','Kelime Kutusu','جعبهٔ لغات','Caja de palabras')}</button></div>
           </div>
           <div class="rm2-head-count">${roadmapHeaderSlots(doneCount)}<div class="num" style="font-weight:800; font-size:15px; color:${archColor}; white-space:nowrap;">${allDone ? L('Page complete','Sayfa tamam','صفحه کامل شد','Página completa') : (doneCount/roadmap.length <= .5 ? doneCount+' '+L('done','tamam','انجام شد','hechos') : (roadmap.length-doneCount)+' '+L('to go','kaldı','مانده','por hacer'))}</div></div>
         </div>
@@ -21685,6 +21747,25 @@ function boxList(){
   if(!Array.isArray(p.vocabBox)) p.vocabBox = [];
   return p.vocabBox;
 }
+/* Empty box (Farin 2026-10-28: "you have leitner box at the first of the roadmap even if it's empty"). A Vocab Box card
+   is never shown while the box has no words. When the learner reaches one (everything required before it done) with an
+   empty box, it passes by itself: boxDone[refId] = 'skip' (counts as done, stays hidden even if words come in later).
+   With words in the box the cards show as before (2 per page). Worked out on every read (currentRoadmap), so roadmaps
+   saved before this fix are covered too: ensureRoadmapBox() used to put both cards right at the current step there. */
+function boxHasWords(){ return boxList().some(e=>boxCard(e)); }
+function roadmapShown(rm){
+  if(!rm || !rm.some(n=>n.type==='box') || !state.progress) return rm;
+  const bd = state.progress.boxDone || (state.progress.boxDone = {});
+  if(!boxHasWords()){
+    let reached = true;
+    rm.forEach(n=>{
+      if(n.type === 'box'){ if(reached && !bd[n.refId]) bd[n.refId] = 'skip'; return; }
+      if(rmRequired(n) && !isRoadmapNodeDone(n)) reached = false;
+    });
+    return rm.filter(n=>n.type !== 'box' || (bd[n.refId] && bd[n.refId] !== 'skip'));
+  }
+  return rm.filter(n=>n.type !== 'box' || bd[n.refId] !== 'skip');
+}
 function boxCard(e){ const s = e && VOCAB_SETS.find(x=>x.id===e.set); return s ? s.cards.find(c=>c.word===e.w) || null : null; }
 function boxAdd(s, card){
   if(!s || !card) return;
@@ -21795,7 +21876,9 @@ function roadmapAddBoxNodes(items, profile, minAt){
   let b = closer >= 0 ? closer : Math.max(items.length - 1, 0);
   b = Math.max(b, lo);
   const mid = items.findIndex(n=>n.type==='game' && n.pos===3);
-  let a = mid >= 0 ? mid + 1 : Math.ceil(items.length / 2);
+  // never before the 2nd flashcard set of the page: those sets are what fill the box (2026-10-28)
+  let fed = 0, afterFeed = 0; items.forEach((n,i)=>{ if((n.type==='vocab' || n.type==='slang') && ++fed === 2) afterFeed = i + 1; });
+  let a = Math.max(mid >= 0 ? mid + 1 : Math.ceil(items.length / 2), afterFeed);
   a = Math.min(Math.max(a, lo), b);
   items.splice(b, 0, mk(2));
   items.splice(a, 0, mk(1));

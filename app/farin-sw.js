@@ -123,7 +123,9 @@ const PATH_RE = /\/path\/[^/?#]+\.webp$/;
 const APP_ART_PRECACHE = [
   'char-career.png', 'char-everyday.png', 'char-exam.png', 'char-immigration.png', 'char-travel.png',
   'story-adventure-cutout.png', 'story-documentary-cutout.png', 'story-fiction-cutout.png', 'story-romance-cutout.png', 'story-thriller-cutout.png',
-  'logo-fe-cutout.png'
+  'logo-fe-cutout.png',
+  // roadmap game-card posters (2026-10-28); add art/posters/card-<kind>.webp here when CARD_POSTERS lists it
+  'art/posters/plate-facade.webp', 'art/posters/plate-lane-ch1-1.webp', 'art/posters/plate-lane-ch2-1.webp', 'art/posters/plate-lane-ch3-1.webp', 'art/posters/plate-lane-ch4-1.webp', 'art/posters/plate-lane-ch5-1.webp', 'art/posters/plate-lane-ch6-1.webp'
 ];
 // Natural voice clips (Claude/tts): audio/<lang>/<key>.mp3 never change under one name -> cache-first;
 // audio/<lang>/manifest.json changes when clips are added -> network-first, cached copy offline.

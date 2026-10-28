@@ -188,14 +188,17 @@
   /* Practice-finished celebration (2026-09-30, Farin: after any card's practice,
      show the character + an applause bubble, slow float, then after 10s go
      straight back to the roadmap). See showCelebration(). */
-  .celebrate-overlay{position:fixed; inset:0; z-index:60; display:flex; align-items:center; justify-content:center; padding:16px; background:rgba(28,20,58,.62); backdrop-filter:blur(4px); -webkit-backdrop-filter:blur(4px); animation:fadeIn .45s ease both; cursor:pointer;}
+  /* Light scrim (design YDiqh5L2, 2026-10-28): warm cream + blur instead of the dark purple; Farin's face sits ABOVE the message (7hub0DP2),
+     16px+ between face, message and hint, and the hint has its own pill so nothing behind it reads as part of it. */
+  .celebrate-overlay{position:fixed; inset:0; z-index:60; display:flex; align-items:center; justify-content:center; padding:16px; background:rgba(255,246,236,.72); backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px); animation:fadeIn .45s ease both; cursor:pointer;}
   .celebrate-stack{position:relative; display:flex; flex-direction:column; align-items:center; max-width:340px; text-align:center; animation:soft-float 4.2s ease-in-out infinite;}
   .celebrate-stack .cute-bubble{font-size:19px; padding:18px 22px; margin-bottom:18px; animation:char-tip-in .6s cubic-bezier(.34,1.56,.64,1) both;}
   .celebrate-stack .cute-bubble small{display:block; font-size:13px; font-weight:600; color:#7a6fa0; margin-top:6px;}
-  .celebrate-stack .cute-bubble::after{content:''; position:absolute; bottom:-10px; left:50%; width:22px; height:22px; background:#fff; transform:translateX(-50%) rotate(45deg); border-radius:0 0 6px 0;}
+  .celebrate-stack .cute-bubble::after{content:''; position:absolute; top:-10px; left:50%; width:22px; height:22px; background:#fff; transform:translateX(-50%) rotate(225deg); border-radius:0 0 6px 0;}
+  .celebrate-stack .celebrate-char{order:-1; margin-bottom:20px;}
   .celebrate-char{width:180px; height:180px; object-fit:contain; filter:drop-shadow(0 16px 22px rgba(0,0,0,.35)); animation:char-tip-in .7s .15s cubic-bezier(.34,1.56,.64,1) both;}
   .celebrate-stack > .sparkle{color:#ffd166;}
-  .celebrate-hint{margin-top:16px; color:rgba(255,255,255,.85); font-size:12.5px; font-weight:700;}
+  .celebrate-hint{margin-top:16px; color:#4d6b66; font-size:12.5px; font-weight:700; background:rgba(255,255,255,.9); padding:6px 14px; border-radius:999px; box-shadow:0 4px 12px -6px rgba(20,51,46,.3);}
   /* Gamification v2 (Journey Journal, 2026-09-30): game-feel layer — companion on
      game screens, tap sparkles, Trap Dash fill pill, Listen & Type word marks. */
   /* Game screens v3 (2026-10-02): layout rebuilt to the approved Journey Journal
@@ -278,10 +281,18 @@
   .rm2-node-current .rm2-farin{height:120px;}
   .rm2-node-current .rm2-farin.rm2-farin-wide{height:100px; max-width:112px;}
   .rm2-node-done .rm2-farin, .rm2-node-done .rm2-cozy{opacity:.5;}
-  /* Game cards as mini posters (2026-10-28): the game's key art full-bleed, the words on a dark frosted panel (white text >= 4.5:1) */
+  /* Game cards as mini posters (2026-10-28): the game's key art full-bleed. Panel (design OScpAcrQ + mnM0D4yh, 2026-10-28): light frosted
+     glass, ink text (>= 4.5:1), compact in the bottom inline-start corner (bottom-right in RTL), max 60% wide, so the poster's subject shows;
+     the bottom padding keeps it clear of the path dot. Fixed ink colours, not var(--ink), so dark mode can't put light text on it. */
   .rm2-poster-img{position:absolute; inset:0; width:100%; height:100%; object-fit:cover; object-position:50% 55%; border-radius:inherit; pointer-events:none;}
-  .rm2-poster .roadmap-study{position:relative; z-index:1; width:fit-content !important; max-width:100%; box-sizing:border-box; padding:14px 16px !important; margin:-14px -12px; background:rgba(20,15,36,.84) !important; -webkit-backdrop-filter:blur(6px); backdrop-filter:blur(6px); border-radius:20px !important;}
-  .rm2-poster .rm2-title{padding-inline-end:0 !important;}
+  .rm2-node.rm2-poster{display:flex; flex-direction:column; justify-content:flex-end; align-items:flex-start; padding:40px 14px 46px !important;}
+  .rm2-poster .roadmap-study{position:relative; z-index:1; flex:0 0 auto; width:fit-content !important; max-width:60%; box-sizing:border-box; padding:10px 12px !important; margin:0; background:rgba(255,255,255,.85) !important; -webkit-backdrop-filter:blur(8px); backdrop-filter:blur(8px); border-radius:16px !important; box-shadow:0 6px 16px -8px rgba(20,51,46,.35);}
+  .rm2-poster .rm2-title{padding-inline-end:0 !important; color:#14332e !important; font-size:16px !important; margin-top:4px !important;}
+  .rm2-poster .rm2-sub{color:#4d6b66 !important; font-size:10.5px !important;}
+  .rm2-poster .rm2-chev{color:#4d6b66 !important;}
+  /* a poster whose subject stands right of centre (Your Call cover) keeps the panel on the left in RTL too, so it never covers her */
+  [dir="rtl"] .rm2-node.rm2-poster-subj-r{align-items:flex-end;}
+  .rm2-poster .roadmap-study .pill{margin-top:8px !important; box-shadow:0 0 0 1.5px rgba(20,51,46,.12), 0 3px 8px -3px rgba(0,0,0,.25) !important;}
   .game-screen .flash-wrap{margin:0;}
   .game-screen .flashcard{min-height:280px; border-radius:26px;}
   .game-screen .flash-face{min-height:280px; border-radius:26px; border:0; padding:30px 22px; box-shadow:var(--clay-shadow-soft);}
@@ -1005,7 +1016,7 @@
   .cel-end .cel-sticker, .cel-end .cel-sv, .cel-end .cel-caption{opacity:1 !important;}
   .cel-end .cel-flip{transform:rotateY(180deg) !important;}
   /* "Take the other one" chip under the souvenir (tobT7nwI) */
-  .cel-alt{opacity:0; margin-top:10px; border:0; border-radius:999px; padding:8px 14px; font:inherit; font-weight:800; font-size:13px; background:rgba(255,255,255,.18); color:#fff; cursor:pointer; transition:opacity .25s;}
+  .cel-alt{opacity:0; margin-top:10px; border:0; border-radius:999px; padding:8px 14px; font:inherit; font-weight:800; font-size:13px; background:#fff; color:#14332e; box-shadow:0 4px 12px -6px rgba(20,51,46,.3); cursor:pointer; transition:opacity .25s;}
   .cel-end .cel-alt{opacity:1 !important;}
   @media (max-height:760px){ .celebrate-overlay .celebrate-char{width:130px; height:130px;} .celebrate-stack .cute-bubble{font-size:17px; padding:14px 18px; margin-bottom:12px;} }
 
@@ -11195,9 +11206,20 @@ const FARIN_ITEM_RULES = [
   ['tote', (it, t) => /travel|trip|airport|hotel|holiday|shop|market|clothes|\bbuy|viaje|compras|tienda|ropa|vacacion/i.test(t)],
   ['flower', (it, t) => it.type === 'story' || /\bstor(y|ies)|journal|diary|historia|diario/i.test(t)]
 ];
+// Dedicated 960x480 card plates (farin-gamification POSTER-BRIEFS.md, 2026-10-28): list a kind here only once its
+// art/posters/card-<kind>.webp exists in BOTH repos (and in farin-sw.js precache), so a card never shows a broken image.
+const CARD_POSTERS = new Set([]);
+// Where each poster's subject sits, so the bottom-corner panel never covers it (mnM0D4yh). Values are CSS object-position.
+function posterFocus(src){
+  if(/yc-/.test(src)) return '50% 66%';          // Your Call cover: the woman's hood and face above the panel, title band cropped off
+  if(/facade/.test(src)) return '50% 42%';       // Cozy Chores: the two upper floors of rooms
+  if(/card-/.test(src)) return '50% 50%';        // card plates are drawn for the 2:1 card
+  return '50% 55%';                              // Story Path plates: town and harbour
+}
 function gamePosterSrc(it){
   if(!it || it.type !== 'game') return '';
   if(it.gameKind === 'chores') return 'art/posters/plate-facade.webp';
+  if(CARD_POSTERS.has(it.gameKind)) return 'art/posters/card-' + it.gameKind + '.webp';
   if(it.gameKind !== 'path') return '';
   const r = pathRefParts(it.refId); if(!r) return '';
   if(YC_POSTER && typeof YC_LEVELS !== 'undefined' && YC_LEVELS.includes(r.level)) return YC_POSTER;
@@ -13839,7 +13861,7 @@ function renderRoadmapCard(p){
     // token), the current card gets the full solid brand color, and titles switch
     // to the app's existing Fredoka "display" treatment (same font used for hero
     // headings like the profile name) instead of the default body font.
-    const cls = 'rm2-node' + (poster ? ' rm2-poster' : '') + (item.type === 'song' && !checked ? ' song-node' : '') + (isCurrent ? ' rm2-node-current' : '') + (checked ? ' rm2-node-done' : '') + (locked ? ' rm2-node-locked' : '');
+    const cls = 'rm2-node' + (poster ? ' rm2-poster' + (/yc-/.test(poster) ? ' rm2-poster-subj-r' : '') : '') + (item.type === 'song' && !checked ? ' song-node' : '') + (isCurrent ? ' rm2-node-current' : '') + (checked ? ' rm2-node-done' : '') + (locked ? ' rm2-node-locked' : '');
     // 2026-09-30, Farin (3rd correction, emphatic): "DO YOU SEE THE COLORS AND GOAL
     // TABS? I WANT THOSE COLORS AND SPARKLE IN THE ROADMAP TOO". The Goals screen's
     // .goal-card is the reference: a FULL-STRENGTH var(--cat-x) fill + white text +
@@ -13900,18 +13922,18 @@ function renderRoadmapCard(p){
     // labels). A game's identity is its GAME subtitle; the streak stays in the top bar.
     return `<div class="${cls}"${locked ? ' data-action="roadmap-locked"' : ''} style="border-radius:32px; padding:${isCurrent ? '66px 30px 68px' : '58px 28px 60px'}; min-height:${isCurrent ? 196 : 176}px; background:${bg}; border:none; box-shadow:${shadow}; color:#fff;">
       ${sparkles}
-      ${poster ? `<img class="rm2-poster-img" src="${poster}" alt="" style="object-position:50% ${/yc-/.test(poster) ? 78 : (/facade/.test(poster) ? 38 : 55)}%;" loading="lazy" decoding="async">` : ''}${cardIcon}${art && art.item ? farinImg('item-' + art.item, 'rm2-cozy') : ''}${art && art.farin ? farinImg(rmFarinBody(art.farin), 'rm2-farin' + (art.wide ? ' rm2-farin-wide' : '')) : ''}
+      ${poster ? `<img class="rm2-poster-img" src="${poster}" alt="" style="object-position:${posterFocus(poster)};" loading="lazy" decoding="async">` : ''}${cardIcon}${art && art.item ? farinImg('item-' + art.item, 'rm2-cozy') : ''}${art && art.farin ? farinImg(rmFarinBody(art.farin), 'rm2-farin' + (art.wide ? ' rm2-farin-wide' : '')) : ''}
       ${studyOpenTag}
         <div class="row between" style="align-items:flex-start; gap:10px;">
           <div style="min-width:0;">
-            <div style="font-size:11px; font-weight:900; color:${subtitleColor}; text-transform:uppercase; letter-spacing:.05em;">${subtitleHtml}</div>
+            <div class="rm2-sub" style="font-size:11px; font-weight:900; color:${subtitleColor}; text-transform:uppercase; letter-spacing:.05em;">${subtitleHtml}</div>
             <!-- only the title clears the bottom-corner icon; the subtitle above it
                  sits clear of the icon already, so reserving space there just made
                  short labels wrap for no reason. -->
-            <div class="rm2-title" style="${titleFont} margin-top:8px; color:${titleColor}; line-height:1.28; padding-inline-end:${(m.img || item.type === 'song' || (art && art.farin))?'100px':'0'}; ${checked?'text-decoration:line-through; opacity:.62;':''}">${esc(nodeTitle(item))}</div>
+            <div class="rm2-title" style="${titleFont} margin-top:8px; color:${titleColor}; line-height:1.28; padding-inline-end:${(m.img || item.type === 'song' || (art && art.farin))?'100px':'0'}; ${checked?'text-decoration:line-through; opacity:.62;':''}">${bidiMix(nodeTitle(item))}</div>
             ${item.type === 'song' ? songCardFaceHtml(item) : ''}
           </div>
-          <span style="flex:0 0 auto; margin-top:3px; color:${chevColor}; opacity:${checked?1:.65};${locked?' visibility:hidden;':''}">${checked?ICONS.check:ICONS.chev}</span>
+          <span class="rm2-chev" style="flex:0 0 auto; margin-top:3px; color:${chevColor}; opacity:${checked?1:.65};${locked?' visibility:hidden;':''}">${checked?ICONS.check:ICONS.chev}</span>
         </div>
         ${isCurrent && !checked ? `<div class="pill" style="margin-top:14px; background:#fff; color:${color}; font-weight:900; text-transform:uppercase; letter-spacing:.03em; box-shadow:0 4px 10px -3px rgba(0,0,0,.3);"><img src="icon-mappin.png" alt="" style="width:15px; height:15px; object-fit:contain;">${L("You're here","Buradasın","اینجایی", 'Estás aquí')}</div>` : ''}
       ${studyCloseTag}
@@ -14999,7 +15021,7 @@ function bidiMix(s){
   if(!/[\u0600-\u06FF]/.test(s)) return esc(s);
   return s.split(/(\(?[A-Za-z\u00C0-\u024F][^\u0600-\u060B\u060D-\u06FF\u2066-\u2069\u00AB\u00BB]*)/).map((p, i)=>{
     if(!(i % 2)) return esc(p);
-    const m = /^([\s\S]*?)([\s(]*)$/.exec(p);
+    const m = /^([\s\S]*?)([\s(\u2014\u2013:;,\u060C\u061B-]*)$/.exec(p);   // a trailing dash/colon/comma belongs to the Persian side (s5Z52jf7)
     return `<bdi dir="ltr">${esc(m[1])}</bdi>${esc(m[2])}`;
   }).join('');
 }

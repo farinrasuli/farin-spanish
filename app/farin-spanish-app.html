@@ -249,6 +249,23 @@
   .game-opt.long{font-family:inherit; font-size:15.5px; line-height:1.4; padding:12px 16px;}
   .game-why{display:flex; gap:12px; align-items:center; background:var(--cat-review-soft); border-radius:20px; padding:14px 16px; font-size:13.5px; font-weight:700; line-height:1.5; color:var(--ink);}
   .game-why img{flex:0 0 auto; width:40px; height:40px; object-fit:contain; transform:rotate(-8deg);}
+  /* Farin the character (2026-10-28, Trello i8t09sOx): cut-outs from her sheet, art/farin/*.webp. She never hops or floats. */
+  .game-why img.fw{width:46px; height:46px; transform:none;}
+  .char-tip-char.farin-dog{width:66px; height:66px; padding:6px 7px 4px; box-sizing:border-box; border-radius:50%; background:#fff; box-shadow:0 8px 16px -6px rgba(0,0,0,.28), 0 0 0 2px rgba(255,255,255,.9); filter:none;}
+  .char-tip-float.farin-still{animation:none;}
+  .game-companion img.gc-dog{width:54px; height:54px; padding:5px 6px 3px; box-sizing:border-box; border-radius:50%; background:#fff; margin-top:4px; animation:none; filter:none; box-shadow:0 6px 12px -6px rgba(0,0,0,.3);}
+  .celebrate-char.farin-cel{width:136px; height:136px; padding:10px; box-sizing:border-box; border-radius:50%; background:#fff; filter:drop-shadow(0 14px 20px rgba(0,0,0,.3));}
+  .lx-hero.has-farin{padding-inline-end:108px; min-height:236px;}
+  .lx-hero > img.farin-hero{position:absolute; inset-inline-end:12px; bottom:50px; height:142px; width:auto; max-width:104px; object-fit:contain; object-position:bottom; pointer-events:none; filter:drop-shadow(0 8px 10px rgba(0,0,0,.2));}
+  .farin-hi{display:flex; align-items:flex-end; gap:14px; margin:12px 0 -14px;}
+  .farin-hi-img{flex:0 0 auto; height:128px; width:auto; filter:drop-shadow(0 6px 8px rgba(60,40,20,.12));}
+  .farin-hi p{margin:0 0 16px; font-weight:600; font-size:15px; line-height:1.45; color:var(--ink-soft); max-width:220px;}
+  .farin-hi p b{display:block; font-family:'Fredoka',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; font-weight:700; font-size:17px; color:var(--ink); margin-bottom:2px;}
+  .farin-empty{display:block; height:140px; width:auto; margin:4px auto 10px; filter:drop-shadow(0 8px 10px rgba(0,0,0,.12));}
+  .farin-empty.farin-empty-dog{height:84px;}
+  .farin-empty.farin-empty-scene{height:118px; border-radius:14px;}
+  .rm2-cozy{position:absolute; inset-inline-end:24px; bottom:12px; height:40px; width:auto; max-width:64px; object-fit:contain; pointer-events:none; opacity:.95; filter:drop-shadow(0 4px 6px rgba(0,0,0,.2));}
+  .rm2-node-current .rm2-cozy{bottom:16px; height:44px;}
   .game-screen .flash-wrap{margin:0;}
   .game-screen .flashcard{min-height:280px; border-radius:26px;}
   .game-screen .flash-face{min-height:280px; border-radius:26px; border:0; padding:30px 22px; box-shadow:var(--clay-shadow-soft);}
@@ -8526,7 +8543,7 @@ function openRhythmSheet(){
   const draw = ()=>{
     const pr = state.progress, goal = weekGoal(), n = Math.min(weekDaysDone(), goal);
     el.innerHTML = `<div class="rh-sheet" role="dialog" aria-label="${esc(L('Your week','Haftan','هفته تو','Tu semana'))}">
-      <img class="rh-char" src="char-${learnerCharKey()}.png" alt="">
+      <img class="rh-char" src="${farinSrc('mood-happy')}" alt="">
       <div class="rh-title">${L('Your week','Haftan','هفته تو','Tu semana')}</div>
       <div class="rh-big-dots">${weekDotsHtml()}</div>
       <div class="rh-line">${n >= goal ? L('Week goal reached — lovely rhythm!','Haftalık hedef tamam — harika bir ritim!','هدف این هفته کامل شد — ریتم قشنگی است!','¡Meta semanal cumplida! ¡Qué buen ritmo!') : L(`${n} of ${goal} days this week`, `Bu hafta ${n}/${goal} gün`, `${n} از ${goal} روز این هفته`, `${n} de ${goal} días esta semana`)}</div>
@@ -9820,7 +9837,7 @@ function renderDialogue(id){
   if(step === 0){
     const cue = turns[0] && turns[0].ln.cue ? trLine(turns[0].ln.cue) : '';
     body = note(L('Listen to the other person. What is happening?','Diğer kişiyi dinle. Ne oluyor?','به آن یکی گوش کن. چه اتفاقی می‌افتد؟','Escucha a la otra persona. ¿Qué pasa?'))
-      + `<div class="game-why" style="background:var(--cat-lis-soft);"><img src="char-${learnerCharKey()}.png" alt=""><div dir="auto"><b>${esc(svText(d.title))}</b>${cue ? '<br>' + esc(cue) : ''}</div></div>`
+      + `<div class="game-why" style="background:var(--cat-lis-soft);">${farinImg('face-smile')}<div dir="auto"><b>${esc(svText(d.title))}</b>${cue ? '<br>' + esc(cue) : ''}</div></div>`
       + `<div class="card-flat gc-card" style="margin-top:12px;">${d.lines.filter(ln=>ln.who !== 'you').map(ln=>dialogueLineHtml(ln, {hide:true})).join('')}</div>`
       + next(L('Show the words','Kelimeleri göster','کلمه‌ها را نشان بده','Muestra las palabras'));
   } else if(step === 1){
@@ -9843,13 +9860,13 @@ function renderDialogue(id){
       const order = dialogueOrder(d, t, ln.choices.length), miss = vp.miss || [];
       task = note(L('What do you say?','Ne dersin?','چه می‌گویی؟','¿Qué dices?')) + `<div class="game-opts">${order.map(k=>{ const c = ln.choices[k]; let cls = 'game-opt long'; if(solved) cls += c.ok ? ' ok' : ' dim'; else if(miss.includes(k)) cls += ' no';
           return `<button class="${cls}" dir="ltr" data-action="dlg-pick" data-k="${k}" ${solved || miss.includes(k) ? 'disabled' : ''}>${esc(c.text)}</button>`; }).join('')}</div>`
-        + (!solved && miss.length ? `<div class="game-why"><img src="char-${learnerCharKey()}.png" alt=""><div dir="auto">${esc(trLine(ln.choices[miss[miss.length - 1]].why) || L('Not quite. Try again.','Tam değil. Tekrar dene.','کاملاً درست نیست. دوباره امتحان کن.','Casi. Inténtalo otra vez.'))}</div></div>` : '');
+        + (!solved && miss.length ? `<div class="game-why">${farinImg('mood-thinking')}<div dir="auto">${esc(trLine(ln.choices[miss[miss.length - 1]].why) || L('Not quite. Try again.','Tam değil. Tekrar dene.','کاملاً درست نیست. دوباره امتحان کن.','Casi. Inténtalo otra vez.'))}</div></div>` : '');
     } else {
       const missing = vp.missing || [];
-      task = `<div class="game-why" style="background:var(--cat-lis-soft);"><img src="char-${learnerCharKey()}.png" alt=""><div dir="auto">${esc(trLine(ln.cue))}</div></div>`
+      task = `<div class="game-why" style="background:var(--cat-lis-soft);">${farinImg('face-smile')}<div dir="auto">${esc(trLine(ln.cue))}</div></div>`
         + (solved ? `<div class="phrase-mean" dir="ltr" style="margin-top:10px; font-style:italic;">${esc(vp.sayText || '')}</div>` : `<textarea class="story-answer" id="dlg-say-input" dir="ltr" maxlength="300" placeholder="${esc(L('Type what you would say.','Ne söyleyeceğini yaz.','بنویس چه می‌گویی.','Escribe lo que dirías.'))}">${esc(vp.sayText || '')}</textarea>
           <button class="btn btn-primary" style="margin-top:8px;" data-action="dlg-say">${L('Check','Kontrol et','بررسی کن','Comprobar')}</button>`)
-        + (!solved && missing.length ? `<div class="game-why" style="margin-top:10px;"><img src="char-${learnerCharKey()}.png" alt=""><div dir="auto">${esc(L('Try to use: ','Şunları kullanmayı dene: ','سعی کن این‌ها را به کار ببری: ','Intenta usar: '))}<span dir="ltr">${esc(missing.join(', '))}</span></div></div>` : '');
+        + (!solved && missing.length ? `<div class="game-why" style="margin-top:10px;">${farinImg('mood-thinking')}<div dir="auto">${esc(L('Try to use: ','Şunları kullanmayı dene: ','سعی کن این‌ها را به کار ببری: ','Intenta usar: '))}<span dir="ltr">${esc(missing.join(', '))}</span></div></div>` : '');
     }
     const after = solved ? `<div class="gx-tip" style="margin-top:12px;">${ttsButton(okLine, '')}<div style="min-width:0;"><div class="gx-label" style="margin-bottom:4px; color:var(--cat-lis);">${low ? '✓' : L('One way to say it','Söylemenin bir yolu','یک راه برای گفتنش','Una forma de decirlo')}</div><div dir="ltr" style="font-size:14.5px; font-weight:700; line-height:1.5;">${esc(okLine)}</div></div></div>
       <button class="btn btn-primary" style="margin-top:14px;" data-action="dlg-next-turn">${t + 1 < turns.length ? L('Next line','Sonraki replik','جمله‌ی بعدی','Siguiente frase') : L('Next','Devam','بعدی','Siguiente')}</button>` : '';
@@ -9900,7 +9917,7 @@ function renderMediaSession(id){
     <div class="screen" style="padding-top:0;">
       ${embed}
       ${credit}
-      <div class="game-why media-enjoy" style="margin-top:16px; background:var(--cat-lis-soft); font-size:16px;"><img src="char-${learnerCharKey()}.png" alt=""><div dir="auto">${enjoy}</div></div>
+      <div class="game-why media-enjoy" style="margin-top:16px; background:var(--cat-lis-soft); font-size:16px;">${farinImg('face-smile')}<div dir="auto">${enjoy}</div></div>
     </div>
   </div>`;
 }
@@ -10266,7 +10283,7 @@ function songComplete(s){
   document.querySelectorAll('.song-line').forEach(p=>p.classList.add('keepable'));
   const k = document.getElementById('song-keep');
   if(k){
-    k.innerHTML = `<div class="game-why song-keep-bubble" style="margin-top:12px; background:color-mix(in srgb, var(--cat-review) 22%, var(--bg-elevated));"><img src="char-${learnerCharKey()}.png" alt=""><div dir="auto">${L('Keep one line? Tap the line you like best.','Bir satır saklamak ister misin? En sevdiğin satıra dokun.','یک خط را نگه می‌داری؟ روی خطی که بیشتر دوست داری بزن.','¿Guardas una frase? Toca la que más te guste.')}</div></div>`;
+    k.innerHTML = `<div class="game-why song-keep-bubble" style="margin-top:12px; background:color-mix(in srgb, var(--cat-review) 22%, var(--bg-elevated));">${farinImg('face-smile')}<div dir="auto">${L('Keep one line? Tap the line you like best.','Bir satır saklamak ister misin? En sevdiğin satıra dokun.','یک خط را نگه می‌داری؟ روی خطی که بیشتر دوست داری بزن.','¿Guardas una frase? Toca la que más te guste.')}</div></div>`;
     clearTimeout(songUi.keepTimer);
     songUi.keepTimer = setTimeout(()=>{ const b = document.querySelector('.song-keep-bubble'); if(b) b.remove(); }, 5000);
   }
@@ -10279,7 +10296,7 @@ function songKeepLine(s, text){
   songUi.keep = false;
   document.querySelectorAll('.song-line.keepable').forEach(p=>p.classList.remove('keepable'));
   const k = document.getElementById('song-keep');
-  if(k) k.innerHTML = `<div class="game-why" style="margin-top:12px;"><img src="char-${learnerCharKey()}.png" alt=""><div><span dir="auto">${L('Kept in your collection:','Koleksiyonuna eklendi:','به مجموعه‌ات اضافه شد:','Guardada en tu colección:')}</span> <b dir="ltr">${esc(text)}</b></div></div>`;
+  if(k) k.innerHTML = `<div class="game-why" style="margin-top:12px;">${farinImg('face-smile')}<div><span dir="auto">${L('Kept in your collection:','Koleksiyonuna eklendi:','به مجموعه‌ات اضافه شد:','Guardada en tu colección:')}</span> <b dir="ltr">${esc(text)}</b></div></div>`;
   sfx('reveal');
 }
 // Gold four-point stars (the logo's star): around the roadmap card's disc, and scattered over the player's sky.
@@ -11095,6 +11112,55 @@ function mergeRoadmapForGoalChange(){
   try{ ensureRoadmapSong(); }catch(e){}
 }
 
+/* ============================= FARIN THE CHARACTER =============================
+   Farin 2026-10-28 (Trello J1H0U3VU, build i8t09sOx): option A with changes. Farin does the talking and reacting
+   (onboarding hello, hint boxes, lesson and course heroes, results, empty states); her dog sits in the Home bubble's
+   corner and the practice header's corner; the clay buddy stays only as the learner's token on the roadmap and in the
+   Journal. Outfits follow the topic and rotate. Small items from her sheet sit on some roadmap cards (decorative only,
+   bottom band, never over text). Cut-outs from her character sheet, art/farin/*.webp, lazy-loaded. One Farin per
+   screen, no hops. Not on flashcards, level tests, stage checks or the Club. */
+const FARIN_ART = 'art/farin/';
+function farinSrc(n){ return FARIN_ART + n + '.webp'; }
+function farinImg(n, cls){ return '<img class="' + (cls || 'fw') + '" src="' + farinSrc(n) + '" alt="" loading="lazy" decoding="async">'; }
+function farinHash(t){ let h = 0; t = String(t || ''); for(let i = 0; i < t.length; i++) h = (h * 31 + t.charCodeAt(i)) | 0; return Math.abs(h); }
+const FARIN_TOPIC_OUTFITS = [
+  [/exam|ielts|study|school|class|grammar|examen|estudi|escuela/i, 'teacher'],
+  [/travel|trip|airport|hotel|holiday|vacation|journey|transport|direction|viaje|turismo|vacaciones/i, 'travel'],
+  [/career|work|job|office|business|meeting|interview|email|money|bank|company|\bhr\b|trabajo|oficina|negocio/i, 'work'],
+  [/weather|winter|season|cold|snow|clothes|climate|tiempo|ropa|invierno|clima/i, 'winter'],
+  [/home|house|family|food|kitchen|cook|meal|routine|chore|casa|familia|comida|cocina|rutina/i, 'home'],
+  [/sport|health|body|fitness|exercise|hobb|free time|gym|deporte|salud|cuerpo|ocio/i, 'sporty'],
+  [/restaurant|café|cafe|shop|party|going out|friend|social|music|film|movie|weekend|fiesta|amigo|compras|música/i, 'goingout']
+];
+const FARIN_ROTATE = ['casual', 'goingout', 'sporty', 'home', 'casual', 'travel'];
+function farinOutfit(text, key){
+  for(const [re, o] of FARIN_TOPIC_OUTFITS) if(re.test(text || '')) return 'outfit-' + o;
+  return 'outfit-' + FARIN_ROTATE[farinHash(key || text) % FARIN_ROTATE.length];
+}
+// Lesson heroes: selected lessons only — the first set of a level and about 1 in 3 after it; never inside a course step.
+function farinHeroPick(id){ return /-1$/.test(String(id || '')) || farinHash(id) % 3 === 0; }
+function farinVocabPose(s){
+  if(!s || inCourseStep() || !farinHeroPick(s.id)) return '';
+  const t = s.title || {};
+  return farinOutfit([t.en, t.es, s.id].join(' '), s.id);
+}
+function farinGrammarPose(t){ return (!t || inCourseStep() || !farinHeroPick(t.id)) ? '' : 'outfit-teacher'; }
+function farinCoursePose(c){ const t = (c && c.title) || {}; return c ? farinOutfit([c.id, t.en, t.es].join(' '), c.id) : ''; }
+function farinHeroHtml(pose){ return pose ? farinImg(pose, 'farin-hero') : ''; }
+// Results: 80%+ laugh, 50-79% proud, under 50% content ("Nice effort").
+function farinCelebrateFace(detail, low){
+  const m = String(detail || '').match(/(\d+)\s*\/\s*(\d+)/);
+  const pct = (m && +m[2]) ? (+m[1] / +m[2]) : (low ? 0.4 : 1);
+  return pct >= 0.8 && !low ? 'face-laugh' : pct >= 0.5 ? 'face-proud' : 'face-content';
+}
+function farinHelloHtml(){
+  return '<div class="farin-hi">' + farinImg('body-front', 'farin-hi-img') + '<p dir="auto"><b>'
+    + L("Hi, I'm Farin.", 'Merhaba, ben Farin.', 'سلام، من فرین هستم.', 'Hola, soy Farin.') + '</b>'
+    + L("I'm your teacher here. Two quick choices and we start.", 'Burada senin öğretmeninim. İki kısa seçim yapalım, sonra başlıyoruz.', 'اینجا معلمت هستم. دو انتخاب کوتاه داریم و بعد شروع می‌کنیم.', 'Aquí soy tu profe. Dos elecciones rápidas y empezamos.')
+    + '</p></div>';
+}
+// Cosy details on the roadmap: small items from her sheet, on every other card that has no art of its own.
+const FARIN_COZY = ['coffee', 'flower', 'notebook', 'headphones', 'laptop', 'tote'];
 function learnerCharKey(){
   const p = state.profile || {};
   return (p.motivationTag && ARCHETYPES[p.motivationTag]) ? p.motivationTag : 'everyday';
@@ -11121,8 +11187,8 @@ function showCharTip(motivOnly, line){
   const text = line || offer || pickGreeting(state.profile, dueItems().length, charTipRot++);
   const el = document.createElement('div');
   el.className = 'char-tip'; el.id = 'char-tip';
-  el.innerHTML = `<div class="char-tip-inner"><div class="char-tip-float">
-    <img class="char-tip-char" src="char-${learnerCharKey()}.png" alt="">
+  el.innerHTML = `<div class="char-tip-inner"><div class="char-tip-float farin-still">
+    <img class="char-tip-char farin-dog" src="${farinSrc('dog')}" alt="">
     <div class="cute-bubble${offer ? ' cb-plan' : ''}"><span class="sparkle" style="top:-3px; right:12px; left:auto; width:6px; height:6px;"></span><span class="sparkle" style="bottom:6px; right:-4px; left:auto; width:5px; height:5px; animation-delay:.8s;"></span>${text}</div>
   </div></div>`;
   el.addEventListener('click', (e)=>{
@@ -11816,7 +11882,7 @@ function showCelebration(kind, detail, low, extra){
     <div class="cute-bubble">🎉 ${celebrationText(kind, low)}${stickers.length
       ? `<div class="cel-stickers">${stickers.map(s=>`<span class="cel-sticker ${s.hot?'hot':''}">${esc(s.t)}</span>`).join('')}</div>`
       : (detail ? `<small>${esc(detail)}</small>` : '')}</div>
-    <img class="celebrate-char" id="cel-char" src="char-${learnerCharKey()}.png" alt="">
+    <img class="celebrate-char farin-cel" id="cel-char" src="${farinSrc(farinCelebrateFace(detail, low))}" alt="">
     ${sv ? `<div class="cel-sv" id="cel-sv"><div class="cel-flip" id="cel-flip">
         <div class="cel-side cel-back">${souvenirCardHtml(sv, 'big', souvenirBackHtml(sv))}</div>
         <div class="cel-side cel-front">${souvenirCardHtml(sv, 'big')}</div>
@@ -11873,8 +11939,6 @@ function showCelebration(kind, detail, low, extra){
   if(reducedMotion()){ finish(); return; }
   at(700, ()=>{
     const ch = q('#cel-char');
-    const a = anim(ch, [{transform:'translateY(0)'}, {transform:'translateY(-18px)', offset:.5}, {transform:'translateY(0)'}], {duration:520, easing:SPRING});
-    if(a) a.onfinish = ()=>anim(ch, [{transform:'scale(1.08,.92)'}, {transform:'scale(1,1)'}], {duration:80, easing:'ease-out'});
     const c = centerOf(ch);
     sparkBurst(c.x, c.y - 40, 3, '#ffd166', 90);
   });
@@ -12115,6 +12179,7 @@ function renderLangPick(){
       <div class="onb-top"><div class="wordmark">Farin<span>${ONB_APP.word}</span></div></div>
       <div class="onb-eb">${L('2 minutes','2 dakika','۲ دقیقه','2 minutos')}</div>
       <h1 class="onb-h1">${L("Let's begin",'Başlayalım','بیا شروع کنیم','Empecemos')}<span class="dot">.</span></h1>
+      ${farinHelloHtml()}
       ${onbBlocksHtml()}
     </div>
     <div class="onb-foot">
@@ -13363,6 +13428,7 @@ function renderJournal(){
     ${sectionHead(journalName(), count ? L(count+' souvenirs collected — tap one to flip it', count+' hatıra toplandı — çevirmek için birine dokun', count+' یادگاری جمع شده — برای برگرداندن روی یکی بزن', count+' recuerdos reunidos — toca uno para darle la vuelta') : L('Finish a step on your roadmap to collect your first souvenir.','İlk hatıranı toplamak için yol haritanda bir adımı bitir.','برای جمع‌کردن اولین یادگاری، یک قدم از نقشه راهت را تمام کن.','Termina un paso de tu hoja de ruta para reunir tu primer recuerdo.'))}
     <div class="screen" style="padding-top:0;">
       ${journalCoverHtml()}
+      ${count ? '' : `<div class="card-flat" style="text-align:center; margin-top:14px;">${farinImg('scene-planning', 'farin-empty farin-empty-scene')}<p dir="auto" style="margin:0; font-size:14.5px; line-height:1.6; color:var(--ink-soft);">${L('Finish a card on your roadmap and your first souvenir lands here.','Yol haritandaki bir kartı bitir, ilk hatıran buraya gelsin.','یک کارت از نقشه‌ی راهت را تمام کن تا اولین یادگاری‌ات اینجا بیاید.','Termina una tarjeta de tu ruta y tu primer recuerdo llegará aquí.')}</p></div>`}
       ${readyBanner}
       ${journalShelfHtml(openVol)}
       ${openVol && openVol !== cur ? journalPageHtml(openVol, true) : ''}
@@ -13750,6 +13816,9 @@ function renderRoadmapCard(p){
     const iconBig = m.img === 'studio-icon-cutout.png';
     // the current card is a bit bigger (2026-10-18), its icon grows with it
     const iconPx = iconBig ? (isCurrent ? 152 : 140) : (isCurrent ? 116 : 104);
+    // Cosy details (Farin 2026-10-28): a small item from Farin's sheet on every other card without its own art,
+    // in the card's empty bottom band (never over the title, the pill or the chevron); decorative only.
+    const cozy = (!m.img && item.type !== 'song' && idx % 2 === 0) ? FARIN_COZY[Math.floor(idx / 2) % FARIN_COZY.length] : '';
     const cardIcon = item.type === 'song' ? (checked ? '' : `<span class="song-shimmer" aria-hidden="true"></span>`) + `<span class="song-vinyl rm-disc" aria-hidden="true"${checked ? ' style="opacity:.5;"' : ''}><span class="song-vinyl-label"><img src="logo-fe-cutout.png" alt=""></span></span>` + (checked ? '' : songStarsHtml()) : m.img
       ? `<img src="${m.img}" alt="" class="rm2-icon-float" style="position:absolute; inset-inline-end:${iconBig?'-6px':'10px'}; bottom:${iconBig?'-4px':'12px'}; width:${iconPx}px; height:${iconPx}px; object-fit:contain; pointer-events:none; filter:drop-shadow(0 6px 12px rgba(0,0,0,.28)); ${checked?'opacity:.5;':''}">`
       : '';
@@ -13758,7 +13827,7 @@ function renderRoadmapCard(p){
     // labels). A game's identity is its GAME subtitle; the streak stays in the top bar.
     return `<div class="${cls}"${locked ? ' data-action="roadmap-locked"' : ''} style="border-radius:32px; padding:${isCurrent ? '66px 30px 68px' : '58px 28px 60px'}; min-height:${isCurrent ? 196 : 176}px; background:${bg}; border:none; box-shadow:${shadow}; color:#fff;">
       ${sparkles}
-      ${cardIcon}
+      ${cardIcon}${cozy ? farinImg('item-' + cozy, 'rm2-cozy') : ''}
       ${studyOpenTag}
         <div class="row between" style="align-items:flex-start; gap:10px;">
           <div style="min-width:0;">
@@ -15229,7 +15298,7 @@ function studioResultHtml(result, round, mode, text){
   return `<div class="card-flat fill-result" style="margin-top:14px;">
         <div class="eyebrow" style="color:var(--cat-voc);">${L('Your words','Senin sözlerin','حرف‌های تو','Tus palabras')}</div>
         <p class="fill-text" dir="ltr">${fillMarkedTextHtml(result, round, text)}</p>
-        ${fillAllHit(result, round) ? `<div class="game-why" style="margin-top:12px;"><img src="char-${learnerCharKey()}.png" alt=""><span>${L('All of them. Nice.','Hepsi. Güzel.','همه‌شان. عالی.','Todas. Muy bien.')}</span></div>` : ''}
+        ${fillAllHit(result, round) ? `<div class="game-why" style="margin-top:12px;">${farinImg('face-smile')}<span>${L('All of them. Nice.','Hepsi. Güzel.','همه‌شان. عالی.','Todas. Muy bien.')}</span></div>` : ''}
         <div class="row between" style="align-items:center; margin-top:12px;">
           <div class="eyebrow" style="color:${bandColor};">${headline}</div>
           <span class="pill" style="background:${bandSoft}; color:${bandColor}; font-size:11px; padding:3px 8px;">${result.score}/100</span>
@@ -15693,7 +15762,7 @@ function renderGamesShelf(){
   return `<div class="fade-in">
     ${sectionHead(L('Games','Oyunlar','بازی‌ها','Juegos'), sub)}
     <div class="screen" style="padding-top:0;">
-      ${kinds.length ? `<div class="stack" style="gap:10px;">${rows}</div>` : `<div class="card-flat" style="text-align:center;"><p style="margin:0; font-size:14.5px; line-height:1.6; color:var(--ink-soft);">${L('Finish a game on your roadmap and it appears here to play again.','Yol haritandaki bir oyunu bitir, tekrar oynamak için burada görünsün.','یک بازی از نقشه راهت را تمام کن تا برای بازی دوباره اینجا بیاید.','Termina un juego de tu hoja de ruta y aparecerá aquí para jugarlo otra vez.')}</p></div>`}
+      ${kinds.length ? `<div class="stack" style="gap:10px;">${rows}</div>` : `<div class="card-flat" style="text-align:center;">${farinImg('dog', 'farin-empty farin-empty-dog')}<p style="margin:0; font-size:14.5px; line-height:1.6; color:var(--ink-soft);">${L('Finish a game on your roadmap and it appears here to play again.','Yol haritandaki bir oyunu bitir, tekrar oynamak için burada görünsün.','یک بازی از نقشه راهت را تمام کن تا برای بازی دوباره اینجا بیاید.','Termina un juego de tu hoja de ruta y aparecerá aquí para jugarlo otra vez.')}</p></div>`}
     </div>
   </div>`;
 }
@@ -15914,7 +15983,7 @@ function renderGameBuild(){
     </div>
     ${it.solved ? '' : `<div class="build-tray" dir="ltr">${it.tiles.map((t,i)=>`<button class="build-tile${t.used ? ' used' : ''}${i === it.hintTile ? ' pulse' : ''}" data-action="build-tile" data-i="${i}" ${t.used ? 'disabled' : ''}>${esc(t.t)}</button>`).join('')}</div>`}
     <button class="game-chip build-ear${it.showRule && !it.solved ? ' pulse' : ''}" data-action="build-hear">${ICONS.soundOn} ${L('Hear it','Dinle','بشنو','Escúchalo')}</button>
-    ${it.showRule && item ? `<div class="game-why"><img src="char-${learnerCharKey()}.png" alt=""><div>${esc(grammarRuleLine(item))}${it.hintWord ? ` · ${esc(L('Next: ','Sıradaki: ','بعدی: ','Sigue: '))}'${esc(it.hintWord)}'` : ''}</div></div>` : ''}
+    ${it.showRule && item ? `<div class="game-why">${farinImg('mood-thinking')}<div>${esc(grammarRuleLine(item))}${it.hintWord ? ` · ${esc(L('Next: ','Sıradaki: ','بعدی: ','Sigue: '))}'${esc(it.hintWord)}'` : ''}</div></div>` : ''}
     ${it.solved ? `<button class="btn btn-primary game-cta" data-action="build-next">${round.index + 1 < b ? L('Next sentence','Sonraki cümle','جمله بعدی','Siguiente oración') : L('See results','Sonuçları gör','دیدن نتایج','Ver resultados')}</button>` : ''}
   </div>`;
 }
@@ -18343,7 +18412,7 @@ function caseCluesHtml(round, cs){
 function caseReasonHtml(cs, clueIdx){
   const clue = clueIdx != null ? cs.clues[clueIdx] : null;
   if(!clue) return '';
-  return `<div class="game-why case-why" id="case-why"><img src="char-${learnerCharKey()}.png" alt=""><div dir="auto"><b dir="ltr" translate="no">${esc(clue.text)}</b><br>${esc(caseFrame(clue, cs))}</div></div>`;
+  return `<div class="game-why case-why" id="case-why">${farinImg('face-smile')}<div dir="auto"><b dir="ltr" translate="no">${esc(clue.text)}</b><br>${esc(caseFrame(clue, cs))}</div></div>`;
 }
 function caseStateWord(v){ return v === 'ok' ? L('confirmed','onaylı','تأیید','confirmado') : (v ? L('crossed out','çizili','خط‌خورده','descartado') : L('empty','boş','خالی','vacío')); }
 // What a cell shows: the learner's mark, else a light auto-cross (a confirmed cell in its row or column), else a pencilled hint.
@@ -21263,7 +21332,7 @@ function yourTurnHtml(t){
     </div>`;
   const hits = errorWatchHits(rec.text, t);
   const watch = hits.length
-    ? hits.map(h=>`<div class="game-why" style="margin-top:10px;"><img src="char-${learnerCharKey()}.png" alt=""><div dir="auto"><b>${esc(L('Check this','Şuna bak','این را بررسی کن','Revisa esto'))}:</b> "${esc(h.phrase)}" · ${esc(trLine(h.fix))}</div></div>`).join('')
+    ? hits.map(h=>`<div class="game-why" style="margin-top:10px;">${farinImg('mood-thinking')}<div dir="auto"><b>${esc(L('Check this','Şuna bak','این را بررسی کن','Revisa esto'))}:</b> "${esc(h.phrase)}" · ${esc(trLine(h.fix))}</div></div>`).join('')
     : `<p class="yt-clean" style="margin:10px 0 0; font-size:13.5px; font-weight:700; color:var(--success);">${ICONS.check} ${esc(L('No common mistake found.','Yaygın bir hata bulunmadı.','اشتباه رایجی پیدا نشد.','No hay errores frecuentes.'))}</p>`;
   return `<div class="card-flat yt-card" style="margin-top:16px; text-align:start;">
       ${head}
@@ -21312,8 +21381,8 @@ function renderGrammarTrap(id){
     ${sectionHead('', '')}
     <div class="screen" style="padding-top:0;">
       ${courseStripHtml()}${grammarContextHtml(t)}
-      <div class="tip-card"><div class="lx-hero">
-        ${claySparkles()}
+      <div class="tip-card"><div class="lx-hero${farinGrammarPose(t) ? ' has-farin' : ''}">
+        ${claySparkles()}${farinHeroHtml(farinGrammarPose(t))}
         ${inCourseStep() ? '' : `<span class="lx-pill">${L('Grammar','Dilbilgisi','گرامر','Gramática')} · ${esc(t.level || '')}</span>`}
         <h1 class="display"><bdi>${esc(grammarTitle(t))}</bdi><span class="dot">.</span></h1>
         ${st.hook ? `<p class="lx-hook">${esc(st.hook)}</p>` : ''}
@@ -21470,7 +21539,7 @@ function useItHtml(s){
     ? `<div class="use-chips" dir="ltr" translate="no">${used.map(w=>`<span class="use-chip">${ICONS.check} ${esc(w)}</span>`).join('')}</div>`
     : '';
   const usedLine = used.length >= 2 ? '' : `<p class="use-more" dir="auto">${esc(used.length ? L('Nice. Next time, try a second phrase from this set.','Güzel. Bir dahaki sefere bu setten ikinci bir ifade dene.','خوبه. دفعهٔ بعد یک عبارت دیگر از این مجموعه هم امتحان کن.','Bien. La próxima vez, prueba una segunda frase de este grupo.') : L('Try to use 2 phrases from this set.','Bu setten 2 ifade kullanmayı dene.','سعی کن ۲ عبارت از این مجموعه به کار ببری.','Intenta usar 2 frases de este grupo.'))}</p>`;
-  const watch = hits.map(h=>`<div class="game-why" style="margin-top:10px;"><img src="char-${learnerCharKey()}.png" alt=""><div dir="auto"><b>${esc(L('Check this','Şuna bak','این را بررسی کن','Revisa esto'))}:</b> "${esc(h.phrase)}" · ${esc(trLine(h.fix))}</div></div>`).join('');
+  const watch = hits.map(h=>`<div class="game-why" style="margin-top:10px;">${farinImg('mood-thinking')}<div dir="auto"><b>${esc(L('Check this','Şuna bak','این را بررسی کن','Revisa esto'))}:</b> "${esc(h.phrase)}" · ${esc(trLine(h.fix))}</div></div>`).join('');
   return `<div class="card-flat use-card" style="margin-top:16px; text-align:start;">
       ${head}
       <div class="phrase-mean" dir="ltr" translate="no" style="margin-top:8px; font-style:italic; white-space:pre-line;">${esc(rec.text)}</div>
@@ -21503,8 +21572,8 @@ function renderVocabSetIntro(id){
   return `<div class="fade-in lx-page ${isSlang ? 'lx-slang' : 'lx-voc'}">
     ${sectionHead('', inCourseStep() ? courseStripText() : '')}
     <div class="screen" style="padding-top:0;">
-      <div class="lx-hero">
-        ${claySparkles()}
+      <div class="lx-hero${farinVocabPose(s) ? ' has-farin' : ''}">
+        ${claySparkles()}${farinHeroHtml(farinVocabPose(s))}
         <span class="lx-pill">${isSlang ? L('Slang','Argo','اصطلاحات','Jerga') : L('Vocabulary','Kelime','واژگان','Vocabulario')} · ${esc(s.level || '')}</span>
         <h1 class="display"><bdi>${esc(setTitle(s))}</bdi><span class="dot">.</span></h1>
         <p class="lx-hook">${L('Skim through all '+n+' below, then flip through flashcards to lock them in.','Aşağıdaki tüm '+n+' tanesine göz gezdir, sonra pekiştirmek için kartları çevir.','همه '+n+' مورد زیر را مرور کن، بعد با ورق زدن کارت‌ها آن‌ها را در ذهنت ثبت کن.', 'Repasa las '+n+' de abajo y luego practica con las tarjetas para memorizarlas.')}</p>
@@ -21673,13 +21742,14 @@ function renderVocabBox(){
   if(!d.queue.length || d.done){
     if(!d.queue.length) boxMarkDone(state.viewParams.node);
     const line = !d.queue.length
-      ? L('Your Vocab Box is empty. Every word you mark "Practice again" lands here for a review.','Kelime Kutun boş. "Tekrar çalışayım" dediğin her kelime tekrar için buraya gelir.','جعبهٔ لغاتت خالی است. هر کلمه‌ای که «دوباره تمرین کنم» بزنی برای مرور اینجا می‌آید.','Tu Caja de palabras está vacía. Cada palabra que marques "Practicar otra vez" llega aquí para repasarla.')
+      ? L('When a word feels shaky, tap "Practice again" on its card. I will keep it here for you.','Bir kelimeden emin olmadığında kartındaki "Tekrar çalışayım"a dokun. Onu senin için burada saklarım.','وقتی کلمه‌ای را خوب بلد نیستی، روی کارتش «دوباره تمرین کنم» را بزن. من برایت اینجا نگهش می‌دارم.','Cuando una palabra no la tengas clara, toca «Practicar otra vez» en su tarjeta. Yo te la guardo aquí.')
       : L(`Words you knew, now out of the box: ${d.knew}.`, `Bildiğin ve kutudan çıkan kelime: ${d.knew}.`, `کلمه‌هایی که بلد بودی و از جعبه بیرون رفتند: ${d.knew}.`, `Palabras que sabías y salen de la caja: ${d.knew}.`)
         + (left ? ' ' + L(`Still in the box for the next review: ${left}.`, `Bir sonraki tekrar için kutuda kalan: ${left}.`, `در جعبه برای مرور بعدی می‌ماند: ${left}.`, `Siguen en la caja para el próximo repaso: ${left}.`) : '');
     return `<div class="fade-in game-screen">
-    ${gameTopHtml(title)}
+    ${gameTopHtml(title, !d.queue.length)}
     <div class="game-card">
-      <div class="game-result-title">${d.queue.length ? L('Box reviewed','Kutu tekrarlandı','جعبه مرور شد','Caja repasada') : L('Nothing to review','Tekrar edilecek bir şey yok','چیزی برای مرور نیست','Nada que repasar')}</div>
+      ${d.queue.length ? '' : farinImg('body-sit-knees', 'farin-empty')}
+      <div class="game-result-title">${d.queue.length ? L('Box reviewed','Kutu tekrarlandı','جعبه مرور شد','Caja repasada') : L('Your box is empty','Kutun boş','جعبه‌ات خالی است','Tu caja está vacía')}</div>
       <div class="game-result-line">${esc(line)}</div>
       <button class="btn btn-primary game-cta" data-action="box-finish">${L('Done','Tamam','تمام','Listo')}</button>
     </div>
@@ -21802,7 +21872,7 @@ function slangSayHtml(s){
       <button class="game-opt${cls('say', sayOk)}" data-action="slang-say" data-a="say" ${a ? 'disabled' : ''}>${L('Say it','Söyle','بگو','Dilo')}</button>
       <button class="game-opt${cls('not', !sayOk)}" data-action="slang-say" data-a="not" ${a ? 'disabled' : ''}>${L('Not here','Burada değil','اینجا نه','Aquí no')}</button>
     </div>
-    ${a ? `${(a === 'say') === sayOk ? '' : `<div class="game-why"><img src="char-${learnerCharKey()}.png" alt=""><div dir="auto">${esc(slangSayLine(sc, card, a))}</div></div>`}
+    ${a ? `${(a === 'say') === sayOk ? '' : `<div class="game-why">${farinImg('mood-thinking')}<div dir="auto">${esc(slangSayLine(sc, card, a))}</div></div>`}
       <button class="btn btn-primary game-cta" data-action="slang-say-next">${last ? L('Done','Tamam','تمام','Listo') : L('Next scene','Sonraki sahne','صحنه بعدی','Siguiente escena')}</button>`
       : `<button class="btn btn-ghost" data-action="slang-say-skip">${L('Skip to the game','Oyuna geç','برو سراغ بازی','Saltar al juego')}</button>`}
   </div>`;
@@ -22179,7 +22249,7 @@ function storyTurnGloss(o){ o = o || {}; const g = o[LANG]; return (LANG !== sto
 function storyTurnHtml(story, R){
   const tp = story.turningPoint, call = R.call, vp = state.viewParams;
   const showGloss = !!tp.glossA1 && (story.level === 'A1' || !!vp.turnGloss), canGloss = !!tp.glossA1 && story.level !== 'A1';
-  const img = `<img src="char-${learnerCharKey()}.png" alt="">`;
+  const img = farinImg('face-smile');
   const g = o => { const t = showGloss ? storyTurnGloss(o) : ''; return t ? `<span class="story-gloss" dir="auto">${esc(t)}</span>` : ''; };
   const opts = tp.options.map((o,i)=>{
     let cls = 'game-opt long';
@@ -22244,7 +22314,7 @@ function storyPerspectiveHtml(s){
   if(pick != null && !rec) frame = `<div class="sp-frame" dir="ltr" style="margin-top:12px; font-size:15px; font-weight:700; line-height:1.9;">${esc(parts[0] || '')}<b style="color:var(--cat-story);">${esc(feel)}</b>${esc(parts[1] || ' ')}<input id="feel-why" class="sp-why" dir="ltr" maxlength="120" style="min-width:150px; max-width:100%; border:none; border-bottom:2px solid var(--cat-story); background:transparent; font:inherit; color:var(--ink); padding:0 4px;" placeholder="…">${esc(parts.slice(2).join('___'))}</div>
       <button class="btn btn-primary" style="margin-top:12px;" data-action="story-feel-save">${L('See what happened','Ne olduğunu gör','ببین چه شد','Mira lo que pasó')}</button>`;
   else if(rec) frame = `<div class="sp-frame" dir="ltr" style="margin-top:12px; font-size:15px; font-weight:700; line-height:1.6;">${esc(parts[0] || '')}<b style="color:var(--cat-story);">${esc(feel)}</b>${esc(parts[1] || ' ')}${esc(rec.why || '…')}${esc(parts.slice(2).join('___'))}</div>
-      <div class="game-why" style="margin-top:12px; background:var(--cat-story-soft);"><img src="char-${learnerCharKey()}.png" alt=""><div dir="auto"><b>${esc(L('In the story','Hikayede','در داستان','En la historia'))}:</b> ${esc(trLine(p.actual))}</div></div>`;
+      <div class="game-why" style="margin-top:12px; background:var(--cat-story-soft);">${farinImg('face-smile')}<div dir="auto"><b>${esc(L('In the story','Hikayede','در داستان','En la historia'))}:</b> ${esc(trLine(p.actual))}</div></div>`;
   return `<div class="card-flat sp-card" style="margin-top:20px;">
       <div class="eyebrow" style="color:var(--cat-story);">${L('Through their eyes','Onun gözünden','از چشم او','A través de sus ojos')}</div>
       <p dir="auto" style="margin:6px 0 10px; font-size:15px; font-weight:700; line-height:1.5;">${esc(trLine(p.prompt))}</p>
@@ -23291,7 +23361,7 @@ function answerBannerHtml(item, ok, sel){
   // Phase 2b (jljlQLsH): after a miss, the distractorWhy line for the option the learner tapped (UI language; the hint never names the answer).
   const why = !ok && sel != null && sel !== item.correct && item.hints ? item.hints[sel] : '';
   const head = ok ? '' : `<b>${esc(L('Correct answer','Doğru cevap','پاسخ درست','Respuesta correcta'))}:</b> `;
-  return `<div class="game-why"><img src="char-${learnerCharKey()}.png" alt=""><div dir="ltr">${head}${esc(ans)}${tr ? `<div dir="auto" style="margin-top:4px; opacity:.85;">${esc(tr)}</div>` : ''}${why ? `<div class="quiz-why-miss" dir="auto" style="margin-top:4px; opacity:.85;">${esc(why)}</div>` : ''}</div></div>`;
+  return `<div class="game-why">${farinImg(ok ? 'face-smile' : 'mood-thinking')}<div dir="ltr">${head}${esc(ans)}${tr ? `<div dir="auto" style="margin-top:4px; opacity:.85;">${esc(tr)}</div>` : ''}${why ? `<div class="quiz-why-miss" dir="auto" style="margin-top:4px; opacity:.85;">${esc(why)}</div>` : ''}</div></div>`;
 }
 // The hint after a first miss. distractorWhy for the chosen option when it exists, else the
 // item's rule line (grammar). Vocab and story whys give the answer away, so they get a nudge.
@@ -23342,7 +23412,7 @@ function proveChips(q){
 function proveHtml(q){
   if(q.proveAt !== q.index || !q.answered || !proveWhy(q)) return '';
   const chips = proveChips(q);
-  const img = `<img src="char-${learnerCharKey()}.png" alt="">`;
+  const img = farinImg('face-smile');
   if(!q.proved){
     const ask = q.proveOk
       ? L('Nice. Why does it work?','Güzel. Peki neden işe yarıyor?','آفرین. چرا درست است؟','Bien. ¿Por qué funciona?')
@@ -23403,7 +23473,7 @@ function quizTypedNoteHtml(q, item){
   const line = t.near === 'accent'
     ? L('Right, watch the accent: ','Doğru, aksan işaretine dikkat: ','درسته، به علامت روی حرف دقت کن: ','Bien, ojo con la tilde: ')
     : L('Right, check the spelling: ','Doğru, yazılışına dikkat: ','درسته، به املایش دقت کن: ','Bien, revisa cómo se escribe: ');
-  return `<div class="game-why"><img src="char-${learnerCharKey()}.png" alt=""><div dir="auto">${esc(line)}<b dir="ltr" translate="no">${esc(a)}</b></div></div>`;
+  return `<div class="game-why">${farinImg('face-smile')}<div dir="auto">${esc(line)}<b dir="ltr" translate="no">${esc(a)}</b></div></div>`;
 }
 // One answer for a typed or built question, under the same rules as 'quiz-answer' (X6 retry, first attempts score).
 function quizSettle(q, it, ok, e, el){
@@ -23458,7 +23528,7 @@ function renderQuiz(){
         return `<button class="${cls}" dir="ltr" ${q.answered || missed ? 'disabled' : ''} data-action="quiz-answer" data-i="${i}">${esc(opt)}</button>`;
       }).join('')}
     </div>
-    ${!q.answered && (q.miss||[]).length ? `<div class="game-why"><img src="char-${learnerCharKey()}.png" alt=""><div dir="ltr">${esc(quizHintText(q, item))}</div></div>` : ''}
+    ${!q.answered && (q.miss||[]).length ? `<div class="game-why">${farinImg('mood-thinking')}<div dir="ltr">${esc(quizHintText(q, item))}</div></div>` : ''}
     ${q.answered ? `
       ${answerBannerHtml(item, q.results && q.results[q.index] === true, q.selected)}
       ${quizTypedNoteHtml(q, item)}
@@ -24136,16 +24206,16 @@ function theatreExit(){
   while(navHistory.length && THEATRE_VIEWS.includes(navHistory[navHistory.length-1].view)) navHistory.pop();
   try{ history.back(); }catch(e){ goBack(); }
 }
-function gameTopHtml(title){
+function gameTopHtml(title, noFace){
   return `<div class="game-top">
     <button class="game-back" data-action="back" aria-label="${esc(L('Back','Geri','برگشت','Atrás'))}">${ICONS.back}</button>
     <h1 class="game-title">${esc(title)}</h1>
-    ${gameCompanionHtml()}
+    ${noFace ? '' : gameCompanionHtml()}
   </div>`;
 }
 function gameCompanionHtml(){
   const b = (gcBubble && gcBubble.until > Date.now()) ? gcBubble : null;
-  return `<div class="game-companion" aria-hidden="true"><img id="gc-char" src="char-${learnerCharKey()}.png" alt="">${b ? `<div class="gc-bubble" id="gc-bubble">${esc(b.text)}</div>` : ''}</div>`;
+  return `<div class="game-companion" aria-hidden="true"><img id="gc-char" class="gc-dog" src="${farinSrc('dog')}" alt="">${b ? `<div class="gc-bubble" id="gc-bubble">${esc(b.text)}</div>` : ''}</div>`;
 }
 // One bubble at a time: a new line replaces whatever is showing.
 function companionSay(text, ms){
@@ -24162,24 +24232,9 @@ function companionSay(text, ms){
   clearTimeout(gcBubbleTimer);
   gcBubbleTimer = setTimeout(()=>{ gcBubble = null; const e = document.getElementById('gc-bubble'); if(e) e.remove(); }, ms);
 }
-function companionCheer(){
-  anim(document.getElementById('gc-char'), [
-    {transform:'translateY(0) scale(1)'},
-    {transform:'translateY(-10px) scale(1)', offset:.45},
-    {transform:'translateY(0) scale(1.08,.92)', offset:.8},
-    {transform:'translateY(0) scale(1)'}
-  ], {duration:360, easing:'ease-out'});
-}
+function companionCheer(){}   // no hop on a right answer (Farin the character, 2026-10-28)
 // A miss: a small tilt + shake — curious, never sad.
-function companionOops(){
-  anim(document.getElementById('gc-char'), [
-    {transform:'rotate(0deg) translateX(0)'},
-    {transform:'rotate(-8deg) translateX(-4px)', offset:.25},
-    {transform:'rotate(-8deg) translateX(4px)', offset:.5},
-    {transform:'rotate(-8deg) translateX(-4px)', offset:.75},
-    {transform:'rotate(0deg) translateX(0)'}
-  ], {duration:280, easing:'ease-in-out'});
-}
+function companionOops(){}    // no shake on a miss either: the hint box shows Farin thinking instead
 // Practice quiz feedback (2026-10-03): the same physical feedback as the games.
 function fxQuizAnswer(i, pt, isCorrect, streak, word, action){
   const btn = i != null && i >= 0 ? document.querySelector('[data-action="'+(action || 'quiz-answer')+'"][data-i="'+i+'"]') : null;
@@ -27234,8 +27289,8 @@ function renderCourseIntro(c){
   return `<div class="fade-in course-intro lx-page lx-course">
     ${coursePathHeadHtml()}
     <div class="screen" style="padding-top:0;">
-      <div class="lx-hero" style="padding-bottom:44px;">
-        ${claySparkles()}
+      <div class="lx-hero has-farin" style="padding-bottom:44px;">
+        ${claySparkles()}${farinHeroHtml(farinCoursePose(c))}
         <span class="lx-pill">${CL('Premium course','Premium kurs','دوره‌ی ویژه','Curso premium')}</span>
         <h1 class="display"><bdi>${esc(cl(c.title))}</bdi><span class="dot">.</span></h1>
         <p class="lx-hook">${esc(meet)}</p>${roleHtml}

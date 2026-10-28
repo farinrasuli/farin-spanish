@@ -251,7 +251,9 @@
   .game-why img{flex:0 0 auto; width:40px; height:40px; object-fit:contain; transform:rotate(-8deg);}
   /* Farin the character (2026-10-28, Trello i8t09sOx): cut-outs from her sheet, art/farin/*.webp. She never hops or floats. */
   .game-why img.fw{width:46px; height:46px; transform:none;}
-  .char-tip-char.farin-dog{width:66px; height:66px; padding:6px 7px 4px; box-sizing:border-box; border-radius:50%; background:#fff; box-shadow:0 8px 16px -6px rgba(0,0,0,.28), 0 0 0 2px rgba(255,255,255,.9); filter:none;}
+  .char-tip .cute-bubble.farin-db{padding-inline-end:62px; min-height:66px;}
+  .char-tip .cute-bubble.farin-db::after{display:none;}
+  .cute-bubble .farin-dog{position:absolute; inset-inline-end:10px; bottom:10px; width:46px; height:46px; padding:4px 5px 3px; box-sizing:border-box; border-radius:50%; background:#fff4e6; box-shadow:inset 0 0 0 1.5px rgba(232,170,110,.35);}
   .char-tip-float.farin-still{animation:none;}
   .game-companion img.gc-dog{width:54px; height:54px; padding:5px 6px 3px; box-sizing:border-box; border-radius:50%; background:#fff; margin-top:4px; animation:none; filter:none; box-shadow:0 6px 12px -6px rgba(0,0,0,.3);}
   .celebrate-char.farin-cel{width:136px; height:136px; padding:10px; box-sizing:border-box; border-radius:50%; background:#fff; filter:drop-shadow(0 14px 20px rgba(0,0,0,.3));}
@@ -11188,8 +11190,7 @@ function showCharTip(motivOnly, line){
   const el = document.createElement('div');
   el.className = 'char-tip'; el.id = 'char-tip';
   el.innerHTML = `<div class="char-tip-inner"><div class="char-tip-float farin-still">
-    <img class="char-tip-char farin-dog" src="${farinSrc('dog')}" alt="">
-    <div class="cute-bubble${offer ? ' cb-plan' : ''}"><span class="sparkle" style="top:-3px; right:12px; left:auto; width:6px; height:6px;"></span><span class="sparkle" style="bottom:6px; right:-4px; left:auto; width:5px; height:5px; animation-delay:.8s;"></span>${text}</div>
+    <div class="cute-bubble farin-db${offer ? ' cb-plan' : ''}"><img class="farin-dog" src="${farinSrc('dog')}" alt=""><span class="sparkle" style="top:-3px; right:12px; left:auto; width:6px; height:6px;"></span><span class="sparkle" style="bottom:6px; right:-4px; left:auto; width:5px; height:5px; animation-delay:.8s;"></span>${text}</div>
   </div></div>`;
   el.addEventListener('click', (e)=>{
     const b = e.target.closest('[data-action]');

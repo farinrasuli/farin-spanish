@@ -164,7 +164,11 @@
   @keyframes soft-float{0%,100%{transform:translateY(0);} 50%{transform:translateY(-10px);}}
   /* Roadmap card icons (2026-09-30, Farin: "make the icons bigger and give them a
      slow floating motion"). */
-  .rm2-icon-float{animation:rm2-icon-float 4.4s ease-in-out infinite;}
+  .rm2-icon-float{animation:none;}   /* still since 2026-10-28 (Farin: no floating old elements) */
+  .rm2-track.rm2-nostart{padding-top:36px;}
+  .rm2-cap-end{padding-top:40px;}
+  .rm2-links{display:flex; align-items:center; gap:8px; margin-top:6px; font-size:12.5px; font-weight:800;}
+  .rm2-link{padding:6px 0; margin:0; border:none; background:none; color:var(--clay-orange-deep); font:inherit; cursor:pointer; text-decoration:underline; text-underline-offset:3px;}
   @keyframes rm2-icon-float{0%,100%{transform:translateY(0) rotate(-3deg);} 50%{transform:translateY(-9px) rotate(3deg);}}
   /* Character tip bubble (2026-09-30, Farin: delete the sentence box on home, "once
      in a while show these sentences in a very cute bubble saying from the
@@ -12701,11 +12705,11 @@ function stackedRoadmap(count, pinFn, cardFn, startLabel, startMediaHtml, endLab
     <div class="rm2-seam rm2-seam-enter" style="animation-delay:${delay}ms;">${pinFn(i)}</div>
     <div class="rm2-card-enter" style="animation-delay:${delay+40}ms;">${cardFn(i)}</div>`);
   }
-  return `<div class="rm2-track">
-    <div class="rm2-cap rm2-cap-start">
+  return `<div class="rm2-track${startMediaHtml ? '' : ' rm2-nostart'}">
+    ${startMediaHtml ? `<div class="rm2-cap rm2-cap-start">
       ${startMediaHtml}
       <div class="rm2-cap-label">${esc(startLabel)}</div>
-    </div>
+    </div>` : ''}
     ${rows.join('')}
     <div class="rm2-cap rm2-cap-end">
       ${endMediaHtml}
@@ -13684,7 +13688,7 @@ function renderRoadmapCard(p){
     const fillVar = (idx === advFrom && fillPct>0) ? `--rm2-fill:${fillPct}%;` : '';
     const circleBgFinal = fillVar ? `conic-gradient(${color} 0 var(--rm2-fill), var(--bg-elevated) var(--rm2-fill) 100%)` : circleBg;
     return `<button class="rm2-seam-ic ${isCurrent?'roadmap-pin-current':''}" ${action?('data-action="'+action+'"'):'disabled'} ${dataAttrs} aria-label="${ariaLabel}" style="width:60px; height:60px; border-radius:50%; ${locked?'opacity:.45; ':''}${fillVar}background:${circleBgFinal}; border:${isCurrent?'5px':'4px'} solid ${color}; display:flex; align-items:center; justify-content:center; box-shadow:${isCurrent?`0 0 0 4px ${glowRing}, 0 8px 18px -4px ${glowStrong}`:(checked?`0 6px 14px -3px ${doneGlow}, inset 0 2px 3px rgba(255,255,255,.35)`:'0 5px 12px -3px rgba(0,0,0,.25)')}; cursor:${action?'pointer':'default'}; padding:0;">
-    </button>${isCurrent ? roadmapCompanionHtml(72) : ''}`;
+    </button>`;
   }
 
   function cardFn(idx){
@@ -13850,10 +13854,10 @@ function renderRoadmapCard(p){
   // marker at the far end grows with it so the two bookends stay in proportion.
   // Gamification v2 §2: the character now walks the path as the companion, so the
   // start cap shows the clay start marker; the goal warms up as the page fills.
-  const startMedia = `<img src="roadmap-start-clay.png" alt="" style="width:96px; height:96px; object-fit:contain; filter:drop-shadow(0 10px 14px rgba(0,0,0,.22));">`;
-  const endMedia = allDone
-    ? `<div class="rm2-endcap-row">${roadmapGoalHtml(1, true)}${roadmapCompanionHtml(96, 'rm2-companion-end')}</div><button class="btn btn-primary rm2-page-btn" data-action="open-page-complete">${L('Page complete','Sayfa tamam','صفحه کامل شد','Página completa')}</button>`
-    : roadmapGoalHtml(doneCount/roadmap.length, false);
+  // Farin 2026-10-28: "the learning character floating on roadmap should be deleted. and also delete the other floating old
+  // elements too" - no START signpost, no clay travel buddy, no clay goal trophy; the end keeps a plain label (+ Page complete).
+  const startMedia = '';
+  const endMedia = allDone ? `<button class="btn btn-primary rm2-page-btn" data-action="open-page-complete">${L('Page complete','Sayfa tamam','صفحه کامل شد','Página completa')}</button>` : '';
 
   return `
       <div class="card-flat" style="margin-bottom:14px; background:linear-gradient(135deg, ${archColor}18, var(--bg-elevated) 65%);">
@@ -13862,6 +13866,7 @@ function renderRoadmapCard(p){
             <div style="font-weight:700; font-size:14px;">${esc(displayLevel(p))} ${L('roadmap','yol haritası','نقشه راه', 'hoja de ruta')}</div>
             ${(() => { const th = roadmapThemeLabel(p); return th ? `<div class="rm2-theme" style="font-size:12.5px; font-weight:800; color:${archColor}; margin-top:2px;">${esc(th)}</div>` : ''; })()}
             <div style="font-size:12px; color:var(--ink-soft); margin-top:2px;">${doneCount===0 ? L('Your first souvenir is waiting','İlk hatıran seni bekliyor','اولین یادگاری‌ات منتظرت است','Tu primer recuerdo te espera') : L('Check everything off to reach','Hepsini işaretle ve şuraya ulaş:','همه را علامت بزن تا برسی به','Marca todo para llegar a')+' '+esc(nextDisplayLevel(p))}</div>
+            <div class="rm2-links"><button class="rm2-link" data-action="nav" data-view="journal">${esc(journalName())}</button></div>
           </div>
           <div class="rm2-head-count">${roadmapHeaderSlots(doneCount)}<div class="num" style="font-weight:800; font-size:15px; color:${archColor}; white-space:nowrap;">${allDone ? L('Page complete','Sayfa tamam','صفحه کامل شد','Página completa') : (doneCount/roadmap.length <= .5 ? doneCount+' '+L('done','tamam','انجام شد','hechos') : (roadmap.length-doneCount)+' '+L('to go','kaldı','مانده','por hacer'))}</div></div>
         </div>

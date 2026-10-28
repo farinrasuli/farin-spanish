@@ -10750,7 +10750,7 @@ function buildRoadmap(profile){
   // Drillers repeat-to-learn, and anyone who flagged vocab as their weak spot gets a warm-up rep first.
   const gaveVocabWarmup = stage===1 && (profile.priorityArea==='vocab' || profile.learnerType==='driller') && vPool.length;
   if(gaveVocabWarmup){
-    items.push({type:'vocab', refId:vPool[0].id, goal:(vPool[0].goals&&vPool[0].goals.find(gk=>goals.includes(gk)))||primaryGoal, title:L('Vocab warm-up','Kelime ısınması','گرم‌کردن با کلمات', 'Calentamiento de vocabulario')+': '+setTitle(vPool[0])});
+    items.push({type:'vocab', warmup:true, refId:vPool[0].id, goal:(vPool[0].goals&&vPool[0].goals.find(gk=>goals.includes(gk)))||primaryGoal, title:L('Vocab warm-up','Kelime ısınması','گرم‌کردن با کلمات', 'Calentamiento de vocabulario')+': '+setTitle(vPool[0])});
   }
   // Position 0 (opener): the first node of the page, after the warm-up. Empty on stage 1 until
   // Story Path is live (a page never opens with a game on content it has not taught yet).
@@ -10839,6 +10839,44 @@ function buildRoadmap(profile){
     let mAt = sp >= 0 ? sp+1 : Math.floor(items.length/2);
     if(items[mAt] && items[mAt].type === 'game' && items[mAt].pos === 1) mAt++;   // the position-1 game stays right after speaking
     items.splice(mAt, 0, mediaRoadmapNode(profile, mediaPick, primaryGoal));
+  }
+  /* LXD Review 5 READY-5 (Farin 24lgwXUw, 2026-10-28): the same content in the same format twice on one page goes; new content
+     of the same type stays, and reviewing in a different way (box, games on taught sets, stage check, the driller warm-up)
+     is untouched. A repeated vocab/slang set swaps to a set of the pool not yet on the page, else becomes a vocab game on
+     that set (first free kind of echo / spell / cross / dictation), else is dropped. A second speaking card stays only when
+     its goal has another topic at this level; a second story is dropped. Games keep their positions. */
+  {
+    const EXEMPT = new Set(['box','game','stagecheck','media','song','dialogue','writing','grammar']);
+    const seen = new Set(), kept = [];
+    const setOnPage = id => items.some(x=>(x.type==='vocab' || x.type==='slang') && x.refId===id);
+    const gameOnPage = ref => items.some(x=>x.type==='game' && x.refId===ref) || kept.some(x=>x.type==='game' && x.refId===ref);
+    const gameFits = (s, k) => (k !== 'cross' || crossSetOk(s)) && (k !== 'spell' || spellSetOk(s)) && ((k !== 'dictation' && k !== 'echo') || s.cards.filter(c=>c.sentence).length >= 3);
+    items.forEach(it=>{
+      const key = it.type + '|' + it.refId;
+      if(EXEMPT.has(it.type) || !seen.has(key)){ seen.add(key); kept.push(it); return; }
+      if(it.type === 'vocab' || it.type === 'slang'){
+        const pool = it.type === 'vocab' ? vPool : slPool;
+        const fresh = pool.find(s=>!setOnPage(s.id));
+        if(fresh){
+          it.refId = fresh.id; it.goal = (fresh.goals && fresh.goals.find(gk=>goals.includes(gk))) || primaryGoal;
+          it.title = (it.type === 'vocab' ? L('Vocab','Kelime','کلمات','Vocabulario') : L('Slang','Argo','اصطلاحات','Argot')) + ': ' + setTitle(fresh);
+          seen.add(it.type + '|' + it.refId); kept.push(it); return;
+        }
+        const set = VOCAB_SETS.find(s=>s.id===it.refId);
+        const k = set && ['echo','spell','cross','dictation'].find(x=>!gameOnPage(set.id+'-'+x) && gameFits(set, x));
+        if(k) kept.push({type:'game', gameKind:k, slot:null, pos:null, rot:3, review:true, refId:set.id+'-'+k, setId:set.id, goal:it.goal || primaryGoal,
+          title:L('Game','Oyun','بازی','Juego')+': '+gameDisplayName(k)+' — '+setTitle(set)});
+        return;
+      }
+      if(it.type === 'speaking'){ if(speakTopicCount(profile, it.goal) >= 2) kept.push(it); return; }
+      if(it.type !== 'story') kept.push(it);   // a second story is dropped; types this READY does not name stay
+    });
+    items.length = 0; kept.forEach(x=>items.push(x));
+    // stage 2: the speaking card opens a follow-up round when the goal's only topic was used on stage 1
+    if(stage === 2){
+      const sp = items.find(it=>it.type==='speaking'), pl = sp && speakTopicPlan(profile, sp.goal);
+      if(pl && pl.follow) sp.title = L('Speaking: follow-up','Konuşma: devam','صحبت: ادامه','Conversación: continuación') + ': ' + L(pl.tp.topic.en, pl.tp.topic.tr, pl.tp.topic.fa, pl.tp.topic.es);
+    }
   }
   roadmapAddBoxNodes(items, profile, 0);   // Vocab Box reviews (Farin 2026-10-18)
   const seenNodeKeys = {};
@@ -15008,12 +15046,47 @@ function withSpeakingTopic(round, vp){
   const n = state.progress.speakingRoundsDone || 0;
   const gk = goals.length ? goals[n % goals.length] : 'everyday';
   // lxd cycle 2026-10-14 READY-3: a topic tagged with the learner's stage wins; untagged topics behave as before.
-  const okTopic = x => Array.isArray(x.models) && x.models.length && x.questions && x.questions.length;
-  const pool = (SPEAKING_TOPICS[gk] && SPEAKING_TOPICS[gk][lv]) || [];
-  const tp = pool.find(x => okTopic(x) && x.stage === stageKeyOf(state.profile)) || pool.find(okTopic);
-  if(!tp) return round;
-  const qi = Math.floor(n / Math.max(goals.length, 1)) % Math.min(tp.questions.length, tp.models.length);
+  // Review 5 READY-5: on stage 2 a topic not used on stage 1 wins, else the stage-1 topic comes back as a follow-up round.
+  const plan = speakTopicPlan(state.profile, gk);
+  if(!plan) return round;
+  const tp = plan.tp, k = Math.floor(n / Math.max(goals.length, 1));
+  if(plan.follow){
+    const f = plan.follow[k % plan.follow.length];
+    return Object.assign({}, round, {topic:trLine(f.text), starters:studioStartersFor(f.text), speak:{topicId:tp.id, goal:gk, level:lv, qi:f.qi != null ? f.qi : -1, fu:f.fu != null ? f.fu : null}});
+  }
+  const qi = k % Math.min(tp.questions.length, tp.models.length);
   return Object.assign({}, round, {topic:trLine(tp.questions[qi]), starters:studioStartersFor(tp.questions[qi]), speak:{topicId:tp.id, goal:gk, level:lv, qi}});
+}
+/* LXD Review 5 READY-5 (Farin 24lgwXUw, 2026-10-28): speaking across the two stages of a level. The questions a learner was
+   asked are kept per topic and stage in progress.speakAsked = {topicId:{"1":[qi], "2":[qi]}}. On stage 2 a usable topic not
+   asked on stage 1 is used; when the goal has none, the stage-1 topic opens as a follow-up round: its followups first, then
+   the questions stage 1 did not ask (review in a different way: new questions, same theme). */
+function speakTopicOk(x){ return !!(x && Array.isArray(x.models) && x.models.length && x.questions && x.questions.length); }
+function speakTopicCount(profile, gk){
+  const lv = profile && profile.level, sk = stageKeyOf(profile);
+  return ((SPEAKING_TOPICS[gk] && SPEAKING_TOPICS[gk][lv]) || []).filter(x=>speakTopicOk(x) && (!x.stage || x.stage === sk)).length;
+}
+function speakAskedMark(round){
+  const s = round && round.speak;
+  if(!s || !(s.qi >= 0) || !state.profile) return;
+  const all = state.progress.speakAsked || (state.progress.speakAsked = {});
+  const rec = all[s.topicId] || (all[s.topicId] = {}), st = state.profile.levelStage === 2 ? '2' : '1';
+  const arr = rec[st] || (rec[st] = []);
+  if(!arr.includes(s.qi)) arr.push(s.qi);
+}
+function speakTopicPlan(profile, gk){
+  const lv = profile && profile.level, sk = stageKeyOf(profile);
+  const pool = (SPEAKING_TOPICS[gk] && SPEAKING_TOPICS[gk][lv]) || [];
+  const tp = pool.find(x => speakTopicOk(x) && x.stage === sk) || pool.find(speakTopicOk);
+  if(!tp) return null;
+  if(!profile || profile.levelStage !== 2) return {tp, follow:null};
+  const asked = (state.progress && state.progress.speakAsked) || {};
+  const s1 = id => (asked[id] && asked[id]['1']) || [];
+  if(!s1(tp.id).length) return {tp, follow:null};
+  const fresh = pool.find(x => speakTopicOk(x) && (!x.stage || x.stage === sk) && !s1(x.id).length);
+  if(fresh) return {tp:fresh, follow:null};
+  const list = (tp.followups || []).map((f, i)=>({fu:i, text:f})).concat(tp.questions.map((q, i)=>({qi:i, text:q})).filter(x=>!s1(tp.id).includes(x.qi) && tp.models[x.qi]));
+  return {tp, follow:list.length ? list : null};
 }
 function speakingModelHtml(round){
   const tp = speakingTopicOf(round), m = tp && tp.models && tp.models[round.speak.qi];
@@ -22330,8 +22403,14 @@ function grammarQuizQuestions(item, variantKey, opts){
       else if(p.type === 'build' && Array.isArray(p.words) && p.words.length >= 2 && p.answer) out.build.push(buildQ(p));
       else if(p.type === 'type' && p.sentence && /_{2,}/.test(String(p.sentence)) && Array.isArray(p.accept) && p.accept.length) out.type.push(typeQ(p));
     });
-    // S3 order: fill, fill, meaning, fix, build, type, type, type; extras (goal practice comes first) after them
-    return [].concat(out.fill.slice(0, 2), out.meaning.slice(0, 1), out.fix.slice(0, 1), out.build.slice(0, 1), out.type.slice(0, 3), out.fill.slice(2), out.meaning.slice(1), out.fix.slice(1), out.build.slice(1), out.type.slice(3));
+    // Review 5 READY-6 order (Farin 0E36nBVz = A, 2026-10-28): fill, meaning, fill, type, fix, type, build, type.
+    // Recognition -> cued recall -> free recall as before, but no format twice in a row. If an item lacks a format
+    // (e.g. meaning skipped because the explainer check showed it), the next item of a different format moves forward.
+    // Extras (goal practice comes first) after them.
+    const fmtOf = new Map(); Object.keys(out).forEach(k=>out[k].forEach(q=>fmtOf.set(q, k)));
+    const core = [out.fill[0], out.meaning[0], out.fill[1], out.type[0], out.fix[0], out.type[1], out.build[0], out.type[2]].filter(Boolean);
+    for(let i = 1; i < core.length; i++) if(fmtOf.get(core[i]) === fmtOf.get(core[i-1])){ const j = core.findIndex((q, k)=>k > i && fmtOf.get(q) !== fmtOf.get(core[i-1])); if(j > 0) core.splice(i, 0, core.splice(j, 1)[0]); }
+    return core.concat(out.fill.slice(2), out.meaning.slice(1), out.fix.slice(1), out.build.slice(1), out.type.slice(3));
   };
   // Never the same sentence twice in a row.
   const spread = qs => {
@@ -24894,6 +24973,7 @@ const HANDLERS = {
     if(result.passed){
       const key = vp.mode==='writing' ? 'writingRoundsDone' : 'speakingRoundsDone';
       if(keep.count) state.progress[key] = (state.progress[key]||0) + 1;
+      if(keep.count && vp.mode === 'speaking') speakAskedMark(vp.round);   // Review 5 READY-5
       if(!state.progress.lastWords) state.progress.lastWords = {};
       state.progress.lastWords[vp.mode] = String(text||'').slice(0, 300);
       // Fill it (tobT7nwI): which target words landed, so the souvenir can lead with the best sentence.
@@ -24941,7 +25021,7 @@ const HANDLERS = {
     if(!vp || vp.mode !== 'speaking' || vp.said) return;
     vp.said = true;
     const counts = !speakMicMode(vp) && !vp.counted;
-    if(counts){ vp.counted = true; state.progress.speakingRoundsDone = (state.progress.speakingRoundsDone||0) + 1; }
+    if(counts){ vp.counted = true; state.progress.speakingRoundsDone = (state.progress.speakingRoundsDone||0) + 1; speakAskedMark(vp.round); }
     queueFx(()=>{ sfx('correct'); buzz(12); const el = document.querySelector('.speak-said-done'); if(el){ anim(el, [{transform:'scale(.7)', opacity:0}, {transform:'scale(1)', opacity:1}], {duration:320, easing:SPRING}); const c = centerOf(el); sparkBurst(c.x, c.y, 8, 'var(--success)', 70); } });
     save();
     if(counts) markActivity();

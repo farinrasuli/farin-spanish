@@ -1378,6 +1378,17 @@
   .btn-primary:active{box-shadow:inset 0 2px 4px -1px rgba(0,0,0,.3);}
   .btn-ghost{background:var(--bg-elevated); color:var(--ink); border-color:var(--border-soft); box-shadow:var(--clay-shadow-soft);}
   .btn-ghost:active{box-shadow:var(--clay-inset);}
+  /* course buy box: two brand pill buttons (Farin 2026-10-29) */
+  .cu-two{margin:24px 0 8px; padding:4px 0;}
+  .cu-row{display:flex; flex-direction:column; gap:14px;}
+  @media (min-width:600px){ .cu-row{flex-direction:row;} .cu-row > .cu-btn{flex:1;} }
+  .cu-btn{display:flex; align-items:center; justify-content:center; text-align:center; min-height:56px; padding:15px 24px; border:0; border-radius:999px; font-family:inherit; font-weight:900; font-size:16.5px; line-height:1.2; text-decoration:none; cursor:pointer; transition:transform .1s ease, box-shadow .1s ease;}
+  .cu-btn:active{transform:translateY(3px);}
+  .cu-orange{background:#FFA53D; color:#1A1410; box-shadow:0 5px 0 #E8790A;}
+  .cu-orange:active{box-shadow:0 2px 0 #E8790A;}
+  .cu-purple{background:#7C5CFC; color:#fff; box-shadow:0 5px 0 #3F2A9E;}
+  .cu-purple:active{box-shadow:0 2px 0 #3F2A9E;}
+  .cu-two .card-flat{margin-top:18px;}
   .btn-whatsapp{background:#2e9e5b; color:#fff; box-shadow:inset 0 1.5px 2px rgba(255,255,255,.4), inset 0 -5px 8px -3px rgba(0,0,0,.25), 0 8px 16px -8px rgba(46,158,91,.55);}
   .btn-whatsapp:active{box-shadow:inset 0 2px 4px -1px rgba(0,0,0,.3);}
   .btn-sm{padding:9px 14px; font-size:13px; width:auto;}
@@ -27329,11 +27340,13 @@ function renderCoursesHome(){
 }
 
 /* ---------- unlock box: "I want this course" + "I have a password" (Hr03Iu6C) ---------- */
-function courseRequestBtnHtml(c, full){
-  const hasName = !!(state.profile && state.profile.name);
-  const label = `${ICONS.whatsapp} ${full ? CL('I want the full course','Tam kursu istiyorum','دوره‌ی کامل را می‌خواهم','Quiero el curso completo') : CL('I want this course','Bu kursu istiyorum','این دوره را می‌خواهم','Quiero este curso')}`;
-  if(hasName) return `<a class="btn btn-whatsapp" target="_top" rel="noopener" href="${esc(courseRequestLink(c))}">${label}</a>`;
-  if(!courseUi.nameOpen) return `<button class="btn btn-whatsapp" data-action="course-request-name">${label}</button>`;
+// The orange buy button: the WhatsApp request (asks for the learner's name first when the profile has none).
+function courseRequestBtnHtml(c){
+  const label = CL('I want this course','Bu kursu istiyorum','این دوره را می‌خواهم','Quiero este curso');
+  if(state.profile && state.profile.name) return `<a class="cu-btn cu-orange" target="_top" rel="noopener" href="${esc(courseRequestLink(c))}">${label}</a>`;
+  return `<button class="cu-btn cu-orange" data-action="course-request-name">${label}</button>`;
+}
+function courseRequestNameHtml(c){
   return `<div class="card-flat" style="padding:12px;">
     <p style="margin:0 0 8px; font-size:13px;">${CL('What is your name? It goes into the message to Farin.','Adın ne? Farin\'e giden mesaja eklenecek.','اسمت چیست؟ در پیام به Farin نوشته می‌شود.','¿Cómo te llamas? Va en el mensaje para Farin.')}</p>
     <input id="course-req-name" class="name-input" type="text" autocomplete="name" placeholder="${esc(CL('Your name','Adın','اسم تو','Tu nombre'))}" />
@@ -27351,7 +27364,6 @@ function coursePwStatusText(st){
 }
 function coursePasswordBoxHtml(c){
   const st = courseUi.pwStatus && courseUi.pwStatus.cid===c.id ? courseUi.pwStatus : null;
-  if(!courseUi.pwOpen && !st) return `<button class="btn btn-ghost" data-action="course-pw-toggle">${CL('I have a course password','Kurs şifrem var','رمز دوره دارم','Tengo una contraseña del curso')}</button>`;
   return `<div class="card-flat" style="padding:12px;">
     <div class="eyebrow">${CL('Course password','Kurs şifresi','رمز دوره','Contraseña del curso')}</div>
     <input id="course-pw" class="name-input" type="text" autocomplete="off" autocapitalize="characters" spellcheck="false" dir="ltr" translate="no" placeholder="HR-AYSE-7K3Q" value="${esc(courseUi.pwDraft||'')}" style="margin-top:8px; text-transform:uppercase; letter-spacing:.06em;" />
@@ -27370,20 +27382,16 @@ function courseAccessLineHtml(c){
       <a class="btn btn-whatsapp btn-sm" target="_top" rel="noopener" href="${esc(whatsappLink('Hi Farin, I\'m '+(state.profile.name||'...')+'. My access to '+c.title.en+' ('+c.id+') ends soon. Can I extend it? ['+LOGIN_APP+'-app, '+LANG+']'))}">${ICONS.whatsapp} ${CL('Message Farin','Farin\'e yaz','پیام به Farin','Escribir a Farin')}</a>` : ''}
   </div>`;
 }
-// The unlock box on the course page and the gate. `lead` is the one-line reason it is shown.
-// `bare` (chapter-done screen): the two buttons and the who-sends-it line only, the button saying "the full course".
+// The course buy box on the course page, the gate and the chapter-done screen (Farin 2026-10-29: "make just 2 orange and purple
+// button, saying i want this course, or i already have the password!"): exactly two pill buttons, orange = the WhatsApp request,
+// purple = the password entry. The name or password field opens under them only after a tap. `lead`/`bare` are kept for the callers.
 function courseUnlockBoxHtml(c, lead, bare){
   if(courseUnlocked(c.id) || coursePreviewOn() || !courseHasContent(c.id) || (state.progress && state.progress.premium === true)) return '';
-  const inner = `<div class="stack" style="gap:8px;">
-      ${courseRequestBtnHtml(c, bare)}
-      ${coursePasswordBoxHtml(c)}
-    </div>
-    <p style="font-size:12px; color:var(--ink-soft); margin:10px 0 0; line-height:1.45;${bare ? ' text-align:center;' : ''}">${CL('Your teacher Farin sends you a course password on WhatsApp. It works on every device you log in on.','Öğretmenin Farin, WhatsApp\'tan sana özel bir kurs şifresi gönderir. Giriş yaptığın her cihazda çalışır.','معلمت، Farin، رمز دوره را در واتساپ برایت می‌فرستد. روی هر دستگاهی که با آن وارد شوی کار می‌کند.','Tu profesor Farin te envía una contraseña del curso por WhatsApp. Funciona en todos los dispositivos donde inicies sesión.')}</p>`;
-  if(bare) return `<div class="course-unlock" style="margin-top:14px;">${inner}</div>`;
-  return `<div class="card-flat course-unlock" style="margin-top:16px; background:var(--cat-diag-soft); border-color:transparent;">
-    <div class="eyebrow" style="color:var(--clay-lavender-deep);">${CL('Full course','Tam kurs','دوره‌ی کامل','Curso completo')}</div>
-    <p style="font-size:13.5px; margin:4px 0 12px; line-height:1.45;">${esc(lead || courseFreeUnitsText(c))}</p>
-    ${inner}
+  const st = courseUi.pwStatus && courseUi.pwStatus.cid===c.id ? courseUi.pwStatus : null;
+  return `<div class="course-unlock cu-two">
+    <div class="cu-row">${courseRequestBtnHtml(c)}<button class="cu-btn cu-purple" data-action="course-pw-toggle">${CL('I already have the password','Şifrem zaten var','رمز را دارم','Ya tengo la contraseña')}</button></div>
+    ${courseUi.nameOpen && !(state.profile && state.profile.name) ? courseRequestNameHtml(c) : ''}
+    ${courseUi.pwOpen || st ? coursePasswordBoxHtml(c) : ''}
   </div>`;
 }
 

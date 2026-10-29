@@ -11,7 +11,7 @@
      poster,             // optional overrides merged over THEATRE_CONTENT.posters[kind]:
                          //   {title, sub, tagline, art, artReady, artWide, palette:{sky,glow,ink,accent,accentInk}}
                          //   title may be a string or a per-level map {A1:'..', A2:'..', default:'..'}
-     strip,              // optional [{id, label, thumb, state:'developed'|'developing'|'locked', onTap(item)}]
+     strip,              // optional [{id, label, thumb, state:'developed'|'developing'|'locked', note, onTap(item)}] (note = small grey line under the photo)
      controls,           // optional extra HUD buttons, right of sound: [{id, label, icon(svg string), onTap(btn)}]
      stage,              // 'portrait' (default, full-height tall column) | '4:5' (wider column for 4:5 art)
      seen,               // true = the learner has met this poster: show it at rest with Continue, no sequence
@@ -97,7 +97,7 @@ function stripHtml(items){
     var st = it.state || 'developed', locked = st === 'locked';
     return '<button type="button" class="th-strip-item th-' + esc(st) + '" data-i="' + i + '"' + (locked ? ' disabled aria-disabled="true"' : '') + '>' +
       '<span class="th-strip-thumb">' + (it.thumb ? '<img src="' + esc(it.thumb) + '" alt="">' : '') + (locked ? '<span class="th-strip-lock">' + ICON.lock + '</span>' : '') + '</span>' +
-      '<span class="th-strip-label">' + esc(it.label || '') + '</span></button>';
+      '<span class="th-strip-label">' + esc(it.label || '') + '</span>' + (it.note ? '<span class="th-strip-note">' + esc(it.note) + '</span>' : '') + '</button>';
   }).join('');
 }
 function buildPoster(s){

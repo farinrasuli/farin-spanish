@@ -8526,6 +8526,8 @@ function restoreFromCode(code){
     state.roadmap = data.roadmap || null;
     migrateProgressV3(state.progress);
     repairRestoredProfile();
+    // a login on a new device re-reads every course password on the next course page (a revoke shows at once, not after 12 h)
+    Object.keys(state.progress.courseAccess || {}).forEach(k=>{ const ca = state.progress.courseAccess[k]; if(ca && typeof ca === 'object') ca.checkedAt = 0; });
     ensureRoadmap();
     migrateRoadmapChecked();
     save();
@@ -20606,7 +20608,7 @@ function pathSayBtn(text){ return text ? `<button class="tts-btn sp-say" data-ac
    The comic-album Your Call. Engine lazy-loaded from games/your-call/ (your-call.js + .css byte-identical EN/ES;
    content-<side>.js generated from the farin-lxd scripts). A card plays v2 only when YourCall.ready() says every
    panel of its chapters has final art; otherwise the v1 round below runs unchanged. */
-const YC_VER = '1';
+const YC_VER = '2';
 const YC_LEVELS = ['A1'];
 let ycLoading = null, ycGame = null, ycPending = null;
 function ycSide(){ return TTS_LANG.slice(0, 2); }
@@ -24453,7 +24455,7 @@ let gcBubble = null, gcBubbleTimer = null;
    (offline before the first use) the game opens the old way. x = the old Back, all the way out of the game's views. */
 const THEATRE_KINDS = ['path','chores','mystery','order','desk','spell'];
 const THEATRE_VIEWS = ['game-path','game-yc','game-chores-building','game-chores-room','game-mystery','game-order','game-desk','game-spell'];
-const THEATRE_VER = '2';
+const THEATRE_VER = '3';
 let theatreLoading = null;
 function theatreLoad(){
   if(window.Theatre) return Promise.resolve(window.Theatre);

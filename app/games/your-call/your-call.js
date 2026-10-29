@@ -64,6 +64,7 @@ var UI = {
   y1970:{en:'1970', tr:'1970', fa:'۱۹۷۰', es:'1970'},
   photoOf:{en:'Photo', tr:'Fotoğraf', fa:'عکس', es:'Foto'},
   tapTurn:{en:'Tap the photo.', tr:'Fotoğrafa dokun.', fa:'روی عکس بزن.', es:'Toca la foto.'},
+  opensOn:{en:'Opens on the {p} page', tr:'{p} sayfasında açılır', fa:'در صفحه‌ی {p} باز می‌شود', es:'Se abre en la página {p}'},
   dev:{en:'DEV ART · not for learners', tr:'DEV ART · not for learners', fa:'DEV ART · not for learners', es:'DEV ART · not for learners'}
 };
 var ICON = {
@@ -1066,7 +1067,10 @@ function poster(content, path, o){
   var items = C.chapters.map(function(c){
     var played = !!chs[c.n], inCard = card.indexOf(c.n) >= 0;
     var pic = c.postcard || (c.photo && (c.photo.then || c.photo.now));
-    return {id:'ch' + c.n, label:String(c.n), thumb:played ? src(pic) : null, state:played ? 'developed' : (inCard ? 'developing' : 'locked'), n:c.n,
+    var st = played ? 'developed' : (inCard ? 'developing' : 'locked');
+    // GDD 4: a grey chapter says where it opens (ch1-2 = the level's .1 page, ch3-6 = the .2 page)
+    var note = st === 'locked' ? (UI.opensOn[ui] || UI.opensOn.en).replace('{p}', (C.level || 'A1') + (c.n <= 2 ? '.1' : '.2')) : '';
+    return {id:'ch' + c.n, label:String(c.n), thumb:played ? src(pic) : null, state:st, note:note, n:c.n,
       onTap:function(it){ if(o.onChapter) o.onChapter(it.n, {replay:it.state === 'developed' && !inCard}); }};
   });
   return Promise.all(items.map(function(it){ return it.state === 'developed' && it.thumb ? tickThumb(it.thumb).then(function(u){ it.thumb = u; }) : null; })).then(function(){

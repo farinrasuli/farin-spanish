@@ -8277,9 +8277,10 @@ function ttsKey(t){
   h2 = Math.imul(h2 ^ (h2>>>16), 2246822507) ^ Math.imul(h1 ^ (h1>>>13), 3266489909);
   return (h2>>>0).toString(16).padStart(8,'0') + (h1>>>0).toString(16).padStart(8,'0');
 }
-try{ fetch(TTS_AUDIO_BASE + 'manifest.json').then(r=>r.ok ? r.json() : null).then(m=>{ ttsClips = m; }).catch(()=>{}); }catch(e){}
+let ttsClipsWait = null;
+try{ ttsClipsWait = fetch(TTS_AUDIO_BASE + 'manifest.json').then(r=>r.ok ? r.json() : null).then(m=>{ ttsClips = m; }).catch(()=>{}).then(()=>{ ttsClipsWait = null; }); }catch(e){}
 try{ fetch(TTS_AUDIO_BASE + 'alt/manifest.json').then(r=>r.ok ? r.json() : null).then(m=>{ if(m && Object.keys(m).length){ ttsAlt = m; if(state.view === 'settings') render(); } }).catch(()=>{}); }catch(e){}
-function ttsHasClip(text){ return !!(ttsClips && ttsClips[ttsKey(text)]); }
+function ttsHasClip(text){ return !!(ttsClips && (ttsClips[ttsKey(text)] || ttsPlan(text).ok)); }
 function ttsBadge(code){
   clearTimeout(ttsBadgeTimer);
   let el = document.getElementById('tts-badge');
@@ -8293,7 +8294,7 @@ function ttsBadge(code){
       if(!ttsAccentReady() || !other) return;
       ttsSetAccent(other);
       // replay the line in the other voice; a line that already ended replays alone (its story/echo chain is over)
-      if(ttsLast) ttsSpeak(ttsLast.text, ttsLast.rate, ttsAudio ? ttsLast.cb : null); else { ttsBadge(other); ttsBadge(null); }
+      if(ttsLast) ttsSpeak(ttsLast.text, ttsLast.rate, ttsAudio ? ttsLast.cb : null, ttsLast.opt); else { ttsBadge(other); ttsBadge(null); }
       if(state.view === 'settings') render();
     });
   }
@@ -8308,6 +8309,7 @@ function ttsBadge(code){
 }
 // Stops whatever is speaking (clip or device voice).
 function ttsStop(){
+  ttsSeqTok++; clearTimeout(ttsSeqTimer);
   if(ttsAudio){ const a = ttsAudio; ttsAudio = null; try{ a.onended = a.onerror = null; a.pause(); }catch(e){} ttsBadge(null); }
   try{ if(typeof speechSynthesis !== 'undefined'){ speechSynthesis.cancel(); } }catch(e){}
 }
@@ -8335,15 +8337,22 @@ function ttsSpeakDevice(text, rate, cb){
 }
 // Speaks text: the natural clip when there is one, else the device voice.
 // cb = {end, error}; rate follows the old utterance rates (0.92 = normal).
-function ttsSpeak(text, rate, cb){
+function ttsSpeak(text, rate, cb, opt){
   cb = cb || {};
   ttsStop();
   if(!text) return;
+  if(!ttsClips && ttsClipsWait){ const my = ttsSeqTok; ttsClipsWait.then(()=>{ if(ttsSeqTok === my) ttsSpeak(text, rate, cb, opt); }); return; }
   const key = ttsKey(text), main = ttsClips && ttsClips[key];
-  if(!main){ ttsLast = null; ttsSpeakDevice(text, rate, cb); return; }
-  // the learner's accent: the other voice's clip when this line's narrator is not the one they chose
-  const want = ttsAccent(), alt = !!(want && want !== main && ttsAlt && ttsAlt[key] === want), code = alt ? want : main;
-  ttsLast = {text, rate, cb};
+  // the learner's accent first; with mixed narrators a speaker's own voice (opt.voice: a traveller, a course speaker)
+  const want = ttsAccent() || (opt && TTS_ACCENTS.includes(opt.voice) ? opt.voice : '');
+  if(!main){
+    const plan = ttsClips ? ttsPlan(text) : null;
+    if(plan && plan.ok){ ttsLast = {text, rate, cb, opt}; ttsPlayPlan(plan, rate, cb, want); return; }
+    ttsLast = null; ttsSpeakDevice(text, rate, cb); return;
+  }
+  // the other voice's clip when this line's narrator is not the one wanted
+  const alt = !!(want && want !== main && ttsAlt && ttsAlt[key] === want), code = alt ? want : main;
+  ttsLast = {text, rate, cb, opt};
   const a = new Audio(TTS_AUDIO_BASE + (alt ? 'alt/' : '') + key + '.mp3');
   // clips are recorded at their level's pace (A1 / A2 slower), so only an explicit slow replay stretches them
   a.playbackRate = (rate && rate <= 0.75) ? rate / 0.92 : 1; a.preservesPitch = true;
@@ -8367,6 +8376,71 @@ function speakSlots(parts, rate, cb){
     if(ttsSlot.token !== my) return;
     if(i >= list.length){ if(cb.end) cb.end(); return; }
     ttsSpeak(list[i], rate, {end:()=>next(i+1), error:()=>next(i+1)});
+  };
+  next(0);
+}
+/* Natural voice everywhere (2026-10-29, Farin: "no robotic voice anywhere"). A line with no clip of its own (a Passport Desk
+   traveller, a Case Closed clue, any line written after the last render) is voiced from the longest natural clips inside it:
+   the longest run of sentences / clauses that has a clip, else the longest run of words. Template pieces, names, numbers, dates,
+   times, places and the words of these games are rendered for this (Claude/tts/coverage.mjs + extra.mjs), in both voices,
+   so the whole line plays in one voice. Only text nobody wrote in advance (the learner's own typing) can miss a word;
+   that alone still uses the device voice. */
+const TTS_PLAN_MAX = 14, TTS_PLAN_SEGS = 24, ttsPlanCache = new Map();
+let ttsSeqTok = 0, ttsSeqTimer = 0;
+// [{t, pause}]: the line cut at sentence ends (longer pause) and clause marks
+function ttsSegs(text){
+  const out = [];
+  (String(text).match(/[^.!?…]+[.!?…]*["'’”»)\]]*\s*/g) || []).forEach(sen=>{
+    const parts = sen.match(/[^,;:—–]+[,;:—–]*\s*/g) || [sen];
+    parts.forEach((p, i)=>out.push({t:p, pause:i === parts.length - 1 ? (/[.!?…]/.test(sen) ? 260 : 120) : 140}));
+  });
+  return out;
+}
+function ttsPlan(text){
+  const s = String(text || '');
+  if(ttsPlanCache.has(s)) return ttsPlanCache.get(s);
+  const has = k=>!!(ttsClips && ttsClips[k]), pieces = [], segs = ttsSegs(s);
+  let ok = !!ttsNorm(s);
+  for(let i = 0; i < segs.length && ok;){
+    if(!ttsNorm(segs[i].t)){ i++; continue; }
+    // the longest run of whole segments that has a clip (two sentences of one vocab line, a clause, ...)
+    let end = -1, key = '';
+    for(let j = Math.min(segs.length, i + TTS_PLAN_SEGS); j > i; j--){ const k = ttsKey(segs.slice(i, j).map(x=>x.t).join('')); if(has(k)){ end = j; key = k; break; } }
+    if(end > 0){ pieces.push({k:key, pause:segs[end - 1].pause}); i = end; continue; }
+    // else this segment word by word: the longest run of words that has a clip
+    const w = ttsNorm(segs[i].t).split(' ').filter(Boolean);
+    for(let a = 0; a < w.length && ok;){
+      let b = Math.min(w.length, a + TTS_PLAN_MAX), hit = null;
+      for(; b > a; b--){ const k = ttsKey(w.slice(a, b).join(' ')); if(has(k)){ hit = k; break; } }
+      if(!hit){ ok = false; break; }
+      pieces.push({k:hit, pause:b === w.length ? segs[i].pause : 0}); a = b;
+    }
+    i++;
+  }
+  const plan = {ok:ok && pieces.length > 0, pieces};
+  if(ttsPlanCache.size > 3000) ttsPlanCache.clear();
+  ttsPlanCache.set(s, plan);
+  return plan;
+}
+// Plays a plan's clips back to back in one voice (want, else the first piece's narrator), all preloaded.
+function ttsPlayPlan(plan, rate, cb, want){
+  const code = want || ttsClips[plan.pieces[0].k], my = ++ttsSeqTok;
+  const list = plan.pieces.map(p=>{
+    const alt = code !== ttsClips[p.k] && ttsAlt && ttsAlt[p.k] === code;
+    const a = new Audio(TTS_AUDIO_BASE + (alt ? 'alt/' : '') + p.k + '.mp3'); a.preload = 'auto';
+    a.playbackRate = (rate && rate <= 0.75) ? rate / 0.92 : 1; a.preservesPitch = true;
+    return {a, pause:p.pause};
+  });
+  ttsBadge(code);
+  const finish = ok=>{ if(ttsSeqTok !== my) return; ttsAudio = null; ttsBadge(null); if(ok){ if(cb.end) cb.end(); } else if(cb.error) cb.error(); };
+  const next = i=>{
+    if(ttsSeqTok !== my) return;
+    if(i >= list.length){ finish(true); return; }
+    const it = list[i]; ttsAudio = it.a;
+    const go = ()=>{ if(ttsSeqTok !== my) return; if(it.pause && i < list.length - 1) ttsSeqTimer = setTimeout(()=>next(i + 1), it.pause); else next(i + 1); };
+    it.a.onended = go;
+    it.a.onerror = ()=>{ if(ttsSeqTok === my) go(); };   // a piece that fails is skipped, never the robot voice mid-line
+    try{ const p = it.a.play(); if(p && p.catch) p.catch(()=>{ if(ttsSeqTok === my && ttsAudio === it.a) go(); }); }catch(e){ go(); }
   };
   next(0);
 }
@@ -15960,9 +16034,9 @@ function gameFallbackNote(vp){
    A1-A2, 12 at B1+; round = min(6, candidates); under 4 the caller falls back.
    On a second miss the item's rule is shown. Untimed, no lives. */
 const BUILD_MIN = 4;
-function speakTarget(text, rate){
+function speakTarget(text, rate, voice){
   try{
-    ttsSpeak(text, rate);
+    ttsSpeak(text, rate, null, voice ? {voice} : null);
   }catch(e){}
 }
 // Splits a fill-in sentence into slots {pre, w, post, target}. null = not buildable.
@@ -16218,6 +16292,7 @@ function bingoTileText(word){
   return t;
 }
 function ttsVoiceMissing(){
+  if(ttsClips) return false;   // the natural clips speak on every phone
   try{
     if(typeof speechSynthesis === 'undefined') return true;
     const vs = speechSynthesis.getVoices() || [];
@@ -17994,9 +18069,11 @@ function deskRefresh(){
 }
 /* ---- Flow and feel (spec §5.2, §5.7) ---- */
 let deskBusy = false, deskTimer = null;
+// a traveller speaks in their own voice (TTS_ACCENTS = [female, male]: Bella / George, Daniela / Dave)
+function deskVoice(t){ return t ? TTS_ACCENTS[t.g === 'm' ? 1 : 0] : ''; }
 function deskSpeak(round, text, delay){
   const idx = round.index;
-  setTimeout(()=>{ if(state.viewParams && state.viewParams.round === round && round.index === idx && !round.finished) speakTarget(text, deskRate(round)); }, delay || 60);
+  setTimeout(()=>{ if(state.viewParams && state.viewParams.round === round && round.index === idx && !round.finished) speakTarget(text, deskRate(round), deskVoice(deskCur(round))); }, delay || 60);
 }
 function deskAllSaid(t){ return t.lines.map(l=>l.say).join(' '); }
 function deskArrive(round){
@@ -25430,7 +25507,7 @@ const HANDLERS = {
     const r = state.viewParams && state.viewParams.round; if(!r || !r.intro) return;
     r.intro = false; sfx('tick'); deskRefresh(); save(); deskArrive(r);
   },
-  'desk-play'(){ const r = state.viewParams && state.viewParams.round, t = r && deskCur(r); if(!t || r.finished) return; speakTarget(t.reply && t.mode === 'ask' ? t.reply : deskAllSaid(t), deskRate(r)); },
+  'desk-play'(){ const r = state.viewParams && state.viewParams.round, t = r && deskCur(r); if(!t || r.finished) return; speakTarget(t.reply && t.mode === 'ask' ? t.reply : deskAllSaid(t), deskRate(r), deskVoice(t)); },
   'desk-said'(){
     const r = state.viewParams && state.viewParams.round, t = r && deskCur(r); if(!t || r.finished || t.said) return;
     t.said = true; if(!r.noVoice) r.said++;   // a hint for this traveller (free when the phone has no voice)
@@ -28771,7 +28848,7 @@ function courseVoiceFor(idx, accent){
 let courseListenNow = null;
 function courseListenStop(){ const c = courseListenNow; courseListenNow = null; if(!c) return; c.dead = true; clearTimeout(c.wd);
   if(c.audio){ try{ c.audio.onended = c.audio.onerror = null; c.audio.pause(); }catch(e){} }
-  try{ if(typeof speechSynthesis !== 'undefined') speechSynthesis.cancel(); }catch(e){} }
+  try{ ttsStop(); }catch(e){} }
 // Plays lines [{who, line, accent}] once, in order. onLine(i) before each line, onEnd() after the last (also when nothing can speak).
 function courseListenPlay(lines, onLine, onEnd){
   courseListenStop();
@@ -28800,7 +28877,8 @@ function courseListenPlay(lines, onLine, onEnd){
       const a = new Audio(COURSE_CLIP_BASE + key + '.mp3'); ctl.audio = a;
       a.onended = ()=>next(i+1); a.onerror = ()=>{ if(ctl.audio === a){ ctl.audio = null; device(); } };
       try{ const p = a.play(); if(p && p.catch) p.catch(()=>{ if(ctl.audio === a){ ctl.audio = null; device(); } }); }catch(e){ ctl.audio = null; device(); }
-    } else device();
+    } else if(ttsHasClip(text)) ttsSpeak(text, 0.92, {end:()=>next(i+1), error:()=>next(i+1)}, {voice:TTS_ACCENTS[Math.max(0, who.indexOf(l.who)) % 2 ? 0 : 1]});   // natural voice: speakers alternate
+    else device();
   };
   courseClipsLoad().then(()=>play(0));
   return ctl;
@@ -30188,6 +30266,8 @@ function courseIeSay(text, vo, run){
     if(run.cancel || COURSE_LISTEN.fast || !text) return res();
     const voice = vo && vo.tts && vo.tts.voice, key = voice ? courseIeClipKey(voice, text) : '';
     const device = ()=>{
+      // natural clips first (a woman's part in Bella / Daniela, a man's in George / Dave)
+      if(ttsHasClip(text)){ run.skip = ()=>{ ttsStop(); res(); }; ttsSpeak(text, 0.92, {end:res, error:res}, {voice:TTS_ACCENTS[/^.f_/.test(voice || '') || (vo && /^f/i.test(vo.gender || '')) ? 0 : 1]}); return; }
       if(typeof speechSynthesis === 'undefined' || typeof SpeechSynthesisUtterance === 'undefined'){ const w = setTimeout(res, Math.min(6000, String(text).length * 55)); run.skip = ()=>{ clearTimeout(w); res(); }; return; }
       const parts = String(text).replace(/\b(?:[A-Z]-){2,}[A-Z]\b/g, m=>m.split('-').join(', ')).match(/[^.!?]+[.!?]+["’”)]*\s*|[^.!?]+$/g) || [String(text)];
       const next = i=>{

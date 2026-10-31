@@ -25401,7 +25401,7 @@ function g2Host(key){
       const end = ()=>{ clearTimeout(tm); if(g2Pending === end) g2Pending = null; res(); };
       end.drop = ()=>{ clearTimeout(tm); if(g2Pending === end) g2Pending = null; };
       g2Pending = end;
-      tm = setTimeout(end, 4000 + 900 * String(t || '').split(/s+/).length);
+      tm = setTimeout(end, 4000 + 900 * String(t || '').split(/\s+/).length);
       try{ ttsSpeak(t, o && o.rate, {end, error:end}, g2Voice(o && o.who)); if(!t) end(); }catch(e){ end(); }
     }),
     stopSpeech:()=>{ stopAllSpeech(); if(g2Pending) g2Pending.drop(); },   // not settled: a skip resolves itself, and after leaving the game nothing may resume

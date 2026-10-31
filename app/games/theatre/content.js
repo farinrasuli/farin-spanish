@@ -40,6 +40,13 @@ window.THEATRE_CONTENT = {
       art:'games/posters/desk.webp', artReady:false,
       palette:{sky:'#eef6ff', sky2:'#c4e1f6', glow:'#ffffff', ground:'#8dbbe8', ink:'#13304d', accent:'#e2533c', accentInk:'#ffffff'}
     },
+    radio:{
+      // Mini Radio (spec mini-radio-2026-10-21.md 5.3): key art from the poster agent (GW74YH0q queue)
+      title:'Mini Radio',
+      tagline:'Sintoniza. Atrapa la historia.',
+      art:'games/posters/radio.webp', artReady:false,
+      palette:{sky:'#ffe1ef', sky2:'#ffd0e2', glow:'#fff3d2', ground:'#FF8FB3', ink:'#14332e', accent:'#FF6F5E', accentInk:'#ffffff'}
+    },
     spell:{
       title:'Las puertas de las palabras',
       tagline:'Dila bien y la puerta se abre.',

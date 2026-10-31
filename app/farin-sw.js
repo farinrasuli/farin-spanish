@@ -137,7 +137,7 @@ const MANIFEST_RE = /\/audio\/[a-z]{2}\/(alt\/)?manifest\.json$/;
    with no connection. Bump CACHE whenever an image is replaced under the same name. */
 // Game Theatre + lazy game files (x35crL5M): games/**/*.js|css load on the first tap of a game; stale-while-revalidate keeps
 // them offline after that and picks up a new ?v= on the next visit. Poster WebPs (games/posters/) fall under IMG_RE.
-const GAMES_RE = /\/games\/[^?#]+\.(js|css)$/;
+const GAMES_RE = /\/games\/[^?#]+\.(js|css|json|woff2)$/;
 const IMG_RE = /\.(png|webp|jpg|jpeg|svg)$/;
 const STATIC_HOSTS = ['fonts.gstatic.com'];
 const FIREBASE_SDK = 'https://www.gstatic.com/firebasejs/';

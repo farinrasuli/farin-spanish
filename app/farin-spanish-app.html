@@ -27762,11 +27762,11 @@ function courseUnitAccess(c, uid){ return (c.freeUnits || []).includes(uid) || c
 const COURSE_ACCESS_SALT = 'farin-course-access-v1';
 const COURSE_ACCESS_PREFIX = 'ca-';
 const COURSE_ACCESS_RECHECK_MS = 12 * 3600 * 1000;
-const COURSE_PW_PREFIX = {hr:'HR', travel:'TR', 'travel-es':'ES', ielts:'IE', interview:'JI'};
+const COURSE_PW_PREFIX = {hr:'HR', travel:'TR', 'travel-es':'ES', ielts:'IE', interview:'JI', marketing:'MK'};
 // Every sellable course on both sides, so one admin can issue passwords for either app.
 const COURSE_CATALOG_ALL = [
   {id:'hr', app:'en', title:'HR & Business English'}, {id:'travel', app:'en', title:'Travel English'},
-  {id:'ielts', app:'en', title:'IELTS: 10 full exams'}, {id:'travel-es', app:'es', title:'Travel Spanish'}
+  {id:'ielts', app:'en', title:'IELTS: 10 full exams'}, {id:'marketing', app:'en', title:'Copywriting & Content English'}, {id:'travel-es', app:'es', title:'Travel Spanish'}
 ];
 function courseAccessMap(){ const pr = state.progress; if(!pr.courseAccess || typeof pr.courseAccess !== 'object') pr.courseAccess = {}; return pr.courseAccess; }
 function courseAccessInfo(cid){ const a = courseAccessMap()[cid]; return a && typeof a === 'object' ? a : null; }
@@ -28620,7 +28620,7 @@ function renderCourseAbout(c){
   const pd = courseFinalData(c), intro = COURSE_INTRO[c.id] || {}, total = courseUnitsTotal(c), mods = c.modules.length;
   const first = courseOrder(c.id)[0], mins = first ? Math.round(coursePartMinutes(c.id, first, -1) / 5) * 5 : 0;
   const cert = pd && pd.certificate ? pd.certificate : null;
-  const exam = courseTrackQ(c), cm = exam ? courseMeet(c) : null, story = exam && courseTrack(c.id)==='gt' && c.storyGT ? c.storyGT : c.story;
+  const exam = courseTrackQ(c), cm = exam || !(c.story || intro.meet) ? courseMeet(c) : null, story = exam && courseTrack(c.id)==='gt' && c.storyGT ? c.storyGT : c.story;
   const meet = cm ? cl(cm.body) : intro.meet ? cl(intro.meet) : (c.story ? CL('Meet '+c.story.character+' in '+c.story.company+'. ','Tanış: '+c.story.character+', '+c.story.company+'. ','با '+c.story.character+' در '+c.story.company+' آشنا شو. ','Conoce a '+c.story.character+' en '+c.story.company+'. ') : '') + cl(c.promise);
   const cast = story && story.cast && story.cast.length ? `<p style="margin:8px 0 0; font-size:12.5px; color:rgba(255,255,255,.9);">${CL('Also in the story','Hikayede ayrıca','دیگر شخصیت‌ها','También en la historia')}: ${esc(story.cast.join(' · '))}</p>` : '';
   const m = mins ? CL(' (about '+mins+' minutes in all)', ' (toplam yaklaşık '+mins+' dakika)', ' (روی هم حدود '+mins+' دقیقه)', ' (unos '+mins+' minutos en total)') : '';
@@ -28640,7 +28640,7 @@ function renderCourseAbout(c){
         <p style="margin:6px 0 0; font-size:14.5px; line-height:1.5;">${esc(meet)}</p>${cast}
       </div>
       <div class="card-flat" style="margin-top:12px;"><div class="eyebrow" style="color:var(--clay-lavender-deep);">${CL('How it works','Nasıl işler','چطور کار می‌کند','Cómo funciona')}</div>
-        <p style="margin:4px 0 0; font-size:14px; line-height:1.5;">${esc(exam && c.intro.how ? cl(c.intro.how.body) : how)}</p></div>
+        <p style="margin:4px 0 0; font-size:14px; line-height:1.5;">${esc(cm && c.intro.how ? cl(c.intro.how.body) : how)}</p></div>
       <div class="card-flat" style="margin-top:12px;"><div class="eyebrow" style="color:var(--clay-lavender-deep);">${CL('What you finish with','Sonunda elinde ne olacak','در پایان چه چیزی داری','Con qué terminas')}</div>${exam && c.intro.finish ? `<p style="margin:4px 0 0; font-size:14px; line-height:1.5;">${esc(cl(c.intro.finish.body))}</p>` : finish}</div>
       ${courseOutcomesHtml(c)}
       <button class="btn btn-ghost" style="margin-top:16px;" data-action="course-intro-close" data-cid="${c.id}">${CL('Back to the course','Kursa dön','برگشت به دوره','Volver al curso')}</button>
@@ -28943,7 +28943,8 @@ function courseFinalNodeHtml(c, nx){
    lesson it comes from. The final project opens each piece prefilled with its draft. Journal = the learner's Empathy
    answers, newest first, with the card title and the lesson. No counts or empty-slot wording. */
 function coursePortfolioSources(cid){
-  const order = courseOrder(cid), m = {};
+  const order = courseOrder(cid), m = {}, known = (courseGet(cid) || {}).portfolioSources;
+  if(known) return known;   // a lazy course's lessons may not be loaded here: the sync lists the sources on the course
   COURSE_EXTRA.writing.filter(w=>w.course===cid && w.portfolio).forEach(w=>{ (m[w.portfolio] = m[w.portfolio] || []).push(w.unit); });
   Object.keys(m).forEach(k=>m[k].sort((a,b)=>order.indexOf(a)-order.indexOf(b)));
   return m;
@@ -29743,8 +29744,8 @@ function courseFinalPartHtml(c, pd, p){
     <textarea id="cw-text" class="game-input" dir="ltr" translate="no" rows="8" style="margin-top:12px; font-weight:500; min-height:170px;" placeholder="${esc(CL('Write here','Buraya yaz','اینجا بنویس', 'Escribe aquí'))}">${esc(a.text || (draft ? draft.text : '') || '')}</textarea>
     <p style="font-size:12px; color:var(--ink-faint); margin:6px 0 0;">${p.minWords}+ ${CL('words','kelime','کلمه', 'palabras')}</p>
     <div class="card-flat" style="margin-top:12px;"><div class="eyebrow">${CL('Score yourself','Kendini puanla','به خودت نمره بده', 'Puntúate')}</div>
-      <p style="margin:4px 0 8px; font-size:12px; color:var(--ink-faint);">${esc(cl(COURSE_SCORE_HINT))}</p>
-      ${pd.rubric.map((r,ri)=>`<div style="margin-bottom:10px;"><div dir="ltr" translate="no" style="font-size:13px; margin-bottom:5px;">${esc(r)}${courseRubricSubHtml(pd, ri)}</div><div class="row" style="gap:6px;">${[0,1,2,3].map(v=>`<button class="cj-part${scores[ri]===v ? (v>=2 ? ' ok' : ' bad') : ''}" data-action="course-final-score" data-c="${ri}" data-v="${v}">${v}</button>`).join('')}</div></div>`).join('')}</div>
+      <p style="margin:4px 0 8px; font-size:12px; color:var(--ink-faint);">${esc(cl((courseRubricBands(c.id, pd) || {}).note || COURSE_SCORE_HINT))}</p>
+      ${pd.rubric.map((r,ri)=>`<div style="margin-bottom:10px;"><div dir="ltr" translate="no" style="font-size:13px; margin-bottom:5px;">${esc(r)}${courseRubricSubHtml(pd, ri)}</div><div class="row" style="gap:6px;">${[0,1,2,3].map(v=>`<button class="cj-part${scores[ri]===v ? (v>=2 ? ' ok' : ' bad') : ''}" data-action="course-final-score" data-c="${ri}" data-v="${v}">${v}</button>`).join('')}</div>${courseRubricBands(c.id, pd) && typeof scores[ri] === 'number' ? `<p class="cs-band-d" dir="${courseTD()}">${esc(cl(courseRubricBands(c.id, pd)[courseRubricBands(c.id, pd).order[ri]][scores[ri]]))}</p>` : ''}</div>`).join('')}</div>
     ${res ? `<div class="card-flat" style="margin-top:12px; background:${res.passed ? 'var(--cat-voc-soft)' : 'var(--cat-gram-soft)'}; border-color:transparent;"><p style="margin:0; font-size:13.5px;">${res.wc} ${CL('words','kelime','کلمه', 'palabras')} · ${res.passed ? CL('Part passed. Well done!','Bölüm geçildi. Tebrikler!','این بخش را قبول شدی. آفرین!', 'Parte aprobada. ¡Bien hecho!') : res.missing ? CL('Score every line of the checklist first.','Önce kontrol listesinin her satırını puanla.','اول به همه‌ی ردیف‌های چک‌لیست نمره بده.', 'Primero puntúa cada línea de la lista.') : res.short ? CL('A little longer, please: at least '+p.minWords+' words.','Biraz daha uzun yaz: en az '+p.minWords+' kelime.','کمی بیشتر بنویس: دست‌کم '+p.minWords+' کلمه.', 'Un poco más largo, por favor: al menos '+p.minWords+' palabras.') : CL('Not yet: every line needs 2 or more. Revise, then score again.','Henüz değil: her satır 2 veya üstü olmalı. Düzelt ve yeniden puanla.','هنوز نه: نمره‌ی هر ردیف باید ۲ یا بیشتر باشد. متن را بازبینی کن و دوباره نمره بده.', 'Todavía no: cada línea necesita 2 o más. Revisa y puntúa otra vez.')}</p></div>` : ''}
     <button class="btn btn-primary" style="margin-top:14px;" data-action="course-final-save" data-cid="${c.id}" data-part="${p.id}">${CL('Check and save','Kontrol et ve kaydet','بررسی و ذخیره', 'Comprobar y guardar')}</button>`;
 }
@@ -31021,20 +31022,24 @@ function coursePosterMaybe(c){
 const COURSE_LAZY = {base:'', state:{}, wait:{}, byUid:null};
 // The lazy module a unit belongs to (cached map; COURSES does not change after load).
 function courseLazyUnitMod(uid){
-  if(!COURSE_LAZY.byUid){ const map = {}; COURSES.forEach(c=>(c.modules || []).forEach(m=>{ if(m.lazy) m.units.forEach(u=>{ map[u.id] = m; }); })); COURSE_LAZY.byUid = map; }
+  if(!COURSE_LAZY.byUid){ const map = {}; COURSES.forEach(c=>(c.modules || []).forEach(m=>{ if(m.lazy) courseLazyUnits(m).forEach(u=>{ map[u.id] = m; }); })); COURSE_LAZY.byUid = map; }
   return COURSE_LAZY.byUid[uid] || null;
 }
+// The lessons of a lazy module, plus its chapter finale when it has one (IELTS exams have none).
+function courseLazyUnits(m){ return m.checkpoint ? m.units.concat(m.checkpoint) : m.units; }
 function courseLazyReady(m){ return !m || !m.lazy || COURSE_LAZY.state[m.lazy.key] === 'ok'; }
 function courseLazyScript(src){
   return new Promise((res, rej)=>{ const s = document.createElement('script'); s.src = src; s.onload = ()=>res(); s.onerror = ()=>{ try{ s.remove(); }catch(e){} rej(new Error('load ' + src)); }; document.head.appendChild(s); });
 }
-// Puts one loaded exam's items into COURSE_EXTRA (once).
+// Puts one loaded module's items where the engine looks for them (once): COURSE_EXTRA, or GRAMMAR_ITEMS / VOCAB_SETS for a course's grammar and word items.
+const COURSE_LAZY_KEYS = ['explain','drill','writing','sets','exit','judge','speaking','grammar','b2','vocab'];
+function courseLazyTarget(k){ if(k === 'grammar' || k === 'b2') return GRAMMAR_ITEMS; if(k === 'vocab') return VOCAB_SETS; return COURSE_EXTRA[k] || (COURSE_EXTRA[k] = []); }
 function courseLazyRegister(c, m){
   const lz = m.lazy, all = (typeof window !== 'undefined' && window[lz.global || 'IELTS_EXAMS']) || {}, data = all[lz.key] || {}, units = data.units || {};
-  m.units.forEach(u=>{
+  courseLazyUnits(m).forEach(u=>{
     const d = units[u.id]; if(!d) return;
-    const put = (k, x, gt)=>{ if(!x || !x.id) return; const arr = COURSE_EXTRA[k] || (COURSE_EXTRA[k] = []); if(arr.some(y=>y.id===x.id)) return; arr.push(Object.assign({}, x, {course:c.id, unit:u.id}, gt ? {track:'gt'} : {})); };
-    ['explain','drill','writing','sets','exit'].forEach(k=>{ put(k, d[k], false); if(d.gt) put(k, d.gt[k], true); });
+    const put = (k, x, gt)=>{ if(!x || !x.id) return; const arr = courseLazyTarget(k); if(arr.some(y=>y.id===x.id)) return; arr.push(Object.assign({}, x, {course:c.id, unit:u.id}, gt ? {track:'gt'} : {})); };
+    COURSE_LAZY_KEYS.forEach(k=>{ put(k, d[k], false); if(d.gt) put(k, d.gt[k], true); });
   });
 }
 function courseLazyLoad(c, m){
@@ -31048,26 +31053,28 @@ function courseLazyLoad(c, m){
     .catch(()=>{ COURSE_LAZY.state[k] = 'error'; return false; })
     .then(ok=>{ COURSE_LAZY.wait[k] = null;
       // re-render only a screen that shows this exam (its course page, or a lesson / card / done screen of one of its lessons)
-      const vp = state.viewParams || {}, mine = vp.uid ? m.units.some(u=>u.id === vp.uid) : vp.cid === c.id;
+      const vp = state.viewParams || {}, mine = vp.uid ? courseLazyUnits(m).some(u=>u.id === vp.uid) : vp.cid === c.id;
       if(mine && ['course-detail','course-lesson','course-step','course-done'].includes(state.view)) render(); return ok; }));
 }
 // Starts loading the exam of a lesson (not again after a failure; Retry does that).
 function courseLazyEnsure(c, uid){ const m = courseLazyUnitMod(uid); if(m && !courseLazyReady(m) && COURSE_LAZY.state[m.lazy.key] !== 'error' && !COURSE_LAZY.wait[m.lazy.key]) courseLazyLoad(c, m); return m; }
 // The course page loads the exam of the next step in the background, so its lessons open at once (and offline later).
 function courseLazyPrefetch(c, nx){ if(nx && nx.uid) courseLazyEnsure(c, nx.uid); }
+function courseLazyOpening(cid){ return courseIsExam(courseGet(cid)) ? CL('Opening the exam…','Sınav açılıyor…','آزمون باز می‌شود…','Abriendo el examen…') : CL('Opening the lesson…','Ders açılıyor…','درس باز می‌شود…','Abriendo la lección…'); }
 function courseLazyFailHtml(cid, uid){
-  return `<div class="card-flat ie-wait"><p dir="${courseTD()}">${CL('This exam could not be loaded. Check your connection and try again.','Bu sınav yüklenemedi. Bağlantını kontrol edip tekrar dene.','این آزمون بار نشد. اتصالت را بررسی کن و دوباره امتحان کن.','No se pudo cargar este examen. Revisa tu conexión e inténtalo de nuevo.')}</p>
+  const msg = courseIsExam(courseGet(cid)) ? CL('This exam could not be loaded. Check your connection and try again.','Bu sınav yüklenemedi. Bağlantını kontrol edip tekrar dene.','این آزمون بار نشد. اتصالت را بررسی کن و دوباره امتحان کن.','No se pudo cargar este examen. Revisa tu conexión e inténtalo de nuevo.') : CL('This lesson could not be loaded. Check your connection and try again.','Bu ders yüklenemedi. Bağlantını kontrol edip tekrar dene.','این درس بار نشد. اتصالت را بررسی کن و دوباره امتحان کن.','No se pudo cargar esta lección. Revisa tu conexión e inténtalo de nuevo.');
+  return `<div class="card-flat ie-wait"><p dir="${courseTD()}">${msg}</p>
     <button class="btn btn-sm btn-ghost" data-action="course-lazy-retry" data-cid="${cid}" data-uid="${esc(uid)}">${CL('Try again','Tekrar dene','دوباره امتحان کن','Reintentar')}</button></div>`;
 }
 function courseLazyWaitHtml(cid, uid, m){
   const c = courseGet(cid); if(c) courseLazyEnsure(c, uid);
   if(COURSE_LAZY.state[m.lazy.key] === 'error') return courseLazyFailHtml(cid, uid);
-  return `<div class="card-flat ie-wait"><span class="ie-spin" aria-hidden="true"></span><p>${CL('Opening the exam…','Sınav açılıyor…','آزمون باز می‌شود…','Abriendo el examen…')}</p></div>`;
+  return `<div class="card-flat ie-wait"><span class="ie-spin" aria-hidden="true"></span><p>${courseLazyOpening(cid)}</p></div>`;
 }
 // Lesson page: loads the exam; shows a line only while it loads or when it failed.
 function courseLazyLessonNote(c, uid){
   const m = courseLazyEnsure(c, uid); if(!m || courseLazyReady(m)) return '';
-  return COURSE_LAZY.state[m.lazy.key] === 'error' ? courseLazyFailHtml(c.id, uid) : `<p class="ie-wait-line"><span class="ie-spin" aria-hidden="true"></span>${CL('Opening the exam…','Sınav açılıyor…','آزمون باز می‌شود…','Abriendo el examen…')}</p>`;
+  return COURSE_LAZY.state[m.lazy.key] === 'error' ? courseLazyFailHtml(c.id, uid) : `<p class="ie-wait-line"><span class="ie-spin" aria-hidden="true"></span>${courseLazyOpening(c.id)}</p>`;
 }
 
 /* ---------- Academic / General Training switch ("Your version"; course page and the lesson page of R1-R3 and W1) ---------- */

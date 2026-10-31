@@ -1,0 +1,3115 @@
+{
+ "id": "laundry",
+ "v": 1,
+ "place": "flat2",
+ "anchor": "B2",
+ "day": "fri",
+ "light": "morning",
+ "content": "content/laundry.json",
+ "_doc": "Engine schema for Cozy Chores \"Open House\" project \"laundry\" (GDD 4, 6, 7, 13). Built by cozy-chores-tools/build-projects.mjs from farin-lxd's content-chores-laundry.json; words come from content/laundry.json by line role (a role 'x' in station 's' = the line whose id ends in '.s.x', or the full id). Stand-in art lives in \"art\" until art/manifest.json lists the real file.",
+ "mentor": "bell",
+ "cast": {
+  "bell": {
+   "name": {
+    "en": "Mrs Bell",
+    "es": "doña Pura"
+   },
+   "face": "pt-bell",
+   "hue": "#7C93FF"
+  },
+  "ollie": {
+   "name": {
+    "en": "Ollie",
+    "es": "Iker"
+   },
+   "face": "pt-ollie",
+   "hue": "#2f8fc9"
+  },
+  "tom": {
+   "name": {
+    "en": "Tom",
+    "es": "Tino"
+   },
+   "face": "pt-tom",
+   "hue": "#7a6a52"
+  },
+  "captain": {
+   "name": {
+    "en": "Captain",
+    "es": "Capitán"
+   },
+   "face": "pt-captain",
+   "hue": "#FFA53D"
+  }
+ },
+ "house": [
+  {
+   "id": "movein",
+   "label": {
+    "en": "Flat 1",
+    "es": "Piso 1"
+   }
+  },
+  {
+   "id": "cake",
+   "label": {
+    "en": "Bakery",
+    "es": "Panadería"
+   }
+  },
+  {
+   "id": "bouquet",
+   "label": {
+    "en": "Flowers",
+    "es": "Floristería"
+   }
+  },
+  {
+   "id": "laundry",
+   "label": {
+    "en": "Flat 2",
+    "es": "Piso 2"
+   }
+  },
+  {
+   "id": "cat",
+   "label": {
+    "en": "Flat 3",
+    "es": "Piso 3"
+   }
+  },
+  {
+   "id": "fixit",
+   "label": {
+    "en": "Flat 4",
+    "es": "Piso 4"
+   }
+  },
+  {
+   "id": "party",
+   "label": {
+    "en": "The street",
+    "es": "La calle"
+   }
+  }
+ ],
+ "counting": {
+  "en": [
+   "one",
+   "two",
+   "three",
+   "four",
+   "five",
+   "six",
+   "seven",
+   "eight",
+   "nine"
+  ],
+  "es": [
+   "una",
+   "dos",
+   "tres",
+   "cuatro",
+   "cinco",
+   "seis",
+   "siete",
+   "ocho",
+   "nueve"
+  ]
+ },
+ "bands": {
+  "A1": {
+   "stations": [
+    "chaos",
+    "sort",
+    "machine",
+    "detergent",
+    "hang"
+   ]
+  },
+  "A2": {
+   "stations": [
+    "chaos",
+    "sort",
+    "labels",
+    "machine",
+    "detergent",
+    "hang",
+    "recap"
+   ],
+   "over": {
+    "recap": {
+     "type": "recap",
+     "beats": null
+    }
+   }
+  },
+  "B1": {
+   "stations": [
+    "chaos",
+    "sort",
+    "labels",
+    "machine",
+    "detergent",
+    "sock",
+    "soak",
+    "hang",
+    "recap"
+   ],
+   "over": {
+    "sock": {
+     "beats": [
+      {
+       "shot": "machine"
+      },
+      {
+       "gesture": {
+        "type": "tap",
+        "targets": [
+         "mdoor"
+        ],
+        "on": {
+         "mdoor": [
+          [
+           "sfx",
+           "door"
+          ],
+          [
+           "swapTo",
+           "mdoor",
+           "mdoor-open"
+          ],
+          [
+           "appear",
+           "shirts-pink"
+          ],
+          [
+           "appear",
+           "shirts-white"
+          ]
+         ]
+        }
+       }
+      },
+      {
+       "if": "!laundry.sockFound",
+       "then": [
+        {
+         "say": [
+          "reveal",
+          "bell",
+          "ollie"
+         ]
+        }
+       ],
+       "else": [
+        {
+         "say": [
+          "wash.b1.nosock.white",
+          "wash.b1.nosock.bell"
+         ]
+        }
+       ]
+      },
+      {
+       "reply": {}
+      }
+     ]
+    },
+    "recap": {
+     "type": null,
+     "beats": [
+      {
+       "say": [
+        "intro"
+       ]
+      },
+      {
+       "chips": {}
+      },
+      {
+       "say": [
+        "ollie"
+       ]
+      }
+     ]
+    }
+   }
+  },
+  "B2": {
+   "stations": [
+    "chaos",
+    "sort",
+    "labels",
+    "machine",
+    "detergent",
+    "sock",
+    "soak",
+    "hang",
+    "recap"
+   ]
+  },
+  "C1": {
+   "stations": [
+    "chaos",
+    "clash",
+    "persuade",
+    "sort",
+    "machine",
+    "detergent",
+    "soak",
+    "hang",
+    "recap"
+   ],
+   "over": {
+    "soak": {
+     "beats": [
+      {
+       "say": [
+        "white",
+        "pink"
+       ]
+      },
+      {
+       "if": "laundry.pinkKept",
+       "then": [
+        {
+         "gesture": {
+          "type": "stir-circles",
+          "center": [
+           50,
+           45
+          ],
+          "r": [
+           6,
+           28
+          ],
+          "turns": 2,
+          "states": [
+           "w-pink",
+           "w-even"
+          ]
+         }
+        }
+       ],
+       "else": [
+        {
+         "gesture": {
+          "type": "stir-circles",
+          "center": [
+           50,
+           45
+          ],
+          "r": [
+           6,
+           28
+          ],
+          "turns": 3,
+          "states": [
+           "w-pink",
+           "w-half",
+           "w-clear"
+          ]
+         }
+        }
+       ]
+      },
+      {
+       "say": [
+        "done"
+       ]
+      }
+     ]
+    }
+   }
+  }
+ },
+ "memory": {
+  "laundry.sockFound": false,
+  "laundry.called": false,
+  "laundry.pegs": null,
+  "laundry.pinkKept": null
+ },
+ "keep": "hang",
+ "souvenir": {
+  "composite": "line",
+  "box": [
+   2,
+   18,
+   96,
+   60
+  ]
+ },
+ "units": {
+  "ml": {
+   "en": "ml",
+   "es": "ml"
+  },
+  "deg": {
+   "en": "°C",
+   "es": "°C"
+  },
+  "turn": {
+   "en": "",
+   "es": ""
+  }
+ },
+ "composites": {
+  "line": {
+   "_doc": "The washing line as the learner pegged it: four crew shirts and the pegs in the colours they chose.",
+   "store": "hang",
+   "parts": [
+    {
+     "id": "shirt0",
+     "art": "co-line-shirt",
+     "box": [
+      4,
+      16,
+      20,
+      54
+     ],
+     "if": "!laundry.pinkKept"
+    },
+    {
+     "id": "shirtp0",
+     "art": "co-line-shirt-pink",
+     "box": [
+      4,
+      16,
+      20,
+      54
+     ],
+     "if": "laundry.pinkKept"
+    },
+    {
+     "id": "shirt1",
+     "art": "co-line-shirt",
+     "box": [
+      28,
+      16,
+      20,
+      54
+     ],
+     "if": "!laundry.pinkKept"
+    },
+    {
+     "id": "shirtp1",
+     "art": "co-line-shirt-pink",
+     "box": [
+      28,
+      16,
+      20,
+      54
+     ],
+     "if": "laundry.pinkKept"
+    },
+    {
+     "id": "shirt2",
+     "art": "co-line-shirt",
+     "box": [
+      52,
+      16,
+      20,
+      54
+     ],
+     "if": "!laundry.pinkKept"
+    },
+    {
+     "id": "shirtp2",
+     "art": "co-line-shirt-pink",
+     "box": [
+      52,
+      16,
+      20,
+      54
+     ],
+     "if": "laundry.pinkKept"
+    },
+    {
+     "id": "shirt3",
+     "art": "co-line-shirt",
+     "box": [
+      76,
+      16,
+      20,
+      54
+     ],
+     "if": "!laundry.pinkKept"
+    },
+    {
+     "id": "shirtp3",
+     "art": "co-line-shirt-pink",
+     "box": [
+      76,
+      16,
+      20,
+      54
+     ],
+     "if": "laundry.pinkKept"
+    }
+   ],
+   "rings": {
+    "pegs": {
+     "pts": [
+      [
+       8,
+       18
+      ],
+      [
+       20,
+       18
+      ],
+      [
+       32,
+       18
+      ],
+      [
+       44,
+       18
+      ],
+      [
+       56,
+       18
+      ],
+      [
+       68,
+       18
+      ],
+      [
+       80,
+       18
+      ],
+      [
+       92,
+       18
+      ]
+     ],
+     "size": [
+      5,
+      12
+     ],
+     "foot": false
+    }
+   }
+  }
+ },
+ "stations": {
+  "chaos": {
+   "light": "morning",
+   "photo": {
+    "crop": [
+     0,
+     20,
+     100,
+     70
+    ]
+   },
+   "curios": [
+    {
+     "id": "medal",
+     "hot": {
+      "x": 82,
+      "y": 44,
+      "w": 10,
+      "h": 10
+     },
+     "line": "wash.curio.medal",
+     "sfx": "medal-clink",
+     "doodle": "medal"
+    }
+   ],
+   "shots": {
+    "main": {
+     "kind": "wide",
+     "plate": "plate-flat2-wide",
+     "origin": "50% 55%",
+     "layers": [
+      {
+       "id": "ollie",
+       "art": "pt-ollie-oh",
+       "x": 6,
+       "y": 32,
+       "w": 30,
+       "h": 44,
+       "z": 5,
+       "anim": "a-bob",
+       "cast": "ollie"
+      },
+      {
+       "id": "bell",
+       "art": "pt-bell-warm",
+       "x": 68,
+       "y": 36,
+       "w": 26,
+       "h": 36,
+       "z": 4,
+       "cast": "bell"
+      },
+      {
+       "id": "basket",
+       "art": "co-basket-full",
+       "x": 38,
+       "y": 62,
+       "w": 24,
+       "h": 20,
+       "z": 6
+      },
+      {
+       "id": "basket-t",
+       "art": "co-basket-tipped",
+       "x": 38,
+       "y": 66,
+       "w": 24,
+       "h": 18,
+       "z": 6,
+       "hidden": true
+      },
+      {
+       "id": "heap",
+       "art": "co-heap",
+       "x": 22,
+       "y": 76,
+       "w": 56,
+       "h": 18,
+       "z": 5,
+       "hidden": true,
+       "notBands": [
+        "C1"
+       ]
+      },
+      {
+       "id": "heap-pink",
+       "art": "co-heap-pink",
+       "x": 22,
+       "y": 76,
+       "w": 56,
+       "h": 18,
+       "z": 5,
+       "hidden": true,
+       "bands": [
+        "C1"
+       ]
+      },
+      {
+       "id": "medal",
+       "art": "co-medal",
+       "x": 84,
+       "y": 46,
+       "w": 6,
+       "h": 7,
+       "z": 6
+      }
+     ],
+     "atmos": [
+      {
+       "t": "sun",
+       "op": 0.35
+      },
+      {
+       "t": "motes",
+       "x": 8,
+       "y": 12,
+       "w": 28,
+       "h": 26,
+       "n": 5,
+       "col": "#ffffff"
+      }
+     ],
+     "hots": [
+      {
+       "id": "basket",
+       "x": 34,
+       "y": 58,
+       "w": 32,
+       "h": 26,
+       "label": "basket"
+      }
+     ]
+    }
+   },
+   "beats": [
+    {
+     "say": [
+      "ollie",
+      "bell"
+     ]
+    },
+    {
+     "gesture": {
+      "type": "tap",
+      "targets": [
+       "basket"
+      ],
+      "on": {
+       "basket": [
+        [
+         "sfx",
+         "cloth"
+        ],
+        [
+         "swapTo",
+         "basket",
+         "basket-t"
+        ],
+        [
+         "appear",
+         "heap"
+        ],
+        [
+         "appear",
+         "heap-pink"
+        ]
+       ]
+      }
+     }
+    },
+    {
+     "reply": {}
+    }
+   ]
+  },
+  "clash": {
+   "light": "morning",
+   "photo": {
+    "crop": [
+     0,
+     10,
+     100,
+     70
+    ]
+   },
+   "shots": {
+    "main": {
+     "kind": "two",
+     "plate": "plate-flat2-machine-two",
+     "origin": "50% 50%",
+     "layers": [
+      {
+       "id": "tom",
+       "art": "pt-tom-calm",
+       "x": 4,
+       "y": 22,
+       "w": 40,
+       "h": 54,
+       "z": 4,
+       "anim": "a-bob",
+       "cast": "tom"
+      },
+      {
+       "id": "ollie",
+       "art": "pt-ollie-oh",
+       "x": 56,
+       "y": 24,
+       "w": 40,
+       "h": 52,
+       "z": 4,
+       "cast": "ollie"
+      }
+     ],
+     "atmos": [
+      {
+       "t": "sun",
+       "op": 0.3
+      }
+     ],
+     "hots": []
+    }
+   },
+   "beats": [
+    {
+     "say": [
+      "tom",
+      "ollie",
+      "tom2"
+     ]
+    },
+    {
+     "reply": {}
+    }
+   ]
+  },
+  "persuade": {
+   "light": "morning",
+   "photo": {
+    "crop": [
+     0,
+     20,
+     100,
+     70
+    ]
+   },
+   "shots": {
+    "main": {
+     "kind": "wide",
+     "plate": "plate-flat2-wide",
+     "origin": "50% 55%",
+     "layers": [
+      {
+       "id": "tom",
+       "art": "pt-tom-calm",
+       "x": 6,
+       "y": 30,
+       "w": 32,
+       "h": 46,
+       "z": 4,
+       "cast": "tom"
+      },
+      {
+       "id": "ollie",
+       "art": "pt-ollie-calm",
+       "x": 62,
+       "y": 30,
+       "w": 32,
+       "h": 46,
+       "z": 4,
+       "cast": "ollie"
+      },
+      {
+       "id": "heap-pink",
+       "art": "co-heap-pink",
+       "x": 22,
+       "y": 76,
+       "w": 56,
+       "h": 18,
+       "z": 5
+      }
+     ],
+     "atmos": [
+      {
+       "t": "sun",
+       "op": 0.35
+      }
+     ],
+     "hots": []
+    }
+   },
+   "beats": [
+    {
+     "freeLine": {}
+    },
+    {
+     "mem": {
+      "laundry.called": true
+     }
+    },
+    {
+     "do": [
+      [
+       "face",
+       "tom",
+       "warm"
+      ],
+      [
+       "face",
+       "ollie",
+       "warm"
+      ]
+     ]
+    }
+   ]
+  },
+  "sort": {
+   "light": "morning",
+   "photo": {
+    "crop": [
+     0,
+     0,
+     100,
+     80
+    ]
+   },
+   "curios": [
+    {
+     "id": "sock",
+     "once": true,
+     "mem": {
+      "laundry.sockFound": true
+     },
+     "line": "sockfound",
+     "sfx": "cloth",
+     "doodle": "sock",
+     "do": [
+      [
+       "appear",
+       "sock-out"
+      ]
+     ]
+    }
+   ],
+   "shots": {
+    "main": {
+     "kind": "top",
+     "plate": "plate-flat2-floor-top",
+     "origin": "50% 50%",
+     "layers": [
+      {
+       "id": "shirt1",
+       "art": "co-crew-shirt",
+       "x": 6,
+       "y": 44,
+       "w": 18,
+       "h": 16,
+       "z": 4,
+       "item": "shirt",
+       "mat": "soft",
+       "notBands": [
+        "C1"
+       ]
+      },
+      {
+       "id": "shirtp1",
+       "art": "co-crew-shirt-pink",
+       "x": 6,
+       "y": 44,
+       "w": 18,
+       "h": 16,
+       "z": 4,
+       "item": "shirt",
+       "mat": "soft",
+       "bands": [
+        "C1"
+       ]
+      },
+      {
+       "id": "shirt2",
+       "art": "co-crew-shirt",
+       "x": 26,
+       "y": 50,
+       "w": 18,
+       "h": 16,
+       "z": 5,
+       "item": "shirt",
+       "mat": "soft",
+       "notBands": [
+        "C1"
+       ]
+      },
+      {
+       "id": "shirtp2",
+       "art": "co-crew-shirt-pink",
+       "x": 26,
+       "y": 50,
+       "w": 18,
+       "h": 16,
+       "z": 5,
+       "item": "shirt",
+       "mat": "soft",
+       "bands": [
+        "C1"
+       ]
+      },
+      {
+       "id": "shirt3",
+       "art": "co-crew-shirt",
+       "x": 50,
+       "y": 46,
+       "w": 18,
+       "h": 16,
+       "z": 4,
+       "item": "shirt",
+       "mat": "soft",
+       "notBands": [
+        "C1"
+       ]
+      },
+      {
+       "id": "shirtp3",
+       "art": "co-crew-shirt-pink",
+       "x": 50,
+       "y": 46,
+       "w": 18,
+       "h": 16,
+       "z": 4,
+       "item": "shirt",
+       "mat": "soft",
+       "bands": [
+        "C1"
+       ]
+      },
+      {
+       "id": "shirt4",
+       "art": "co-crew-shirt-sock",
+       "x": 72,
+       "y": 52,
+       "w": 18,
+       "h": 16,
+       "z": 5,
+       "item": "shirt",
+       "mat": "soft",
+       "bands": [
+        "B1",
+        "B2"
+       ],
+       "find": {
+        "id": "sock",
+        "x": 78,
+        "y": 52,
+        "w": 30,
+        "h": 34,
+        "art": "co-sock-toe"
+       }
+      },
+      {
+       "id": "shirt4w",
+       "art": "co-crew-shirt",
+       "x": 72,
+       "y": 52,
+       "w": 18,
+       "h": 16,
+       "z": 5,
+       "item": "shirt",
+       "mat": "soft",
+       "bands": [
+        "A1",
+        "A2"
+       ]
+      },
+      {
+       "id": "shirt4p",
+       "art": "co-crew-shirt-pink",
+       "x": 72,
+       "y": 52,
+       "w": 18,
+       "h": 16,
+       "z": 5,
+       "item": "shirt",
+       "mat": "soft",
+       "bands": [
+        "C1"
+       ]
+      },
+      {
+       "id": "jeans",
+       "art": "co-jeans",
+       "x": 10,
+       "y": 68,
+       "w": 18,
+       "h": 18,
+       "z": 4,
+       "item": "colour",
+       "word": "jeans",
+       "mat": "soft"
+      },
+      {
+       "id": "towel",
+       "art": "co-towel",
+       "x": 34,
+       "y": 72,
+       "w": 18,
+       "h": 14,
+       "z": 5,
+       "item": "colour",
+       "word": "towel",
+       "mat": "soft"
+      },
+      {
+       "id": "tshirt",
+       "art": "co-tshirt-green",
+       "x": 56,
+       "y": 70,
+       "w": 16,
+       "h": 15,
+       "z": 4,
+       "item": "colour",
+       "word": "tshirt",
+       "mat": "soft"
+      },
+      {
+       "id": "jumper",
+       "art": "co-jumper",
+       "x": 76,
+       "y": 74,
+       "w": 18,
+       "h": 16,
+       "z": 5,
+       "item": "wool",
+       "mat": "soft",
+       "notBands": [
+        "A1"
+       ]
+      },
+      {
+       "id": "sock-out",
+       "art": "co-sock-red",
+       "x": 44,
+       "y": 14,
+       "w": 10,
+       "h": 6,
+       "z": 3,
+       "hidden": true
+      }
+     ],
+     "atmos": [
+      {
+       "t": "sun",
+       "op": 0.3
+      }
+     ],
+     "hots": [
+      {
+       "id": "whites",
+       "x": 4,
+       "y": 6,
+       "w": 28,
+       "h": 26,
+       "label": "whites"
+      },
+      {
+       "id": "colours",
+       "x": 36,
+       "y": 6,
+       "w": 28,
+       "h": 26,
+       "label": "colours"
+      },
+      {
+       "id": "delicates",
+       "x": 68,
+       "y": 6,
+       "w": 28,
+       "h": 26,
+       "label": "delicates",
+       "notBands": [
+        "A1"
+       ]
+      }
+     ]
+    }
+   },
+   "beats": [
+    {
+     "say": [
+      "intro",
+      "shirts",
+      "pink",
+      "white"
+     ]
+    },
+    {
+     "bands": [
+      "A1"
+     ],
+     "gesture": {
+      "type": "drag-to",
+      "slotsBy": {
+       "whites": [
+        [
+         12,
+         16
+        ],
+        [
+         22,
+         16
+        ],
+        [
+         14,
+         24
+        ],
+        [
+         24,
+         24
+        ]
+       ],
+       "colours": [
+        [
+         44,
+         16
+        ],
+        [
+         54,
+         18
+        ],
+        [
+         48,
+         25
+        ]
+       ],
+       "delicates": [
+        [
+         82,
+         18
+        ]
+       ]
+      },
+      "items": [
+       {
+        "item": "shirt",
+        "n": 4,
+        "to": "whites"
+       },
+       {
+        "item": "colour",
+        "n": 3,
+        "to": "colours"
+       }
+      ],
+      "misdrop": {
+       "colour": "x.colour"
+      }
+     }
+    },
+    {
+     "notBands": [
+      "A1"
+     ],
+     "gesture": {
+      "type": "drag-to",
+      "slotsBy": {
+       "whites": [
+        [
+         12,
+         16
+        ],
+        [
+         22,
+         16
+        ],
+        [
+         14,
+         24
+        ],
+        [
+         24,
+         24
+        ]
+       ],
+       "colours": [
+        [
+         44,
+         16
+        ],
+        [
+         54,
+         18
+        ],
+        [
+         48,
+         25
+        ],
+        [
+         58,
+         25
+        ],
+        [
+         40,
+         24
+        ],
+        [
+         50,
+         14
+        ],
+        [
+         60,
+         14
+        ]
+       ],
+       "delicates": [
+        [
+         82,
+         18
+        ]
+       ]
+      },
+      "items": [
+       {
+        "item": "shirt",
+        "n": 4,
+        "to": "whites",
+        "if": "!laundry.pinkKept"
+       },
+       {
+        "item": "shirt",
+        "n": 4,
+        "to": "colours",
+        "if": "laundry.pinkKept"
+       },
+       {
+        "item": "colour",
+        "n": 3,
+        "to": "colours"
+       },
+       {
+        "item": "wool",
+        "n": 1,
+        "to": "delicates"
+       }
+      ],
+      "misdrop": {
+       "wool": "x.jumper"
+      }
+     }
+    },
+    {
+     "say": [
+      "done"
+     ]
+    }
+   ]
+  },
+  "labels": {
+   "light": "noon",
+   "photo": {
+    "crop": [
+     5,
+     5,
+     90,
+     80
+    ]
+   },
+   "shots": {
+    "main": {
+     "kind": "close",
+     "plate": "plate-flat2-label-close",
+     "origin": "50% 45%",
+     "layers": [
+      {
+       "id": "label",
+       "art": "co-care-label",
+       "x": 14,
+       "y": 14,
+       "w": 72,
+       "h": 66,
+       "z": 2
+      },
+      {
+       "id": "sym30",
+       "art": "co-sym-30",
+       "x": 20,
+       "y": 30,
+       "w": 18,
+       "h": 16,
+       "z": 4,
+       "word": "sym30"
+      },
+      {
+       "id": "symtd",
+       "art": "co-sym-notumble",
+       "x": 41,
+       "y": 30,
+       "w": 18,
+       "h": 16,
+       "z": 4
+      },
+      {
+       "id": "symir",
+       "art": "co-sym-noiron",
+       "x": 62,
+       "y": 30,
+       "w": 18,
+       "h": 16,
+       "z": 4
+      }
+     ],
+     "atmos": [],
+     "hots": [
+      {
+       "id": "s30",
+       "x": 18,
+       "y": 28,
+       "w": 22,
+       "h": 20,
+       "label": "30"
+      },
+      {
+       "id": "std",
+       "x": 39,
+       "y": 28,
+       "w": 22,
+       "h": 20,
+       "label": "no tumble"
+      },
+      {
+       "id": "sir",
+       "x": 60,
+       "y": 28,
+       "w": 22,
+       "h": 20,
+       "label": "no iron"
+      }
+     ]
+    }
+   },
+   "beats": [
+    {
+     "say": [
+      "intro"
+     ]
+    },
+    {
+     "gesture": {
+      "type": "tap",
+      "targets": [
+       "s30",
+       "std",
+       "sir"
+      ],
+      "order": "any",
+      "on": {
+       "s30": [
+        [
+         "shake",
+         "sym30"
+        ],
+        [
+         "line",
+         "tts",
+         "30"
+        ]
+       ],
+       "std": [
+        [
+         "shake",
+         "symtd"
+        ],
+        [
+         "line",
+         "tts",
+         "notumble"
+        ]
+       ],
+       "sir": [
+        [
+         "shake",
+         "symir"
+        ],
+        [
+         "line",
+         "tts",
+         "noiron"
+        ]
+       ]
+      }
+     }
+    },
+    {
+     "say": [
+      "done"
+     ]
+    }
+   ]
+  },
+  "machine": {
+   "light": "noon",
+   "photo": {
+    "crop": [
+     5,
+     0,
+     90,
+     70
+    ]
+   },
+   "shots": {
+    "main": {
+     "kind": "close",
+     "plate": "plate-flat2-machine-close",
+     "origin": "50% 30%",
+     "layers": [
+      {
+       "id": "mdial",
+       "art": "co-machine-dial",
+       "x": 38,
+       "y": 10,
+       "w": 24,
+       "h": 19.2,
+       "z": 5,
+       "origin": "50% 50%"
+      }
+     ],
+     "atmos": [],
+     "hots": [],
+     "ui": [
+      {
+       "type": "dialring",
+       "layer": "mdial",
+       "min": 20,
+       "max": 90,
+       "step": 10,
+       "every": 10,
+       "arc": [
+        -135,
+        135
+       ]
+      }
+     ]
+    }
+   },
+   "beats": [
+    {
+     "say": [
+      "intro"
+     ]
+    },
+    {
+     "gesture": {
+      "type": "turn-dial",
+      "layer": "mdial",
+      "min": 20,
+      "max": 90,
+      "step": 10,
+      "target": 30,
+      "arc": [
+       -135,
+       135
+      ],
+      "unit": "deg",
+      "lines": {
+       "over": "wrong",
+       "under": "wrong",
+       "wrong": "wrong"
+      }
+     }
+    },
+    {
+     "do": [
+      [
+       "sfx",
+       "machine"
+      ]
+     ]
+    }
+   ]
+  },
+  "detergent": {
+   "light": "noon",
+   "photo": {
+    "crop": [
+     0,
+     10,
+     100,
+     80
+    ]
+   },
+   "shots": {
+    "main": {
+     "kind": "close",
+     "plate": "plate-flat2-drawer-close",
+     "origin": "50% 50%",
+     "layers": [
+      {
+       "id": "bottle",
+       "art": "co-detergent",
+       "x": 10,
+       "y": 14,
+       "w": 30,
+       "h": 50,
+       "z": 4,
+       "mat": "glass"
+      },
+      {
+       "id": "cap",
+       "art": "co-cap",
+       "x": 52,
+       "y": 46,
+       "w": 30,
+       "h": 26,
+       "z": 3
+      },
+      {
+       "id": "capfill",
+       "art": "co-cap-fill",
+       "x": 56,
+       "y": 52,
+       "w": 22,
+       "h": 16,
+       "z": 4,
+       "hidden": true,
+       "origin": "50% 100%"
+      }
+     ],
+     "atmos": [
+      {
+       "t": "sun",
+       "op": 0.25
+      }
+     ],
+     "hots": [
+      {
+       "id": "pour",
+       "x": 6,
+       "y": 10,
+       "w": 40,
+       "h": 58,
+       "label": "bottle"
+      }
+     ],
+     "ui": [
+      {
+       "type": "scale",
+       "pivot": [
+        67,
+        88
+       ],
+       "r": 12
+      }
+     ]
+    }
+   },
+   "beats": [
+    {
+     "say": [
+      "intro"
+     ]
+    },
+    {
+     "gesture": {
+      "type": "pour-until",
+      "from": "bottle",
+      "fill": "capfill",
+      "hold": [
+       "pour"
+      ],
+      "unit": "ml",
+      "rate": 14,
+      "target": 40,
+      "tol": 4,
+      "max": 80,
+      "steps": [
+       20,
+       5
+      ],
+      "over": "over"
+     }
+    },
+    {
+     "say": [
+      "done"
+     ]
+    },
+    {
+     "do": [
+      [
+       "sfx",
+       "machine"
+      ]
+     ]
+    }
+   ]
+  },
+  "sock": {
+   "light": "afternoon",
+   "photo": {
+    "crop": [
+     0,
+     20,
+     100,
+     70
+    ],
+    "shot": "machine"
+   },
+   "shots": {
+    "machine": {
+     "kind": "two",
+     "plate": "plate-flat2-machine-two",
+     "origin": "50% 55%",
+     "layers": [
+      {
+       "id": "mdoor",
+       "art": "co-mdoor-closed",
+       "x": 18,
+       "y": 44,
+       "w": 30,
+       "h": 26,
+       "z": 4
+      },
+      {
+       "id": "mdoor-open",
+       "art": "co-mdoor-open",
+       "x": 18,
+       "y": 44,
+       "w": 30,
+       "h": 26,
+       "z": 4,
+       "hidden": true
+      },
+      {
+       "id": "shirts-pink",
+       "art": "co-shirts-pink",
+       "x": 20,
+       "y": 72,
+       "w": 34,
+       "h": 16,
+       "z": 5,
+       "hidden": true,
+       "if": "!laundry.sockFound"
+      },
+      {
+       "id": "shirts-white",
+       "art": "co-shirts-white",
+       "x": 20,
+       "y": 72,
+       "w": 34,
+       "h": 16,
+       "z": 5,
+       "hidden": true,
+       "if": "laundry.sockFound"
+      },
+      {
+       "id": "ollie",
+       "art": "pt-ollie-calm",
+       "x": 60,
+       "y": 30,
+       "w": 34,
+       "h": 46,
+       "z": 3,
+       "anim": "a-bob",
+       "cast": "ollie"
+      }
+     ],
+     "atmos": [
+      {
+       "t": "sun",
+       "op": 0.3
+      }
+     ],
+     "hots": [
+      {
+       "id": "mdoor",
+       "x": 14,
+       "y": 40,
+       "w": 38,
+       "h": 34,
+       "label": "machine door"
+      }
+     ]
+    },
+    "phone": {
+     "kind": "close",
+     "plate": "plate-flat2-phone-close",
+     "origin": "50% 50%",
+     "layers": [
+      {
+       "id": "phone",
+       "art": "co-ollie-phone",
+       "x": 34,
+       "y": 28,
+       "w": 32,
+       "h": 42,
+       "z": 4
+      },
+      {
+       "id": "ollie",
+       "art": "pt-ollie-oh",
+       "x": 66,
+       "y": 34,
+       "w": 30,
+       "h": 42,
+       "z": 3,
+       "cast": "ollie"
+      }
+     ],
+     "atmos": [
+      {
+       "t": "sun",
+       "op": 0.3
+      }
+     ],
+     "hots": []
+    }
+   },
+   "beats": [
+    {
+     "shot": "machine"
+    },
+    {
+     "gesture": {
+      "type": "tap",
+      "targets": [
+       "mdoor"
+      ],
+      "on": {
+       "mdoor": [
+        [
+         "sfx",
+         "door"
+        ],
+        [
+         "swapTo",
+         "mdoor",
+         "mdoor-open"
+        ],
+        [
+         "appear",
+         "shirts-pink"
+        ],
+        [
+         "appear",
+         "shirts-white"
+        ]
+       ]
+      }
+     }
+    },
+    {
+     "if": "!laundry.sockFound",
+     "then": [
+      {
+       "say": [
+        "reveal",
+        "bell",
+        "ollie"
+       ]
+      },
+      {
+       "shot": "phone"
+      },
+      {
+       "do": [
+        [
+         "ring",
+         "phone",
+         true
+        ]
+       ]
+      },
+      {
+       "say": [
+        "tom"
+       ]
+      },
+      {
+       "do": [
+        [
+         "ring",
+         "phone",
+         false
+        ]
+       ]
+      }
+     ],
+     "else": [
+      {
+       "say": [
+        "wash.nosock.white"
+       ]
+      },
+      {
+       "shot": "phone"
+      },
+      {
+       "do": [
+        [
+         "ring",
+         "phone",
+         true
+        ]
+       ]
+      },
+      {
+       "say": [
+        "wash.nosock.tom"
+       ]
+      },
+      {
+       "do": [
+        [
+         "ring",
+         "phone",
+         false
+        ]
+       ]
+      }
+     ]
+    },
+    {
+     "freeLine": {}
+    },
+    {
+     "mem": {
+      "laundry.called": true
+     }
+    }
+   ]
+  },
+  "soak": {
+   "light": "afternoon",
+   "photo": {
+    "crop": [
+     5,
+     5,
+     90,
+     80
+    ]
+   },
+   "shots": {
+    "main": {
+     "kind": "top",
+     "plate": "plate-flat2-bucket-top",
+     "origin": "50% 45%",
+     "layers": [
+      {
+       "id": "w-pink",
+       "art": "co-water-pink",
+       "x": 20,
+       "y": 21,
+       "w": 60,
+       "h": 48,
+       "z": 3,
+       "if": "!laundry.sockFound"
+      },
+      {
+       "id": "w-half",
+       "art": "co-water-half",
+       "x": 20,
+       "y": 21,
+       "w": 60,
+       "h": 48,
+       "z": 3,
+       "hidden": true
+      },
+      {
+       "id": "w-clear",
+       "art": "co-water-clear",
+       "x": 20,
+       "y": 21,
+       "w": 60,
+       "h": 48,
+       "z": 3,
+       "hidden": true
+      },
+      {
+       "id": "w-even",
+       "art": "co-water-pink-even",
+       "x": 20,
+       "y": 21,
+       "w": 60,
+       "h": 48,
+       "z": 3,
+       "hidden": true,
+       "bands": [
+        "C1"
+       ]
+      }
+     ],
+     "atmos": [
+      {
+       "t": "sun",
+       "op": 0.3
+      }
+     ],
+     "hots": []
+    }
+   },
+   "beats": [
+    {
+     "say": [
+      "pink",
+      "spare",
+      "ollie"
+     ]
+    },
+    {
+     "reply": {}
+    },
+    {
+     "if": "!laundry.sockFound",
+     "then": [
+      {
+       "gesture": {
+        "type": "stir-circles",
+        "center": [
+         50,
+         45
+        ],
+        "r": [
+         6,
+         28
+        ],
+        "turns": 3,
+        "states": [
+         "w-pink",
+         "w-half",
+         "w-clear"
+        ]
+       }
+      }
+     ],
+     "else": [
+      {
+       "do": [
+        [
+         "appear",
+         "w-half"
+        ]
+       ]
+      },
+      {
+       "gesture": {
+        "type": "stir-circles",
+        "center": [
+         50,
+         45
+        ],
+        "r": [
+         6,
+         28
+        ],
+        "turns": 2,
+        "states": [
+         "w-half",
+         "w-clear"
+        ]
+       }
+      }
+     ]
+    },
+    {
+     "say": [
+      "done"
+     ]
+    }
+   ]
+  },
+  "hang": {
+   "light": "golden",
+   "expressive": "laundry.pegs",
+   "photo": {
+    "crop": [
+     0,
+     6,
+     100,
+     70
+    ]
+   },
+   "captain": {
+    "layer": "captain",
+    "jump": "pt-captain-jump",
+    "paw": "pt-captain-paw",
+    "sit": "pt-captain-sit",
+    "notBands": [
+     "A1"
+    ],
+    "prop": "sock",
+    "call": "wash.captain.call",
+    "label": "wash.captain.label"
+   },
+   "curios": [
+    {
+     "id": "sock",
+     "hot": {
+      "x": 4,
+      "y": 80,
+      "w": 14,
+      "h": 10
+     },
+     "line": "wash.curio.sock",
+     "sfx": "cloth-flap",
+     "doodle": "sock",
+     "if": "!laundry.sockFound"
+    }
+   ],
+   "shots": {
+    "main": {
+     "kind": "wide",
+     "plate": "plate-yard-line-wide",
+     "origin": "50% 40%",
+     "layers": [
+      {
+       "id": "line",
+       "art": null,
+       "x": 2,
+       "y": 10,
+       "w": 96,
+       "h": 50,
+       "z": 4,
+       "composite": "line",
+       "live": true
+      },
+      {
+       "id": "pegs-red",
+       "art": "co-pegs-red",
+       "x": 24,
+       "y": 80,
+       "w": 11,
+       "h": 9,
+       "z": 6
+      },
+      {
+       "id": "pegs-yellow",
+       "art": "co-pegs-yellow",
+       "x": 38,
+       "y": 82,
+       "w": 11,
+       "h": 9,
+       "z": 6
+      },
+      {
+       "id": "pegs-blue",
+       "art": "co-pegs-blue",
+       "x": 52,
+       "y": 80,
+       "w": 11,
+       "h": 9,
+       "z": 6
+      },
+      {
+       "id": "pegs-green",
+       "art": "co-pegs-green",
+       "x": 66,
+       "y": 82,
+       "w": 11,
+       "h": 9,
+       "z": 6
+      },
+      {
+       "id": "sock",
+       "art": "co-sock-red",
+       "x": 6,
+       "y": 82,
+       "w": 10,
+       "h": 6,
+       "z": 5,
+       "notBands": [
+        "A1"
+       ]
+      },
+      {
+       "id": "captain",
+       "art": "pt-captain-sit",
+       "x": 74,
+       "y": 64,
+       "w": 26,
+       "h": 20,
+       "z": 7,
+       "hidden": true,
+       "cast": "captain"
+      },
+      {
+       "id": "bell",
+       "art": "pt-bell-warm",
+       "x": 82,
+       "y": 40,
+       "w": 18,
+       "h": 26,
+       "z": 3,
+       "cast": "bell"
+      }
+     ],
+     "atmos": [
+      {
+       "t": "sun"
+      },
+      {
+       "t": "motes",
+       "x": 6,
+       "y": 30,
+       "w": 88,
+       "h": 20,
+       "n": 6,
+       "col": "#ffffff"
+      }
+     ],
+     "hots": []
+    }
+   },
+   "beats": [
+    {
+     "say": [
+      "intro",
+      "pegs"
+     ]
+    },
+    {
+     "gesture": {
+      "type": "place",
+      "composite": "line",
+      "ring": "pegs",
+      "store": "pegs",
+      "need": 8,
+      "captain": {
+       "at": 4
+      },
+      "memList": "laundry.pegs",
+      "sources": [
+       {
+        "id": "red",
+        "from": "pegs-red",
+        "art": "co-peg-red"
+       },
+       {
+        "id": "yellow",
+        "from": "pegs-yellow",
+        "art": "co-peg-yellow"
+       },
+       {
+        "id": "blue",
+        "from": "pegs-blue",
+        "art": "co-peg-blue"
+       },
+       {
+        "id": "green",
+        "from": "pegs-green",
+        "art": "co-peg-green"
+       }
+      ]
+     }
+    },
+    {
+     "photo": "album"
+    },
+    {
+     "bands": [
+      "A1"
+     ],
+     "say": [
+      "photo"
+     ]
+    },
+    {
+     "bands": [
+      "A1"
+     ],
+     "recapSpoken": {}
+    },
+    {
+     "bands": [
+      "A1"
+     ],
+     "produce": {}
+    }
+   ]
+  },
+  "recap": {
+   "light": "golden",
+   "photo": {
+    "crop": [
+     0,
+     0,
+     100,
+     100
+    ]
+   },
+   "shots": {
+    "main": {
+     "kind": "close",
+     "plate": "plate-yard-line-wide",
+     "origin": "50% 50%",
+     "blur": true,
+     "layers": []
+    }
+   },
+   "beats": [
+    {
+     "say": [
+      "intro"
+     ]
+    },
+    {
+     "freeLine": {
+      "souvenir": true
+     }
+    },
+    {
+     "say": [
+      "ollie"
+     ]
+    }
+   ]
+  }
+ },
+ "objects": {
+  "_doc": "farin-lxd 2026-10-29 (lines obj.laundry.*): target words + tr / fa / en glosses.",
+  "sym30": {
+   "en": "30°",
+   "es": "30°",
+   "tr": "30°",
+   "fa": "۳۰°",
+   "gl": {
+    "en": "30°"
+   },
+   "esGl": {
+    "tr": "30°",
+    "fa": "۳۰°",
+    "en": "30°"
+   }
+  },
+  "shirt": {
+   "en": "crew shirt",
+   "es": "camiseta de la tripulación",
+   "tr": "ekip tişörtü",
+   "fa": "تی‌شرتِ تیم",
+   "gl": {
+    "en": "crew shirt"
+   },
+   "esGl": {
+    "tr": "ekip tişörtü",
+    "fa": "تی‌شرتِ تیم",
+    "en": "crew shirt"
+   }
+  },
+  "jeans": {
+   "en": "jeans",
+   "es": "vaqueros",
+   "tr": "kot pantolon",
+   "fa": "شلوار جین",
+   "gl": {
+    "en": "jeans"
+   },
+   "esGl": {
+    "tr": "kot pantolon",
+    "fa": "شلوار جین",
+    "en": "jeans"
+   }
+  },
+  "towel": {
+   "en": "towel",
+   "es": "toalla",
+   "tr": "havlu",
+   "fa": "حوله",
+   "gl": {
+    "en": "towel"
+   },
+   "esGl": {
+    "tr": "havlu",
+    "fa": "حوله",
+    "en": "towel"
+   }
+  },
+  "tshirt": {
+   "en": "T-shirt",
+   "es": "camiseta",
+   "tr": "tişört",
+   "fa": "تی‌شرت",
+   "gl": {
+    "en": "T-shirt"
+   },
+   "esGl": {
+    "tr": "tişört",
+    "fa": "تی‌شرت",
+    "en": "T-shirt"
+   }
+  },
+  "jumper": {
+   "en": "wool jumper",
+   "es": "jersey de lana",
+   "tr": "yün kazak",
+   "fa": "پلیورِ پشمی",
+   "gl": {
+    "en": "wool jumper"
+   },
+   "esGl": {
+    "tr": "yün kazak",
+    "fa": "پلیورِ پشمی",
+    "en": "wool jumper"
+   }
+  }
+ },
+ "art": {
+  "plate-flat2-wide": {
+   "kind": "plate",
+   "name": "Flat 2, the chaos",
+   "file": "games/cozy-chores/art/plate-flat2-wide.webp",
+   "size": {
+    "w": 864,
+    "h": 1080
+   },
+   "ready": false,
+   "desc": "Ollie’s student flat at number 12: rowing kit everywhere, an oar in the corner, a medal on the door handle, the washing machine in an alcove. Morning light through a big window.",
+   "ph": {
+    "bg": "#eef3f8",
+    "shapes": [
+     {
+      "x": 0,
+      "y": 0,
+      "w": 100,
+      "h": 62,
+      "fill": "#eef0f2"
+     },
+     {
+      "x": 0,
+      "y": 62,
+      "w": 100,
+      "h": 38,
+      "fill": "#d8c3a5"
+     },
+     {
+      "x": 6,
+      "y": 10,
+      "w": 30,
+      "h": 28,
+      "fill": "#d6eef9",
+      "r": 6,
+      "label": "window"
+     },
+     {
+      "x": 80,
+      "y": 22,
+      "w": 16,
+      "h": 50,
+      "fill": "#cfe1ec",
+      "r": 4,
+      "label": "door"
+     },
+     {
+      "x": 60,
+      "y": 40,
+      "w": 18,
+      "h": 26,
+      "fill": "#f4f4f4",
+      "r": 8,
+      "label": "machine"
+     }
+    ]
+   }
+  },
+  "plate-flat2-floor-top": {
+   "kind": "plate",
+   "name": "The floor, three piles",
+   "file": "games/cozy-chores/art/plate-flat2-floor-top.webp",
+   "size": {
+    "w": 864,
+    "h": 1080
+   },
+   "ready": false,
+   "desc": "Straight down on the floorboards: three marked spots for the piles (whites, colours, delicates), the tipped-out laundry in the middle. Morning.",
+   "ph": {
+    "bg": "#f2e8d8",
+    "shapes": [
+     {
+      "x": 0,
+      "y": 0,
+      "w": 100,
+      "h": 100,
+      "fill": "#ead6b6"
+     },
+     {
+      "x": 4,
+      "y": 6,
+      "w": 28,
+      "h": 26,
+      "fill": "#ffffff",
+      "r": 14,
+      "label": "whites"
+     },
+     {
+      "x": 36,
+      "y": 6,
+      "w": 28,
+      "h": 26,
+      "fill": "#ffd9c9",
+      "r": 14,
+      "label": "colours"
+     },
+     {
+      "x": 68,
+      "y": 6,
+      "w": 28,
+      "h": 26,
+      "fill": "#e7e0f7",
+      "r": 14,
+      "label": "delicates"
+     }
+    ]
+   }
+  },
+  "plate-flat2-label-close": {
+   "kind": "plate",
+   "name": "A shirt’s care label, close",
+   "file": "games/cozy-chores/art/plate-flat2-label-close.webp",
+   "size": {
+    "w": 864,
+    "h": 1080
+   },
+   "ready": false,
+   "desc": "Close on the inside of a crew shirt collar: a care label (the symbols are cut-outs, the words are live HTML). Noon.",
+   "ph": {
+    "bg": "#f6f6f2",
+    "shapes": [
+     {
+      "x": 0,
+      "y": 0,
+      "w": 100,
+      "h": 100,
+      "fill": "#eef2f6"
+     },
+     {
+      "x": 14,
+      "y": 14,
+      "w": 72,
+      "h": 66,
+      "fill": "#ffffff",
+      "r": 6,
+      "label": "label"
+     }
+    ]
+   }
+  },
+  "plate-flat2-machine-close": {
+   "kind": "plate",
+   "name": "Washing machine, close",
+   "file": "games/cozy-chores/art/plate-flat2-machine-close.webp",
+   "size": {
+    "w": 864,
+    "h": 1080
+   },
+   "ready": false,
+   "desc": "The front of an old washing machine: the programme dial (cut-out), the door window. Noon.",
+   "ph": {
+    "bg": "#f2f4f6",
+    "shapes": [
+     {
+      "x": 0,
+      "y": 0,
+      "w": 100,
+      "h": 100,
+      "fill": "#eef1f3"
+     },
+     {
+      "x": 10,
+      "y": 6,
+      "w": 80,
+      "h": 86,
+      "fill": "#ffffff",
+      "r": 14
+     },
+     {
+      "x": 24,
+      "y": 34,
+      "w": 52,
+      "h": 42,
+      "fill": "#cfe6f2",
+      "round": true,
+      "label": "door"
+     }
+    ]
+   }
+  },
+  "plate-flat2-drawer-close": {
+   "kind": "plate",
+   "name": "Detergent drawer, close",
+   "file": "games/cozy-chores/art/plate-flat2-drawer-close.webp",
+   "size": {
+    "w": 864,
+    "h": 1080
+   },
+   "ready": false,
+   "desc": "Close on the detergent bottle and the measuring cap on top of the machine, a 40 ml line printed on the cap (the cap and its level are cut-outs). Noon.",
+   "ph": {
+    "bg": "#f2f4f6",
+    "shapes": [
+     {
+      "x": 0,
+      "y": 0,
+      "w": 100,
+      "h": 100,
+      "fill": "#f0f2f4"
+     },
+     {
+      "x": 0,
+      "y": 70,
+      "w": 100,
+      "h": 30,
+      "fill": "#ffffff"
+     }
+    ]
+   }
+  },
+  "plate-flat2-machine-two": {
+   "kind": "plate",
+   "name": "Ollie at the machine",
+   "file": "games/cozy-chores/art/plate-flat2-machine-two.webp",
+   "size": {
+    "w": 864,
+    "h": 1080
+   },
+   "ready": false,
+   "desc": "Two-shot by the machine, the door about to open; Ollie (cut-out) crouches beside it. Afternoon light.",
+   "ph": {
+    "bg": "#f3efe6",
+    "shapes": [
+     {
+      "x": 0,
+      "y": 0,
+      "w": 100,
+      "h": 100,
+      "fill": "#f1ece2"
+     },
+     {
+      "x": 8,
+      "y": 30,
+      "w": 50,
+      "h": 56,
+      "fill": "#ffffff",
+      "r": 14,
+      "label": "machine"
+     }
+    ]
+   }
+  },
+  "plate-flat2-phone-close": {
+   "kind": "plate",
+   "name": "The phone, close",
+   "file": "games/cozy-chores/art/plate-flat2-phone-close.webp",
+   "size": {
+    "w": 864,
+    "h": 1080
+   },
+   "ready": false,
+   "desc": "Close on Ollie’s phone on the worktop, a call screen (live HTML), the window bright behind. Afternoon.",
+   "ph": {
+    "bg": "#f3efe6",
+    "shapes": [
+     {
+      "x": 0,
+      "y": 0,
+      "w": 100,
+      "h": 100,
+      "fill": "#efe8dc"
+     },
+     {
+      "x": 0,
+      "y": 66,
+      "w": 100,
+      "h": 34,
+      "fill": "#d8c3a5"
+     }
+    ]
+   }
+  },
+  "plate-flat2-bucket-top": {
+   "kind": "plate",
+   "name": "Bucket, from above",
+   "file": "games/cozy-chores/art/plate-flat2-bucket-top.webp",
+   "size": {
+    "w": 864,
+    "h": 1080
+   },
+   "ready": false,
+   "desc": "Straight down into a metal bucket of water on the kitchen floor (the water and the shirt in it are cut-outs). Afternoon sun on the tiles.",
+   "ph": {
+    "bg": "#eef2f0",
+    "shapes": [
+     {
+      "x": 0,
+      "y": 0,
+      "w": 100,
+      "h": 100,
+      "fill": "#e9eee9"
+     },
+     {
+      "x": 16,
+      "y": 18,
+      "w": 68,
+      "h": 54.4,
+      "fill": "#c9d3d8",
+      "round": true,
+      "label": "bucket"
+     }
+    ]
+   }
+  },
+  "plate-yard-line-wide": {
+   "kind": "plate",
+   "name": "The yard, the washing line",
+   "file": "games/cozy-chores/art/plate-yard-line-wide.webp",
+   "size": {
+    "w": 864,
+    "h": 1080
+   },
+   "ready": false,
+   "desc": "The back yard of number 12 at golden hour: a long washing line across, a peg basket on a chair, a low wall, the harbour light. Brightest frame of the project (CZ8).",
+   "ph": {
+    "bg": "#fff0d2",
+    "shapes": [
+     {
+      "x": 0,
+      "y": 0,
+      "w": 100,
+      "h": 60,
+      "fill": "#ffe7b8"
+     },
+     {
+      "x": 0,
+      "y": 60,
+      "w": 100,
+      "h": 40,
+      "fill": "#d9cfa8"
+     },
+     {
+      "x": 4,
+      "y": 22,
+      "w": 92,
+      "h": 1.2,
+      "fill": "#14332e",
+      "label": ""
+     },
+     {
+      "x": 0,
+      "y": 74,
+      "w": 100,
+      "h": 3,
+      "fill": "#c9b48a"
+     }
+    ]
+   }
+  },
+  "co-basket-full": {
+   "kind": "cutout",
+   "name": "laundry basket (full)",
+   "file": "games/cozy-chores/art/co-basket-full.webp",
+   "ready": false,
+   "desc": "",
+   "ph": {
+    "shape": "bowl",
+    "fill": "#e8c99a"
+   }
+  },
+  "co-basket-tipped": {
+   "kind": "cutout",
+   "name": "laundry basket (tipped over)",
+   "file": "games/cozy-chores/art/co-basket-tipped.webp",
+   "ready": false,
+   "desc": "",
+   "ph": {
+    "shape": "bowl",
+    "fill": "#e8c99a"
+   }
+  },
+  "co-heap": {
+   "kind": "cutout",
+   "name": "heap of clothes",
+   "file": "games/cozy-chores/art/co-heap.webp",
+   "ready": false,
+   "desc": "",
+   "ph": {
+    "shape": "dome",
+    "fill": "#f2d2c0"
+   }
+  },
+  "co-medal": {
+   "kind": "cutout",
+   "name": "regatta medal",
+   "file": "games/cozy-chores/art/co-medal.webp",
+   "ready": false,
+   "desc": "",
+   "ph": {
+    "shape": "round",
+    "fill": "#e8b931"
+   }
+  },
+  "co-crew-shirt": {
+   "kind": "cutout",
+   "name": "crew shirt (white)",
+   "file": "games/cozy-chores/art/co-crew-shirt.webp",
+   "ready": false,
+   "desc": "white rowing shirt with a small printed crest",
+   "obj": "shirt",
+   "ph": {
+    "shape": "soft",
+    "fill": "#ffffff"
+   }
+  },
+  "co-crew-shirt-sock": {
+   "kind": "cutout",
+   "name": "crew shirt (white, a red toe in the sleeve)",
+   "file": "games/cozy-chores/art/co-crew-shirt-sock.webp",
+   "ready": false,
+   "desc": "the same shirt; a red sock toe peeps out of one sleeve, small but findable",
+   "obj": "shirt",
+   "ph": {
+    "shape": "soft",
+    "fill": "#ffffff"
+   }
+  },
+  "co-sock-toe": {
+   "kind": "cutout",
+   "name": "red sock toe",
+   "file": "games/cozy-chores/art/co-sock-toe.webp",
+   "ready": false,
+   "desc": "",
+   "ph": {
+    "shape": "pill",
+    "fill": "#e04848"
+   }
+  },
+  "co-sock-red": {
+   "kind": "cutout",
+   "name": "red sock",
+   "file": "games/cozy-chores/art/co-sock-red.webp",
+   "ready": false,
+   "desc": "",
+   "ph": {
+    "shape": "pill",
+    "fill": "#e04848"
+   }
+  },
+  "co-jeans": {
+   "kind": "cutout",
+   "name": "jeans",
+   "file": "games/cozy-chores/art/co-jeans.webp",
+   "ready": false,
+   "desc": "",
+   "obj": "jeans",
+   "ph": {
+    "shape": "soft",
+    "fill": "#5b7fb8"
+   }
+  },
+  "co-towel": {
+   "kind": "cutout",
+   "name": "towel (orange)",
+   "file": "games/cozy-chores/art/co-towel.webp",
+   "ready": false,
+   "desc": "",
+   "obj": "towel",
+   "ph": {
+    "shape": "soft",
+    "fill": "#ffa53d"
+   }
+  },
+  "co-tshirt-green": {
+   "kind": "cutout",
+   "name": "t-shirt (green)",
+   "file": "games/cozy-chores/art/co-tshirt-green.webp",
+   "ready": false,
+   "desc": "",
+   "obj": "tshirt",
+   "ph": {
+    "shape": "soft",
+    "fill": "#5fb87a"
+   }
+  },
+  "co-jumper": {
+   "kind": "cutout",
+   "name": "wool jumper",
+   "file": "games/cozy-chores/art/co-jumper.webp",
+   "ready": false,
+   "desc": "",
+   "obj": "jumper",
+   "ph": {
+    "shape": "soft",
+    "fill": "#c9b6f2"
+   }
+  },
+  "co-care-label": {
+   "kind": "cutout",
+   "name": "care label",
+   "file": "games/cozy-chores/art/co-care-label.webp",
+   "ready": false,
+   "desc": "",
+   "ph": {
+    "shape": "paper",
+    "fill": "#ffffff"
+   }
+  },
+  "co-sym-30": {
+   "kind": "cutout",
+   "name": "wash 30",
+   "file": "games/cozy-chores/art/co-sym-30.webp",
+   "ready": false,
+   "desc": "",
+   "ph": {
+    "shape": "paper",
+    "fill": "#eaf6ff"
+   }
+  },
+  "co-sym-notumble": {
+   "kind": "cutout",
+   "name": "do not tumble dry",
+   "file": "games/cozy-chores/art/co-sym-notumble.webp",
+   "ready": false,
+   "desc": "",
+   "ph": {
+    "shape": "paper",
+    "fill": "#eaf6ff"
+   }
+  },
+  "co-sym-noiron": {
+   "kind": "cutout",
+   "name": "do not iron the print",
+   "file": "games/cozy-chores/art/co-sym-noiron.webp",
+   "ready": false,
+   "desc": "",
+   "ph": {
+    "shape": "paper",
+    "fill": "#eaf6ff"
+   }
+  },
+  "co-machine-dial": {
+   "kind": "cutout",
+   "name": "programme dial",
+   "file": "games/cozy-chores/art/co-machine-dial.webp",
+   "ready": false,
+   "desc": "",
+   "ph": {
+    "shape": "dial",
+    "fill": "#ffffff"
+   }
+  },
+  "co-detergent": {
+   "kind": "cutout",
+   "name": "detergent bottle",
+   "file": "games/cozy-chores/art/co-detergent.webp",
+   "ready": false,
+   "desc": "",
+   "ph": {
+    "shape": "bottle",
+    "fill": "#7cc6f2"
+   }
+  },
+  "co-cap": {
+   "kind": "cutout",
+   "name": "measuring cap",
+   "file": "games/cozy-chores/art/co-cap.webp",
+   "ready": false,
+   "desc": "",
+   "ph": {
+    "shape": "jar",
+    "fill": "#ffffff"
+   }
+  },
+  "co-cap-fill": {
+   "kind": "cutout",
+   "name": "detergent in the cap",
+   "file": "games/cozy-chores/art/co-cap-fill.webp",
+   "ready": false,
+   "desc": "",
+   "ph": {
+    "shape": "round",
+    "fill": "#7cc6f2"
+   }
+  },
+  "co-mdoor-closed": {
+   "kind": "cutout",
+   "name": "machine door (closed)",
+   "file": "games/cozy-chores/art/co-mdoor-closed.webp",
+   "ready": false,
+   "desc": "",
+   "ph": {
+    "shape": "round",
+    "fill": "#cfe6f2"
+   }
+  },
+  "co-mdoor-open": {
+   "kind": "cutout",
+   "name": "machine door (open)",
+   "file": "games/cozy-chores/art/co-mdoor-open.webp",
+   "ready": false,
+   "desc": "",
+   "ph": {
+    "shape": "frame",
+    "fill": "#ffffff"
+   }
+  },
+  "co-shirts-pink": {
+   "kind": "cutout",
+   "name": "crew shirts (pink!)",
+   "file": "games/cozy-chores/art/co-shirts-pink.webp",
+   "ready": false,
+   "desc": "",
+   "ph": {
+    "shape": "soft",
+    "fill": "#ffb3c8"
+   }
+  },
+  "co-shirts-white": {
+   "kind": "cutout",
+   "name": "crew shirts (white)",
+   "file": "games/cozy-chores/art/co-shirts-white.webp",
+   "ready": false,
+   "desc": "",
+   "ph": {
+    "shape": "soft",
+    "fill": "#ffffff"
+   }
+  },
+  "co-ollie-phone": {
+   "kind": "cutout",
+   "name": "phone (Tom calling)",
+   "file": "games/cozy-chores/art/co-ollie-phone.webp",
+   "ready": false,
+   "desc": "",
+   "ph": {
+    "shape": "paper",
+    "fill": "#2f3b46",
+    "ink": "#ffffff"
+   }
+  },
+  "co-heap-pink": {
+   "kind": "cutout",
+   "name": "heap of clothes (the shirts already pink)",
+   "file": "games/cozy-chores/art/co-heap-pink.webp",
+   "ready": false,
+   "desc": "C1: the shirts tumble out pink, the morning after Ollie washed them with a red sock",
+   "ph": {
+    "shape": "dome",
+    "fill": "#ffb3c8"
+   }
+  },
+  "co-crew-shirt-pink": {
+   "kind": "cutout",
+   "name": "crew shirt (pink)",
+   "file": "games/cozy-chores/art/co-crew-shirt-pink.webp",
+   "ready": false,
+   "desc": "the white crew shirt with the same crest, gone an even pink (C1)",
+   "ph": {
+    "shape": "soft",
+    "fill": "#ffb3c8"
+   }
+  },
+  "co-line-shirt-pink": {
+   "kind": "cutout",
+   "name": "crew shirt on the line (pink)",
+   "file": "games/cozy-chores/art/co-line-shirt-pink.webp",
+   "ready": false,
+   "desc": "co-line-shirt in the pink of co-crew-shirt-pink (C1, laundry.pinkKept)",
+   "ph": {
+    "shape": "soft",
+    "fill": "#ffb3c8"
+   }
+  },
+  "co-water-pink-even": {
+   "kind": "cutout",
+   "name": "water (an even, rinsed pink)",
+   "file": "games/cozy-chores/art/co-water-pink-even.webp",
+   "ready": false,
+   "desc": "C1 pink path: the rinse water, the pink evened out",
+   "ph": {
+    "shape": "round",
+    "fill": "#ffd3df"
+   }
+  },
+  "co-water-pink": {
+   "kind": "cutout",
+   "name": "water (pink)",
+   "file": "games/cozy-chores/art/co-water-pink.webp",
+   "ready": false,
+   "desc": "",
+   "ph": {
+    "shape": "round",
+    "fill": "#ffc4d4"
+   }
+  },
+  "co-water-half": {
+   "kind": "cutout",
+   "name": "water (paler)",
+   "file": "games/cozy-chores/art/co-water-half.webp",
+   "ready": false,
+   "desc": "",
+   "ph": {
+    "shape": "round",
+    "fill": "#ffe6ee"
+   }
+  },
+  "co-water-clear": {
+   "kind": "cutout",
+   "name": "water (clear, shirt white)",
+   "file": "games/cozy-chores/art/co-water-clear.webp",
+   "ready": false,
+   "desc": "",
+   "ph": {
+    "shape": "round",
+    "fill": "#e6f4fb"
+   }
+  },
+  "co-peg-red": {
+   "kind": "cutout",
+   "name": "red peg",
+   "file": "games/cozy-chores/art/co-peg-red.webp",
+   "ready": false,
+   "desc": "",
+   "ph": {
+    "shape": "pill",
+    "fill": "#e04848"
+   }
+  },
+  "co-pegs-red": {
+   "kind": "cutout",
+   "name": "red pegs (a handful)",
+   "file": "games/cozy-chores/art/co-pegs-red.webp",
+   "ready": false,
+   "desc": "",
+   "ph": {
+    "shape": "bowl",
+    "fill": "#e04848"
+   }
+  },
+  "co-peg-yellow": {
+   "kind": "cutout",
+   "name": "yellow peg",
+   "file": "games/cozy-chores/art/co-peg-yellow.webp",
+   "ready": false,
+   "desc": "",
+   "ph": {
+    "shape": "pill",
+    "fill": "#f5c542"
+   }
+  },
+  "co-pegs-yellow": {
+   "kind": "cutout",
+   "name": "yellow pegs (a handful)",
+   "file": "games/cozy-chores/art/co-pegs-yellow.webp",
+   "ready": false,
+   "desc": "",
+   "ph": {
+    "shape": "bowl",
+    "fill": "#f5c542"
+   }
+  },
+  "co-peg-blue": {
+   "kind": "cutout",
+   "name": "blue peg",
+   "file": "games/cozy-chores/art/co-peg-blue.webp",
+   "ready": false,
+   "desc": "",
+   "ph": {
+    "shape": "pill",
+    "fill": "#4f8fdc"
+   }
+  },
+  "co-pegs-blue": {
+   "kind": "cutout",
+   "name": "blue pegs (a handful)",
+   "file": "games/cozy-chores/art/co-pegs-blue.webp",
+   "ready": false,
+   "desc": "",
+   "ph": {
+    "shape": "bowl",
+    "fill": "#4f8fdc"
+   }
+  },
+  "co-peg-green": {
+   "kind": "cutout",
+   "name": "green peg",
+   "file": "games/cozy-chores/art/co-peg-green.webp",
+   "ready": false,
+   "desc": "",
+   "ph": {
+    "shape": "pill",
+    "fill": "#5fb87a"
+   }
+  },
+  "co-pegs-green": {
+   "kind": "cutout",
+   "name": "green pegs (a handful)",
+   "file": "games/cozy-chores/art/co-pegs-green.webp",
+   "ready": false,
+   "desc": "",
+   "ph": {
+    "shape": "bowl",
+    "fill": "#5fb87a"
+   }
+  },
+  "co-line-shirt": {
+   "kind": "cutout",
+   "name": "crew shirt on the line",
+   "file": "games/cozy-chores/art/co-line-shirt.webp",
+   "ready": false,
+   "desc": "",
+   "ph": {
+    "shape": "soft",
+    "fill": "#ffffff"
+   }
+  },
+  "co-peg-basket": {
+   "kind": "cutout",
+   "name": "peg basket",
+   "file": "games/cozy-chores/art/co-peg-basket.webp",
+   "ready": false,
+   "desc": "",
+   "ph": {
+    "shape": "bowl",
+    "fill": "#e8c99a"
+   }
+  }
+ }
+}

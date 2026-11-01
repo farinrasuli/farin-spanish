@@ -27812,11 +27812,12 @@ function courseUnitAccess(c, uid){ return (c.freeUnits || []).includes(uid) || c
 const COURSE_ACCESS_SALT = 'farin-course-access-v1';
 const COURSE_ACCESS_PREFIX = 'ca-';
 const COURSE_ACCESS_RECHECK_MS = 12 * 3600 * 1000;
-const COURSE_PW_PREFIX = {hr:'HR', travel:'TR', 'travel-es':'ES', ielts:'IE', interview:'JI', marketing:'MK'};
+const COURSE_PW_PREFIX = {hr:'HR', travel:'TR', 'travel-es':'ES', ielts:'IE', interview:'JI', marketing:'MK', sales:'SC'};
 // Every sellable course on both sides, so one admin can issue passwords for either app.
 const COURSE_CATALOG_ALL = [
   {id:'hr', app:'en', title:'HR & Business English'}, {id:'travel', app:'en', title:'Travel English'},
-  {id:'ielts', app:'en', title:'IELTS: 10 full exams'}, {id:'marketing', app:'en', title:'Copywriting & Content English'}, {id:'travel-es', app:'es', title:'Travel Spanish'}
+  {id:'ielts', app:'en', title:'IELTS: 10 full exams'}, {id:'marketing', app:'en', title:'Copywriting & Content English'},
+  {id:'interview', app:'en', title:'Job Interview English'}, {id:'sales', app:'en', title:'Sales & Trade English'}, {id:'travel-es', app:'es', title:'Travel Spanish'}
 ];
 function courseAccessMap(){ const pr = state.progress; if(!pr.courseAccess || typeof pr.courseAccess !== 'object') pr.courseAccess = {}; return pr.courseAccess; }
 function courseAccessInfo(cid){ const a = courseAccessMap()[cid]; return a && typeof a === 'object' ? a : null; }

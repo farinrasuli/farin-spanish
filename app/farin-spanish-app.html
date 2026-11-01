@@ -1389,6 +1389,26 @@
   .cu-purple{background:#7C5CFC; color:#fff; box-shadow:0 5px 0 #3F2A9E;}
   .cu-purple:active{box-shadow:0 2px 0 #3F2A9E;}
   .cu-two .card-flat{margin-top:18px;}
+  /* Course waiting list page (Farin 2026-11-01) */
+  .course-waitlist .cs-top{position:static; background:transparent;}
+  .screen.wl-screen{padding-top:12px;}
+  .wl-title{font-size:27px; line-height:1.15; margin:10px 0 0;}
+  .wl-lead{margin:14px 0 0; font-size:15.5px; line-height:1.55; color:var(--ink-soft);}
+  .wl-form{margin-top:30px; display:flex; flex-direction:column; gap:24px;}
+  .wl-label{display:block; font-weight:800; font-size:14.5px; margin-bottom:9px;}
+  .wl-hint{margin:9px 0 0; font-size:12.5px; line-height:1.45; color:var(--ink-faint);}
+  .wl-err{margin:9px 0 0; font-size:13px; line-height:1.45; font-weight:700; color:var(--error);}
+  .name-input.wl-bad{border-color:var(--error);}
+  html[dir="rtl"] #wl-phone{text-align:right;}
+  .wl-submit{width:100%; margin-top:4px;}
+  .wl-submit:disabled{opacity:.65; cursor:default; transform:none;}
+  .wl-note{margin:14px 0 0; font-size:12.5px; line-height:1.45; text-align:center; color:var(--ink-faint);}
+  .wl-done{margin-top:18px; padding:26px 22px;}
+  .wl-done-msg{font-size:23px; line-height:1.3; margin:0; color:#fff;}
+  .wl-back{margin-top:24px;}
+  .wl-admin-banner{width:100%; margin-bottom:14px; text-align:start; font-family:inherit; color:var(--ink); background:var(--bg-sunken); border:none;}
+  .wl-admin-banner.wl-on{background:#FFA53D; color:#1A1410;}
+  .wl-admin-banner.wl-on .item-sub, .wl-admin-banner.wl-on .item-title, .wl-admin-banner.wl-on .eyebrow, .wl-admin-banner.wl-on .chevron{color:#1A1410;}
   .btn-whatsapp{background:#2e9e5b; color:#fff; box-shadow:inset 0 1.5px 2px rgba(255,255,255,.4), inset 0 -5px 8px -3px rgba(0,0,0,.25), 0 8px 16px -8px rgba(46,158,91,.55);}
   .btn-whatsapp:active{box-shadow:inset 0 2px 4px -1px rgba(0,0,0,.3);}
   .btn-sm{padding:9px 14px; font-size:13px; width:auto;}
@@ -8599,7 +8619,7 @@ function goBack(){
     return;
   }
   // Course steps (Trello yNFXBq6k): Back out of a step opened from a course unit lands on its step list.
-  if(state.courseReturn && courseBackLeavesStep() && courseReturnGo()) return;
+  if(state.courseReturn && state.view !== 'course-waitlist' && courseBackLeavesStep() && courseReturnGo()) return;
   const prev = navHistory.pop();
   if(prev){ state.view = prev.view; state.viewParams = prev.params; }
   else { state.view = state.profile.completedDiagnostic ? 'dashboard' : 'diagnostic-intro'; state.viewParams = {}; }
@@ -27620,7 +27640,7 @@ const COURSE_TYPE_SHORT = COURSE_TYPE_META;
 const COURSE_SESSION_NAMES = [{en:'Learn', tr:'Öğren', fa:'یاد بگیر', es:'Aprende'}, {en:'Practise', tr:'Alıştır', fa:'تمرین کن', es:'Practica'}, {en:'Check', tr:'Kontrol et', fa:'بسنج', es:'Comprueba'}];
 const COURSE_CP_SESSION_NAMES = [{en:'Questions', tr:'Sorular', fa:'سؤال‌ها', es:'Preguntas'}, {en:'Show it', tr:'Göster', fa:'نشانش بده', es:'Demuéstralo'}];
 // Screen-only state (never saved): quiz cursors, open chapter, password box, intro, try-one pick, quick check, story answers.
-const courseUi = {sceneSeen:{}, judge:null, exit:null, wres:null, review:null, branch:null, fres:null, star:null, chapter:null, pwOpen:false, pwStatus:null, pwBusy:false, introOpen:null, trackOpen:false, nameOpen:false, tryPick:null, tryKey:null, outcomesOpen:{}, quick:null, story:null, srcOpen:{}, lifeAll:{}, scrollTo:null};
+const courseUi = {sceneSeen:{}, judge:null, exit:null, wres:null, review:null, branch:null, fres:null, star:null, chapter:null, pwOpen:false, pwStatus:null, pwBusy:false, introOpen:null, trackOpen:false, tryPick:null, tryKey:null, outcomesOpen:{}, quick:null, story:null, srcOpen:{}, lifeAll:{}, scrollTo:null};
 function cl(o){ return o ? L(o.en, o.tr, o.fa, o.es) : ''; }
 const CES = {"Courses":"Cursos","HR & Business English, Travel, IELTS":"Español para viajar, DELE","Free sample unit":"Unidad de muestra gratis","Coming soon":"Próximamente","units":"unidades","Focused courses for one real-life goal. Your free Roadmap is never touched.":"Cursos centrados en un objetivo de la vida real. Tu Ruta gratuita no se toca.","Soon":"Pronto","Free":"Gratis","Entry level":"Nivel de entrada","weeks":"semanas","What you will do":"Lo que vas a hacer","track":"ruta","B1 track: more frames and model texts.":"Ruta B1: más plantillas y textos modelo.","B2 track: frames removed after the model.":"Ruta B2: sin plantillas después del modelo.","Module":"Módulo","Full course":"Curso completo","The sample unit is free. The full course is on its way.":"La unidad de muestra es gratis. El curso completo está en camino.","Tell me when it opens":"Avísame cuando abra","Premium course":"Curso premium","This course is being built":"Este curso se está construyendo","This unit is part of the full course":"Esta unidad es parte del curso completo","Leave a message and Farin will tell you when it opens.":"Deja un mensaje y Farin te avisará cuando abra.","Purchases are not open yet. Try the free sample unit meanwhile.":"Las compras aún no están abiertas. Mientras tanto, prueba la unidad de muestra gratis.","Back to courses":"Volver a los cursos","By the end of this unit":"Al final de esta unidad","Unit complete!":"¡Unidad completada!","Session":"Sesión","Warm-up":"Calentamiento","You are the interviewer. Ask:":"Tú eres quien entrevista. Pregunta:","Follow-up":"Pregunta de seguimiento","Useful phrases":"Frases útiles","Culture note":"Nota cultural","Say your answers out loud: 90 seconds, then 60, then 45. Recorded answers and teacher feedback come with the full course.":"Di tus respuestas en voz alta: 90 segundos, luego 60 y luego 45. Las respuestas grabadas y los comentarios del profesor llegan con el curso completo.","I've practised it":"Ya lo he practicado","This part of the course is not built yet.":"Esta parte del curso aún no está lista.","Nicely spotted!":"¡Bien visto!","judged correctly":"bien valoradas","Done":"Listo","Tap each part you can find in this answer.":"Toca cada parte que encuentres en esta respuesta.","Missing":"Falta","A complete answer. All four parts are there.":"Una respuesta completa. Están las cuatro partes.","Nothing to fix in this line.":"Nada que corregir en esta línea.","Next":"Siguiente","Check":"Comprobar","Model":"Modelo","Frame":"Plantilla","Write here":"Escribe aquí","Use":"Usa","words":"palabras","sentences":"frases","Not used yet":"Aún sin usar","Check it yourself":"Compruébalo por tu cuenta","Check and save":"Comprobar y guardar","Not scored":"Sin puntuación","Save to my journal":"Guardar en mi diario","Complete":"Completa","Something is missing":"Falta algo","Is this answer STAR-complete?":"¿Esta respuesta está completa según STAR?","Nothing to check yet.":"Aún no hay nada que comprobar.","Secure!":"¡Dominado!","Almost there":"Casi","Questions that slipped come back in the next units.":"Las preguntas que has fallado vuelven en las próximas unidades."};
 function CL(en, tr, fa, es){ return L(en, tr, fa, es !== undefined ? es : CES[en]); }
@@ -27958,12 +27978,90 @@ function courseReviewHtml(cid, uid, w){
       <button class="btn btn-primary course-review-send-btn" style="width:100%;" data-action="course-review-ask" data-cid="${cid}" data-uid="${uid}" data-task="${esc(w.id)}" ${ready ? '' : 'disabled'}>${CL('Send to Farin for review','Farin\'e incelemeye gönder','ارسال برای بررسی فرین','Enviar a Farin para revisión')}</button>
       ${ready ? '' : `<p style="font-size:12px; color:var(--ink-faint); margin:6px 0 0;">${done ? L('Write at least '+need+' words to send.','Göndermek için en az '+need+' kelime yaz.','برای ارسال دست‌کم '+need+' کلمه بنویس.','Escribe al menos '+need+' palabras para enviar.') : CL('Check and save your text first.','Önce metnini kontrol edip kaydet.','اول متنت را بررسی و ذخیره کن.','Primero comprueba y guarda tu texto.')}</p>`}${err}`);
 }
-// "I want this course": a WhatsApp message to Farin with name, course id + title, app side and UI language.
-// Shown everywhere, including the Play build (Farin's decision 2026-10-07, card 8WiLr472).
-function courseRequestLink(c){
-  const name = (state.profile && state.profile.name) ? state.profile.name : '';
-  return whatsappLink('Hi Farin, I\'m ' + (name || '...') + '. I want the course: ' + c.title.en + ' (' + c.id + '). [' + LOGIN_APP + '-app, ' + LANG + ']');
+// "I want this course" (Farin 2026-11-01): a waiting list page in the app, not WhatsApp. One random-id doc per signup,
+// progress/wl-<32 hex>, kind:'waitlist'. The id must stay random: get-by-id is open, so a hash of the phone would expose numbers.
+// Shown everywhere, including the Play build (Farin's decision 2026-10-07, card 8WiLr472). The admin panel: renderAdminWaitlistTab.
+const WAITLIST_DOC_PREFIX = 'wl-';
+function courseWaitlistNewId(){ const b = new Uint8Array(16); crypto.getRandomValues(b); return WAITLIST_DOC_PREFIX + Array.from(b).map(x=>x.toString(16).padStart(2,'0')).join(''); }
+function courseWaitlistEntry(cid){ const m = state.progress && state.progress.courseWaitlist; return (m && m[cid]) || null; }
+// Persian/Arabic digits become ASCII; spaces, dashes, brackets, dots and invisible direction marks go.
+function courseWaitlistPhone(s){
+  return String(s || '').replace(/[۰-۹]/g, d=>'۰۱۲۳۴۵۶۷۸۹'.indexOf(d)).replace(/[٠-٩]/g, d=>'٠١٢٣٤٥٦٧٨٩'.indexOf(d))
+    .replace(/[\s\-().​-‏‪-‮⁦-⁩]/g, '');
 }
+function courseWaitlistPhoneOk(p){ return /^\+?\d{7,15}$/.test(p) && !/^\+?(\d)\1+$/.test(p); }
+function courseWaitlistNameOk(n){ return String(n || '').trim().split(/\s+/).filter(x=>x.length >= 2).length >= 2; }
+function courseWaitlistDraft(cid){
+  if(!courseUi.wl || courseUi.wl.cid !== cid){ const p = state.profile || {}; courseUi.wl = {cid, name:p.name || '', phone:p.contactPhone || '', errName:false, errPhone:false, errSave:false, busy:false, id:null, createdAt:0}; }
+  return courseUi.wl;
+}
+function courseWaitlistSubmit(cid){
+  const c = courseGet(cid), w = courseWaitlistDraft(cid);
+  if(!c || w.busy || courseWaitlistEntry(cid)) return;
+  const ni = document.getElementById('wl-name'), pi = document.getElementById('wl-phone');
+  if(ni) w.name = ni.value;
+  if(pi) w.phone = pi.value;
+  const name = w.name.trim().replace(/\s+/g, ' '), phone = courseWaitlistPhone(w.phone);
+  w.errName = !courseWaitlistNameOk(name); w.errPhone = !courseWaitlistPhoneOk(phone); w.errSave = false;
+  if(w.errName || w.errPhone){ render(); const bad = document.getElementById(w.errName ? 'wl-name' : 'wl-phone'); if(bad) bad.focus(); return; }
+  if(typeof firebase === 'undefined' || !(window.crypto && crypto.getRandomValues)){ w.errSave = true; render(); return; }
+  // A retry reuses the id, so a save that did land but timed out here can't make a second doc.
+  if(!w.id){ w.id = courseWaitlistNewId(); w.createdAt = Date.now(); }
+  w.busy = true; render();
+  const id = w.id, ref = firebase.firestore().collection('progress').doc(id);
+  const doc = {kind:'waitlist', app:LOGIN_APP, course:c.id, courseTitle:c.title.en || cl(c.title), name, phone, lang:LANG, createdAt:w.createdAt, status:'waiting'};
+  const late = new Promise((_, no)=>setTimeout(()=>no(new Error('timeout')), 15000));
+  // Read it back: the confirmation only shows when the doc is really there.
+  Promise.race([ref.set(doc).then(()=>ref.get()), late]).then(snap=>{
+    if(!snap || !snap.exists || (snap.data() || {}).phone !== phone) throw new Error('not saved');
+    const pr = state.progress; if(!pr.courseWaitlist || typeof pr.courseWaitlist !== 'object') pr.courseWaitlist = {};
+    pr.courseWaitlist[cid] = {id, at:w.createdAt};
+    courseUi.wl = null; save();
+    if(state.view === 'course-waitlist'){ render(); window.scrollTo(0, 0); }
+  }).catch(()=>{ w.busy = false; w.errSave = true; if(state.view === 'course-waitlist') render(); });
+}
+function renderCourseWaitlist(){
+  const c = courseGet((state.viewParams || {}).cid);
+  if(!c) return renderNotFound();
+  const top = `<div class="cs-top"><button class="back" data-action="back">${ICONS.back} ${CL('Back','Geri','برگشت','Atrás')}</button><span style="flex:1;"></span></div>`;
+  if(courseWaitlistEntry(c.id)) return `<div class="fade-in course-waitlist">${top}
+    <div class="screen wl-screen">
+      <h1 class="display wl-title">${esc(cl(c.title))}</h1>
+      <div class="card-flat cs-card-lav wl-done">${claySparkles()}
+        <p class="display wl-done-msg">${CL("You're on the list. As soon as a spot opens, we'll message you.",'Listedesin. Yer açılır açılmaz sana yazacağız.','اسمت در لیست است. به‌محض اینکه جا باز شود، به تو پیام می‌دهیم.','Estás en la lista. En cuanto haya una plaza libre, te escribimos.')}</p>
+      </div>
+      <button class="btn btn-ghost wl-back" data-action="back">${CL('Back to the course','Kursa dön','برگشت به دوره','Volver al curso')}</button>
+    </div></div>`;
+  const w = courseWaitlistDraft(c.id);
+  return `<div class="fade-in course-waitlist">${top}
+    <div class="screen wl-screen">
+      <div class="eyebrow">${CL('Waiting list','Bekleme listesi','لیست انتظار','Lista de espera')}</div>
+      <h1 class="display wl-title">${esc(cl(c.title))}</h1>
+      <p class="wl-lead">${CL("Leave your name and phone number. As soon as a spot opens, we'll message you.",'Adını ve telefon numaranı bırak. Yer açılır açılmaz sana yazacağız.','اسم و شماره‌ی تلفنت را بگذار. به‌محض اینکه جا باز شود، به تو پیام می‌دهیم.','Déjanos tu nombre y tu número de teléfono. En cuanto haya una plaza libre, te escribimos.')}</p>
+      <div class="wl-form">
+        <div>
+          <label class="wl-label" for="wl-name">${CL('Name and surname','Ad ve soyad','نام و نام خانوادگی','Nombre y apellidos')}</label>
+          <input id="wl-name" class="name-input${w.errName ? ' wl-bad' : ''}" type="text" dir="auto" autocomplete="name" maxlength="80" value="${esc(w.name)}" ${w.busy ? 'disabled' : ''} />
+          ${w.errName ? `<p class="wl-err" role="alert">${CL('Write your name and surname.','Adını ve soyadını yaz.','نام و نام خانوادگی‌ات را بنویس.','Escribe tu nombre y apellidos.')}</p>` : ''}
+        </div>
+        <div>
+          <label class="wl-label" for="wl-phone">${CL('Phone number','Telefon numarası','شماره‌ی تلفن','Número de teléfono')}</label>
+          <input id="wl-phone" class="name-input${w.errPhone ? ' wl-bad' : ''}" type="tel" inputmode="tel" dir="ltr" autocomplete="tel" maxlength="30" placeholder="${esc(CL('+44 7XXX XXXXXX','+90 5XX XXX XX XX','+98 9XX XXX XXXX','+34 6XX XXX XXX'))}" value="${esc(w.phone)}" ${w.busy ? 'disabled' : ''} />
+          ${w.errPhone ? `<p class="wl-err" role="alert">${CL("This number doesn't look right. Use 7 to 15 digits, with an optional + at the start.",'Bu numara doğru görünmüyor. 7 ila 15 rakam yaz; başa + koyabilirsin.','این شماره درست به نظر نمی‌رسد. ۷ تا ۱۵ رقم بنویس؛ می‌توانی اولش + بگذاری.','Este número no parece correcto. Usa de 7 a 15 dígitos, con un + al principio si quieres.')}</p>` : `<p class="wl-hint">${CL('Please include your country code.','Lütfen ülke kodunu da yaz.','لطفاً کد کشور را هم بنویس.','Incluye el prefijo del país, por favor.')}</p>`}
+        </div>
+        <div>
+          <button class="cu-btn cu-orange wl-submit" data-action="course-waitlist-save" data-cid="${esc(c.id)}" ${w.busy ? 'disabled' : ''}>${w.busy ? CL('Saving…','Kaydediliyor…','در حال ذخیره…','Guardando…') : CL('Put me on the list','Beni listeye ekle','اسمم را در لیست بنویس','Apúntame a la lista')}</button>
+          ${w.errSave ? `<p class="wl-err" role="alert" style="text-align:center;">${CL("We couldn't save this. Check your connection and try again.",'Kaydedemedik. Bağlantını kontrol edip tekrar dene.','ذخیره نشد. اتصالت را بررسی کن و دوباره امتحان کن.','No pudimos guardarlo. Revisa tu conexión e inténtalo de nuevo.')}</p>` : ''}
+          <p class="wl-note">${CL('We only use your number to message you about this course.','Numaranı yalnızca bu kurs için sana yazmak üzere kullanırız.','شماره‌ات را فقط برای پیام دادن درباره‌ی این دوره استفاده می‌کنیم.','Usamos tu número solo para escribirte sobre este curso.')}</p>
+        </div>
+      </div>
+    </div></div>`;
+}
+// What's typed survives any re-render while the page is open.
+document.addEventListener('input', e=>{
+  const t = e.target, w = courseUi.wl; if(!t || !w) return;
+  if(t.id === 'wl-name') w.name = t.value; else if(t.id === 'wl-phone') w.phone = t.value;
+});
 function courseGameRef(uid){ return 'c-'+uid+'-match'; }   // kept as is for every kind, so units already done stay done
 // games-all-levels §5 (57HYNzbO): a unit's game step cycles six games on the unit's own words by the unit's place in its
 // course (lessons in module order; checkpoints and mocks are not counted and keep Word Rush).
@@ -28065,7 +28163,7 @@ function courseOpenStep(cid, uid, type, redo){
    celebration, a result screen's Continue) opens the next card (courseAdvance); ✕ and Back (goBack) land on the
    course page with the place kept. It ends as soon as the learner is on a course screen or a Home tab (render),
    so the free roadmap keeps returning to Home. The Home button is a deliberate exit and still goes Home. */
-function courseReturnEnds(view){ return ['courses-home','course-detail','course-lesson','course-unit','course-gate','course-final','course-work','course-cert','course-pause','course-done','course-chapter-done','course-mock-result','dashboard','goals-list','student-club'].includes(view); }
+function courseReturnEnds(view){ return ['courses-home','course-detail','course-lesson','course-unit','course-gate','course-waitlist','course-final','course-work','course-cert','course-pause','course-done','course-chapter-done','course-mock-result','dashboard','goals-list','student-club'].includes(view); }
 // Flow v3 (UX-FLOW 2): leaving a lesson (X, Back) always lands on its lesson page, with the course page under it.
 function courseReturnTarget(){ const r = state.courseReturn; return r && courseFindUnit(r.cid, r.uid) ? {view:'course-lesson', params:{cid:r.cid, uid:r.uid}} : null; }
 // Back leaves the card when it is a native card, or when the screen behind is the course area / Home / nothing.
@@ -28430,18 +28528,9 @@ function renderCoursesHome(){
 }
 
 /* ---------- unlock box: "I want this course" + "I have a password" (Hr03Iu6C) ---------- */
-// The orange buy button: the WhatsApp request (asks for the learner's name first when the profile has none).
+// The orange buy button: opens the waiting list page (its "you're on the list" state once this account has joined).
 function courseRequestBtnHtml(c){
-  const label = CL('I want this course','Bu kursu istiyorum','این دوره را می‌خواهم','Quiero este curso');
-  if(state.profile && state.profile.name) return `<a class="cu-btn cu-orange" target="_top" rel="noopener" href="${esc(courseRequestLink(c))}">${label}</a>`;
-  return `<button class="cu-btn cu-orange" data-action="course-request-name">${label}</button>`;
-}
-function courseRequestNameHtml(c){
-  return `<div class="card-flat" style="padding:12px;">
-    <p style="margin:0 0 8px; font-size:13px;">${CL('What is your name? It goes into the message to Farin.','Adın ne? Farin\'e giden mesaja eklenecek.','اسمت چیست؟ در پیام به Farin نوشته می‌شود.','¿Cómo te llamas? Va en el mensaje para Farin.')}</p>
-    <input id="course-req-name" class="name-input" type="text" autocomplete="name" placeholder="${esc(CL('Your name','Adın','اسم تو','Tu nombre'))}" />
-    <button class="btn btn-primary" style="margin-top:8px;" data-action="course-request-name-save" data-cid="${c.id}">${CL('Continue','Devam et','ادامه','Continuar')}</button>
-  </div>`;
+  return `<button class="cu-btn cu-orange" data-action="course-waitlist" data-cid="${esc(c.id)}">${CL('I want this course','Bu kursu istiyorum','این دوره را می‌خواهم','Quiero este curso')}</button>`;
 }
 function coursePwStatusText(st){
   if(!st) return '';
@@ -28473,14 +28562,13 @@ function courseAccessLineHtml(c){
   </div>`;
 }
 // The course buy box on the course page, the gate and the chapter-done screen (Farin 2026-10-29: "make just 2 orange and purple
-// button, saying i want this course, or i already have the password!"): exactly two pill buttons, orange = the WhatsApp request,
-// purple = the password entry. The name or password field opens under them only after a tap. `lead`/`bare` are kept for the callers.
+// button, saying i want this course, or i already have the password!"): exactly two pill buttons, orange = the waiting list page (2026-11-01),
+// purple = the password entry. The password field opens under them only after a tap. `lead`/`bare` are kept for the callers.
 function courseUnlockBoxHtml(c, lead, bare){
   if(courseUnlocked(c.id) || coursePreviewOn() || !courseHasContent(c.id) || (state.progress && state.progress.premium === true)) return '';
   const st = courseUi.pwStatus && courseUi.pwStatus.cid===c.id ? courseUi.pwStatus : null;
   return `<div class="course-unlock cu-two">
     <div class="cu-row">${courseRequestBtnHtml(c)}<button class="cu-btn cu-purple" data-action="course-pw-toggle">${CL('I already have the password','Şifrem zaten var','رمز را دارم','Ya tengo la contraseña')}</button></div>
-    ${courseUi.nameOpen && !(state.profile && state.profile.name) ? courseRequestNameHtml(c) : ''}
     ${courseUi.pwOpen || st ? coursePasswordBoxHtml(c) : ''}
   </div>`;
 }
@@ -31837,11 +31925,12 @@ Object.assign(HANDLERS, {
       render();
     });
   },
-  'course-request-name'(){ courseUi.nameOpen = true; render(); const i = document.getElementById('course-req-name'); if(i) i.focus(); },
+  'course-waitlist'(el){ courseSheetRemove(); go('course-waitlist', {cid:el.dataset.cid}); },
+  'course-waitlist-save'(el){ courseWaitlistSubmit(el.dataset.cid); },
   'course-request-name-save'(){
     const i = document.getElementById('course-req-name'), name = i ? i.value.trim() : '';
     if(!name){ if(i) i.focus(); return; }
-    state.profile.name = name; courseUi.nameOpen = false; save(); render();
+    state.profile.name = name; save(); render();
   },
   'course-try-pick'(el){ if(courseUi.tryPick !== null) return; courseUi.tryPick = Number(el.dataset.i); render(); },
   'course-judge-toggle'(el){
@@ -31941,6 +32030,7 @@ Object.assign(screens, {
   'course-unit': ()=>renderCourseUnit(state.viewParams.cid, state.viewParams.uid),
   'course-step': renderCourseStep,
   'course-gate': renderCourseGate,
+  'course-waitlist': renderCourseWaitlist,
   'course-final': renderCourseFinal,
   'course-work': renderCourseWork,
   'course-cert': renderCourseCert,
@@ -32184,6 +32274,114 @@ function renderAdminReviewsTab(){
     ${adminReviewsLoading && !adminReviews ? `<p style="text-align:center; padding:20px; color:var(--ink-faint);">Loading…</p>` : (rows || `<p style="padding:20px; text-align:center; color:var(--ink-faint);">Nothing here yet.</p>`)}
   </div>`;
 }
+/* ============================= ADMIN: WAITING LIST (Farin 2026-11-01) =============================
+   "I want this course" signups (progress/wl-… docs, kind:'waitlist'; see the learner side at WAITLIST_DOC_PREFIX). Both admins
+   read the same list. The banner above the tabs shows who is still waiting on every admin tab. Same phone + same course on the
+   same side = one row. The docs are publicly writable, so every field is treated as untrusted text. Admin UI is English only. */
+let adminWaitlist = null, adminWaitlistLoading = false, adminWaitlistError = '', adminWaitlistBusy = false, adminWaitlistFilter = 'all';
+function adminWaitlistLoad(){
+  adminWaitlistLoading = true; adminWaitlistError = ''; renderAdminPage();
+  firebase.firestore().collection('progress').where('kind', '==', 'waitlist').get().then(snap=>{
+    adminWaitlist = snap.docs.map(d=>Object.assign({id:d.id}, d.data())).filter(d=>d.id.indexOf(WAITLIST_DOC_PREFIX) === 0);
+    adminWaitlistLoading = false; renderAdminPage();
+  }).catch(err=>{ adminWaitlistError = err.message || String(err); adminWaitlistLoading = false; renderAdminPage(); });
+}
+// The number WhatsApp needs: no +, no 00. Without a country code (a single leading 0) it guesses from the app language, and the row says so.
+function adminWaitlistDigits(phone){ return String(phone || '').replace(/\D/g, '').replace(/^00/, ''); }
+function adminWaitlistNoCode(phone){ const p = String(phone || ''); return p.charAt(0) !== '+' && /^0[1-9]/.test(p); }
+function adminWaitlistWaNumber(r){
+  const digits = adminWaitlistDigits(r.phone);
+  if(!adminWaitlistNoCode(r.phone)) return digits;
+  const code = {tr:'90', fa:'98'}[r.lang];
+  return code ? code + digits.slice(1) : digits;
+}
+// One row per person + course, newest signup first. A row counts as messaged only when every signup in it is.
+function adminWaitlistRows(){
+  const groups = {}, order = [];
+  (adminWaitlist || []).slice().sort((a,b)=>(Number(b.createdAt) || 0) - (Number(a.createdAt) || 0)).forEach(d=>{
+    const course = String(d.course || '?'), app = String(d.app || '?'), key = app + '|' + course + '|' + adminWaitlistDigits(d.phone);
+    if(!groups[key]){ groups[key] = {key, app, course, filter:app + '|' + course, title:String(d.courseTitle || course), name:String(d.name || ''), phone:String(d.phone || ''), lang:String(d.lang || ''), createdAt:Number(d.createdAt) || 0, ids:[], messaged:true}; order.push(key); }
+    groups[key].ids.push(d.id);
+    if(d.status !== 'messaged') groups[key].messaged = false;
+  });
+  return order.map(k=>groups[k]);
+}
+function adminWaitlistWaiting(){ return adminWaitlistRows().filter(r=>!r.messaged); }
+function adminWaitlistMessage(r){
+  const n = r.name.split(' ')[0];
+  if(r.lang === 'tr') return 'Merhaba ' + n + '! ' + r.title + ' kursunda yer açıldı.';
+  if(r.lang === 'fa') return 'سلام ' + n + '! در دوره‌ی ' + r.title + ' جا باز شد.';
+  if(r.lang === 'es') return '¡Hola, ' + n + '! Se ha abierto una plaza en el curso ' + r.title + '.';
+  return 'Hi ' + n + '! A spot has opened in the course: ' + r.title + '.';
+}
+function adminWaitlistSetMessaged(key, on){
+  const r = adminWaitlistRows().find(x=>x.key === key);
+  if(!r || adminWaitlistBusy) return;
+  adminWaitlistBusy = true; adminWaitlistError = ''; renderAdminPage();
+  const status = on ? 'messaged' : 'waiting', at = on ? Date.now() : null;
+  Promise.all(r.ids.map(id=>firebase.firestore().collection('progress').doc(id).set({status, messagedAt:at}, {merge:true}))).then(()=>{
+    (adminWaitlist || []).forEach(d=>{ if(r.ids.indexOf(d.id) !== -1){ d.status = status; d.messagedAt = at; } });
+    adminWaitlistBusy = false; renderAdminPage();
+  }).catch(err=>{ adminWaitlistBusy = false; adminWaitlistLoad(); adminWaitlistError = err.message || String(err); renderAdminPage(); });
+}
+function adminWaitlistRemove(key){
+  const r = adminWaitlistRows().find(x=>x.key === key);
+  if(!r || adminWaitlistBusy || !confirm('Remove ' + r.name + ' from the waiting list for ' + r.title + '? This deletes their number too.')) return;
+  adminWaitlistBusy = true; adminWaitlistError = ''; renderAdminPage();
+  Promise.all(r.ids.map(id=>firebase.firestore().collection('progress').doc(id).delete())).then(()=>{
+    adminWaitlist = (adminWaitlist || []).filter(d=>r.ids.indexOf(d.id) === -1);
+    adminWaitlistBusy = false; renderAdminPage();
+  }).catch(err=>{ adminWaitlistBusy = false; adminWaitlistLoad(); adminWaitlistError = err.message || String(err); renderAdminPage(); });
+}
+function adminWaitlistAction(action, el){
+  if(action === 'tab-waitlist'){ adminTab = 'waitlist'; renderAdminPage(); if(adminWaitlist === null && !adminWaitlistLoading) adminWaitlistLoad(); return; }
+  if(action === 'waitlist-reload'){ adminWaitlistLoad(); return; }
+  if(action === 'waitlist-filter'){ adminWaitlistFilter = el.dataset.filter; renderAdminPage(); return; }
+  if(action === 'waitlist-messaged'){ adminWaitlistSetMessaged(el.dataset.key, el.dataset.on === '1'); return; }
+  if(action === 'waitlist-remove'){ adminWaitlistRemove(el.dataset.key); return; }
+}
+// The panel above the tabs: what Farin sees on opening admin, on every tab.
+function renderAdminWaitlistBanner(){
+  if(adminWaitlistError && !adminWaitlist) return `<button type="button" class="item-row wl-admin-banner" data-admin-action="waitlist-reload"><div class="item-body"><div class="eyebrow">Waiting list</div><div class="item-title" style="color:var(--error);">Couldn't load it. Tap to try again.</div><div class="item-sub">${esc(adminWaitlistError)}</div></div></button>`;
+  if(adminWaitlist === null) return `<div class="item-row wl-admin-banner"><div class="item-body"><div class="eyebrow">Waiting list</div><div class="item-title">Loading…</div></div></div>`;
+  const waiting = adminWaitlistWaiting(), n = waiting.length, top = waiting[0];
+  return `<button type="button" class="item-row wl-admin-banner${n ? ' wl-on' : ''}" data-admin-action="tab-waitlist">
+    <div class="item-body"><div class="eyebrow">Waiting list</div>
+      <div class="item-title">${n ? n + (n === 1 ? ' person' : ' people') + ' still waiting' : 'Nobody waiting'}</div>
+      ${top ? `<div class="item-sub">Newest: ${esc(top.name)} · ${esc(top.title)} · ${esc(adminAgo(top.createdAt))}</div>` : ''}</div>
+    <span class="chevron">${ICONS.chev}</span>
+  </button>`;
+}
+function renderAdminWaitlistTab(){
+  const all = adminWaitlistRows(), f = adminWaitlistFilter, courses = [];
+  all.forEach(r=>{ if(!courses.find(c=>c.filter === r.filter)) courses.push({filter:r.filter, title:r.title, app:r.app}); });
+  courses.sort((a,b)=>a.title.localeCompare(b.title));
+  const list = f === 'all' ? all : all.filter(r=>r.filter === f);
+  const fbtn = (k, label, n)=>`<button class="btn btn-sm ${f === k ? 'btn-primary' : 'btn-ghost'}" data-admin-action="waitlist-filter" data-filter="${esc(k)}">${esc(label)} (${n})</button>`;
+  const rows = list.map(r=>{
+    const noCode = adminWaitlistNoCode(r.phone), wa = adminWaitlistWaNumber(r);
+    return `<div class="item-row" style="align-items:flex-start; flex-wrap:wrap; cursor:default; ${r.messaged ? 'opacity:.72;' : ''}">
+      <div class="item-body" style="min-width:0;">
+        <div class="item-title"><span dir="auto">${esc(r.name || '—')}</span> <span class="pill" style="background:var(--bg-sunken); color:var(--ink-soft);">${esc(r.title)} · ${esc(r.app.toUpperCase())}</span>${r.messaged ? ' <span class="pill" style="background:var(--success-soft); color:var(--success);">Messaged</span>' : ''}${r.ids.length > 1 ? ` <span class="pill" style="background:var(--bg-sunken); color:var(--ink-faint);">signed up ${r.ids.length}×</span>` : ''}</div>
+        <div class="item-sub" dir="ltr">${esc(r.phone)} · ${adminDate(r.createdAt)} (${esc(adminAgo(r.createdAt))}) · app language ${esc(r.lang || '?')}</div>
+        ${noCode ? `<div class="item-sub" style="color:var(--error);">No country code. Check the number on WhatsApp${wa !== adminWaitlistDigits(r.phone) ? ': the button guessed +' + esc(wa.slice(0, 2)) + ' from the app language' : ''}.</div>` : ''}
+      </div>
+      <div class="row" style="gap:6px; flex-wrap:wrap; width:100%; margin-top:6px;">
+        <a class="btn btn-sm btn-whatsapp" style="text-decoration:none;" target="_blank" rel="noopener" href="${esc(waLinkTo(wa, adminWaitlistMessage(r)))}">WhatsApp</a>
+        <button class="btn btn-sm ${r.messaged ? 'btn-ghost' : 'btn-primary'}" data-admin-action="waitlist-messaged" data-key="${esc(r.key)}" data-on="${r.messaged ? '0' : '1'}" ${adminWaitlistBusy ? 'disabled' : ''}>${r.messaged ? 'Undo Messaged' : 'Mark as Messaged'}</button>
+        <button class="btn btn-sm btn-ghost" data-admin-action="waitlist-remove" data-key="${esc(r.key)}" ${adminWaitlistBusy ? 'disabled' : ''}>Remove</button>
+      </div>
+    </div>`; }).join('');
+  return `<div class="stack" style="gap:10px;">
+    <p style="font-size:12px; color:var(--ink-faint); margin:0;">People who tapped "I want this course" and left their number, from both apps, newest first. Learners were told you will message them as soon as a spot opens.</p>
+    <div class="row between" style="align-items:center; gap:6px; flex-wrap:wrap;">
+      <div class="row" style="gap:6px; flex-wrap:wrap;">${fbtn('all', 'All courses', all.length)}${courses.map(c=>fbtn(c.filter, c.title + ' · ' + c.app.toUpperCase(), all.filter(r=>r.filter === c.filter).length)).join('')}</div>
+      <button class="btn btn-sm btn-ghost" data-admin-action="waitlist-reload">${adminWaitlistLoading ? '…' : '↻'}</button>
+    </div>
+    ${adminWaitlistError ? `<p style="color:var(--error); font-size:12.5px; margin:0;">${esc(adminWaitlistError)}</p>` : ''}
+    ${adminWaitlistLoading && !adminWaitlist ? `<p style="text-align:center; padding:20px; color:var(--ink-faint);">Loading…</p>` : (rows || `<p style="padding:20px; text-align:center; color:var(--ink-faint);">Nobody on the list yet.</p>`)}
+  </div>`;
+}
 /* ============================= ADMIN PAGE (hidden, reachable via #admin) ============================= */
 function waLinkTo(phone, message){
   const clean = String(phone||'').replace(/[^\d]/g, '');
@@ -32255,13 +32453,15 @@ function renderAdminPage(){
       <button class="btn btn-sm ${adminTab==='students'?'btn-primary':'btn-ghost'}" data-admin-action="tab-students">Student Panels (${(adminStudents||[]).length})</button>
       <button class="btn btn-sm ${adminTab==='access'?'btn-primary':'btn-ghost'}" data-admin-action="tab-access">Course access${adminAccessList ? ` (${adminAccessList.length})` : ''}</button>
       <button class="btn btn-sm ${adminTab==='reviews'?'btn-primary':'btn-ghost'}" data-admin-action="tab-reviews">Writing reviews${adminReviews ? ` (${adminReviewNewCount()} new)` : ''}</button>
+      <button class="btn btn-sm ${adminTab==='waitlist'?'btn-primary':'btn-ghost'}" data-admin-action="tab-waitlist">Waiting list${adminWaitlist ? ` (${adminWaitlistWaiting().length})` : ''}</button>
     </div>`;
-    const body = adminTab === 'reviews' ? renderAdminReviewsTab() : adminTab === 'contacts' ? renderAdminContactsTab() : adminTab === 'users' ? renderAdminUsersTab() : adminTab === 'access' ? renderAdminAccessTab() : renderAdminStudentsTab();
+    const body = adminTab === 'waitlist' ? renderAdminWaitlistTab() : adminTab === 'reviews' ? renderAdminReviewsTab() : adminTab === 'contacts' ? renderAdminContactsTab() : adminTab === 'users' ? renderAdminUsersTab() : adminTab === 'access' ? renderAdminAccessTab() : renderAdminStudentsTab();
     html = `<div class="screen" style="padding-top:24px; max-width:480px; margin:0 auto;">
       <div class="row between" style="margin-bottom:14px;">
         <h1 class="display" style="font-size:20px;">Admin</h1>
         <button class="btn btn-ghost" data-admin-action="signout">Sign out</button>
       </div>
+      ${renderAdminWaitlistBanner()}
       ${tabs}
       ${body}
     </div>`;
@@ -33060,7 +33260,7 @@ function bindAdminActions(root){
         });
       } else if(action === 'signout'){
         firebase.auth().signOut().then(()=>{
-          adminContacts = null; adminStudents = null; adminTab = 'users'; adminEditingStudent = null; adminUsers = null; adminUserOpen = null; adminUsersShowHidden = false; adminAccessList = null; adminAccessLast = null; adminReviews = null; adminReviewOpen = null; adminReviewNote = '';
+          adminContacts = null; adminStudents = null; adminTab = 'users'; adminEditingStudent = null; adminUsers = null; adminUserOpen = null; adminUsersShowHidden = false; adminAccessList = null; adminAccessLast = null; adminReviews = null; adminReviewOpen = null; adminReviewNote = ''; adminWaitlist = null; adminWaitlistError = ''; adminWaitlistFilter = 'all';
           renderAdminPage();
         });
       } else if(action === 'tab-users'){
@@ -33087,6 +33287,8 @@ function bindAdminActions(root){
         adminToggleUserHidden(el.dataset.id);
       } else if(action === 'users-csv'){
         downloadAdminUsersCsv();
+      } else if(action === 'tab-waitlist' || action.indexOf('waitlist-') === 0){
+        adminWaitlistAction(action, el);
       } else if(action === 'tab-reviews' || action.indexOf('review-') === 0){
         adminReviewAction(action, el);
       } else if(action === 'tab-access' || action.indexOf('access-') === 0){
@@ -33500,7 +33702,7 @@ function loadAdminUsers(){
   Promise.all([db.get(), db.doc(ADMIN_HIDDEN_DOC).get()]).then(([snap, hiddenDoc])=>{
     adminUsersHidden = (hiddenDoc.exists && (hiddenDoc.data() || {}).hidden) || [];
     const users = snap.docs.map(d=>Object.assign({id:d.id}, d.data()))
-      .filter(u=>u.id.indexOf(LOGIN_DOC_PREFIX) !== 0 && u.id.indexOf(REVIEW_DOC_PREFIX) !== 0 && u.kind !== 'login' && u.profile)
+      .filter(u=>u.id.indexOf(LOGIN_DOC_PREFIX) !== 0 && u.id.indexOf(REVIEW_DOC_PREFIX) !== 0 && u.kind !== 'login' && u.kind !== 'waitlist' && u.profile)
       .map(u=>{
         u.app = u.app === 'es' ? 'es' : 'en';
         u.progress = u.progress || {};
@@ -33911,7 +34113,7 @@ if(location.hash === '#admin'){
   firebase.auth().setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(()=>{});
   firebase.auth().onAuthStateChanged(function(user){
     adminAuthResolved = true;
-    if(user){ loadAdminContacts(); loadAdminUsers(); }
+    if(user){ loadAdminContacts(); loadAdminUsers(); adminWaitlistLoad(); }
     else renderAdminPage();
   });
   setTimeout(()=>{ if(!adminAuthResolved) renderAdminPage(); }, 4000);

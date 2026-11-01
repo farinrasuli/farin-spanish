@@ -8112,6 +8112,35 @@ try{
     history.replaceState(null, '', url);
   }
 }catch(e){}
+/* Per-course links (?course=<id>, Farin 2026-11-01): a link to send to people that opens one premium course. The id is checked against
+   COURSES (unknown and hidden ones open the normal app) and kept in its own localStorage key, because a login replaces the profile and
+   the first-run steps can span reloads. courseLinkLand() opens it once the learner has a finished profile, then clears it. */
+const COURSE_LINK_KEY = STORAGE_KEY + '.courseLink';
+function courseLinkCourse(id){ const c = COURSES.find(x=>x.id===id); return c && !c.hidden ? c : null; }
+function courseLinkPending(){ try{ return courseLinkCourse(localStorage.getItem(COURSE_LINK_KEY)); }catch(e){ return null; } }
+function courseLinkLand(){
+  const c = courseLinkPending();
+  if(!c || !state.profile.completedDiagnostic) return false;
+  try{ localStorage.removeItem(COURSE_LINK_KEY); }catch(e){}
+  // the same routing as courseCardHtml; courseShow leaves the Courses list under it, so Back lands there
+  courseShow(c.status==='live' || c.status==='shell' ? 'course-detail' : 'course-gate', {cid:c.id}, c.id, false);
+  return true;
+}
+// New visitors: one line on the first screen says the course is waiting for them.
+function courseLinkNoteHtml(){
+  const c = courseLinkPending();
+  if(!c) return '';
+  return `<p style="margin:12px 0 0; font-size:14px; font-weight:700; color:var(--ink-soft);">${L('First set up your account. Then this course opens:','Önce hesabını oluştur. Ardından şu kurs açılacak:','اول حسابت را بساز. بعدش این دوره باز می‌شود:','Primero crea tu cuenta. Después se abre este curso:')} <bdi>${esc(cl(c.title))}</bdi></p>`;
+}
+try{
+  const incomingCourse = new URLSearchParams(location.search).get('course');
+  if(incomingCourse !== null){
+    if(location.hash !== '#admin' && courseLinkCourse(incomingCourse)) localStorage.setItem(COURSE_LINK_KEY, incomingCourse);
+    const url = new URL(location.href);
+    url.searchParams.delete('course');
+    history.replaceState(null, '', url);
+  }
+}catch(e){}
 function load(){
   try{
     const raw = localStorage.getItem(STORAGE_KEY);
@@ -8553,7 +8582,7 @@ function restoreFromCode(code){
     ensureRoadmap();
     migrateRoadmapChecked();
     save();
-    go('dashboard');
+    if(!courseLinkLand()) go('dashboard');
     songHashOpen();
     showSplash();
     return true;
@@ -13296,6 +13325,7 @@ function renderLangPick(){
       <div class="onb-eb">${L('2 minutes','2 dakika','۲ دقیقه','2 minutos')}</div>
       <h1 class="onb-h1">${L("Let's begin",'Başlayalım','بیا شروع کنیم','Empecemos')}<span class="dot">.</span></h1>
       ${farinHelloHtml()}
+      ${courseLinkNoteHtml()}
       ${onbBlocksHtml()}
     </div>
     <div class="onb-foot">
@@ -26021,7 +26051,7 @@ const HANDLERS = {
       // of recomputing live (see regenerateRoadmap() comment above).
       regenerateRoadmap();
       save();
-      go('dashboard');
+      if(!courseLinkLand()) go('dashboard');
       showSplash();
     };
     if(keepLogin){ finish(null); return; }
@@ -27797,6 +27827,18 @@ function courseSha256Hex(text){
   if(!(window.crypto && crypto.subtle && window.TextEncoder)) return Promise.reject(new Error('no-crypto'));
   return crypto.subtle.digest('SHA-256', new TextEncoder().encode(text)).then(b=>Array.from(new Uint8Array(b)).map(x=>x.toString(16).padStart(2,'0')).join(''));
 }
+/* Farin's review password (Farin 2026-11-01): typed in any course's password box it turns on coursePreviewOn() on this device, for checking the courses.
+   It is compared by hash here, before the normal lookup: no Firestore read or write, no courseAccess entry, nothing in progress or admin. ?coursePreview=0 switches it off. */
+const COURSE_REVIEW_PW_HASH = '72cb80c51317a53396eb0d0a2717f86b81e92345cf4c27b3ca25694fb0c4e486';
+function courseReviewPwMatches(pw){ return courseSha256Hex('farin-course-review-v1\u0000' + String(pw||'').trim().toUpperCase().replace(/İ/g,'I')).then(h=>h === COURSE_REVIEW_PW_HASH).catch(()=>false); }
+function courseReviewTurnOn(cid){
+  try{ localStorage.setItem('farinCoursePreview','1'); }catch(e){}
+  // a ?coursePreview=0 still in the address would switch it straight off again
+  try{ if(/[?&]coursePreview=0/.test(location.search)){ const url = new URL(location.href); url.searchParams.delete('coursePreview'); history.replaceState(null, '', url); } }catch(e){}
+  Object.assign(courseUi, {pwBusy:false, pwOpen:false, pwDraft:'', pwStatus:null, chapter:null, introOpen:null, reviewMsg:cid});
+  courseSheetRemove();
+  courseShow('course-detail', {cid}, cid, false);
+}
 function courseAccessDocId(pw){ return courseSha256Hex(COURSE_ACCESS_SALT + '\u0000' + courseNormalizePw(pw)).then(h=>COURSE_ACCESS_PREFIX + h); }
 // Readable password: <course prefix>-<up to 4 letters of the name>-<4 unambiguous characters>.
 function courseMakePassword(cid, name){
@@ -29123,6 +29165,7 @@ function renderCourseGate(){
   const vp = state.viewParams || {}, c = courseGet(vp.cid);
   const soon = !c || !(c.status === 'live' || c.status === 'shell');
   if(!soon && vp.uid && courseUnitAccess(c, vp.uid) && courseFindUnit(c.id, vp.uid)) return renderCourseLesson();
+  if(!soon && coursePreviewOn()) return renderCourseDetail(c.id);
   if(soon) return `<div class="fade-in lx-page lx-course">
     ${coursePathHeadHtml()}
     <h1 class="display cp-title">${esc(c ? cl(c.title) : CL('Courses','Kurslar','دوره‌ها','Cursos'))}</h1>
@@ -29258,6 +29301,7 @@ function courseWrapViewer(html){
 }
 // After every render(): the shell class, and the writing card's live bits (Leyla's version folds once you type; word chips tick).
 function courseAfterRender(root){
+  if(courseUi.reviewMsg && state.view !== 'course-detail') courseUi.reviewMsg = null;
   root.classList.toggle('cs-in', courseShellOn || state.view==='course-step');
   // flow v3: the situation's Listen stops off its screen; "Look again at key point N" scrolls Learn to that section once;
   // the course poster hook (renders nothing until a course has real key art)
@@ -29775,6 +29819,7 @@ function courseFinalHomeHtml(c, pd){
   return `<div class="hero-card" style="${COURSE_HERO_BG} cursor:default;">${claySparkles()}
       <div class="hero-eyebrow">${CL('Your brief','Görevin','شرح پروژه', 'Tu encargo')}</div>
       <p style="margin:6px 0 0; font-size:14px; line-height:1.45;">${esc(cl(pd.brief))}</p></div>
+    ${pd.defaultProduct ? `<div class="card-flat" style="margin-top:12px;"><p dir="${courseTD()}" style="margin:0; font-size:13.5px; line-height:1.5;">${esc(cl(pd.defaultProduct))}</p></div>` : ''}
     ${v.title ? `<div class="card-flat" dir="ltr" translate="no" style="margin-top:12px;"><div class="eyebrow">${CL('Default vacancy','Varsayılan pozisyon','موقعیت شغلی نمونه', 'Puesto por defecto')}</div>
       <div style="font-weight:800; margin-top:4px;">${esc(v.title)}</div>
       ${list('Duties', v.duties)}${list('Essential', v.essential)}${list('Desirable', v.desirable)}${list('Finalists', v.finalists)}</div>` : ''}
@@ -31059,6 +31104,7 @@ function renderCourseDetail(cid){
     ${content ? '' : `<h1 class="display cp-title">${esc(cl(c.title))}</h1>`}
     <div class="screen" style="padding-top:0;">
       ${content ? courseHeroHtml(c) : ''}
+      ${courseUi.reviewMsg === cid ? `<div class="card-flat" role="status" style="margin-top:12px; font-size:14px; font-weight:700;">${CL('Review mode is on. Every lesson is open on this device.','İnceleme modu açık. Bu cihazda bütün dersler açık.','حالت بررسی روشن است. همه‌ی درس‌ها روی این دستگاه باز است.','El modo de revisión está activado. Todas las lecciones están abiertas en este dispositivo.')}</div>` : ''}
       ${content ? courseRebuiltNoteHtml(c) : ''}
       ${content ? courseNextCardHtml(c, nx) : courseComingSoonHtml(c)}
       ${courseReviewNoticeHtml(c)}
@@ -31919,10 +31965,13 @@ Object.assign(HANDLERS, {
     courseUi.pwDraft = pw;
     if(courseUi.pwBusy) return;
     courseUi.pwBusy = true; render();
-    courseAccessRedeem(cid, pw).then(res=>{
-      courseUi.pwBusy = false; courseUi.pwStatus = Object.assign({cid}, res);
-      if(res.status === 'ok'){ courseUi.pwOpen = false; courseUi.pwDraft = ''; courseUi.chapter = null; }
-      render();
+    courseReviewPwMatches(pw).then(isReview=>{
+      if(isReview){ courseReviewTurnOn(cid); return; }
+      return courseAccessRedeem(cid, pw).then(res=>{
+        courseUi.pwBusy = false; courseUi.pwStatus = Object.assign({cid}, res);
+        if(res.status === 'ok'){ courseUi.pwOpen = false; courseUi.pwDraft = ''; courseUi.chapter = null; }
+        render();
+      });
     });
   },
   'course-waitlist'(el){ courseSheetRemove(); go('course-waitlist', {cid:el.dataset.cid}); },
@@ -34157,12 +34206,12 @@ if(location.hash === '#admin'){
       state.view = state.profile.completedDiagnostic ? 'dashboard' : 'diagnostic-intro';
       state.viewParams = {};
       save();
-      render();
+      if(!courseLinkLand()) render();
       songHashOpen();
     }).catch(giveUp);
     setTimeout(giveUp, 6000);
   } else {
-    render();
+    if(!courseLinkLand()) render();
     songHashOpen();
   }
   try{ window.addEventListener('hashchange', songHashOpen); }catch(e){}

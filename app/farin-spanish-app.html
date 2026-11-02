@@ -8694,7 +8694,7 @@ function pwErrorText(kind){
   if(kind==='mismatch') return L("The two passwords don't match.", 'İki şifre birbirini tutmuyor.', 'دو رمز با هم یکی نیستند.', 'Las dos contraseñas no coinciden.');
   if(kind==='taken') return L('Someone already uses this name with this password. Please choose a different password.', 'Bu ad ve şifreyi zaten başka biri kullanıyor. Lütfen farklı bir şifre seç.', 'کس دیگری همین اسم و رمز را دارد. لطفاً رمز دیگری انتخاب کن.', 'Alguien ya usa este nombre con esta contraseña. Elige otra contraseña, por favor.');
   if(kind==='wrong') return L("We couldn't find an account with that name and password.", 'Bu ad ve şifreyle bir hesap bulamadık.', 'حسابی با این اسم و رمز پیدا نکردیم.', 'No encontramos ninguna cuenta con ese nombre y esa contraseña.');
-  return L("We couldn't reach the server. Check your connection and try again.", 'Sunucuya ulaşamadık. Bağlantını kontrol edip tekrar dene.', 'به سرور دسترسی پیدا نکردیم. اتصالت را بررسی کن و دوباره امتحان کن.', 'No pudimos conectar con el servidor. Revisa tu conexión e inténtalo de nuevo.');
+  return L("We couldn't reach the server. Check your connection and try again.", 'Sunucuya ulaşamadık. Bağlantını kontrol edip tekrar dene.', 'نتوانستیم به سرور وصل شویم. اتصالت را بررسی کن و دوباره امتحان کن.', 'No pudimos conectar con el servidor. Revisa tu conexión e inténtalo de nuevo.');
 }
 function pwField(id, autocomplete, placeholder, value){
   return `<div class="pw-wrap">
@@ -15507,13 +15507,13 @@ function renderStudentPanel(){
   const prevCourse = activeCourseIdx > 0 ? sortedCourses[activeCourseIdx-1] : null;
   const justCompletedPrev = (prevCourse && prevCourse.status==='completed' && activeCourse && activeCourse.status==='active') ? prevCourse : null;
   return `<div class="fade-in">
-    ${sectionHead(L('Your Progress','İlerlemen','پیشرفت تو', 'Tu progreso'), L('Curated by your teacher, just for you.','Öğretmenin tarafından, sadece senin için hazırlandı.','توسط معلمت و فقط برای تو آماده شده.', 'Preparado por tu profesor, solo para ti.'), 'student-club')}
+    ${sectionHead(L('Your Progress','İlerlemen','پیشرفت تو', 'Tu progreso'), L('Curated by your teacher, just for you.','Öğretmenin tarafından, sadece senin için hazırlandı.','معلمت این را فقط برای تو آماده کرده است.', 'Preparado por tu profesor, solo para ti.'), 'student-club')}
     <div class="screen" style="padding-top:0;">
       <div class="character-card" style="background:linear-gradient(135deg,#8a5cf7,#ff4fa3);">
         <span class="sparkle" style="top:16px; left:22px;"></span>
         <span class="sparkle" style="top:36px; right:26px; left:auto; width:6px; height:6px; animation-delay:.5s;"></span>
         <span class="sparkle" style="bottom:14px; right:20px; left:auto; width:5px; height:5px; animation-delay:1s;"></span>
-        <div class="eyebrow" style="color:rgba(255,255,255,.85);">${esc(d.level || L('Level not set','Seviye belirtilmemiş','سطح تنظیم‌نشده', 'Nivel no definido'))} · ${COURSE_LABEL}</div>
+        <div class="eyebrow" style="color:rgba(255,255,255,.85);">${esc(d.level || L('Level not set','Seviye belirtilmemiş','سطح هنوز مشخص نشده', 'Nivel no definido'))} · ${COURSE_LABEL}</div>
         <h1 class="display" style="font-size:22px; margin-top:4px; color:#fff;">${esc(d.name || L('Student','Öğrenci','دانش‌آموز', 'Estudiante'))}</h1>
       </div>
 
@@ -15521,7 +15521,7 @@ function renderStudentPanel(){
       <div class="card-flat" style="margin-top:12px; border-left:4px solid var(--cat-lis); display:flex; align-items:center; gap:10px;">
         <span style="font-size:20px;">❄️</span>
         <div>
-          <div class="eyebrow">${L('Lessons paused','Dersler duraklatıldı','درس‌ها متوقف شده','Clases en pausa')}</div>
+          <div class="eyebrow">${L('Lessons paused','Dersler duraklatıldı','درس‌ها متوقف شده‌اند','Clases en pausa')}</div>
           <div style="font-size:13px; color:var(--ink-soft); margin-top:2px;">${esc(d.freezeUntil)}</div>
         </div>
       </div>` : ''}
@@ -15547,7 +15547,7 @@ function renderStudentPanel(){
         <div class="progress-track" style="margin-top:10px;"><div class="progress-fill" style="width:${stage.sessions*10}%; background:var(--cat-diag);"></div></div>
         <p style="font-size:12px; color:var(--ink-faint); margin-top:8px;">${stage.next
           ? L('Next stop: '+stage.next, stage.next+' — bir sonraki durak', 'ایستگاه بعدی: '+stage.next, 'Próxima parada: '+stage.next)
-          : L("You've reached the top of the roadmap!",'Yol haritasının zirvesine ulaştın!','به بالای نقشه راه رسیدی!', '¡Llegaste a la cima de la ruta!')}</p>
+          : L("You've reached the top of the roadmap!",'Yol haritasının zirvesine ulaştın!','به بالای نقشه‌ی راه رسیدی!', '¡Llegaste a la cima de la ruta!')}</p>
       </div>` : ''}
 
       ${justCompletedPrev ? `
@@ -28085,7 +28085,7 @@ function courseReviewHtml(cid, uid, w){
   if(r){
     courseReviewRefresh(cid);
     if(!r.feedback || !r.feedback.note) return wrap(`<button class="btn course-review-sent" disabled style="width:100%; background:var(--success); color:#fff; opacity:1;">${CL('Sent!','Gönderildi!','ارسال شد!','¡Enviado!')}</button>
-      <p style="font-size:13px; color:var(--ink-soft); margin:8px 0 0;">${CL('Farin will send your feedback within 2–3 days. It will appear here.','Farin geri bildirimini 2–3 gün içinde gönderecek. Burada görünecek.','فرین ظرف ۲ تا ۳ روز بازخوردش را برایت می‌فرستد. همین‌جا نشان داده می‌شود.','Farin te enviará sus comentarios en 2–3 días. Aparecerán aquí.')}</p>`);
+      <p style="font-size:13px; color:var(--ink-soft); margin:8px 0 0;">${CL('Farin will send your feedback within 2–3 days. It will appear here.','Farin geri bildirimini 2–3 gün içinde gönderecek. Burada görünecek.','فرین ظرف ۲ تا ۳ روز بازخوردش را برایت می‌فرستد و همین‌جا می‌بینی‌اش.','Farin te enviará sus comentarios en 2–3 días. Aparecerán aquí.')}</p>`);
     const fresh = courseReviewUnseen(r);
     if(fresh){ r.seenAt = Date.now(); save(); }   // opening the step = seen; the badge shows on this visit only
     return wrap(`<div class="row between" style="align-items:center; gap:8px;"><div class="eyebrow" style="color:var(--success);">${CL('Feedback from Farin','Farin\'den geri bildirim','بازخورد فرین','Comentarios de Farin')}</div>${fresh ? courseReviewReadyPill() : ''}</div>
@@ -28581,7 +28581,7 @@ function courseStoryNoticeHtml(s){
 function courseCelebrateHint(){
   const r = state.courseReturn, s = r && r.uid ? courseUnitItems(r.uid).story : null;
   if(r && r.type==='story' && s && s.bridge) return cl(s.bridge);
-  return CL('Your lesson continues in a moment…','Dersin birazdan devam ediyor…','درست تا چند لحظه‌ی دیگر ادامه پیدا می‌کند…','Tu lección sigue en un momento…');
+  return CL('Your lesson continues in a moment…','Dersin birazdan devam ediyor…','درس تا چند لحظه‌ی دیگر ادامه پیدا می‌کند…','Tu lección sigue en un momento…');
 }
 const COURSE_LOCK_SVG = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="9" rx="2.5"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>';
 const COURSE_HERO_BG = 'background-color:var(--clay-lavender-deep); background-image:radial-gradient(circle at 88% -18%, rgba(255,255,255,.5), transparent 55%), linear-gradient(135deg, var(--clay-lavender), var(--clay-lavender-deep));';
@@ -28646,7 +28646,7 @@ function courseListOrder(){ const rank = c=>(c.status==='live' || c.status==='sh
 function renderCoursesHome(){
   return `<div class="fade-in">
     ${topbar(false)}
-    ${sectionHeadNoBack(CL('Premium courses','Premium kurslar','دوره‌های ویژه','Cursos premium'), CL("Made to make you more professional out there. Spanish isn't a lesson anymore. It's a tool.",'Seni daha profesyonel yapmak için hazırlandı. İspanyolca artık bir ders değil, bir araç.','این دوره‌ها ساخته شده‌اند تا حرفه‌ای‌تر باشی. اسپانیایی دیگر یک درس نیست، یک ابزار است.','Hechos para que seas más profesional. El español ya no es una asignatura, es una herramienta.'))}
+    ${sectionHeadNoBack(CL('Premium courses','Premium kurslar','دوره‌های ویژه','Cursos premium'), CL("Made to make you more professional out there. Spanish isn't a lesson anymore. It's a tool.",'Seni daha profesyonel yapmak için hazırlandı. İspanyolca artık bir ders değil, bir araç.','این دوره‌ها کمکت می‌کنند در کارت حرفه‌ای‌تر باشی. اسپانیایی دیگر یک درس نیست، یک ابزار است.','Hechos para que seas más profesional. El español ya no es una asignatura, es una herramienta.'))}
     <div class="screen" style="padding-top:0;">
       <div class="stack" style="gap:12px;">${courseListOrder().map(courseCardHtml).join('')}</div>
     </div>
@@ -28665,7 +28665,7 @@ function coursePwStatusText(st){
   if(st.status==='other-app') return CL('This password is for a course in the other app (English/Spanish).','Bu şifre diğer uygulamadaki (İngilizce/İspanyolca) bir kurs için.','این رمز برای دوره‌ای در اپ دیگر (انگلیسی/اسپانیایی) است.','Esta contraseña es para un curso de la otra app (inglés/español).');
   if(st.status==='revoked') return CL('This password is no longer active. Message Farin.','Bu şifre artık etkin değil. Farin\'e yaz.','این رمز دیگر فعال نیست. به Farin پیام بده.','Esta contraseña ya no está activa. Escribe a Farin.');
   if(st.status==='expired') return CL('This password has expired. Message Farin to extend it.','Bu şifrenin süresi dolmuş. Uzatmak için Farin\'e yaz.','مدت این رمز تمام شده است. برای تمدید به Farin پیام بده.','Esta contraseña ha caducado. Escribe a Farin para ampliarla.');
-  return CL("We couldn't reach the server. Check your connection and try again.",'Sunucuya ulaşamadık. Bağlantını kontrol edip tekrar dene.','به سرور دسترسی پیدا نکردیم. اتصالت را بررسی کن و دوباره امتحان کن.','No pudimos conectar con el servidor. Revisa tu conexión e inténtalo otra vez.');
+  return CL("We couldn't reach the server. Check your connection and try again.",'Sunucuya ulaşamadık. Bağlantını kontrol edip tekrar dene.','نتوانستیم به سرور وصل شویم. اتصالت را بررسی کن و دوباره امتحان کن.','No pudimos conectar con el servidor. Revisa tu conexión e inténtalo otra vez.');
 }
 function coursePasswordBoxHtml(c){
   const st = courseUi.pwStatus && courseUi.pwStatus.cid===c.id ? courseUi.pwStatus : null;
@@ -28840,7 +28840,7 @@ function renderCourseAbout(c){
   const m = mins ? CL(' (about '+mins+' minutes in all)', ' (toplam yaklaşık '+mins+' dakika)', ' (روی هم حدود '+mins+' دقیقه)', ' (unos '+mins+' minutos en total)') : '';
   const how = CL(total+' lessons in '+mods+' chapters. Each lesson has 3 steps: Learn, Practise, Check'+m+'. You can stop after any step; the course keeps your place.',
     mods+' bölümde '+total+' ders. Her dersin 3 adımı var: Öğren, Alıştır, Kontrol et'+m+'. Her adımdan sonra durabilirsin; kurs kaldığın yeri saklar.',
-    total+' درس در '+mods+' فصل. هر درس ۳ قدم دارد: یاد بگیر، تمرین کن، بسنج'+m+'. بعد از هر قدم می‌توانی دست نگه داری؛ دوره جایت را نگه می‌دارد.',
+    total+' درس در '+mods+' فصل. هر درس ۳ قدم دارد: یاد بگیر، تمرین کن، بسنج'+m+'. بعد از هر قدم می‌توانی دست نگه داری؛ بعداً از همان‌جا ادامه می‌دهی.',
     total+' lecciones en '+mods+' capítulos. Cada lección tiene 3 pasos: Aprende, Practica, Comprueba'+m+'. Puedes parar después de cada paso; el curso guarda tu sitio.');
   const finish = pd ? `<ul style="margin:6px 0 0; padding-inline-start:18px; font-size:13.5px;">${pd.parts.map(p=>`<li style="margin-bottom:3px;">${esc(cl(p.title))}</li>`).join('')}</ul>
       ${cert ? `<p style="margin:10px 0 0; font-size:13px; font-weight:700;">${esc(cl(cert.title))}</p><p style="margin:2px 0 0; font-size:12px; color:var(--ink-soft);">${esc(cl(cert.disclaimer))}</p>` : ''}`
@@ -28855,7 +28855,7 @@ function renderCourseAbout(c){
       </div>
       <div class="card-flat" style="margin-top:12px;"><div class="eyebrow" style="color:var(--clay-lavender-deep);">${CL('How it works','Nasıl işler','چطور کار می‌کند','Cómo funciona')}</div>
         <p style="margin:4px 0 0; font-size:14px; line-height:1.5;">${esc(cm && c.intro.how ? cl(c.intro.how.body) : how)}</p></div>
-      <div class="card-flat" style="margin-top:12px;"><div class="eyebrow" style="color:var(--clay-lavender-deep);">${CL('What you finish with','Sonunda elinde ne olacak','در پایان چه چیزی داری','Con qué terminas')}</div>${exam && c.intro.finish ? `<p style="margin:4px 0 0; font-size:14px; line-height:1.5;">${esc(cl(c.intro.finish.body))}</p>` : finish}</div>
+      <div class="card-flat" style="margin-top:12px;"><div class="eyebrow" style="color:var(--clay-lavender-deep);">${CL('What you finish with','Sonunda elinde ne olacak','در پایان چه چیزی به دست می‌آوری','Con qué terminas')}</div>${exam && c.intro.finish ? `<p style="margin:4px 0 0; font-size:14px; line-height:1.5;">${esc(cl(c.intro.finish.body))}</p>` : finish}</div>
       ${courseOutcomesHtml(c)}
       ${courseLastReviewedHtml(c)}
       <button class="btn btn-ghost" style="margin-top:16px;" data-action="course-intro-close" data-cid="${c.id}">${CL('Back to the course','Kursa dön','برگشت به دوره','Volver al curso')}</button>
@@ -28982,7 +28982,7 @@ function courseCardTitle(cid, uid, type){
   if(type==='explain') return it.explain ? cl(it.explain.title) : '';
   if(type==='listening') return it.listening ? cl(it.listening.title) : '';
   if(type==='judge' && it.judge && it.judge.title && courseScreensOn(cid)) return cl(it.judge.title);
-  if(type==='judge') return courseIsExam(courseUnitCourse(uid)) ? CL('Mark the answers as an examiner would','Cevapları bir sınav görevlisi gibi değerlendir','پاسخ‌ها را مثل یک ممتحن ارزیابی کن','Evalúa las respuestas como lo haría un examinador') : CL('Which answer would work?','Hangi cevap işe yarar?','کدام پاسخ جواب می‌دهد؟','¿Qué respuesta funcionaría?');
+  if(type==='judge') return courseIsExam(courseUnitCourse(uid)) ? CL('Mark the answers as an examiner would','Cevapları bir sınav görevlisi gibi değerlendir','پاسخ‌ها را مثل یک ممتحن ارزیابی کن','Evalúa las respuestas como lo haría un examinador') : CL('Which answer would work?','Hangi cevap işe yarar?','کدام پاسخ کارساز است؟','¿Qué respuesta funcionaría?');
   if(type==='scene'){ const f = courseFindUnit((courseUnitCourse(uid)||{}).id, uid); return f ? (f.u.isMock ? cl(f.u.title) : f.u.finale ? cl(courseGt(f.c.id, f.u, 'finale')) : '') : ''; }
   if(type==='drill') return it.drill ? cl(it.drill.title) : '';
   if(type==='sets') return it.sets ? cl(it.sets.title) : '';
@@ -29208,14 +29208,14 @@ function renderCourseWork(){
   const pm = COURSE_CARD.empathy, jr = courseJournal(c.id);
   const journal = jr.length ? jr.map(e=>`<div class="card-flat cs-jentry"><div class="cs-eyebrow" style="color:${pm.t};">${esc(courseUp(cl(pm)+(e.p && e.p.title ? ' · '+cl(e.p.title) : '')))}</div>
       <p dir="ltr" translate="no">${esc(e.text)}</p><div class="cs-slotsub">${esc(courseLessonName(c.id, e.uid))}${e.date ? courseSep()+esc(courseReviewDate(new Date(e.date+'T12:00:00').getTime())) : ''}</div></div>`).join('')
-    : `<p style="font-size:13px; color:var(--ink-soft); margin:0;">${CL('Your Empathy answers appear here.','Empati cevapların burada görünür.','پاسخ‌های تو در کارت‌های همدلی اینجا نشان داده می‌شوند.','Tus respuestas de Empatía aparecen aquí.')}</p>`;
+    : `<p style="font-size:13px; color:var(--ink-soft); margin:0;">${CL('Your Empathy answers appear here.','Empati cevapların burada görünür.','پاسخ‌هایت در کارت‌های همدلی اینجا جمع می‌شوند.','Tus respuestas de Empatía aparecen aquí.')}</p>`;
   return `<div class="fade-in course-work-page">
     <div class="cp-head"><button class="cp-back" data-action="course-open" data-view="course-detail" data-cid="${c.id}">${LANG==='fa' ? '›' : '‹'} ${esc(cl(c.title))}</button></div>
     <h1 class="display cp-title">${CL('Your work','Çalışmaların','کارهای تو','Tu trabajo')}</h1>
     <div class="screen" style="padding-top:0;">
       ${all ? `<button class="item-row cs-certrow" data-action="course-open" data-view="course-cert" data-cid="${c.id}"><span class="item-ic" style="background:linear-gradient(135deg,#FFE08A,#F5B92E); color:#7a4a00;">${COURSE_TROPHY_SVG}</span><div class="item-body"><div class="item-title">${CL('Your certificate','Sertifikan','گواهی‌نامه‌ی تو','Tu certificado')}</div></div><span class="chevron">${ICONS.chev}</span></button>` : ''}
       ${pd ? `<h2 class="cs-wh">${CL('Portfolio','Portföy','پرونده‌ی کاری','Portafolio')}</h2>
-      <p class="cs-wsub">${CL('The pieces of your final project. Drafts you write in the lessons wait here.','Final projenin parçaları. Derslerde yazdığın taslaklar burada bekler.','قطعه‌های پروژه‌ی پایانی‌ات. پیش‌نویس‌هایی که در درس‌ها می‌نویسی اینجا منتظرند.','Las piezas de tu proyecto final. Los borradores que escribes en las lecciones te esperan aquí.')}</p>
+      <p class="cs-wsub">${CL('The pieces of your final project. Drafts you write in the lessons wait here.','Final projenin parçaları. Derslerde yazdığın taslaklar burada bekler.','بخش‌های پروژه‌ی پایانی‌ات. پیش‌نویس‌هایی که در درس‌ها می‌نویسی اینجا جمع می‌شوند.','Las piezas de tu proyecto final. Los borradores que escribes en las lecciones te esperan aquí.')}</p>
       <div class="stack" style="gap:10px;">${slots}</div>` : ''}
       <h2 class="cs-wh">${CL('Journal','Günlük','دفترچه','Diario')}</h2>
       <p class="cs-wsub">${CL('What you wrote in the Empathy cards, newest first.','Empati kartlarında yazdıkların, en yenisi önce.','چیزهایی که در کارت‌های همدلی نوشتی، جدیدترین اول.','Lo que escribiste en las tarjetas de Empatía, lo más reciente primero.')}</p>
@@ -29228,7 +29228,7 @@ function renderCourseWork(){
 function courseErrLogHtml(cid){
   const list = courseErrLogList(cid); if(!list.length) return '';
   return `<h2 class="cs-wh">${CL('Error log','Hata kaydı','فهرست اشتباه‌ها','Registro de errores')} (${list.length})</h2>
-    <p class="cs-wsub">${CL('Questions you got wrong in Practice and the mock tests. Answer one right later and it leaves the list.','Uygulama ve deneme sınavlarında yanlış yaptığın sorular. Sonra doğru cevaplarsan listeden çıkar.','سؤال‌هایی که در تمرین‌ها و آزمون‌های آزمایشی اشتباه جواب دادی. اگر بعداً درست جواب بدهی، از فهرست بیرون می‌رود.','Preguntas que fallaste en Práctica y en los simulacros. Si luego aciertas una, sale de la lista.')}</p>
+    <p class="cs-wsub">${CL('Questions you got wrong in Practice and the mock tests. Answer one right later and it leaves the list.','Uygulama ve deneme sınavlarında yanlış yaptığın sorular. Sonra doğru cevaplarsan listeden çıkar.','سؤال‌هایی که در تمرین‌ها و آزمون‌های آزمایشی اشتباه جواب دادی. اگر بعداً درست جوابشان بدهی، از فهرست بیرون می‌روند.','Preguntas que fallaste en Práctica y en los simulacros. Si luego aciertas una, sale de la lista.')}</p>
     <div class="stack cs-errlog" style="gap:8px;">${list.slice(0, 60).map(e=>`<div class="card-flat"><p dir="ltr" translate="no" style="margin:0; font-size:13.5px; font-weight:700;">${esc(e.prompt)}</p>
       <p style="margin:4px 0 0; font-size:12.5px;">${e.given ? `${CL('You','Sen','تو','Tú')}: <s dir="ltr" translate="no">${esc(e.given)}</s> · ` : ''}${CL('Right','Doğrusu','درست','Correcto')}: <b dir="ltr" translate="no">${esc(e.right)}</b></p>
       <div class="cs-slotsub">${esc(courseLessonName(cid, e.uid))}${e.date ? courseSep()+esc(courseReviewDate(new Date(e.date+'T12:00:00').getTime())) : ''}</div></div>`).join('')}</div>`;
@@ -29453,7 +29453,7 @@ function renderCoursePause(){
     </div>
     <div class="cs-foot">
       <button class="btn btn-primary cs-main" data-action="course-go" data-cid="${cid}" data-uid="${esc(uid)}">${CL('Keep going','Devam et','ادامه بده','Sigue')}</button>
-      <button class="btn btn-ghost cs-stop" data-action="course-close" data-cid="${cid}">${CL('Stop here. We\'ll keep your place.','Burada dur. Kaldığın yeri saklarız.','همین‌جا بس است. جایت را نگه می‌داریم.','Para aquí. Guardamos tu sitio.')}</button>
+      <button class="btn btn-ghost cs-stop" data-action="course-close" data-cid="${cid}">${CL('Stop here. We\'ll keep your place.','Burada dur. Kaldığın yeri saklarız.','همین‌جا بس است. بعداً از همین‌جا ادامه می‌دهی.','Para aquí. Guardamos tu sitio.')}</button>
     </div>
   </div>`;
 }
@@ -29524,7 +29524,7 @@ function renderCourseSpeaking(cid, uid, sp){
   const btn = (action, label)=>`<button class="btn btn-primary cs-main" data-action="${action}" data-cid="${cid}" data-uid="${esc(uid)}">${label}</button>`;
   // Prepare
   if(st.stage === 0){
-    const recRow = courseRecSupported() ? `<button class="cs-rec${st.rec ? ' on' : ''}" data-action="course-sp-rec" aria-pressed="${st.rec ? 'true' : 'false'}"><span class="cs-box">${st.rec ? ICONS.check : ''}</span><span><b>${CL('Record myself','Sesimi kayda al','صدایم را ضبط کن','Grabarme')}</b><small>${CL('You hear it back after each round. It stays on this phone and is not saved.','Her turdan sonra dinlersin. Bu telefonda kalır, saklanmaz.','بعد از هر دور دوباره گوشش می‌کنی. روی همین گوشی می‌ماند و ذخیره نمی‌شود.','Lo escuchas después de cada ronda. Se queda en este móvil y no se guarda.')}</small></span></button>` : '';
+    const recRow = courseRecSupported() ? `<button class="cs-rec${st.rec ? ' on' : ''}" data-action="course-sp-rec" aria-pressed="${st.rec ? 'true' : 'false'}"><span class="cs-box">${st.rec ? ICONS.check : ''}</span><span><b>${CL('Record myself','Sesimi kayda al','صدایم را ضبط کن','Grabarme')}</b><small>${CL('You hear it back after each round. It stays on this phone and is not saved.','Her turdan sonra dinlersin. Bu telefonda kalır, saklanmaz.','بعد از هر دور دوباره گوشش می‌کنی. ضبطت از همین گوشی بیرون نمی‌رود و ذخیره هم نمی‌شود.','Lo escuchas después de cada ronda. Se queda en este móvil y no se guarda.')}</small></span></button>` : '';
     return `<div class="card-flat"><div class="eyebrow">${CL('Before you start','Başlamadan önce','قبل از شروع','Antes de empezar')}</div><p style="margin:4px 0 0;">${esc(cl(sp.warmup))}</p></div>
       ${prompts}
       ${courseUseInHtml(cid, uid)}
@@ -29889,7 +29889,7 @@ function renderCourseBranch(cid, uid, b){
     const tries = Object.keys(st.retries).reduce((n,k)=>n+st.retries[k], 0);
     return `${head}<div class="card-flat badge-unlock-shine" style="margin-top:12px; text-align:center;"><h2 class="display" style="font-size:19px;">${CL('Scene complete','Sahne tamamlandı','گفتگو به پایان رسید', 'Escena completada')}</h2>
       <p style="margin:6px 0 0; font-size:14px;">${esc(cl(node.outcome))}</p>
-      ${tries ? `<p style="font-size:12.5px; color:var(--ink-faint); margin:8px 0 0;">${CL('Second tries: ','İkinci denemeler: ','تعداد تلاش‌های دوباره: ', 'Segundos intentos: ')}${tries}</p>` : ''}
+      ${tries ? `<p style="font-size:12.5px; color:var(--ink-faint); margin:8px 0 0;">${CL('Second tries: ','İkinci denemeler: ','دفعه‌های دوم: ', 'Segundos intentos: ')}${tries}</p>` : ''}
       <button class="btn btn-primary cs-main" data-action="course-branch-finish" data-cid="${cid}" data-uid="${uid}">${esc(courseNextBtnLabel())}</button></div>`;
   }
   if(!st.order[st.node]) st.order[st.node] = shuffle(node.choices.map((_,i)=>i));
@@ -29979,7 +29979,7 @@ function renderCourseWriting(cid, uid, w){
   if(res){
     const hits = courseWritingHits(cid, uid, saved), ticks = courseWriteTicks(cid, uid), slot = w.portfolio && courseStepDone(uid, 'writing') ? w.portfolio : null;
     const bands = courseRubricBands(cid, w), bs = bands ? courseWriteBands(cid, uid) : [];
-    const checkList = bands ? `<p class="cs-cmp-hint" dir="${courseTD()}">${esc(cl(bands.note) || CL('Score each line: 0 = not there, 3 = fully there.','Her satırı puanla: 0 = yok, 3 = tamamen var.','هر خط را نمره بده: ۰ = نیست، ۳ = کامل هست.','Puntúa cada línea: 0 = no está, 3 = está del todo.'))}</p>
+    const checkList = bands ? `<p class="cs-cmp-hint" dir="${courseTD()}">${esc(cl(bands.note) || CL('Score each line: 0 = not there, 3 = fully there.','Her satırı puanla: 0 = yok, 3 = tamamen var.','به هر خط نمره بده: ۰ = نیست، ۳ = کامل هست.','Puntúa cada línea: 0 = no está, 3 = está del todo.'))}</p>
         <div class="stack cs-bands" style="gap:12px;">${w.rubric.map((r,ri)=>{ const v = typeof bs[ri] === 'number' ? bs[ri] : null, d = v !== null ? bands[bands.order[ri]][v] : null;
           return `<div class="cs-band"><div class="cs-band-l">${ruleLine(r, ri)}</div><div class="cs-band-seg" role="group">${[0,1,2,3].map(n=>`<button class="${v===n ? 'on' : ''}" data-action="course-write-band" data-cid="${cid}" data-uid="${esc(uid)}" data-i="${ri}" data-v="${n}" aria-pressed="${v===n ? 'true' : 'false'}">${n}</button>`).join('')}</div>${d ? `<p class="cs-band-d" dir="${courseTD()}">${esc(cl(d))}</p>` : ''}</div>`; }).join('')}</div>`
       : `<p class="cs-cmp-hint">${CL('Compare, then tick what your text does.','Karşılaştır, sonra metninin yaptıklarını işaretle.','مقایسه کن و بعد هر چیزی را که متنت دارد تیک بزن.','Compara y marca lo que hace tu texto.')}</p>
@@ -29988,7 +29988,7 @@ function renderCourseWriting(cid, uid, w){
       <p style="margin:0; font-size:13.5px;">${res.wc} ${CL('words','kelime','کلمه','palabras')} · ${res.sc} ${CL('sentences','cümle','جمله','frases')}${res.wordsMissed.length ? ' · '+CL('Not used yet','Henüz kullanılmadı','هنوز استفاده نشده','Aún sin usar')+': <span dir="ltr" translate="no">'+esc(res.wordsMissed.join(', '))+'</span>' : ''}</p>
       ${!res.lengthOk ? `<p style="margin:6px 0 0; font-size:13px;">${L('A little longer, please: at least '+w.minWords+' words and '+w.minSentences+' sentences.','Biraz daha uzun yaz: en az '+w.minWords+' kelime ve '+w.minSentences+' cümle.','کمی بیشتر بنویس: دست‌کم '+w.minWords+' کلمه و '+w.minSentences+' جمله.', 'Un poco más largo, por favor: al menos '+w.minWords+' palabras y '+w.minSentences+' frases.')}</p>` : ''}</div>
     ${hits.length ? `<div class="card-flat cs-watch"><div class="eyebrow">${CL('Check this','Şuna bir bak','این را بررسی کن','Revisa esto')}</div>${hits.map(h=>`<p><b dir="ltr" translate="no">${esc(h.phrase)}</b><span dir="${courseTD()}">${esc(cl(h.fix))}</span></p>`).join('')}</div>` : ''}
-    ${slot ? `<p class="cs-saved">${ICONS.check} ${CL('Saved as a draft for your portfolio. You find it in "Your work".','Portföyün için taslak olarak saklandı. "Çalışmaların" bölümünde bulursun.','به‌عنوان پیش‌نویس برای پرونده‌ی کاری‌ات نگه داشته شد. در «کارهای تو» پیدایش می‌کنی.','Guardado como borrador para tu portafolio. Lo encuentras en "Tu trabajo".')}</p>` : ''}
+    ${slot ? `<p class="cs-saved">${ICONS.check} ${CL('Saved as a draft for your portfolio. You find it in "Your work".','Portföyün için taslak olarak saklandı. "Çalışmaların" bölümünde bulursun.','این را به‌عنوان پیش‌نویس پرونده‌ی کاری‌ات نگه داشتیم. در «کارهای تو» پیدایش می‌کنی.','Guardado como borrador para tu portafolio. Lo encuentras en "Tu trabajo".')}</p>` : ''}
     <div class="cs-cmp">
       <div class="card-flat cs-yours"><div class="eyebrow">${CL('Your text','Senin metnin','متن تو','Tu texto')}</div><p dir="ltr" translate="no">${esc(saved)}</p></div>
       <div class="cs-cmp-mid"><div class="eyebrow">${bands ? CL('Score your text','Metnini puanla','به متنت نمره بده','Puntúa tu texto') : CL('Checklist','Kontrol listesi','چک‌لیست','Lista de comprobación')}</div>
@@ -30005,7 +30005,7 @@ function renderCourseWriting(cid, uid, w){
     ${courseWritingExtrasHtml(cid, uid, w, track)}
     ${showModel ? `<details class="cs-model"${draft.trim() ? '' : ' open'}><summary>${esc(courseUp(courseModelName(cid, w)))}</summary>
       <p dir="ltr" translate="no" style="margin:6px 0 0; font-size:13.5px; line-height:1.55;">${esc(w.model)}</p>
-      <p style="margin:6px 0 0; font-size:12px; color:var(--ink-soft);">${CL('It folds when you start writing. Tap to see it again.','Yazmaya başlayınca kapanır. Tekrar görmek için dokun.','وقتی شروع به نوشتن کنی جمع می‌شود. برای دیدن دوباره لمسش کن.','Se pliega cuando empiezas a escribir. Tócalo para verlo otra vez.')}</p></details>` : ''}
+      <p style="margin:6px 0 0; font-size:12px; color:var(--ink-soft);">${CL('It folds when you start writing. Tap to see it again.','Yazmaya başlayınca kapanır. Tekrar görmek için dokun.','وقتی نوشتن را شروع کنی، جمع می‌شود. برای دیدن دوباره لمسش کن.','Se pliega cuando empiezas a escribir. Tócalo para verlo otra vez.')}</p></details>` : ''}
     ${(track==='B1' || track==='academic' || track==='gt') && typeof w.frame === 'string' && w.frame ? `<p style="margin:12px 0 0; font-size:13.5px;"><b>${CL('Start like this','Böyle başla','این‌طوری شروع کن','Empieza así')}:</b> <span dir="ltr" translate="no">${esc(w.frame)}</span></p>` : ''}
     <textarea id="cw-text" class="game-input" dir="ltr" translate="no" rows="7" data-words="1" ${courseReviewLocked(cid, uid, w) ? 'readonly ' : ''}style="margin-top:10px; font-weight:500; min-height:150px;" placeholder="${esc(CL('Write here','Buraya yaz','اینجا بنویس','Escribe aquí'))}">${esc(draft)}</textarea>
     <div class="row between" style="align-items:flex-start; gap:8px;"><div translate="no">${w.words.map(x=>`<span class="cs-wchip${low.includes(String(x.word).toLowerCase()) ? ' on' : ''}" data-w="${esc(x.word)}" dir="ltr" translate="no">${esc(x.word)}</span>`).join('')}</div>
@@ -30102,7 +30102,7 @@ function courseFinalUnlocked(c){
 function courseWordCount(t){ return String(t||'').trim().split(/\s+/).filter(Boolean).length; }
 function courseFinalPart(cid, partId){ return courseProg(cid).answers[partId] || {text:'', scores:[]}; }
 function courseFinalPassed(cid, pd){ return pd.parts.filter(p=>courseFinalPart(cid, p.id).passed).length; }
-const COURSE_SCORE_HINT = {en:'0 not there · 1 partly · 2 mostly · 3 fully', tr:'0 yok · 1 kısmen · 2 büyük ölçüde · 3 tamamen', fa:'۰ اصلاً، ۱ تا حدی، ۲ بیشتر موارد، ۳ کامل', es:'0 no está · 1 en parte · 2 casi todo · 3 completo'};
+const COURSE_SCORE_HINT = {en:'0 not there · 1 partly · 2 mostly · 3 fully', tr:'0 yok · 1 kısmen · 2 büyük ölçüde · 3 tamamen', fa:'۰ اصلاً نیست، ۱ تا حدی، ۲ بیشتر موارد، ۳ کامل', es:'0 no está · 1 en parte · 2 casi todo · 3 completo'};
 function renderCourseFinal(){
   const vp = state.viewParams || {}, c = courseGet(vp.cid), pd = courseFinalData(c);
   if(!c || !pd) return renderNotFound();
@@ -30125,7 +30125,7 @@ function courseFinalHomeHtml(c, pd){
       ${list('Duties', v.duties)}${list('Essential', v.essential)}${list('Desirable', v.desirable)}${list('Finalists', v.finalists)}</div>` : ''}
     <div class="card-flat" style="margin-top:12px; background:var(--cat-diag-soft); border-color:var(--cat-diag-soft);">
       <div class="eyebrow" style="color:var(--cat-diag);">${CL('Self-check','Kendini değerlendir','خودارزیابی', 'Autoevaluación')}</div>
-      <p style="margin:4px 0 0; font-size:13px;">${CL('You score each part yourself with the checklist. There is no teacher marking in the app.','Her kısmı kontrol listesiyle kendin puanlarsın. Uygulamada öğretmen değerlendirmesi yok.','به هر بخش خودت و با چک‌لیست نمره می‌دهی. در اپ، تصحیح معلم وجود ندارد.', 'Puntúas cada parte tú mismo con la lista de comprobación. En la app no hay corrección del profesor.')}</p>
+      <p style="margin:4px 0 0; font-size:13px;">${CL('You score each part yourself with the checklist. There is no teacher marking in the app.','Her kısmı kontrol listesiyle kendin puanlarsın. Uygulamada öğretmen değerlendirmesi yok.','به هر بخش خودت با چک‌لیست نمره می‌دهی. در اپ، معلم نوشته‌ات را تصحیح نمی‌کند.', 'Puntúas cada parte tú mismo con la lista de comprobación. En la app no hay corrección del profesor.')}</p>
       <p style="margin:6px 0 0; font-size:13px; font-weight:700;">${esc(cl(pd.passRule))}</p>
       <ul style="margin:6px 0 0; padding-inline-start:18px; font-size:12.5px; color:var(--ink-soft);">${pd.rubric.map((r,ri)=>`<li><span dir="ltr" translate="no">${esc(r)}</span>${courseRubricSubHtml(pd, ri)}</li>`).join('')}</ul></div>
     <div class="eyebrow" style="margin:16px 0 8px;">${passed}/${pd.parts.length} ${CL('parts passed','kısım geçildi','بخش قبول‌شده', 'partes aprobadas')}</div>
@@ -30677,9 +30677,9 @@ function courseMockIntroHtml(cid, uid, type, mk, sec){
     courseMockParts(cid, mk, sec).length+' بخش، '+n+' سؤال، حدود '+(s.minutes || 30)+' دقیقه. فایل صوتی بدون توقف و فقط یک بار پخش می‌شود. بعد '+(s.review || 2)+' دقیقه وقت داری جواب‌هایت را بررسی کنی.',
     courseMockParts(cid, mk, sec).length+' partes, '+n+' preguntas, unos '+(s.minutes || 30)+' minutos. La grabación suena seguida y una sola vez. Luego tienes '+(s.review || 2)+' minutos para revisar.');
   else if(sec === 'reading') what = CL(courseMockParts(cid, mk, sec).length+' sections, '+n+' questions, '+(s.minutes || 60)+' minutes. When the time is up, your answers are sent.', courseMockParts(cid, mk, sec).length+' bölüm metni, '+n+' soru, '+(s.minutes || 60)+' dakika. Süre bitince cevapların gönderilir.', courseMockParts(cid, mk, sec).length+' بخش، '+n+' سؤال، '+(s.minutes || 60)+' دقیقه. وقتی زمان تمام شود، جواب‌هایت ثبت می‌شود.', courseMockParts(cid, mk, sec).length+' secciones, '+n+' preguntas, '+(s.minutes || 60)+' minutos. Cuando se acaba el tiempo, se envían tus respuestas.');
-  else if(sec === 'writing') what = CL('Task 1 (about 20 minutes, 150+ words) and Task 2 (about 40 minutes, 250+ words) in '+(s.minutes || 60)+' minutes. A word counter, no spell-check. When the time is up, your texts are saved as they are.', 'Task 1 (yaklaşık 20 dakika, 150+ kelime) ve Task 2 (yaklaşık 40 dakika, 250+ kelime), toplam '+(s.minutes || 60)+' dakika. Kelime sayacı var, yazım denetimi yok. Süre bitince metinlerin olduğu gibi kaydedilir.', 'Task 1 (حدود ۲۰ دقیقه، ۱۵۰+ کلمه) و Task 2 (حدود ۴۰ دقیقه، ۲۵۰+ کلمه) در '+(s.minutes || 60)+' دقیقه. شمارنده‌ی کلمه هست، غلط‌یاب نه. وقتی زمان تمام شود، متن‌هایت همان‌طور که هست ذخیره می‌شود.', 'Task 1 (unos 20 minutos, 150+ palabras) y Task 2 (unos 40 minutos, 250+ palabras) en '+(s.minutes || 60)+' minutos. Contador de palabras, sin corrector. Al acabar el tiempo, tus textos se guardan tal como están.');
+  else if(sec === 'writing') what = CL('Task 1 (about 20 minutes, 150+ words) and Task 2 (about 40 minutes, 250+ words) in '+(s.minutes || 60)+' minutes. A word counter, no spell-check. When the time is up, your texts are saved as they are.', 'Task 1 (yaklaşık 20 dakika, 150+ kelime) ve Task 2 (yaklaşık 40 dakika, 250+ kelime), toplam '+(s.minutes || 60)+' dakika. Kelime sayacı var, yazım denetimi yok. Süre bitince metinlerin olduğu gibi kaydedilir.', 'Task 1 (حدود ۲۰ دقیقه، ۱۵۰+ کلمه) و Task 2 (حدود ۴۰ دقیقه، ۲۵۰+ کلمه) در '+(s.minutes || 60)+' دقیقه. شمارنده‌ی کلمه هست، غلط‌یاب نه. وقتی زمان تمام شود، متن‌هایت همان‌طور که هستند ذخیره می‌شوند.', 'Task 1 (unos 20 minutos, 150+ palabras) y Task 2 (unos 40 minutos, 250+ palabras) en '+(s.minutes || 60)+' minutos. Contador de palabras, sin corrector. Al acabar el tiempo, tus textos se guardan tal como están.');
   else what = CL('About '+(s.minutes || '11-14')+' minutes. The app reads each examiner question aloud. Part 1: short answers. Part 2: one minute to make notes, then up to two minutes. Part 3: longer answers. Then you check yourself.', 'Yaklaşık '+(s.minutes || '11-14')+' dakika. Uygulama sınav görevlisinin her sorusunu sesli okur. Part 1: kısa cevaplar. Part 2: not almak için bir dakika, sonra en fazla iki dakika. Part 3: daha uzun cevaplar. Sonra kendini değerlendirirsin.', 'حدود '+(s.minutes || '11-14')+' دقیقه. اپ هر سؤال ممتحن را بلند می‌خواند. Part 1: جواب‌های کوتاه. Part 2: یک دقیقه یادداشت، بعد تا دو دقیقه صحبت. Part 3: جواب‌های بلندتر. بعد خودت را ارزیابی می‌کنی.', 'Unos '+(s.minutes || '11-14')+' minutos. La app lee en voz alta cada pregunta del examinador. Part 1: respuestas cortas. Part 2: un minuto para notas y luego hasta dos minutos. Part 3: respuestas más largas. Después te evalúas.');
-  const rec = sec === 'speaking' && courseRecSupported() ? `<button class="cs-rec${courseUi.mkRec ? ' on' : ''}" data-action="course-mock-rec" aria-pressed="${courseUi.mkRec ? 'true' : 'false'}"><span class="cs-box">${courseUi.mkRec ? ICONS.check : ''}</span><span><b>${CL('Record myself','Sesimi kayda al','صدایم را ضبط کن','Grabarme')}</b><small>${CL('You hear it back at the end. It stays on this phone and is not saved.','Sonunda dinlersin. Bu telefonda kalır, saklanmaz.','در پایان دوباره گوشش می‌کنی. روی همین گوشی می‌ماند و ذخیره نمی‌شود.','Lo escuchas al final. Se queda en este móvil y no se guarda.')}</small></span></button>` : '';
+  const rec = sec === 'speaking' && courseRecSupported() ? `<button class="cs-rec${courseUi.mkRec ? ' on' : ''}" data-action="course-mock-rec" aria-pressed="${courseUi.mkRec ? 'true' : 'false'}"><span class="cs-box">${courseUi.mkRec ? ICONS.check : ''}</span><span><b>${CL('Record myself','Sesimi kayda al','صدایم را ضبط کن','Grabarme')}</b><small>${CL('You hear it back at the end. It stays on this phone and is not saved.','Sonunda dinlersin. Bu telefonda kalır, saklanmaz.','در پایان دوباره گوشش می‌کنی. ضبطت از همین گوشی بیرون نمی‌رود و ذخیره هم نمی‌شود.','Lo escuchas al final. Se queda en este móvil y no se guarda.')}</small></span></button>` : '';
   return `<div class="card-flat cq-how"><div class="eyebrow" style="color:${COURSE_CARD.mock.t};">${esc(courseUp(cl(COURSE_MOCK_NAMES[sec])))}</div><p style="margin:6px 0 0; font-size:14px; line-height:1.5;">${esc(what)}</p>
       ${sec === 'listening' && s.note ? `<p style="margin:6px 0 0; font-size:12px; color:var(--ink-soft);" dir="ltr" translate="no">${esc(s.note)}</p>` : ''}</div>${rec}
     <p style="font-size:12.5px; color:var(--ink-soft); margin:12px 0 0;">${CL('Find a quiet place. Once you start, the clock runs.','Sessiz bir yer bul. Başlayınca süre işler.','یک جای ساکت پیدا کن. وقتی شروع کنی، زمان‌سنج کار می‌کند.','Busca un lugar tranquilo. Cuando empiezas, corre el reloj.')}</p>
@@ -30881,7 +30881,7 @@ function renderCourseMockResult(){
       ${wrong.length ? `<p style="margin:12px 0 0; font-size:12.5px; color:var(--ink-soft);">${CL(wrong.length+' wrong answers are in your error log ("Your work").', wrong.length+' yanlış cevap hata kaydında ("Çalışmaların").', wrong.length+' جواب غلط در فهرست اشتباه‌هایت است («کارهای تو»).', wrong.length+' respuestas incorrectas están en tu registro de errores ("Tu trabajo").')}</p>` : ''}
       <button class="link-btn cs-back-course" data-action="course-close" data-cid="${cid}" style="display:block; margin:16px auto 0;">${CL('Back to the course','Kursa dön','برگشت به دوره','Volver al curso')}</button>
     </div>
-    ${nextUid ? `<div class="cs-foot"><button class="btn btn-primary cs-main" data-action="${access ? 'course-go' : 'course-open'}" ${access ? '' : 'data-view="course-gate"'} data-cid="${cid}" data-uid="${esc(nextUid)}">${courseIsCp(cid, nextUid) ? CL('Start the chapter finale','Bölüm finaline başla','شروع پایان فصل','Empezar el final del capítulo') : CL('Start the next lesson','Sonraki derse başla','درس بعدی را شروع کن','Empezar la siguiente lección')}</button></div>` : ''}
+    ${nextUid ? `<div class="cs-foot"><button class="btn btn-primary cs-main" data-action="${access ? 'course-go' : 'course-open'}" ${access ? '' : 'data-view="course-gate"'} data-cid="${cid}" data-uid="${esc(nextUid)}">${courseIsCp(cid, nextUid) ? CL('Start the chapter finale','Bölüm finaline başla','شروع مرور پایان فصل','Empezar el final del capítulo') : CL('Start the next lesson','Sonraki derse başla','درس بعدی را شروع کن','Empezar la siguiente lección')}</button></div>` : ''}
   </div>`;
 }
 // Mock writing: the typed text and the word counters are kept as you type (saved a moment later).
@@ -31147,7 +31147,7 @@ function renderCourseDone(){
   }
   const mk = mock ? courseFindUnit(cid, mock) : null;
   const mockCard = mk ? `<div class="card-flat cd-mock"><div class="eyebrow">${esc(courseUp(courseLessonName(cid, mock)))}${courseSep()}${esc(courseHoursText(coursePartMinutes(cid, mock, -1)))}</div>
-      <p dir="${courseTD()}">${esc(cl(mk.u.title))}. ${CL('Do it when you have a quiet slot.','Sakin bir zamanın olduğunda yap.','وقتی وقت آرامی داشتی انجامش بده.','Hazlo cuando tengas un rato tranquilo.')}</p>
+      <p dir="${courseTD()}">${esc(cl(mk.u.title))}. ${CL('Do it when you have a quiet slot.','Sakin bir zamanın olduğunda yap.','هر وقت سرت خلوت بود انجامش بده.','Hazlo cuando tengas un rato tranquilo.')}</p>
       <button class="btn btn-sm btn-ghost" data-action="course-go" data-cid="${cid}" data-uid="${esc(mock)}">${CL('Open the mock test','Deneme sınavını aç','باز کردن آزمون آزمایشی','Abrir el simulacro')}</button></div>` : '';
   const work = [];
   if(wr && wr.text && it.writing) work.push(`<div class="card-flat cd-work"><div class="cs-eyebrow" style="color:${COURSE_CARD.writing.t};">${esc(courseUp(cl(COURSE_CARD.writing)+(it.writing.title ? courseSep()+cl(it.writing.title) : '')))}</div><details><summary dir="ltr" translate="no">${esc(courseFirstLine(wr.text))}</summary><p dir="ltr" translate="no">${esc(wr.text)}</p></details></div>`);
@@ -31331,7 +31331,7 @@ function courseRowHtml(c, id, mi, nx, locked){
   const ui = f.m.units.findIndex(u=>u.id===id);
   const no = isCp ? ICONS.star : isMk ? ICONS.pen : (mi+1)+'.'+(ui+1);
   const title = isMk ? courseLessonName(cid, id) : isCp ? courseFinaleName(cid) : cl(f.u.title);
-  const sub = isMk ? courseHoursText(coursePartMinutes(cid, id, -1)) + (done ? '' : courseSep() + CL('optional, when you have a quiet slot','isteğe bağlı, sakin bir zamanında','اختیاری، وقتی وقت آرامی داری','opcional, cuando tengas un rato tranquilo'))
+  const sub = isMk ? courseHoursText(coursePartMinutes(cid, id, -1)) + (done ? '' : courseSep() + CL('optional, when you have a quiet slot','isteğe bağlı, sakin bir zamanında','اختیاری، هر وقت سرت خلوت بود','opcional, cuando tengas un rato tranquilo'))
     : isCp ? courseLessonLine(cid, id) : courseUnitWaiting(cid, id) ? courseWaitingLine() : f.u.sub ? cl(courseGt(cid, f.u, 'sub')) : '';
   const cls = 'cl-row' + (locked ? ' lock' : done ? ' done' : cur ? ' cur' : '') + (isCp ? ' cp' : '') + (isMk ? ' mk' : '');
   const act = locked ? `data-action="course-open" data-view="course-gate" data-cid="${cid}" data-uid="${esc(id)}"` : ready ? `data-action="course-lesson-open" data-cid="${cid}" data-uid="${esc(id)}"` : 'disabled';
@@ -31501,7 +31501,7 @@ function courseLazyEnsure(c, uid){ const m = courseLazyUnitMod(uid); if(m && !co
 function courseLazyPrefetch(c, nx){ if(nx && nx.uid) courseLazyEnsure(c, nx.uid); }
 function courseLazyOpening(cid){ return courseIsExam(courseGet(cid)) ? CL('Opening the exam…','Sınav açılıyor…','آزمون باز می‌شود…','Abriendo el examen…') : CL('Opening the lesson…','Ders açılıyor…','درس باز می‌شود…','Abriendo la lección…'); }
 function courseLazyFailHtml(cid, uid){
-  const msg = courseIsExam(courseGet(cid)) ? CL('This exam could not be loaded. Check your connection and try again.','Bu sınav yüklenemedi. Bağlantını kontrol edip tekrar dene.','این آزمون بار نشد. اتصالت را بررسی کن و دوباره امتحان کن.','No se pudo cargar este examen. Revisa tu conexión e inténtalo de nuevo.') : CL('This lesson could not be loaded. Check your connection and try again.','Bu ders yüklenemedi. Bağlantını kontrol edip tekrar dene.','این درس بار نشد. اتصالت را بررسی کن و دوباره امتحان کن.','No se pudo cargar esta lección. Revisa tu conexión e inténtalo de nuevo.');
+  const msg = courseIsExam(courseGet(cid)) ? CL('This exam could not be loaded. Check your connection and try again.','Bu sınav yüklenemedi. Bağlantını kontrol edip tekrar dene.','این آزمون باز نشد. اتصالت را بررسی کن و دوباره امتحان کن.','No se pudo cargar este examen. Revisa tu conexión e inténtalo de nuevo.') : CL('This lesson could not be loaded. Check your connection and try again.','Bu ders yüklenemedi. Bağlantını kontrol edip tekrar dene.','این درس باز نشد. اتصالت را بررسی کن و دوباره امتحان کن.','No se pudo cargar esta lección. Revisa tu conexión e inténtalo de nuevo.');
   return `<div class="card-flat ie-wait"><p dir="${courseTD()}">${msg}</p>
     <button class="btn btn-sm btn-ghost" data-action="course-lazy-retry" data-cid="${cid}" data-uid="${esc(uid)}">${CL('Try again','Tekrar dene','دوباره امتحان کن','Reintentar')}</button></div>`;
 }
@@ -31534,7 +31534,7 @@ function courseIeCards(cid, ex){ const want = courseTrack(cid) === 'gt' ? 'gt' :
 function courseIeStepLine(cid, uid, types, it){
   const t = types.length === 1 ? types[0] : '';
   if(t === 'explain' && it.explain && it.explain.context){ const n = courseIeCards(cid, it.explain).length;
-    return CL('The context: '+n+' cards. Then the technique: key points, a worked example, a quick check.', 'Bağlam: '+n+' kart. Sonra teknik: ana noktalar, çözümlü bir örnek, hızlı bir kontrol.', 'بافت: '+n+' کارت. بعد تکنیک: نکته‌های اصلی، یک مثال حل‌شده، یک سؤال سریع.', 'El contexto: '+n+' tarjetas. Luego la técnica: puntos clave, un ejemplo resuelto y una comprobación rápida.'); }
+    return CL('The context: '+n+' cards. Then the technique: key points, a worked example, a quick check.', 'Bağlam: '+n+' kart. Sonra teknik: ana noktalar, çözümlü bir örnek, hızlı bir kontrol.', 'زمینه: '+n+' کارت. بعد تکنیک: نکته‌های اصلی، یک مثال حل‌شده، یک سؤال سریع.', 'El contexto: '+n+' tarjetas. Luego la técnica: puntos clave, un ejemplo resuelto y una comprobación rápida.'); }
   if(t === 'drill' && it.drill && it.drill.exam){ const r = courseIeQRange(it.drill.groups);
     return it.drill.skill === 'listening' ? CL('Hear the recording once, as in the exam, and answer Questions '+r+'.', 'Kaydı sınavdaki gibi bir kez dinle ve '+r+'. soruları cevapla.', 'فایل صوتی را مثل آزمون فقط یک بار گوش بده و به سؤال‌های '+r+' جواب بده.', 'Escucha la grabación una vez, como en el examen, y responde a las preguntas '+r+'.')
       : CL('Read the passage and answer Questions '+r+' in about '+(it.drill.timed || 20)+' minutes.', 'Metni oku ve '+r+'. soruları yaklaşık '+(it.drill.timed || 20)+' dakikada cevapla.', 'متن را بخوان و در حدود '+(it.drill.timed || 20)+' دقیقه به سؤال‌های '+r+' جواب بده.', 'Lee el texto y responde a las preguntas '+r+' en unos '+(it.drill.timed || 20)+' minutos.'); }
@@ -31575,7 +31575,7 @@ function courseIeContextHtml(cid, uid, ex){
           : `<button class="btn btn-sm ie-acc" data-action="course-ie-reveal" data-uid="${esc(uid)}" data-card="${esc(k.id)}">${CL('Show answer','Cevabı göster','جواب را نشان بده','Mostrar la respuesta')}</button>`}</div>`); }
     return h + `</div>`;
   };
-  return `<div class="lx-sec ie-ctx"><div class="lx-head"><div class="lx-eyebrow">${esc(cl(cx.eyebrow) || CL('1 The context','1 Bağlam','۱ بافت','1 El contexto'))}</div><h2 class="display" dir="${courseTD()}">${esc(cl(cx.head))}<span class="dot">.</span></h2></div>
+  return `<div class="lx-sec ie-ctx"><div class="lx-head"><div class="lx-eyebrow">${esc(cl(cx.eyebrow) || CL('1 The context','1 Bağlam','۱ زمینه','1 El contexto'))}</div><h2 class="display" dir="${courseTD()}">${esc(cl(cx.head))}<span class="dot">.</span></h2></div>
       ${cx.intro ? `<p class="ie-cintro" dir="${courseTD()}">${esc(cl(cx.intro))}</p>` : ''}
       <div class="ie-cards" id="ie-cards">${cards.map(card).join('')}</div>
       ${cards.length > 1 ? `<div class="ie-pager"><span id="ie-cpos">1 / ${cards.length}</span><span class="ie-pd">${cards.map((k, i)=>`<i class="${i === 0 ? 'on' : ''}"></i>`).join('')}</span><span>${CL('Swipe for the next card','Sonraki kart için kaydır','برای کارت بعدی بکش','Desliza para la siguiente tarjeta')} ${LANG === 'fa' ? '←' : '→'}</span></div>` : ''}
@@ -31797,7 +31797,7 @@ function courseIePlayerInner(d, st){
       <div class="ie-pt"><div class="ie-pst">${esc(lbl)}</div>${sub ? `<div class="ie-psub" dir="${s0 === 'playing' ? 'ltr' : courseTD()}">${esc(sub)}</div>` : ''}</div>
       ${s0 === 'playing' && ie.left > 0 ? `<b class="ie-pcnt">${courseClock(ie.left)}</b><button class="btn btn-sm ie-pskip" data-action="course-ie-skip">${CL('Skip','Geç','رد شو','Saltar')}</button>` : ''}</div>
     <div class="ie-pbar"><i style="width:${p}%;"></i></div>
-    <div class="ie-vlist">${CL('Voices','Sesler','صداها','Voces')}: <span dir="ltr" translate="no">${Object.keys(V).map(k=>esc(k + ' (' + V[k].accent + ', ' + V[k].gender + ')')).join(' · ')}</span><br>${noVoice ? CL('This device has no voices. Answer, check, then read what was said.','Bu cihazda ses yok. Cevapla, kontrol et, sonra söyleneni oku.','این دستگاه صدا ندارد. جواب بده، بررسی کن و بعد متن گفت‌وگو را بخوان.','Este dispositivo no tiene voces. Responde, comprueba y luego lee lo que se dijo.') : (courseIeClipMap && Object.keys(courseIeClipMap).length ? CL('Studio voices where recorded; your device’s voice for the rest.','Kaydedilen yerlerde stüdyo sesleri; geri kalanında cihazının sesi.','هر جا ضبط شده صدای استودیو؛ بقیه با صدای دستگاه خودت.','Voces de estudio donde están grabadas; la voz de tu dispositivo para el resto.') : CL('Your device’s voices stand in for the studio recording here.','Burada stüdyo kaydının yerine cihazının sesleri çalar.','این‌جا به جای ضبط استودیویی، صدای دستگاه خودت پخش می‌شود.','Aquí las voces de tu dispositivo sustituyen a la grabación de estudio.'))}</div>`;
+    <div class="ie-vlist">${CL('Voices','Sesler','صداها','Voces')}: <span dir="ltr" translate="no">${Object.keys(V).map(k=>esc(k + ' (' + V[k].accent + ', ' + V[k].gender + ')')).join(' · ')}</span><br>${noVoice ? CL('This device has no voices. Answer, check, then read what was said.','Bu cihazda ses yok. Cevapla, kontrol et, sonra söyleneni oku.','این دستگاه صدا ندارد. جواب بده، بررسی کن و بعد متن گفت‌وگو را بخوان.','Este dispositivo no tiene voces. Responde, comprueba y luego lee lo que se dijo.') : (courseIeClipMap && Object.keys(courseIeClipMap).length ? CL('Studio voices where recorded; your device’s voice for the rest.','Kaydedilen yerlerde stüdyo sesleri; geri kalanında cihazının sesi.','هر جا ضبط شده باشد صدای استودیو پخش می‌شود و بقیه با صدای دستگاه خودت.','Voces de estudio donde están grabadas; la voz de tu dispositivo para el resto.') : CL('Your device’s voices stand in for the studio recording here.','Burada stüdyo kaydının yerine cihazının sesleri çalar.','اینجا به‌جای ضبط استودیویی، صدای دستگاه خودت پخش می‌شود.','Aquí las voces de tu dispositivo sustituyen a la grabación de estudio.'))}</div>`;
 }
 function courseIePlayerUpd(st){ const el = typeof document !== 'undefined' && document.getElementById('ie-player'); if(el && courseUi.dr === st){ const d = courseUnitItems(st.uid).drill; if(d) el.innerHTML = courseIePlayerInner(d, st); } }
 
@@ -31958,7 +31958,7 @@ function courseIeSetsHtml(cid, uid, s){
   const mins = (p.minutes || []).join('-');
   let tail = '', btn = '';
   if(k.stage === 0){
-    const recRow = courseRecSupported() ? `<button class="cs-rec${st.rec ? ' on' : ''}" data-action="course-ie-sp-recmode" aria-pressed="${st.rec ? 'true' : 'false'}"><span class="cs-box">${st.rec ? ICONS.check : ''}</span><span><b>${CL('Record myself','Sesimi kayda al','صدایم را ضبط کن','Grabarme')}</b><small>${CL('You hear it back after each part. It stays on this phone and is not saved.','Her kısımdan sonra dinlersin. Bu telefonda kalır, saklanmaz.','بعد از هر بخش دوباره گوشش می‌کنی. روی همین گوشی می‌ماند و ذخیره نمی‌شود.','Lo escuchas después de cada parte. Se queda en este móvil y no se guarda.')}</small></span></button>` : '';
+    const recRow = courseRecSupported() ? `<button class="cs-rec${st.rec ? ' on' : ''}" data-action="course-ie-sp-recmode" aria-pressed="${st.rec ? 'true' : 'false'}"><span class="cs-box">${st.rec ? ICONS.check : ''}</span><span><b>${CL('Record myself','Sesimi kayda al','صدایم را ضبط کن','Grabarme')}</b><small>${CL('You hear it back after each part. It stays on this phone and is not saved.','Her kısımdan sonra dinlersin. Bu telefonda kalır, saklanmaz.','بعد از هر بخش دوباره گوشش می‌کنی. ضبطت از همین گوشی بیرون نمی‌رود و ذخیره هم نمی‌شود.','Lo escuchas después de cada parte. Se queda en este móvil y no se guarda.')}</small></span></button>` : '';
     tail = recRow;
     btn = p.card ? `<button class="btn btn-primary cs-main" data-action="course-ie-sp-go" data-stage="prep">${CL('Start: 1 minute to prepare','Başla: 1 dakika hazırlık','شروع: ۱ دقیقه آماده‌سازی','Empieza: 1 minuto para prepararte')}</button>`
       : `<button class="btn btn-primary cs-main" data-action="course-ie-sp-go" data-stage="rec">${esc(CL('Start answering · '+mins+' min', 'Cevaplamaya başla · '+mins+' dk', 'شروع جواب دادن – '+mins+' دقیقه', 'Empieza a responder · '+mins+' min'))}</button>`;
@@ -32357,7 +32357,7 @@ Object.assign(HANDLERS, {
   'course-cert-save'(el){
     const c = courseGet(el.dataset.cid), pd = courseFinalData(c); if(!pd) return;
     courseCertPng(c, pd).then(b=>{ if(!b) return; const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = courseCertFile(c); document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(a.href), 8000);
-      courseUi.certMsg = CL('Saved. Look in your downloads or photos.','Kaydedildi. İndirilenlere ya da fotoğraflarına bak.','ذخیره شد. در دانلودها یا عکس‌هایت ببین.','Guardado. Míralo en tus descargas o fotos.'); if(state.view==='course-cert') render(); });
+      courseUi.certMsg = CL('Saved. Look in your downloads or photos.','Kaydedildi. İndirilenlere ya da fotoğraflarına bak.','ذخیره شد. آن را در پوشه‌ی دانلودها یا عکس‌هایت پیدا می‌کنی.','Guardado. Míralo en tus descargas o fotos.'); if(state.view==='course-cert') render(); });
   },
   'course-cert-share'(el){
     const c = courseGet(el.dataset.cid), pd = courseFinalData(c); if(!pd) return;

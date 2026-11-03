@@ -27881,7 +27881,9 @@ function courseTrack(cid){
   return (state.profile && ['B2','C1','C2'].includes(state.profile.level)) ? 'B2' : 'B1';
 }
 // coursePreview (set by ?coursePreview=1 on the URL) lets the team open every unit to review content.
-function coursePreviewOn(){ try{ if(/[?&]coursePreview=1/.test(location.search)) localStorage.setItem('farinCoursePreview','1'); if(/[?&]coursePreview=0/.test(location.search)) localStorage.removeItem('farinCoursePreview'); return localStorage.getItem('farinCoursePreview')==='1'; }catch(e){ return false; } }
+/* Review mode is tied to the account that typed the review password (its recovery code), never to the device (Farin 2026-11-03: another account on the same phone saw every course open). */
+function coursePreviewOwner(){ return (state.profile && state.profile.recoveryCode) || ''; }
+function coursePreviewOn(){ try{ if(/[?&]coursePreview=0/.test(location.search)) localStorage.removeItem('farinCoursePreview'); const v = localStorage.getItem('farinCoursePreview'); return !!v && v.length > 1 && v === coursePreviewOwner(); }catch(e){ return false; } }
 function courseUnitAccess(c, uid){ return (c.freeUnits || []).includes(uid) || courseUnlocked(c.id) || !!(state.progress && state.progress.premium === true) || coursePreviewOn(); }
 /* ---------- Course access by password (Trello Hr03Iu6C; business rules business/farin-monetization/02 §4, 06 §6) ----------
    Farin sells a course by hand: the learner taps "I want this course" (WhatsApp), pays, and Farin
@@ -27919,7 +27921,7 @@ function courseSha256Hex(text){
 const COURSE_REVIEW_PW_HASH = '72cb80c51317a53396eb0d0a2717f86b81e92345cf4c27b3ca25694fb0c4e486';
 function courseReviewPwMatches(pw){ return courseSha256Hex('farin-course-review-v1\u0000' + String(pw||'').trim().toUpperCase().replace(/İ/g,'I')).then(h=>h === COURSE_REVIEW_PW_HASH).catch(()=>false); }
 function courseReviewTurnOn(cid){
-  try{ localStorage.setItem('farinCoursePreview','1'); }catch(e){}
+  try{ if(coursePreviewOwner()) localStorage.setItem('farinCoursePreview', coursePreviewOwner()); }catch(e){}
   // a ?coursePreview=0 still in the address would switch it straight off again
   try{ if(/[?&]coursePreview=0/.test(location.search)){ const url = new URL(location.href); url.searchParams.delete('coursePreview'); history.replaceState(null, '', url); } }catch(e){}
   Object.assign(courseUi, {pwBusy:false, pwOpen:false, pwDraft:'', pwStatus:null, chapter:null, introOpen:null, reviewMsg:cid});

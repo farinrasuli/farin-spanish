@@ -24,6 +24,11 @@ Tools: `Claude/specs/mini-radio-tools/` (`sweep.mjs` content sweep + clip covera
   null when already played (then a story passage, then Listen & Type). refId = `RadioEpisode.refId(id)` = id + '-radio'.
 - Two-voice shows get a speaker dot per line in the Off-air transcript (a = --cat-lis, b = --cat-story).
 
+## Art in (2026-11-02)
+- Picks from `game-card-posters-2026-10-28/plates/out/r2`: body s7, knob s23 (turned so the notch is at 12), sill s23. Cut by `Claude/specs/mini-radio-tools/process-art.mjs`, then `build-art-manifest.mjs`. The body draft has no lamp socket, so the cutter draws a pill socket in the art's line above the grille.
+- `radio.css`: on the sill art the status, line, ghost button and order slots get a solid light ground so they read over the harbour.
+- Known: the engine places the radio at the top of the screen, so it sits in front of the window, not on the sill.
+
 ## App wiring
 Step 4 of the serialized pass plan: `Claude/specs/app-wiring-pass-2026-10-29/PATCH-PLAN.md`.
 

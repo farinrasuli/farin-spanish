@@ -2094,6 +2094,11 @@
   .cs-tg-ex{font-size:14px; font-weight:700; margin:4px 0 2px; text-align:left;}
   /* AI-ENGINE-STYLE-END */
   .cx-tip{padding:10px 12px; border-radius:12px; background:var(--bg-sunken); font-size:13px; line-height:1.5; color:var(--ink-soft);}
+  .cx-mk{margin:10px 0 8px;} .cx-mk .lx-eyebrow{margin-bottom:6px;}
+  .cx-mk-l{margin:0 0 6px; padding:9px 12px; border-radius:12px; font-size:14.5px; line-height:1.45; font-weight:700;}
+  .cx-mk-l span{display:inline-block; width:18px; font-weight:800;}
+  .cx-mk-l.bad{background:var(--cat-gram-soft); color:var(--ink); text-decoration:line-through; text-decoration-color:color-mix(in srgb, var(--cat-gram) 70%, transparent);} .cx-mk-l.bad span{text-decoration:none;}
+  .cx-mk-l.ok{background:var(--cat-voc-soft); color:var(--ink);}
   .cx-phrs{display:flex; flex-direction:column;}
   .cx-phr{display:flex; gap:10px; align-items:flex-start; padding:10px 0; border-top:1px solid var(--border-soft);}
   .cx-phr:first-child{border-top:none; padding-top:0;}
@@ -31067,7 +31072,9 @@ function courseExplainCardHtml(p){
   const table = p.table ? courseExplainTableHtml(p.table) : '';
   const phrases = (p.phrases || []).length ? `<div class="cx-phrs">${p.phrases.map(x=>x.copy ? courseCopyPhraseHtml(x) : `<div class="cx-phr"><button type="button" class="lx-spk" data-action="speak-sentence" data-text="${esc(x.phrase)}" aria-label="${esc(CL('Listen','Dinle','گوش کن','Escuchar'))}">${ICONS.soundOn}</button><div><b dir="ltr" translate="no">${esc(x.phrase)}</b>${x.meaning ? `<small dir="${courseTD()}">${esc(cl(x.meaning))}</small>` : ''}</div></div>`).join('')}</div>` : '';
   const tip = p.tip ? `<div class="cx-tip" dir="${courseTD()}">${isoHtml(cl(p.tip))}</div>` : '';
-  return `<div class="lx-card cx-card">${body}${steps}${table}${phrases}${tip}</div>`;
+  // Common mistake (cloud 2026-11-03): the typical learner error and its fix; the tip below it says why.
+  const mk = p.wrong && p.right ? `<div class="cx-mk"><div class="lx-eyebrow">${CL('Common mistake','Sık yapılan hata','اشتباه رایج','Error frecuente')}</div><p class="cx-mk-l bad" dir="ltr" translate="no"><span aria-hidden="true">✗</span> ${esc(p.wrong)}</p><p class="cx-mk-l ok" dir="ltr" translate="no"><span aria-hidden="true">✓</span> ${esc(p.right)}</p></div>` : '';
+  return `<div class="lx-card cx-card">${body}${steps}${table}${phrases}${mk}${tip}</div>`;
 }
 function courseExplainHtml(cid, uid, ex, redo){
   const c = courseGet(cid), obj = courseUnitObjective(cid, uid);

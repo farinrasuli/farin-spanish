@@ -36,7 +36,7 @@
 'use strict';
 if(window.CozyChores) return;
 var W = window, D = document;
-var VERSION = '0.4.0';
+var VERSION = '0.4.1';
 var ABORT = {abort:true};
 var G = null;                       // the running game (one at a time, like chStage in the app)
 var SPRING = 'cubic-bezier(.34,1.56,.64,1)';
@@ -1216,6 +1216,16 @@ function springBack(n){
 }
 function inside(pt, r, tol){ return pt.x >= r.left - tol && pt.x <= r.right + tol && pt.y >= r.top - tol && pt.y <= r.bottom + tol; }
 
+/* a press is never silently refused (Farin 2026-10-31): a line that is playing is cut short and the object comes up; only Captain's moment and
+   the mentor's stop (G.hold) really hold the hand, and then the object says so */
+function cutLine(){ if(G && G.lineSkip){ var f = G.lineSkip; G.lineSkip = null; stopSpeech(); f(); return true; } return false; }
+function notYet(n){
+  if(!n) return;
+  sfx('tick');
+  n.classList.add('oh-notyet'); setTimeout(function(){ n.classList.remove('oh-notyet'); }, 420);
+  fx(n, [{translate:'0 0'}, {translate:'-4px 0'}, {translate:'4px 0'}, {translate:'-2px 0'}, {translate:'0 0'}], {duration:280});
+}
+
 /* ============================== the 7 gestures ============================== */
 var GESTURE = {};
 
@@ -1327,7 +1337,7 @@ GESTURE['drag-to'] = function(g){
       var n = shot.L[id], z = n.style.zIndex;
       n.classList.add('oh-grab');
       var off = onPress(n, {
-        start:function(){ if(n.dataset.done || n.classList.contains('oh-gone') || G.busyLine) return false; G.dragging = true; liftOn(n); sfx('tick'); if(g.speakWord && G.band === 'A1' && n.dataset.item){ speak(objWord(n.dataset.item), {interrupt:true}); } },
+        start:function(){ if(n.dataset.done || n.classList.contains('oh-gone')) return false; if(G.hold){ notYet(n); return false; } cutLine(); if(!remaining().length) return false; G.dragging = true; liftOn(n); sfx('tick'); if(g.speakWord && G.band === 'A1' && n.dataset.item){ speak(objWord(n.dataset.item), {interrupt:true}); } },
         move:function(e, d){ moveBy(n, d); },
         end:function(e, tap){
           G.dragging = false;
@@ -1374,7 +1384,7 @@ GESTURE['drag-to'] = function(g){
       var n = shot.L[id]; var gr = groupOf(id), item = n.dataset.item;
       try{
         if(!gr){
-          // an extra: its line plays and it springs back (300 ms SPRING); nothing new is picked up while the line plays
+          // an extra: its line plays and it springs back (300 ms SPRING); picking up something else cuts the line short
           liftOff(n, z); hn.wrong(); springBack(n);
           await sayOnce(extras[item], 'wrong');
           return;
@@ -1448,7 +1458,7 @@ GESTURE['pour-until'] = function(g){
     var hn = hints({h15:function(){ if(mark) mark.classList.add('oh-pulse'); }, h45:function(){ if(mark) mark.classList.add('oh-pulse'); }});
     G.status = {kind:'gesture', type:'pour-until', station:G.sid, hold:'.oh-live [data-oh-hot="' + g.hold[0] + '"]', target:g.target, rate:g.rate, tol:g.tol, steps:g.steps || [50, 10], value:function(){ return v; }};
     function startPour(){
-      if(finished || pouring || G.busyPour) return;
+      if(finished || pouring) return;
       pouring = true; last = performance.now();
       if(bagP && bag){ bag.classList.add('oh-gone'); bagP.classList.remove('oh-gone'); }
       if(stream){ stream.classList.remove('oh-gone'); stream.classList.add('oh-flowing'); }
@@ -1473,7 +1483,7 @@ GESTURE['pour-until'] = function(g){
     }
     var busyCheck = false;
     async function check(){
-      if(busyCheck) return; busyCheck = true; G.busyPour = true;
+      if(busyCheck) return; busyCheck = true;
       try{
         var n = Math.round(v);
         var rl = lineFor(g.readout);
@@ -1487,18 +1497,19 @@ GESTURE['pour-until'] = function(g){
           await new Promise(function(res){ var f = function(t){ var k = clamp((t - t0) / (600 * (RM() ? .01 : 1)), 0, 1); v = from + (to - from) * k; paint(); if(k < 1 && G) requestAnimationFrame(f); else res(); }; requestAnimationFrame(f); });
         } else hn.progress();
       }catch(err){ if(err !== ABORT && G) console.warn('[cozy] pour', err); }
-      finally{ busyCheck = false; if(G) G.busyPour = false; }
+      finally{ busyCheck = false; }
     }
     g.hold.forEach(function(hid){
       var node = H(hid); if(!node) return;
       node.classList.add('oh-holdme');
-      offs.push(onPress(node, {start:function(){ if(finished || busyCheck) return false; startPour(); }, end:function(){ stopPour(); }}));
+      offs.push(onPress(node, {start:function(){ if(finished) return false; if(busyCheck){ cutLine(); notYet(node); return false; } startPour(); }, end:function(){ stopPour(); }}));
     });
     var steps = g.steps || [50, 10];
     controls('<div class="oh-alt">' + steps.map(function(k){ return '<button type="button" class="oh-chip oh-alt-btn" data-add="' + k + '">+' + k + ' ' + esc(unit) + '</button>'; }).join('') + '</div>');
     G.ctl.querySelectorAll('[data-add]').forEach(function(b){
       b.addEventListener('click', function(){
-        if(finished || busyCheck || pouring) return;
+        if(finished || pouring) return;
+        if(busyCheck){ cutLine(); notYet(b); return; }
         var add = +b.dataset.add, from = v, to = Math.min(g.max, v + add), t0 = performance.now();
         if(first && g.puff){ first = false; VERB.burst(g.puff[0], g.puff[1], 10, '#ffffff', .12); }
         sfx('swish');
@@ -1635,7 +1646,7 @@ GESTURE['turn-dial'] = function(g){
     }
     var drag = false;
     offs.push(onPress(dial, {
-      start:function(){ if(finished || busy) return false; drag = true; },
+      start:function(){ if(finished || (busy && i === ti)) return false; if(busy) cutLine(); drag = true; },
       move:function(e){
         if(!drag) return;
         var c = center(rect(dial)), a = Math.atan2(e.clientX - c.x, -(e.clientY - c.y)) * 180 / Math.PI;   // 0 = up, clockwise
@@ -1766,10 +1777,10 @@ GESTURE.place = function(g){
       if(full(src) && src.node){ src.node.classList.add('oh-blocked'); if(sel === src) sel = srcs.filter(function(x){ return !x.blocked && !full(x); })[0] || sel; }
       paintDone();
       if(g.near) await nearCheck(it);
-      if(g.captain && count() === g.captain.at){ G.busyDrop = true; try{ await captainBeat(Object.assign({}, (G.P.stations[G.sid] || {}).captain || {}, g.captain)); } finally{ if(G) G.busyDrop = false; } hn.progress(); }
+      if(g.captain && count() === g.captain.at){ await captainBeat(Object.assign({}, (G.P.stations[G.sid] || {}).captain || {}, g.captain)); hn.progress(); }
       if(!G) return;
-      if(src.def.say && used(src) === 1){ var sl = lineFor(src.def.say); if(sl){ G.busyDrop = true; try{ await lineSay(sl); } finally{ if(G) G.busyDrop = false; } } }
-      if(need && count() >= need) finish();
+      if(src.def.say && used(src) === 1){ var sl = lineFor(src.def.say); if(sl) await lineSay(sl); }
+      if(!finished && need && count() >= need) finish();
     }
     // advice, never a block: a piece dropped next to one it should not sit by gets one kind line (the party plan speaker)
     async function nearCheck(it){
@@ -1780,12 +1791,12 @@ GESTURE.place = function(g){
       if(!hit) return;
       (G.round.said = G.round.said || {})[G.sid + ':near'] = 1;
       var l = lineFor(nr.line); if(!l) return;
-      G.busyDrop = true; try{ await lineSay(l); } finally{ if(G) G.busyDrop = false; }
+      await lineSay(l);
     }
     async function guardHit(src, piece){
       // the blueberry stop (GDD 5 S6): Mrs Bell's sling hand slides in and the berry stops in mid-air
       var gd = src.def.guard;
-      G.busyDrop = true;
+      G.hold = true;
       try{
         var hand = gd.hand ? L(gd.hand) : null;
         if(hand && piece){
@@ -1806,7 +1817,7 @@ GESTURE.place = function(g){
         src.blocked = true; if(src.node) src.node.classList.add('oh-blocked');
         if(sel === src) sel = srcs.filter(function(s){ return !s.blocked; })[0];
       }catch(err){ if(err !== ABORT && G) console.warn('[cozy] guard', err); }
-      finally{ if(G) G.busyDrop = false; }
+      finally{ if(G) G.hold = false; }
     }
     srcs.forEach(function(src){
       var n = src.node; if(!n) return;
@@ -1814,7 +1825,9 @@ GESTURE.place = function(g){
       var piece = null, startPt = null, stopped = false;
       offs.push(onPress(n, {
         start:function(e){
-          if(finished || G.busyDrop || count() >= max || full(src)) return false;
+          if(finished || count() >= max || full(src)) return false;
+          if(G.hold){ notYet(n); return false; }
+          cutLine();
           startPt = {x:e.clientX, y:e.clientY}; stopped = false; G.dragging = true;
         },
         move:function(e, d){
@@ -1858,7 +1871,9 @@ GESTURE.place = function(g){
     dots.forEach(function(d, i){
       d.addEventListener('click', function(e){
         e.stopPropagation();
-        if(finished || G.busyDrop) return;
+        if(finished) return;
+        if(G.hold){ notYet(d); return; }
+        cutLine();
         if(!sel || sel.blocked || full(sel)) sel = srcs.filter(function(s){ return !s.blocked && !full(s); })[0] || sel;
         if(sel.def.guard && !sel.blocked && cond(sel.def.guard.if, {drag:sel.def.id})){ guardHit(sel, null); return; }
         put(i, sel);
@@ -1866,7 +1881,7 @@ GESTURE.place = function(g){
     });
     // the guide (h45): each tap anywhere places an item on the nearest free anchor
     var guideTap = function(e){
-      if(!hn.guide || finished || G.busyDrop) return;
+      if(!hn.guide || finished || G.hold) return;
       if(e.target.closest && (e.target.closest('.oh-anchor') || e.target.closest('.oh-grab'))) return;
       var s = srcs.filter(function(x){ return !x.blocked && !full(x) && !(x.def.guard && cond(x.def.guard.if, {drag:x.def.id})); })[0];
       if(s) put(nearestFree({x:e.clientX, y:e.clientY}).i, s);
@@ -2289,7 +2304,7 @@ async function captainBeat(c){
     labelOn(cat, label);
     return;
   }
-  G.busyLine = true; G.busyDrop = true;
+  G.busyLine = true; G.hold = true;
   var prevStatus = G.status;
   try{
     cat.classList.remove('oh-gone');
@@ -2315,7 +2330,7 @@ async function captainBeat(c){
     if(settled && label){ var lt = T(label); balloon({who:label.who, text:lt, gloss:GL(label)}); G.lastLine = lt; await Promise.race([speak(lt, {interrupt:true}), wait(readMs(lt), true)]); }
     labelOn(cat, label);
   }catch(err){ if(err !== ABORT) throw err; }
-  finally{ if(G){ G.busyLine = false; G.busyDrop = false; G.status = prevStatus; } }
+  finally{ if(G){ G.busyLine = false; G.hold = false; G.status = prevStatus; } }
 }
 function labelOn(n, line){
   if(!line || n.dataset.lab) return;
@@ -2808,7 +2823,14 @@ function bandProject(P, band){
 function newRound(P, band, lang){
   return {v:1, project:P.id, band:band, lang:lang, stationIdx:0, items:{}, choices:{}, note:[], noteOn:false, photos:[], snaps:{}, mem:JSON.parse(JSON.stringify(P.memory || {})), startedAt:Date.now()};
 }
+function handFont(){
+  // never as an @import in chores.css: a blocked Google Fonts request fails the whole stylesheet, and the app then falls back to the old game
+  if(document.getElementById('oh-hand-font')) return;
+  var l = document.createElement('link'); l.id = 'oh-hand-font'; l.rel = 'stylesheet'; l.href = 'https://fonts.googleapis.com/css2?family=Patrick+Hand&display=swap';
+  document.head.appendChild(l);
+}
 function start(o){
+  handFont();
   if(G) destroy();
   o = o || {};
   var data = o.data, P = data.project;

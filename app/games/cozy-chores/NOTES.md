@@ -53,6 +53,12 @@ The engine's UI strings (`UI` in `engine.js`: Ask, Done, Leave?, Stay, cues…) 
 - **farin-lxd strings in (2026-10-29):** ui.* (shared.ui, wins over the engine table), obj.<project>.* (project objects, ES glosses in esGl), fill.sugar.*, cast.gran (Grandma Ivy / la abuela Amparo), bouquet curios (order / count / trim). build-projects.mjs reads them from lines/cozy-chores/lines-*.json. The non-anchor bands came on 2026-10-31 (v0.4).
 - **Not done:** Cat-Sitting and Fix-It (shelf projects, no content yet), Ada's drawing on the party table, real sfx files, the building-wide shelf entry inside the app (app-file slot).
 
+## v0.4.1 (2026-10-31): a press is never silently refused
+- **The bug:** drag-to refused every press while a line played (`G.busyLine`; place had `busyDrop`, pour `busyPour` / `busyCheck`, the dial `busy`), with no feedback. Measured at real speed: 5-6 s after one wrong drop, 11 s when the voice never reports its end.
+- **Now:** a press cuts the playing line short (`cutLine()`; the balloon stays) and the object lifts. Only `G.hold` holds the hand (Captain's moment, the blueberry stop); the object then wiggles with a dashed outline (`notYet()`). A pour press during the over-pour line cuts it and wiggles until the spoon has finished.
+- **Font:** the Patrick Hand `@import` left chores.css. With Google Fonts blocked it failed the stylesheet, and the app fell back to the old game. `handFont()` adds it as its own link.
+- **QA:** `Claude/qa/cozy-chores-realspeed.mjs` (pace 1, real speech path and speech that never ends, mouse + touch, dev harness + real app).
+
 ## v0.4 (2026-10-31): every project at every level (25 bands)
 - **Content:** farin-lxd's bands (card ZBMsgvbv; authoring source `cozy-chores-lxd-bands/`, design in `meta.bandNotes`). `build-projects.mjs` now copies the cake content too.
 - **A band can change a station without a second file:** `bands[band].over = {station:{fields to replace}}` and `bands[band].souvenir`. `bandProject()` merges them in `start()`, so the rest of the engine only reads `G.P.stations`. Small differences stay as `bands` / `notBands` on beats, layers and hots (hots are gated too now).

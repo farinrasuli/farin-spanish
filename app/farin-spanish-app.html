@@ -27880,11 +27880,15 @@ function courseTrack(cid){
   if(cc && cc.tracks && cc.tracks.length && !cc.tracks.includes('B1')) return cc.tracks[0];
   return (state.profile && ['B2','C1','C2'].includes(state.profile.level)) ? 'B2' : 'B1';
 }
-// coursePreview (set by ?coursePreview=1 on the URL) lets the team open every unit to review content.
+// coursePreview: Farin's review password opens every unit to review content (for the account that typed it only).
 /* Review mode is tied to the account that typed the review password (its recovery code), never to the device (Farin 2026-11-03: another account on the same phone saw every course open). */
 function coursePreviewOwner(){ return (state.profile && state.profile.recoveryCode) || ''; }
-function coursePreviewOn(){ try{ if(/[?&]coursePreview=0/.test(location.search)) localStorage.removeItem('farinCoursePreview'); const v = localStorage.getItem('farinCoursePreview'); return !!v && v.length > 1 && v === coursePreviewOwner(); }catch(e){ return false; } }
-function courseUnitAccess(c, uid){ return (c.freeUnits || []).includes(uid) || courseUnlocked(c.id) || !!(state.progress && state.progress.premium === true) || coursePreviewOn(); }
+/* The flag is a comma list of recovery codes: the English and Spanish apps share the farinrasuli.github.io origin, so one key serves both apps and every reviewing account.
+   The old device-wide value '1' (before 2026-11-03) is removed on sight, so an old saved copy of the page can never read it again. */
+function coursePreviewCodes(){ try{ const v = localStorage.getItem('farinCoursePreview'); if(v === '1'){ localStorage.removeItem('farinCoursePreview'); return []; } return String(v || '').split(',').filter(x=>x.length > 1); }catch(e){ return []; } }
+function coursePreviewOn(){ try{ if(/[?&]coursePreview=0/.test(location.search)) localStorage.removeItem('farinCoursePreview'); const me = coursePreviewOwner(); return me.length > 1 && coursePreviewCodes().includes(me); }catch(e){ return false; } }
+// (progress.premium was a placeholder from before the password sales model; nothing sets it, and a progress doc is writable by its owner, so it no longer opens anything — 2026-11-05)
+function courseUnitAccess(c, uid){ return (c.freeUnits || []).includes(uid) || courseUnlocked(c.id) || coursePreviewOn(); }
 /* ---------- Course access by password (Trello Hr03Iu6C; business rules business/farin-monetization/02 §4, 06 §6) ----------
    Farin sells a course by hand: the learner taps "I want this course" (WhatsApp), pays, and Farin
    creates a password in admin › Course access. Firestore rules only open the 'progress' collection,
@@ -27921,7 +27925,7 @@ function courseSha256Hex(text){
 const COURSE_REVIEW_PW_HASH = '72cb80c51317a53396eb0d0a2717f86b81e92345cf4c27b3ca25694fb0c4e486';
 function courseReviewPwMatches(pw){ return courseSha256Hex('farin-course-review-v1\u0000' + String(pw||'').trim().toUpperCase().replace(/İ/g,'I')).then(h=>h === COURSE_REVIEW_PW_HASH).catch(()=>false); }
 function courseReviewTurnOn(cid){
-  try{ if(coursePreviewOwner()) localStorage.setItem('farinCoursePreview', coursePreviewOwner()); }catch(e){}
+  try{ const me = coursePreviewOwner(); if(me){ const codes = coursePreviewCodes(); if(!codes.includes(me)) codes.push(me); localStorage.setItem('farinCoursePreview', codes.slice(-6).join(',')); } }catch(e){}
   // a ?coursePreview=0 still in the address would switch it straight off again
   try{ if(/[?&]coursePreview=0/.test(location.search)){ const url = new URL(location.href); url.searchParams.delete('coursePreview'); history.replaceState(null, '', url); } }catch(e){}
   Object.assign(courseUi, {pwBusy:false, pwOpen:false, pwDraft:'', pwStatus:null, chapter:null, introOpen:null, reviewMsg:cid});
@@ -28701,7 +28705,7 @@ function courseAccessLineHtml(c){
 // button, saying i want this course, or i already have the password!"): exactly two pill buttons, orange = the waiting list page (2026-11-01),
 // purple = the password entry. The password field opens under them only after a tap. `lead`/`bare` are kept for the callers.
 function courseUnlockBoxHtml(c, lead, bare){
-  if(courseUnlocked(c.id) || coursePreviewOn() || !courseHasContent(c.id) || (state.progress && state.progress.premium === true)) return '';
+  if(courseUnlocked(c.id) || coursePreviewOn() || !courseHasContent(c.id)) return '';
   const st = courseUi.pwStatus && courseUi.pwStatus.cid===c.id ? courseUi.pwStatus : null;
   return `<div class="course-unlock cu-two">
     <div class="cu-row">${courseRequestBtnHtml(c)}<button class="cu-btn cu-purple" data-action="course-pw-toggle">${CL('I already have the password','Şifrem zaten var','رمز را دارم','Ya tengo la contraseña')}</button></div>

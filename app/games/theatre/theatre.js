@@ -328,7 +328,10 @@ function exit(){
   var s = cur; if(!s) return;
   if(s.phase === 'poster'){ close(); return; }
   if(s.opts.onExit){
-    try{ s.opts.onExit(); }catch(e){ console.error('[theatre] onExit', e); }
+    var keep;
+    try{ keep = s.opts.onExit(); }catch(e){ console.error('[theatre] onExit', e); }
+    // onExit returns false = the game asks first ("Leave? Your place is safe.") and navigates itself if the learner leaves
+    if(keep === false) return;
     // the app's navigation calls sync(); if nothing navigated, close anyway
     setTimeout(function(){ if(cur === s) close(); }, 700);
   } else close();

@@ -21,7 +21,7 @@
 (function(){
 'use strict';
 if(window.MiniRadio) return;
-var W = window, D = document, VERSION = '0.3.0', ABORT = {abort:true}, G = null;
+var W = window, D = document, VERSION = '0.3.1', ABORT = {abort:true}, G = null;
 var MARK = 0.68;   // where the station sits on the dial (0..1)
 
 function esc(s){ return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
@@ -170,7 +170,7 @@ function build(){
   root.innerHTML = '<div class="mr-status"><span dir="' + dir() + '">' + esc(U('onAir')) + '</span><span class="mr-dots">' + new Array(P + 1).join('<i></i>') + '</span></div>' +
     '<div class="mr-scroll">' + setHtml() + '<p class="mr-line" aria-live="polite"></p><div class="mr-controls"></div><div class="mr-area"></div></div>';
   G.box.innerHTML = ''; G.box.appendChild(root);
-  if(G.art && G.art.sill){ root.classList.add('mr-has-sill'); root.style.setProperty('--mr-sill', 'url("' + G.art.sill + '")'); }
+  if(G.art && G.art.sill){ root.classList.add('mr-has-sill'); root.style.setProperty('--mr-sill', 'url("' + new URL(G.art.sill, D.baseURI).href + '")'); }   // absolute: a relative url() in a custom property resolves against radio.css, not the page (404 fixed 2026-11-05)
   G.root = root; G.set = root.querySelector('.mr-set'); G.needle = root.querySelector('.mr-needle'); G.knob = root.querySelector('.mr-knob');
   G.lineEl = root.querySelector('.mr-line'); G.ctl = root.querySelector('.mr-controls'); G.area = root.querySelector('.mr-area'); G.dots = root.querySelectorAll('.mr-dots i');
 }

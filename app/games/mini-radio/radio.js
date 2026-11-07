@@ -21,7 +21,7 @@
 (function(){
 'use strict';
 if(window.MiniRadio) return;
-var W = window, D = document, VERSION = '0.4.0', ABORT = {abort:true}, G = null;
+var W = window, D = document, VERSION = '0.5.0', ABORT = {abort:true}, G = null;
 var MARK = 0.68;   // where the station sits on the dial (0..1)
 
 function esc(s){ return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
@@ -109,9 +109,12 @@ function stopSpeech(){ try{ if(G && G.host.stopSpeech) G.host.stopSpeech(); else
 function box(b){ return b ? 'left:' + b[0] + '%;top:' + b[1] + '%;width:' + b[2] + '%;height:' + b[3] + '%' : ''; }
 function setHtml(){
   var A = G.art, mx = (4 + MARK * 92).toFixed(2) + '%';
-  var dial = '<div class="mr-dial" role="slider" aria-label="' + esc(U('tune')) + '"' + (A ? ' style="' + box(A.layout.dial) + '"' : '') + '><i class="mr-ticks"></i><i class="mr-mark" style="left:' + mx + '"></i><i class="mr-needle"></i></div>';
+  var round = !!(A && A.layout.round), ang = function(n){ return (-135 + n * 270).toFixed(1); };
+  var dial = round
+    ? '<div class="mr-dial mr-round" role="slider" aria-label="' + esc(U('tune')) + '" style="' + box(A.layout.dial) + '"><i class="mr-face"></i><i class="mr-mark" style="transform:rotate(' + ang(MARK) + 'deg)"></i><i class="mr-needle"></i><i class="mr-hub"></i></div>'
+    : '<div class="mr-dial" role="slider" aria-label="' + esc(U('tune')) + '"' + (A ? ' style="' + box(A.layout.dial) + '"' : '') + '><i class="mr-ticks"></i><i class="mr-mark" style="left:' + mx + '"></i><i class="mr-needle"></i></div>';
   var lampEl = '<div class="mr-lamp"' + (A ? ' style="' + box(A.layout.lamp) + '"' : '') + ' dir="' + dir() + '">' + esc(U('onAir')) + '</div>';
-  if(A) return '<div class="mr-set mr-art"><img class="mr-body" src="' + esc(A.body) + '" alt="" draggable="false">' + dial + lampEl +
+  if(A) return '<div class="mr-set mr-art' + (round ? ' mr-roundset' : '') + '"><img class="mr-body" src="' + esc(A.body) + '" alt="" draggable="false">' + dial + lampEl +
     '<div class="mr-knob" style="' + box(A.layout.knob) + '"><img src="' + esc(A.knob) + '" alt="" draggable="false"></div></div>';
   return '<div class="mr-set mr-plain">' + lampEl + dial + '<button type="button" class="mr-knob" aria-label="' + esc(U('tune')) + '"><i class="mr-notch"></i></button></div>';
 }
@@ -144,7 +147,7 @@ function opening(){
 }
 function setNeedle(n){
   G.n = clamp(n, 0, 1);
-  G.needle.style.left = (4 + G.n * 92) + '%';
+  if(G.needle.parentNode.classList.contains('mr-round')) G.needle.style.transform = 'rotate(' + (-135 + G.n * 270) + 'deg)'; else G.needle.style.left = (4 + G.n * 92) + '%';
   G.knob.style.transform = 'rotate(' + (G.n * 300 - 150) + 'deg)';
 }
 function lamp(on){ G.set.classList.toggle('mr-on', !!on); }

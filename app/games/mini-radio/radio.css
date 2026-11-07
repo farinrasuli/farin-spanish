@@ -42,6 +42,19 @@
 /* reduced motion: the ambient layers are not drawn at all (a still cloud half out of the window looked like a mistake) */
 .mr-rm .mr-cloud, .mr-rm .mr-gull, .mr-rm .mr-shine, .mr-rm .mr-steam{display:none;}
 @media (prefers-reduced-motion: reduce){ .mr-cloud, .mr-gull, .mr-shine, .mr-steam{display:none;} }
+/* the round dial on the r3 art: the needle turns around the centre; the dial face glows warm when the station is found */
+.mr-dial.mr-round{border-radius:50%; background:none; box-shadow:none; overflow:visible; cursor:grab;}
+.mr-round .mr-face{position:absolute; left:17%; top:17%; width:66%; height:66%; border-radius:50%; background:radial-gradient(circle at 45% 40%, #4a4f52, #24282a 70%); transition:box-shadow .4s, background .4s;}
+.mr-round .mr-needle{position:absolute; left:50%; top:8%; bottom:50%; width:2px; margin-left:-1px; border-radius:2px; background:#e8552f; transform-origin:50% 100%; height:auto;}
+.mr-round .mr-mark{position:absolute; left:50%; top:1%; width:8%; height:8%; margin-left:-4%; background:#ffcf6b; clip-path:polygon(50% 100%, 100% 0, 0 0); transform-origin:50% 612%; bottom:auto;}
+.mr-round .mr-hub{position:absolute; left:50%; top:50%; width:12%; height:12%; margin:-6% 0 0 -6%; border-radius:50%; background:#c9a24a; box-shadow:0 0 0 1px #6b4d17;}
+.mr-set.mr-on .mr-round .mr-face{background:radial-gradient(circle at 45% 40%, #6a5a3a, #2c2a24 72%); box-shadow:0 0 10px 3px rgba(255,190,90,.55);}
+.mr-roundset .mr-lamp{min-width:0; height:auto; padding:0; border-radius:4px; font-size:0; background:rgba(80,55,25,.28);}
+.mr-roundset.mr-on .mr-lamp{background:#ffbf5e; box-shadow:0 0 8px 2px rgba(255,180,80,.7);}
+.mr-roundset .mr-knob{background:none;}
+/* one picture: daylight from the left - the sill a little warmer on the left, the radio's contact shadow falls to the right */
+.mr-view::after{content:''; position:absolute; inset:0; pointer-events:none; background:linear-gradient(90deg, rgba(255,214,150,.16), rgba(255,214,150,0) 55%);}
+.mr-scene .mr-shadow{left:46%; bottom:10.9%; width:33%; height:3.2%; margin-left:-16.5%; background:rgba(40,28,15,.22); box-shadow:6px 1px 0 2px rgba(40,28,15,.1);}
 /* the opening: push in, the radio settles on the sill (one small bounce), its shadow grows */
 .mr-intro .mr-view{animation:mr-pushin .75s cubic-bezier(.2,.7,.2,1) both;}
 .mr-intro .mr-set{animation:mr-settle .62s cubic-bezier(.34,1.56,.64,1) .32s both;}

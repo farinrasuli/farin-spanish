@@ -24242,10 +24242,16 @@ function buildStageCheck(){
     if(t && !t.course) G.push({id:t.id, t, goal:n.goal, at:G.length});
   });
   // LXD READY-6 R4: slot 7 = the weakest grammar item of the stage before, slot 8 = a word from its weakest set
-  const cgId = carryGrammarIds(p).find(id=>!G.some(g=>g.id === id));
-  const cT = cgId && GRAMMAR_ITEMS.find(x=>x.id === cgId);
-  const carryG = cT ? {id:cT.id, t:cT, goal:srsGoalFor(cT), at:99} : null;
-  const gMax = carryG ? 4 : 5;
+  // Level check (Farin chose A on KzlZblHK, 2026-11-07; farin-lxd PROPOSAL-2 of 2026-11-02): at x.2 the check covers the whole level:
+  // 2 grammar items from x.1 (lowest first-try score first, ties by review box; only items the learner has met) + 3 from this page,
+  // and 2 words from the x.1 sets the learner had (slots 8 and 2). x.1 keeps the single carry item and word.
+  const levelCheck = scIsLevelCheck(stageKeyOf(p));
+  const firstScore = id => { const s = scores['grammar:' + id]; return (s && typeof s.first === 'number') ? s.first : 0; };
+  const cgIds = carryGrammarIds(p).filter(id=>!G.some(g=>g.id === id));
+  // ties: the carry rank (review box, then due date, then teaching order)
+  const cgPick = levelCheck ? cgIds.slice().sort((a,b)=>(firstScore(a) - firstScore(b)) || (cgIds.indexOf(a) - cgIds.indexOf(b))).slice(0, 2) : cgIds.slice(0, 1);
+  const carryGs = cgPick.map(id=>GRAMMAR_ITEMS.find(x=>x.id === id)).filter(Boolean).map(t=>({id:t.id, t, goal:srsGoalFor(t), at:99}));
+  const gMax = 5 - carryGs.length;
   if(G.length > gMax){
     const first = g => { const s = scores['grammar:' + g.id]; return (s && typeof s.first === 'number') ? s.first : 0; };
     G = G.slice().sort((a,b)=>(first(a) - first(b)) || (a.at - b.at)).slice(0, gMax);
@@ -24392,7 +24398,8 @@ function buildStageCheck(){
   // G1: fewer than 5 grammar items -> the free grammar slots become word slots (pick -> choose, type -> typed)
   let gi = 0;
   slots.forEach((s, k)=>{ if(s[0] === 'g'){
-    if(k === 6 && carryG){ s.push(Object.assign(gInfo(carryG), {carry:true})); return; }   // LXD READY-6 R4
+    if(k === 6 && carryGs[0]){ s.push(Object.assign(gInfo(carryGs[0]), {carry:true})); return; }   // LXD READY-6 R4
+    if(k === 2 && carryGs[1]){ s.push(Object.assign(gInfo(carryGs[1]), {carry:true})); return; }   // level check: the second x.1 item
     if(gi < gList.length){ s.push(gList[gi]); gi++; } else { s[0] = 'w'; s[1] = s[1] === 'pick' ? 'choose' : 'typed'; } } });
   const out = new Array(slots.length).fill(null);
   // grammar first (their answers keep a word off the word slots)
@@ -24412,16 +24419,17 @@ function buildStageCheck(){
   let lDone = false;
   if(lSlot >= 0){ const q = listenQ(); if(q){ use(q._s); delete q._s; out[lSlot] = q; lDone = true; } }
   // R4: one word from the weakest set of the stage before, into slot 8 (index 7) when it is a "choose" slot
-  if(slots[7] && slots[7][0] === 'w' && slots[7][1] === 'choose'){
-    for(const cid of carrySetIds(p)){
+  const carrySetsUsed = [];
+  for(const k of (levelCheck ? [7, 1] : [7])) if(slots[k] && slots[k][0] === 'w' && slots[k][1] === 'choose'){
+    for(const cid of carrySetIds(p).sort((a,b)=>carrySetsUsed.includes(a) - carrySetsUsed.includes(b))){
       const set = VOCAB_SETS.find(x=>x.id === cid);
       if(!set || S.includes(cid)) continue;
       const cand = (set.cards || []).map((c, i)=>({c, i})).filter(o=>cardHasGap(o.c) && !gramAns.has(scNorm(cardGap(o.c))) && !isUsed([o.c.sentence]))
         .sort((a,b)=>(rankFor(cid, a.c) - rankFor(cid, b.c)) || (a.i - b.i))[0];
       if(!cand) continue;
-      use([cand.c.sentence]);
-      out[7] = Object.assign(wChoose({set, card:cand.c}), {scKind:'vocab', itemId:cid, kind:'vocab', scWord:cand.c.word, scCarry:true});
-      slots[7][0] = 'done';
+      use([cand.c.sentence]); carrySetsUsed.push(cid);
+      out[k] = Object.assign(wChoose({set, card:cand.c}), {scKind:'vocab', itemId:cid, kind:'vocab', scWord:cand.c.word, scCarry:true});
+      slots[k][0] = 'done';
       break;
     }
   }
@@ -24459,6 +24467,10 @@ function scPlayRowHtml(item){
       <button class="btn btn-ghost" style="width:auto;" data-action="sc-play" data-r="0.8">${ICONS.soundOn} ${L('Slower','Daha yavaş','آهسته‌تر','Más despacio')}</button>
     </div>`;
 }
+// x.2 ends the level, so its check is the level check ("Level A2 check"); x.1 stays the quick check
+function scIsLevelCheck(key){ return /\.2$/.test(String(key || '')); }
+function scTitle(key){ const lv = String(key || '').split('.')[0];
+  return scIsLevelCheck(key) ? L('Level {lv} check','{lv} seviye kontrolü','بررسی سطح {lv}','Repaso del nivel {lv}').replace('{lv}', lv) : L('Quick check: {stage}','Kısa kontrol: {stage}','مرور کوتاه: {stage}','Repaso rápido: {stage}').replace('{stage}', key || ''); }
 function scEyebrow(q){
   const a = q.index + 1, b = q.questions.length;
   return L(`Quick check · ${a} of ${b}`, `Kısa kontrol · ${a}/${b}`, `مرور کوتاه – ${a} از ${b}`, `Repaso rápido · ${a} de ${b}`);
@@ -24467,7 +24479,12 @@ function renderStageCheckIntro(){
   const key = state.viewParams.key || stageKeyOf(state.profile);
   const qs = state.viewParams.qs || [], n = qs.length || 10;
   const cb = qs.filter(x=>x && x.scCarry).length, ca = n - cb;   // LXD READY-6 R4: S2b when the check reaches back
-  const intro = cb ? L(`${n} short questions: ${ca} about this page and ${cb} from the page before. About 4 minutes. Whatever your score, you go to the next level, and anything you miss comes back in your review.`,
+  const lv = String(key).split('.')[0];
+  const intro = (scIsLevelCheck(key) && cb) ? L(`${n} short questions about all of ${lv}: ${ca} from this page and ${cb} from the first half of the level. About 4 minutes. Whatever your score, you go to the next level, and anything you miss comes back in your review.`,
+      `${lv} seviyesinin tamamından ${n} kısa soru: ${ca} tanesi bu sayfadan, ${cb} tanesi seviyenin ilk yarısından. Yaklaşık 4 dakika. Puanın ne olursa olsun bir sonraki seviyeye geçersin; kaçırdıkların tekrarında geri gelir.`,
+      `${n} سؤال کوتاه از کل سطح ${lv}: ${ca} تا از همین صفحه و ${cb} تا از نیمه‌ی اول سطح. حدود ۴ دقیقه. نمره‌ات هر چه باشد به سطح بعدی می‌روی، و هر چیزی را که جا بیندازی در مرورت دوباره می‌بینی.`,
+      `${n} preguntas cortas de todo el nivel ${lv}: ${ca} de esta página y ${cb} de la primera mitad del nivel. Unos 4 minutos. Saques lo que saques, pasas al siguiente nivel, y lo que falles vuelve en tu repaso.`)
+    : cb ? L(`${n} short questions: ${ca} about this page and ${cb} from the page before. About 4 minutes. Whatever your score, you go to the next level, and anything you miss comes back in your review.`,
       `${n} kısa soru: ${ca} tanesi bu sayfadan, ${cb} tanesi bir önceki sayfadan. Yaklaşık 4 dakika. Puanın ne olursa olsun bir sonraki seviyeye geçersin; kaçırdıkların tekrarında geri gelir.`,
       `${n} سؤال کوتاه: ${ca} تا از همین صفحه و ${cb} تا از صفحه‌ی قبل. حدود ۴ دقیقه. نمره‌ات هر چه باشد به سطح بعدی می‌روی، و هر چیزی را که جا بیندازی در مرورت دوباره می‌بینی.`,
       `${n} preguntas cortas: ${ca} de esta página y ${cb} de la anterior. Unos 4 minutos. Saques lo que saques, pasas al siguiente nivel, y lo que falles vuelve en tu repaso.`)
@@ -24475,10 +24492,10 @@ function renderStageCheckIntro(){
     ? L("10 short questions about this page. About 4 minutes. Whatever your score, you go to the next level, and anything you miss comes back in your review.", "Bu sayfayla ilgili 10 kısa soru. Yaklaşık 4 dakika. Puanın ne olursa olsun bir sonraki seviyeye geçersin; kaçırdıkların tekrarında geri gelir.", "۱۰ سؤال کوتاه درباره‌ی همین صفحه. حدود ۴ دقیقه. نمره‌ات هر چه باشد به سطح بعدی می‌روی، و هر چیزی را که جا بیندازی در مرورت دوباره می‌بینی.", "10 preguntas cortas sobre esta página. Unos 4 minutos. Saques lo que saques, pasas al siguiente nivel, y lo que falles vuelve en tu repaso.")
     : L(`${n} short questions about this page. About 4 minutes. Whatever your score, you go to the next level, and anything you miss comes back in your review.`, `Bu sayfayla ilgili ${n} kısa soru. Yaklaşık 4 dakika. Puanın ne olursa olsun bir sonraki seviyeye geçersin; kaçırdıkların tekrarında geri gelir.`, `${n} سؤال کوتاه درباره‌ی همین صفحه. حدود ۴ دقیقه. نمره‌ات هر چه باشد به سطح بعدی می‌روی، و هر چیزی را که جا بیندازی در مرورت دوباره می‌بینی.`, `${n} preguntas cortas sobre esta página. Unos 4 minutos. Saques lo que saques, pasas al siguiente nivel, y lo que falles vuelve en tu repaso.`);
   return `<div class="fade-in game-screen">
-    ${gameTopHtml(L('Quick check: {stage}','Kısa kontrol: {stage}','مرور کوتاه: {stage}','Repaso rápido: {stage}').replace('{stage}', key))}
+    ${gameTopHtml(scTitle(key))}
     <div class="game-card" style="text-align:center;">
       <img src="char-${learnerCharKey()}.png" alt="" style="width:96px; height:96px; object-fit:contain; margin:0 auto 10px; display:block;">
-      <div class="game-result-title" style="font-size:20px;" dir="auto">${esc(L('Quick check: {stage}','Kısa kontrol: {stage}','مرور کوتاه: {stage}','Repaso rápido: {stage}').replace('{stage}', key))}</div>
+      <div class="game-result-title" style="font-size:20px;" dir="auto">${esc(scTitle(key))}</div>
       <p class="game-result-line" dir="auto">${esc(intro)}</p>
     </div>
     <button class="btn btn-primary game-cta" data-action="sc-start">${L('Start','Başla','شروع کن','Empezar')}</button>
@@ -24509,7 +24526,7 @@ function renderStageCheckResults(){
     return row(s ? setTitle(s) : id, !miss.length, wCarry[id] ? (sub ? carryTag() + ' · ' + sub : carryTag()) : sub); });
   const anyMiss = q.correct < total;
   return `<div class="fade-in game-screen" style="gap:0;">
-    ${gameTopHtml(L('Quick check: {stage}','Kısa kontrol: {stage}','مرور کوتاه: {stage}','Repaso rápido: {stage}').replace('{stage}', q.scKey || ''))}
+    ${gameTopHtml(scTitle(q.scKey || ''))}
     <div style="text-align:center;">
       <img src="char-${learnerCharKey()}.png" alt="" style="width:84px; height:84px; object-fit:contain; margin:4px auto 6px; display:block;">
       <h2 class="game-result-title" dir="auto">${esc(head)}</h2>

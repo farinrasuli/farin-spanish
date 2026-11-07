@@ -8537,7 +8537,9 @@ function ttsSpeak(text, rate, cb, opt){
   if(!main){
     const plan = ttsClips ? ttsPlan(text) : null;
     if(plan && plan.ok){ ttsLast = {text, rate, cb, opt}; ttsPlayPlan(plan, rate, cb, want); return; }
-    ttsLast = null; ttsSpeakDevice(text, rate, cb); return;
+    ttsLast = null;
+    if(opt && opt.natural){ console.warn('[tts] no natural clip, device voice skipped:', key); const ms = 400 + 330 * String(text).split(/\s+/).length; setTimeout(()=>{ if(cb.end) cb.end(); }, ms); return; }
+    ttsSpeakDevice(text, rate, cb); return;
   }
   // the other voice's clip when this line's narrator is not the one wanted
   const alt = !!(want && want !== main && ttsAlt && ttsAlt[key] === want), code = alt ? want : main;
@@ -8546,7 +8548,7 @@ function ttsSpeak(text, rate, cb, opt){
   // clips are recorded at their level's pace (A1 / A2 slower), so only an explicit slow replay stretches them
   a.playbackRate = (rate && rate <= 0.75) ? rate / 0.92 : 1; a.preservesPitch = true;
   ttsAudio = a; ttsBadge(code);
-  const fail = ()=>{ if(ttsAudio !== a) return; ttsAudio = null; ttsBadge(null); ttsSpeakDevice(text, rate, cb); };
+  const fail = ()=>{ if(ttsAudio !== a) return; ttsAudio = null; ttsBadge(null); if(opt && opt.natural){ if(cb.end) cb.end(); return; } ttsSpeakDevice(text, rate, cb); };
   a.onended = ()=>{ if(ttsAudio !== a) return; ttsAudio = null; ttsBadge(null); if(cb.end) cb.end(); };
   a.onerror = fail;
   try{ const p = a.play(); if(p && p.catch) p.catch(fail); }catch(e){ fail(); }
@@ -25593,7 +25595,7 @@ function g2Host(key){
       end.drop = ()=>{ clearTimeout(tm); if(g2Pending === end) g2Pending = null; };
       g2Pending = end;
       tm = setTimeout(end, 4000 + 900 * String(t || '').split(/\s+/).length);
-      try{ ttsSpeak(t, o && o.rate, {end, error:end}, g2Voice(o && o.who)); if(!t) end(); }catch(e){ end(); }
+      try{ ttsSpeak(t, o && o.rate, {end, error:end}, key === 'radio' ? Object.assign({natural:true}, g2Voice(o && o.who)) : g2Voice(o && o.who)); if(!t) end(); }catch(e){ end(); }
     }),
     stopSpeech:()=>{ stopAllSpeech(); if(g2Pending) g2Pending.drop(); },   // not settled: a skip resolves itself, and after leaving the game nothing may resume
     sfx:n=>{ if(['tick','correct','reveal','combo','flip','stamp'].includes(n)){ sfx(n); return true; } return false; },

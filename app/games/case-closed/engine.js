@@ -17,7 +17,8 @@
      CaseClosed.load({appRoot, episode}) -> Promise<data>
      CaseClosed.start({root, data, lang:'en'|'es', ui:'en'|'tr'|'fa'|'es', name, host, resume, pace, tts, reduced, hintMs,
                        onDone(result), onLeave()}) -> game
-     CaseClosed.savedRound(host, episodeId) -> round | null      CaseClosed.EPISODES = {A1..C1: episode id}
+     CaseClosed.savedRound(host, episodeId) -> round | null      CaseClosed.EPISODES = {A1..C1: the opener}
+     CaseClosed.SEASONS = {A1..C1: [opener, ep2, ...]}         CaseClosed.episodeFor(level, cases) -> the first unsolved episode of the season
      game.destroy()
    host (all optional; defaults use localStorage + speechSynthesis + small WebAudio tones):
      speak(text, {lang, who, rate, interrupt}) -> Promise, stopSpeech(), sfx(name), muted(), reduced(), buzz(pattern),
@@ -28,13 +29,23 @@
 if(window.CaseClosed) return;
 
 var W = window, D = document;
-var VERSION = '0.1.0';
+var VERSION = '0.2.0';
 var ABORT = {abort:true};
 var G = null;
 var SPRING = 'cubic-bezier(.34,1.56,.64,1)';
 var EASE = 'cubic-bezier(.2,.7,.2,1)';
 var SPINE = ['question', 'possibilities', 'investigation', 'evidence', 'contradiction', 'reevaluation', 'connection', 'deduction', 'truth'];
 var EPISODES = {A1:'a1-where-is-captain', A2:'a2-regatta-cup', B1:'b1-lamp-pier', B2:'b2-boats-at-dawn', C1:'c1-sea-swallow'};
+// A season per level, in play order (CASE-CLOSED-EP2-CORE section 7, card ijlcPFrY 2026-11-07). The roadmap slot opens the first unsolved one;
+// when every episode of the season is solved it opens the opener again (a Cold Case replay). Written out on purpose: never sorted by name.
+var SEASONS = {A1:['a1-where-is-captain', 'a1-wrong-coat'], A2:['a2-regatta-cup', 'a2-postcard-1970'], B1:['b1-lamp-pier', 'b1-missing-oar'],
+  B2:['b2-boats-at-dawn', 'b2-fake-review'], C1:['c1-sea-swallow', 'c1-missing-logbook']};
+function seasonFor(level){ var k = String(level || '').slice(0, 2).toUpperCase(); return SEASONS[level] || SEASONS[k] || SEASONS.A2; }
+function episodeFor(level, cases){
+  var list = seasonFor(level); cases = cases || {};
+  for(var i = 0; i < list.length; i++) if(!cases[list[i]]) return list[i];
+  return list[0];
+}
 
 /* ============================== small helpers ============================== */
 function esc(s){ return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
@@ -1817,7 +1828,8 @@ function load(o){
 W.CaseClosed = {
   version:VERSION, EPISODES:EPISODES, SPINE:SPINE, UI:UI,
   load:load, start:start, openArchive:openArchive,
-  episodeFor:function(level){ return EPISODES[level] || EPISODES[String(level || '').slice(0, 2).toUpperCase()] || EPISODES.A2; },
+  SEASONS:SEASONS, season:seasonFor,
+  episodeFor:episodeFor,   // (level, cases): pass host.loadCases() so a solved opener moves the learner on to Episode 2
   savedRound:function(host, id){ var r = hostLoadRound(host || {}); return r && (!id || r.episode === id) ? r : null; },
   clearRound:function(host){ try{ if(host && host.saveRound) host.saveRound(null); else localStorage.removeItem(LS_ROUND); }catch(e){} },
   solved:function(host){ return loadCases(host || {}); },

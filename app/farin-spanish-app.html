@@ -1022,6 +1022,7 @@
 
   .eyebrow{font-size:12px; font-weight:700; letter-spacing:.09em; text-transform:uppercase; color:var(--ink-faint);}
   .display{font-family:'Fredoka',-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; font-weight:700; letter-spacing:-.02em;}
+  .display, .lx-head h2{font-kerning:none;}   /* Fredoka kerns I+V into one shape: NOT GIVEN read NOT GMEN (CsrwGwf6, 2026-11-07); spacing is unchanged */
   .num{font-variant-numeric:tabular-nums; font-family:'Plus Jakarta Sans',-apple-system,sans-serif; font-weight:800;}
 
   /* ---- topbar ---- */
@@ -25548,7 +25549,7 @@ function theatreExit(){
    their nodes, Cozy Chores and Case Closed play the old way. Set GAMES_V2_LIVE.radio / .mystery / .chores to true (both apps) to put that game live; bump GAMES_VER
    whenever a games/ engine changes. (var, not const: SHELF_GAMES reads the flag earlier in the file.) */
 // (GAMES_V2_LIVE, the per-game switch, is declared above SHELF_GAMES)
-var GAMES_VER = '2';
+var GAMES_VER = '3';
 var g2Flag = null, g2Game = null, g2KeepNow = null, g2Pending = null;
 var G2_KINDS = ['chores', 'mystery', 'radio'];
 var G2_COZY = {A1:'movein', A2:'cake', B1:'bouquet', B2:'laundry', C1:'party'};   // the anchor project per level (Cozy GDD 0)
@@ -25654,7 +25655,7 @@ function g2Start(ds){
         onDone:()=>done({perfect:true, keep:g2KeepNow}), onLeave:theatreExit}));
   } else if(kind === 'mystery'){
     const host = g2Host('mystery');
-    prep = g2LoadFiles('case-closed', ['case.css', 'engine.js']).then(()=>CaseClosed.load({appRoot:'', episode:CaseClosed.episodeFor(level)}))
+    prep = g2LoadFiles('case-closed', ['case.css', 'engine.js']).then(()=>CaseClosed.load({appRoot:'', episode:CaseClosed.episodeFor(level, host.loadCases())}))
       .then(data=>box=>CaseClosed.start({root:box, data, lang, ui, name, host, resume:!!CaseClosed.savedRound(host, data.stage.id),
         onDone:()=>done({perfect:true, keep:g2KeepNow}), onLeave:theatreExit}));
   } else {

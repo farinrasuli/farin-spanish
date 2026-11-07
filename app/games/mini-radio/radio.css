@@ -14,13 +14,43 @@
   position:absolute; inset:0; overflow:hidden; display:flex; flex-direction:column; align-items:center; color:var(--mr-ink); font-family:var(--mr-text);
   background:var(--mr-sunken); -webkit-tap-highlight-color:transparent; user-select:none; -webkit-user-select:none; color-scheme:light;
 }
-.mr-root.mr-has-sill{background:var(--mr-sunken) var(--mr-sill) center / cover no-repeat;}
-.mr-root.mr-has-sill::before{display:none;}
-/* on the sill art every text needs its own light ground (2026-11-02) */
-.mr-has-sill .mr-status{padding:6px 12px; border-radius:999px; background:var(--mr-elev);}
-.mr-has-sill .mr-line:not(:empty){padding:8px 14px; border-radius:16px; background:var(--mr-elev);}
-.mr-has-sill .mr-btn.mr-ghost{background:var(--mr-elev);}
-.mr-has-sill .mr-slot{background:var(--mr-elev);}
+/* The sill scene (2026-11-07): the radio stands on the sill, smaller, with a contact shadow; calm ambient motion; an opening push-in. */
+.mr-root.mr-has-scene{background:#f6eee4;}
+.mr-root.mr-has-scene::before{display:none;}
+.mr-scene{position:relative; flex:0 0 auto; width:100%; max-width:440px; aspect-ratio:864 / 605; touch-action:none;}
+.mr-view{position:absolute; inset:0; overflow:hidden; border-radius:22px; box-shadow:0 0 0 2px var(--mr-ink); background:#cfe7f3;}
+.mr-sill{position:absolute; left:0; top:-50%; width:100%; height:178.6%; display:block; pointer-events:none; user-select:none;}
+.mr-scene .mr-set{position:absolute; left:43.5%; bottom:12.4%; width:34%; max-width:none; transform:translateX(-50%); z-index:2;}
+.mr-scene .mr-set.mr-art .mr-body{transform-origin:50% 100%;}
+.mr-shadow{position:absolute; left:43.5%; bottom:11.2%; width:31%; height:3.6%; margin-left:-15.5%; border-radius:50%; background:rgba(20,51,46,.24); z-index:1; pointer-events:none;}
+/* ambient layers, inside the window: clouds and gulls in the sky, light on the water, steam from the mug */
+.mr-cloud{position:absolute; top:4%; left:-26%; width:18%; height:5%; border-radius:40px; background:#fff; opacity:.95; animation:mr-cloud 70s linear infinite;}
+.mr-cloud::before{content:''; position:absolute; left:20%; bottom:30%; width:46%; height:150%; border-radius:50%; background:#fff;}
+.mr-c2{top:9%; width:13%; height:4%; animation-duration:95s; animation-delay:-48s;}
+@keyframes mr-cloud{from{transform:translateX(0);} to{transform:translateX(640%);}}
+.mr-gull{position:absolute; top:20%; left:-8%; width:4.2%; height:2%; animation:mr-gull 34s linear infinite;}
+.mr-gull::before, .mr-gull::after{content:''; position:absolute; top:0; width:50%; height:100%; border-top:2px solid var(--mr-ink); border-radius:50% 50% 0 0;}
+.mr-gull::before{left:0;} .mr-gull::after{right:0;}
+.mr-g2{top:27%; width:3.2%; animation-duration:46s; animation-delay:-20s;}
+@keyframes mr-gull{0%{transform:translate(0,0);} 25%{transform:translate(560%,-60%);} 50%{transform:translate(1120%,30%);} 75%{transform:translate(1680%,-40%);} 100%{transform:translate(2300%,0);}}
+.mr-shine{position:absolute; height:.7%; border-radius:4px; background:#fff; opacity:0; animation:mr-shine 5.5s ease-in-out infinite;}
+.mr-s1{left:30%; top:57%; width:7%;} .mr-s2{left:52%; top:60.5%; width:5%; animation-delay:-2s;} .mr-s3{left:41%; top:63.5%; width:6%; animation-delay:-3.6s;}
+@keyframes mr-shine{0%,100%{opacity:0; transform:translateX(-12%);} 50%{opacity:.75; transform:translateX(12%);}}
+.mr-steam{position:absolute; left:16.5%; top:66%; width:1.4%; height:8%; border-left:2px solid rgba(255,255,255,.95); border-radius:50%; opacity:0; animation:mr-steam 3.4s ease-out infinite;}
+.mr-w2{left:19%; animation-delay:-1.7s;}
+@keyframes mr-steam{0%{opacity:0; transform:translateY(20%) scaleY(.6);} 30%{opacity:.85;} 100%{opacity:0; transform:translateY(-60%) scaleY(1.1) skewX(-8deg);}}
+/* reduced motion: the ambient layers are not drawn at all (a still cloud half out of the window looked like a mistake) */
+.mr-rm .mr-cloud, .mr-rm .mr-gull, .mr-rm .mr-shine, .mr-rm .mr-steam{display:none;}
+@media (prefers-reduced-motion: reduce){ .mr-cloud, .mr-gull, .mr-shine, .mr-steam{display:none;} }
+/* the opening: push in, the radio settles on the sill (one small bounce), its shadow grows */
+.mr-intro .mr-view{animation:mr-pushin .75s cubic-bezier(.2,.7,.2,1) both;}
+.mr-intro .mr-set{animation:mr-settle .62s cubic-bezier(.34,1.56,.64,1) .32s both;}
+.mr-intro .mr-shadow{animation:mr-shadowin .62s ease-out .32s both;}
+@keyframes mr-pushin{from{opacity:0; transform:scale(1.07);} to{opacity:1; transform:scale(1);}}
+@keyframes mr-settle{from{opacity:0; transform:translate(-50%,-30%);} to{opacity:1; transform:translate(-50%,0);}}
+@keyframes mr-shadowin{from{opacity:0; transform:scaleX(.5);} to{opacity:1; transform:scaleX(1);}}
+/* on the scene every text keeps its own light ground */
+.mr-has-scene .mr-status{padding:6px 12px; border-radius:999px; background:var(--mr-elev);}
 .mr-root::before{content:''; position:absolute; right:-60px; top:-60px; width:220px; height:220px; border-radius:50%; background:var(--mr-gold-soft); pointer-events:none;}
 .mr-root *, .mr-root *::before, .mr-root *::after{box-sizing:border-box;}
 .mr-root button{font:inherit; color:inherit; cursor:pointer;}

@@ -21,7 +21,7 @@
 (function(){
 'use strict';
 if(window.MiniRadio) return;
-var W = window, D = document, VERSION = '0.3.1', ABORT = {abort:true}, G = null;
+var W = window, D = document, VERSION = '0.4.0', ABORT = {abort:true}, G = null;
 var MARK = 0.68;   // where the station sits on the dial (0..1)
 
 function esc(s){ return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
@@ -115,6 +115,33 @@ function setHtml(){
     '<div class="mr-knob" style="' + box(A.layout.knob) + '"><img src="' + esc(A.knob) + '" alt="" draggable="false"></div></div>';
   return '<div class="mr-set mr-plain">' + lampEl + dial + '<button type="button" class="mr-knob" aria-label="' + esc(U('tune')) + '"><i class="mr-notch"></i></button></div>';
 }
+// The sill scene (2026-11-07): the sill render cropped to the window + sill band (image rows 28%-84%), the radio standing on the sill between
+// the mug and the plant, a flat contact shadow under it, and calm ambient layers. Positions are % of the scene (measured on radio-sill.webp).
+function sceneHtml(){
+  if(!(G.art && G.art.sill)) return setHtml();
+  var amb = '<i class="mr-cloud mr-c1"></i><i class="mr-cloud mr-c2"></i><i class="mr-gull mr-g1"></i><i class="mr-gull mr-g2"></i>' +
+    '<i class="mr-shine mr-s1"></i><i class="mr-shine mr-s2"></i><i class="mr-shine mr-s3"></i><i class="mr-steam mr-w1"></i><i class="mr-steam mr-w2"></i>';
+  return '<div class="mr-scene"><div class="mr-view"><img class="mr-sill" src="' + esc(new URL(G.art.sill, D.baseURI).href) + '" alt="" draggable="false">' + amb + '</div>' +
+    '<i class="mr-shadow"></i>' + setHtml() + '</div>';
+}
+// Opening (Farin 2026-11-07 "it needs a beginning motion"): the scene pushes in, the radio settles onto the sill, the dial lamp glows, a short
+// burst of static, then the tune step. About 1.6 s; a tap anywhere skips it. Nothing at all with reduced motion.
+function opening(){
+  var sc = G.root.querySelector('.mr-scene');
+  if(!sc || RM()) return Promise.resolve();
+  var g = G;
+  return new Promise(function(res, rej){
+    var timers = [], done = false;
+    var fin = function(){ if(done) return; done = true; timers.forEach(clearTimeout); g.root.removeEventListener('pointerdown', fin, true); g.waits.delete(stop); sc.classList.remove('mr-intro'); lamp(false); staticOff(); res(); };
+    var stop = function(){ fin(); rej(ABORT); };
+    g.waits.add(stop);
+    g.root.addEventListener('pointerdown', fin, true);
+    sc.classList.add('mr-intro');
+    timers.push(setTimeout(function(){ if(G === g) lamp(true); }, 900));
+    timers.push(setTimeout(function(){ if(G === g){ staticOn(); staticLevel(.35); } }, 1000));
+    timers.push(setTimeout(fin, 1650));
+  });
+}
 function setNeedle(n){
   G.n = clamp(n, 0, 1);
   G.needle.style.left = (4 + G.n * 92) + '%';
@@ -168,9 +195,10 @@ function build(){
   root.setAttribute('data-ui', G.ui);
   var P = G.ep.parts.length;
   root.innerHTML = '<div class="mr-status"><span dir="' + dir() + '">' + esc(U('onAir')) + '</span><span class="mr-dots">' + new Array(P + 1).join('<i></i>') + '</span></div>' +
-    '<div class="mr-scroll">' + setHtml() + '<p class="mr-line" aria-live="polite"></p><div class="mr-controls"></div><div class="mr-area"></div></div>';
+    '<div class="mr-scroll">' + sceneHtml() + '<p class="mr-line" aria-live="polite"></p><div class="mr-controls"></div><div class="mr-area"></div></div>';
   G.box.innerHTML = ''; G.box.appendChild(root);
-  if(G.art && G.art.sill){ root.classList.add('mr-has-sill'); root.style.setProperty('--mr-sill', 'url("' + new URL(G.art.sill, D.baseURI).href + '")'); }   // absolute: a relative url() in a custom property resolves against radio.css, not the page (404 fixed 2026-11-05)
+  if(G.art && G.art.sill) root.classList.add('mr-has-scene');
+  if(RM()) root.classList.add('mr-rm');   // the app's reduce-motion setting as well as the system one: no ambient motion, no opening
   G.root = root; G.set = root.querySelector('.mr-set'); G.needle = root.querySelector('.mr-needle'); G.knob = root.querySelector('.mr-knob');
   G.lineEl = root.querySelector('.mr-line'); G.ctl = root.querySelector('.mr-controls'); G.area = root.querySelector('.mr-area'); G.dots = root.querySelectorAll('.mr-dots i');
 }
@@ -193,13 +221,15 @@ async function tuneIn(){
     function drag(e){
       if(done) return; e.preventDefault();
       staticOn();
-      var dw = G.set.querySelector('.mr-dial').getBoundingClientRect().width * 0.92, sx = e.clientX, n0 = G.n, pid = e.pointerId;
+      var scn = G.root.querySelector('.mr-scene'), dw = Math.max(G.set.querySelector('.mr-dial').getBoundingClientRect().width * 0.92, scn ? scn.getBoundingClientRect().width * 0.6 : 0), sx = e.clientX, n0 = G.n, pid = e.pointerId;
       var mv = function(ev){ if(ev.pointerId !== pid || done) return; var nn = n0 + (ev.clientX - sx) / dw; setNeedle(nn); var dist = Math.abs(G.n - MARK); staticLevel(dist); if(dist < 0.06){ off(); lock(); } };
       var up = function(ev){ if(ev.pointerId !== pid) return; off(); if(!done) staticLevel(.5); };
       var off = function(){ W.removeEventListener('pointermove', mv); W.removeEventListener('pointerup', up); W.removeEventListener('pointercancel', up); };
       W.addEventListener('pointermove', mv); W.addEventListener('pointerup', up); W.addEventListener('pointercancel', up);
     }
     G.knob.addEventListener('pointerdown', drag); G.set.querySelector('.mr-dial').addEventListener('pointerdown', drag);
+    // the radio is small on the sill: a drag anywhere on the scene turns the dial, at a comfortable speed (2026-11-07)
+    var scn0 = G.root.querySelector('.mr-scene'); if(scn0) scn0.addEventListener('pointerdown', function(e){ if(!e.target.closest('.mr-knob, .mr-dial')) drag(e); });
     G.ctl.querySelector('.mr-tunebtn').addEventListener('click', function(){
       if(done) return;
       if(RM()){ lock(); return; }
@@ -372,7 +402,7 @@ function start(o){
   W.addEventListener('keydown', g.onKey);
   (async function(){
     try{
-      await tuneIn(); await parts(); await gist(); await order();
+      await opening(); await tuneIn(); await parts(); await gist(); await order();
       var stats = await offAir();
       var cb = g.onDone; destroy({keepDom:true}); if(cb) cb(stats);
     }catch(e){ if(e !== ABORT) console.error('[mini-radio]', e); }

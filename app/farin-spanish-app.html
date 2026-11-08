@@ -1948,6 +1948,15 @@
   .ie-score{display:flex; align-items:center; gap:10px; margin-top:12px; padding:12px 14px; border-radius:16px; background:var(--success-soft); font-weight:800;}
   .ie-score b{font-size:26px;}
   .ie-score.warn{background:var(--cat-review-soft);}
+  /* course method P2/P9/P10 (Farin 2026-11-09, card 1XwITsnP) */
+  .cx-miss-kp{margin:8px 0 0; font-size:13.5px; line-height:1.45; color:var(--ink-soft);}
+  .cd-how .link-btn{margin-top:6px; font-size:13.5px;}
+  .ie-xd-row{display:flex; align-items:center; gap:10px; padding:10px 0; border-top:1px solid var(--border-soft); font-size:14.5px;}
+  .ie-xd-row:first-of-type{border-top:none;}
+  .ie-xd-ic{width:10px; height:10px; border-radius:50%; background:var(--c); flex:0 0 auto;}
+  .ie-xd-v{margin-inline-start:auto; font-weight:800; text-align:end;}
+  .ie-xd-v small{display:block; font-weight:600; font-size:12px; color:var(--ink-soft);}
+  .quiz-look{margin:0; font-size:13.5px; line-height:1.45; color:var(--ink-soft); text-align:start;}
   .ie-link{display:block; margin:12px auto 0;}
   .ie-script{margin-top:8px; font-size:14px; line-height:1.55;}
   /* Reading */
@@ -22587,7 +22596,7 @@ function grammarCheckHtml(t){
   const ok = c.tried.includes(ci);
   const line = !c.tried.length ? ''
     : ok ? L("Right! You've got it.", "Doğru! Anladın.", "درسته! فهمیدی.", "¡Correcto! Lo has entendido.")
-    : c.done ? L("The answer is: ", "Doğru cevap: ", "جواب درست: ", "La respuesta es: ") + txt(m.options[ci])
+    : c.done ? L("The answer is: ", "Doğru cevap: ", "جواب درست: ", "La respuesta es: ") + txt(m.options[ci]) + (m.why ? ' ' + txt(m.why) : '')
     : L("Not quite. Look at the example at the top again, then try once more.", "Tam değil. Yukarıdaki örneğe bir daha bak, sonra tekrar dene.", "نه دقیقاً. یک بار دیگر مثال بالا را ببین و دوباره امتحان کن.", "No exactamente. Vuelve a mirar el ejemplo de arriba e inténtalo otra vez.");
   const btn = i => {
     const cls = c.tried.includes(i) ? (i === ci ? ' correct' : ' wrong') : (c.done && i === ci ? ' correct' : '');
@@ -23718,11 +23727,15 @@ function grammarQuizQuestions(item, variantKey, opts){
     const opts = shuffle([right].concat(wrongs));
     const q = {prompt, options:opts, correct:opts.indexOf(right), why, key:norm(key), answerText:String(key)};
     if(tr) q.answerTr = tr;
+    { const r = reasonOf(cur); if(r) q.reason = r; }
     if(hintFor){ const h = opts.map(o=>hintFor(o)); if(h.some(Boolean)) q.hints = h; }
     return q;
   };
   const uniq = arr => arr.filter((w,i)=>w && arr.indexOf(w)===i);
   const goodBlank = b => b && b.sentence && b.word && b.distractors && b.distractors.length >= 2;
+  // P2: a practice item's (or blank's) own why: {en,tr,fa,es} or a string, shown after the answer (item.reason). cur = the item being built.
+  let cur = null;
+  function reasonOf(o){ const w = o && o.why; if(!w) return ''; return typeof w === 'string' ? w : (L(w.en, w.tr, w.fa, w.es) || w.en || ''); }
   const fillIn = (s, w) => String(s).replace(/_{2,}/, w);
   const interim = () => {
     const qs = [];
@@ -23731,6 +23744,7 @@ function grammarQuizQuestions(item, variantKey, opts){
     if(item.right2 && item.right2 !== item.right && wrongs.length >= 2) qs.push(mk(pickLabel, item.right2, wrongs, item.right2, null, item.right2Translation));
     [['blank', item.blank], ['blank2', item.blank2]].forEach(([field, b])=>{
       if(!goodBlank(b)) return;
+      cur = b;
       if(blankListed(TRAP_EXCLUDE_BLANKS, item.id, field, variantKey)){
         // Flagged as ambiguous (a "wrong" option is also correct): fall back to the
         // same safe 3-way "which sentence is correct?" format srsGrammarQ() uses.
@@ -23744,6 +23758,7 @@ function grammarQuizQuestions(item, variantKey, opts){
       qs.push(mk(pickLabel, fillIn(b.sentence, b.word), dists.slice(0, 2).map(d=>fillIn(b.sentence, d)), fillIn(b.sentence, b.word), o=>dwText(b.distractorWhy, byFilled[o]), b.translation));
       qs.push(mk(b.sentence, b.word, dists, fillIn(b.sentence, b.word), o=>dwText(b.distractorWhy, o), b.translation));
     });
+    cur = null;
     return qs;
   };
   // Teaching redesign item 12: practice[] slots 5-8 (build, type, type, type). Same option shape as the rest: options:[answer], correct:0.
@@ -23756,18 +23771,21 @@ function grammarQuizQuestions(item, variantKey, opts){
     const q = {qt:'build', prompt:buildLabel, tiles:order.map(i=>words[i]), words, options:[String(p.answer)], correct:0, why, key:norm(p.answer), answerText:String(p.answer)};
     if(p.accept && p.accept.length){ q.accept = p.accept.map(String); q.keys = [p.answer].concat(p.accept).map(norm); }   // LXD READY-1 (Review 6): other correct orders
     if(p.translation) q.answerTr = p.translation;
+    { const r = reasonOf(p); if(r) q.reason = r; }
     return q;
   };
   const typeQ = p => {
     const acc = p.accept.map(String), first = /^\s*_{2,}/.test(String(p.sentence)) ? acc[0].charAt(0).toUpperCase() + acc[0].slice(1) : acc[0];
     const q = {qt:'type', prompt:p.sentence, options:[first], correct:0, accept:acc, typeHint:p.hint || null, why, key:norm(fillAns(p.sentence, acc[0])), answerText:fillAns(p.sentence, acc[0])};
     if(p.translation) q.answerTr = p.translation;
+    { const r = reasonOf(p); if(r) q.reason = r; }
     return q;
   };
   const fromPractice = () => {
     const out = {fill:[], meaning:[], fix:[], build:[], type:[]};
     (item.practice || []).forEach(p=>{
       if(!p) return;
+      cur = p;
       if(p.type === 'fill' && goodBlank(p)) out.fill.push(mk(p.sentence, p.word, uniq(p.distractors), fillIn(p.sentence, p.word), o=>dwText(p.distractorWhy, o), p.translation));
       else if(p.type === 'meaning' && p.options && p.options.length >= 3){
         if(skipMeaning && !meaningSkipped){ meaningSkipped = true; return; }   // LXD READY-1: same item grammarCheckItem() shows
@@ -23780,6 +23798,7 @@ function grammarQuizQuestions(item, variantKey, opts){
       else if(p.type === 'build' && Array.isArray(p.words) && p.words.length >= 2 && p.answer) out.build.push(buildQ(p));
       else if(p.type === 'type' && p.sentence && /_{2,}/.test(String(p.sentence)) && Array.isArray(p.accept) && p.accept.length) out.type.push(typeQ(p));
     });
+    cur = null;
     // Review 5 READY-6 order (Farin 0E36nBVz = A, 2026-10-28): fill, meaning, fill, type, fix, type, build, type.
     // Recognition -> cued recall -> free recall as before, but no format twice in a row. If an item lacks a format
     // (e.g. meaning skipped because the explainer check showed it), the next item of a different format moves forward.
@@ -24681,11 +24700,20 @@ function quizAnswerText(item){
 }
 function answerBannerHtml(item, ok, sel){
   const ans = quizAnswerText(item), tr = trLine(item.answerTr);
-  if(ok && !tr) return '';
+  if(ok && !tr && !item.reason) return '';
   // Phase 2b (jljlQLsH): after a miss, the distractorWhy line for the option the learner tapped (UI language; the hint never names the answer).
   const why = !ok && sel != null && sel !== item.correct && item.hints ? item.hints[sel] : '';
   const head = ok ? '' : `<b>${esc(L('Correct answer','Doğru cevap','پاسخ درست','Respuesta correcta'))}:</b> `;
-  return `<div class="game-why">${farinImg(ok ? 'face-smile' : 'mood-thinking')}<div dir="ltr">${head}${esc(ans)}${tr ? `<div dir="auto" style="margin-top:4px; opacity:.85;">${esc(tr)}</div>` : ''}${why ? `<div class="quiz-why-miss" dir="auto" style="margin-top:4px; opacity:.85;">${esc(why)}</div>` : ''}</div></div>`;
+  return `<div class="game-why">${farinImg(ok ? 'face-smile' : 'mood-thinking')}<div dir="ltr">${head}${esc(ans)}${tr ? `<div dir="auto" style="margin-top:4px; opacity:.85;">${esc(tr)}</div>` : ''}${why ? `<div class="quiz-why-miss" dir="auto" style="margin-top:4px; opacity:.85;">${esc(why)}</div>` : ''}${item.reason ? `<div class="quiz-why-item" dir="auto" style="margin-top:4px;">${esc(item.reason)}</div>` : ''}</div></div>`;
+}
+/* P2 (Farin 2026-11-09, card 1XwITsnP: B, "this should apply to the original roadmap lessons too"): in a lesson's grammar quiz a
+   wrong answer points back to what teaches it. The free grammar page has no numbered key points, so the pointer is the item's rule
+   (why.rule): "Look again at the rule: ...". A question with its own why (practice[].why, item.reason) shows that in the banner instead. */
+function quizLookAgainHtml(q, item, ok){
+  if(ok || !q || q.kind !== 'grammar' || !q.contextId || !item || item.reason || item.carry) return '';
+  const it = GRAMMAR_ITEMS.find(g=>g.id === q.contextId), r = it && it.why && it.why.rule;
+  const t = r ? (typeof r === 'string' ? r : (L(r.en, r.tr, r.fa, r.es) || r.en)) : '';
+  return t ? `<p class="quiz-look" dir="auto"><b>${esc(L('Look again at the rule','Kurala tekrar bak','دوباره قاعده را ببین','Vuelve a mirar la regla'))}:</b> ${esc(t)}</p>` : '';
 }
 // The hint after a first miss. distractorWhy for the chosen option when it exists, else the
 // item's rule line (grammar). Vocab and story whys give the answer away, so they get a nudge.
@@ -24859,6 +24887,7 @@ function renderQuiz(){
     ${!q.answered && (q.miss||[]).length ? `<div class="game-why">${farinImg('mood-thinking')}<div dir="ltr">${esc(quizHintText(q, item))}</div></div>` : ''}
     ${q.answered ? `
       ${answerBannerHtml(item, q.results && q.results[q.index] === true, q.selected)}
+      ${quizLookAgainHtml(q, item, q.results && q.results[q.index] === true)}
       ${quizTypedNoteHtml(q, item)}
       ${q.kind === 'stagecheck' && !(q.results && q.results[q.index] === true) ? `<p class="game-result-line" dir="auto" style="margin:0;">${esc(L('This one comes back in your review tomorrow.','Bu soru yarın tekrarında geri gelecek.','این یکی فردا در مرورت برمی‌گردد.','Esta pregunta vuelve mañana en tu repaso.'))}</p>` : ''}
       ${proveHtml(q)}
@@ -25557,7 +25586,9 @@ var G2_KINDS = ['chores', 'mystery', 'radio'];
 var G2_COZY = {A1:'movein', A2:'cake', B1:'bouquet', B2:'laundry', C1:'party'};   // the anchor project per level (Cozy GDD 0)
 // a fixed natural voice per character: 0 = female (Bella / Daniela), 1 = male (George / Dave); radio speakers a / b
 var G2_VOICE = {a:0, b:1, bell:0, okafor:0, ada:0, leyla:0, rosa:0, hana:0, priya:0, lena:0, moss:0, ines:0, edie:0, mum:0,
-  tom:1, sam:1, ollie:1, pike:1, ben:1, marcus:1, jack:1, dealer:1, arthur:1, youngarthur:1, edwin:1};
+  tom:1, sam:1, ollie:1, pike:1, ben:1, marcus:1, jack:1, dealer:1, arthur:1, youngarthur:1, edwin:1,
+  // card lUQiLMLJ (2026-11-09): the B2/C1 cast had no fixed voice and switched between the two narrators
+  hale:0, meg:0, dunn:0, julian:1, rowe:1};
 // gamesV2On() = the v2 roadmap shape (8 positions per stage, the Mini Radio slot): on when Mini Radio is live, or with ?games2=1.
 function gamesV2On(){ return g2KindLive('radio'); }
 function g2KindLive(kind){ return !!(GAMES_V2_LIVE && GAMES_V2_LIVE[kind]) || g2DevOn(); }
@@ -25595,7 +25626,7 @@ function g2Host(key){
       end.drop = ()=>{ clearTimeout(tm); if(g2Pending === end) g2Pending = null; };
       g2Pending = end;
       tm = setTimeout(end, 4000 + 900 * String(t || '').split(/\s+/).length);
-      try{ ttsSpeak(t, o && o.rate, {end, error:end}, key === 'radio' ? Object.assign({natural:true}, g2Voice(o && o.who)) : g2Voice(o && o.who)); if(!t) end(); }catch(e){ end(); }
+      try{ ttsSpeak(t, o && o.rate, {end, error:end}, Object.assign({natural:true}, g2Voice(o && o.who))); /* Mini Radio, Case Closed, Cozy Chores: natural clips only, never the device voice (card lUQiLMLJ) */ if(!t) end(); }catch(e){ end(); }
     }),
     stopSpeech:()=>{ stopAllSpeech(); if(g2Pending) g2Pending.drop(); },   // not settled: a skip resolves itself, and after leaving the game nothing may resume
     sfx:n=>{ if(['tick','correct','reveal','combo','flip','stamp'].includes(n)){ sfx(n); return true; } return false; },
@@ -25617,6 +25648,9 @@ function radioGloss(level, w){
   return '';
 }
 function radioCtx(level, storyPickId){ return {lang:TTS_LANG.slice(0, 2), level, split:splitSentences, stories:STORY_LIBRARY_FREE.filter(s=>s.level === level), pool:radioPool(level), ui:LANG, gloss:w=>radioGloss(level, w), storyPick:storyPickId || null}; }
+// Card iuOhtcUf (2026-11-09): Mini Radio plays natural clips only, so a story passage with a line that has no clip (whole, or spliced
+// from shorter clips) would go silent there. Such a story is never picked; before the clip list has loaded none is.
+function radioVoiced(ep){ return !!ttsClips && (ep.lines || []).every(l=>!l.text || ttsHasClip(l.text)); }
 function radioEpisodeFor(refId, free, level){
   const ctx = radioCtx(level), done = (state.progress && state.progress.completedGames) || [];
   if(!free && refId){
@@ -25624,12 +25658,12 @@ function radioEpisodeFor(refId, free, level){
     const au = RADIO_EPISODES.find(e=>e.id === id);
     if(au){ const ep = RadioEpisode.fromAuthored(au, Object.assign({}, ctx, {level:au.level})); if(!ep.fail) return ep; }
     const st = STORY_LIBRARY_FREE.find(s=>s.id === id);
-    if(st){ const ep = RadioEpisode.fromStory(st, ctx); if(!ep.fail) return ep; }
+    if(st){ const ep = RadioEpisode.fromStory(st, ctx); if(!ep.fail && radioVoiced(ep)) return ep; }
     return null;
   }
   // shelf (free play): an authored show of the level not heard yet, else a fresh story passage
   for(const au of shuffle(RADIO_EPISODES.filter(e=>e.level === level && !done.includes(e.id + '-radio')))){ const ep = RadioEpisode.fromAuthored(au, ctx); if(!ep.fail) return ep; }
-  for(const st of shuffle(ctx.stories)){ const ep = RadioEpisode.fromStory(st, ctx); if(!ep.fail) return ep; }
+  for(const st of shuffle(ctx.stories)){ const ep = RadioEpisode.fromStory(st, ctx); if(!ep.fail && radioVoiced(ep)) return ep; }
   return null;
 }
 function renderGameV2(){ return (window.Theatre && Theatre.isOpen()) ? '<div></div>' : '<div id="g2-box" style="position:fixed;inset:0;z-index:45;background:#fbf4e8"></div>'; }   // the box only when the Theatre could not open
@@ -28683,8 +28717,9 @@ function courseFreeLessonsLine(c, free){ const nos = free.map(u=>courseUnitNo(c.
   return CL('Lessons '+a+' and '+z+' are free.', 'Ders '+a+' ve '+z+' ücretsiz.', 'درس‌های '+a+' و '+z+' رایگان‌اند.', 'Las lecciones '+a+' y '+z+' son gratis.'); }
 function courseFreeUnitsText(c){
   const free = (c.freeUnits || []).filter(uid=>courseFindUnit(c.id, uid)), total = courseUnitsTotal(c), cps = c.modules.filter(m=>m.checkpoint).length;
-  if(c.chapterName && free.length > 1){ const n = c.modules.length, ch1 = courseChapterName(0, c);   // IELTS: 'Exam 1 is free. The full course has 10 full exams (100 lessons).'
-    return CL('The first half of '+ch1+' is free. The full course has '+n+' full exams ('+total+' lessons).', ch1+': ilk yarısı ücretsiz. Tam kursta '+n+' tam sınav ('+total+' ders) var.', 'نیمه‌ی اول '+ch1+' رایگان است. دوره‌ی کامل '+n+' آزمون کامل ('+total+' درس) دارد.', 'La primera mitad de '+ch1+' es gratis. El curso completo tiene '+n+' exámenes completos ('+total+' lecciones).'); }
+  // P8 (Farin 2026-11-09, card 1XwITsnP): only Lesson 1.1 of each premium course is free. IELTS: 'Lesson 1.1 is free. The full course has 11 full exams (110 lessons).'
+  if(c.chapterName && free.length === 1){ const n = c.modules.length, one = courseUnitNo(c.id, free[0]);   // IELTS: 'Exam 1 is free. The full course has 10 full exams (100 lessons).'
+    return CL('Lesson '+one+' is free. The full course has '+n+' full exams ('+total+' lessons).', 'Ders '+one+' ücretsiz. Tam kursta '+n+' tam sınav ('+total+' ders) var.', 'درس '+one+' رایگان است. دوره‌ی کامل '+n+' آزمون کامل ('+total+' درس) دارد.', 'La lección '+one+' es gratis. El curso completo tiene '+n+' exámenes completos ('+total+' lecciones).'); }
   const what = !free.length ? '' : free.length > 1 ? courseFreeLessonsLine(c, free)
     : CL('Lesson '+courseUnitNo(c.id, free[0])+' is free.','Ders '+courseUnitNo(c.id, free[0])+' ücretsiz.','درس '+courseUnitNo(c.id, free[0])+' رایگان است.','La lección '+courseUnitNo(c.id, free[0])+' es gratis.');
   const en = [total+' lessons'], tr = [total+' ders'], fa = [total+' درس'], es = [total+' lecciones'];
@@ -28904,6 +28939,27 @@ function coursePageHeroHtml(c, nx){
     <div class="lx-gap"></div>`;
 }
 // "How this course works" (footer link): today's three intro cards, in the Phase 0 words (lessons, parts, chapter finales).
+// "How it works": the course data's own text (intro.how) or the general one. The About page, and (P10) the card under "Your next step".
+function courseHowText(c){
+  const intro = COURSE_INTRO[c.id] || {}, total = courseUnitsTotal(c), mods = c.modules.length;
+  const exam = courseTrackQ(c), cm = exam || !(c.story || intro.meet) ? courseMeet(c) : null;
+  if(cm && c.intro && c.intro.how) return cl(c.intro.how.body);
+  const first = courseOrder(c.id)[0], mins = first ? Math.round(coursePartMinutes(c.id, first, -1) / 5) * 5 : 0;
+  const m = mins ? CL(' (about '+mins+' minutes in all)', ' (toplam yaklaşık '+mins+' dakika)', ' (روی هم حدود '+mins+' دقیقه)', ' (unos '+mins+' minutos en total)') : '';
+  return CL(total+' lessons in '+mods+' chapters. Each lesson has 3 steps: Learn, Practise, Check'+m+'. You can stop after any step; the course keeps your place.',
+    mods+' bölümde '+total+' ders. Her dersin 3 adımı var: Öğren, Alıştır, Kontrol et'+m+'. Her adımdan sonra durabilirsin; kurs kaldığın yeri saklar.',
+    total+' درس در '+mods+' فصل. هر درس ۳ قدم دارد: یاد بگیر، تمرین کن، بسنج'+m+'. بعد از هر قدم می‌توانی دست نگه داری؛ بعداً از همان‌جا ادامه می‌دهی.',
+    total+' lecciones en '+mods+' capítulos. Cada lección tiene 3 pasos: Aprende, Practica, Comprueba'+m+'. Puedes parar después de cada paso; el curso guarda tu sitio.');
+}
+/* P10 (Farin 2026-11-09, card 1XwITsnP: A): until Lesson 1.1 is done, "How it works" is a small card under "Your next step"
+   (it was only a link at the bottom of the page); after that it is the link again. */
+function courseHowCardHtml(c){
+  const first = courseOrder(c.id)[0]; if(!first || courseUnitFinished(c.id, first)) return '';
+  const t = courseHowText(c); if(!t) return '';
+  return `<div class="card-flat cd-how" style="margin-top:12px;"><div class="eyebrow" style="color:var(--clay-lavender-deep);">${CL('How it works','Nasıl işler','چطور کار می‌کند','Cómo funciona')}</div>
+    <p dir="${courseTD()}" style="margin:4px 0 0; font-size:13.5px; line-height:1.5;">${esc(t)}</p>
+    <button class="link-btn" data-action="course-intro-open" data-cid="${c.id}">${CL('How this course works','Bu kurs nasıl işler','این دوره چطور کار می‌کند','Cómo funciona este curso')} ${LANG==='fa' ? '‹' : '›'}</button></div>`;
+}
 function renderCourseAbout(c){
   const pd = courseFinalData(c), intro = COURSE_INTRO[c.id] || {}, total = courseUnitsTotal(c), mods = c.modules.length;
   const first = courseOrder(c.id)[0], mins = first ? Math.round(coursePartMinutes(c.id, first, -1) / 5) * 5 : 0;
@@ -28911,11 +28967,7 @@ function renderCourseAbout(c){
   const exam = courseTrackQ(c), cm = exam || !(c.story || intro.meet) ? courseMeet(c) : null, story = exam && courseTrack(c.id)==='gt' && c.storyGT ? c.storyGT : c.story;
   const meet = cm ? cl(cm.body) : intro.meet ? cl(intro.meet) : (c.story ? CL('Meet '+c.story.character+' in '+c.story.company+'. ','Tanış: '+c.story.character+', '+c.story.company+'. ','با '+c.story.character+' در '+c.story.company+' آشنا شو. ','Conoce a '+c.story.character+' en '+c.story.company+'. ') : '') + cl(c.promise);
   const cast = story && story.cast && story.cast.length ? `<p style="margin:8px 0 0; font-size:12.5px; color:rgba(255,255,255,.9);">${CL('Also in the story','Hikayede ayrıca','دیگر شخصیت‌ها','También en la historia')}: ${esc(story.cast.join(' · '))}</p>` : '';
-  const m = mins ? CL(' (about '+mins+' minutes in all)', ' (toplam yaklaşık '+mins+' dakika)', ' (روی هم حدود '+mins+' دقیقه)', ' (unos '+mins+' minutos en total)') : '';
-  const how = CL(total+' lessons in '+mods+' chapters. Each lesson has 3 steps: Learn, Practise, Check'+m+'. You can stop after any step; the course keeps your place.',
-    mods+' bölümde '+total+' ders. Her dersin 3 adımı var: Öğren, Alıştır, Kontrol et'+m+'. Her adımdan sonra durabilirsin; kurs kaldığın yeri saklar.',
-    total+' درس در '+mods+' فصل. هر درس ۳ قدم دارد: یاد بگیر، تمرین کن، بسنج'+m+'. بعد از هر قدم می‌توانی دست نگه داری؛ بعداً از همان‌جا ادامه می‌دهی.',
-    total+' lecciones en '+mods+' capítulos. Cada lección tiene 3 pasos: Aprende, Practica, Comprueba'+m+'. Puedes parar después de cada paso; el curso guarda tu sitio.');
+  // (the "How it works" text is courseHowText(c), P10)
   const finish = pd ? `<ul style="margin:6px 0 0; padding-inline-start:18px; font-size:13.5px;">${pd.parts.map(p=>`<li style="margin-bottom:3px;">${esc(cl(p.title))}</li>`).join('')}</ul>
       ${cert ? `<p style="margin:10px 0 0; font-size:13px; font-weight:700;">${esc(cl(cert.title))}</p><p style="margin:2px 0 0; font-size:12px; color:var(--ink-soft);">${esc(cl(cert.disclaimer))}</p>` : ''}`
     : `<ul style="margin:6px 0 0; padding-inline-start:18px; font-size:13.5px;">${c.modules.map(mm=>`<li style="margin-bottom:3px;">${esc(cl(mm.title))}</li>`).join('')}</ul>`;
@@ -28928,7 +28980,7 @@ function renderCourseAbout(c){
         <p style="margin:6px 0 0; font-size:14.5px; line-height:1.5;">${esc(meet)}</p>${cast}
       </div>
       <div class="card-flat" style="margin-top:12px;"><div class="eyebrow" style="color:var(--clay-lavender-deep);">${CL('How it works','Nasıl işler','چطور کار می‌کند','Cómo funciona')}</div>
-        <p style="margin:4px 0 0; font-size:14px; line-height:1.5;">${esc(cm && c.intro.how ? cl(c.intro.how.body) : how)}</p></div>
+        <p style="margin:4px 0 0; font-size:14px; line-height:1.5;">${esc(courseHowText(c))}</p></div>
       <div class="card-flat" style="margin-top:12px;"><div class="eyebrow" style="color:var(--clay-lavender-deep);">${CL('What you finish with','Sonunda elinde ne olacak','در پایان چه چیزی به دست می‌آوری','Con qué terminas')}</div>${exam && c.intro.finish ? `<p style="margin:4px 0 0; font-size:14px; line-height:1.5;">${esc(cl(c.intro.finish.body))}</p>` : finish}</div>
       ${courseOutcomesHtml(c)}
       ${courseLastReviewedHtml(c)}
@@ -29353,8 +29405,8 @@ function renderCourseGate(){
         <h2 class="display" style="font-size:21px; margin:6px 0 0; color:#fff;">${esc(title)}</h2>
         ${blurb ? `<p style="margin:6px 0 0; font-size:13.5px; line-height:1.45; opacity:.95;">${esc(blurb)}</p>` : ''}
       </div>
-      ${freeLeft ? `<button class="btn btn-primary" style="margin-top:14px;" data-action="course-go" data-cid="${c.id}">${courseUnlocked(c.id) || coursePreviewOn() ? CL('Continue lesson','Derse devam et','ادامه‌ی درس','Seguir con la lección') : CL('Go to your next free lesson','Sıradaki ücretsiz dersine git','برو سراغ درس رایگان بعدی‌ات','Ir a tu siguiente lección gratis')}</button>`
-        : courseUnlocked(c.id) || coursePreviewOn() ? '' : `<p style="margin:16px 0 0; font-size:14.5px; font-weight:700; text-align:center;">${CL('You have finished the free lessons.','Ücretsiz dersleri bitirdin.','درس‌های رایگان را تمام کردی.','Has terminado las lecciones gratis.')}</p>`}
+      ${freeLeft ? `<button class="btn btn-primary" style="margin-top:14px;" data-action="course-go" data-cid="${c.id}">${courseUnlocked(c.id) || coursePreviewOn() ? CL('Continue lesson','Derse devam et','ادامه‌ی درس','Seguir con la lección') : ((c.freeUnits || []).length > 1 ? CL('Go to your next free lesson','Sıradaki ücretsiz dersine git','برو سراغ درس رایگان بعدی‌ات','Ir a tu siguiente lección gratis') : CL('Go to the free lesson','Ücretsiz derse git','برو سراغ درس رایگان','Ir a la lección gratis'))}</button>`
+        : courseUnlocked(c.id) || coursePreviewOn() ? '' : `<p style="margin:16px 0 0; font-size:14.5px; font-weight:700; text-align:center;">${(c.freeUnits || []).length > 1 ? CL('You have finished the free lessons.','Ücretsiz dersleri bitirdin.','درس‌های رایگان را تمام کردی.','Has terminado las lecciones gratis.') : CL('You have finished the free lesson.','Ücretsiz dersi bitirdin.','درس رایگان را تمام کردی.','Has terminado la lección gratis.')}</p>`}
       ${courseUnlocked(c.id) || coursePreviewOn() ? '' : `<p class="cg-free" style="margin:14px 4px 0; font-size:13.5px; line-height:1.5; text-align:center;" dir="${courseTD()}">${esc(courseFreeUnitsText(c))}</p>`}
       ${courseUnlockBoxHtml(c, courseFreeUnitsText(c))}
       ${courseAccessLineHtml(c)}
@@ -30125,7 +30177,7 @@ function courseExitQuestions(it, b2, cid, uid){
     const own = it.exit.unit || (uid || '');
     if(!it.explain || !own) return all;
     // Lesson shape (UX-FLOW 7.2): up to 2 earlier-lesson questions first, tagged "From an earlier lesson"; the review step's picks (at most 2) are folded in here.
-    const f = cid ? courseFindUnit(cid, own) : null, rv = f && (f.u.sessions || []).some(s=>s.includes('review')) ? courseReviewPicks(cid, own).map(p=>courseQ(p.item, p.key)) : [];
+    const f = cid ? courseFindUnit(cid, own) : null, rv = f && courseReviewOn(cid, f.u) ? courseReviewPicks(cid, own).map(p=>{ const q = courseQ(p.item, p.key); if(!q.from) q.from = p.uid; return q; }) : [];
     const early = rv.concat(all.filter(q=>q.from && q.from !== own)), mine = all.filter(q=>!q.from || q.from === own);
     early.forEach(q=>{ q.earlier = true; });
     return early.slice(0, 2).concat(mine, early.slice(2));   // at most 2 before the lesson's own; any further spaced item comes after them
@@ -30153,6 +30205,22 @@ function courseLookAgainHtml(cid, uid, st){
   return `<div class="cx-again">${pts.sort((a,b)=>a-b).map(n=>`<div class="cx-again-row"><span dir="${courseTD()}">${esc(CL('Look again at key point '+n, n+'. ana noktaya tekrar bak', 'دوباره نکته‌ی '+n+' را ببین', 'Vuelve a mirar el punto clave '+n))}: <b dir="${courseTD()}">${esc(cl(ex.points[n-1].head))}</b></span>
     <button class="link-btn" data-action="course-lookagain" data-cid="${cid}" data-uid="${esc(uid)}" data-n="${n}">${CL('Open it in Learn','Öğren\'de aç','در «یاد بگیر» بازش کن','Ábrelo en Aprende')} ${LANG==='fa' ? '‹' : '›'}</button></div>`).join('')}</div>`;
 }
+/* P2 (Farin 2026-11-09, card 1XwITsnP: B, every course): a wrong answer in Check names the key point that teaches it, at once:
+   "Look again at key point N: <its title>" (an earlier lesson's question names that lesson). With the item's own why (shown above it)
+   the line is the pointer only; without one it is the feedback. The result screen keeps its "Open it in Learn" links. */
+function courseMissPointHtml(cid, uid, q){
+  if(!q || !q.point || (q.earlier && (!q.from || q.from === uid))) return '';
+  const from = q.earlier ? q.from : uid, ex = courseUnitItems(from).explain, p = ex && (ex.points || [])[q.point-1];
+  if(!p || !p.head) return '';
+  const n = q.point, no = from !== uid ? courseUnitNo(cid, from) : '';
+  const line = no ? CL('Look again at Lesson '+no+', key point '+n, 'Ders '+no+': '+n+'. ana noktaya tekrar bak', 'دوباره نکته‌ی '+n+' درس '+no+' را ببین', 'Vuelve a mirar la lección '+no+', punto clave '+n)
+    : CL('Look again at key point '+n, n+'. ana noktaya tekrar bak', 'دوباره نکته‌ی '+n+' را ببین', 'Vuelve a mirar el punto clave '+n);
+  const body = `<span dir="${courseTD()}">${esc(line)}: <b dir="${courseTD()}">${esc(cl(p.head))}</b></span>`;
+  return q.why && cl(q.why) ? `<p class="cx-miss-kp">${body}</p>` : `<div class="cx-fb bad"><b>${CL('Not quite.','Tam değil.','نه دقیقاً.','No exactamente.')}</b> ${body}</div>`;
+}
+/* P4 (Farin 2026-11-09, card 1XwITsnP: A): missed Check questions really come back. Every course except IELTS folds up to 2
+   earlier-lesson questions (missed ones first, courseReviewPicks) into a lesson's Check, as a lesson that lists a review step does. */
+function courseReviewOn(cid, u){ const c = courseGet(cid); return !!u && ((u.sessions || []).some(s=>s.includes('review')) || !!(c && c.id !== 'ielts' && !courseIsExam(c))); }
 function renderCourseExit(cid, uid, it){
   let st = courseUi.exit;
   if(!st || st.uid !== uid) st = courseUi.exit = {uid, cid, qs:courseExitQuestions(it, courseB2(cid, uid), cid, uid), i:0, picked:null, right:0, miss:[]};
@@ -30160,7 +30228,9 @@ function renderCourseExit(cid, uid, it){
   if(st.i >= st.qs.length){
     const n = st.qs.length, wrong = n - st.right;
     return `<div class="card-flat cx-result" style="text-align:center;"><h2 class="display" style="font-size:24px;">${esc(CL(st.right+' of '+n+' right', n+' sorudan '+st.right+' doğru', st.right+' از '+n+' درست', st.right+' de '+n+' correctas'))}</h2>
-      <p style="font-size:12.5px; color:var(--ink-faint); margin:6px 0 0;">${!wrong ? CL('All right. You can use this now.','Hepsi doğru. Bunu artık kullanabilirsin.','همه درست است. حالا می‌توانی از این استفاده کنی.','Todo bien. Ya puedes usarlo.') : CL(wrong+' missed. You can redo this step any time from the lesson page.', wrong+' yanlış. Bu adımı ders sayfasından istediğin zaman yeniden yapabilirsin.', wrong+' مورد غلط بود. هر وقت خواستی می‌توانی این قدم را از صفحه‌ی درس دوباره انجام بدهی.', wrong+' falladas. Puedes repetir este paso cuando quieras desde la página de la lección.')}</p></div>
+      <p style="font-size:12.5px; color:var(--ink-faint); margin:6px 0 0;">${!wrong ? CL('All right. You can use this now.','Hepsi doğru. Bunu artık kullanabilirsin.','همه درست است. حالا می‌توانی از این استفاده کنی.','Todo bien. Ya puedes usarlo.') : courseReviewOn(cid, (courseFindUnit(cid, uid) || {}).u) ? (wrong === 1 ? CL('1 missed. It comes back in your next lessons.', '1 yanlış. Sonraki derslerinde tekrar karşına çıkacak.', '۱ مورد غلط بود. در درس‌های بعدی‌ات دوباره می‌آید.', '1 fallada. Volverá en tus próximas lecciones.')
+        : CL(wrong+' missed. They come back in your next lessons.', wrong+' yanlış. Sonraki derslerinde tekrar karşına çıkacaklar.', wrong+' مورد غلط بود. در درس‌های بعدی‌ات دوباره می‌آیند.', wrong+' falladas. Volverán en tus próximas lecciones.'))
+        : CL(wrong+' missed. You can redo this step any time from the lesson page.', wrong+' yanlış. Bu adımı ders sayfasından istediğin zaman yeniden yapabilirsin.', wrong+' مورد غلط بود. هر وقت خواستی می‌توانی این قدم را از صفحه‌ی درس دوباره انجام بدهی.', wrong+' falladas. Puedes repetir este paso cuando quieras desde la página de la lección.')}</p></div>
       ${courseLookAgainHtml(cid, uid, st)}
       <button class="btn btn-primary cs-main" data-action="course-exit-finish" data-cid="${cid}" data-uid="${uid}">${esc(courseNextBtnLabel())}</button>`;
   }
@@ -30175,6 +30245,7 @@ function renderCourseExit(cid, uid, it){
     }).join('')}</div>
     ${st.picked!==null && q.full ? `<div class="card-flat" dir="ltr" translate="no" style="margin-top:10px; font-size:14.5px;">${esc(q.full)}</div>` : ''}
     ${st.picked!==null && q.why && cl(q.why) ? `<div class="cx-fb ${st.picked===q.correct ? 'ok' : 'bad'}"><b>${st.picked===q.correct ? CL('Right.','Doğru.','درست است.','Correcto.') : CL('Not quite.','Tam değil.','نه دقیقاً.','No exactamente.')}</b> <span dir="${courseTD()}">${esc(cl(q.why))}</span></div>` : ''}
+    ${st.picked!==null && st.picked!==q.correct ? courseMissPointHtml(cid, uid, q) : ''}
     ${st.picked!==null ? `<button class="btn btn-primary cs-main" data-action="course-exit-next">${CL('Next','Sonraki','بعدی','Siguiente')}</button>` : ''}`;
 }
 
@@ -30996,7 +31067,7 @@ function courseUnitObjective(cid, uid){
 function courseCheckCount(cid, uid){
   const it = courseUnitItems(uid), f = courseFindUnit(cid, uid);
   const n = it.exit && it.exit.items ? it.exit.items.length : courseExitQuestions(it, null).length;
-  const rv = courseHasExplain(uid) && f && (f.u.sessions || []).some(s=>s.includes('review')) ? courseReviewPicks(cid, uid).length : 0;
+  const rv = courseHasExplain(uid) && f && courseReviewOn(cid, f.u) ? courseReviewPicks(cid, uid).length : 0;
   return n + rv;
 }
 function courseQuestionsText(n){ return CL(n+' questions', n+' soru', n+' سؤال', n+' preguntas'); }
@@ -31063,8 +31134,8 @@ function renderCourseLesson(){
   const c = f.c;
   if(!courseUnitAccess(c, uid)) return renderCourseGate();
   const isCp = courseIsCp(cid, uid), isMk = !!f.u.isMock, mi = courseModuleIndex(c, uid), parts = courseParts(cid, uid), nx = courseNextInUnit(cid, uid);
-  const seq = isCp || isMk ? '' : courseLessonSeq(cid, uid);
-  const pill = isMk ? courseLessonName(cid, uid) : isCp ? courseFinaleName(cid) : (seq ? seq + courseSep() : '') + CL('Lesson '+courseUnitNo(cid, uid), 'Ders '+courseUnitNo(cid, uid), 'درس '+courseUnitNo(cid, uid), 'Lección '+courseUnitNo(cid, uid));
+  // P6 (Farin 2026-11-09, card 1XwITsnP: A): the header shows only "Lesson 2.1", without the running number.
+  const pill = isMk ? courseLessonName(cid, uid) : isCp ? courseFinaleName(cid) : CL('Lesson '+courseUnitNo(cid, uid), 'Ders '+courseUnitNo(cid, uid), 'درس '+courseUnitNo(cid, uid), 'Lección '+courseUnitNo(cid, uid));
   const title = isMk ? cl(f.u.title) : isCp ? courseLessonLine(cid, uid) : cl(f.u.title);
   const obj = courseUnitObjective(cid, uid), scene = (isCp || isMk) ? courseSceneText(cid, f.u) : '', hook = isCp || isMk ? '' : courseHookText(cid, uid);
   const objBox = obj ? `<div class="cl-obj fs-goal"><div class="lx-eyebrow">${CL('Your goal in this lesson','Bu dersteki hedefin','هدفت در این درس','Tu objetivo en esta lección')}</div><p dir="${courseTD()}">${esc(obj)}</p></div>`
@@ -31172,7 +31243,8 @@ function courseExplainHtml(cid, uid, ex, redo){
   const src = ex.source ? `<p class="cx-src">${ICONS.book}<span dir="${courseTD()}">${esc(cl(ex.source))}</span></p>` : '';
   const steps = courseUnitSteps(cid, uid), si = (steps.find(s=>s.type==='explain') || {si:0}).si, after = steps.find(s=>s.si > si);
   const label = redo || !after ? CL('Continue','Devam et','ادامه','Continuar') : CL('Next: '+courseStepName(cid, uid, after.si), 'Sırada: '+courseStepName(cid, uid, after.si), 'بعدی: '+courseStepName(cid, uid, after.si), 'Siguiente: '+courseStepName(cid, uid, after.si));
-  if(c && c.learnScreens) return courseLearnPagedHtml(cid, uid, ex, {stats, points, example, quick, remember, b2, src}, label, redo);
+  // P7 (Farin 2026-11-09, card 1XwITsnP: A): Learn one screen at a time in every course, one course at a time (learnPaged:true in its app-only literal).
+  if(c && (c.learnScreens || c.learnPaged)) return courseLearnPagedHtml(cid, uid, ex, {stats, points, example, quick, remember, b2, src}, label, redo);
   return `<div class="lx-page lx-course cx-page">
     <div class="lx-hero cx-hero">${claySparkles()}
       <span class="lx-pill">${CL('Learn','Öğren','یاد بگیر','Aprende')}</span>
@@ -31250,11 +31322,13 @@ function renderCourseDone(){
   const sc = cp.scores[uid+':drill'];
   if(sc && it.drill) work.push(`<div class="card-flat cd-work"><div class="cs-eyebrow">${esc(courseUp(cl(it.drill.title)))}</div><p>${esc(CL(sc.right+' of '+sc.total+' right', sc.total+' sorudan '+sc.right+' doğru', sc.right+' از '+sc.total+' درست', sc.right+' de '+sc.total+' correctas'))}</p></div>`);
   { const ie = courseIeDoneWork(cid, uid, it); if(ie) work.push(ie); }
+  const ed = courseIeExamDone(c, uid);
   return `<div class="fade-in course-done">
     ${courseShellTopHtml(cid, uid, null)}
     <div class="screen cs-center" style="padding-top:14px;">
       <div class="cs-big" aria-hidden="true">🎉</div>
-      <h1 class="display cs-h1">${esc(CL('Lesson '+no+' done', no+' dersi bitti', 'درس '+no+' تمام شد', 'Lección '+no+' terminada'))}</h1>
+      <h1 class="display cs-h1">${esc(ed ? CL(courseChapterName(ed.mi, c)+' done', courseChapterName(ed.mi, c)+' bitti', courseChapterName(ed.mi, c)+' تمام شد', courseChapterName(ed.mi, c)+' terminado') : CL('Lesson '+no+' done', no+' dersi bitti', 'درس '+no+' تمام شد', 'Lección '+no+' terminada'))}</h1>
+      ${ed ? courseIeExamDoneHtml(c, ed) : ''}
       ${f.u.cando ? `<div class="card-flat cs-card-green" style="margin-top:16px; text-align:start;"><b style="font-size:14px;">${CL('You can now say:','Artık şunu söyleyebilirsin:','حالا می‌توانی بگویی:','Ahora puedes decir:')}</b>
         <p style="margin:4px 0 0; font-size:14.5px; line-height:1.45;" dir="${courseTD()}">${esc(courseQuote(cl(f.u.cando)))}</p></div>` : ''}
       ${work.length ? `<div class="cd-works"><div class="cl-steps-h">${esc(courseUp(CL('Your work','Çalışmaların','کارهای تو','Tu trabajo')))}</div>${work.join('')}</div>` : ''}
@@ -31505,6 +31579,7 @@ function renderCourseDetail(cid){
       ${courseUi.reviewMsg === cid ? `<div class="card-flat" role="status" style="margin-top:12px; font-size:14px; font-weight:700;">${CL('Review mode is on. Every lesson is open on this device.','İnceleme modu açık. Bu cihazda bütün dersler açık.','حالت بررسی روشن است. همه‌ی درس‌ها روی این دستگاه باز است.','El modo de revisión está activado. Todas las lecciones están abiertas en este dispositivo.')}</div>` : ''}
       ${content ? courseRebuiltNoteHtml(c) : ''}
       ${content ? courseNextCardHtml(c, nx) : courseComingSoonHtml(c)}
+      ${content ? courseHowCardHtml(c) : ''}
       ${courseReviewNoticeHtml(c)}
       ${content ? courseSkillTilesHtml(c, nx) : ''}
       ${content && c.trackSwitch ? courseIeTrackBoxHtml(c, true) : ''}
@@ -31592,7 +31667,13 @@ function courseLazyLoad(c, m){
       if(mine && ['course-detail','course-lesson','course-step','course-done'].includes(state.view)) render(); return ok; }));
 }
 // Starts loading the exam of a lesson (not again after a failure; Retry does that).
-function courseLazyEnsure(c, uid){ const m = courseLazyUnitMod(uid); if(m && !courseLazyReady(m) && COURSE_LAZY.state[m.lazy.key] !== 'error' && !COURSE_LAZY.wait[m.lazy.key]) courseLazyLoad(c, m); return m; }
+function courseLazyEnsure(c, uid){ const m = courseLazyUnitMod(uid); if(m && !courseLazyReady(m) && COURSE_LAZY.state[m.lazy.key] !== 'error' && !COURSE_LAZY.wait[m.lazy.key]) courseLazyLoad(c, m); courseLazyEarlier(c, m); return m; }
+// P4: a lesson's Check can bring back questions from any earlier chapter, so those chapters load too (not IELTS: it has no review picks).
+function courseLazyEarlier(c, m){
+  if(!c || !m || c.id === 'ielts' || courseIsExam(c)) return;
+  const i = (c.modules || []).indexOf(m);
+  (c.modules || []).slice(0, Math.max(0, i)).forEach(e=>{ if(e.lazy && !courseLazyReady(e) && COURSE_LAZY.state[e.lazy.key] !== 'error' && !COURSE_LAZY.wait[e.lazy.key]) courseLazyLoad(c, e); });
+}
 // The course page loads the exam of the next step in the background, so its lessons open at once (and offline later).
 function courseLazyPrefetch(c, nx){ if(nx && nx.uid) courseLazyEnsure(c, nx.uid); }
 function courseLazyOpening(cid){ return courseIsExam(courseGet(cid)) ? CL('Opening the exam…','Sınav açılıyor…','آزمون باز می‌شود…','Abriendo el examen…') : CL('Opening the lesson…','Ders açılıyor…','درس باز می‌شود…','Abriendo la lección…'); }
@@ -31963,12 +32044,44 @@ function courseIeTaskHtml(w){
     if(a >= 0 && b > a) html = `<p>${esc(en.slice(0, a + 32))}</p><div class="ie-topic">${esc(en.slice(a + 32, b).trim())}</div><p>${esc(en.slice(b))}</p>`; }
   return html;
 }
+const COURSE_IE_RATE_ON = false;
+/* P9 (Farin 2026-11-09, card 1XwITsnP: A): the end of an IELTS exam. Its last lesson's done screen says "Exam N done" and shows each
+   part's raw score (right answers; no band, no scoring lesson). Writing and Speaking show what was done. */
+function courseIeExamDone(c, uid){
+  if(!c || !courseIsExam(c) || !c.chapterName) return null;
+  const mi = courseModuleIndex(c, uid), m = c.modules[mi];
+  return m && m.units.length && m.units[m.units.length - 1].id === uid ? {mi, m} : null;
+}
+function courseIeExamDoneHtml(c, ed){
+  const cp = courseProg(c.id), num = s=>`<bdi dir="ltr">${esc(String(s))}</bdi>`, rows = [];
+  COURSE_SKILLS.forEach(s=>{
+    const us = ed.m.units.filter(u=>courseSkillOf(c, u.id) === s.k); if(!us.length) return;
+    let val = '';
+    if(s.k === 'l' || s.k === 'r'){
+      let r = 0, t = 0, d = 0; us.forEach(u=>{ const sc = cp.scores[u.id+':drill']; if(sc && sc.total){ r += sc.right || 0; t += sc.total; d++; } });
+      val = t ? num(r + ' / ' + t) : esc(CL('Not done yet','Henüz yapılmadı','هنوز انجام نشده','Aún sin hacer'));
+      if(t && d < us.length) val += `<small>${esc(CL(d+' of '+us.length+' parts', us.length+' kısımdan '+d, d+' از '+us.length+' بخش', d+' de '+us.length+' partes'))}</small>`;
+    } else if(s.k === 'w'){
+      const d = us.filter(u=>{ const a = cp.answers[u.id+':writing']; return !!(a && (a.compared || a.text)); }).length;
+      val = esc(CL(d+' of '+us.length+' tasks written', us.length+' görevden '+d+' tanesi yazıldı', d+' از '+us.length+' تکلیف نوشته شد', d+' de '+us.length+' tareas escritas'));
+    } else {
+      const sc = cp.scores[us[0].id+':sets'], p = sc ? (sc.parts || 0) : 0;
+      val = esc(CL(p+' of 3 parts done', p+' / 3 kısım bitti', p+' از ۳ بخش انجام شد', p+' de 3 partes hechas'));
+    }
+    rows.push(`<div class="ie-xd-row"><span class="ie-xd-ic" style="--c:${s.c};"></span><b>${esc(cl(s.name))}</b><span class="ie-xd-v" dir="${courseTD()}">${val}</span></div>`);
+  });
+  if(!rows.length) return '';
+  return `<div class="card-flat ie-xd" style="margin-top:16px; text-align:start;"><div class="eyebrow">${CL('Your raw scores','Ham puanların','نمره‌های خام تو','Tus puntuaciones brutas')}</div>${rows.join('')}
+    <p class="ie-note" style="margin:8px 0 0;" dir="${courseTD()}">${CL('The number of answers you got right in each part. This is not an IELTS band.','Her kısımda doğru verdiğin cevap sayısı. Bu bir IELTS bandı değil.','تعداد جواب‌های درستت در هر بخش. این نمره‌ی باند آیلتس نیست.','El número de respuestas correctas en cada parte. No es una banda IELTS.')}</p></div>`;
+}
 function courseIeWritingHtml(cid, uid, w){
   const cp = courseProg(cid), key = uid+':writing', a = cp.answers[key] || {}, done = !!a.compared;
   let st = courseUi.iew; if(!st || st.uid !== uid || st.id !== w.id) st = courseUi.iew = {uid, id:w.id, startedAt:Date.now(), model:false, inLang:false};
   const text = (courseUi.wdraft && courseUi.wdraft.uid === uid ? courseUi.wdraft.text : a.text) || '', n = courseWordCount(text);
   const taskName = w.task === 'task2' ? 'Task 2' : w.task === 'task1-gt' ? 'Task 1 (General Training)' : 'Task 1 (Academic)';
-  const B = w.rubricBands, bs = courseWriteBands(cid, uid), rated = B && (w.rubric || []).every((_, j)=>typeof bs[j] === 'number');
+  // P5 (Farin 2026-11-09, card 1XwITsnP: "this self testing is not good at IELTS too, change it or delete this phase"): the "Rate your answer"
+  // phase is off, so nothing blocks Next. farin-lxd is designing what replaces it; COURSE_IE_RATE_ON brings the old phase back.
+  const B = COURSE_IE_RATE_ON ? w.rubricBands : null, bs = courseWriteBands(cid, uid), rated = B && (w.rubric || []).every((_, j)=>typeof bs[j] === 'number');
   let after = '';
   if(done){
     after = `<div class="lx-sec"><div class="lx-eyebrow">${CL('Your answer','Senin cevabın','جواب تو','Tu respuesta')}</div><div class="card-flat"><p class="ie-model" dir="ltr" translate="no">${esc(a.text || '')}</p><small class="ie-wc">${esc(CL(courseWordCount(a.text)+' words', courseWordCount(a.text)+' kelime', courseWordCount(a.text)+' کلمه', courseWordCount(a.text)+' palabras'))}</small></div></div>
@@ -31988,7 +32101,7 @@ function courseIeWritingHtml(cid, uid, w){
     ${LANG !== 'en' && w.prompt && w.prompt[LANG] ? `<button class="link-btn ie-link" data-action="course-ie-inlang">${st.inLang ? CL('Hide the translation','Çeviriyi gizle','پنهان کردن ترجمه','Ocultar la traducción') : CL('Read the task in my language','Görevi kendi dilimde oku','تکلیف را به زبان خودم بخوانم','Lee la tarea en mi idioma')}</button>${st.inLang ? `<div class="cx-tip" dir="${courseTD()}">${esc(cl(w.prompt))}</div>` : ''}` : ''}
     ${done ? after : `<textarea id="cw-text" class="game-input ie-wta" dir="ltr" translate="no" data-ie="1" data-min="${w.minWords || 0}" rows="9" placeholder="${esc(w.task === 'task1-gt' ? 'Dear Sir or Madam,' : CL('Write here','Buraya yaz','اینجا بنویس','Escribe aquí'))}">${esc(text)}</textarea>
       <div class="ie-wcount" id="ie-wcount">${esc(CL(n+' words', n+' kelime', n+' کلمه', n+' palabras'))} · ${esc(CL('at least '+w.minWords, 'en az '+w.minWords, 'دست‌کم '+w.minWords, 'al menos '+w.minWords))}</div>
-      <button class="btn btn-primary cs-main" data-action="course-ie-write-done" data-cid="${cid}" data-uid="${esc(uid)}" ${n >= 10 ? '' : 'disabled'}>${CL('I’m done: compare and rate','Bitirdim: karşılaştır ve puanla','تمام شد: مقایسه کن و نمره بده','He terminado: comparar y puntuar')}</button>
+      <button class="btn btn-primary cs-main" data-action="course-ie-write-done" data-cid="${cid}" data-uid="${esc(uid)}" ${n >= 10 ? '' : 'disabled'}>${COURSE_IE_RATE_ON ? CL('I’m done: compare and rate','Bitirdim: karşılaştır ve puanla','تمام شد: مقایسه کن و نمره بده','He terminado: comparar y puntuar') : CL('I’m done: compare with the model','Bitirdim: örnek cevapla karşılaştır','تمام شد: با جواب نمونه مقایسه کن','He terminado: comparar con el modelo')}</button>
       <p class="ie-note" id="ie-write-hint" style="text-align:center;${n >= 10 ? ' display:none;' : ''}">${CL('Write a few sentences first (10+ words).','Önce birkaç cümle yaz (10+ kelime).','اول چند جمله بنویس (۱۰ کلمه یا بیشتر).','Escribe primero unas frases (10+ palabras).')}</p>`}`;
 }
 

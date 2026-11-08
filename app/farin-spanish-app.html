@@ -4292,6 +4292,34 @@ const GRAMMAR_DISTRACTOR_WHY_A1A2 = {
  }
 };
 Object.keys(GRAMMAR_DISTRACTOR_WHY_A1A2).forEach(id=>{ const it = GRAMMAR_ITEMS.find(g=>g.id===id); if(it) it.distractorWhy = GRAMMAR_DISTRACTOR_WHY_A1A2[id]; });
+/* LXD Review 9 READY-1/2 (me 1XwITsnP P2, Farin 2026-11-07): one reason line per roadmap grammar item,
+   shown after a missed grammar question in the stage check (and in review rounds). A1 + A2 so far; B1-C1 use the rule line. */
+const GRAMMAR_CHECK_WHY = {
+"g-A1-1":{"es":"Lo que alguien es (profesión, origen, nombre) va con ser: soy médico, soy de Irán, tú eres. Estar es para el lugar y el estado de ahora.", "en":"Who or what someone is (job, origin, name) takes ser: soy médico, soy de Irán, tú eres. Estar is for place and how you are now.", "tr":"Birinin kim ya da ne olduğu (meslek, köken, ad) ser ile söylenir: soy médico, soy de Irán, tú eres. Estar yer ve şu anki durum içindir.", "fa":"اینکه کسی کیست یا چیست (شغل، اصلیت، اسم) با ser گفته می‌شود: soy médico، soy de Irán، tú eres. estar برای مکان و حالِ همین الان است."},
+  "g-A1-2":{"es":"Dónde está alguien o algo, y cómo está ahora, va con estar: estoy en la cocina, el café está caliente, hoy estoy contento.", "en":"Where someone or something is, and how they are right now, takes estar: estoy en la cocina, el café está caliente, hoy estoy contento.", "tr":"Birinin ya da bir şeyin nerede olduğu ve şu an nasıl olduğu estar ile söylenir: estoy en la cocina, el café está caliente, hoy estoy contento.", "fa":"اینکه کسی یا چیزی کجاست و همین الان چه حالی دارد، با estar گفته می‌شود: estoy en la cocina، el café está caliente، hoy estoy contento."},
+  "g-A1-3":{"es":"El artículo concuerda con el sustantivo: el/un con los masculinos, la/una con los femeninos. Normalmente, -o es masculino y -a o -ión, femenino, pero hay excepciones: el problema, el coche, la frase.", "en":"The article matches the noun: el/un with masculine nouns, la/una with feminine ones. -o is usually masculine and -a or -ión feminine, but some aren't: el problema, el coche, la frase.", "tr":"Tanımlık isme uyar: eril isimlerle el/un, dişil isimlerle la/una. -o genelde eril, -a ve -ión genelde dişildir, ama istisnalar var: el problema, el coche, la frase.", "fa":"حرف تعریف با اسم جور می‌شود: با اسم مذکر el/un و با اسم مؤنث la/una. اسم‌های -o معمولاً مذکرند و -a و -ión معمولاً مؤنث، ولی استثنا هم هست: el problema، el coche، la frase."},
+  "g-A1-4":{"es":"En plural cambia todo a la vez: artículo, sustantivo y adjetivo. Añade -s tras vocal y -es tras consonante: las casas grandes, las ciudades, los hoteles caros.", "en":"In the plural, everything changes together: article, noun and adjective. Add -s after a vowel and -es after a consonant: las casas grandes, las ciudades, los hoteles caros.", "tr":"Çoğulda her şey birlikte değişir: tanımlık, isim ve sıfat. Ünlüden sonra -s, ünsüzden sonra -es ekle: las casas grandes, las ciudades, los hoteles caros.", "fa":"در جمع همه با هم عوض می‌شوند: حرف تعریف، اسم و صفت. بعد از مصوت -s و بعد از صامت -es اضافه کن: las casas grandes، las ciudades، los hoteles caros."},
+  "g-A1-5":{"es":"Quita -ar y pon la terminación de cada persona: yo hablo, tú hablas, ella habla, nosotros hablamos, vosotros habláis, ellos hablan. El infinitivo solo no es presente.", "en":"Drop -ar and add the ending for the person: yo hablo, tú hablas, ella habla, nosotros hablamos, vosotros habláis, ellos hablan. The -ar form alone is not the present.", "tr":"-ar'ı at ve kişinin ekini koy: yo hablo, tú hablas, ella habla, nosotros hablamos, vosotros habláis, ellos hablan. Tek başına mastar şimdiki zaman değildir.", "fa":"‎-ar را بردار و پایانه‌ی هر شخص را بگذار: yo hablo، tú hablas، ella habla، nosotros hablamos، vosotros habláis، ellos hablan. مصدر به‌تنهایی زمان حال نیست."},
+  "g-A1-6":{"es":"Quita -er/-ir y pon la terminación de cada persona: yo como, tú comes, ella come, ellos comen; nosotros comemos, nosotros vivimos. Con yo, siempre -o.", "en":"Drop -er/-ir and add the person's ending: yo como, tú comes, ella come, ellos comen; nosotros comemos, nosotros vivimos. Yo always ends in -o.", "tr":"-er/-ir'i at ve kişinin ekini koy: yo como, tú comes, ella come, ellos comen; nosotros comemos, nosotros vivimos. Yo ile her zaman -o gelir.", "fa":"‎-er/-ir را بردار و پایانه‌ی هر شخص را بگذار: yo como، tú comes، ella come، ellos comen؛ nosotros comemos، nosotros vivimos. با yo همیشه -o می‌آید."},
+  "g-A1-7":{"es":"Lo que tienes, la edad, el hambre, la sed, el sueño, el miedo y la obligación van con tener, nunca con ser: tengo una reunión, tengo veinte años, tengo que salir. Tener cambia con la persona: tengo, tienes, tiene, tenemos.", "en":"What you have, and age, hunger, thirst, sleep, fear and 'have to' all take tener, never ser: tengo una reunión, tengo veinte años, tengo que salir. Tener changes with the person: tengo, tienes, tiene, tenemos.", "tr":"Sahip olduğun şeyler, yaş, açlık, susuzluk, uyku, korku ve zorunluluk ser ile değil, tener ile söylenir: tengo una reunión, tengo veinte años, tengo que salir. Tener kişiye göre değişir: tengo, tienes, tiene, tenemos.", "fa":"چیزی که داری، سن، گرسنگی، تشنگی، خواب، ترس و «باید» همه با tener گفته می‌شوند، هیچ‌وقت با ser: tengo una reunión، tengo veinte años، tengo que salir. tener با شخص عوض می‌شود: tengo، tienes، tiene، tenemos."},
+  "g-A1-8":{"es":"Lo que gusta es el sujeto, así que gusta o gustan concuerda con él: me gusta el café, me gustan los libros. Con un verbo, siempre gusta: me gusta viajar. La persona va con me, te, le, nos, les.", "en":"The thing you like is the subject, so gusta or gustan agrees with it: me gusta el café, me gustan los libros. With a verb it is always gusta: me gusta viajar. The person is me, te, le, nos, les.", "tr":"Beğenilen şey öznedir, bu yüzden gusta ya da gustan ona uyar: me gusta el café, me gustan los libros. Fiille her zaman gusta gelir: me gusta viajar. Kişi me, te, le, nos, les ile söylenir.", "fa":"چیزی که دوستش داری فاعل جمله است، پس gusta یا gustan با آن جور می‌شود: me gusta el café، me gustan los libros. با فعل همیشه gusta می‌آید: me gusta viajar. شخص با me، te، le، nos، les می‌آید."},
+  "g-A1-9":{"es":"La palabra interrogativa va primero, con tilde: ¿Dónde vives? Elígela por lo que preguntas: dónde (lugar), cuándo (tiempo), cuánto o cuántos (cantidad), cómo (nombre, manera), qué (qué cosa), cuál (cuál de varios: ¿Cuál es tu nacionalidad?).", "en":"Put the question word first, with its accent: ¿Dónde vives? Pick it by meaning: dónde (place), cuándo (time), cuánto or cuántos (amount), cómo (name, way), qué (what), cuál (which one: ¿Cuál es tu nacionalidad?).", "tr":"Soru sözcüğü vurgu işaretiyle başa gelir: ¿Dónde vives? Ne sorduğuna göre seç: dónde (yer), cuándo (zaman), cuánto ya da cuántos (miktar), cómo (ad, biçim), qué (ne), cuál (hangisi: ¿Cuál es tu nacionalidad?).", "fa":"کلمه‌ی پرسشی با تکیه‌نما اول جمله می‌آید: ¿Dónde vives? آن را بر اساس سؤالت انتخاب کن: dónde (مکان)، cuándo (زمان)، cuánto یا cuántos (مقدار)، cómo (اسم، روش)، qué (چه چیزی)، cuál (کدام: ¿Cuál es tu nacionalidad?)."},
+  "g-A1-10":{"es":"No va justo antes del verbo: yo no hablo francés, no tengo tiempo. Mi, tu, su y nuestro concuerdan con el sustantivo, no con el dueño: mis amigos, nuestra casa.", "en":"No goes right before the verb: yo no hablo francés, no tengo tiempo. Mi, tu, su and nuestro match the noun, not the owner: mis amigos, nuestra casa.", "tr":"No fiilin hemen önüne gelir: yo no hablo francés, no tengo tiempo. Mi, tu, su ve nuestro sahibe değil, isme uyar: mis amigos, nuestra casa.", "fa":"no درست قبل از فعل می‌آید: yo no hablo francés، no tengo tiempo. mi، tu، su و nuestro با اسم جور می‌شوند، نه با صاحبش: mis amigos، nuestra casa."},
+  "g-A1-11":{"es":"Hay dice que algo existe (con un/una, con números o sin artículo): hay un banco cerca, hay dos baños. Para decir dónde está algo conocido, usa está o están: las llaves están en la mesa.", "en":"Hay says that something exists (with un/una, numbers or no article): hay un banco cerca, hay dos baños. To say where a known thing is, use está or están: las llaves están en la mesa.", "tr":"Hay bir şeyin var olduğunu söyler (un/una, sayı ya da tanımlıksız): hay un banco cerca, hay dos baños. Bilinen bir şeyin nerede olduğunu söylemek için está ya da están kullan: las llaves están en la mesa.", "fa":"hay می‌گوید چیزی وجود دارد (با un/una، با عدد یا بدون حرف تعریف): hay un banco cerca، hay dos baños. برای اینکه بگویی چیزِ آشنایی کجاست، está یا están بیاور: las llaves están en la mesa."},
+"g-A2-1":{"es":"Para una acción terminada en un momento del pasado (ayer, anoche, el lunes pasado), usa el indefinido: hablé, comí, viviste; nosotros comimos, ellos comieron. El presente no sirve aquí.", "en":"For an action that finished at a time in the past (ayer, anoche, el lunes pasado), use the preterite: hablé, comí, viviste; nosotros comimos, ellos comieron. The present doesn't work here.", "tr":"Geçmişte belli bir zamanda bitmiş bir eylem için (ayer, anoche, el lunes pasado) indefinido kullan: hablé, comí, viviste; nosotros comimos, ellos comieron. Şimdiki zaman burada olmaz.", "fa":"برای کاری که در زمانی از گذشته تمام شده (ayer، anoche، el lunes pasado)، گذشته‌ی ساده (indefinido) بیاور: hablé، comí، viviste؛ nosotros comimos، ellos comieron. زمان حال اینجا درست نیست."},
+  "g-A2-2":{"es":"Estos verbos son irregulares en indefinido: ser e ir comparten fui, fue, fuimos, fueron; tener: tuve, tuvo, tuvieron; hacer: hice, hizo, hicimos. Con ayer o el año pasado, usa estas formas, no el presente.", "en":"These verbs are irregular in the preterite: ser and ir share fui, fue, fuimos, fueron; tener: tuve, tuvo, tuvieron; hacer: hice, hizo, hicimos. With ayer or el año pasado, use these forms, not the present.", "tr":"Bu fiiller indefinido'da düzensizdir: ser ve ir aynı biçimleri paylaşır (fui, fue, fuimos, fueron); tener: tuve, tuvo, tuvieron; hacer: hice, hizo, hicimos. Ayer ya da el año pasado ile şimdiki zamanı değil, bu biçimleri kullan.", "fa":"این فعل‌ها در گذشته‌ی ساده بی‌قاعده‌اند: ser و ir شکل‌های مشترک دارند (fui، fue، fuimos، fueron)؛ tener: tuve، tuvo، tuvieron؛ hacer: hice، hizo، hicimos. با ayer یا el año pasado همین شکل‌ها را بیاور، نه زمان حال را."},
+  "g-A2-3":{"es":"Para costumbres y descripciones del pasado (de niño, antes, cada verano), usa el imperfecto: -aba en los verbos en -ar (jugaba), -ía en -er/-ir (vivía, tenía). Irregulares: era, iba.", "en":"For habits and background in the past (de niño, antes, cada verano), use the imperfect: -aba for -ar verbs (jugaba), -ía for -er/-ir verbs (vivía, tenía). Irregular: era, iba.", "tr":"Geçmişteki alışkanlıklar ve arka plan için (de niño, antes, cada verano) imperfecto kullan: -ar fiillerinde -aba (jugaba), -er/-ir fiillerinde -ía (vivía, tenía). Düzensizler: era, iba.", "fa":"برای عادت‌ها و توصیف‌های گذشته (de niño، antes، cada verano)، imperfecto بیاور: در فعل‌های -ar پایانه‌ی -aba (jugaba) و در -er/-ir پایانه‌ی -ía (vivía، tenía). بی‌قاعده‌ها: era، iba."},
+  "g-A2-4":{"es":"La escena, lo que estaba pasando y las costumbres van en imperfecto (mientras cocinaba, viajaba cada verano). Un hecho puntual, lo que pasa o interrumpe, va en indefinido (llegó, sonó el teléfono).", "en":"The scene, what was going on and repeated habits take the imperfect (mientras cocinaba, viajaba cada verano). A single event that happens or breaks in takes the preterite (llegó, sonó el teléfono).", "tr":"Sahne, o sırada olan şey ve tekrarlanan alışkanlıklar imperfecto alır (mientras cocinaba, viajaba cada verano). Bir kez olan ya da araya giren olay indefinido alır (llegó, sonó el teléfono).", "fa":"صحنه، کاری که در جریان بود و عادت‌های تکراری با imperfecto می‌آیند (mientras cocinaba، viajaba cada verano). اتفاقِ یک‌باره، یعنی چیزی که رخ می‌دهد یا وسط کار پیش می‌آید، با indefinido می‌آید (llegó، sonó el teléfono)."},
+  "g-A2-5":{"es":"Cuando te lo haces a ti mismo, el verbo lleva su pronombre, y el pronombre concuerda con la persona: me levanto, te duchas, se acuesta, nos duchamos. Va antes del verbo conjugado.", "en":"When you do it to yourself, the verb needs its pronoun, and the pronoun matches the person: me levanto, te duchas, se acuesta, nos duchamos. It goes before the conjugated verb.", "tr":"Eylemi kendine yapıyorsan fiil zamirini alır ve zamir kişiye uyar: me levanto, te duchas, se acuesta, nos duchamos. Zamir çekimli fiilden önce gelir.", "fa":"وقتی کاری را روی خودت انجام می‌دهی، فعل ضمیرش را می‌گیرد و ضمیر با شخص جور می‌شود: me levanto، te duchas، se acuesta، nos duchamos. ضمیر قبل از فعلِ صرف‌شده می‌آید."},
+  "g-A2-6":{"es":"Para comparar: más o menos + adjetivo + que, o tan + adjetivo + como. Bueno pasa a mejor (nunca más mejor ni más bueno). Para destacar a uno en un grupo: el o la más... de: el más joven de la familia.", "en":"To compare: más or menos + adjective + que, or tan + adjective + como. Bueno becomes mejor (never más mejor or más bueno). For the top of a group: el or la más... de: el más joven de la familia.", "tr":"Karşılaştırmak için: más ya da menos + sıfat + que, veya tan + sıfat + como. Bueno, mejor olur (más mejor ya da más bueno asla). Grubun en üstü için: el ya da la más... de: el más joven de la familia.", "fa":"برای مقایسه: más یا menos + صفت + que، یا tan + صفت + como. bueno می‌شود mejor (هیچ‌وقت más mejor یا más bueno). برای برترینِ یک گروه: el یا la más... de: el más joven de la familia."},
+  "g-A2-7":{"es":"Lo, la, los y las sustituyen a la cosa o a la persona y van antes del verbo conjugado: Sí, lo tengo. No las veo. Concuerdan con el sustantivo: la maleta, la; mis primas, las.", "en":"Lo, la, los and las replace the thing or person and go before the conjugated verb: Sí, lo tengo. No las veo. They match the noun: la maleta takes la; mis primas takes las.", "tr":"Lo, la, los ve las nesnenin ya da kişinin yerine geçer ve çekimli fiilden önce gelir: Sí, lo tengo. No las veo. İsme uyarlar: la maleta için la, mis primas için las.", "fa":"lo، la، los و las جای چیز یا شخص می‌نشینند و قبل از فعلِ صرف‌شده می‌آیند: Sí, lo tengo. No las veo. با اسم جور می‌شوند: برای la maleta ضمیر la و برای mis primas ضمیر las."},
+  "g-A2-8":{"es":"Quien recibe algo necesita le o les (o me, te, nos) antes del verbo, aunque la frase diga «a mi madre»: A mi madre le compré un regalo. Nos escribe cada mes.", "en":"The person who receives needs le or les (or me, te, nos) before the verb, even when the sentence also says 'a mi madre': A mi madre le compré un regalo. Nos escribe cada mes.", "tr":"Alan kişi için fiilden önce le ya da les (veya me, te, nos) gerekir, cümlede 'a mi madre' olsa bile: A mi madre le compré un regalo. Nos escribe cada mes.", "fa":"برای کسی که چیزی به او می‌رسد، قبل از فعل le یا les (یا me، te، nos) لازم است، حتی اگر در جمله “a mi madre” هم آمده باشد: A mi madre le compré un regalo. Nos escribe cada mes."},
+  "g-A2-9":{"es":"Dos formas: ir a + infinitivo (voy a estudiar, nunca voy estudiar) o el infinitivo + -é, -ás, -á, -emos, -án (hablaré). El infinitivo solo no es futuro. Algunas raíces cambian: tendré, saldré.", "en":"Two ways: ir a + infinitive (voy a estudiar, never voy estudiar) or the infinitive + -é, -ás, -á, -emos, -án (hablaré). A plain infinitive is not a future. Some stems change: tendré, saldré.", "tr":"İki yol var: ir a + mastar (voy a estudiar; asla voy estudiar) ya da mastar + -é, -ás, -á, -emos, -án (hablaré). Tek başına mastar gelecek zaman değildir. Bazı kökler değişir: tendré, saldré.", "fa":"دو راه دارد: ir a + مصدر (voy a estudiar، هیچ‌وقت voy estudiar) یا مصدر + ‎-é، -ás، -á، -emos، -án (hablaré). مصدر به‌تنهایی آینده نیست. ریشه‌ی بعضی فعل‌ها عوض می‌شود: tendré، saldré."},
+  "g-A2-10":{"es":"El imperativo de tú usa la forma de él del presente: habla, cierra, abre. No la forma de tú (hablas) ni el infinitivo (abrir). Algunos son cortos e irregulares: ten, pon, haz, ve, di, ven, sal.", "en":"A tú command uses the él form of the present: habla, cierra, abre. Not the tú form (hablas) or the infinitive (abrir). A few are short and irregular: ten, pon, haz, ve, di, ven, sal.", "tr":"tú emri şimdiki zamanın él biçimini kullanır: habla, cierra, abre. tú biçimi (hablas) ya da mastar (abrir) olmaz. Birkaçı kısa ve düzensizdir: ten, pon, haz, ve, di, ven, sal.", "fa":"امرِ tú از شکلِ él در زمان حال استفاده می‌کند: habla، cierra، abre. نه شکل tú (hablas) و نه مصدر (abrir). چندتایی کوتاه و بی‌قاعده‌اند: ten، pon، haz، ve، di، ven، sal."}
+};
+Object.keys(GRAMMAR_CHECK_WHY).forEach(id=>{ const it = GRAMMAR_ITEMS.find(g=>g.id===id && !g.course); if(it){ it.why = it.why || {}; it.why.check = GRAMMAR_CHECK_WHY[id]; } });
+// The reason after a miss: LXD's why.check line, else the rule sentence of the explainer (stopgap for B1-C1 until their lines are written).
+function grammarCheckWhy(item){ const c = item && item.why && item.why.check; return c ? trLine(c) : grammarRuleLine(item); }
 
 /* === VOCAB_SETS_PLACEHOLDER — content author inserts A1-C1 vocab + slang sets here === */
 const VOCAB_SETS = [
@@ -9289,7 +9317,7 @@ function srsGoalFor(item){
   return profileGoalKeys(state.profile).find(k=>item.goalVariant && item.goalVariant[k]) || 'base';
 }
 function srsGrammarQ(item, field, goal){
-  const why = grammarRuleLine(item);
+  const why = grammarCheckWhy(item);   // LXD READY-1 A6
   const variants = [goal, 'base'].concat(Object.keys(item.goalVariant || {})).filter((v,i,a)=>v && a.indexOf(v)===i);
   for(const v of variants){
     const src = v === 'base' ? item : (item.goalVariant && item.goalVariant[v]);
@@ -9336,7 +9364,7 @@ function srsStoryQ(story, v){
    from lastQ may come back, never both. The goal version's sentences come first (srsGoalFor). */
 function srsGrammarPools(item, goal){
   const norm = s => String(s||'').toLowerCase().replace(/\s+/g,' ').trim();
-  const why = grammarRuleLine(item);
+  const why = grammarCheckWhy(item);   // LXD READY-1 A6
   const uniq = arr => arr.filter((w,i)=>w && arr.indexOf(w)===i);
   const variant = goal && goal !== 'base' && item.goalVariant && item.goalVariant[goal];
   const practice = ((variant && variant.practice) || []).concat(item.practice || []);
@@ -24328,7 +24356,7 @@ function buildStageCheck(){
     gi.others.forEach(o=>{ const s = verSrc(t, o); if(!s) return; [['blank', s.blank], ['blank2', s.blank2]].forEach(([f, b])=>{ if(b && !gi.seen.has(scNorm(b.sentence))){ const q = fillQ(b, f, o); if(q) t2.push(q); } }); });
     let q = pickFrom(t2); if(q) return q;
     // tier 3: the item's own practice fix item
-    const fixes = (t.practice || []).filter(x=>x && x.type === 'fix' && x.right && x.distractors && x.distractors.length >= 2).map(x=>{ const fq = mk(fixLabel + '\n"' + x.wrong + '"', x.right, uniq(x.distractors).slice(0, 2), x.right, null, x.translation); fq._s = [x.right, x.wrong]; return fq; });
+    const fixes = (t.practice || []).filter(x=>x && x.type === 'fix' && x.right && x.distractors && x.distractors.length >= 2).map(x=>{ const fq = mk(fixLabel + '\n"' + x.wrong + '"', x.right, uniq(x.distractors).slice(0, 2), x.right, o=>dwText(t, x.distractorWhy, o), x.translation); fq._s = [x.right, x.wrong]; return fq; });
     q = pickFrom(fixes); if(q) return q;
     // tier 4: the learner's own blank2
     const b2 = gi.eff.blank2;
@@ -24432,6 +24460,7 @@ function buildStageCheck(){
     if(!q){ s[0] = 'w'; s[1] = s[1] === 'pick' ? 'choose' : 'typed'; return; }
     use(q._s); if(q._a) gramAns.add(scNorm(q._a));
     q.scKind = 'grammar'; q.itemId = g.t.id; q.kind = 'grammar';
+    q.why = grammarCheckWhy(g.t);   // LXD READY-1 A2
     if(g.carry) q.scCarry = true;
     delete q._s; delete q._a;
     out[k] = q;
@@ -24539,7 +24568,10 @@ function renderStageCheckResults(){
   const g = [], w = {}, wOrder = [], l = [], wCarry = {};
   q.questions.forEach((qq, i)=>{
     const ok = !!q.results[i];
-    if(qq.scKind === 'grammar'){ const it = GRAMMAR_ITEMS.find(x=>x.id === qq.itemId); g.push(row(it ? grammarTitle(it) : qq.itemId, ok, qq.scCarry ? carryTag() : '')); }
+    if(qq.scKind === 'grammar'){ const it = GRAMMAR_ITEMS.find(x=>x.id === qq.itemId);
+      // LXD READY-1 A7: a row that needs a review opens its lesson; Back returns here
+      const look = !ok && it ? `<button class="btn btn-ghost btn-sm" style="margin-top:6px;" data-action="sc-look-again" data-id="${esc(it.id)}">${esc(L('Look again','Tekrar bak','دوباره ببین','Repasar'))}</button>` : '';
+      g.push(row(it ? grammarTitle(it) : qq.itemId, ok, qq.scCarry ? carryTag() : '').replace(/<\/div>$/, look + '</div>')); }
     else if(qq.scKind === 'vocab'){ if(!w[qq.itemId]){ w[qq.itemId] = []; wOrder.push(qq.itemId); } if(!ok) w[qq.itemId].push(qq.scWord); if(qq.scCarry) wCarry[qq.itemId] = true; }
     else if(qq.scKind === 'listen'){ const d = DIALOGUES.find(x=>x.id === qq.itemId), t = d && d.title; l.push(row(t ? (typeof t === 'string' ? t : (L(t.en, t.tr, t.fa, t.es) || t.en)) : L('Listening','Dinleme','شنیدن','Comprensión auditiva'), ok)); }
   });
@@ -24698,17 +24730,25 @@ function quizAnswerText(item){
   const right = item.options[item.correct];
   return /_{3,}/.test(body) ? body.replace(/_{3,}/, right) : right;
 }
-function answerBannerHtml(item, ok, sel){
+// extra (LXD READY-1 A4): the stage check's reason + "Look again at the lesson", shown after a miss when the tapped option has no line of its own.
+function answerBannerHtml(item, ok, sel, extra){
   const ans = quizAnswerText(item), tr = trLine(item.answerTr);
   if(ok && !tr && !item.reason) return '';
   // Phase 2b (jljlQLsH): after a miss, the distractorWhy line for the option the learner tapped (UI language; the hint never names the answer).
-  const why = !ok && sel != null && sel !== item.correct && item.hints ? item.hints[sel] : '';
+  const why = !ok ? ((sel != null && sel !== item.correct && item.hints && item.hints[sel]) || extra || '') : '';
   const head = ok ? '' : `<b>${esc(L('Correct answer','Doğru cevap','پاسخ درست','Respuesta correcta'))}:</b> `;
   return `<div class="game-why">${farinImg(ok ? 'face-smile' : 'mood-thinking')}<div dir="ltr">${head}${esc(ans)}${tr ? `<div dir="auto" style="margin-top:4px; opacity:.85;">${esc(tr)}</div>` : ''}${why ? `<div class="quiz-why-miss" dir="auto" style="margin-top:4px; opacity:.85;">${esc(why)}</div>` : ''}${item.reason ? `<div class="quiz-why-item" dir="auto" style="margin-top:4px;">${esc(item.reason)}</div>` : ''}</div></div>`;
 }
 /* P2 (Farin 2026-11-09, card 1XwITsnP: B, "this should apply to the original roadmap lessons too"): in a lesson's grammar quiz a
    wrong answer points back to what teaches it. The free grammar page has no numbered key points, so the pointer is the item's rule
    (why.rule): "Look again at the rule: ...". A question with its own why (practice[].why, item.reason) shows that in the banner instead. */
+// Stage check, after a missed grammar question: the reason, then where to look again (the roadmap's "Look again at key point N"; LXD READY-1 A5).
+function stageCheckMissExtra(item){
+  if(!item || item.scKind !== 'grammar') return '';
+  const it = GRAMMAR_ITEMS.find(x=>x.id === item.itemId);
+  const look = it ? L('Look again at the lesson: {t}.','Derse tekrar bak: {t}.','دوباره درس را ببین: {t}.','Vuelve a mirar la lección: {t}.').replace('{t}', grammarTitle(it)) : '';
+  return [item.why, look].filter(Boolean).join(' ');
+}
 function quizLookAgainHtml(q, item, ok){
   if(ok || !q || q.kind !== 'grammar' || !q.contextId || !item || item.reason || item.carry) return '';
   const it = GRAMMAR_ITEMS.find(g=>g.id === q.contextId), r = it && it.why && it.why.rule;
@@ -24886,7 +24926,7 @@ function renderQuiz(){
     </div>
     ${!q.answered && (q.miss||[]).length ? `<div class="game-why">${farinImg('mood-thinking')}<div dir="ltr">${esc(quizHintText(q, item))}</div></div>` : ''}
     ${q.answered ? `
-      ${answerBannerHtml(item, q.results && q.results[q.index] === true, q.selected)}
+      ${answerBannerHtml(item, q.results && q.results[q.index] === true, q.selected, q.kind === 'stagecheck' ? stageCheckMissExtra(item) : '')}
       ${quizLookAgainHtml(q, item, q.results && q.results[q.index] === true)}
       ${quizTypedNoteHtml(q, item)}
       ${q.kind === 'stagecheck' && !(q.results && q.results[q.index] === true) ? `<p class="game-result-line" dir="auto" style="margin:0;">${esc(L('This one comes back in your review tomorrow.','Bu soru yarın tekrarında geri gelecek.','این یکی فردا در مرورت برمی‌گردد.','Esta pregunta vuelve mañana en tu repaso.'))}</p>` : ''}
@@ -26398,6 +26438,7 @@ const HANDLERS = {
     if(!state.progress.stageChecks[key]) state.progress.stageChecks[key] = {v:1, date:todayISO(), skipped:true};
     HANDLERS['sc-advance']();
   },
+  'sc-look-again'(el){ const id = el.dataset.id; if(GRAMMAR_ITEMS.some(g=>g.id === id)) go('grammar-trap', {id}); },
   'sc-advance'(){
     checkRoadmapStageAdvance();
     markActivity();

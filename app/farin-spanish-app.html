@@ -1948,6 +1948,17 @@
   .ie-score{display:flex; align-items:center; gap:10px; margin-top:12px; padding:12px 14px; border-radius:16px; background:var(--success-soft); font-weight:800;}
   .ie-score b{font-size:26px;}
   .ie-score.warn{background:var(--cat-review-soft);}
+  /* P5 draft checks (x8ULlduf) */
+  .cs-chk{display:flex; gap:10px; align-items:flex-start; padding:9px 0; border-top:1px solid var(--border-soft); font-size:13.5px; line-height:1.45;}
+  .cs-draftchk .eyebrow + .cs-chk{border-top:none;}
+  .cs-chk-i{flex:0 0 22px; height:22px; border-radius:50%; display:flex; align-items:center; justify-content:center; background:var(--bg-sunken); color:var(--ink-soft); font-weight:800;}
+  .cs-chk.ok .cs-chk-i{background:var(--success-soft); color:var(--success);}
+  .cs-chk-i svg{width:14px; height:14px;}
+  .cs-chk-b small{color:var(--ink-soft);}
+  .cs-chk-b .link-btn{margin-top:4px; font-size:13px;}
+  .cs-lb{margin:0; padding-inline-start:20px; font-size:13.5px; line-height:1.5; color:var(--ink-soft);}
+  .cs-lb li{margin-bottom:4px;}
+  .cs-yours u{text-decoration-color:var(--success); text-decoration-thickness:2px; text-underline-offset:3px;}
   /* course method P2/P9/P10 (Farin 2026-11-09, card 1XwITsnP) */
   .cx-miss-kp{margin:8px 0 0; font-size:13.5px; line-height:1.45; color:var(--ink-soft);}
   .cd-how .link-btn{margin-top:6px; font-size:13.5px;}
@@ -29726,7 +29737,7 @@ function renderCourseSpeaking(cid, uid, sp){
     let action, label;
     if(st.running){ action = 'course-sp-done'; label = CL('Done','Bitti','تمام','Listo'); }
     else if(r < last){ action = 'course-sp-go'; label = p2 && r === 0 ? CL('Start the talk · 2 minutes','Konuşmaya başla · 2 dakika','شروع صحبت: دو دقیقه','Empezar la charla · 2 minutos') : p2 ? CL('Talk once more · 2 minutes','Bir kez daha konuş · 2 dakika','یک بار دیگر بگو: دو دقیقه','Habla otra vez · 2 minutos') : CL('Start round '+(r+2)+' · '+R[r+1]+' s', (r+2)+'. tura başla · '+R[r+1]+' sn', 'شروع دور '+(r+2)+' – '+R[r+1]+' ثانیه', 'Empezar la ronda '+(r+2)+' · '+R[r+1]+' s'); }
-    else { action = 'course-sp-check'; label = CL('Check yourself','Kendini değerlendir','خودت را ارزیابی کن','Evalúate'); }
+    else { action = 'course-sp-check'; label = CL('Listen back','Kendini dinle','به ضبطت گوش کن','Escúchate'); }
     return `<div class="cs-rounds">${rounds}</div>
       <div class="cs-count${st.running ? ' on' : ''}"><div class="eyebrow">${p2 && r === 0 ? CL('Notes','Notlar','یادداشت','Notas') : p2 ? CL('Talk','Konuşma','صحبت','Charla') : CL('Round','Tur','دور','Ronda')+' '+(r+1)}${courseSep()}${secs} ${CL('seconds','saniye','ثانیه','segundos')}</div><b>${courseClock(st.running ? left : 0)}</b><span class="cs-cbar"><i style="width:${st.running ? 100 * left / secs : 0}%;"></i></span></div>
       ${tip}${recNote}${clip}
@@ -29736,12 +29747,12 @@ function renderCourseSpeaking(cid, uid, sp){
   }
   // Check
   const sec = CL('s','sn','ثانیه','s'), used = st.used.map((u,i)=>u ? `<span class="cs-rdot done">${R[i]} ${sec} → ${u} ${sec}</span>` : '').join('');
-  const ticks = courseSpChecks(sp).map((x,i)=>`<button class="cs-tick${st.ticks[i] ? ' on' : ''}" data-action="course-sp-tick" data-i="${i}" aria-pressed="${st.ticks[i] ? 'true' : 'false'}"><span class="cs-box">${st.ticks[i] ? ICONS.check : ''}</span><span>${esc(cl(x))}</span></button>`).join('');
+  const ticks = courseListenBackHtml(courseSpChecks(sp).map(x=>`<span dir="${courseTD()}">${esc(cl(x))}</span>`));   // P5: read-only, nothing stored
   return `${used ? `<div class="cs-rounds">${used}</div>` : ''}
     ${sp.model ? `<div class="card-flat cs-spmodel"><div class="row between" style="align-items:center; gap:8px;"><div class="eyebrow" style="color:color-mix(in srgb, var(--cat-lis) 75%, var(--ink));">${CL('Listen to a model','Bir örnek dinle','یک نمونه گوش کن','Escucha un modelo')}</div>
         <button class="btn btn-sm cs-play" data-action="speak-sentence" data-text="${esc(sp.model)}">${ICONS.soundOn} ${CL('Play','Dinle','پخش','Escuchar')}</button></div>
       <details style="margin-top:8px;"><summary style="cursor:pointer; font-size:13px; font-weight:700; color:var(--ink-soft);">${CL('Read it','Metni gör','متنش را ببین','Leerlo')}</summary><p dir="ltr" translate="no" style="margin:6px 0 0; font-size:14px; line-height:1.55;">${esc(sp.model)}</p></details></div>` : ''}
-    ${ticks ? `<div class="eyebrow" style="margin:16px 0 8px;">${CL('Checklist','Kontrol listesi','چک‌لیست','Lista de comprobación')}</div><p class="cs-cmp-hint" dir="${courseTD()}" style="margin:0 0 8px;">${CL('For you only. Not graded.','Yalnızca senin için. Not verilmez.','فقط برای خودت است؛ نمره‌ی رسمی ندارد.','Solo para ti. Sin nota.')}</p><div class="stack" style="gap:8px;">${ticks}</div>` : ''}
+    ${ticks}
     ${sp.culture ? `<div class="card-flat" style="margin-top:14px; background:var(--cat-review-soft); border-color:var(--cat-review-soft);"><div class="eyebrow">${CL('Culture note','Kültür notu','نکته‌ی فرهنگی','Nota cultural')}</div><p style="margin:4px 0 0; font-size:13.5px;">${esc(cl(sp.culture))}</p></div>` : ''}
     ${btn('course-sp-finish', esc(courseNextBtnLabel()))}`;
 }
@@ -30154,6 +30165,73 @@ function courseWriteTicks(cid, uid){ const s = courseProg(cid).scores[uid+':writ
 // (course.rubricBands: {note, order:[4 keys], <key>:[4 descriptors]}). Courses without bands keep the tick boxes.
 function courseRubricBands(cid, w){ const b = (courseGet(cid) || {}).rubricBands; return b && Array.isArray(b.order) && w && (w.rubric || []).length === b.order.length && b.order.every(k=>Array.isArray(b[k]) && b[k].length === 4) ? b : null; }
 function courseWriteBands(cid, uid){ const s = courseProg(cid).scores[uid+':writing']; return (s && Array.isArray(s.bands)) ? s.bands : []; }
+/* P5 (Farin 2026-11-07 on 1XwITsnP; LXD READY-2, Trello x8ULlduf): no learner scores themselves anywhere (no 0-3 lines, no ticks,
+   no IELTS ratings). After Check the app shows what the draft has and what is missing (length, key phrases, task parts, grammar slips),
+   next to the model. Speaking checklists are read-only ("Listen back for these"). Task parts (writing.parts = [{t, find:[cues]}]) never
+   block: a cue list can miss a paraphrase, so "I wrote it another way" marks a part as there for this draft (answers[key].ways). */
+function coursePartCueRe(cue){ return cue === '#number' ? /[0-9]/ : new RegExp("(^|[^\\p{L}\\p{N}'])" + reEsc(String(cue).toLowerCase()) + "(?![\\p{L}\\p{N}])", 'u'); }
+function coursePartsCheck(w, text, ways){
+  const low = String(text || '').toLowerCase().replace(/[’‘]/g, "'"), wy = Array.isArray(ways) ? ways : [];
+  return (w && Array.isArray(w.parts) ? w.parts : []).map((p, i)=>{ const cues = p.find || [], hit = cues.filter(c=>coursePartCueRe(c).test(low));
+    return {i, label:cl(p.t), cues, hit, ok:hit.length > 0 || wy.includes(i), way:!hit.length && wy.includes(i)}; });
+}
+function coursePartsAllOk(w, text, ways){ return coursePartsCheck(w, text, ways).every(p=>p.ok); }
+function coursePartModelLine(w, part){ const ss = splitSentences(String((w && w.model) || '')); return ss.find(s=>part.cues.some(c=>coursePartCueRe(c).test(s.toLowerCase().replace(/[’‘]/g, "'")))) || ''; }
+function courseCheckRowHtml(ok, html){ return `<div class="cs-chk${ok ? ' ok' : ''}"><span class="cs-chk-i" aria-hidden="true">${ok ? ICONS.check : '○'}</span><div class="cs-chk-b">${html}</div></div>`; }
+function courseListenBackHtml(items){
+  if(!items.length) return '';
+  return `<div class="eyebrow" style="margin:16px 0 8px;">${CL('Listen back for these','Kaydı dinlerken bunlara bak','موقع گوش دادن به ضبط، این‌ها را پیدا کن','Al escucharte, busca esto')}</div><ul class="cs-lb">${items.map(x=>`<li>${x}</li>`).join('')}</ul>`;
+}
+// "Your text" with the words that matched a task part underlined
+function courseMarkCues(text, cues){
+  const h = esc(String(text || '')), cs = [...new Set((cues || []).filter(c=>c && c !== '#number'))].sort((a, b)=>b.length - a.length);
+  if(!cs.length) return h;
+  return h.replace(new RegExp('\\b(' + cs.map(c=>reEsc(esc(c))).join('|') + ')\\b', 'gi'), '<u>$1</u>');
+}
+// The "Check your draft" card: Length, Key phrases, one row per task part, Check this (grammar slips). Used by lesson writing and final-project parts.
+function courseDraftCheckHtml(cid, uid, w, res, text, ways, hits, wayAction){
+  const rows = [], kw = Math.max(0, (w.minWords || 0) - res.wc), ks = Math.max(0, (w.minSentences || 0) - res.sc);
+  const len = res.lengthOk ? CL(res.wc+' words, '+res.sc+' sentences', res.wc+' kelime, '+res.sc+' cümle', res.wc+' کلمه، '+res.sc+' جمله', res.wc+' palabras, '+res.sc+' frases')
+    : [kw ? CL('Add '+kw+' more words', kw+' kelime daha ekle', kw+' کلمه‌ی دیگر اضافه کن', 'Añade '+kw+' palabras más') : '', ks ? CL('Add '+ks+' more sentences', ks+' cümle daha ekle', ks+' جمله‌ی دیگر اضافه کن', 'Añade '+ks+' frases más') : ''].filter(Boolean).join(courseSep());
+  rows.push(courseCheckRowHtml(res.lengthOk && res.looksReal !== false, `<b>${CL('Length','Uzunluk','طول','Extensión')}</b> <span dir="${courseTD()}">${esc(len)}</span>${res.lengthOk && res.looksReal === false ? `<br><span dir="${courseTD()}">${CL('Write real sentences in English to go on.','Devam etmek için İngilizce gerçek cümleler yaz.','برای ادامه، جمله‌های واقعی به انگلیسی بنویس.','Escribe frases reales en inglés para seguir.')}</span>` : ''}`));
+  const words = (w.words || []).map(x=>x.word), miss = res.wordsMissed || [], used = words.filter(x=>!miss.includes(x));
+  if(words.length) rows.push(courseCheckRowHtml(!miss.length, `<b>${CL('Key phrases','Anahtar ifadeler','عبارت‌های کلیدی','Frases clave')}</b>${used.length ? ` <span>${CL('Used','Kullandın','به کار بردی','Usadas')}: <bdi dir="ltr" translate="no">${esc(used.join(', '))}</bdi></span>` : ''}${miss.length ? `${used.length ? '<br>' : ' '}<span>${CL('Not yet','Henüz yok','هنوز نه','Aún no')}: <bdi dir="ltr" translate="no">${esc(miss.join(', '))}</bdi></span>` : ''}`));
+  coursePartsCheck(w, text, ways).forEach(p=>{
+    if(p.ok){ rows.push(courseCheckRowHtml(true, `<span dir="${courseTD()}">${esc(p.label)}</span>${p.way ? ` <small dir="${courseTD()}">(${CL('written another way','başka türlü yazıldı','جور دیگری نوشته شد','escrito de otra forma')})</small>` : ''}`)); return; }
+    const ml = coursePartModelLine(w, p);
+    rows.push(courseCheckRowHtml(false, `<span dir="${courseTD()}">${esc(p.label)}: ${CL('not found yet','henüz bulunamadı','هنوز پیدا نشد','aún no aparece')}</span>${ml ? `<br><small><span dir="${courseTD()}">${CL('In the model','Örnekte','در نمونه','En el modelo')}:</span> <bdi dir="ltr" translate="no">${esc(ml)}</bdi></small>` : ''}<br><button class="link-btn" data-action="${wayAction || 'course-write-way'}" data-cid="${cid}" data-uid="${esc(uid)}" data-i="${p.i}">${CL('I wrote it another way','Başka türlü yazdım','جور دیگری نوشتم','Lo escribí de otra forma')}</button>`));
+  });
+  if((hits || []).length) rows.push(courseCheckRowHtml(false, `<b>${CL('Check this','Şuna bir bak','این را بررسی کن','Revisa esto')}</b>${hits.map(h=>`<br><b dir="ltr" translate="no">${esc(h.phrase)}</b> <span dir="${courseTD()}">${esc(cl(h.fix))}</span>`).join('')}`));
+  return `<div class="card-flat cs-draftchk" style="margin-top:12px;"><div class="eyebrow">${CL('Check your draft','Taslağını kontrol et','پیش‌نویست را بسنج','Revisa tu borrador')}</div>${rows.join('')}</div>`;
+}
+// Before Check: what the app will look at (read-only rubric) and what happens after Check.
+function courseAppChecksHtml(w, ruleLine){
+  return `<div class="card-flat" style="margin-top:12px;"><div class="eyebrow">${CL('What the app checks','Uygulamanın kontrol ettikleri','چیزهایی که اپ بررسی می‌کند','Lo que comprueba la app')}</div>
+      <ul style="margin:6px 0 0; padding-inline-start:18px; font-size:13px; color:var(--ink-soft);">${(w.rubric || []).map((r, ri)=>`<li style="margin-bottom:4px;">${ruleLine(r, ri)}</li>`).join('')}</ul>
+      <p style="margin:6px 0 0; font-size:12px; color:var(--ink-faint);" dir="${courseTD()}">${CL('After Check, you see what your draft has and what is missing, next to the model answer.','Kontrol et\'ten sonra taslağında ne olduğunu ve neyin eksik olduğunu, örnek cevabın yanında görürsün.','بعد از «بررسی کن» می‌بینی پیش‌نویست چه دارد و چه چیزی کم دارد، کنار جواب نمونه.','Después de Comprobar, ves qué tiene tu borrador y qué falta, junto a la respuesta modelo.')}</p></div>`;
+}
+// IELTS writing after "compare": exam checks that need no marking (P5 section 6). No bands or descriptors on screen.
+function courseIeWriteChecksHtml(w, a){
+  const t = String((a && a.text) || ''), low = t.toLowerCase().replace(/[’‘]/g, "'"), wc = courseWordCount(t), task = w.task || 'task1';
+  const min = w.minWords || (task === 'task2' ? 250 : 150), paras = t.split(/\n\s*\n/).map(x=>x.trim()).filter(Boolean), rows = [];
+  const has = (s, list)=>list.some(c=>coursePartCueRe(c).test(String(s || '').toLowerCase().replace(/[’‘]/g, "'")));
+  rows.push(courseCheckRowHtml(wc >= min, esc(CL(wc+' words. The exam asks for at least '+min+'.', wc+' kelime. Sınav en az '+min+' kelime ister.', wc+' کلمه. آزمون دست‌کم '+min+' کلمه می‌خواهد.', wc+' palabras. El examen pide al menos '+min+'.'))));
+  const needP = task === 'task2' ? 4 : task === 'task1-gt' ? ((w.bullets || []).length || 3) + 1 : 3;
+  rows.push(courseCheckRowHtml(paras.length >= needP, esc(CL(paras.length+' paragraphs (at least '+needP+').', paras.length+' paragraf (en az '+needP+').', paras.length+' پاراگراف (دست‌کم '+needP+').', paras.length+' párrafos (al menos '+needP+').'))));
+  if(task === 'task2'){
+    rows.push(courseCheckRowHtml(has(paras[0], ['i believe','in my view','in my opinion','i agree','i disagree','this essay will','i would argue']), esc(CL('Your position in the first paragraph','İlk paragrafta görüşün','نظرت در پاراگراف اول','Tu postura en el primer párrafo'))));
+    rows.push(courseCheckRowHtml(paras.length > 1 && has(paras[paras.length - 1], ['in conclusion','to conclude','to sum up','overall']), esc(CL('A clear ending in the last paragraph (In conclusion, To sum up...)','Son paragrafta net bir sonuç (In conclusion, To sum up...)','یک پایان روشن در پاراگراف آخر (In conclusion، To sum up...)','Un cierre claro en el último párrafo (In conclusion, To sum up...)'))));
+  } else if(task === 'task1-gt'){
+    rows.push(courseCheckRowHtml(/^\s*dear\b/i.test(t), esc(CL('Starts with "Dear ..."','"Dear ..." ile başlıyor','با «Dear ...» شروع می‌شود','Empieza con "Dear ..."'))));
+    rows.push(courseCheckRowHtml(has(t, ['yours sincerely','yours faithfully','kind regards','best wishes']), esc(CL('A closing (Yours sincerely, Kind regards...)','Bir kapanış (Yours sincerely, Kind regards...)','یک جمله‌ی پایانی (Yours sincerely، Kind regards...)','Una despedida (Yours sincerely, Kind regards...)'))));
+  } else {
+    rows.push(courseCheckRowHtml(has(t, ['overall','in general','it is clear that','the main trend','in summary']), esc(CL('An overview (Overall, It is clear that...)','Bir genel bakış (Overall, It is clear that...)','یک جمع‌بندی کلی (Overall، It is clear that...)','Una visión general (Overall, It is clear that...)'))));
+    const figs = (t.match(/[0-9]+(?:[.,][0-9]+)?\s*%?/g) || []).length;
+    rows.push(courseCheckRowHtml(figs >= 3, esc(CL(figs+' figures from the task (at least 3)', 'Görevden '+figs+' sayı (en az 3)', figs+' عدد از تکلیف (دست‌کم ۳)', figs+' cifras de la tarea (al menos 3)'))));
+  }
+  if(a && a.secs){ const m = Math.max(1, Math.round(a.secs / 60)), lim = w.timed || 20; rows.push(courseCheckRowHtml(m <= lim, esc(CL('Time used: '+m+' of '+lim+' minutes', 'Kullanılan süre: '+lim+' dakikadan '+m, 'زمان: '+m+' از '+lim+' دقیقه', 'Tiempo usado: '+m+' de '+lim+' minutos')))); }
+  return `<div class="lx-sec"><div class="lx-eyebrow">${CL('Check your answer','Cevabını kontrol et','جوابت را بسنج','Revisa tu respuesta')}</div><div class="card-flat cs-draftchk">${rows.join('')}</div></div>`;
+}
 function renderCourseWriting(cid, uid, w){
   const track = courseTrack(cid), cp = courseProg(cid), key = uid+':writing';
   const saved = (cp.answers[key] && cp.answers[key].text) || '';
@@ -30165,28 +30243,16 @@ function renderCourseWriting(cid, uid, w){
   const showModel = track==='B1' && !res;
   let after = '';
   if(res){
-    const hits = courseWritingHits(cid, uid, saved), ticks = courseWriteTicks(cid, uid), slot = w.portfolio && courseStepDone(uid, 'writing') ? w.portfolio : null;
-    const bands = courseRubricBands(cid, w), bs = bands ? courseWriteBands(cid, uid) : [];
-    const checkList = bands ? `<p class="cs-cmp-hint" dir="${courseTD()}">${esc(cl(bands.note) || CL('Score each line: 0 = not there, 3 = fully there.','Her satırı puanla: 0 = yok, 3 = tamamen var.','به هر خط نمره بده: ۰ = نیست، ۳ = کامل هست.','Puntúa cada línea: 0 = no está, 3 = está del todo.'))}</p><p class="cs-cmp-hint" dir="${courseTD()}">${esc(CL('This score is only for you. Nothing is graded. A low line shows what to change: fix your text and tap Check again.','Bu puan yalnızca senin için. Not verilmez. Düşük bir satır neyi değiştireceğini gösterir: metnini düzelt ve yeniden Kontrol et\'e dokun.','این نمره فقط برای خودت است و کسی به تو نمره نمی‌دهد. خطی که نمره‌اش کم است نشان می‌دهد چه چیزی را عوض کنی: متنت را درست کن و دوباره «بررسی کن» را بزن.','Esta nota es solo para ti. Nadie te califica. Una línea baja te muestra qué cambiar: corrige tu texto y toca Comprobar otra vez.'))}</p>
-        <div class="stack cs-bands" style="gap:12px;">${w.rubric.map((r,ri)=>{ const v = typeof bs[ri] === 'number' ? bs[ri] : null, d = v !== null ? bands[bands.order[ri]][v] : null;
-          return `<div class="cs-band"><div class="cs-band-l">${ruleLine(r, ri)}</div><div class="cs-band-seg" role="group">${[0,1,2,3].map(n=>`<button class="${v===n ? 'on' : ''}" data-action="course-write-band" data-cid="${cid}" data-uid="${esc(uid)}" data-i="${ri}" data-v="${n}" aria-pressed="${v===n ? 'true' : 'false'}">${n}</button>`).join('')}</div>${d ? `<p class="cs-band-d" dir="${courseTD()}">${esc(cl(d))}</p>` : ''}</div>`; }).join('')}</div>`
-      : `<p class="cs-cmp-hint">${CL('Compare, then tick what your text does.','Karşılaştır, sonra metninin yaptıklarını işaretle.','مقایسه کن و بعد هر چیزی را که متنت دارد تیک بزن.','Compara y marca lo que hace tu texto.')}</p>
-        <div class="stack" style="gap:8px;">${w.rubric.map((r,ri)=>`<button class="cs-tick${ticks[ri] ? ' on' : ''}" data-action="course-write-tick" data-cid="${cid}" data-uid="${esc(uid)}" data-i="${ri}" aria-pressed="${ticks[ri] ? 'true' : 'false'}"><span class="cs-box">${ticks[ri] ? ICONS.check : ''}</span><span>${ruleLine(r, ri)}</span></button>`).join('')}</div>`;
-    after = `<div class="card-flat" style="margin-top:12px; background:${res.lengthOk && !res.wordsMissed.length ? 'var(--cat-voc-soft)' : 'var(--cat-gram-soft)'}; border-color:transparent;">
-      <p style="margin:0; font-size:13.5px;">${res.wc} ${CL('words','kelime','کلمه','palabras')} · ${res.sc} ${CL('sentences','cümle','جمله','frases')}${res.wordsMissed.length ? ' · '+CL('Not used yet','Henüz kullanılmadı','هنوز استفاده نشده','Aún sin usar')+': <span dir="ltr" translate="no">'+esc(res.wordsMissed.join(', '))+'</span>' : ''}</p>
-      ${!res.lengthOk ? `<p style="margin:6px 0 0; font-size:13px;">${L('A little longer, please: at least '+w.minWords+' words and '+w.minSentences+' sentences.','Biraz daha uzun yaz: en az '+w.minWords+' kelime ve '+w.minSentences+' cümle.','کمی بیشتر بنویس: دست‌کم '+w.minWords+' کلمه و '+w.minSentences+' جمله.', 'Un poco más largo, por favor: al menos '+w.minWords+' palabras y '+w.minSentences+' frases.')}</p>` : ''}${res.lengthOk && !res.looksReal ? `<p style="margin:6px 0 0; font-size:13px;">${CL('Write real sentences in English to go on.','Devam etmek için İngilizce gerçek cümleler yaz.','برای ادامه، جمله‌های واقعی به انگلیسی بنویس.','Escribe frases reales en inglés para seguir.')}</p>` : ''}</div>
-    ${hits.length ? `<div class="card-flat cs-watch"><div class="eyebrow">${CL('Check this','Şuna bir bak','این را بررسی کن','Revisa esto')}</div>${hits.map(h=>`<p><b dir="ltr" translate="no">${esc(h.phrase)}</b><span dir="${courseTD()}">${esc(cl(h.fix))}</span></p>`).join('')}</div>` : ''}
+    const hits = courseWritingHits(cid, uid, saved), slot = w.portfolio && courseStepDone(uid, 'writing') ? w.portfolio : null;
+    const ways = (cp.answers[key] && cp.answers[key].ways) || [], parts = coursePartsCheck(w, saved, ways);
+    after = `${courseDraftCheckHtml(cid, uid, w, res, saved, ways, hits)}
     ${slot ? `<p class="cs-saved">${ICONS.check} ${CL('Saved as a draft for your final project. You find it in "Your work".','Final projen için taslak olarak saklandı. "Çalışmaların" bölümünde bulursun.','این را به‌عنوان پیش‌نویس پروژه‌ی پایانی‌ات نگه داشتیم. در «کارهای تو» پیدایش می‌کنی.','Guardado como borrador para tu proyecto final. Lo encuentras en "Tu trabajo".')}</p>` : ''}
     <div class="cs-cmp">
-      <div class="card-flat cs-yours"><div class="eyebrow">${CL('Your text','Senin metnin','متن تو','Tu texto')}</div><p dir="ltr" translate="no">${esc(saved)}</p></div>
-      <div class="cs-cmp-mid"><div class="eyebrow">${bands ? CL('Score your text','Metnini puanla','به متنت نمره بده','Puntúa tu texto') : CL('Checklist','Kontrol listesi','چک‌لیست','Lista de comprobación')}</div>
-        ${checkList}</div>
+      <div class="card-flat cs-yours"><div class="eyebrow">${CL('Your text','Senin metnin','متن تو','Tu texto')}</div><p dir="ltr" translate="no">${courseMarkCues(saved, [].concat(...parts.map(p=>p.hit)))}</p></div>
       <div class="card-flat cs-theirs"><div class="eyebrow">${esc(courseModelName(cid, w))}</div><p dir="ltr" translate="no">${esc(w.model)}</p></div>
     </div>`;
   } else {
-    after = `<div class="card-flat" style="margin-top:12px;"><div class="eyebrow">${CL('Checklist','Kontrol listesi','چک‌لیست','Lista de comprobación')}</div>
-      <ul style="margin:6px 0 0; padding-inline-start:18px; font-size:13px; color:var(--ink-soft);">${w.rubric.map((r,ri)=>`<li style="margin-bottom:4px;">${ruleLine(r, ri)}</li>`).join('')}</ul>
-      <p style="margin:6px 0 0; font-size:12px; color:var(--ink-faint);">${courseRubricBands(cid, w) ? CL('After Check you score each line from 0 to 3, next to '+courseModelName(cid, w)+'.', 'Kontrol ettikten sonra her satırı 0 ile 3 arasında puanlarsın, '+courseModelName(cid, w)+' yanında.', 'بعد از بررسی، کنار '+courseModelName(cid, w)+' به هر خط از ۰ تا ۳ نمره می‌دهی.', 'Después de comprobar, puntúas cada línea de 0 a 3, junto a '+courseModelName(cid, w)+'.') : w.modelBy ? esc(CL('You tick it after Check, next to '+courseModelName(cid, w)+'.', 'Kontrol ettikten sonra, '+courseModelName(cid, w)+' yanında işaretlersin.', 'بعد از بررسی، کنار '+courseModelName(cid, w)+' تیکش می‌زنی.', 'Lo marcas después de comprobar, junto a '+courseModelName(cid, w)+'.')) : CL('You tick it after Check, next to the model answer.','Kontrol ettikten sonra, örnek metnin yanında işaretlersin.','بعد از بررسی، کنار نسخه‌ی نمونه تیکش می‌زنی.','Lo marcas después de comprobar, junto al texto modelo.')}</p></div>`;
+    after = courseAppChecksHtml(w, ruleLine);
   }
   return `${courseWritingTopHtml(cid, uid, w)}${courseWritingTaskHtml(w)}<div class="card-flat" style="border:2px solid var(--cat-gram-soft);"><p style="margin:0; font-size:14.5px; font-weight:700; line-height:1.5;">${esc(cl(w.prompt))}</p>${(w.bullets || []).length ? `<ul class="cs-bullets" dir="ltr" translate="no" style="margin:8px 0 0; padding-inline-start:20px; font-size:14px;">${w.bullets.map(b=>`<li>${esc(b)}</li>`).join('')}</ul>` : ''}</div>
     ${courseUseInHtml(cid, uid)}
@@ -30342,11 +30408,11 @@ function courseFinalHomeHtml(c, pd){
       <div style="font-weight:800; margin-top:4px;">${esc(v.title)}</div>
       ${list('Duties', v.duties)}${list('Essential', v.essential)}${list('Desirable', v.desirable)}${list('Finalists', v.finalists)}</div>` : ''}
     <div class="card-flat" style="margin-top:12px; background:var(--cat-diag-soft); border-color:var(--cat-diag-soft);">
-      <div class="eyebrow" style="color:var(--cat-diag);">${CL('Self-check','Kendini değerlendir','خودارزیابی', 'Autoevaluación')}</div>
-      <p style="margin:4px 0 0; font-size:13px;">${CL('You score each part yourself with the checklist. There is no teacher marking in the app.','Her kısmı kontrol listesiyle kendin puanlarsın. Uygulamada öğretmen değerlendirmesi yok.','به هر بخش خودت با چک‌لیست نمره می‌دهی. در اپ، معلم نوشته‌ات را تصحیح نمی‌کند.', 'Puntúas cada parte tú mismo con la lista de comprobación. En la app no hay corrección del profesor.')}</p>
+      <div class="eyebrow" style="color:var(--cat-diag);">${CL('How each part is checked','Her kısım nasıl kontrol edilir','هر بخش چطور بررسی می‌شود','Cómo se comprueba cada parte')}</div>
+      <p style="margin:4px 0 0; font-size:13px;">${CL('The app checks the length and each part of the task, and shows the model answer. You record speaking parts on your phone. There is no teacher marking in the app.','Uygulama uzunluğu ve görevin her kısmını kontrol eder, örnek cevabı gösterir. Konuşma kısımlarını telefonunla kaydedersin. Uygulamada öğretmen değerlendirmesi yok.','اپ طول متن و هر بخش تکلیف را بررسی می‌کند و جواب نمونه را نشان می‌دهد. بخش‌های صحبت را با گوشی‌ات ضبط می‌کنی. در اپ، معلم کارت را تصحیح نمی‌کند.','La app comprueba la extensión y cada parte de la tarea, y muestra la respuesta modelo. Las partes orales las grabas con el móvil. En la app no hay corrección del profesor.')}</p>
       <p style="margin:6px 0 0; font-size:13px; font-weight:700;">${esc(cl(pd.passRule))}</p>
       <ul style="margin:6px 0 0; padding-inline-start:18px; font-size:12.5px; color:var(--ink-soft);">${pd.rubric.map((r,ri)=>`<li><span dir="ltr" translate="no">${esc(r)}</span>${courseRubricSubHtml(pd, ri)}</li>`).join('')}</ul></div>
-    <div class="eyebrow" style="margin:16px 0 8px;">${passed}/${pd.parts.length} ${CL('parts passed','kısım geçildi','بخش قبول‌شده', 'partes aprobadas')}</div>
+    <div class="eyebrow" style="margin:16px 0 8px;">${passed}/${pd.parts.length} ${CL('parts done','kısım tamam','بخش تمام‌شده', 'partes hechas')}</div>
     <div class="stack" style="gap:8px;">${pd.parts.map(p=>{
       const a = courseFinalPart(c.id, p.id), m = COURSE_TYPE_META[p.mode] || COURSE_TYPE_META.writing;
       const tail = a.passed ? `<span class="pill badge-done">${ICONS.check}</span>` : (a.date ? `<span class="pill" style="background:var(--cat-gram-soft); color:var(--cat-gram);">${CL('Revise','Gözden geçir','بازبینی', 'Revisar')}</span>` : `<span class="chevron">${ICONS.chev}</span>`);
@@ -30394,11 +30460,13 @@ function courseFinalPartHtml(c, pd, p){
     ${p.mode==='speaking' ? `<p style="font-size:12.5px; color:var(--ink-soft); margin:12px 0 0;">${CL('Write it here first. Then say it out loud and record yourself on your phone.','Önce buraya yaz. Sonra yüksek sesle söyle ve telefonunla kendini kaydet.','اول اینجا بنویس. بعد با صدای بلند بگو و با گوشی‌ات صدایت را ضبط کن.','Escríbelo aquí primero. Luego dilo en voz alta y grábate con el móvil.')}</p>` : ''}
     <textarea id="cw-text" class="game-input" dir="ltr" translate="no" rows="8" style="margin-top:12px; font-weight:500; min-height:170px;" placeholder="${esc(CL('Write here','Buraya yaz','اینجا بنویس', 'Escribe aquí'))}">${esc(a.text || (draft ? draft.text : '') || '')}</textarea>
     <p style="font-size:12px; color:var(--ink-faint); margin:6px 0 0;">${p.minWords}+ ${CL('words','kelime','کلمه', 'palabras')}</p>
-    <div class="card-flat" style="margin-top:12px;"><div class="eyebrow">${CL('Score yourself','Kendini puanla','به خودت نمره بده', 'Puntúate')}</div>
-      <p style="margin:4px 0 8px; font-size:12px; color:var(--ink-faint);">${esc(cl((courseRubricBands(c.id, pd) || {}).note || COURSE_SCORE_HINT))}</p>
-      ${pd.rubric.map((r,ri)=>`<div style="margin-bottom:10px;"><div dir="ltr" translate="no" style="font-size:13px; margin-bottom:5px;">${esc(r)}${courseRubricSubHtml(pd, ri)}</div><div class="row" style="gap:6px;">${[0,1,2,3].map(v=>`<button class="cj-part${scores[ri]===v ? (v>=2 ? ' ok' : ' bad') : ''}" data-action="course-final-score" data-c="${ri}" data-v="${v}">${v}</button>`).join('')}</div>${courseRubricBands(c.id, pd) && typeof scores[ri] === 'number' ? `<p class="cs-band-d" dir="${courseTD()}">${esc(cl(courseRubricBands(c.id, pd)[courseRubricBands(c.id, pd).order[ri]][scores[ri]]))}</p>` : ''}</div>`).join('')}</div>
-    ${res ? `<div class="card-flat" style="margin-top:12px; background:${res.passed ? 'var(--cat-voc-soft)' : 'var(--cat-gram-soft)'}; border-color:transparent;"><p style="margin:0; font-size:13.5px;">${res.wc} ${CL('words','kelime','کلمه', 'palabras')} · ${res.passed ? CL('Part passed. Well done!','Bölüm geçildi. Tebrikler!','این بخش را قبول شدی. آفرین!', 'Parte aprobada. ¡Bien hecho!') : res.missing ? CL('Score every line of the checklist first.','Önce kontrol listesinin her satırını puanla.','اول به همه‌ی ردیف‌های چک‌لیست نمره بده.', 'Primero puntúa cada línea de la lista.') : res.short ? CL('A little longer, please: at least '+p.minWords+' words.','Biraz daha uzun yaz: en az '+p.minWords+' kelime.','کمی بیشتر بنویس: دست‌کم '+p.minWords+' کلمه.', 'Un poco más largo, por favor: al menos '+p.minWords+' palabras.') : CL('Not yet: every line needs 2 or more. Revise, then score again.','Henüz değil: her satır 2 veya üstü olmalı. Düzelt ve yeniden puanla.','هنوز نه: نمره‌ی هر ردیف باید ۲ یا بیشتر باشد. متن را بازبینی کن و دوباره نمره بده.', 'Todavía no: cada línea necesita 2 o más. Revisa y puntúa otra vez.')}</p></div>` : ''}
-    <button class="btn btn-primary" style="margin-top:14px;" data-action="course-final-save" data-cid="${c.id}" data-part="${p.id}">${CL('Check and save','Kontrol et ve kaydet','بررسی و ذخیره', 'Comprobar y guardar')}</button>`;
+    ${p.mode==='speaking' ? `${courseListenBackHtml((pd.rubric || []).map((r, ri)=>`<span dir="ltr" translate="no">${esc(r)}</span>${courseRubricSubHtml(pd, ri)}`))}
+      ${res ? `<div class="card-flat" style="margin-top:12px; background:${res.passed ? 'var(--cat-voc-soft)' : 'var(--cat-gram-soft)'}; border-color:transparent;"><p style="margin:0; font-size:13.5px;">${res.passed ? CL('Part done. Well done!','Bölüm tamam. Tebrikler!','این بخش تمام شد. آفرین!','Parte hecha. ¡Bien hecho!') : CL('Write it first, then record it.','Önce yaz, sonra kaydet.','اول بنویسش، بعد ضبطش کن.','Escríbelo primero y luego grábalo.')}</p></div>` : ''}
+      <button class="btn btn-primary" style="margin-top:14px;" data-action="course-final-save" data-cid="${c.id}" data-part="${p.id}" data-rec="1">${CL('I recorded it','Kaydettim','ضبطش کردم','Lo grabé')}</button>`
+    : `${res ? courseDraftCheckHtml(c.id, p.id, {minWords:p.minWords || 0, minSentences:p.minSentences || 0, words:[], parts:p.parts, model:p.model}, res, a.text || '', a.ways || [], [], 'course-final-way')
+        + `<div class="card-flat" style="margin-top:12px; background:${res.passed ? 'var(--cat-voc-soft)' : 'var(--cat-gram-soft)'}; border-color:transparent;"><p style="margin:0; font-size:13.5px;">${res.passed ? CL('Part done. Well done!','Bölüm tamam. Tebrikler!','این بخش تمام شد. آفرین!','Parte hecha. ¡Bien hecho!') : CL('Not done yet: see what is missing above.','Henüz tamam değil: eksik olanı yukarıda gör.','هنوز تمام نشده: چیزی را که کم است بالا ببین.','Aún no está hecha: mira arriba lo que falta.')}</p></div>`
+      : courseAppChecksHtml(pd, (r, ri)=>`<span dir="ltr" translate="no">${esc(r)}</span>${courseRubricSubHtml(pd, ri)}`)}
+    <button class="btn btn-primary" style="margin-top:14px;" data-action="course-final-save" data-cid="${c.id}" data-part="${p.id}">${CL('Check and save','Kontrol et ve kaydet','بررسی و ذخیره', 'Comprobar y guardar')}</button>`}`;
 }
 
 /* ---------- the certificate (Build 2, spec 3.6 "Certificate"; Farin Q5 = A) ----------
@@ -30974,9 +31042,8 @@ function renderCourseMockWriting(cid, uid, type, mk){
   return `${tabs}${task}
     <div class="cs-cmp">
       <div class="card-flat cs-yours"><div class="eyebrow">${CL('Your text','Senin metnin','متن تو','Tu texto')} · ${wc} ${CL('words','kelime','کلمه','palabras')}${wc < (w.minWords || 0) ? ' · '+esc(CL('under '+w.minWords, w.minWords+' altında', 'کمتر از '+w.minWords, 'menos de '+w.minWords)) : ''}</div><p dir="ltr" translate="no">${esc(text) || '&nbsp;'}</p></div>
-      <div class="cs-cmp-mid"><div class="eyebrow">${CL('Checklist','Kontrol listesi','چک‌لیست','Lista de comprobación')}</div>
-        <p class="cs-cmp-hint">${CL('Compare, then tick what your text does.','Karşılaştır, sonra metninin yaptıklarını işaretle.','مقایسه کن و بعد هر چیزی را که متنت دارد تیک بزن.','Compara y marca lo que hace tu texto.')}</p>
-        <div class="stack" style="gap:8px;">${(w.rubric || []).map((r,ri)=>`<button class="cs-tick${ticks[ri] ? ' on' : ''}" data-action="course-mock-tick" data-cid="${cid}" data-uid="${esc(uid)}" data-type="${type}" data-tk="${w.tk}" data-i="${ri}" aria-pressed="${ticks[ri] ? 'true' : 'false'}"><span class="cs-box">${ticks[ri] ? ICONS.check : ''}</span><span>${ruleLine(r, ri)}</span></button>`).join('')}</div></div>
+      <div class="cs-cmp-mid"><div class="eyebrow">${CL('What a good answer has','İyi bir cevapta neler var','یک جواب خوب چه دارد','Qué tiene una buena respuesta')}</div>
+        <ul class="cs-lb">${(w.rubric || []).map((r,ri)=>`<li>${ruleLine(r, ri)}</li>`).join('')}</ul></div>
       <div class="card-flat cs-theirs"><div class="eyebrow">${esc(courseModelName(cid, w))}</div><p dir="ltr" translate="no">${esc(w.model || '')}</p></div>
     </div>
     ${courseReviewHtml(cid, uid, w)}
@@ -31007,9 +31074,9 @@ function renderCourseMockSpeaking(cid, uid, type, mk){
   const k = st.spStep || 0;
   if(st.checked || k >= steps.length){
     const ticks = Array.isArray(a.ticks.sp) ? a.ticks.sp : [];
-    return `<div class="card-flat"><div class="eyebrow">${CL('Check yourself','Kendini değerlendir','خودت را ارزیابی کن','Evalúate')}</div><p style="margin:4px 0 0; font-size:13px; color:var(--ink-soft);">${CL('Tick each line that was true for you. This is your own check, not a band.','Senin için doğru olan her satırı işaretle. Bu bir band değil, kendi kontrolün.','هر خطی را که درباره‌ی تو درست بود تیک بزن. این ارزیابی خودت است، نه باند.','Marca cada línea que fue verdad para ti. Es tu propia revisión, no una banda.')}</p></div>
+    return `<div class="card-flat"><div class="eyebrow">${CL('Listen back','Kendini dinle','به ضبطت گوش کن','Escúchate')}</div><p style="margin:4px 0 0; font-size:13px; color:var(--ink-soft);">${CL('Play your recording and listen for the lines below.','Kaydını dinle ve aşağıdaki satırlara dikkat et.','ضبطت را پخش کن و دنبال خط‌های پایین بگرد.','Escucha tu grabación y busca las líneas de abajo.')}</p></div>
       ${st.clip ? `<div class="card-flat cs-clip" style="margin-top:10px;"><div class="eyebrow">${CL('Listen to yourself','Kendini dinle','به صدای خودت گوش کن','Escúchate')}</div><audio controls preload="auto" src="${st.clip}"></audio></div>` : ''}
-      <div class="stack" style="gap:8px; margin-top:12px;">${(s.selfCheck || []).map((x,i)=>`<button class="cs-tick${ticks[i] ? ' on' : ''}" data-action="course-mock-tick" data-cid="${cid}" data-uid="${esc(uid)}" data-type="${type}" data-tk="sp" data-i="${i}" aria-pressed="${ticks[i] ? 'true' : 'false'}"><span class="cs-box">${ticks[i] ? ICONS.check : ''}</span><span><b>${esc(cl(COURSE_SPK_CRIT[x.c] || {en:x.c}))}</b><br>${esc(cl(x))}</span></button>`).join('')}</div>
+      ${courseListenBackHtml((s.selfCheck || []).map(x=>`<b>${esc(cl(COURSE_SPK_CRIT[x.c] || {en:x.c}))}</b><br>${esc(cl(x))}`))}
       <button class="btn btn-primary cs-main" data-action="course-mock-finish" data-cid="${cid}" data-uid="${esc(uid)}" data-type="${type}">${esc(courseNextBtnLabel())}</button>`;
   }
   const sp = steps[k], partName = sp.p ? 'Part ' + sp.p : CL('Introduction','Giriş','مقدمه','Introducción');
@@ -32143,6 +32210,7 @@ function courseIeWritingHtml(cid, uid, w){
   let after = '';
   if(done){
     after = `<div class="lx-sec"><div class="lx-eyebrow">${CL('Your answer','Senin cevabın','جواب تو','Tu respuesta')}</div><div class="card-flat"><p class="ie-model" dir="ltr" translate="no">${esc(a.text || '')}</p><small class="ie-wc">${esc(CL(courseWordCount(a.text)+' words', courseWordCount(a.text)+' kelime', courseWordCount(a.text)+' کلمه', courseWordCount(a.text)+' palabras'))}</small></div></div>
+      ${courseIeWriteChecksHtml(w, a)}
       ${(w.moves || []).length ? `<div class="lx-sec"><div class="lx-eyebrow">🧭 ${CL('The answer moves','Cevabın adımları','قدم‌های جواب','Los pasos de la respuesta')}</div><div class="card-flat">${w.moves.map(m=>`<div class="ie-move"><b dir="${courseTD()}">${esc(cl(m.label))}</b><p dir="ltr" translate="no">${esc(m.text)}</p></div>`).join('')}</div></div>` : ''}
       <div class="lx-sec"><div class="lx-eyebrow">⭐ ${CL('Model answer','Örnek cevap','جواب نمونه','Respuesta modelo')}</div>${st.model ? `<div class="card-flat"><p class="ie-model" dir="ltr" translate="no">${esc(w.model)}</p><small class="ie-wc">${esc(CL(courseWordCount(w.model)+' words', courseWordCount(w.model)+' kelime', courseWordCount(w.model)+' کلمه', courseWordCount(w.model)+' palabras'))}</small></div>` : ''}
         <button class="link-btn ie-link" data-action="course-ie-model">${st.model ? CL('Hide the model answer','Örnek cevabı gizle','پنهان کردن جواب نمونه','Ocultar la respuesta modelo') : CL('Show the model answer','Örnek cevabı göster','جواب نمونه را نشان بده','Mostrar la respuesta modelo')}</button></div>
@@ -32159,7 +32227,7 @@ function courseIeWritingHtml(cid, uid, w){
     ${LANG !== 'en' && w.prompt && w.prompt[LANG] ? `<button class="link-btn ie-link" data-action="course-ie-inlang">${st.inLang ? CL('Hide the translation','Çeviriyi gizle','پنهان کردن ترجمه','Ocultar la traducción') : CL('Read the task in my language','Görevi kendi dilimde oku','تکلیف را به زبان خودم بخوانم','Lee la tarea en mi idioma')}</button>${st.inLang ? `<div class="cx-tip" dir="${courseTD()}">${esc(cl(w.prompt))}</div>` : ''}` : ''}
     ${done ? after : `<textarea id="cw-text" class="game-input ie-wta" dir="ltr" translate="no" data-ie="1" data-min="${w.minWords || 0}" rows="9" placeholder="${esc(w.task === 'task1-gt' ? 'Dear Sir or Madam,' : CL('Write here','Buraya yaz','اینجا بنویس','Escribe aquí'))}">${esc(text)}</textarea>
       <div class="ie-wcount" id="ie-wcount">${esc(CL(n+' words', n+' kelime', n+' کلمه', n+' palabras'))} · ${esc(CL('at least '+w.minWords, 'en az '+w.minWords, 'دست‌کم '+w.minWords, 'al menos '+w.minWords))}</div>
-      <button class="btn btn-primary cs-main" data-action="course-ie-write-done" data-cid="${cid}" data-uid="${esc(uid)}" ${n >= 10 ? '' : 'disabled'}>${COURSE_IE_RATE_ON ? CL('I’m done: compare and rate','Bitirdim: karşılaştır ve puanla','تمام شد: مقایسه کن و نمره بده','He terminado: comparar y puntuar') : CL('I’m done: compare with the model','Bitirdim: örnek cevapla karşılaştır','تمام شد: با جواب نمونه مقایسه کن','He terminado: comparar con el modelo')}</button>
+      <button class="btn btn-primary cs-main" data-action="course-ie-write-done" data-cid="${cid}" data-uid="${esc(uid)}" ${n >= 10 ? '' : 'disabled'}>${COURSE_IE_RATE_ON ? CL('I’m done: compare and rate','Bitirdim: karşılaştır ve puanla','تمام شد: مقایسه کن و نمره بده','He terminado: comparar y puntuar') : CL('I’m done: check and compare','Bitirdim: kontrol et ve karşılaştır','تمام شد: بسنج و مقایسه کن','He terminado: comprobar y comparar')}</button>
       <p class="ie-note" id="ie-write-hint" style="text-align:center;${n >= 10 ? ' display:none;' : ''}">${CL('Write a few sentences first (10+ words).','Önce birkaç cümle yaz (10+ kelime).','اول چند جمله بنویس (۱۰ کلمه یا بیشتر).','Escribe primero unas frases (10+ palabras).')}</p>`}`;
 }
 
@@ -32240,7 +32308,7 @@ function courseIeSetsHtml(cid, uid, s){
   } else {
     tail = `${(p.roundingOff || []).length ? `<div class="card-flat ie-spbox" style="text-align:start;"><div class="lx-eyebrow">${CL('Then the examiner asks','Sonra sınav görevlisi sorar','بعد ممتحن می‌پرسد','Luego el examinador pregunta')}</div>${exq(p.roundingOff)}</div>` : ''}
       ${k.clip ? `<div class="card-flat cs-clip"><div class="eyebrow">${CL('Listen to yourself','Kendini dinle','به صدای خودت گوش کن','Escúchate')}</div><audio controls preload="auto" src="${k.clip}"></audio></div>` : ''}
-      <div class="lx-sec"><div class="lx-eyebrow">${CL('Check yourself','Kendini kontrol et','خودت را بسنج','Evalúate')}</div><div class="stack" style="gap:8px; margin-top:8px;">${(p.selfCheck || []).map((x, j)=>`<button class="cs-tick${k.ticks[j] ? ' on' : ''}" data-action="course-ie-sp-tick" data-i="${j}" aria-pressed="${k.ticks[j] ? 'true' : 'false'}"><span class="cs-box">${k.ticks[j] ? ICONS.check : ''}</span><span dir="${courseTD()}">${esc(cl(x))}</span></button>`).join('')}</div></div>
+      <div class="lx-sec">${courseListenBackHtml((p.selfCheck || []).map(x=>`<span dir="${courseTD()}">${esc(cl(x))}</span>`))}</div>
       ${(p.moves || []).length ? `<div class="lx-sec"><div class="lx-eyebrow">🧭 ${CL('The answer moves','Cevabın adımları','قدم‌های جواب','Los pasos de la respuesta')}</div><div class="card-flat">${p.moves.map(m=>`<div class="ie-move"><b dir="${courseTD()}">${esc(cl(m.label))}</b><p dir="ltr" translate="no">${esc(m.example)}</p></div>`).join('')}</div></div>` : ''}
       ${p.model ? `<div class="lx-sec"><div class="lx-eyebrow">⭐ ${CL('Model answer','Örnek cevap','جواب نمونه','Respuesta modelo')}</div>${st.model ? `<div class="card-flat"><p class="ie-model" dir="ltr" translate="no">${esc(p.model)}</p></div>` : ''}<button class="link-btn ie-link" data-action="course-ie-sp-model">${st.model ? CL('Hide the model answer','Örnek cevabı gizle','پنهان کردن جواب نمونه','Ocultar la respuesta modelo') : CL('Show the model answer','Örnek cevabı göster','جواب نمونه را نشان بده','Mostrar la respuesta modelo')}</button></div>` : ''}`;
     btn = i < N - 1 ? `<button class="btn btn-primary cs-main" data-action="course-ie-sp-next">${esc(CL('Next: Part '+(i+2), 'Sırada: Part '+(i+2), 'بعدی: Part '+(i+2), 'Siguiente: Part '+(i+2)))}</button>`
@@ -32292,7 +32360,7 @@ Object.assign(HANDLERS, {
   'course-ie-inlang'(){ const st = courseUi.iew; if(!st) return; const ta = document.getElementById('cw-text'); if(ta) courseUi.wdraft = {uid:st.uid, text:ta.value}; st.inLang = !st.inLang; render(); },
   'course-ie-write-done'(el){ const cid = el.dataset.cid, uid = el.dataset.uid, w = courseUnitItems(uid).writing, ta = document.getElementById('cw-text'); if(!w) return;
     const text = ta ? ta.value : ((courseUi.wdraft && courseUi.wdraft.uid === uid && courseUi.wdraft.text) || ''); if(courseWordCount(text) < 10) return;
-    courseProg(cid).answers[uid+':writing'] = {text, date:todayISO(), compared:Date.now()}; courseUi.wdraft = null;
+    courseProg(cid).answers[uid+':writing'] = {text, date:todayISO(), compared:Date.now(), secs:courseUi.iew && courseUi.iew.uid === uid ? Math.round((Date.now() - courseUi.iew.startedAt) / 1000) : null}; courseUi.wdraft = null;
     courseMarkDone(cid, uid, 'writing'); render(); window.scrollTo(0, 0); },
   'course-ie-say'(el){ const s = courseUnitItems((courseUi.ies || {}).uid).sets; if(s) courseIeSayLines([el.dataset.text], s); },
   'course-ie-sayall'(){ const st = courseUi.ies, s = st && courseUnitItems(st.uid).sets; if(!s) return; const p = s.sets[st.part]; courseIeSayLines(courseIeSpLines(p, st.part).concat(p.card ? [p.card.task] : []), s); },
@@ -32461,13 +32529,17 @@ Object.assign(HANDLERS, {
     const cp = courseProg(cid), ta = document.getElementById('cw-text');
     const a = cp.answers[p.id] = Object.assign({text:'', scores:[]}, cp.answers[p.id]);
     if(ta) a.text = ta.value;
-    const wc = courseWordCount(a.text), missing = pd.rubric.some((_,i)=>typeof (a.scores||[])[i] !== 'number'), short = wc < (p.minWords || 0);
-    a.passed = !missing && !short && pd.rubric.every((_,i)=>a.scores[i] >= 2);
+    // P5: no scores. Writing: long enough + real English + every task part (found, or "I wrote it another way"). Speaking: "I recorded it".
+    if(!el.dataset.keep && ta && a.ways && a.ways.length && a.lastText !== a.text) a.ways = [];
+    const chk = checkPracticeAnswer({words:[], minWords:p.minWords || 0, minSentences:p.minSentences || 0, difficulty:'easy'}, a.text || ''), wc = chk.wc, short = !chk.lengthOk, missing = false;
+    if(el.dataset.rec) a.recorded = !!(a.text || '').trim();
+    a.passed = p.mode === 'speaking' ? !!a.recorded : (chk.lengthOk && chk.looksReal && coursePartsAllOk(p, a.text, a.ways));
+    a.lastText = a.text;
     a.date = todayISO();
     if(a.passed) cp.done[pd.id+':'+p.id] = Date.now(); else delete cp.done[pd.id+':'+p.id];
     let first = false;
     if(courseFinalPassed(cid, pd)===pd.parts.length){ if(!cp.done[pd.id+':project']){ cp.done[pd.id+':project'] = Date.now(); first = true; } markActivity(); }
-    courseUi.fres = {part:p.id, wc, missing, short, passed:a.passed};
+    courseUi.fres = Object.assign({part:p.id, missing, short, passed:a.passed}, chk);
     save();
     if(first){ courseUi.certMsg = null; go('course-cert', {cid}); window.scrollTo(0, 0); return; }   // Build 2: the certificate moment, once
     render();
@@ -32593,11 +32665,16 @@ Object.assign(HANDLERS, {
     if(st) courseProg(el.dataset.cid).scores[el.dataset.uid+':judge'] = {right:st.right, total:st.total};
     courseMarkDone(el.dataset.cid, el.dataset.uid, 'judge'); courseAdvance(el.dataset.cid, el.dataset.uid);
   },
+  // P5: "I wrote it another way" on a task part the cue list missed (lesson writing / final-project part)
+  'course-write-way'(el){ const a = courseProg(el.dataset.cid).answers[el.dataset.uid+':writing']; if(!a) return; const i = Number(el.dataset.i); a.ways = (a.ways || []).filter(x=>x !== i).concat(i); save(); render(); },
+  'course-final-way'(el){ const vp = state.viewParams || {}, c = courseGet(vp.cid), pd = courseFinalData(c), p = pd && pd.parts.find(x=>x.id === el.dataset.uid); if(!p) return;
+    const cp = courseProg(c.id), a = cp.answers[p.id]; if(!a) return; const i = Number(el.dataset.i); a.ways = (a.ways || []).filter(x=>x !== i).concat(i);
+    HANDLERS['course-final-save']({dataset:{cid:c.id, part:p.id, keep:'1'}}); },
   'course-write-check'(el){
     const w = courseUnitItems(el.dataset.uid).writing, ta = document.getElementById('cw-text');
     const text = ta ? ta.value : '';
     const res = checkPracticeAnswer({words:w.words, minWords:w.minWords, minSentences:w.minSentences, difficulty:'easy'}, text);
-    courseProg(el.dataset.cid).answers[el.dataset.uid+':writing'] = {text, date:todayISO()};
+    { const ans = courseProg(el.dataset.cid).answers, old = ans[el.dataset.uid+':writing']; ans[el.dataset.uid+':writing'] = Object.assign({text, date:todayISO()}, old && old.text === text && Array.isArray(old.ways) ? {ways:old.ways} : {}); }
     courseUi.wres = Object.assign({uid:el.dataset.uid}, res); courseUi.wdraft = null;
     if(res.lengthOk && res.looksReal){ if(w.portfolio) coursePortfolioMap(el.dataset.cid)[w.portfolio] = {text, from:el.dataset.uid, date:todayISO()}; courseMarkDone(el.dataset.cid, el.dataset.uid, 'writing'); } else save();
     render();

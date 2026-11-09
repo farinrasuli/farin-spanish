@@ -99,6 +99,8 @@ var UI = {
   stay:{en:'Stay', tr:'Kal', fa:'می‌مونم', es:'Quedarme'},
   leave:{en:'Leave', tr:'Çık', fa:'می‌رم', es:'Salir'},
   finish:{en:'Close the file', tr:'Dosyayı kapat', fa:'پرونده رو ببند', es:'Cerrar el expediente'},
+  // chapter flow (UI0ejg05, Farin 2026-11-09): the next episode lives in a later roadmap step; spoken Persian like the rest of this table
+  tbcCase:{en:'Another file is waiting for you… in a later step on your roadmap.', tr:'Seni başka bir dosya bekliyor… yol haritanda ilerideki bir adımda.', fa:'یه پرونده‌ی دیگه منتظرته… توی یکی از قدم‌های بعدیِ نقشه‌ی راهت.', es:'Te espera otro expediente… en un paso más adelante de tu hoja de ruta.'},
   flip:{en:'Tap the card to turn it over', tr:'Çevirmek için karta dokun', fa:'برای برگردوندن کارت روش بزن', es:'Toca la tarjeta para darle la vuelta'},
   kept:{en:'Saved to your review cards', tr:'Tekrar kartlarına kaydedildi', fa:'توی کارت‌های مرورت ذخیره شد', es:'Guardada en tus tarjetas de repaso'},
   hear:{en:'Listen', tr:'Dinle', fa:'گوش کن', es:'Escuchar'},
@@ -1663,10 +1665,12 @@ async function souvenir(){
     '<button type="button" class="cc-souv-say" aria-label="' + esc(U('hear')) + '">' + SPEAKER_SVG + '</button></div>' +
     '<div class="cc-souv-face cc-souv-back">' + evCardHtml(evid) + '<p lang="' + G.lang + '" dir="ltr">' + esc(backText) + '</p>' + (backGl ? '<p class="cc-gl" dir="' + uiDir() + '">' + esc(backGl) + '</p>' : '') +
     '<p class="cc-gl" dir="' + uiDir() + '">' + esc(U('kept')) + '</p></div></div><p class="cc-souv-hint" dir="' + uiDir() + '">' + esc(U('flip')) + '</p>' +
+    (G.moreLater ? '<div class="cc-townnote cc-tbc"><span dir="' + uiDir() + '">' + esc(U('tbcCase')) + '</span></div>' : '') +
     '<div class="cc-actions"><button type="button" class="cc-btn cc-primary cc-finish">' + esc(U('finish')) + '</button></div>';
   G.root.appendChild(o);
   var card = o.querySelector('.cc-souv-card');
   sfx('reveal');
+  if(G.moreLater) setTimeout(function(){ if(G && !G.dead) sfx('softstamp'); }, 700);
   if(!RM()) run(card, [{transform:'translateY(40px) scale(.85) rotate(-4deg)', opacity:0}, {transform:'none', opacity:1}], {duration:520, easing:SPRING});
   card.addEventListener('click', function(e){
     if(e.target.closest('.cc-souv-say')){ e.stopPropagation(); speak(T(s), {who:voiceOf(s)}); return; }
@@ -1725,7 +1729,7 @@ function start(o){
   var g = G = {
     v:VERSION, data:data, S:S, C:data.content[lang], M:data.manifest || {items:{}}, lang:lang, ui:o.ui || lang, band:S.band || 'A2', host:host,
     appRoot:o.appRoot || '', name:o.name || '', pace:o.pace || 1, tts:o.tts, hintMs:o.hintMs || null, forceReduced:!!o.reduced,
-    onDone:o.onDone, onLeave:o.onLeave, round:saved || newRound(S, lang), waits:new Set(), anims:new Set(), dead:false, status:{kind:'boot'},
+    onDone:o.onDone, onLeave:o.onLeave, round:saved || newRound(S, lang), waits:new Set(), anims:new Set(), dead:false, status:{kind:'boot'}, moreLater:!!o.moreLater,
     box:o.root || (W.Theatre && W.Theatre.stageEl && W.Theatre.stageEl()) || D.body, glossOn:false
   };
   if(!g.C) throw new Error('case-closed: no ' + lang + ' content for ' + S.id);

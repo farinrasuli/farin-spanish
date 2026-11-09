@@ -51,6 +51,9 @@ var UI = {
   withWords:{en:'Listen with the words', tr:'Metinle birlikte dinle', fa:'با متن گوش کن', es:'Escúchalo con el texto'},
   wholeStory:{en:'Read the whole story', tr:'Hikayenin tamamını oku', fa:'کل داستان را بخوان', es:'Lee la historia completa'},
   done:{en:'Continue', tr:'Devam et', fa:'ادامه بده', es:'Continuar'},
+  // chapter flow (UI0ejg05, Farin 2026-11-09): the next show lives in a later roadmap step
+  tbcRadio:{en:'Stay tuned: the next show is in a later step on your roadmap.', tr:'Bizi dinlemeye devam et: sıradaki program yol haritanda ilerideki bir adımda.', fa:'همراه ما بمان: برنامه‌ی بعدی در یکی از قدم‌های بعدیِ نقشه‌ی راهت است.', es:'Sigue en sintonía: el próximo programa está en un paso más adelante de tu hoja de ruta.'},
+  backMap:{en:'Back to roadmap', tr:'Yol haritasına dön', fa:'بازگشت به نقشه‌ی راه', es:'Volver a la hoja de ruta'},
   play:{en:'Play', tr:'Çal', fa:'پخش', es:'Reproducir'},
   pause:{en:'Pause', tr:'Duraklat', fa:'مکث', es:'Pausa'}
 };
@@ -365,12 +368,14 @@ async function offAir(){
   var words = ep.checkins.map(function(c){ return c.word; });
   var bold = function(text){ var h = esc(text); words.forEach(function(w){ h = h.replace(new RegExp('(^|[^\\p{L}])(' + w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\p{L}{0,3})(?![\\p{L}])', 'giu'), '$1<b>$2</b>'); }); return h; };
   var panel = el('div', 'mr-off-air');
+  var tbc = !G.replay && G.moreLater;
   panel.innerHTML = '<h2 dir="' + dir() + '">' + esc(U('offAir')) + '</h2><p class="mr-sign" dir="' + dir() + '">' + esc(U(perfect ? 'sharp' : 'thanks')) + '</p>' +
+    (tbc ? '<p class="mr-sign mr-tbc" dir="' + dir() + '">' + esc(U('tbcRadio')) + '</p>' : '') +
     '<div class="mr-read" dir="ltr" lang="' + G.lang + '">' + ep.lines.map(function(l, i){ return '<p data-l="' + i + '">' + (ep.kind === 'authored' ? '<i class="mr-spk mr-spk-' + (l.who === 'b' ? 'b' : 'a') + '"></i>' : '') + bold(l.text) + '</p>'; }).join('') + '</div>' +
     '<button type="button" class="mr-btn mr-primary mr-with">' + esc(U('withWords')) + '</button>' +
     (ep.title ? '<p class="mr-title" lang="' + G.lang + '">' + esc(ep.title) + '</p>' : '') +
     (ep.kind === 'story' && ep.storyId && G.host.openStory ? '<button type="button" class="mr-btn mr-ghost mr-whole">' + esc(U('wholeStory')) + '</button>' : '') +
-    '<div class="mr-hostresult"></div><button type="button" class="mr-btn mr-done">' + esc(U('done')) + '</button>';
+    '<div class="mr-hostresult"></div><button type="button" class="mr-btn mr-done">' + esc(U(tbc ? 'backMap' : 'done')) + '</button>';
   G.area.innerHTML = ''; G.area.appendChild(panel); controls(''); say('');
   G.lineEl.style.display = 'none';
   G.readEl = panel.querySelector('.mr-read');
@@ -393,7 +398,7 @@ async function offAir(){
 function start(o){
   if(G) destroy();
   o = o || {};
-  var g = G = {v:VERSION, ep:o.episode, lang:o.lang === 'es' ? 'es' : 'en', ui:o.ui || o.lang || 'en', host:o.host || {}, replay:!!o.replay, pace:o.pace || 1, tts:o.tts,
+  var g = G = {v:VERSION, ep:o.episode, lang:o.lang === 'es' ? 'es' : 'en', ui:o.ui || o.lang || 'en', host:o.host || {}, replay:!!o.replay, moreLater:!!o.moreLater, pace:o.pace || 1, tts:o.tts,
     forceReduced:!!o.reduced, art:validArt(o.art), onDone:o.onDone, onLeave:o.onLeave, waits:new Set(), tok:0, n:0, clean:0, replays:0, heardTo:-1, dead:false,
     box:o.root || (W.Theatre && W.Theatre.stageEl && W.Theatre.stageEl()) || D.body, status:{kind:'boot'}};
   if(!g.ep || !g.ep.lines || !g.ep.parts) throw new Error('mini-radio: no episode');

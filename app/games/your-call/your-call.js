@@ -68,6 +68,11 @@ var UI = {
   photoOf:{en:'Photo', tr:'Fotoğraf', fa:'عکس', es:'Foto'},
   tapTurn:{en:'Tap the photo.', tr:'Fotoğrafa dokun.', fa:'روی عکس بزن.', es:'Toca la foto.'},
   opensOn:{en:'Opens on the {p} page', tr:'{p} sayfasında açılır', fa:'در صفحه‌ی {p} باز می‌شود', es:'Se abre en la página {p}'},
+  // chapter flow (Farin 2026-11-09: chapters live in roadmap steps; spec Claude/specs/games-chapter-flow-2026-11-09.md, UI0ejg05)
+  afterCh:{en:'After chapter {n}', tr:'{n}. bölümden sonra', fa:'بعد از فصل {n}', es:'Después del capítulo {n}'},
+  inStep:{en:'One more chapter in this step.', tr:'Bu adımda bir bölüm daha var.', fa:'در همین قدم یک فصل دیگر هم هست.', es:'En este paso hay un capítulo más.'},
+  tbcStory:{en:'To be continued… in a later step on your roadmap.', tr:'Devam edecek… yol haritanda ilerideki bir adımda.', fa:'ادامه دارد… در یکی از قدم‌های بعدیِ نقشه‌ی راهت.', es:'Continuará… en un paso más adelante de tu hoja de ruta.'},
+  backMap:{en:'Back to roadmap', tr:'Yol haritasına dön', fa:'بازگشت به نقشه‌ی راه', es:'Volver a la hoja de ruta'},
   dev:{en:'DEV ART · not for learners', tr:'DEV ART · not for learners', fa:'DEV ART · not for learners', es:'DEV ART · not for learners'}
 };
 var ICON = {
@@ -1322,7 +1327,12 @@ function start(o){
     var ov = overlay('yc-post', '<div class="yc-postcard"><img src="' + esc(pic ? artSrc(pic, {era:'then'}) : devSvg('postcard', .8, 'then')) + '" alt="">' +
       '<p lang="' + ui + '" dir="' + uiDir() + '">' + esc(us('chapter', {n:ch.n})) + ' · <span lang="' + target + '">' + esc(tg(ch.title)) + '</span></p>' +
       (sv ? '<div class="yc-stamp"><span lang="' + target + '">' + esc(sv.word) + '</span><small dir="auto" lang="' + ui + '">' + esc(String(sv.m[ui] || sv.m.en || '').split(/ \(| — |; /)[0]) + '</small></div>' : '') + '</div>' +
-      '<div class="yc-post-btns">' + (nextN && mode !== 'replay' ? '<button type="button" class="yc-btn yc-readnext">' + esc(us('readNext', {n:nextN})) + '</button><button type="button" class="yc-btn yc-ghost yc-later">' + esc(us('later')) + '</button>' : '<button type="button" class="yc-btn yc-postdone">' + esc(us('cont')) + '</button>') + '</div>');
+      // chapter flow (UI0ejg05): the 2nd chapter of a step stays one tap away (same step, GDD 4) with a line that says so; the step's
+      // last chapter closes to the roadmap with "to be continued in a later step" (not after ch6: the credits teaser ends the arc)
+      '<div class="yc-post-btns">' + (nextN && mode !== 'replay'
+        ? '<p class="yc-post-note" lang="' + ui + '" dir="' + uiDir() + '">' + esc(us('inStep')) + '</p><button type="button" class="yc-btn yc-readnext">' + esc(us('readNext', {n:nextN})) + '</button><button type="button" class="yc-btn yc-ghost yc-later">' + esc(us('later')) + '</button>'
+        : mode === 'replay' ? '<button type="button" class="yc-btn yc-postdone">' + esc(us('cont')) + '</button>'
+        : (ch.n < C.chapters.length ? '<p class="yc-tbc" lang="' + ui + '" dir="' + uiDir() + '">' + esc(us('tbcStory')) + '</p>' : '') + '<button type="button" class="yc-btn yc-postdone">' + esc(us('backMap')) + '</button>') + '</div>');
     later(function(){ snd.play('stamp'); }, 450 * pace);
     if(nextN) preload(C.chapters[nextN - 1]);
     G.wait = 'postcard';
@@ -1496,12 +1506,16 @@ function poster(content, path, o){
   var C = content, base = o.base || '', ui = o.ui || 'en', chs = (path && path.choices) || [];
   var card = o.card || [1, 2];
   var src = function(id){ var a = C.art.items[id]; return a && a.src ? base + C.art.base + a.src : null; };
+  // chapter flow (UI0ejg05): in a step only its first unplayed chapter can be opened; the other one waits "After chapter {n}"
+  // (before, photo 2 could be tapped first and chapter 1 was skipped for good)
+  var firstOpen = card.filter(function(n){ return !chs[n]; })[0];
   var items = C.chapters.map(function(c){
     var played = !!chs[c.n], inCard = card.indexOf(c.n) >= 0;
     var pic = c.postcard || (c.photo && (c.photo.then || c.photo.now));
-    var st = played ? 'developed' : (inCard ? 'developing' : 'locked');
+    var st = played ? 'developed' : (inCard && c.n === firstOpen ? 'developing' : 'locked');
     // GDD 4: a grey chapter says where it opens (ch1-2 = the level's .1 page, ch3-6 = the .2 page)
-    var note = st === 'locked' ? (UI.opensOn[ui] || UI.opensOn.en).replace('{p}', (C.level || 'A1') + (c.n <= 2 ? '.1' : '.2')) : '';
+    var note = st === 'locked' ? (inCard ? fmt(UI.afterCh[ui] || UI.afterCh.en, {n:firstOpen})
+      : (UI.opensOn[ui] || UI.opensOn.en).replace('{p}', (C.level || 'A1') + (c.n <= 2 ? '.1' : '.2'))) : '';
     return {id:'ch' + c.n, label:String(c.n), thumb:played ? src(pic) : null, state:st, note:note, n:c.n,
       onTap:function(it){ if(o.onChapter) o.onChapter(it.n, {replay:it.state === 'developed' && !inCard}); }};
   });

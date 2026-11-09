@@ -2359,6 +2359,7 @@
 .sp-listen{display:flex; align-items:center; justify-content:center; gap:14px; padding:6px 0 2px;}
 .sp-free{margin-top:6px; min-height:110px;}
 .sp-own{margin:6px 0 10px;}
+.sp-tbc{margin:2px 0 12px; font-family:var(--font-display); color:var(--cat-story); font-size:15px; font-weight:600;}   /* chapter flow (UI0ejg05) */
 .sp-own p{margin:4px 0 0; font-size:15px; line-height:1.55;}
   /* FEschool course design v4 (Farin approved 2026-10-27, artifact 5kYyAPZ8: "all good, also remember give more free space to not seem
      crowded"): the Course Report look on the course page and the lesson page (.fs-scr), the IELTS skill tiles, numbered rows, the
@@ -12530,7 +12531,10 @@ function celebrationText(kind, low){
     vocab:[L('Word power unlocked, {name}!','Kelime gücü açıldı, {name}!','قدرت کلمات باز شد، {name}!','¡Poder de palabras desbloqueado, {name}!'), L('Those words are yours now, {name}!','Bu kelimeler artık senin, {name}!','این کلمه‌ها حالا مال تو هستند، {name}!','¡Esas palabras ya son tuyas, {name}!')],
     story:[L('What a reader, {name}! Story done!','Ne okuyucu, {name}! Hikaye bitti!','چه خواننده‌ای، {name}! داستان تمام شد!','¡Qué gran lector, {name}! ¡Historia terminada!')],
     review:[L('Memory refreshed, {name}!','Hafıza tazelendi, {name}!','حافظه تازه شد، {name}!','¡Memoria renovada, {name}!')],
-    path:[L('Chapter done, {name}! The story goes on.','Bölüm bitti, {name}! Hikâye devam ediyor.','فصل تمام شد، {name}! داستان ادامه دارد.','¡Capítulo terminado, {name}! La historia sigue.')],
+    // chapter flow (UI0ejg05): the story goes on in a later step; the last chapter (PATH_CH) closes the arc
+    path:[(()=>{ const r = (state.viewParams && state.viewParams.round) || {}; return r.ch >= PATH_CH
+      ? L('The whole story is yours now, {name}!','Hikâyenin tamamı artık senin, {name}!','حالا کلِ داستان مال توست، {name}!','¡La historia completa ya es tuya, {name}!')
+      : L('Chapter done, {name}! The story goes on in a later step.','Bölüm bitti, {name}! Hikâye ilerideki bir adımda devam ediyor.','فصل تمام شد، {name}! داستان در یکی از قدم‌های بعدی ادامه دارد.','¡Capítulo terminado, {name}! La historia sigue en un paso más adelante.'); })()],
     song:[L('What a song, {name}! You listened all the way.','Ne şarkı ama, {name}! Sonuna kadar dinledin.','چه آهنگی، {name}! تا آخرش گوش دادی.','¡Qué canción, {name}! La escuchaste entera.')],
     game:[L('Game won, {name}! You rock!','Oyunu kazandın, {name}! Harikasın!','بازی را بردی، {name}! فوق‌العاده‌ای!','¡Juego ganado, {name}! ¡Eres genial!')],
     writing:[L('Beautiful writing, {name}!','Harika yazdın, {name}!','عالی نوشتی، {name}!','¡Qué bien escribes, {name}!')],
@@ -17054,7 +17058,7 @@ function shelfGames(){
   // Story Path stays off the shelf while it is dormant (PATH_LIVE), then appears once a chapter has been played.
   // Cozy Chores is listed from go-live (own content, like Order Up!), marked New until the learner has met it.
   // Trap Dash and Word Rush (off the roadmap, games-all-levels §4 item 6) are listed from the start too, marked New until played.
-  return SHELF_GAMES.filter(k=>k === 'path' ? (PATH_LIVE && met.has('path')) : ((k === 'order' || k === 'desk' || k === 'mystery' || k === 'trap' || k === 'match') ? true : (k === 'chores' ? ((CHORES_LIVE && CHORES_OPEN.length > 0) || met.has('chores')) : ((k === 'cross' || k === 'spell') ? (met.has(k) || shelfSets(k).length > 0) : met.has(k)))));
+  return SHELF_GAMES.filter(k=>k === 'path' ? (PATH_LIVE && met.has('path')) : (k === 'mystery' ? (g2Applies('mystery') ? !!caseShelfEpisode() : true) : (k === 'order' || k === 'desk' || k === 'trap' || k === 'match') ? true : (k === 'chores' ? (g2Applies('chores') ? !!cozyShelfProject() : (met.has('chores') && CHORES_OPEN.some(chTidiedEver))) : ((k === 'cross' || k === 'spell') ? (met.has(k) || shelfSets(k).length > 0) : met.has(k)))));
 }
 function shelfSubLine(){
   const n = shelfGames().length;
@@ -21669,7 +21673,7 @@ function pathSayBtn(text){ return text ? `<button class="tts-btn sp-say" data-ac
    The comic-album Your Call. Engine lazy-loaded from games/your-call/ (your-call.js + .css byte-identical EN/ES;
    content-<side>.js generated from the farin-lxd scripts). A card plays v2 only when YourCall.ready() says every
    panel of its chapters has final art; otherwise the v1 round below runs unchanged. */
-const YC_VER = '4';   // 3: GDD 12 sound (sets, 1970 radio, piano, ducking; 7VO9j7xZ). 4: Cudillero art ch1-6 + engine trail parts / per-choice art
+const YC_VER = '5';   // 3: GDD 12 sound (sets, 1970 radio, piano, ducking; 7VO9j7xZ). 4: Cudillero art ch1-6 + engine trail parts / per-choice art 5: chapter flow (UI0ejg05)
 const YC_LEVELS = ['A1'];
 let ycLoading = null, ycGame = null, ycPending = null;
 function ycSide(){ return TTS_LANG.slice(0, 2); }
@@ -21771,7 +21775,9 @@ function ycMount(){
   const pend = ycPending; ycPending = null;
   const p = pathState(), card = vp.free ? [pend ? pend.n : 1] : ycCard(vp.refId);
   const replay = !!vp.free || !!(pend && pend.replay);
-  const startCh = pend ? pend.n : (card.every(n=>p.choices[n]) ? card[0] : card.find(n=>!p.choices[n]));
+  let startCh = pend ? pend.n : (card.every(n=>p.choices[n]) ? card[0] : card.find(n=>!p.choices[n]));
+  // chapter flow (UI0ejg05): never start after an unplayed earlier chapter of the same step (the strip used to open chapter 2 first)
+  if(pend && !replay && card.includes(pend.n)){ const first = card.find(n=>!p.choices[n]); if(first && first < pend.n) startCh = first; }
   const resume = !replay && p.ycRun && card.includes(p.ycRun.ch) ? p.ycRun : null;
   ycGame = YourCall.start({root, content:YC_CONTENT, ui:LANG, chapters:card, start:startCh, mode:replay ? 'replay' : 'card', resume, theatre:window.Theatre || null,
     host:{
@@ -21812,11 +21818,12 @@ function renderGamePath(){
       <div class="game-card tight sp-card badge-unlock-shine">
         <div class="game-result-title">${esc(svText(c.title))}</div>
         <p class="game-result-line">${n === PATH_CH ? L('This summer is part of your story now.','Bu yaz artık hikâyenin bir parçası.','این تابستان حالا بخشی از داستان توست.','Este verano ya es parte de tu historia.') : L(`Chapter ${n} is finished.`, `${n}. bölüm bitti.`, `فصل ${n} تمام شد.`, `El capítulo ${n} ha terminado.`)}</p>
+        ${n < PATH_CH && !round.next && !vp.free ? `<p class="sp-tbc">${L('To be continued… in a later step on your roadmap.','Devam edecek… yol haritanda ilerideki bir adımda.','ادامه دارد… در یکی از قدم‌های بعدیِ نقشه‌ی راهت.','Continuará… en un paso más adelante de tu hoja de ruta.')}</p>` : ''}
         ${n === PATH_CH ? pathRibbonHtml(pathRoundChoices(round)) : ''}
         <div class="sp-said-list">${said}</div>
         ${Object.keys(round.freeText || {}).filter(k=>round.freeText[k]).map(k=>`<div class="sp-own"><div class="eyebrow">${L('In your words','Kendi sözlerinle','با کلمات خودت','Con tus palabras')}</div><p dir="auto">${esc(round.freeText[k])}</p></div>`).join('')}
         ${round.next && !vp.free
-          ? `<button class="btn btn-primary game-cta" data-action="sp-read-next">${L('Read chapter {n}','{n}. bölümü oku','فصل {n} را بخوان','Lee el capítulo {n}').replace('{n}', round.next)}</button><button class="btn btn-ghost" style="margin-top:8px;" data-action="back-to-roadmap">${L('Later','Sonra','بعداً','Más tarde')}</button>`
+          ? `<p class="game-result-line">${L('One more chapter in this step.','Bu adımda bir bölüm daha var.','در همین قدم یک فصل دیگر هم هست.','En este paso hay un capítulo más.')}</p><button class="btn btn-primary game-cta" data-action="sp-read-next">${L('Read chapter {n}','{n}. bölümü oku','فصل {n} را بخوان','Lee el capítulo {n}').replace('{n}', round.next)}</button><button class="btn btn-ghost" style="margin-top:8px;" data-action="back-to-roadmap">${L('Later','Sonra','بعداً','Más tarde')}</button>`
           : gameDoneCta(true)}
       </div>
       ${renderBadgeUnlockCard(pullJustEarnedBadges())}
@@ -22151,7 +22158,10 @@ function chBuildingScene(){
     layers: E.layers.map(x => Object.assign({}, x, {hidden: x.litFor ? !lit.has(x.litFor) : !!x.hidden})),
     hots: E.hots.map(h => { const loc = chLoc(h.id), isLit = lit.has(h.id);
       if(!chOpen(h.id)) return Object.assign({}, h, {label:chPlaceShort(loc) + ' · ' + soon, cap:chPlaceShort(loc), soon:true, disabled:true});
-      return Object.assign({}, h, {label:chPlaceShort(loc), cap:chPlaceShort(loc) + (isLit ? ' ✓' : ''), lit:isLit, disabled:isLit && !allOpen, action:'chores-enter', data:{place:h.id}}); })
+      // chapter flow (UI0ejg05): after this step's room every other window waits for a later step; the shelf opens rooms tidied before
+      const vp = state.viewParams || {}, closed = (vp.justLit && h.id !== vp.justLit) || (vp.free && !chTidiedEver(h.id));
+      if(closed) return Object.assign({}, h, {label:chPlaceShort(loc), cap:chPlaceShort(loc) + (isLit ? ' ✓' : ''), lit:isLit, disabled:true});
+      return Object.assign({}, h, {label:chPlaceShort(loc), cap:chPlaceShort(loc) + (isLit ? ' ✓' : ''), lit:isLit, disabled:(isLit && !allOpen && !vp.free) || !!vp.justLit, action:'chores-enter', data:{place:h.id}}); })
   };
 }
 function chMountBuilding(){ const stage = document.getElementById('ch-stage'); if(!stage || stage.childElementCount) return; mountScene(stage, chBuildingScene()); }
@@ -22162,7 +22172,7 @@ function renderGameChoresBuilding(){
   return `<div class="fade-in game-screen ch-screen">
     ${gameTopHtml(chChrome('title'))}
     ${open.length > 1 ? `<div class="game-status"><span class="game-status-end"><span class="game-chip">${litOpen}/${open.length}</span></span></div>` : ''}
-    <p class="game-hint">${L('Tap a window.','Bir pencereye dokun.','روی یک پنجره بزن.','Toca una ventana.')}</p>
+    <p class="game-hint">${vp.justLit && !vp.free ? (moreLater('chores', vp.refId, false) ? L('More rooms to tidy… in a later step on your roadmap.','Toplanacak başka odalar da var… yol haritanda ilerideki bir adımda.','اتاق‌های دیگری هم برای مرتب‌کردن هست… در یکی از قدم‌های بعدیِ نقشه‌ی راهت.','Quedan más habitaciones por ordenar… en un paso más adelante de tu hoja de ruta.') : '') : L('Tap a window.','Bir pencereye dokun.','روی یک پنجره بزن.','Toca una ventana.')}</p>
     <div class="ch-stage ch-ext" id="ch-stage" dir="ltr"></div>
     ${vp.justLit ? gameDoneCta(true) : ''}
   </div>`;
@@ -22327,8 +22337,9 @@ async function chDo(vp, id){
   }
 }
 function chRecord(vp, round){
-  const pc = chProgress(), rec = pc[round.place] || (pc[round.place] = {}), prev = rec[String(round.level)];
-  if(!prev || round.smooth >= prev.smooth) rec[String(round.level)] = {smooth:round.smooth, of:round.total, date:todayISO()};
+  // the shelf (free play) saves nothing, so a roadmap step later finds its room still to tidy (UI0ejg05)
+  if(!vp.free){ const pc = chProgress(), rec = pc[round.place] || (pc[round.place] = {}), prev = rec[String(round.level)];
+  if(!prev || round.smooth >= prev.smooth) rec[String(round.level)] = {smooth:round.smooth, of:round.total, date:todayISO()}; }
   scoreGameCompletion(vp.refId, round.smooth === round.total);   // before markGameComplete (first-completion check)
   markGameComplete(vp.refId);
 }
@@ -25638,7 +25649,7 @@ function theatreExit(){
    their nodes, Cozy Chores and Case Closed play the old way. Set GAMES_V2_LIVE.radio / .mystery / .chores to true (both apps) to put that game live; bump GAMES_VER
    whenever a games/ engine changes. (var, not const: SHELF_GAMES reads the flag earlier in the file.) */
 // (GAMES_V2_LIVE, the per-game switch, is declared above SHELF_GAMES)
-var GAMES_VER = '4';
+var GAMES_VER = '5';
 var g2Flag = null, g2Game = null, g2KeepNow = null, g2Pending = null;
 var G2_KINDS = ['chores', 'mystery', 'radio'];
 var G2_COZY = {A1:'movein', A2:'cake', B1:'bouquet', B2:'laundry', C1:'party'};   // the anchor project per level (Cozy GDD 0)
@@ -25671,6 +25682,36 @@ function g2LoadFiles(dir, files){
     .catch(e=>{ delete g2Loading[dir]; throw e; }));
 }
 function g2Voice(who){ const i = G2_VOICE[who]; return i == null ? null : {voice:TTS_ACCENTS[i]}; }
+// chapter flow (UI0ejg05, Farin 2026-11-09: "the user cant go to the next chapter in each game, because chapters are splitted in cards
+// in the roadmap"). Is a later step of this game waiting? Never on the shelf; below C1 the next level always has one (rotation v3).
+function moreLater(kind, refId, free){
+  if(free) return false;
+  const rm = currentRoadmap(), i = rm.findIndex(n=>n.refId === refId);
+  return rm.some((n, k)=>k > i && n.type === 'game' && n.gameKind === kind && !isRoadmapNodeDone(n))
+    || ((state.profile && state.profile.level) || 'A1') !== 'C1';
+}
+// Case Closed v2: a copy of the engine's SEASONS (the engine is lazy); tests compare the two
+const CASE_SEASONS = {A1:['a1-where-is-captain','a1-wrong-coat'], A2:['a2-regatta-cup','a2-postcard-1970'], B1:['b1-lamp-pier','b1-missing-oar'], B2:['b2-boats-at-dawn','b2-fake-review'], C1:['c1-sea-swallow','c1-missing-logbook']};
+// the Nth Case Closed step of a level opens episode N of that level's season (a solved step tapped again replays the same one)
+function caseEpisodeForStep(refId){
+  const m = /^mystery-(A1|A2|B1|B2|C1)-s(\d)-p(\d)$/.exec(refId || ''); if(!m) return null;
+  const rm = currentRoadmap(), i = rm.findIndex(n=>n.refId === refId);
+  const k = rm.filter((n, j)=>j < i && n.type === 'game' && n.gameKind === 'mystery' && String(n.refId).indexOf('mystery-' + m[1] + '-') === 0).length;
+  return (CASE_SEASONS[m[1]] || [])[k] || null;
+}
+// the shelf replays a solved episode only (none solved: Case Closed v2 stays off the shelf)
+function caseShelfEpisode(){
+  const all = [].concat.apply([], Object.values(CASE_SEASONS));
+  const solved = Object.keys((state.progress && state.progress.cases) || {}).filter(id=>all.includes(id));
+  return solved.length ? solved[Math.floor(Math.random() * solved.length)] : null;
+}
+// Cozy v2 shelf: a project already delivered (none: off the shelf)
+function cozyShelfProject(){
+  const mine = Object.keys(((state.progress && state.progress.house) || {}).projects || {}).filter(id=>Object.values(G2_COZY).includes(id));
+  return mine.length ? mine[Math.floor(Math.random() * mine.length)] : null;
+}
+// Cozy v1 shelf: a room counts once it was tidied at some level
+function chTidiedEver(id){ return Object.keys(chProgress()[id] || {}).length > 0; }
 function g2Host(key){
   const P = state.progress;
   return {
@@ -25719,16 +25760,20 @@ function radioEpisodeFor(refId, free, level){
     if(st){ const ep = RadioEpisode.fromStory(st, ctx); if(!ep.fail && radioVoiced(ep)) return ep; }
     return null;
   }
-  // shelf (free play): an authored show of the level not heard yet, else a fresh story passage
-  for(const au of shuffle(RADIO_EPISODES.filter(e=>e.level === level && !done.includes(e.id + '-radio')))){ const ep = RadioEpisode.fromAuthored(au, ctx); if(!ep.fail) return ep; }
-  for(const st of shuffle(ctx.stories)){ const ep = RadioEpisode.fromStory(st, ctx); if(!ep.fail && radioVoiced(ep)) return ep; }
+  // shelf (free play), chapter flow (UI0ejg05): an authored show already heard, else a passage from a story already finished;
+  // never a show that a later roadmap step holds
+  for(const au of shuffle(RADIO_EPISODES.filter(e=>done.includes(e.id + '-radio')))){ const ep = RadioEpisode.fromAuthored(au, Object.assign({}, ctx, {level:au.level})); if(!ep.fail) return ep; }
+  const read = (state.progress && state.progress.completedStories) || [];
+  for(const st of shuffle(ctx.stories.filter(s=>read.includes(s.id)))){ const ep = RadioEpisode.fromStory(st, ctx); if(!ep.fail && radioVoiced(ep)) return ep; }
   return null;
 }
 function renderGameV2(){ return (window.Theatre && Theatre.isOpen()) ? '<div></div>' : '<div id="g2-box" style="position:fixed;inset:0;z-index:45;background:#fbf4e8"></div>'; }   // the box only when the Theatre could not open
 // start-game / shelf-play for a games-v2 kind (the Theatre is already open: theatreGate ran first). Any load failure: the old game.
 function g2Start(ds){
-  const kind = ds.kind, free = !!ds.free, level = (state.profile && state.profile.level) || 'A1';
-  const lang = TTS_LANG.slice(0, 2), ui = LANG, name = (state.profile && state.profile.name) || '';
+  const kind = ds.kind, free = !!ds.free;
+  // the step's own level (refId), not the profile's: a step keeps its chapter after a level change (UI0ejg05)
+  const level = (!free && (/-(A1|A2|B1|B2|C1)-/.exec(String(ds.refId || '')) || [])[1]) || (state.profile && state.profile.level) || 'A1';
+  const lang = TTS_LANG.slice(0, 2), ui = LANG, name = (state.profile && state.profile.name) || '', tbcLater = moreLater(kind, ds.refId, free);
   const done = res=>g2Done(kind, ds, res);
   // the view first, synchronously: the Theatre closes itself right after Play when the current view is not one of its own
   go('game-v2', {g2:kind, refId:ds.refId, goal:ds.goal || '', free, shelf:!!ds.shelf});
@@ -25743,19 +25788,22 @@ function g2Start(ds){
   };
   let prep;
   if(kind === 'chores'){
-    const project = G2_COZY[level] || 'cake', host = g2Host('chores');
-    prep = g2LoadFiles('cozy-chores', ['chores.css', 'engine.js']).then(()=>CozyChores.load({appRoot:'', project}))
-      .then(data=>box=>CozyChores.start({root:box, data, lang, ui, band:level, name, host, resume:!!CozyChores.savedRound(host, project),
+    const project = free ? cozyShelfProject() : (G2_COZY[level] || 'cake'), host = g2Host('chores');
+    prep = !project ? Promise.reject(new Error('no delivered cozy project')) : g2LoadFiles('cozy-chores', ['chores.css', 'engine.js']).then(()=>CozyChores.load({appRoot:'', project}))
+      .then(data=>box=>CozyChores.start({root:box, data, lang, ui, band:level, name, host, resume:!!CozyChores.savedRound(host, project), moreLater:tbcLater,
         onDone:()=>done({perfect:true, keep:g2KeepNow}), onLeave:theatreExit}));
   } else if(kind === 'mystery'){
     const host = g2Host('mystery');
-    prep = g2LoadFiles('case-closed', ['case.css', 'engine.js']).then(()=>CaseClosed.load({appRoot:'', episode:CaseClosed.episodeFor(level, host.loadCases())}))
-      .then(data=>box=>CaseClosed.start({root:box, data, lang, ui, name, host, resume:!!CaseClosed.savedRound(host, data.stage.id),
+    prep = g2LoadFiles('case-closed', ['case.css', 'engine.js']).then(()=>{
+        const episode = free ? caseShelfEpisode() : (caseEpisodeForStep(ds.refId) || CaseClosed.episodeFor(level, host.loadCases()));
+        if(!episode) throw new Error('no solved case for the shelf');
+        return CaseClosed.load({appRoot:'', episode}); })
+      .then(data=>box=>CaseClosed.start({root:box, data, lang, ui, name, host, resume:!!CaseClosed.savedRound(host, data.stage.id), moreLater:tbcLater,
         onDone:()=>done({perfect:true, keep:g2KeepNow}), onLeave:theatreExit}));
   } else {
     const host = g2Host('radio'), ep = radioEpisodeFor(ds.refId, free, level);
     prep = ep ? g2LoadFiles('mini-radio', ['radio.css', 'radio.js']).then(()=>MiniRadio.loadArt(''))
-      .then(art=>box=>MiniRadio.start({root:box, episode:ep, art, lang, ui, host, replay:free,
+      .then(art=>box=>MiniRadio.start({root:box, episode:ep, art, lang, ui, host, replay:free, moreLater:tbcLater,
         onDone:st=>{ const k = g2KeepNow; done({perfect:!!(st && st.perfect), keep:k ? {text:k.word, say:k.word, note:[k.meaning, k.title].filter(Boolean).join(' · ')} : null}); },
         onLeave:theatreExit})) : Promise.reject(new Error('no radio episode'));
   }
@@ -27147,8 +27195,10 @@ const HANDLERS = {
   // ---- Cozy Chores ----
   'chores-enter'(el){
     const id = el.dataset.place, vp = state.viewParams || {}; if(!chOpen(id)) return;   // a "Soon" place is not playable yet
+    if(vp.justLit) return;   // chapter flow (UI0ejg05): one room per step; the next room is in a later step
+    if(vp.free){ if(!chTidiedEver(id)) return; } else {   // the shelf replays rooms tidied before
     const lit = chLitAt(chLevel());
-    if(lit.has(id) && !chAllOpenLit(lit)) return;   // tidied at this level: pick another open window
+    if(lit.has(id) && !chAllOpenLit(lit)) return; }   // tidied at this level: pick another open window
     sfx('hop');
     go('game-chores-room', Object.assign(chCarry(vp), {round:chNewRound(id)}));
   },

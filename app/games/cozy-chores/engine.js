@@ -62,6 +62,8 @@ function cap1(s){ s = String(s || ''); return s.charAt(0).toUpperCase() + s.slic
 var UI = {
   ask:{en:'Ask', tr:'Sor', fa:'بپرس', es:'Preguntar'},
   done:{en:'Done', tr:'Tamam', fa:'تموم شد', es:'Listo'},
+  // chapter flow (UI0ejg05, Farin 2026-11-09): the next project lives in a later roadmap step; spoken Persian like the rest of this table
+  tbcWindows:{en:'More windows to light up… in a later step on your roadmap.', tr:'Işığını yakacağın başka pencereler de var… yol haritanda ilerideki bir adımda.', fa:'پنجره‌های دیگه‌ای هم هست که روشنشون می‌کنی… توی یکی از قدم‌های بعدیِ نقشه‌ی راهت.', es:'Quedan más ventanas por iluminar… en un paso más adelante de tu hoja de ruta.'},
   leaveQ:{en:'Leave? Your place is saved.', tr:'Çıkıyor musun? Kaldığın yer kayıtlı.', fa:'می‌خوای بری؟ تا همین‌جا ذخیره شده.', es:'¿Te vas? Tu sitio queda guardado.'},
   stay:{en:'Stay', tr:'Kal', fa:'می‌مونم', es:'Quedarme'},
   leave:{en:'Leave', tr:'Çık', fa:'می‌رم', es:'Salir'},
@@ -2506,6 +2508,7 @@ async function windowShot(){
   G.shot = shot; G.uiLayer.innerHTML = '';
   G.frame.dataset.light = 'morning';
   G.status = {kind:'end', station:'end'};
+  if(G.moreLater) G.say.innerHTML = '<span class="oh-tbc" dir="' + uiDir() + '" lang="' + G.ui + '">' + esc(U('tbcWindows')) + '</span>';
   await camEnter(shot, prev);
   var skip = false;
   var skipP = new Promise(function(res){ var f = function(){ skip = true; res(); }; G.frame.addEventListener('click', f, {once:true}); });
@@ -2843,7 +2846,7 @@ function start(o){
   var g = G = {
     v:VERSION, data:data, P:bandProject(P, band), M:data.manifest || {items:{}}, lang:lang, ui:o.ui || lang, band:band, bandCfg:P.bands[band],
     V:null, host:host, appRoot:o.appRoot || '', name:o.name || '', pace:o.pace || 1, tts:o.tts, hintMs:o.hintMs || null,
-    forceReduced:!!o.reduced, onDone:o.onDone, onLeave:o.onLeave,
+    forceReduced:!!o.reduced, onDone:o.onDone, onLeave:o.onLeave, moreLater:!!o.moreLater,
     round:saved || newRound(P, band, lang), house:loadHouse(host),
     list:P.bands[band].stations.slice(), roleIdx:{}, waits:new Set(), anims:new Set(), dead:false, skipping:false, status:{kind:'boot'},
     glossOn:false, box:o.root || (W.Theatre && W.Theatre.stageEl && W.Theatre.stageEl()) || D.body

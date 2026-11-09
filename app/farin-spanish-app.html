@@ -167,8 +167,6 @@
   .rm2-icon-float{animation:none;}   /* still since 2026-10-28 (Farin: no floating old elements) */
   .rm2-track.rm2-nostart{padding-top:36px;}
   .rm2-cap-end{padding-top:40px;}
-  .rm2-links{display:flex; align-items:center; gap:8px; margin-top:6px; font-size:12.5px; font-weight:800;}
-  .rm2-link{padding:6px 0; margin:0; border:none; background:none; color:var(--clay-orange-deep); font:inherit; cursor:pointer; text-decoration:underline; text-underline-offset:3px;}
   @keyframes rm2-icon-float{0%,100%{transform:translateY(0) rotate(-3deg);} 50%{transform:translateY(-9px) rotate(3deg);}}
   /* Character tip bubble (2026-09-30, Farin: delete the sentence box on home, "once
      in a while show these sentences in a very cute bubble saying from the
@@ -13968,6 +13966,14 @@ function renderProfile(){
         </div>
         <span class="chevron">${ICONS.chev}</span>
       </button>
+      <button class="item-row" data-action="open-box" style="margin-top:10px; cursor:pointer;">
+        <span class="item-ic" style="background:var(--cat-voc); color:#fff;">${ICONS.cards}</span>
+        <div class="item-body">
+          <div class="item-title">${L('Vocab Box','Kelime Kutusu','جعبه‌ی لغات','Caja de palabras')}</div>
+          <div class="item-sub">${(()=>{ const n = boxList().length; return n ? (n === 1 ? L('1 word to practise','Çalışılacak 1 kelime','۱ کلمه برای تمرین','1 palabra para practicar') : L(n+' words to practise','Çalışılacak '+n+' kelime',n.toLocaleString('fa-IR')+' کلمه برای تمرین',n+' palabras para practicar')) : L('Empty for now: tap "Practice again" on a word card','Şimdilik boş: bir kelime kartında "Tekrar çalışayım"a dokun','فعلاً خالی است: روی کارت یک کلمه «دوباره تمرین کنم» را بزن','Vacía por ahora: toca "Practicar otra vez" en una tarjeta'); })()}</div>
+        </div>
+        <span class="chevron">${ICONS.chev}</span>
+      </button>
       <button class="item-row" data-action="nav" data-view="studio-lab" style="margin-top:10px; cursor:pointer;">
         <span class="item-ic" style="background:var(--clay-sky); color:#fff;">${ICONS.mic}</span>
         <div class="item-body">
@@ -15169,7 +15175,6 @@ function renderRoadmapCard(p){
             <div style="font-weight:700; font-size:14px;">${esc(displayLevel(p))} ${L('roadmap','yol haritası','نقشه‌ی راه', 'hoja de ruta')}</div>
             ${(() => { const th = roadmapThemeLabel(p); return th ? `<div class="rm2-theme" style="font-size:12.5px; font-weight:800; color:${archColor}; margin-top:2px;">${esc(th)}</div>` : ''; })()}
             <div style="font-size:12px; color:var(--ink-soft); margin-top:2px;">${doneCount===0 ? L('Your first souvenir is waiting','İlk hatıran seni bekliyor','اولین یادگاری‌ات منتظرت است','Tu primer recuerdo te espera') : L('Check everything off to reach','Hepsini işaretle ve şuraya ulaş:','همه را علامت بزن تا برسی به','Marca todo para llegar a')+' '+esc(nextDisplayLevel(p))}</div>
-            <div class="rm2-links"><button class="rm2-link" data-action="nav" data-view="journal">${esc(journalName())}</button><span aria-hidden="true" style="color:var(--ink-faint);">·</span><button class="rm2-link" data-action="open-box">${L('Vocab Box','Kelime Kutusu','جعبه‌ی لغات','Caja de palabras')}</button></div>
           </div>
           <div class="rm2-head-count">${roadmapHeaderSlots(doneCount)}<div class="num" style="font-weight:800; font-size:15px; color:${archColor}; white-space:nowrap;">${allDone ? L('Page complete','Sayfa tamam','صفحه کامل شد','Página completa') : (doneCount/roadmap.length <= .5 ? doneCount+' '+L('done','tamam','انجام شد','hechos') : (roadmap.length-doneCount)+' '+L('to go','kaldı','مانده','por hacer'))}</div></div>
         </div>

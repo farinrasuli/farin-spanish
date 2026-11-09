@@ -122,7 +122,9 @@ function chapterArt(c){
   (c.seq || []).forEach(devPanel);
   ['d1', 'd2'].forEach(function(dk){ var d = c.decisions[dk]; if(d) ['a', 'b'].forEach(function(o){ (d[o].panels || []).forEach(devPanel); }); });
   ['d1', 'd2'].forEach(function(dk){ var d = c.decisions[dk]; if(d) ['a', 'b'].forEach(function(o){ (d[o].panels || []).forEach(panel); }); });
-  if(c.photo){ add(c.photo.now); add(c.photo.then); }
+  (c.seq || []).concat.apply([], [c.seq || []].concat(['d1', 'd2'].map(function(dk){ var d = c.decisions[dk]; return d ? [].concat(d.a.panels || [], d.b.panels || []) : []; }))).forEach(function(p){ (p && p.artAlt || []).forEach(function(x){ add(x.art); }); });
+  if(c.photo && c.photo.vars){ Object.keys(c.photo.vars).forEach(function(k){ add(c.photo.vars[k]); }); }
+  if(c.photo){ add(c.photo.now); add(c.photo.then); if(c.photo.trail){ c.photo.trail.forEach(function(t){ add(t.plate); }); if(c.photo.revealFind) add(c.photo.revealFind.plate); } }
   add(c.postcard);
   return ids;
 }
@@ -747,6 +749,7 @@ function start(o){
     var fig = el('figure', 'yc-panel yc-' + (p.size || 'wide') + (p.art ? '' : ' yc-capanel') + (p.tone ? ' yc-tone-' + p.tone : '') + (instant ? ' yc-instant' : ''));
     fig.setAttribute('data-id', p.id || '');
     var html = '';
+    if(p.artAlt){ var alt = p.artAlt.filter(function(x){ return whenOk(x.when, arcChoices()); })[0]; if(alt) p = Object.assign({}, p, {art:alt.art}); }
     if(p.art){
       var a = art(p.art), r = artRatio(p.art), cr = p.crop && p.crop.length === 4 ? p.crop : null;
       var ar = cr ? r * cr[2] / cr[3] : r;
@@ -906,29 +909,41 @@ function start(o){
     var cx = b.x + b.w / 2, cy = (b.y + b.h / 2) * 1.25;
     return '<ellipse class="' + cls + '" cx="' + cx + '" cy="' + cy + '" rx="' + (b.w / 2 + 2.5) + '" ry="' + ((b.h / 2 + 2.5) * 1.25) + '"' + (rot ? ' transform="rotate(' + rot + ' ' + cx + ' ' + cy + ')"' : '') + '/>';
   }
-  function playPhoto(ch, instant){
+  function playPhoto(ch, instant, part){
     var ph = ch.photo;
     if(!ph) return Promise.resolve();
     if(ph.mode === 'robert') return playRobert(ch, instant);
     if(ph.mode === 'last') return playLast(ch, instant);
-    var steps = ph.mode === 'trail'
-      ? [{then:'T1', now:null, finds:[Object.assign({id:'t1', line:ph.trail[0].line}, ph.trail[0])], era:'then'},
-         {then:'T2', now:null, finds:[Object.assign({id:'t2', line:ph.trail[1].line}, ph.trail[1])], era:'then'},
-         {then:null, now:'T3', finds:[{id:'reveal', line:ph.reveal, box:{x:40, y:70, w:22, h:14}, dev:true}], era:'now', chips:ph.chips}]
-      : [{then:ph.then, now:ph.now, finds:ph.finds, chips:ph.chips, clue:ph.clue}];
+    var steps, doneKey = '#done';
+    if(ph.mode === 'trail'){
+      // part 1 = photo t1; then the chase panels (ch.photo.set) play on the page; part 2 = photo t2 + today's reveal.
+      // A build without parts (old content) plays all three steps in one go.
+      var tr = ph.trail, rv = ph.revealFind || {plate:'T3', box:{x:40, y:70, w:22, h:14}, dev:true};
+      var s1 = {then:tr[0].plate || 'T1', now:null, finds:[Object.assign({}, tr[0], {id:'t1'})], era:'then'},
+          s2 = {then:tr[1].plate || 'T2', now:null, finds:[Object.assign({}, tr[1], {id:'t2'})], era:'then'},
+          s3 = {then:null, now:rv.plate || 'T3', finds:[Object.assign({}, rv, {id:'reveal', line:ph.reveal})], era:'now', chips:ph.chips};
+      steps = part === 1 ? [s1] : part === 2 ? [s2, s3] : [s1, s2, s3];
+      if(part) doneKey = '#done' + part;
+    } else steps = [{then:ph.then, now:ph.now, finds:ph.finds, chips:ph.chips, clue:ph.clue}];
+    var tn0 = G.run.tn;
+    if(part === 2 && tn0 && tn0.part !== 2){
+      // a fresh Then & Now state for the second half; the finds of part 1 stay for the chapter result
+      G.run.tn = {found:tn0.found.slice(), step:0, quiz:false, phase:'find', part:2};
+    } else if(part === 1 && tn0 && !tn0.part) tn0.part = 1;
     var found = (G.run.tn && G.run.tn.found) || [];
-    if(instant || found.indexOf('#done') >= 0){ printPanel(ch, steps[steps.length - 1], found); return Promise.resolve(); }
-    return new Promise(function(ok){ thenNow(ch, ph, steps, found, ok); });
+    if(instant || found.indexOf(doneKey) >= 0){ printPanel(ch, steps[steps.length - 1], found); return Promise.resolve(); }
+    return new Promise(function(ok){ thenNow(ch, ph, steps, found, ok, doneKey, part); });
   }
   function printPanel(ch, st, found){
     var src = st.then ? artSrc(st.then, {era:'then', finds:st.finds}) : artSrc(st.now, {era:'now', finds:st.finds});
     var fig = el('figure', 'yc-panel yc-wide yc-printpanel');
     fig.innerHTML = '<div class="yc-print"><img src="' + esc(src) + '" alt=""><svg viewBox="0 0 100 125" preserveAspectRatio="none" aria-hidden="true">' +
-      (st.finds || []).filter(function(f){ return found.indexOf(f.id) >= 0; }).map(function(f){ return boxesOf(f).map(function(b){ return ellipse(b, 'yc-pencil yc-drawn', -6); }).join(''); }).join('') + '</svg><i>' + esc(us('y1970')) + '</i></div>';
+      (st.finds || []).filter(function(f){ return found.indexOf(f.id) >= 0; }).map(function(f){ return boxesOf(f).map(function(b){ return ellipse(b, 'yc-pencil yc-drawn', -6); }).join(''); }).join('') + '</svg><i>' + esc(us(st.then ? 'y1970' : 'today')) + '</i></div>';
     page.appendChild(fig);
   }
-  function thenNow(ch, ph, steps, found0, done){
-    var tn = G.run.tn = G.run.tn || {found:found0.slice(), step:0, quiz:false, phase:'frame'};
+  function thenNow(ch, ph, steps, found0, done, doneKey, part){
+    doneKey = doneKey || '#done';
+    var tn = G.run.tn = G.run.tn || {found:found0.slice(), step:0, quiz:false, phase:'frame', part:part || 0};
     var st = steps[tn.step] || steps[0];
     var scr = el('section', 'yc-tn yc-mode-' + ph.mode);
     scr.setAttribute('aria-label', tg(ph.instr) || 'Then & Now');
@@ -938,7 +953,7 @@ function start(o){
         (thenSrc ? '<img class="yc-tn-then' + (nowSrc ? ' yc-hide' : '') + '" src="' + esc(thenSrc) + '" alt="">' : '') +
         '<svg class="yc-tn-ov" viewBox="0 0 100 125" preserveAspectRatio="none" role="img" aria-label="' + esc(tg(cu('find')) || 'Find') + '"></svg>' +
         '<div class="yc-vf" aria-hidden="true"></div><div class="yc-white" aria-hidden="true"></div>' +
-        '<div class="yc-printout" aria-hidden="true"><div class="yc-ph"><img src="' + esc(thenSrc || nowSrc) + '" alt=""><div class="yc-cover"></div></div><span class="yc-tab"></span><i>' + esc(us('y1970')) + '</i></div>' +
+        '<div class="yc-printout" aria-hidden="true"><div class="yc-ph"><img src="' + esc(thenSrc || nowSrc) + '" alt=""><div class="yc-cover"></div></div><span class="yc-tab"></span><i>' + esc(us(st.then ? 'y1970' : 'today')) + '</i></div>' +
         ((art(st.then) && art(st.then).dev) || (art(st.now) && art(st.now).dev) || !art(st.then || st.now) ? '<span class="yc-devtag">' + esc(us('dev')) + '</span>' : '') +
       '</div></div><div class="yc-tn-ui"><div class="yc-ins" aria-live="polite"></div><div class="yc-ctl"></div></div>';
     layer.appendChild(scr);
@@ -1090,7 +1105,7 @@ function start(o){
       if(tn.step < steps.length - 1){
         // trail: the next photo of the trail
         tn.step++; tn.phase = 'find'; save();
-        later(function(){ scr.remove(); G.tn = null; thenNow(ch, ph, steps, tn.found, done); }, 900 * pace);
+        later(function(){ scr.remove(); G.tn = null; thenNow(ch, ph, steps, tn.found, done, doneKey, part); }, 900 * pace);
         return;
       }
       clue();
@@ -1111,7 +1126,7 @@ function start(o){
       ctl.innerHTML = '<button type="button" class="yc-btn yc-tn-done">' + esc(us('cont')) + '</button>';
       ctl.querySelector('.yc-tn-done').addEventListener('click', function(){
         clear(hintT); clear(autoT); G.speakTok++; stopSpeech(); snd.era(0);
-        tn.found.push('#done'); save();
+        tn.found.push(doneKey); save();
         scr.remove(); G.tn = null; G.wait = null;
         printPanel(ch, st, tn.found);
         if(host.keepPrint) try{ host.keepPrint({ch:ch.n, found:tn.found.filter(function(x){ return x[0] !== '#'; })}); }catch(e){}
@@ -1145,8 +1160,9 @@ function start(o){
     var d2 = pickOf(chs, 6, 2), person = pickOf(chs, 5, 2) === 'a' ? 'pa' : 'pb';
     var right = d2 === 'b' ? H.right.b : (H.right.a && H.right.a[person]);
     var fig = el('figure', 'yc-panel yc-wide yc-last');
-    fig.innerHTML = '<div class="yc-halves"><div><img src="' + esc(artSrc(ph.then || 'LAST70', {era:'then'})) + '" alt="">' + (left ? '<div class="yc-cap yc-cap-bottom">' + lineHtml(left, ch) + '</div>' : '') + '</div>' +
-      '<div><img src="' + esc(artSrc(ph.now || 'LAST26', {era:'now'})) + '" alt="">' + (right ? '<div class="yc-cap yc-cap-bottom">' + lineHtml(right, ch) + '</div>' : '') + '</div></div>';
+    var V = ph.vars || {}, lArt = (pickOf(chs, 4, 2) === 'b' ? V.lb : V.la) || ph.then || 'LAST70', rArt = (d2 === 'b' ? V.rb : (person === 'pa' ? V.rpa : V.rpb)) || ph.now || 'LAST26';
+    fig.innerHTML = '<div class="yc-halves"><div><img src="' + esc(artSrc(lArt, {era:'then'})) + '" alt="">' + (left ? '<div class="yc-cap yc-cap-bottom">' + lineHtml(left, ch) + '</div>' : '') + '</div>' +
+      '<div><img src="' + esc(artSrc(rArt, {era:'now'})) + '" alt="">' + (right ? '<div class="yc-cap yc-cap-bottom">' + lineHtml(right, ch) + '</div>' : '') + '</div></div>';
     page.appendChild(fig);
     if(instant) return;
     scrollEnd(); snd.play('firework'); later(function(){ snd.play('firework'); }, 500 * pace);
@@ -1329,7 +1345,7 @@ function start(o){
   function playBeat(b, ch, instant){
     if(b.type === 'panel') return playPanel(b, ch, instant);
     if(b.type === 'decision') return playDecision(b, ch, instant);
-    if(b.type === 'photo') return playPhoto(ch, instant);
+    if(b.type === 'photo') return playPhoto(ch, instant, b.part);
     if(b.type === 'note') return playNoteBeat(ch, instant);
     if(b.type === 'flip') return playFlip(ch, instant);
     if(b.type === 'tin') return playTin(ch, instant);
@@ -1403,7 +1419,8 @@ function start(o){
   }
   function status(){
     var r = {sound:snd.status(), ch:G.ch && G.ch.n, i:G.run && G.run.i, beat:null, wait:G.wait, picks:G.run && G.run.picks.slice(), ended:G.ended, endings:G.endings || null, hinted:G.hinted || 0, autoSolved:G.autoSolved || 0, misses:G.misses || 0, tn:null};
-    if(G.ch && G.run && G.ch.seq[G.run.i]){ var b = G.ch.seq[G.run.i]; r.beat = {type:b.type, id:b.id || b.d || null}; }
+    if(G.ch && G.run && G.ch.seq[G.run.i]){ var b = G.ch.seq[G.run.i]; r.beat = {type:b.type, id:b.id || b.d || null, part:b.part || null}; }
+    r.runFound = G.run && G.run.tn ? G.run.tn.found.slice() : [];
     if(G.tn){
       var ov = G.tn.scr.querySelector('.yc-tn-ov'), rc = ov.getBoundingClientRect(), tn = G.run && G.run.tn;
       r.tn = {phase:tn && tn.phase, step:tn && tn.step, found:tn ? tn.found.slice() : [], rect:{x:rc.left, y:rc.top, w:rc.width, h:rc.height},

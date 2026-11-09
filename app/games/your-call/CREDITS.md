@@ -12,3 +12,11 @@ No sound files are used: no recordings, no samples, no third-party audio. Nothin
 - The last-photo piano motif: an original 13-note motif, played by an additive piano voice with a generated room reverb.
 
 Source: Farin English / FEschool, 2026 (Trello 7VO9j7xZ, GDD `Claude/specs/your-call-v2/A1-the-camera-GDD.md` §12).
+
+# Your Call — art credits
+
+- Panels and plates in `art/whitby/` and `art/cudillero/`: our own clear-line art, rendered on this PC with FLUX.1-schnell
+  (Black Forest Labs, Apache 2.0; GGUF weights second-state/FLUX.1-schnell-GGUF, Apache 2.0) through stable-diffusion.cpp (MIT),
+  then composited, face-repainted and lettered by hand-written scripts (`Claude/specs/your-call-v2/art3/`, `art4/`). Whitby Abbey is
+  our own Blender model. No paid or online image service was used.
+- Every word inside the art is real type: Alfa Slab One, Archivo Black and Patrick Hand (SIL Open Font License 1.1).

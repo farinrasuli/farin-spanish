@@ -26,16 +26,19 @@
      YourCall.stance(content, choices) / endings(content, choices) / tracks(content)
      YourCall.poster(content, path, {ui, base, card, onChapter, onAlbum}) -> Promise<{poster, strip, controls, stage}>
      YourCall.album({root, content, path, ui, host})   the album overlay on its own (HUD button on the poster)
-     YourCall.debug.status()                   for tests: the beat, what the game waits for, Then & Now targets in client px
+     YourCall.debug.status()                   for tests: the beat, what the game waits for, Then & Now targets in client px, sound
+     YourCall.hush()                           stop every sound bed now (the app calls it when the Theatre closes)
+     YourCall.bedOf(panel)                     the set / night / fest / 1970 a panel's ambience comes from (pure; for tests)
    host (all optional): speak(text,{lang,rate,quiet}) -> Promise, stopSpeech(), muted(), reduced(), path() -> {choices,
      prints, notes}, saveRun(run|null), commit(result), base (art URL prefix, default '').
+   Sound (GDD 12): all generated in code (no files); host.muted() silences sound effects, ambience, radio and piano alike.
    choices = ['', 'ab', 'ba', ...] indexed by chapter (the v1 progress.path.choices shape).
 */
 (function(){
 'use strict';
 if(window.YourCall) return;
 var D = document, W = window;
-var VERSION = '0.1.0';
+var VERSION = '0.2.0';
 
 /* ---------- chrome strings (the UI language; Persian informal) ---------- */
 var UI = {
@@ -165,37 +168,114 @@ function glossHtml(text, ch, feelG){
   return out + esc(s.slice(last));
 }
 
-/* ---------- generated sound (WebAudio; nothing before a tap, nothing when muted) ---------- */
-function Sound(muted){
-  var AC = null;
-  function ac(){ if(muted()) return null; try{ AC = AC || new (W.AudioContext || W.webkitAudioContext)(); if(AC.state === 'suspended') AC.resume(); return AC; }catch(e){ return null; } }
+/* ---------- sound (GDD 12, Trello 7VO9j7xZ). Everything is generated in code with WebAudio: no sound files, nothing to
+   license (games/your-call/CREDITS.md). Nothing before a tap; nothing when muted (the app's sound toggle, which is also the
+   Theatre's HUD button) - polled, so the toggle works mid-scene; nothing while the tab is hidden; nothing after the game or
+   the Theatre has gone (alive() is polled). Every failure is silence, never an error, and nothing ever waits on audio.
+   Buses:  sfx ------------------------------------------> master -> speakers
+           bed (per-set ambience) -> 1970 low-pass x2 -> duck -> master
+           radio (the 1970 period tune) ----------------> duck
+           music (the last-photo piano) -> dry + room --> master (ducks a little)
+   1970 view (a 1970 panel, Hold: 1970, a 1970 print, the flip) = the same bed muffled through two low-passes plus a faint
+   AM-radio tune; the live split (ch4) sits halfway. Speech ducks the ambience (bed + radio) by 60 %. ---------- */
+var SND = {master:.9, sfx:.8, bed:.55, radio:.065, music:.13, duck:.4, musicDuck:.7};
+var LIVE_SOUNDS = [];   // every Sound still open; YourCall.hush() closes them (the app calls it when the Theatre closes)
+function Sound(muted, sopt){
+  sopt = sopt || {};
+  var AC = sopt.ctx || null, own = !sopt.ctx, N = null, closed = false;
+  var alive = sopt.alive || function(){ return true; };
+  var want = null, cur = null, olds = [], eraT = 0, eraSet = -1, dimT = 1;
+  var ducks = {}, duckT = null, isMuted = null, tick = null, born = Date.now();
+  var radio = {on:false, k:0, i:0, t0:0, hiss:null, stopAt:0, crk:0};
+  function rnd(a, b){ return a + Math.random() * (b - a); }
+  function ac(){
+    if(closed || muted()) return null;
+    try{
+      if(!AC){ var K = W.AudioContext || W.webkitAudioContext; if(!K) return null; AC = new K(); }
+      if(own && AC.state === 'suspended' && !D.hidden){ var r = AC.resume(); if(r && r.catch) r.catch(function(){}); }
+      if(!N) graph();
+      return AC;
+    }catch(e){ return null; }
+  }
+  function graph(){
+    var c = AC; N = {buf:{}};
+    N.master = c.createGain(); N.master.gain.value = SND.master; N.master.connect(c.destination);
+    N.sfx = c.createGain(); N.sfx.gain.value = SND.sfx; N.sfx.connect(N.master);
+    N.duck = c.createGain(); N.duck.gain.value = 1; N.duck.connect(N.master);
+    N.lp1 = c.createBiquadFilter(); N.lp1.type = 'lowpass'; N.lp1.frequency.value = 16000; N.lp1.Q.value = .6;
+    N.lp2 = c.createBiquadFilter(); N.lp2.type = 'lowpass'; N.lp2.frequency.value = 16000; N.lp2.Q.value = .5;
+    N.bed = c.createGain(); N.bed.gain.value = SND.bed;
+    N.bed.connect(N.lp1); N.lp1.connect(N.lp2); N.lp2.connect(N.duck);
+    // the radio: band-limited like a 1970 transistor set, a touch of overdrive, wow on every note
+    N.radio = c.createGain(); N.radio.gain.value = 0; N.radio.connect(N.duck);
+    N.rin = c.createGain(); N.rin.gain.value = 1;
+    var hp = c.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 420;
+    var lp = c.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 2700; lp.Q.value = 1.1;
+    var sh = c.createWaveShaper(), cv = new Float32Array(256);
+    for(var i = 0; i < 256; i++){ var x = i / 127.5 - 1; cv[i] = Math.tanh(x * 1.6) / Math.tanh(1.6); }
+    sh.curve = cv;
+    var wow = c.createDelay(.05); wow.delayTime.value = .006;
+    var lfo = c.createOscillator(), dep = c.createGain(); lfo.frequency.value = .55; dep.gain.value = .0015; lfo.connect(dep); dep.connect(wow.delayTime); lfo.start();
+    N.rin.connect(wow); wow.connect(hp); hp.connect(lp); lp.connect(sh); sh.connect(N.radio);
+    N.music = c.createGain(); N.music.gain.value = SND.music; N.music.connect(N.master);
+  }
+  function out(){ return N ? N.sfx : AC.destination; }
+  // seamless noise loops (4 s, equal-power crossfaded seam, RMS 0.2)
+  function loopBuf(kind){
+    if(N.buf[kind]) return N.buf[kind];
+    var c = AC, sr = c.sampleRate, len = Math.floor(sr * 4), xf = Math.floor(sr * .3), tmp = new Float32Array(len + xf);
+    var b0 = 0, b1 = 0, b2 = 0, last = 0, i;
+    for(i = 0; i < tmp.length; i++){
+      var w = Math.random() * 2 - 1;
+      if(kind === 'brown'){ last = (last + .02 * w) / 1.02; tmp[i] = last; }
+      else if(kind === 'pink'){ b0 = .99765 * b0 + w * .099046; b1 = .963 * b1 + w * .2965164; b2 = .57 * b2 + w * 1.0526913; tmp[i] = b0 + b1 + b2 + w * .1848; }
+      else tmp[i] = w;
+    }
+    var b = c.createBuffer(1, len, sr), d = b.getChannelData(0), ss = 0;
+    for(i = 0; i < len; i++) d[i] = tmp[i];
+    for(i = 0; i < xf; i++){ var k = i / xf; d[i] = tmp[i] * Math.sqrt(k) + tmp[len + i] * Math.sqrt(1 - k); }
+    for(i = 0; i < len; i++) ss += d[i] * d[i];
+    var g = .2 / Math.max(1e-6, Math.sqrt(ss / len));
+    for(i = 0; i < len; i++) d[i] *= g;
+    return (N.buf[kind] = b);
+  }
+
+  /* ---- one-shot sound effects (the sfx bus) ---- */
   function noise(c, dur){ var b = c.createBuffer(1, Math.max(1, c.sampleRate * dur | 0), c.sampleRate), d = b.getChannelData(0); for(var i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1; var s = c.createBufferSource(); s.buffer = b; return s; }
-  function env(g, a, peak, rel, t0){ g.gain.setValueAtTime(0.0001, t0); g.gain.exponentialRampToValueAtTime(peak, t0 + a); g.gain.exponentialRampToValueAtTime(0.0001, t0 + a + rel); }
-  function osc(c, type, f0, f1, t, dur, peak, filt){
+  function env(g, a, peak, rel, t0){ g.gain.setValueAtTime(0.0001, t0); g.gain.exponentialRampToValueAtTime(Math.max(.0002, peak), t0 + a); g.gain.exponentialRampToValueAtTime(0.0001, t0 + a + rel); }
+  function osc(c, type, f0, f1, t, dur, peak, filt, dest){
     var o = c.createOscillator(); o.type = type; o.frequency.setValueAtTime(f0, t); if(f1) o.frequency.exponentialRampToValueAtTime(f1, t + dur * .9);
     var g = c.createGain(); env(g, .01, peak, dur, t);
     var last = o; if(filt){ var f = c.createBiquadFilter(); f.type = filt[0]; f.frequency.value = filt[1]; if(filt[2]) f.Q.value = filt[2]; o.connect(f); last = f; }
-    last.connect(g); g.connect(c.destination); o.start(t); o.stop(t + dur + .05);
+    last.connect(g); g.connect(dest || out()); o.start(t); o.stop(t + dur + .05);
   }
-  function hiss(c, t, dur, peak, filt){
-    var n = noise(c, dur + .05), f = c.createBiquadFilter(); f.type = filt[0]; f.frequency.value = filt[1]; if(filt[2]) f.Q.value = filt[2];
-    var g = c.createGain(); env(g, .01, peak, dur, t); n.connect(f); f.connect(g); g.connect(c.destination); n.start(t);
+  // filt = [type, freq, Q, freq at the end (a sweep)]
+  function hiss(c, t, dur, peak, filt, dest, att){
+    var n = noise(c, dur + .06), f = c.createBiquadFilter(); f.type = filt[0]; f.frequency.setValueAtTime(filt[1], t); if(filt[2]) f.Q.value = filt[2];
+    if(filt[3]) f.frequency.exponentialRampToValueAtTime(filt[3], t + dur);
+    var g = c.createGain(); env(g, att || .01, peak, dur, t); n.connect(f); f.connect(g); g.connect(dest || out()); n.start(t); n.stop(t + dur + .06);
   }
   var S = {
     bus:function(c, t){ osc(c, 'sawtooth', 55, 42, t, 1.4, .16, ['lowpass', 320]); hiss(c, t + 1.1, .5, .1, ['bandpass', 2500]); },
     flash:function(c, t){ osc(c, 'sine', 900, 3200, t, .3, .1); hiss(c, t + .02, .18, .25, ['highpass', 1200]); },
-    click:function(c, t){ [0, .06].forEach(function(d){ hiss(c, t + d, .05, .45, ['highpass', 1800]); }); },
-    whirr:function(c, t){ osc(c, 'square', 110, 150, t, .9, .06, ['lowpass', 900]); },
+    // the peel-apart Land camera's shutter: blade snap, body thump, the smaller return click, a spring ring
+    click:function(c, t){ hiss(c, t, .035, .5, ['bandpass', 3200, .9]); osc(c, 'sine', 210, 80, t, .07, .3); hiss(c, t + .075, .03, .26, ['bandpass', 2400, 1.2]); osc(c, 'triangle', 3400, 0, t + .005, .07, .02); },
+    shutter:function(c, t){ S.click(c, t); },
+    // a print coming out: geared motor + paper sliding out at the end
+    whirr:function(c, t){ osc(c, 'sawtooth', 92, 118, t, .85, .09, ['bandpass', 700, 2]); for(var k = 0; k < 16; k++) hiss(c, t + k * .05, .02, .07, ['bandpass', 1800, 3]); hiss(c, t + .68, .26, .1, ['bandpass', 2200, .8, 1400]); },
     pop:function(c, t){ osc(c, 'sine', 520, 880, t, .1, .1); },
-    gull:function(c, t){ [0, .28].forEach(function(d){ osc(c, 'triangle', 1500, 900, t + d, .22, .05); }); },
-    pencil:function(c, t){ hiss(c, t, .35, .14, ['bandpass', 3800, 2]); },
-    rustle:function(c, t){ hiss(c, t, .15, .07, ['lowpass', 1200]); },
-    page:function(c, t){ hiss(c, t, .35, .09, ['bandpass', 1600, .8]); },
-    peel:function(c, t){ hiss(c, t, .5, .1, ['bandpass', 2600, 1.5]); },
-    pull:function(c, t){ hiss(c, t, .25, .12, ['highpass', 900]); osc(c, 'sawtooth', 200, 120, t, .2, .03, ['lowpass', 600]); },
+    gull:function(c, t){ EV.gull(c, t, out(), 1.6); },
+    // a red-pencil circle: two graphite strokes
+    pencil:function(c, t){ hiss(c, t, .22, .2, ['bandpass', 3800, 2.5, 4700], 0, .03); hiss(c, t + .23, .2, .16, ['bandpass', 4500, 2.5, 3500], 0, .03); },
+    rustle:function(c, t){ hiss(c, t, .16, .06, ['lowpass', 1800]); hiss(c, t + .05, .1, .035, ['bandpass', 3000, 1]); },
+    page:function(c, t){ hiss(c, t, .32, .075, ['bandpass', 700, .7, 2600], 0, .06); hiss(c, t + .18, .15, .035, ['highpass', 3000]); },
+    // peeling the negative off the print: sticky crackle over a soft tear
+    peel:function(c, t){ hiss(c, t, .5, .06, ['highpass', 2500], 0, .05); for(var k = 0; k < 10; k++) hiss(c, t + k * .048 + Math.random() * .02, .03, .09 + Math.random() * .09, ['bandpass', 2800 + Math.random() * 1200, 2]); },
+    // pulling the tab: paper drag through the rollers, then the stop
+    pull:function(c, t){ hiss(c, t, .24, .14, ['bandpass', 900, .8, 2400], 0, .02); osc(c, 'sine', 160, 70, t + .2, .08, .16); },
     creak:function(c, t){ osc(c, 'sawtooth', 140, 90, t, .6, .12, ['bandpass', 600, 6]); },
     knock:function(c, t){ [0, .18].forEach(function(d){ osc(c, 'sine', 160, 70, t + d, .1, .35); }); },
-    stamp:function(c, t){ osc(c, 'sine', 140, 60, t, .18, .4); },
+    stamp:function(c, t){ osc(c, 'sine', 130, 55, t, .16, .4); hiss(c, t, .06, .22, ['lowpass', 500]); hiss(c, t + .005, .03, .1, ['highpass', 2500]); },
     clink:function(c, t){ S.cup(c, t); },
     firework:function(c, t){ hiss(c, t, .9, .12, ['lowpass', 900]); osc(c, 'sine', 300, 1200, t, .3, .03); },
     run:function(c, t){ for(var k = 0; k < 6; k++) hiss(c, t + k * .13, .06, .18, ['bandpass', 900 + (k % 2) * 300, 3]); },
@@ -211,10 +291,293 @@ function Sound(muted){
     meow:function(c, t){ osc(c, 'triangle', 700, 520, t, .45, .06, ['bandpass', 1200, 2]); },
     chime:function(c, t){ osc(c, 'sine', 784, 0, t, .3, .07); osc(c, 'sine', 1175, 0, t + .08, .3, .05); }
   };
-  return {
-    play:function(name){ var c = ac(); if(!c || !S[name]) return; try{ S[name](c, c.currentTime + .01); }catch(e){} },
-    close:function(){ if(AC){ try{ AC.close(); }catch(e){} AC = null; } }
+
+  /* ---- ambience events (scheduled ahead on the audio clock into the current bed) ---- */
+  var EV = {
+    gull:function(c, t, o, v){ var n = 2 + (Math.random() * 2 | 0), f = rnd(1250, 1600); for(var k = 0; k < n; k++){ var s = t + k * rnd(.22, .32); osc(c, 'triangle', f * 1.08, f * .62, s, rnd(.18, .28), .05 * v, ['bandpass', 1500, 1.4], o); } },
+    chirp:function(c, t, o, v){ var n = 3 + (Math.random() * 3 | 0), f = rnd(3800, 4800); for(var k = 0; k < n; k++) osc(c, 'sine', f, f * .8, t + k * rnd(.06, .09), .05, .022 * v, null, o); },
+    clink:function(c, t, o, v){ var f = rnd(2300, 3100); osc(c, 'sine', f, 0, t, .45, .018 * v, null, o); osc(c, 'sine', f * 1.51, 0, t + .004, .3, .008 * v, null, o); },
+    cup:function(c, t, o, v){ var f = rnd(2500, 3300); osc(c, 'triangle', f, 0, t, .09, .03 * v, null, o); if(Math.random() < .5) osc(c, 'triangle', f * 1.2, 0, t + rnd(.06, .12), .07, .02 * v, null, o); },
+    tick:function(c, t, o, v, ev){ ev.alt = !ev.alt; hiss(c, t, .012, .05 * v, ['bandpass', ev.alt ? 3200 : 2600, 4], o, .002); osc(c, 'sine', ev.alt ? 1900 : 1600, 0, t, .03, .012 * v, null, o); },
+    beep:function(c, t, o, v){ osc(c, 'sine', 880, 0, t, .09, .014 * v, null, o); },
+    drop:function(c, t, o, v){ var f = rnd(2400, 4200); osc(c, 'sine', f, f * .7, t, .02, rnd(.004, .012) * v, null, o); },
+    creak:function(c, t, o, v){ osc(c, 'sawtooth', rnd(120, 150), rnd(80, 95), t, rnd(.5, .8), .03 * v, ['bandpass', 600, 6], o); },
+    cricket:function(c, t, o, v){ var f = rnd(4300, 4700); for(var k = 0; k < 3; k++) osc(c, 'sine', f, 0, t + k * .035, .014, .006 * v, null, o); },
+    flap:function(c, t, o, v){ for(var k = 0; k < 6; k++) hiss(c, t + k * rnd(.05, .08), .04, .018 * v, ['bandpass', rnd(600, 900), 1.2], o); },
+    steam:function(c, t, o, v){ hiss(c, t, 1.4, .02 * v, ['highpass', 2200], o, .2); },
+    cheer:function(c, t, o, v){ hiss(c, t, 1.6, .03 * v, ['bandpass', 1200, .7], o, .5); },
+    crackle:function(c, t, o, v){ hiss(c, t, .006, rnd(.02, .08) * v, ['highpass', 1500], o, .001); }
   };
+
+  /* ---- per-set beds (GDD 10). f = {night, fest}: night = fewer gulls, crickets in the yard, rain at the hospital;
+     fest = Regatta / L'Amuravela crowd. ---- */
+  var SETS = {
+    S1:function(L, f){ L.sea(1); L.lap(.55); L.wind(.3); L.ev('gull', f.night ? [24, 46] : [6, 14], f.night ? .45 : 1); L.ev('clink', [7, 16], .8); if(f.fest){ L.babble(.9); L.ev('flap', [5, 12], .8); L.ev('cheer', [16, 30], .7); } },
+    S2:function(L, f){ L.breeze(1.3); L.sea(.45); if(f.night) L.ev('cricket', [.8, 2.4], 1); else { L.ev('chirp', [4, 10], 1); L.ev('gull', [12, 24], .45); } L.ev('flap', [16, 32], .6); if(f.fest) L.babble(.3); },
+    S3:function(L, f){ L.room(1.3); L.hum(50, .5); L.ev('tick', [1, 1], 1); L.ev('gull', [28, 52], .22); void f; },
+    S4:function(L, f){ L.room(.6); L.babble(1.8); L.ev('cup', [3, 8], 1); L.ev('steam', [30, 55], .8); void f; },
+    S5:function(L, f){ L.wind(1.25); L.sea(.45); L.ev('gull', f.night ? [20, 40] : [5, 12], 1); if(f.fest) L.babble(.35); },
+    S6:function(L, f){ L.room(1); L.hum(100, 1); if(f.night){ L.rain(1); L.ev('drop', [.12, .5], 1); L.ev('beep', [2.2, 2.2], 1); } else { L.babble(.6); L.ev('beep', [3.5, 6], .5); } },
+    S7:function(L, f){ L.room(1); L.sea(.22); L.ev('creak', [26, 52], .6); if(f.night) L.ev('gull', [40, 70], .2); else L.ev('chirp', [9, 18], .4); }
+  };
+  function build(key, f){
+    var c = AC, t = c.currentTime, grp = c.createGain(), nodes = [], evs = [];
+    grp.gain.setValueAtTime(0, t); grp.connect(N.bed);
+    function loop(kind, type, freq, q, gain, lfos, flfo){
+      var s = c.createBufferSource(); s.buffer = loopBuf(kind); s.loop = true;
+      var fl = c.createBiquadFilter(); fl.type = type; fl.frequency.value = freq; if(q) fl.Q.value = q;
+      var g = c.createGain(); g.gain.value = gain;
+      s.connect(fl); fl.connect(g); g.connect(grp); s.start(t, Math.random() * 3.5); nodes.push(s);
+      (lfos || []).forEach(function(l){ var o = c.createOscillator(), d = c.createGain(); o.frequency.value = l[0] * rnd(.85, 1.15); d.gain.value = gain * l[1]; o.connect(d); d.connect(g.gain); o.start(t); nodes.push(o); });
+      if(flfo){ var o = c.createOscillator(), d = c.createGain(); o.frequency.value = flfo[0]; d.gain.value = flfo[1]; o.connect(d); d.connect(fl.frequency); o.start(t); nodes.push(o); }
+    }
+    var L = {
+      sea:function(v){ loop('brown', 'lowpass', 480, .7, .3 * v, [[.07, .35], [.13, .25]], [.07, 160]); },
+      lap:function(v){ loop('pink', 'bandpass', 950, .9, .2 * v, [[.31, .5], [.53, .3]]); },
+      wind:function(v){ loop('pink', 'bandpass', 520, .6, .2 * v, [[.11, .45], [.04, .3]], [.06, 180]); },
+      breeze:function(v){ loop('pink', 'bandpass', 800, .5, .16 * v, [[.06, .5], [.17, .2]]); },
+      room:function(v){ loop('brown', 'lowpass', 260, .5, .13 * v); },
+      rain:function(v){ loop('white', 'highpass', 2600, .4, .08 * v, [[.09, .2]]); loop('pink', 'lowpass', 900, .5, .12 * v); },
+      babble:function(v){ [[320, .14], [720, .11], [1400, .06]].forEach(function(b, k){ loop('pink', 'bandpass', b[0], 1.6, b[1] * v, [[.7 + k * .37, .55], [1.9 + k * .5, .3]]); }); },
+      hum:function(fq, v){ [fq, fq * 2].forEach(function(x, k){ var o = c.createOscillator(), g = c.createGain(); o.frequency.value = x; g.gain.value = (k ? .0025 : .004) * v; o.connect(g); g.connect(grp); o.start(t); nodes.push(o); }); },
+      ev:function(name, every, vol){ evs.push({name:name, min:every[0], max:every[1], vol:vol, next:t + (every[0] === every[1] ? .2 : rnd(every[0] * .3, every[1] * .8)), out:grp}); }
+    };
+    SETS[key](L, f);
+    grp.gain.setTargetAtTime(1, t, .45);
+    return {key:key, f:f, sig:key + (f.night ? 'n' : '') + (f.fest ? 'f' : ''), grp:grp, nodes:nodes, evs:evs};
+  }
+  function retire(b){
+    if(!b) return;
+    var t = AC.currentTime; b.evs = [];
+    try{ b.grp.gain.cancelScheduledValues(t); b.grp.gain.setTargetAtTime(0, t, .35); }catch(e){}
+    b.stopAt = t + 2.2; olds.push(b);
+  }
+  function reap(t){
+    olds = olds.filter(function(b){
+      if(t < b.stopAt) return true;
+      b.nodes.forEach(function(n){ try{ n.stop(); }catch(e){} try{ n.disconnect(); }catch(e){} });
+      try{ b.grp.disconnect(); }catch(e){}
+      return false;
+    });
+  }
+  function apply(){
+    if(!want || !ac() || !N) return;
+    var sig = want.key + (want.f.night ? 'n' : '') + (want.f.fest ? 'f' : '');
+    if(cur && cur.sig === sig) return;
+    retire(cur); cur = null;
+    try{ cur = build(want.key, want.f); }catch(e){ cur = null; }
+    if(eraSet !== eraT) setEra(eraT);
+    run();
+  }
+  function setEra(m){
+    eraT = m;
+    if(!N || !AC || eraSet === m) return;
+    eraSet = m;
+    var t = AC.currentTime, f = 16000 * Math.pow(820 / 16000, m);
+    try{
+      N.lp1.frequency.cancelScheduledValues(t); N.lp1.frequency.setTargetAtTime(f, t, .22);
+      N.lp2.frequency.cancelScheduledValues(t); N.lp2.frequency.setTargetAtTime(f * 1.3, t, .22);
+      N.bed.gain.cancelScheduledValues(t); N.bed.gain.setTargetAtTime(SND.bed * dimT * (1 - .2 * m), t, .3);
+      N.radio.gain.cancelScheduledValues(t); N.radio.gain.setTargetAtTime(SND.radio * m, t, m ? .5 : .25);
+    }catch(e){}
+    if(m > 0 && !sopt.noRadio) radioOn(); else radio.stopAt = t + 2;   // noRadio: tests measure the muffled bed alone
+  }
+
+  /* ---- the 1970 radio: an original 16-bar light-pop tune (G major, 100 bpm), made here, played on a transistor set ---- */
+  var BEAT = .6, BARS = 16, LOOP = BARS * 4 * BEAT;
+  var CH = [[55, 59, 62], [52, 55, 59], [48, 52, 55], [50, 54, 57], [55, 59, 62], [52, 55, 59], [45, 48, 52, 50, 54, 57], [55, 59, 62],
+            [48, 52, 55], [55, 59, 62], [45, 48, 52], [50, 54, 57], [48, 52, 55], [55, 59, 62], [50, 54, 57], [55, 59, 62]];
+  var MEL = [[71, 1], [74, 1], [79, 1.5], [78, .5], [76, 2], [74, 1], [71, 1], [72, 1], [76, 1], [79, 1], [76, 1], [74, 3], [0, 1],
+             [71, 1], [74, 1], [79, 1], [81, 1], [83, 1.5], [81, .5], [79, 1], [76, 1], [76, 1], [72, 1], [69, 1], [66, 1], [67, 3], [0, 1],
+             [76, 1], [76, 1], [79, 1], [76, 1], [74, 2], [71, 2], [72, 1], [72, 1], [76, 1], [72, 1], [71, 2], [69, 2],
+             [67, 1], [69, 1], [72, 1], [76, 1], [74, 1.5], [71, .5], [67, 2], [69, 1], [74, 1], [78, 1], [81, 1], [79, 3], [0, 1]];
+  var SONG = (function(){
+    var ev = [], b = 0;
+    MEL.forEach(function(m){ if(m[0]) ev.push({at:b, k:'lead', n:m[0], d:m[1]}); b += m[1]; });
+    CH.forEach(function(ch, bar){
+      var t0 = bar * 4, two = ch.length > 3, A = ch.slice(0, 3), B = two ? ch.slice(3) : A;
+      ev.push({at:t0, k:'bass', n:A[0] - 12, d:1.8}); ev.push({at:t0 + 2, k:'bass', n:(two ? B[0] : A[0] + 7) - 12, d:1.8});
+      [1, 3].forEach(function(q){ (q < 2 ? A : B).forEach(function(n){ ev.push({at:t0 + q, k:'comp', n:n, d:.35}); }); });
+      for(var e = 0; e < 8; e++) ev.push({at:t0 + e / 2, k:'hat', v:e % 2 ? .6 : 1});
+      ev.push({at:t0, k:'kick'}); ev.push({at:t0 + 2, k:'kick'});
+    });
+    return ev.sort(function(x, y){ return x.at - y.at; });
+  })();
+  function hz(n){ return 440 * Math.pow(2, (n - 69) / 12); }
+  function rnote(c, t, e){
+    var o = N.rin;
+    if(e.k === 'hat'){ hiss(c, t, .05, .05 * e.v, ['highpass', 2200], o, .002); return; }
+    if(e.k === 'kick'){ osc(c, 'sine', 120, 50, t, .14, .22, null, o); return; }
+    var d = e.d * BEAT, g = c.createGain(), f = hz(e.n);
+    var peak = e.k === 'lead' ? .2 : (e.k === 'bass' ? .26 : .06);
+    g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(peak, t + .012); g.gain.setTargetAtTime(peak * (e.k === 'lead' ? .6 : .3), t + .012, e.k === 'comp' ? .08 : .25);
+    g.gain.setTargetAtTime(0, t + d * .92, .05); g.connect(o);
+    (e.k === 'lead' ? ['triangle', 'square'] : [e.k === 'bass' ? 'sine' : 'triangle']).forEach(function(type, j){
+      var x = c.createOscillator(); x.type = type; x.frequency.value = f;
+      var xg = c.createGain(); xg.gain.value = j ? .18 : 1; x.connect(xg); xg.connect(g);
+      x.start(t); x.stop(t + d + .4);
+    });
+  }
+  function radioOn(){
+    if(!N || !AC) return;
+    radio.stopAt = 0;
+    if(radio.on) return;
+    var c = AC, t = c.currentTime;
+    radio.on = true;
+    try{
+      // the station keeps time: coming back to 1970 lands later in the song, not at the top
+      var pos = ((t - (radio.t0 || (radio.t0 = t))) % LOOP + LOOP) % LOOP;
+      radio.k = Math.floor((t - radio.t0) / LOOP); radio.i = 0;
+      while(radio.i < SONG.length && SONG[radio.i].at * BEAT < pos + .05) radio.i++;
+      var s = c.createBufferSource(); s.buffer = loopBuf('pink'); s.loop = true;
+      var hp = c.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 1800;
+      var g = c.createGain(); g.gain.value = .05; s.connect(hp); hp.connect(g); g.connect(N.rin); s.start(t, Math.random() * 3);
+      radio.hiss = s; radio.crk = t + rnd(.2, 1.2);
+    }catch(e){}
+  }
+  function radioOff(){
+    if(!radio.on) return;
+    radio.on = false;
+    try{ radio.hiss && radio.hiss.stop(); }catch(e){}
+    radio.hiss = null;
+  }
+  function radioPump(until){
+    if(!radio.on) return;
+    var c = AC;
+    if(radio.stopAt && c.currentTime > radio.stopAt){ radioOff(); return; }
+    var guard = 0;
+    while(guard++ < 400){
+      if(radio.i >= SONG.length){ radio.i = 0; radio.k++; }
+      var e = SONG[radio.i], t = radio.t0 + radio.k * LOOP + e.at * BEAT;
+      if(t >= until) break;
+      if(t >= c.currentTime - .02) try{ rnote(c, t, e); }catch(x){}
+      radio.i++;
+    }
+    while(radio.crk < until){ try{ EV.crackle(c, radio.crk, N.rin, 1); }catch(x){} radio.crk += rnd(.15, 1.4); }
+  }
+
+  /* ---- the last photo: a short piano motif (additive piano voice, a generated room) ---- */
+  function room(c){
+    if(N.room) return N.room;
+    var len = Math.floor(c.sampleRate * 2.2), ir = c.createBuffer(2, len, c.sampleRate);
+    for(var ch = 0; ch < 2; ch++){ var d = ir.getChannelData(ch), lp = 0; for(var i = 0; i < len; i++){ lp = lp * .6 + (Math.random() * 2 - 1) * .4; d[i] = lp * Math.pow(1 - i / len, 3.2) * Math.min(1, i / (c.sampleRate * .012)); } }
+    var cv = c.createConvolver(); cv.buffer = ir;
+    var wet = c.createGain(); wet.gain.value = .32; cv.connect(wet); wet.connect(N.music);
+    var lp2 = c.createBiquadFilter(); lp2.type = 'lowpass'; lp2.frequency.value = 5200;
+    var dry = c.createGain(); dry.gain.value = .85; lp2.connect(dry); dry.connect(N.music); lp2.connect(cv);
+    return (N.room = lp2);
+  }
+  function piano(c, t, n, vel, dur){
+    var o = room(c), f0 = hz(n), B = .00035;
+    for(var p = 1; p <= 7; p++){
+      var fp = p * f0 * Math.sqrt(1 + B * p * p); if(fp > 8000) break;
+      var tau = Math.max(.25, 1.9 - (n - 48) * .022) / Math.pow(p, .55), a = vel * Math.pow(p, -1.2) * (p === 2 ? 1.15 : 1);
+      (p === 1 ? [0, 1.8] : [0]).forEach(function(cents){
+        var x = c.createOscillator(); x.type = 'sine'; x.frequency.value = fp; x.detune.value = cents;
+        var g = c.createGain(); g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(a * (cents ? .5 : 1), t + .006);
+        g.gain.setTargetAtTime(0, t + .006, tau); g.gain.setTargetAtTime(0, t + dur, .18);
+        x.connect(g); g.connect(o); x.start(t); x.stop(t + dur + 1.4);
+      });
+    }
+    hiss(c, t, .018, vel * .12, ['bandpass', Math.min(6000, f0 * 3), 1.5], o, .001);   // the hammer
+  }
+  var MOTIF = [[0, 76, .5, .6], [0, 48, .26, 3], [0, 55, .2, 3], [.45, 74, .42, .6], [.9, 72, .46, .7], [1.35, 67, .36, .9],
+               [2, 69, .46, .7], [2, 53, .24, 2.2], [2.6, 72, .42, .8], [3.25, 76, .42, 3.2], [3.25, 67, .28, 3.2], [3.25, 60, .26, 3.2], [3.25, 48, .22, 3.2]];
+
+  /* ---- the clock: one 250 ms tick schedules ~0.6 s ahead, follows the mute toggle, the tab and the game's life ---- */
+  function schedule(until){
+    if(!N || !AC) return;
+    var ct = AC.currentTime;
+    if(cur) cur.evs.forEach(function(ev){
+      if(ev.next < ct - .05) ev.next = ct + rnd(.05, .4);
+      var guard = 0;
+      while(ev.next < until && guard++ < 50){ try{ EV[ev.name](AC, ev.next, ev.out, ev.vol, ev); }catch(e){} ev.next += ev.min + Math.random() * (ev.max - ev.min); }
+    });
+    radioPump(until);
+    reap(ct);
+  }
+  function step(){
+    if(closed) return;
+    var ok = false; try{ ok = alive(); }catch(e){}
+    if(!ok){ close(true); return; }
+    var m = !!muted();
+    if(m !== isMuted){
+      isMuted = m;
+      if(AC && N){
+        var t = AC.currentTime;
+        try{ N.master.gain.cancelScheduledValues(t); N.master.gain.setTargetAtTime(m ? 0 : SND.master, t, .08); }catch(e){}
+        if(own){ if(m) setTimeout(function(){ if(isMuted && AC && !closed) try{ AC.suspend(); }catch(e){} }, 400); else ac(); }
+      }
+    }
+    if(m) return;
+    if(want && (!cur || !AC)) apply();
+    if(AC && N && AC.state === 'running') schedule(AC.currentTime + .6);
+  }
+  function run(){ if(!tick && own) tick = setInterval(step, 250); }
+  function onVis(){
+    if(!AC || !own || closed) return;
+    try{ if(D.hidden) AC.suspend(); else if(!muted()) AC.resume(); }catch(e){}
+  }
+  try{ D.addEventListener('visibilitychange', onVis); }catch(e){}
+  function close(slow){
+    if(closed) return;
+    closed = true;
+    clearInterval(tick); tick = null; clearTimeout(duckT);
+    try{ D.removeEventListener('visibilitychange', onVis); }catch(e){}
+    LIVE_SOUNDS = LIVE_SOUNDS.filter(function(x){ return x !== api; });
+    if(AC && N){ try{ N.master.gain.cancelScheduledValues(AC.currentTime); N.master.gain.setTargetAtTime(0, AC.currentTime, slow === true ? .3 : .05); }catch(e){} }
+    var c = AC; AC = null; N = null;
+    if(c && own) setTimeout(function(){ try{ c.close(); }catch(e){} }, slow === true ? 1500 : 300);
+  }
+  var api = {
+    play:function(name){ var c = ac(); if(!c || !S[name]) return; run(); try{ S[name](c, c.currentTime + .01); }catch(e){} },
+    // the ambience of a set ('S1'..'S7'); flags {night, fest}; an unknown key keeps the bed that is playing
+    bed:function(key, f){ if(!SETS[key]) return; want = {key:key, f:{night:!!(f && f.night), fest:!!(f && f.fest)}}; apply(); run(); },
+    // 0 = today, 1 = 1970 (muffled + radio), .5 = the live split
+    era:function(m){ m = Math.max(0, Math.min(1, +m || 0)); if(!ac()){ eraT = m; return; } setEra(m); },
+    // the bed level for a moment (the last photo, the ending); 1 = normal
+    dim:function(v){ dimT = v; if(N && AC) try{ N.bed.gain.setTargetAtTime(SND.bed * v * (1 - .2 * eraT), AC.currentTime, .6); }catch(e){} },
+    // speech: duck(id, true) when a line starts, duck(id, false) when it ends, duck('*') after a stop
+    duck:function(id, on){
+      if(id === '*') ducks = {}; else if(on) ducks[id] = 1; else delete ducks[id];
+      if(!N || !AC) return;
+      var any = false; for(var k in ducks) if(ducks.hasOwnProperty(k)){ any = true; break; }
+      clearTimeout(duckT);
+      var go = function(down){ try{ var t = AC.currentTime; N.duck.gain.cancelScheduledValues(t); N.duck.gain.setTargetAtTime(down ? SND.duck : 1, t, down ? .06 : .4);
+        N.music.gain.cancelScheduledValues(t); N.music.gain.setTargetAtTime(SND.music * (down ? SND.musicDuck : 1), t, down ? .08 : .4); }catch(e){} };
+      if(any) go(true); else duckT = setTimeout(function(){ if(N && AC) go(false); }, 300);   // no pumping between lines
+    },
+    // the last photo's piano; returns its length in ms (0 when silent) so the caller can let it breathe
+    motif:function(){ var c = ac(); if(!c) return 0; run(); var t = c.currentTime + .05; try{ MOTIF.forEach(function(m){ piano(c, t + m[0], m[1], m[2], m[3]); }); }catch(e){ return 0; } return 4200; },
+    unlock:function(){ if(AC && own && AC.state === 'suspended' && !muted() && !D.hidden){ try{ var r = AC.resume(); if(r && r.catch) r.catch(function(){}); }catch(e){} } },
+    rebind:function(o){ if(o.muted) muted = o.muted; if(o.alive) alive = o.alive; },
+    // tests: render ahead on an OfflineAudioContext (no clock there)
+    pump:function(until){ schedule(until); },
+    status:function(){ return {bed:cur ? cur.sig : null, want:want ? want.key : null, era:eraT, ducked:Object.keys(ducks).length > 0, dim:dimT, radio:radio.on, state:AC ? AC.state : 'none', closed:closed}; },
+    alive:function(){ return !closed; },
+    close:close
+  };
+  LIVE_SOUNDS.push(api);
+  return api;
+}
+// which set a panel is in: explicit p.bed / p.set / p.era, else read from the comic sheet's brief ("· S6 hospital corridor,
+// night, rain"), else keyword fallbacks for the briefs with no S code (EN and ES sheets are written in English).
+// Returns {set|null, night, fest, era 0|1} or null (nothing known: keep the bed that is playing).
+function bedOf(p){
+  if(!p) return null;
+  var b = String(p.brief || ''), set = p.bed || p.set || null, m = /\bS([1-7])\b/.exec(b);
+  if(!set && m) set = 'S' + m[1];
+  if(!set){
+    if(/mirador|\bsteps\b|stairs|abbey/i.test(b)) set = 'S5';
+    else if(/harbou?r|quay|bus (stop|station)|bridge|plaza|marina|\bboats?\b/i.test(b)) set = 'S1';
+    else if(/\byard\b|\blane\b|green door|window/i.test(b)) set = 'S2';
+    else if(/kitchen|biscuit tin/i.test(b)) set = 'S3';
+    else if(/caf[eé]|\bbar\b/i.test(b)) set = 'S4';
+    else if(/hospital|corridor|blanket|\bnurse/i.test(b)) set = 'S6';
+    else if(/\bflat\b|my door/i.test(b)) set = 'S7';
+  }
+  var era = p.era != null ? +p.era : (p.tone === '1970' || /^[\s·•\-]*1970\b/.test(b) ? 1 : 0);
+  return {set:set, night:/\bnight\b|\b(9|10|11|12)\s?pm\b/i.test(b) || p.tone === 'night', fest:/regatta|amuravela|bunting|flags/i.test(b), era:era};
 }
 
 /* ---------- fonts (the album look; the app's service worker caches Google Fonts) ---------- */
@@ -250,7 +613,8 @@ function start(o){
   var pace = o.pace || 1;
   var reduced = function(){ try{ return (host.reduced && host.reduced()) || prefersReduced(); }catch(e){ return prefersReduced(); } };
   var muted = function(){ try{ return !!(host.muted && host.muted()); }catch(e){ return false; } };
-  var snd = Sound(muted);
+  var snd = SHARED && SHARED.alive() ? SHARED : Sound(muted);   // the poster's sea bed carries on into the game
+  SHARED = null;
   var G = {alive:true, wait:null, run:null, ch:null, timers:[], listeners:[], tn:null, ended:false};
   var cards = (o.chapters && o.chapters.length ? o.chapters : [o.start || 1]).slice();
   var mode = o.mode || 'card';
@@ -289,13 +653,15 @@ function start(o){
   function speak(text, opt){
     if(!text || muted() || !host.speak) return Promise.resolve();
     var words = String(text).split(/\s+/).length, cap = (1200 + words * 520) / ((opt && opt.rate) || 1);
+    var id = G.duckN = (G.duckN || 0) + 1;
+    snd.duck(id, true);   // GDD 12: the ambience ducks 60 % under the voice
     return new Promise(function(ok){
-      var done = false, fin = function(){ if(!done){ done = true; ok(); } };
+      var done = false, fin = function(){ if(!done){ done = true; snd.duck(id, false); ok(); } };
       try{ Promise.resolve(host.speak(text, Object.assign({lang:target}, opt || {}))).then(fin, fin); }catch(e){ fin(); }
       later(fin, cap);   // never wait on a voice that does not report its end
     });
   }
-  function stopSpeech(){ try{ host.stopSpeech && host.stopSpeech(); }catch(e){} }
+  function stopSpeech(){ try{ host.stopSpeech && host.stopSpeech(); }catch(e){} snd.duck('*'); }
   async function speakAll(list){ var my = G.speakTok; for(var i = 0; i < list.length && G.alive; i++){ if(my !== G.speakTok) return; await speak(list[i]); } }
 
   /* ---- shell ---- */
@@ -305,6 +671,33 @@ function start(o){
   shell.innerHTML = '<div class="yc-page" role="main" aria-live="polite"></div><div class="yc-glossbar" hidden></div><div class="yc-layer"></div>';
   root.appendChild(shell);
   var page = shell.querySelector('.yc-page'), glossbar = shell.querySelector('.yc-glossbar'), layer = shell.querySelector('.yc-layer');
+  snd.rebind({muted:muted, alive:function(){ return G.alive && shell.isConnected; }});   // never outlives the game
+  on(shell, 'pointerdown', function(){ snd.unlock(); });   // iOS: the first touch lets a context made outside a tap play
+
+  /* ---- ambience: the set of what is on the page (GDD 10 + 12) ---- */
+  function scene(p){
+    var b = bedOf(p); if(!b) return;
+    if(b.set) snd.bed(b.set, b);
+    snd.era(b.era);
+  }
+  // the bed at a chapter's start or resume: the last set known before beat i (else the first one ahead)
+  function chapterScene(ch, upto){
+    var seq = ch.seq || [], last = null, k, b;
+    for(k = 0; k < Math.min(upto, seq.length); k++){ if(seq[k].type === 'panel'){ b = bedOf(seq[k]); if(b && b.set) last = b; else if(b && last) last = Object.assign({}, last, {era:b.era}); } }
+    if(!last) for(k = 0; k < seq.length && !last; k++){ if(seq[k].type === 'panel'){ b = bedOf(seq[k]); if(b && b.set) last = b; } }
+    if(last){ snd.bed(last.set, last); snd.era(last.era || 0); }
+  }
+  // Then & Now: the trail walks the steps (photo 1), the boats (photo 2) and the bench today; other modes keep the bed
+  function photoBed(ch, ph, st){
+    var id = st && st.finds && st.finds[0] && st.finds[0].id;
+    if(ph.bed) return typeof ph.bed === 'string' ? ph.bed : (ph.bed[id] || null);
+    if(ph.mode !== 'trail') return null;
+    if(id === 't1') return 'S5';
+    if(id === 't2') return 'S1';
+    var bench = null;
+    (ch.seq || []).some(function(p){ if(p.type === 'panel' && /bench/i.test(p.brief || '')){ var x = bedOf(p); bench = x && x.set; return true; } return false; });
+    return bench || 'S1';
+  }
 
   // one delegated tap handler: glosses + caption replays
   on(shell, 'click', function(e){
@@ -421,6 +814,7 @@ function start(o){
     var fig = panelEl(p, ch, instant);
     page.appendChild(fig);
     if(instant) return true;
+    scene(p);
     scrollEnd();
     later(function(){
       var cues = p.cues && p.cues.length ? p.cues : (p.sfx || []).map(function(s){ return s.sound; }).filter(Boolean);
@@ -478,6 +872,7 @@ function start(o){
       var p = opt.panels[i];
       if(!whenOk(p.when, arcChoices())) continue;
       var fig = panelEl(p, ch, instant); page.appendChild(fig);
+      if(!instant) scene(p);
       if(!instant){ var t2 = G.speakTok = (G.speakTok || 0) + 1; (function(f, tk){ later(function(){ if(G.speakTok === tk) speakAll(f._says); }, 1500 * pace); })(fig, t2); }
     }
     if(opt.feel){
@@ -551,8 +946,10 @@ function start(o){
     var stage = scr.querySelector('.yc-tn-stage'), ov = scr.querySelector('.yc-tn-ov'), ins = scr.querySelector('.yc-ins'), ctl = scr.querySelector('.yc-ctl');
     var imgThen = scr.querySelector('.yc-tn-then'), imgNow = scr.querySelector('.yc-tn-now');
     var hintT = null, autoT = null, misses = [], current = null;
+    var tnEra = function(){ if(!imgThen || !imgNow) return st.then ? 1 : 0; return scr.classList.contains('yc-is70') ? 1 : (scr.classList.contains('yc-split') ? .5 : 0); };
+    var pb = photoBed(ch, ph, st); if(pb) snd.bed(pb, {});
     function setIns(t, extra){ ins.innerHTML = (t ? '<div class="yc-insl" data-say="' + esc(tg(t)) + '">' + lineHtml(t, ch) + '</div>' : '') + (extra || ''); }
-    function set70(v){ if(!imgThen || !imgNow) return; imgThen.classList.toggle('yc-hide', !v); scr.classList.toggle('yc-is70', !!v); var h = ctl.querySelector('.yc-hold'); if(h) h.classList.toggle('on', !!v); }
+    function set70(v){ if(!imgThen || !imgNow) return; imgThen.classList.toggle('yc-hide', !v); scr.classList.toggle('yc-is70', !!v); var h = ctl.querySelector('.yc-hold'); if(h) h.classList.toggle('on', !!v); snd.era(tnEra()); }
     function remaining(){ return st.finds.filter(function(f){ return tn.found.indexOf(f.id) < 0; }); }
     function circle(f, cls){ boxesOf(f).forEach(function(b){ ov.insertAdjacentHTML('beforeend', ellipse(b, cls, cls.indexOf('pencil') >= 0 ? -6 : 0)); }); }
     function clearHints(){ ov.querySelectorAll('.yc-hint').forEach(function(x){ x.remove(); }); }
@@ -634,6 +1031,7 @@ function start(o){
         ctl.querySelector('.yc-btoday').addEventListener('click', function(){ G.tn.sticky = false; set70(false); });
         if(ph.mode === 'split') scr.classList.add('yc-split');
       }
+      snd.era(tnEra());
       nextTarget();
     }
     function nextTarget(){
@@ -712,7 +1110,7 @@ function start(o){
       }
       ctl.innerHTML = '<button type="button" class="yc-btn yc-tn-done">' + esc(us('cont')) + '</button>';
       ctl.querySelector('.yc-tn-done').addEventListener('click', function(){
-        clear(hintT); clear(autoT); G.speakTok++; stopSpeech();
+        clear(hintT); clear(autoT); G.speakTok++; stopSpeech(); snd.era(0);
         tn.found.push('#done'); save();
         scr.remove(); G.tn = null; G.wait = null;
         printPanel(ch, st, tn.found);
@@ -721,6 +1119,7 @@ function start(o){
       }, {once:true});
     }
     // start (or resume) at the saved phase
+    snd.era(tnEra());
     if(tn.phase === 'clue') clue();
     else if(['find', 'peeled', 'develop', 'peel', 'pull'].indexOf(tn.phase) >= 0 && tn.step >= 0 && (tn.found.length || tn.phase !== 'frame')){ scr.classList.add('yc-pulled', 'yc-developed', 'yc-peeled'); scr.querySelector('.yc-vf').hidden = true; toCompare(); }
     else phaseFrame();
@@ -751,6 +1150,10 @@ function start(o){
     page.appendChild(fig);
     if(instant) return;
     scrollEnd(); snd.play('firework'); later(function(){ snd.play('firework'); }, 500 * pace);
+    snd.era(0); snd.dim(.35);
+    var audible = !muted();
+    later(function(){ snd.motif(); }, 700 * pace);   // GDD 12: a short piano motif for the last photo
+    if(audible) await wait(2600 * pace);
     await speakAll([tg(left), tg(right)].filter(Boolean));
     await waitNext(null, 'next');
   }
@@ -869,6 +1272,7 @@ function start(o){
     page.appendChild(box);
     G.endings = e;
     if(instant) return;
+    snd.dim(.55);
     scrollEnd(); snd.play('chime');
     await speakAll(['neighbour', 'friend', 'person'].map(function(k){ return tg(E[k][e[k]]); }));
     await waitNext(null, 'next');
@@ -943,6 +1347,7 @@ function start(o){
     G.run = resume && resume.ch === n ? resume : {v:1, ch:n, i:0, picks:['', ''], tn:null, note:null, startedAt:Date.now()};
     page.innerHTML = '';
     page.classList.toggle('yc-devch', !!ch.auto || !ready(C, [n]));
+    snd.dim(1); chapterScene(ch, G.run.i || 0);
     if(!resume){
       G.wait = 'title';
       var title = us('chapter', {n:n}), sub = tg(ch.title);
@@ -972,6 +1377,7 @@ function start(o){
     if(r.next){ G.run = null; save(); return runChapter(r.next, null); }
     G.run = null; if(mode !== 'replay' && host.saveRun) try{ host.saveRun(null); }catch(e){}
     G.ended = true;
+    snd.close(true);
     if(r.later){ if(o.onPause) o.onPause(result); return; }
     if(o.onCardDone) o.onCardDone(result);
   }
@@ -996,7 +1402,7 @@ function start(o){
     if(api.debug.game === game) api.debug.game = null;
   }
   function status(){
-    var r = {ch:G.ch && G.ch.n, i:G.run && G.run.i, beat:null, wait:G.wait, picks:G.run && G.run.picks.slice(), ended:G.ended, endings:G.endings || null, hinted:G.hinted || 0, autoSolved:G.autoSolved || 0, misses:G.misses || 0, tn:null};
+    var r = {sound:snd.status(), ch:G.ch && G.ch.n, i:G.run && G.run.i, beat:null, wait:G.wait, picks:G.run && G.run.picks.slice(), ended:G.ended, endings:G.endings || null, hinted:G.hinted || 0, autoSolved:G.autoSolved || 0, misses:G.misses || 0, tn:null};
     if(G.ch && G.run && G.ch.seq[G.run.i]){ var b = G.ch.seq[G.run.i]; r.beat = {type:b.type, id:b.id || b.d || null}; }
     if(G.tn){
       var ov = G.tn.scr.querySelector('.yc-tn-ov'), rc = ov.getBoundingClientRect(), tn = G.run && G.run.tn;
@@ -1059,8 +1465,17 @@ function tickThumb(url){
     im.src = url;
   });
 }
+var SHARED = null;   // the poster's bed, adopted by the next YourCall.start
+function hush(){ LIVE_SOUNDS.slice().forEach(function(x){ try{ x.close(); }catch(e){} }); SHARED = null; }
+function posterSound(muted){
+  hush();
+  var t0 = Date.now();
+  SHARED = Sound(muted, {alive:function(){ return !!(W.Theatre && W.Theatre.isOpen && W.Theatre.isOpen()) || Date.now() - t0 < 4000; }});
+  SHARED.bed('S1', {});
+}
 function poster(content, path, o){
   o = o || {};
+  if(typeof o.muted === 'function') try{ posterSound(o.muted); }catch(e){}
   var C = content, base = o.base || '', ui = o.ui || 'en', chs = (path && path.choices) || [];
   var card = o.card || [1, 2];
   var src = function(id){ var a = C.art.items[id]; return a && a.src ? base + C.art.base + a.src : null; };
@@ -1085,7 +1500,7 @@ function poster(content, path, o){
 
 var api = W.YourCall = {
   version:VERSION, start:start, ready:ready, stance:stance, endings:endings, tracks:tracks, poster:poster, album:album,
-  chapterArt:chapterArt, whenOk:whenOk, UI:UI,
-  debug:{game:null, status:function(){ return api.debug.game ? api.debug.game.status() : null; }}
+  chapterArt:chapterArt, whenOk:whenOk, UI:UI, hush:hush, bedOf:bedOf,
+  debug:{game:null, status:function(){ return api.debug.game ? api.debug.game.status() : null; }, Sound:Sound, sounds:function(){ return LIVE_SOUNDS.length; }}
 };
 })();

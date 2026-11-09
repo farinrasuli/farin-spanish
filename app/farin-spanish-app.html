@@ -21664,7 +21664,7 @@ function pathSayBtn(text){ return text ? `<button class="tts-btn sp-say" data-ac
    The comic-album Your Call. Engine lazy-loaded from games/your-call/ (your-call.js + .css byte-identical EN/ES;
    content-<side>.js generated from the farin-lxd scripts). A card plays v2 only when YourCall.ready() says every
    panel of its chapters has final art; otherwise the v1 round below runs unchanged. */
-const YC_VER = '2';
+const YC_VER = '3';   // 3: GDD 12 sound (sets, 1970 radio, piano, ducking; 7VO9j7xZ)
 const YC_LEVELS = ['A1'];
 let ycLoading = null, ycGame = null, ycPending = null;
 function ycSide(){ return TTS_LANG.slice(0, 2); }
@@ -21735,10 +21735,10 @@ function ycExtra(ds, handler){
   return ycLoad().then(()=>{
     const card = shelf ? [] : ycCard(ds.refId);
     if(!shelf && !ycReadyFor(ds.refId)) return {};
-    return YourCall.poster(YC_CONTENT, ycPathView(), {ui:LANG, card,
+    return YourCall.poster(YC_CONTENT, ycPathView(), {ui:LANG, card, muted:()=>sfxMuted,   // muted: the poster's sea bed follows the sound toggle
       onChapter:(n, o)=>{ ycPending = {n, replay:!!(o && o.replay)}; Theatre.play(); },
       onAlbum:()=>YourCall.album({root:(window.Theatre && Theatre.stageEl()) || document.body, content:YC_CONTENT, path:ycPathView(), ui:LANG})})
-      .then(cfg=>Object.assign(cfg, {onClose:()=>{ if(ycGame){ ycGame.destroy(); ycGame = null; } }}));
+      .then(cfg=>Object.assign(cfg, {onClose:()=>{ if(ycGame){ ycGame.destroy(); ycGame = null; } try{ YourCall.hush(); }catch(e){} }}));
   }).catch(()=>({}));
 }
 function ycStart(params){

@@ -784,7 +784,8 @@ function start(o){
         var nt = ch.n === 5 && C.chapters[3] && C.chapters[3].note ? C.chapters[3].note[pickOf(chs, 4, 2) === 'b' ? 'b' : 'a'] : null;
         if(nt) tray += '<div class="yc-notecard yc-notecard-done yc-inl" lang="' + target + '">' + esc(nt.tiles.join(' ')) + '</div>';
       }
-      if(!p.art){
+      // a caption-only panel (comic-parse: art null, devArt false, e.g. ch6 last-close) is a caption panel, never a DEV placeholder
+      if(!p.art && p.devArt !== false){
         var ratio = {wide:16 / 9, half:.9, tall:.8, photo:.8}[p.size] || 1.4;
         html += '<div class="yc-devart" style="aspect-ratio:' + ratio + '"><img class="yc-pimg" src="' + esc(devSvg(p.id + ' · ' + (p.brief || ''), ratio)) + '" alt="" style="width:100%;left:0;top:0;"></div>';
         fig.style.aspectRatio = '';
@@ -793,6 +794,7 @@ function start(o){
       }
       html = '<div class="yc-pic">' + html + over + (p.sfx || []).map(function(s){ return '<div class="yc-sfx" lang="' + target + '" aria-hidden="true" style="left:' + s.x + '%;top:' + s.y + '%;' + (s.size ? 'font-size:' + s.size + 'px;' : '') + '">' + esc(s.word) + '</div>'; }).join('') + '</div>' +
         (tray ? '<div class="yc-tray">' + tray + '</div>' : '');
+      if(!p.art && p.devArt === false) html = tray;   // caption-only panel: the captions sit straight on the dotted paper
       if(p.size === 'photo' || p.flip) fig.classList.add('yc-photo');
       if(p.art){ fig.style.aspectRatio = ''; var pic0 = html.indexOf('<div class="yc-pic">'); void pic0; }
       fig.innerHTML = html;

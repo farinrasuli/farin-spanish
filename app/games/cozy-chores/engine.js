@@ -2497,8 +2497,9 @@ async function windowShot(){
   var mine = G.P.id;
   (B.windows || []).forEach(function(w){
     var on = w.id === mine ? false : delivered(w.id);
-    sdef.layers.push({id:'win-' + w.id, art:B.unlit, x:w.x, y:w.y, w:w.w, h:w.h, z:4, hidden:on});
-    sdef.layers.push({id:'lit-' + w.id, art:B.lit, x:w.x, y:w.y, w:w.w, h:w.h, z:5, hidden:!on});
+    // a window may name its own art (the shop windows and the yellow front differ from the pink-front sash window)
+    sdef.layers.push({id:'win-' + w.id, art:w.unlit || B.unlit, x:w.x, y:w.y, w:w.w, h:w.h, z:4, hidden:on});
+    sdef.layers.push({id:'lit-' + w.id, art:w.lit || B.lit, x:w.x, y:w.y, w:w.w, h:w.h, z:5, hidden:!on});
     sdef.layers.push({id:'pol-' + w.id, art:B.polaroid, x:w.x + w.w * .55, y:w.y + w.h * .52, w:w.w * .38, h:w.h * .36, z:6, hidden:!on});
   });
   G.say.innerHTML = ''; controls(''); cue(null);

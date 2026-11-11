@@ -33003,10 +33003,11 @@ Object.assign(screens, {
    (explain, judge, speaking, writing, exit), plus r1 / r2 / r3, so courseNext, Home, unit progress, finales and the certificate
    behave as before. The scheduler is the existing Leitner one (courseItemSeen) with two extra flags: soft (right on the second
    try, comes back once) and look (wrong twice, on the Look again list).
-   GATE: a course opts in with rounds:true in its app-only literal (pilot: business). ROUNDS_LIVE stays false until Farin approves
-   the demo; ?rounds=1 turns it on in this browser (dev / review), ?rounds=0 off. Off = every course runs today's flow, untouched.
+   GATE: a course opts in with rounds:true in its app-only literal (pilot: business). ROUNDS_LIVE is true since 2026-11-11 (Farin
+   approved the demo: "the demo of the courses is approved go with it"). Set it back to false to switch rounds off for every learner;
+   then ?rounds=1 turns it on in one browser (dev / review), ?rounds=0 off. Courses without rounds:true run today's flow, untouched.
    Byte-identical in the English and Spanish apps. Every string goes through CL(en, tr, fa, es); Persian uses informal تو. */
-var ROUNDS_LIVE = false;
+var ROUNDS_LIVE = true;
 var roundsFlag = null;
 function roundsDevOn(){
   if(roundsFlag == null){

@@ -2545,6 +2545,174 @@
   .lsh-head .onb-h1{margin:0; font-size:28px;}
   .lsh-x{flex:none; width:40px; height:40px; border-radius:50%; border:1px solid var(--border-soft); background:var(--bg-elevated); color:var(--ink); font-size:22px; line-height:1; display:grid; place-items:center; cursor:pointer;}
   .lsh .onb-q{margin-top:28px;}
+  /* THREE-ROUNDS-CSS-BEGIN: Three Rounds course lessons (Trello aGMR4pbC, 2026-11-11). The app's design as it is: Course Report hero,
+     Fredoka heads + Nunito text (.fs-scr), pill buttons, the orange CTA, white cards, the approved selection rows (.fs-opt). Clay art,
+     PNG/WebP alpha on the light paper. The only motion: the stamp landing once per round (none with reduced motion). Byte-identical EN/ES. */
+  .tr-page .cs-top{gap:12px;}
+  .tr-rail{flex:1; min-width:0; display:flex; gap:4px; padding:14px 2px;}
+  .tr-rail i{flex:1; height:8px; border-radius:99px; background:var(--border-soft);}
+  .tr-rail i.done{background:var(--fs-green);}
+  .tr-rail i.cur{background:var(--fs-orange);}
+  .tr-railrow{display:flex; justify-content:space-between; align-items:center; gap:10px; padding:0 20px; min-height:28px;}
+  .tr-back{font-family:inherit;}
+  .tr-recap{margin:6px 20px 0; padding:9px 12px; border-radius:12px; background:var(--fs-purple-soft); color:var(--fs-purple-ink); font-size:13px; font-weight:700; line-height:1.4;}
+  .tr-screen{padding-top:10px !important; padding-bottom:150px !important;}
+  .tr-eb{margin:0 0 6px; color:var(--fs-orange-ink);}
+  html[dir="rtl"] .tr-eb{letter-spacing:0; font-size:12px;}
+  .tr-h{font-size:24px; line-height:1.18; letter-spacing:-.01em; margin:0 0 14px; color:var(--ink); text-wrap:balance;}
+  .tr-h .dot{color:var(--fs-orange);}
+  .tr-qp{font-size:20px;}
+  .tr-body{font-size:15px; line-height:1.6; margin:0 0 12px; color:var(--ink);}
+  .tr-sub{font-size:13px; font-weight:700; color:var(--ink-soft); margin:-8px 0 12px;}
+  .tr-tip{font-size:13px; line-height:1.5; color:var(--ink-soft); margin:10px 2px 0;}
+  .tr-link{display:block; margin:10px 0 0; padding:6px 0; color:var(--fs-purple-ink); font-weight:800; font-size:13.5px; text-align:start; font-family:inherit;}
+  .tr-page .cs-foot{display:flex; flex-direction:column;}
+  .tr-ghost{margin-top:8px;}
+  /* the round opener: the purple hero with the round's clay cover on its disc */
+  .tr-hero{min-height:236px; padding-bottom:28px;}
+  .tr-hero h1{font-size:28px;}
+  .tr-hero .tr-hsub{display:block; -webkit-line-clamp:unset; overflow:visible; max-width:62%;}
+  .tr-meta{display:flex; align-items:center; gap:8px; margin:16px 4px 0; font-weight:800; font-size:13.5px; color:var(--ink-soft);}
+  .tr-meta svg{flex:none; width:15px; height:15px;}
+  .tr-cover .fs-disc{background:color-mix(in srgb, #fff 26%, transparent);}
+  .tr-cover img{object-fit:contain; object-position:center 70%; padding:8px 4px 0;}
+  .tr-cover.noimg .fs-disc{opacity:.6;}
+  /* key point screens */
+  .tr-kp .cx-card{margin-top:0;}
+  .tr-rows{display:flex; flex-direction:column; gap:8px;}
+  .tr-row{display:flex; gap:10px; align-items:flex-start; width:100%; box-sizing:border-box; text-align:start; background:var(--bg-elevated); border:2px solid var(--border-soft); border-radius:16px; padding:11px 12px; color:var(--ink); font:inherit; cursor:pointer;}
+  .tr-row.open{border-color:var(--fs-purple); background:var(--fs-sel);}
+  .tr-row:disabled{cursor:default; opacity:1;}
+  .tr-row-b{display:flex; flex-direction:column; gap:3px; min-width:0;}
+  .tr-row-b b{font-weight:800; font-size:14.5px; line-height:1.35;}
+  .tr-ex{font-weight:700; font-size:14.5px; line-height:1.45; color:var(--fs-purple-ink);}
+  .tr-rule{display:block; margin-top:4px; font-size:13.5px; line-height:1.5; color:var(--ink-soft); font-weight:600;}
+  .tr-tipcard{font-size:15px; line-height:1.65;}
+  /* worked example */
+  .tr-draft{font-size:16px; line-height:1.65; font-weight:600;}
+  .tr-draft.fixed{border-color:color-mix(in srgb, var(--fs-green) 60%, var(--border-soft)); background:color-mix(in srgb, var(--fs-green) 10%, var(--bg-elevated));}
+  .tr-cut{all:unset; cursor:pointer; border-bottom:2px dotted color-mix(in srgb, var(--ink) 25%, transparent); border-radius:4px;}
+  .tr-cut:focus-visible{outline:2px solid var(--fs-purple); outline-offset:1px;}
+  .tr-cut.gone, .tr-cutgone{opacity:.35; text-decoration:line-through; border-bottom:none; cursor:default;}
+  .tr-step{border-top:none; padding:0 0 10px;}
+  .tr-seg{display:flex; gap:4px; padding:4px; border-radius:999px; background:var(--bg-sunken); margin:0 0 12px;}
+  .tr-seg button{flex:1; border:none; border-radius:999px; padding:9px 10px; background:none; font:inherit; font-weight:800; font-size:13px; color:var(--ink-soft); cursor:pointer;}
+  .tr-seg button.on{background:var(--bg-elevated); color:var(--ink); box-shadow:0 1px 3px rgba(0,0,0,.12);}
+  /* questions: the selection rows; a first miss greys its pick, the answer comes first, then why */
+  .tr-qhead{display:flex; align-items:center; justify-content:space-between; gap:10px;}
+  .tr-dots{display:flex; gap:5px;}
+  .tr-dots i{width:9px; height:9px; border-radius:50%; background:var(--border);}
+  .tr-dots i.on{background:var(--fs-green);}
+  .tr-dots i.cur{background:var(--fs-orange);}
+  .tr-qcard{font-size:16.5px; line-height:1.5; font-weight:700; margin:4px 0 12px; padding:16px 18px;}
+  .tr-opts{gap:10px;}
+  .tr-opt .fs-ot b{font-weight:700; font-size:15px; line-height:1.4;}
+  .tr-opt.ok{border-color:var(--fs-green); background:color-mix(in srgb, var(--fs-green) 14%, var(--bg-elevated));}
+  .tr-opt.ok .fs-chk{border-color:var(--fs-green); background:var(--fs-green);}
+  .tr-opt.bad{border-color:var(--clay-coral-deep); background:var(--cat-lis-soft);}
+  .tr-opt.gone, .tr-opt.off{opacity:.45; cursor:default;}
+  .tr-opt.gone{text-decoration:line-through; background:var(--bg-sunken);}
+  .tr-opt:disabled{color:var(--ink);}
+  .tr-miss{margin-top:12px; padding:12px 14px; border-radius:14px; background:var(--fs-orange-soft);}
+  .tr-miss p{margin:0; font-size:14px; line-height:1.5;}
+  .tr-miss p + p{margin-top:6px;}
+  .tr-not{font-weight:800;}
+  .tr-hint{color:var(--ink);}
+  .tr-again{color:var(--fs-orange-ink); font-weight:700;}
+  .tr-fb{font-size:14.5px;}
+  .tr-look{display:block; margin:8px 0 0; padding:6px 0; text-align:start; color:var(--fs-purple-ink); font-weight:700; font-size:13.5px; font-family:inherit;}
+  .tr-freshh{display:flex; align-items:center; gap:10px;}
+  .tr-freshh .tr-eb{margin:0;}
+  .tr-clock{width:40px; height:40px; object-fit:contain; flex:none;}
+  .tr-freshnote{margin-top:14px;}
+  /* the learner's text */
+  .tr-start{display:block; width:96px; height:96px; object-fit:contain; margin:0 0 6px;}
+  .tr-ta{width:100%; min-height:96px; font-weight:500; margin-top:4px;}
+  .tr-notelist{display:flex; flex-direction:column; gap:12px; margin-top:6px;}
+  .tr-note{display:flex; flex-direction:column; gap:5px; font-size:13px; font-weight:800; color:var(--ink-soft);}
+  .tr-note .game-input{font-weight:600; font-size:15px;}
+  .tr-mine{font-size:16px; line-height:1.6; font-weight:600; padding:16px 18px; margin:0 0 12px;}
+  .tr-mine u{text-decoration-color:var(--clay-coral-deep); text-decoration-thickness:3px; text-underline-offset:3px;}
+  .tr-fix{font-size:14.5px; line-height:1.55; margin:0 0 8px;}
+  .tr-pin{padding:12px 14px; margin:0 0 14px; background:var(--fs-purple-soft); border-color:transparent; box-shadow:none;}
+  .tr-pin summary{cursor:pointer; list-style:none; display:flex; gap:8px; align-items:baseline; min-width:0;}
+  .tr-pin summary::-webkit-details-marker{display:none;}
+  .tr-pin .lx-eyebrow{color:var(--fs-purple-ink); flex:none;}
+  .tr-pinline{flex:1; min-width:0; font-size:13px; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .tr-pin[open] .tr-pinline{display:none;}
+  .tr-pinlist{margin:8px 0 0; padding:0; list-style:none; display:flex; flex-direction:column; gap:6px;}
+  .tr-pinlist li{display:flex; flex-direction:column; font-size:14px; font-weight:700;}
+  .tr-pinlist small{font-size:11.5px; font-weight:800; color:var(--ink-soft);}
+  .tr-fold{padding:12px 14px; margin:0 0 12px; box-shadow:none;}
+  .tr-fold summary{cursor:pointer; font-weight:800; font-size:13px; color:var(--ink-soft);}
+  .tr-fold p{margin:8px 0 0; font-size:14.5px; line-height:1.55;}
+  .tr-q1{margin:0 0 12px;} .tr-q1 p{margin:0; font-size:15px; line-height:1.55; font-weight:700;}
+  .tr-tries{margin:0 0 4px;}
+  /* stamps: the clay seal on its ticket slot, the label in Fredoka under it; a missing picture = the orange dashed ring */
+  .tr-ticket{margin:18px 0 0; padding:14px 14px 12px; border-radius:20px; border:1.5px dashed color-mix(in srgb, var(--fs-purple) 35%, var(--border-soft)); background:var(--bg-elevated);}
+  .tr-ticket .lx-eyebrow{text-align:center; color:var(--fs-purple-ink);}
+  .tr-slots{display:flex; justify-content:space-around; gap:8px; margin-top:10px;}
+  .tr-slot{display:flex; flex-direction:column; align-items:center; gap:6px; min-width:0; flex:1;}
+  .tr-slot b{font-family:'Fredoka',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; font-weight:600; font-size:13px; text-align:center; color:var(--ink-soft);}
+  .tr-slot.on b{color:var(--ink);}
+  .tr-stamp{position:relative; width:64px; height:64px; display:grid; place-items:center;}
+  .tr-stamp img{position:relative; z-index:1; width:64px; height:64px; object-fit:contain;}
+  .tr-ring{position:absolute; inset:4px; border-radius:50%; border:2.5px dashed var(--border);}
+  .tr-slot.on .tr-ring{display:none;}
+  .tr-slot.on .tr-stamp.noimg .tr-ring{display:block; border-color:var(--fs-orange); background:var(--fs-orange-soft);}
+  .tr-slot.land .tr-stamp img, .tr-slot.land .tr-stamp.noimg .tr-ring{animation:trStamp .28s ease-out both;}
+  @keyframes trStamp{from{transform:scale(1.15) rotate(-8deg); opacity:0;} to{transform:scale(1) rotate(-3deg); opacity:1;}}
+  @media (prefers-reduced-motion: reduce){ .tr-slot.land .tr-stamp img, .tr-slot.land .tr-stamp.noimg .tr-ring{animation:none;} }
+  .tr-done .tr-ticket{margin-top:6px;}
+  .tr-done .tr-stamp, .tr-done .tr-stamp img{width:84px; height:84px;}
+  .tr-h1{text-align:center; margin:18px 0 0;}
+  .tr-got{margin-top:14px; padding:16px 18px;}
+  .tr-got b{font-size:14px;} .tr-got p{margin:6px 0 0; font-size:14.5px; line-height:1.5; font-weight:700;}
+  .tr-line{font-size:13.5px; line-height:1.5; color:var(--ink-soft); margin:12px 2px 0;}
+  .tr-nextline{font-size:14px; font-weight:800; margin:16px 2px 0; color:var(--fs-orange-ink);}
+  /* lesson page rows */
+  .tr-sn{position:relative; width:40px !important; height:40px !important; background:var(--fs-purple-soft) !important; overflow:visible;}
+  .tr-sn img{width:34px; height:34px; object-fit:contain;}
+  .tr-tick{position:absolute; inset-inline-end:-4px; bottom:-4px; width:18px; height:18px; border-radius:50%; background:var(--fs-green); color:#fff; display:grid; place-items:center;}
+  .tr-tick svg{width:11px; height:11px;}
+  .tr-rrow.cur .tr-sn{background:var(--fs-orange-soft) !important;}
+  .tr-stopline{font-size:12.5px; color:var(--ink-soft); margin:10px 4px 0; text-align:center;}
+  /* lesson done */
+  .tr-target{display:flex; justify-content:center;}
+  .tr-target img{width:120px; height:120px; object-fit:contain;}
+  .tr-ldone .tr-ticket{margin-top:4px;}
+  .tr-ba{display:flex; flex-direction:column; gap:10px; margin-top:16px;}
+  .tr-bcard{background:var(--bg-sunken); box-shadow:none; padding:14px 16px;}
+  .tr-bcard p{margin:6px 0 0; font-size:14.5px; line-height:1.55; color:var(--ink-soft);}
+  .tr-acard{padding:14px 16px; border:2px solid color-mix(in srgb, var(--fs-green) 55%, var(--border-soft));}
+  .tr-more summary{cursor:pointer; list-style:none; margin-top:6px;}
+  .tr-more summary::-webkit-details-marker{display:none;}
+  .tr-clamp{display:-webkit-box; -webkit-line-clamp:4; -webkit-box-orient:vertical; overflow:hidden; font-size:14.5px; line-height:1.55;}
+  .tr-more[open] summary{display:none;}
+  .tr-showall{display:block; margin-top:6px; font-size:13px; font-weight:800; color:var(--fs-purple-ink); text-decoration:underline;}
+  .tr-more p{margin:6px 0 0; font-size:14.5px; line-height:1.55;}
+  .tr-changed{font-size:13.5px; font-weight:800; margin:2px 2px 0; color:var(--ink);}
+  .tr-cando{margin-top:14px; text-align:start;} .tr-cando p{margin:6px 0 0; font-size:14.5px; line-height:1.5;}
+  .tr-rem{color:var(--ink-soft);}
+  /* Your work */
+  .course-work-page .cp-title{display:flex; align-items:center; gap:10px;}
+  .tr-folder{display:inline-flex; width:72px; height:72px; flex:none;}
+  .tr-folder img{width:72px; height:72px; object-fit:contain;}
+  .tr-fpart{width:40px; height:40px; object-fit:contain; vertical-align:middle; margin-inline-end:6px;}
+  .tr-wh{margin-top:18px;}
+  .tr-lookic{flex:none; width:40px; height:40px; display:grid; place-items:center;}
+  .tr-lookic img{width:40px; height:40px; object-fit:contain;}
+  .tr-bacard{padding:14px 16px;}
+  .tr-bacard summary{cursor:pointer; list-style:none;} .tr-bacard summary::-webkit-details-marker{display:none;}
+  .tr-baline{margin:6px 0 0; font-size:13.5px; line-height:1.45;}
+  .tr-bacard[open] .tr-baline{display:none;}
+  .tr-bafull{margin-top:10px;} .tr-bafull p{margin:4px 0 0; font-size:14px; line-height:1.55;}
+  .tr-gotbtn{display:block; margin:16px 0 0; text-align:start; font-weight:800; color:var(--fs-purple-ink);}
+  .tr-gotlist{margin:6px 0 0; padding-inline-start:18px; font-size:13.5px; line-height:1.5;}
+  .tr-gotlist small{color:var(--ink-soft); font-weight:800;}
+  .tr-sheet .tr-kp{margin-top:12px;}
+  .tr-sheet .tr-q{margin-top:18px;}
+  /* THREE-ROUNDS-CSS-END */
 </style>
 
 <div id="app"></div>
@@ -28466,6 +28634,7 @@ function courseOpenStep(cid, uid, type, redo){
   // IELTS exams: the exam's lesson files load first (lazy); the card opens when they are there
   const lm = courseLazyUnitMod(uid);
   if(lm && !courseLazyReady(lm)){ courseLazyLoad(c, lm).then(ok=>{ if(ok) courseOpenStep(cid, uid, type, redo); }); if(state.view !== 'course-lesson') courseShow('course-lesson', {cid, uid}, cid, true); else render(); return; }
+  if(type !== 'round' && courseRoundsOn(cid, uid)) return courseROpen(cid, uid);   // Three Rounds: the lesson runs as rounds
   if(redo && type==='writing'){ const w0 = courseUnitItems(uid).writing, a0 = courseProg(cid).answers[uid+':writing']; if(w0 && w0.exam && a0) delete a0.compared; courseUi.iew = null; }
   if(type==='sets') courseIeSpLeave();
   // Strict sequence inside a lesson (Farin Q1 = A): a card opens when every card before it is done.
@@ -28693,6 +28862,7 @@ function courseResultCta(fallbackHtml){
    plays its own cards, then returns to where the lesson map was opened. Nothing here moves the saved place. */
 function courseAdvance(cid, uid){
   const r = state.courseReturn || {};
+  if(r.type === 'round' && state.view === 'course-step') return courseRNext();   // Three Rounds: a task's end is the next screen of its round
   cid = cid || r.cid; uid = uid || r.uid;
   if(!cid || !uid) return goBack();
   courseSheetRemove();
@@ -29320,6 +29490,7 @@ function courseGo(cid, uid){
   }
   if(!courseFindUnit(cid, uid)) return go('course-detail', {cid});
   if(!courseUnitAccess(c, uid)) return go('course-gate', {cid, uid});
+  if(courseRoundsOn(cid, uid)) return courseRStarted(cid, uid) && courseRStatus(cid, uid).includes(false) ? courseROpen(cid, uid) : courseShow('course-lesson', {cid, uid}, cid, true);   // Three Rounds
   const nx = courseNextInUnit(cid, uid);
   if(nx && courseUnitSteps(cid, uid).some(s=>s.done && s.si===nx.si)) return courseOpenStep(cid, uid, nx.type);
   courseShow('course-lesson', {cid, uid}, cid, true);
@@ -29422,11 +29593,11 @@ function courseWorkPieces(c){
 }
 // "Your work (n)": the pieces written so far plus the journal entries; shown once there is one.
 function courseWorkRowHtml(c){
-  const n = courseWorkPieces(c) + courseJournal(c.id).length + courseErrLogList(c.id).length;
+  const n = courseWorkPieces(c) + courseJournal(c.id).length + courseErrLogList(c.id).length + courseRWorkCount(c), lk = courseRLookCount(c);   // + Three Rounds before-and-after pieces
   if(!n) return '';
   return `<button class="item-row course-work" data-action="course-open" data-view="course-work" data-cid="${c.id}" style="margin-top:16px;">
     <span class="item-ic" style="background:var(--cat-diag-soft); color:var(--clay-lavender-deep);">${ICONS.pen}</span>
-    <div class="item-body"><div class="item-title">${CL('Your work','Çalışmaların','کارهای تو','Tu trabajo')} (${n})</div><div style="font-size:12px; color:var(--ink-soft); margin-top:2px;">${CL('Portfolio and journal','Portföy ve günlük','پرونده‌ی کاری و دفترچه','Portafolio y diario')}</div></div><span class="chevron">${ICONS.chev}</span></button>`;
+    <div class="item-body"><div class="item-title">${CL('Your work','Çalışmaların','کارهای تو','Tu trabajo')} (${n})</div><div style="font-size:12px; color:var(--ink-soft); margin-top:2px;">${CL('Portfolio and journal','Portföy ve günlük','پرونده‌ی کاری و دفترچه','Portafolio y diario')}${lk ? esc(courseSep() + trs('w.row', {n:lk})) : ''}</div></div><span class="chevron">${ICONS.chev}</span></button>`;
 }
 function courseFirstLine(t){ const s = String(t || '').trim().split(/\n/)[0]; return s.length > 90 ? s.slice(0, 88).replace(/\s+\S*$/, '') + '…' : s; }
 function renderCourseWork(){
@@ -29454,10 +29625,10 @@ function renderCourseWork(){
       <p dir="ltr" translate="no">${esc(e.text)}</p><div class="cs-slotsub">${esc(courseLessonName(c.id, e.uid))}${e.date ? courseSep()+esc(courseReviewDate(new Date(e.date+'T12:00:00').getTime())) : ''}</div></div>`).join('');
   return `<div class="fade-in course-work-page">
     <div class="cp-head"><button class="cp-back" data-action="course-open" data-view="course-detail" data-cid="${c.id}">${LANG==='fa' ? '›' : '‹'} ${esc(cl(c.title))}</button></div>
-    <h1 class="display cp-title">${CL('Your work','Çalışmaların','کارهای تو','Tu trabajo')}</h1>
-    <div class="screen" style="padding-top:0;">
+    <h1 class="display cp-title">${courseRWorkArt(c)}${CL('Your work','Çalışmaların','کارهای تو','Tu trabajo')}</h1>
+    <div class="screen" style="padding-top:0;">${courseRWorkTopHtml(c)}
       ${all ? `<button class="item-row cs-certrow" data-action="course-open" data-view="course-cert" data-cid="${c.id}"><span class="item-ic" style="background:linear-gradient(135deg,#FFE08A,#F5B92E); color:#7a4a00;">${COURSE_TROPHY_SVG}</span><div class="item-body"><div class="item-title">${CL('Your certificate','Sertifikan','گواهی‌نامه‌ی تو','Tu certificado')}</div></div><span class="chevron">${ICONS.chev}</span></button>` : ''}
-      ${pd ? `<h2 class="cs-wh">${CL('Final project','Final projesi','پروژه‌ی پایانی','Proyecto final')}</h2>
+      ${pd ? `<h2 class="cs-wh">${courseRFpArt(c)}${CL('Final project','Final projesi','پروژه‌ی پایانی','Proyecto final')}</h2>
       <p class="cs-wsub">${CL('The pieces of your final project. Drafts you write in the lessons wait here.','Final projenin parçaları. Derslerde yazdığın taslaklar burada bekler.','بخش‌های پروژه‌ی پایانی‌ات. پیش‌نویس‌هایی که در درس‌ها می‌نویسی اینجا جمع می‌شوند.','Las piezas de tu proyecto final. Los borradores que escribes en las lecciones te esperan aquí.')}</p>
       <div class="stack" style="gap:10px;">${slots}</div>` : ''}
       ${jr.length ? `<h2 class="cs-wh">${CL('Journal','Günlük','دفترچه','Diario')}</h2>
@@ -29638,12 +29809,12 @@ function courseAfterRender(root){
   root.classList.toggle('cs-in', courseShellOn || state.view==='course-step');
   // flow v3: the situation's Listen stops off its screen; "Look again at key point N" scrolls Learn to that section once;
   // the course poster hook (renders nothing until a course has real key art)
-  if(courseStoryPlaying){ const vp = state.viewParams || {}; if(!(state.view==='course-step' && vp.type==='story')) courseStoryStop(); }
+  if(courseStoryPlaying){ if(!courseRIs('story')) courseStoryStop(); }
   if(courseAud.playing && !root.querySelector('.cs-aud')) courseAudStop();
   if(courseUi.scrollTo && state.view==='course-step'){ const id = courseUi.scrollTo; courseUi.scrollTo = null; const n = document.getElementById(id); if(n) setTimeout(()=>{ try{ n.scrollIntoView({block:'start'}); window.scrollBy(0, -70); }catch(e){} }, 0); }
   if(state.view==='course-detail'){ const pc = courseGet((state.viewParams || {}).cid); if(pc && pc.poster) coursePosterMaybe(pc); }
   // the speaking card's timer / recorder stop as soon as another screen is shown
-  if(courseUi.sp){ const vp = state.viewParams || {}; if(!(state.view==='course-step' && vp.type==='speaking' && vp.uid===courseUi.sp.uid)) courseSpLeave(); }
+  if(courseUi.sp){ const vp = state.viewParams || {}; if(!(courseRIs('speaking') && vp.uid===courseUi.sp.uid)) courseSpLeave(); }
   // IELTS practice: the recording stops when the card is left; typed answers and the clock are bound after each render
   if(courseUi.dr){ const vp = state.viewParams || {}; if(!(state.view==='course-step' && vp.type==='drill' && vp.uid===courseUi.dr.uid)){ courseDrillStop(); courseUi.dr = null; } }
   if(courseUi.mk){ const vp = state.viewParams || {}; if(!(state.view==='course-step' && vp.type===courseUi.mk.type && vp.uid===courseUi.mk.uid)){ courseMockStop(); courseUi.mk = null; } }
@@ -29816,6 +29987,7 @@ function renderCourseSpeaking(cid, uid, sp){
 }
 function renderCourseStep(){
   const vp = state.viewParams || {}, cid = vp.cid, uid = vp.uid, type = vp.type;
+  if(type==='round') return renderCourseRound();   // Three Rounds (aGMR4pbC)
   const lm = courseLazyUnitMod(uid);
   if(lm && !courseLazyReady(lm)) return courseStepShell(cid, uid, type, courseLazyWaitHtml(cid, uid, lm));
   const it = courseUnitItems(uid);
@@ -30018,7 +30190,7 @@ function courseAudPlay(cid, id){
   a.ontimeupdate = ()=>{ if(!a.duration) return; courseAud.at = Math.min(100, 100 * a.currentTime / a.duration); const b = document.querySelector('.cs-aud[data-aud="'+id+'"] .cs-aud-bar i'); if(b) b.style.width = courseAud.at + '%'; };
   a.onended = ()=>{ const first = courseAud.first, uid = courseAud.uid; courseAudStop();
     if(first){ const cp = courseProg(cid); cp.answers[uid+':listening'] = {played:true, date:todayISO()}; cp.lastAt = Date.now(); save(); }
-    const vp = state.viewParams || {}; if(first && state.view === 'course-step' && vp.type === 'listening') render(); else courseAudPaint(); };
+    const vp = state.viewParams || {}; if(first && courseRIs('listening')) render(); else courseAudPaint(); };
   a.onerror = ()=>{ courseAudStop(); courseAud.err = true; courseAud.id = id; courseAudPaint(); };
   const p = a.play(); if(p && p.catch) p.catch(()=>{ if(courseAud.a === a){ courseAudStop(); courseAud.err = true; courseAud.id = id; courseAudPaint(); } });
   courseAudPaint();
@@ -30291,6 +30463,7 @@ function courseIeWriteChecksHtml(w, a){
   return `<div class="lx-sec"><div class="lx-eyebrow">${CL('Check your answer','Cevabını kontrol et','جوابت را بسنج','Revisa tu respuesta')}</div><div class="card-flat cs-draftchk">${rows.join('')}</div></div>`;
 }
 function renderCourseWriting(cid, uid, w){
+  if(courseRPartsOff(cid, uid)) w = Object.assign({}, w, {parts:undefined});   // Three Rounds off: a rounds course's new task parts stay out of today's view
   const track = courseTrack(cid), cp = courseProg(cid), key = uid+':writing';
   const saved = (cp.answers[key] && cp.answers[key].text) || '';
   const draft = courseUi.wdraft && courseUi.wdraft.uid===uid ? courseUi.wdraft.text : saved;
@@ -31342,6 +31515,7 @@ function renderCourseLesson(){
       : `<button class="btn btn-primary cs-main fs-cta" data-action="course-close" data-cid="${cid}">${CL('Back to the course','Kursa dön','برگشت به دوره','Volver al curso')}</button>`;
   const total = coursePartMinutes(cid, uid, -1), n = parts.length;
   const chip = (total ? (isMk ? courseHoursText(total) : '~' + courseMinText(Math.max(5, Math.round(total / 5) * 5))) : '') + (total && n ? courseSep() : '') + (n ? CL(n+' steps', n+' adım', n+' قدم', n+' pasos') : '');
+  const rp = courseRoundsOn(cid, uid) ? courseRLessonParts(c, cid, uid, nu) : null; if(rp) btn = rp.btn;   // Three Rounds: 3 round rows, the stamp ticket
   const plan = n ? `<div class="lx-sec fs-sec fs-plan"><div class="lx-head"><div class="lx-eyebrow">${esc(CL(n+' steps', n+' adım', n+' قدم', n+' pasos'))}</div><h2 class="display">${CL('Lesson plan','Ders planı','برنامه‌ی درس','Plan de la lección')}<span class="dot">.</span></h2></div>
       <div class="cl-steps">${rows}</div></div>` : '';
   return `<div class="fade-in course-lesson lx-page lx-course fs-scr">
@@ -31351,7 +31525,7 @@ function renderCourseLesson(){
         <span class="fs-pill"><bdi>${esc(pill)}</bdi></span>
         <h1 class="display cl-title"><bdi dir="${courseTD()}">${esc(title)}</bdi><span class="dot">.</span></h1>
         ${hook ? `<p class="fs-sub" dir="${courseTD()}">${esc(hook)}</p>` : ''}
-        ${chip ? `<span class="fs-chip">${COURSE_CLOCK_SVG}<span dir="${courseTD()}">${esc(chip)}</span></span>` : ''}
+        ${(rp ? rp.chip : chip) ? `<span class="fs-chip">${COURSE_CLOCK_SVG}<span dir="${courseTD()}">${esc(rp ? rp.chip : chip)}</span></span>` : ''}
         ${courseArtHtml(c, true)}
       </header>
       ${f.u.gt && c.trackSwitch ? courseIeTrackBoxHtml(c, false) : ''}
@@ -31359,7 +31533,7 @@ function renderCourseLesson(){
       ${courseLazyLessonNote(c, uid)}
       ${courseWaitingNoteHtml(c, uid)}
       ${isMk ? courseMockRulesHtml(cid, uid) : ''}
-      ${plan}
+      ${rp ? rp.plan : plan}
       ${nu ? courseNextStripHtml(c, nu) : ''}
       ${isCp || isMk ? '' : courseToolRowHtml(c, uid)}
     </div>
@@ -31471,13 +31645,14 @@ function courseStoryListen(){
   if(courseStoryPlaying){ courseStoryStop(); render(); return; }
   const sents = [].concat.apply([], String(s.text || '').split('\n\n').map(splitSentences)), my = ++courseStoryToken;
   courseStoryPlaying = true; render();
-  const next = i=>{ if(courseStoryToken !== my) return; if(i >= sents.length || state.view !== 'course-step' || (state.viewParams || {}).type !== 'story'){ courseStoryPlaying = false; if(state.view==='course-step') render(); return; }
+  const next = i=>{ if(courseStoryToken !== my) return; if(i >= sents.length || !courseRIs('story')){ courseStoryPlaying = false; if(state.view==='course-step') render(); return; }
     ttsSpeak(sents[i], 0.92, {end:()=>next(i+1), error:()=>{ if(courseStoryToken === my){ courseStoryPlaying = false; render(); } }}); };
   next(0);
 }
 
 /* ---------- lesson done (UX-FLOW 3.7): what you can do now, your work, the next lesson with ITS objective ---------- */
 function renderCourseDone(){
+  { const vp0 = state.viewParams || {}; if(vp0.cid && courseFindUnit(vp0.cid, vp0.uid) && courseRoundsOn(vp0.cid, vp0.uid)) return courseRDoneLessonHtml(vp0.cid, vp0.uid); }   // Three Rounds
   const vp = state.viewParams || {}, cid = vp.cid, uid = vp.uid, f = courseFindUnit(cid, uid);
   if(!f) return renderNotFound();
   const c = f.c, no = courseUnitNo(cid, uid), it = courseUnitItems(uid), cp = courseProg(cid);
@@ -31533,6 +31708,7 @@ function courseLessonMinutes(c){
   const own = [].concat(...c.modules.map(m=>m.units)).filter(u=>Array.isArray(u.mins));
   if(own.length) return Math.max(5, Math.round(own.reduce((n,u)=>n + u.mins.reduce((a,b)=>a+b, 0), 0) / own.length / 5) * 5);
   const first = courseOrder(c.id).find(uid=>!courseIsMock(c.id, uid) && !courseIsCp(c.id, uid) && courseUnitSteps(c.id, uid).length);
+  if(first && courseRoundsOn(c.id, first)){ const R = courseRounds(c.id, first); if(R) return Math.max(5, Math.round(courseRMinutes(R) / 5) * 5); }   // Three Rounds
   return first ? Math.max(5, Math.round(coursePartMinutes(c.id, first, -1) / 5) * 5) : 0;
 }
 function coursePromiseLead(c){ const s = cl(c.promise), m = s.match(/^[\s\S]*?[.!?](?=\s|$)/); return m ? m[0] : s; }
@@ -31578,6 +31754,7 @@ function courseMiniStepsHtml(cid, uid){
     return `<span class="${done ? 'done' : cur ? 'cur' : ''}">${done ? ICONS.check : '<bdi>'+(i+1)+'</bdi>'} ${esc(courseStepName(cid, uid, p.si))}</span>`; }).join('')}</div>`;
 }
 function courseNextCardHtml(c, nx){
+  { const rh = courseRNextCardHtml(c, nx); if(rh) return rh; }   // Three Rounds: "Lesson 5.1 · Round 2"
   const cid = c.id, started = courseStarted(cid);
   let title = '', obj = '', btn = '', mini = '', titleHtml = '';
   if(!nx){
@@ -32816,6 +32993,989 @@ Object.assign(screens, {
   'course-cert': renderCourseCert,
   'course-mock-result': renderCourseMockResult
 });
+/* ========== THREE-ROUNDS-BEGIN: Three Rounds course lessons (Trello aGMR4pbC, farin-app 2026-11-11) ==========
+   Spec Claude/specs/course-three-rounds-2026-11-11/SPEC.md (farin-lxd; Farin chose "Three Rounds, enhanced, clay art in courses").
+   A lesson with a Learn page (explain) runs as three rounds: Know it, Say it right, Use it. Each round is a few short screens with
+   its own rail, a check of up to 2 questions (hint, second try, then the answer first), and a clay stamp when it ends. The learner's
+   own text runs through it: Before (30 s), Notes (end of Round 1), Your first try (Round 2), speaking and writing with the notes
+   pinned (Round 3), Before and after on the lesson-done card and in Your work. No score screen, no points, no bars.
+   Built at render time from today's data (courseRounds); no lesson file changes shape. Today's done marks are still written
+   (explain, judge, speaking, writing, exit), plus r1 / r2 / r3, so courseNext, Home, unit progress, finales and the certificate
+   behave as before. The scheduler is the existing Leitner one (courseItemSeen) with two extra flags: soft (right on the second
+   try, comes back once) and look (wrong twice, on the Look again list).
+   GATE: a course opts in with rounds:true in its app-only literal (pilot: business). ROUNDS_LIVE stays false until Farin approves
+   the demo; ?rounds=1 turns it on in this browser (dev / review), ?rounds=0 off. Off = every course runs today's flow, untouched.
+   Byte-identical in the English and Spanish apps. Every string goes through CL(en, tr, fa, es); Persian uses informal تو. */
+var ROUNDS_LIVE = false;
+var roundsFlag = null;
+function roundsDevOn(){
+  if(roundsFlag == null){
+    try{ const q = new URLSearchParams(location.search).get('rounds');
+      if(q === '1') localStorage.setItem('farinRounds', '1');
+      if(q === '0') localStorage.removeItem('farinRounds');
+      roundsFlag = localStorage.getItem('farinRounds') === '1'; }catch(e){ roundsFlag = false; }
+  }
+  return roundsFlag;
+}
+function roundsLive(){ return !!ROUNDS_LIVE || roundsDevOn(); }
+// ---- strings (SPEC section 11 and 18a, plus the few the screens need); [en, tr, fa, es] ----
+const TRS = {
+  round:['Round {n} of 3', 'Tur {n} / 3', 'دور {n} از ۳', 'Ronda {n} de 3'],
+  rn:['Round {n}', '{n}. tur', 'دور {n}', 'Ronda {n}'],
+  'r.know':['Know it', 'Anla', 'بشناس', 'Entiéndelo'],
+  'r.say':['Say it right', 'Doğru söyle', 'درست بگو', 'Dilo bien'],
+  'r.use':['Use it', 'Kullan', 'به کار ببر', 'Úsalo'],
+  'r.ctx':['The context', 'Bağlam', 'زمینه', 'El contexto'],
+  'r.tech':['The technique', 'Teknik', 'تکنیک', 'La técnica'],
+  'r.timed':['The timed part', 'Süreli bölüm', 'بخش زمان‌دار', 'La parte cronometrada'],
+  'stamp.ctx':['Context', 'Bağlam', 'زمینه', 'Contexto'],
+  'stamp.tech':['Technique', 'Teknik', 'تکنیک', 'Técnica'],
+  'stamp.timed':['Timed part', 'Süreli bölüm', 'بخش زمان‌دار', 'Parte cronometrada'],
+  'lesson.meta':['~{m} min · 3 rounds · stop after any round', '~{m} dk · 3 tur · her turdan sonra ara verebilirsin', 'حدود {m} دقیقه · ۳ دور · بعد از هر دور می‌توانی دست نگه داری', '~{m} min · 3 rondas · puedes parar después de cada una'],
+  'plan.h':['3 rounds · Lesson plan', '3 tur · Ders planı', '۳ دور · برنامه‌ی درس', '3 rondas · Plan de la lección'],
+  'row.after':['Opens after Round {n}', '{n}. turdan sonra açılır', 'بعد از دور {n} باز می‌شود', 'Se abre después de la ronda {n}'],
+  'row.here':['You are here · screen {s} of {k}', 'Buradasın · ekran {s}/{k}', 'اینجایی · صفحه‌ی {s} از {k}', 'Estás aquí · pantalla {s} de {k}'],
+  'row.here0':['You are here', 'Buradasın', 'اینجایی', 'Estás aquí'],
+  'btn.continue':['Continue: Round {n}', 'Devam et: {n}. tur', 'ادامه: دور {n}', 'Sigue: ronda {n}'],
+  'btn.startRound':['Start Round {n}', '{n}. tura başla', 'دور {n} را شروع کن', 'Empezar la ronda {n}'],
+  'btn.stop':['Stop here, come back later', 'Burada dur, sonra devam et', 'همین‌جا دست نگه دار، بعداً برگرد', 'Déjalo aquí y vuelve más tarde'],
+  ticket:['Your stamps', 'Damgaların', 'مهرهای تو', 'Tus sellos'],
+  'next.step':['Lesson {no} · Round {n}', '{no}. ders · {n}. tur', 'درس {no} · دور {n}', 'Lección {no} · ronda {n}'],
+  resume:['Round {n} · screen {s} of {k}: {title}', '{n}. tur · ekran {s}/{k}: {title}', 'دور {n} · صفحه‌ی {s} از {k}: {title}', 'Ronda {n} · pantalla {s} de {k}: {title}'],
+  'opener.meta':['{s} short screens · {q} questions · about {m} min', '{s} kısa ekran · {q} soru · yaklaşık {m} dk', '{s} صفحه‌ی کوتاه · {q} سؤال · حدود {m} دقیقه', '{s} pantallas cortas · {q} preguntas · unos {m} min'],
+  go:['Go', 'Başla', 'برویم', 'Vamos'],
+  'before.eye':['Before you start · 30 seconds', 'Başlamadan önce · 30 saniye', 'قبل از شروع · ۳۰ ثانیه', 'Antes de empezar · 30 segundos'],
+  'before.body':['Try it now in one or two sentences, the way you would today. It is not marked. You will see it again at the end.', 'Şimdi bir iki cümleyle, bugün nasıl yazıyorsan öyle dene. Puanlanmaz. Sonunda yeniden göreceksin.', 'همین حالا در یکی دو جمله امتحانش کن، همان‌طور که امروز می‌نویسی. نمره ندارد و آخر درس دوباره می‌بینی‌اش.', 'Inténtalo ahora en una o dos frases, tal como lo harías hoy. No tiene nota. Al final lo volverás a ver.'],
+  'sample.link':['No real case of your own? Use the sample facts.', 'Kendi gerçek örneğin yok mu? Örnek bilgileri kullan.', 'نمونه‌ی واقعی از کار خودت نداری؟ از اطلاعات نمونه استفاده کن.', '¿No tienes un caso propio? Usa los datos de ejemplo.'],
+  'sample.h':['The sample facts', 'Örnek bilgiler', 'اطلاعات نمونه', 'Los datos de ejemplo'],
+  'before.save':['Save and start Round 1', 'Kaydet ve 1. tura başla', 'ذخیره کن و دور ۱ را شروع کن', 'Guardar y empezar la ronda 1'],
+  skip:['Skip', 'Atla', 'رد شو', 'Saltar'],
+  'skip.now':['Skip for now', 'Şimdilik atla', 'فعلاً رد شو', 'Saltar por ahora'],
+  'try.eye':['Try it · not marked', 'Dene · puanlanmaz', 'امتحان کن · نمره ندارد', 'Pruébalo · sin nota'],
+  'check.eye':['Quick check · {i} of {n}', 'Hızlı kontrol · {i}/{n}', 'سؤال سریع · {i} از {n}', 'Comprobación rápida · {i} de {n}'],
+  'lockin.eye':['One more from this lesson', 'Bu dersten bir soru daha', 'یک سؤال دیگر از همین درس', 'Una más de esta lección'],
+  'fresh.eye':['Keep it fresh · from Lesson {no}', 'Aklında kalsın · {no}. dersten', 'یادت بماند · از درس {no}', 'Que no se te olvide · de la lección {no}'],
+  'fresh.note':['Questions from earlier lessons come here, at the end, never first.', 'Önceki derslerin soruları burada, en sonda gelir, asla başta değil.', 'سؤال‌های درس‌های قبل اینجا می‌آیند، آخر کار، نه اول.', 'Las preguntas de lecciones anteriores van aquí, al final, nunca al principio.'],
+  'q.notThis':['Not this one: {pick}', 'Bu değil: {pick}', 'این یکی نه: {pick}', 'Esta no: {pick}'],
+  'q.again':['Your first pick is greyed out. Try once more.', 'İlk seçimin griye döndü. Bir kez daha dene.', 'انتخاب اولت کم‌رنگ شد. یک بار دیگر امتحان کن.', 'Tu primera opción está en gris. Prueba otra vez.'],
+  'q.answer':['The answer: {x}', 'Doğru cevap: {x}', 'جواب: {x}', 'La respuesta: {x}'],
+  hint:['Key point {n} · {head}', '{n}. ana nokta · {head}', 'نکته‌ی {n} · {head}', 'Punto clave {n} · {head}'],
+  kp:['Key point {n}', '{n}. ana nokta', 'نکته‌ی {n}', 'Punto clave {n}'],
+  shownotes:['Your notes', 'Notların', 'یادداشت‌های تو', 'Tus notas'],
+  'notes.eye':['Round 1 · Your notes', '1. tur · Notların', 'دور ۱ · یادداشت‌های تو', 'Ronda 1 · Tus notas'],
+  'notes.head':['Your notes for the task.', 'Görev için notların.', 'یادداشت‌هایت برای این کار.', 'Tus notas para la tarea.'],
+  'notes.body':['A few words for each line, about your own work or the sample. You use these notes in Round 3.', 'Her satır için birkaç kelime: kendi işin ya da örnek hakkında. Bu notları 3. turda kullanacaksın.', 'برای هر خط چند کلمه بنویس، درباره‌ی کار خودت یا نمونه. در دور ۳ از این یادداشت‌ها استفاده می‌کنی.', 'Unas palabras por línea, sobre tu propio trabajo o el ejemplo. Usarás estas notas en la ronda 3.'],
+  'notes.sample':['Use the sample facts instead', 'Bunun yerine örnek bilgileri kullan', 'به‌جایش از اطلاعات نمونه استفاده کن', 'Usa mejor los datos de ejemplo'],
+  'notes.save':['Save notes', 'Notları kaydet', 'یادداشت‌ها را ذخیره کن', 'Guardar notas'],
+  'notes.edit':['Edit', 'Düzenle', 'ویرایش', 'Editar'],
+  'first.eye':['Round {n} · Your first try', '{n}. tur · İlk denemen', 'دور {n} · تلاش اولت', 'Ronda {n} · Tu primer intento'],
+  'first.head':['Check your first try.', 'İlk denemene bir bak.', 'تلاش اولت را دوباره ببین.', 'Revisa tu primer intento.'],
+  'first.none':['No slip of this kind in your first try.', 'İlk denemende bu türden bir hata yok.', 'در تلاش اولت از این نوع اشتباه نیست.', 'En tu primer intento no hay ningún fallo de este tipo.'],
+  'first.cut':['These words were cut in the worked example: {words}', 'Bu kelimeler çözümlü örnekte çıkarıldı: {words}', 'این کلمه‌ها در مثال حل‌شده حذف شدند: {words}', 'Estas palabras se quitaron en el ejemplo resuelto: {words}'],
+  'first.fix':['Fix it in your notes', 'Notlarında düzelt', 'در یادداشت‌هایت درستش کن', 'Corrígelo en tus notas'],
+  'say.head':['Say it from your notes.', 'Notlarına bakarak söyle.', 'از روی یادداشت‌هایت بگو.', 'Dilo a partir de tus notas.'],
+  'say.write':['Say it, write it', 'Söyle, yaz', 'بگو و بنویس', 'Dilo y escríbelo'],
+  singles:['Then answer these once each.', 'Sonra bunların her birini bir kez cevapla.', 'بعد به هر کدام از این‌ها یک بار جواب بده.', 'Luego responde una vez a cada una.'],
+  'try.n':['Try {n} · {s} s', '{n}. deneme · {s} sn', 'تلاش {n} · {s} ثانیه', 'Intento {n} · {s} s'],
+  'try.start':['Start try {n}', '{n}. denemeye başla', 'تلاش {n} را شروع کن', 'Empezar el intento {n}'],
+  'firsttry.fold':['Your first try', 'İlk denemen', 'تلاش اولت', 'Tu primer intento'],
+  'done.round':['Round {n} done.', '{n}. tur bitti.', 'دور {n} تمام شد.', 'Ronda {n} terminada.'],
+  'done.got':["What you've got:", 'Öğrendiklerin:', 'چیزی که یاد گرفتی:', 'Lo que ya tienes:'],
+  'done.next':['Next: Round {n} · {name} · {m} min', 'Sırada: {n}. tur · {name} · {m} dk', 'بعدی: دور {n} · {name} · {m} دقیقه', 'Siguiente: ronda {n} · {name} · {m} min'],
+  'ielts.done':['{round} done. Next: {next}.', '{round} bitti. Sırada: {next}.', '{round} تمام شد. بعدی: {next}.', '{round}: hecho. Siguiente: {next}.'],
+  'done.soft':['You got question {i} on the second try. It comes back once in Lesson {no}.', '{i}. soruyu ikinci denemede bildin. {no}. derste bir kez daha gelecek.', 'به سؤال {i} بار دوم درست جواب دادی. یک بار دیگر در درس {no} می‌آید.', 'Acertaste la pregunta {i} al segundo intento. Vuelve una vez en la lección {no}.'],
+  'done.look':['Question {i} comes back in Lesson {no}, and it is on your Look again list.', '{i}. soru {no}. derste yeniden gelecek; Tekrar bak listende de var.', 'سؤال {i} در درس {no} دوباره می‌آید و در فهرست «دوباره ببین» هم هست.', 'La pregunta {i} vuelve en la lección {no} y está en tu lista «Vuelve a mirarlo».'],
+  'l.done':['Lesson {no} done.', '{no} dersi bitti.', 'درس {no} تمام شد.', 'Lección {no} terminada.'],
+  'l.before':['Before', 'Önce', 'قبل', 'Antes'],
+  'l.after':['After', 'Sonra', 'بعد', 'Después'],
+  'l.parts':['Task parts: {a} of {n}, now {b} of {n}', 'Görevin parçaları: önce {a}/{n}, şimdi {b}/{n}', 'بخش‌های کار: اول {a} از {n}، حالا {b} از {n}', 'Partes de la tarea: antes {a} de {n}, ahora {b} de {n}'],
+  'l.phrases':['Key phrases: {a}, now {b}', 'Anahtar ifadeler: önce {a}, şimdi {b}', 'عبارت‌های کلیدی: اول {a}، حالا {b}', 'Frases clave: antes {a}, ahora {b}'],
+  'l.cando':['What you can do now', 'Artık yapabildiğin', 'کاری که حالا می‌توانی بکنی', 'Lo que ya puedes hacer'],
+  'l.back':['Comes back in Lesson {no}: one question on key point {n}', '{no}. derste yeniden gelecek: {n}. ana noktadan bir soru', 'در درس {no} دوباره می‌آید: یک سؤال از نکته‌ی {n}', 'Vuelve en la lección {no}: una pregunta del punto clave {n}'],
+  'l.saved':['Saved in Your work, with your first try.', 'İlk denemenle birlikte Çalışmaların bölümüne kaydedildi.', 'همراه با تلاش اولت در «کارهای تو» ذخیره شد.', 'Guardado en Tu trabajo, con tu primer intento.'],
+  'w.look':['Look again · {n} key points', 'Tekrar bak · {n} ana nokta', 'دوباره ببین · {n} نکته', 'Vuelve a mirarlo · {n} puntos clave'],
+  'w.lookhint':['Opens the key point, then one fresh question', 'Ana noktayı açar, sonra yeni bir soru sorar', 'نکته را باز می‌کند و بعد یک سؤال تازه می‌پرسد', 'Abre el punto clave y luego te hace una pregunta nueva'],
+  'w.ba':['Before and after', 'Önce ve sonra', 'قبل و بعد', 'Antes y después'],
+  'w.got':["What you've got: {n} key points", 'Öğrendiklerin: {n} ana nokta', 'چیزهایی که یاد گرفتی: {n} نکته', 'Lo que ya tienes: {n} puntos clave'],
+  'w.show':['show', 'göster', 'نشان بده', 'mostrar'],
+  'w.row':['Look again: {n}', 'Tekrar bak: {n}', 'دوباره ببین: {n}', 'Vuelve a mirarlo: {n}'],
+  'cut.left':['{k} to find', '{k} tane bulman gerekiyor', 'باید {k} مورد پیدا کنی', 'Tienes que encontrar {k}'],
+  'cut.show':['Show me', 'Göster', 'نشانم بده', 'Enséñamelo'],
+  'walk.next':['Next move', 'Sonraki adım', 'قدم بعدی', 'Siguiente paso'],
+  'facts.link':['See the facts the fix uses', 'Düzeltmede kullanılan bilgileri gör', 'اطلاعاتی را که در اصلاح به کار رفته ببین', 'Ver los datos que usa la corrección'],
+  'cut.default':["Tap what the reader can't use.", 'Okuyanın işine yaramayanlara dokun.', 'روی چیزهایی بزن که به کار خواننده نمی‌آید.', 'Toca lo que al lector no le sirve.'],
+  'tap.hint':['Tap a line to see why it matters.', 'Neden önemli olduğunu görmek için bir satıra dokun.', 'روی یک خط بزن تا ببینی چرا مهم است.', 'Toca una línea para ver por qué importa.'],
+  'slip.h':['Why do I slip?', 'Neden hata yapıyorum?', 'چرا اشتباه می‌کنم؟', '¿Por qué me equivoco?'],
+  'ex.draft':['First draft', 'İlk taslak', 'پیش‌نویس اول', 'Primer borrador'],
+  'ex.fixed':['Fixed', 'Düzeltilmiş', 'اصلاح‌شده', 'Corregido'],
+  rail:['Round {r} · {i} of {k}', '{r}. tur · {i}/{k}', 'دور {r} · {i} از {k}', 'Ronda {r} · {i} de {k}'],
+  'show.all':['Show all', 'Hepsini göster', 'همه را نشان بده', 'Mostrar todo'],
+  'show.less':['Show less', 'Daha az göster', 'کمتر نشان بده', 'Mostrar menos']
+};
+function trN(x){ return LANG === 'fa' ? String(x).replace(/\d/g, d=>'۰۱۲۳۴۵۶۷۸۹'[d]) : String(x); }
+// English inside a Persian line goes in an isolate (shown as an LTR <bdi> by isoHtml)
+function trIso(s){ s = String(s == null ? '' : s); return LANG === 'fa' && /[A-Za-z]/.test(s) && !/^⁨/.test(s) ? '⁨' + s + '⁩' : s; }
+// One string, {x} filled: numbers in the UI's digits, text as given (pass trIso() for English inside Persian).
+// (Persian: the middle dot reads like ۰, so " · " becomes the app's Persian separator, as courseSep() does; card TI2RM8Ns)
+function trs(k, v){ const a = TRS[k]; if(!a) return k; let s = CL(a[0], a[1], a[2], a[3]); v = v || {}; if(LANG === 'fa') s = s.split(' · ').join(courseSep());
+  return s.replace(/\{(\w+)\}/g, (m, x)=>v[x] === undefined ? m : (typeof v[x] === 'number' ? trN(v[x]) : String(v[x]))); }
+function trsH(k, v){ return isoHtml(trs(k, v)); }
+const COURSE_R_KEYS = ['know', 'say', 'use'];
+const COURSE_R_REC = ['judge', 'listening', 'story'], COURSE_R_PROD = ['speaking', 'branch', 'writing', 'perspective'];
+const COURSE_R_COVER = ['icon-story.png', 'icon-speaking.png', 'art/course-clay/studio-icon-cutout-320.webp'];
+const COURSE_R_COVER_FB = ['', '', 'studio-icon-cutout.png'];
+const COURSE_R_STAMP = ['art/course-clay/stamp-know-256.webp', 'art/course-clay/stamp-say-256.webp', 'art/course-clay/stamp-use-256.webp'];
+// 'Lesson 5.1' on the new screens, with the UI's digits (Persian: درس ۵.۱)
+function courseRLessonName(cid, uid){ const no = courseUnitNo(cid, uid); return CL('Lesson ' + no, 'Ders ' + no, 'درس ' + trN(no), 'Lección ' + no); }
+function courseRName(r){ return trs('r.' + COURSE_R_KEYS[r]); }
+// Clay pictures: decorative (alt=""), lazy; a missing file falls back to its stand-in or, for a stamp, to the UI ring (never a broken image).
+function courseRImg(src, cls, fb){ return `<img class="${cls || ''}" src="${esc(src)}" alt="" loading="lazy" decoding="async"${fb ? ` data-fb="${esc(fb)}"` : ''} onerror="courseRImgFail(this)">`; }
+function courseRImgFail(img){ try{ const fb = img.getAttribute('data-fb'); if(fb){ img.removeAttribute('data-fb'); img.src = fb; return; } const p = img.parentNode; if(p && p.classList) p.classList.add('noimg'); img.remove(); }catch(e){} }
+
+/* ---- the gate ---- */
+function courseRCourseOn(c){ return !!(c && c.rounds && roundsLive() && !courseIsExam(c)); }
+function courseRoundsOn(cid, uid){
+  const c = courseGet(cid); if(!courseRCourseOn(c)) return false;
+  const f = courseFindUnit(cid, uid); if(!f || f.u.isMock || courseIsCp(cid, uid) || courseUnitWaiting(cid, uid)) return false;
+  const lm = courseLazyUnitMod(uid);
+  if(lm && !courseLazyReady(lm)) return (f.u.sessions || []).some(s=>s.includes('explain'));
+  const ex = courseUnitItems(uid).explain; if(!ex || !(ex.points || []).length) return false;
+  // a lesson with a step the rounds can't place keeps today's flow
+  return courseUnitSteps(cid, uid).every(s=>s.type === 'explain' || s.type === 'exit' || COURSE_R_REC.includes(s.type) || COURSE_R_PROD.includes(s.type));
+}
+// With the switch off, a rounds course's new lesson fields leave today's lesson view as it was (writing.parts feeds only the rounds).
+function courseRPartsOff(cid, uid){ const c = courseGet(cid); return !!(c && c.rounds && !roundsLive() && courseHasExplain(uid)); }
+
+/* ---- words on a screen (the 50/60-word budget, English teaching text; the learner's text and answer options do not count) ---- */
+function courseRW(s){ return String(s || '').replace(/[⁨⁩]/g, '').trim().split(/\s+/).filter(Boolean).length; }
+function courseREn(o){ return o && typeof o === 'object' ? (o.en || '') : String(o || ''); }
+const COURSE_R_LAB = /^[^.:]{2,40}:\s/;
+function courseRLabelled(p){ const st = p.steps || []; return st.length > 0 && st.every(s=>COURSE_R_LAB.test(courseREn(s))); }
+// A labelled step in the UI language: [label, rule] ("The customer: who pays you." / Persian «مشتری یعنی کسی که …»), or null.
+function courseRStepLab(s){ const u = cl(s);
+  if(COURSE_R_LAB.test(u)){ const i = u.indexOf(':'); return [u.slice(0, i).trim(), u.slice(i + 1).trim()]; }
+  if(LANG === 'fa'){ const i = u.indexOf(' یعنی '); if(i > 1 && i <= 40) return [u.slice(0, i).trim(), u.slice(i + 6).trim()]; }
+  return null; }
+function courseRSentences(t){ return String(t || '').split(/(?<=[.!?؟])\s+/).filter(Boolean); }
+// The part of a UI-language text that matches English sentences idx (pages are cut on the English; same sentence count = same cut, else by share).
+function courseRSlice(ui, en, idx){ const all = courseRSentences(ui), n = courseRSentences(en).length; if(!idx || !idx.length || idx.length >= n) return ui;
+  if(all.length === n) return idx.map(i=>all[i]).join(' ');
+  const a = Math.round(idx[0] * all.length / n), b = Math.round((idx[idx.length - 1] + 1) * all.length / n); return all.slice(a, Math.max(a + 1, b)).join(' '); }
+// Greedy packing: blocks [{w, ...}] into pages of at most `max` words (a block bigger than max gets a page of its own)
+function courseRPack(blocks, base, max){ const pages = []; let cur = [], w = base;
+  blocks.forEach(b=>{ if(cur.length && w + b.w > max){ pages.push(cur); cur = []; w = base; } cur.push(b); w += b.w; });
+  if(cur.length) pages.push(cur); return pages; }
+// The screens of one key point (SPEC 3.2): A the idea, B the pattern, C the Turkish/Persian note, D the phrases.
+function courseRKpScreens(p, n, r){
+  const head = courseRW(courseREn(p.head)), out = [], base = {t:'kp', n, r, rail:true, min:1, title:cl(p.head)};
+  const steps = p.steps || [], bodyS = courseRSentences(courseREn(p.body)).map((s, b)=>({b, w:courseRW(s)}));
+  if(bodyS.length || steps.length){
+    // the body's sentences, then the steps (labelled rows or numbered lines), packed into pages of at most 60 words, the head on each
+    const lab = courseRLabelled(p), bl = steps.map((s, i)=>({i, w:lab ? courseRW(courseREn(s).split(':')[0]) + courseRW(s.ex) : courseRW(courseREn(s)) + courseRW(s.ex)}));
+    courseRPack(bodyS.concat(bl), head, 60).forEach(pg=>{ const st = pg.filter(x=>x.i !== undefined).map(x=>x.i);
+      out.push(Object.assign({}, base, {part:'A', body:pg.filter(x=>x.b !== undefined).map(x=>x.b), bodyOf:bodyS.length, w:head + pg.reduce((a, x)=>a + x.w, 0)}, lab ? {rows:st} : {steps:st})); });
+  }
+  if(p.table || (p.wrong && p.right)){
+    const hdr = p.table ? ((p.table.headers && p.table.headers.en) || []).reduce((a, h)=>a + courseRW(h), 0) : 0;
+    const rows = p.table ? (p.table.rows || []).map((rw, i)=>({i, w:rw.reduce((a, c)=>a + courseRW(c), 0)})) : [];
+    const mk = p.wrong && p.right ? courseRW(p.wrong) + courseRW(p.right) : 0;
+    if(head + hdr + rows.reduce((a, x)=>a + x.w, 0) + mk <= 60) out.push(Object.assign({}, base, {part:'B', rows:rows.map(x=>x.i), mk:!!mk, w:head + hdr + rows.reduce((a, x)=>a + x.w, 0) + mk}));
+    else { if(rows.length) courseRPack(rows, head + hdr, 60).forEach(pg=>out.push(Object.assign({}, base, {part:'B', rows:pg.map(x=>x.i), mk:false, w:head + hdr + pg.reduce((a, x)=>a + x.w, 0)})));
+      if(mk) out.push(Object.assign({}, base, {part:'B', rows:[], mk:true, w:head + mk})); }
+  }
+  if(p.tip){ const hw = 4, en = courseRSentences(courseREn(p.tip)).map((s, i)=>({i, w:courseRW(s)}));
+    const pages = courseRPack(en, hw, 60);
+    pages.forEach((pg, k)=>out.push(Object.assign({}, base, {part:'C', tip:pages.length > 1 ? [pg[0].i, pg[pg.length - 1].i] : null, tipOf:pages.length, tipK:k, w:hw + pg.reduce((a, x)=>a + x.w, 0)}))); }
+  if((p.phrases || []).length){ const ph = p.phrases.map((x, i)=>({i, w:courseRW(x.phrase) + courseRW(courseREn(x.meaning))}));
+    courseRPack(ph, head, 60).forEach(pg=>out.push(Object.assign({}, base, {part:'D', phrases:pg.map(x=>x.i), w:head + pg.reduce((a, x)=>a + x.w, 0)}))); }
+  return out;
+}
+// The grammar key point: head = grammar title, else the eyebrow "The language it needs", else 2.
+function courseRGp(it){ const ex = it.explain, g = it.grammar, pts = (ex && ex.points) || [];
+  let k = pts.findIndex(p=>g && p.head && p.head.en === g.title) + 1; if(!k) k = pts.findIndex(p=>p.eyebrow && p.eyebrow.en === 'The language it needs') + 1; return k || Math.min(2, pts.length) || 1; }
+function courseRSplit(ex){ const n = (ex.points || []).length, ok = r=>Array.isArray(r) && r.length === 2 && r[0].length > 0 && [].concat(r[0], r[1]).sort((a, b)=>a - b).join() === Array.from({length:n}, (_, i)=>i + 1).join();
+  if(ok(ex.rounds)) return ex.rounds; const a = n <= 3 ? 1 : Math.ceil(n / 2); return [Array.from({length:a}, (_, i)=>i + 1), Array.from({length:n - a}, (_, i)=>a + i + 1)]; }
+// The worked example: facts and draft, in both orders (SPEC 18a, the lxd reference exSplit).
+function courseRExSplit(item){
+  const s = String(item || ''); let m = s.match(/^([\s\S]*?)\s*(?:Your )?[Dd]raft[^:]{0,30}:\s*([\s\S]+)$/);
+  let r = m ? {facts:m[1].trim(), draft:m[2].trim()} : null;
+  if(!r){ m = s.match(/^([\s\S]*?)\s+(?:Facts(?: from the call)?|Situation):\s*([\s\S]+)$/); if(m) r = {facts:m[2].trim(), draft:m[1].trim()}; }
+  if(!r) return {facts:'', draft:s};
+  if(/^"[\s\S]*"$/.test(r.draft) && !/"/.test(r.draft.slice(1, -1))) r.draft = r.draft.slice(1, -1);
+  return r;
+}
+function courseRTasks(cid, uid){ const st = courseUnitSteps(cid, uid).map(s=>s.type); return {rec:st.filter(t=>COURSE_R_REC.includes(t)), prod:st.filter(t=>COURSE_R_PROD.includes(t))}; }
+function courseRTaskMin(uid, t, it){
+  if(t === 'judge') return ((it.judge && it.judge.items) || []).length * 0.75 || courseStepMin('judge');
+  if(t === 'writing') return courseStepMin('writing') - (it.writing && (it.writing.parts || []).length ? 2 : 0);
+  return courseStepMin(t);
+}
+function courseRNoteParts(w){ return ((w && w.parts) || []).map((p, i)=>({p, i})).filter(x=>!((x.p.find || []).length === 1 && x.p.find[0] === '#number')); }
+// One check question (stable option order for this page session): {key, item, from, earlier, kind, idx}
+function courseRQ(cid, uid, o){
+  const rq = courseUi.rq && courseUi.rq.uid === uid ? courseUi.rq : (courseUi.rq = {uid, m:{}});
+  let q = rq.m[o.key]; if(!q){ q = rq.m[o.key] = courseQ(o.item, o.key); q.hint2 = o.item.hint2 || null; q.from = o.item.from || o.from || q.from; if(o.earlier) q.earlier = true; q.kpU = o.earlier ? (q.from || uid) : uid; if(o.kp !== undefined) q.kp = o.kp; }
+  return q;
+}
+function courseRAnswers(cid, uid){ const a = courseProg(cid).answers; let o = a[uid + ':rounds']; if(!o || typeof o !== 'object'){ o = a[uid + ':rounds'] = {q:{}}; } if(!o.q || typeof o.q !== 'object') o.q = {}; return o; }
+function courseRQState(cid, uid, key, make){
+  const rd = courseUi.rd;
+  if(rd && rd.uid === uid && rd.redo){ rd.rq = rd.rq || {}; if(!rd.rq[key] && make) rd.rq[key] = {p:[]}; return rd.rq[key] || {p:[]}; }
+  const a = courseProg(cid).answers[uid + ':rounds'], s = a && a.q && a.q[key];
+  if(s) return s; if(!make) return {p:[]};
+  return (courseRAnswers(cid, uid).q[key] = {p:[]});
+}
+// Keep it fresh: the first 2 of today's earlier list (review picks, then the data's earlier items), frozen when Round 3 starts.
+function courseRFresh(cid, uid, it){
+  const a = courseProg(cid).answers[uid + ':rounds'], rd = courseUi.rd;
+  if(a && Array.isArray(a.fresh) && !(rd && rd.uid === uid && rd.redo)) return a.fresh;
+  if(rd && rd.uid === uid && rd.redo && rd.fresh) return rd.fresh;
+  const f = courseFindUnit(cid, uid), items = (it.exit && it.exit.items) || [];
+  const rv = f && courseReviewOn(cid, f.u) ? courseReviewPicks(cid, uid).map(p=>({key:p.key, item:p.item, from:p.item.from || p.uid, earlier:true})) : [];
+  const data = items.map((x, i)=>({key:it.exit.id + '#' + i, item:x, from:x.from, earlier:true})).filter(o=>o.item.from && o.item.from !== uid);
+  return rv.concat(data).slice(0, 2);
+}
+function courseRFreeze(cid, uid){
+  const rd = courseUi.rd, it = courseUnitItems(uid); if(!it.explain) return;
+  if(rd && rd.uid === uid && rd.redo){ if(!rd.fresh) rd.fresh = courseRFresh(cid, uid, it); return; }
+  const a = courseRAnswers(cid, uid); if(!Array.isArray(a.fresh)){ a.fresh = courseRFresh(cid, uid, it).map(o=>({key:o.key, item:o.item, from:o.from, earlier:true})); }
+}
+/* ---- courseRounds(cid, uid): the three rounds of a lesson, built from today's data (SPEC 3) ----
+   [{r, key, screens:[{t, rail, min, ...}]}]; screen types: before, opener, kp (A/B/C/D), try, example, first, q, notes, task, done. */
+function courseRounds(cid, uid){
+  const it = courseUnitItems(uid), ex = it.explain; if(!ex) return null;
+  const b2 = courseB2(cid, uid), split = courseRSplit(ex), gp = courseRGp(it), cp = courseProg(cid);
+  const items = (it.exit && it.exit.items) || [], tasks = courseRTasks(cid, uid);
+  const roundOfPt = p=>split[0].includes(p) ? 0 : split[1].includes(p) ? 1 : -1;
+  // own items by point; at most 2 per check, overflow forward only (SPEC 3.3)
+  const own = items.map((x, i)=>({key:it.exit.id + '#' + i, item:x, idx:i})).filter(o=>!o.item.from || o.item.from === uid);
+  let c1 = [], c2 = [], lock = [];
+  own.forEach(o=>{ const r = o.item.point ? roundOfPt(o.item.point) : -1; (r === 0 ? c1 : r === 1 ? c2 : lock).push(o); });
+  c1.splice(2).forEach(o=>{ if(c2.length < 2) c2.push(o); else lock.push(o); });
+  lock = c2.splice(2).concat(lock);
+  const byIdx = (a, b)=>(a.idx || 0) - (b.idx || 0); c1.sort(byIdx); c2.sort(byIdx); lock.sort(byIdx);
+  const notAsked = lock.slice(2); lock = lock.slice(0, 2);
+  const q = ex.quick && (ex.quick.options || []).length ? ex.quick : null;
+  const qPoint = q ? (Number(q.point) || Number(ex.quickAfter) || 1) : 0;
+  let quickTry = !!q;
+  if(c1.length < 2 && q){ c1.push({key:ex.id + '#q', item:{prompt:q.prompt, options:q.options, correct:q.correct, why:q.why, point:qPoint}, idx:900}); quickTry = false; }
+  const g = it.grammar, gRound = roundOfPt(gp) === 0 ? c1 : c2;
+  if(g) [['blank2', '#b2'], ['blank', '#b1']].forEach(([f, k])=>{ const b = g[f]; if(gRound.length < 2 && b && b.word && (b.distractors || []).length)
+    gRound.push({key:g.id + k, item:{kind:'blank', prompt:b.sentence, options:[b.word].concat(b.distractors), correct:0, point:gp, why:g.expParts && g.expParts.test ? g.expParts.test : null}, idx:950}); });
+  if(b2 && b2.exitItem) c2.push({key:b2.id + '#x', item:b2.exitItem, idx:999, kp:'b2'});
+  // before and the learner's text
+  const w = it.writing, redo = !!(courseUi.rd && courseUi.rd.uid === uid && courseUi.rd.redo);
+  const bef = cp.answers[uid + ':before'], hasBefore = !!(bef && String(bef.text || '').trim());
+  const notes = courseRNoteParts(w).length > 0;
+  const kpScr = (n, r)=>{ const p = n === 'b2' ? ex.b2Point : (ex.points || [])[n - 1]; return p ? courseRKpScreens(p, n, r) : []; };
+  const exScr = r=>ex.example ? [{t:'example', r, rail:true, min:1, title:cl(ex.example.head), w:courseRW(courseREn(ex.example.head)) + courseRW(courseREn(ex.example.cutHint || '')) + 4 + Math.max(0, ...((ex.example.walk || []).map(x=>courseRW(courseREn(x)))))}] : [];
+  const tryScr = r=>[{t:'try', r, rail:true, min:1, title:trs('try.eye'), w:courseRW(q.prompt) + courseRW(courseREn(q.why))}];
+  const firstScr = r=>hasBefore ? [{t:'first', r, rail:true, min:1, title:trs('firsttry.fold')}] : [];
+  const qScr = (list, kind, r)=>list.map((o, i)=>({t:'q', r, kind, i, n:list.length, rail:true, min:0.5, key:o.key, o, title:kind === 'fresh' ? trs('fresh.eye', {no:trN(courseUnitNo(cid, o.from || uid))}) : kind === 'lock' ? trs('lockin.eye') : trs('check.eye', {i:i + 1, n:list.length})}));
+  const teach = (r, pts)=>{ const out = [];
+    pts.forEach(n=>{ const ks = kpScr(n, r);
+      if(n === gp){ const lastNonD = ks.map(x=>x.part).lastIndexOf('C') >= 0 ? ks.map(x=>x.part).lastIndexOf('C') : Math.max(ks.map(x=>x.part).lastIndexOf('B'), ks.map(x=>x.part).lastIndexOf('A'));
+        ks.splice(lastNonD + 1, 0, ...firstScr(r)); }
+      out.push(...ks); if(quickTry && qPoint === n) out.push(...tryScr(r)); });
+    return out; };
+  const R = [0, 1, 2].map(r=>({r, key:COURSE_R_KEYS[r], screens:[]}));
+  // Round 1
+  const s1 = R[0].screens;
+  if(w) s1.push({t:'before', r:0, rail:false, min:0.5, title:trs('before.eye')});
+  s1.push({t:'opener', r:0, rail:false, min:0});
+  s1.push(...teach(0, split[0]));
+  if(quickTry && qPoint && !split[0].concat(split[1]).includes(qPoint)) s1.push(...tryScr(0));
+  if(Number(ex.exampleIn) !== 2) s1.push(...exScr(0));
+  s1.push(...qScr(c1, 'check', 0));
+  if(notes) s1.push({t:'notes', r:0, rail:true, min:1.5, title:trs('shownotes')});
+  // Round 2
+  const s2 = R[1].screens; s2.push({t:'opener', r:1, rail:false, min:0});
+  s2.push(...teach(1, split[1]));
+  if(Number(ex.exampleIn) === 2) s2.push(...exScr(1));
+  if(b2 && ex.b2Point) s2.push(...kpScr('b2', 1));
+  s2.lastTeach = s2.length - 1;
+  tasks.rec.forEach(t=>s2.push({t:'task', task:t, r:1, rail:true, min:courseRTaskMin(uid, t, it), title:courseCardTitle(cid, uid, t) || courseStepLabel(t, uid)}));
+  s2.push(...qScr(c2, 'check', 1));
+  // Round 3
+  const s3 = R[2].screens; s3.push({t:'opener', r:2, rail:false, min:0});
+  tasks.prod.forEach(t=>s3.push({t:'task', task:t, r:2, rail:true, min:courseRTaskMin(uid, t, it), title:courseCardTitle(cid, uid, t) || courseStepLabel(t, uid)}));
+  s3.push(...qScr(lock, 'lock', 2));
+  s3.push(...qScr(courseRFresh(cid, uid, it), 'fresh', 2));
+  R.forEach(rd=>{ rd.screens.push({t:'done', r:rd.r, rail:false, min:0}); rd.rail = rd.screens.filter(x=>x.rail);
+    rd.min = Math.max(1, Math.round(rd.screens.reduce((a, x)=>a + (x.min || 0), 0))); rd.qs = rd.screens.filter(x=>x.t === 'q').length; });
+  R[0].pts = split[0]; R[1].pts = split[1].concat(b2 && ex.b2Point ? ['b2'] : []); R[2].pts = [];
+  R.notAsked = notAsked; R.gp = gp; R.hasBefore = hasBefore; R.redo = redo;
+  return R;
+}
+// The heads a round teaches ("What you've got"), Round 3: its tasks.
+function courseRGot(cid, uid, R, r){
+  const ex = courseUnitItems(uid).explain;
+  if(r < 2) return R[r].pts.map(n=>{ const p = n === 'b2' ? ex.b2Point : ex.points[n - 1]; return p ? cl(p.head) : ''; }).filter(Boolean);
+  return R[2].screens.filter(x=>x.t === 'task').map(x=>x.title).filter(Boolean);
+}
+function courseROpenerIdx(R, r){ return R[r].screens.findIndex(x=>x.t === 'opener'); }
+// Done marks of the rounds; old progress migrates (SPEC 5): exit done = all three; Learn done in the old flow = Rounds 1 and 2,
+// except a recognition task that is not done (Round 2 then opens on it, and its check is not asked).
+function courseRStatus(cid, uid){
+  const d = courseProg(cid).done, k = t=>!!d[uid + ':' + t], exit = k('exit'), oldLearn = k('explain') && !k('r1');
+  const rec = courseRTasks(cid, uid).rec;
+  return [k('r1') || exit || k('explain'), k('r2') || exit || (oldLearn && rec.every(t=>courseStepDone(uid, t))), k('r3') || exit];
+}
+function courseROldLearn(cid, uid){ const d = courseProg(cid).done; return !!d[uid + ':explain'] && !d[uid + ':r1']; }
+function courseRPlace(cid, uid){
+  const R = courseRounds(cid, uid); if(!R) return {r:0, s:0};
+  const st = courseRStatus(cid, uid), at = (courseProg(cid).roundAt || {})[uid];
+  if(at && R[at.r] && !st[at.r] && (at.r === 0 || st[at.r - 1])) return {r:at.r, s:Math.max(0, Math.min(at.s, R[at.r].screens.length - 1)), saved:true};
+  const r = st.indexOf(false); if(r < 0) return {r:2, s:R[2].screens.length - 1, all:true};
+  const scr = R[r].screens, op = courseROpenerIdx(R, r), bef = courseProg(cid).answers[uid + ':before'];
+  if(r === 0) return {r, s:scr[0].t === 'before' && !bef ? 0 : op};
+  if(r === 1 && courseROldLearn(cid, uid)){ const k = scr.findIndex(x=>x.t === 'task' && !courseStepDone(uid, x.task)); if(k >= 0) return {r, s:k, mig:true}; }
+  if(r === 2){ const k = scr.findIndex(x=>x.t === 'task' && !courseStepDone(uid, x.task)), any = scr.some(x=>x.t === 'task' && courseStepDone(uid, x.task)); if(any && k >= 0) return {r, s:k}; }
+  return {r, s:op};
+}
+function courseRStarted(cid, uid){ const d = courseProg(cid).done; return !!((courseProg(cid).roundAt || {})[uid] || d[uid + ':r1'] || d[uid + ':explain'] || courseProg(cid).answers[uid + ':before']); }
+function courseRRailPos(R, r, s){ const rail = R[r].rail, scr = R[r].screens[s]; const i = rail.indexOf(scr); return {i:i >= 0 ? i + 1 : (scr && scr.t === 'done' ? rail.length : 0), k:rail.length}; }
+function courseRMinutes(R){ return R ? R.reduce((a, x)=>a + x.min, 0) : 0; }
+
+/* ---- the round runner: one course-step view, type 'round' ---- */
+function courseRState(cid, uid){
+  let rd = courseUi.rd;
+  if(!rd || rd.uid !== uid || rd.cid !== cid){
+    const p = courseRPlace(cid, uid), R = courseRounds(cid, uid);
+    rd = courseUi.rd = {cid, uid, r:p.r, s:p.s, redo:false, open:-1, ex:null, landed:{}, recap:null};
+    if(R && (p.saved || p.r > 0 || p.s > courseROpenerIdx(R, p.r))) courseRSetRecap(R, p.r, p.s);
+    state.viewParams = Object.assign({}, state.viewParams, {r:rd.r, s:rd.s});
+  }
+  return rd;
+}
+function courseRSetRecap(R, r, s){ const scr = R[r].screens[s], pos = courseRRailPos(R, r, s); if(!scr || scr.t === 'opener' || !pos.i) return;
+  courseUi.rd.recap = {text:trs('resume', {n:r + 1, s:pos.i, k:pos.k, title:trIso(scr.title || courseRName(r))}), until:Date.now() + 5000}; }
+// Opens the lesson in rounds at its saved place (or a round from its opener: preview owners, "Do it again").
+function courseROpen(cid, uid, opts){
+  opts = opts || {}; const c = courseGet(cid); if(!c) return;
+  courseSheetRemove();
+  if(!courseUnitAccess(c, uid)) return go('course-gate', {cid, uid});
+  const lm = courseLazyUnitMod(uid);
+  if(lm && !courseLazyReady(lm)){ courseLazyLoad(c, lm).then(ok=>{ if(ok) courseROpen(cid, uid, opts); }); if(state.view !== 'course-lesson') courseShow('course-lesson', {cid, uid}, cid, true); else render(); return; }
+  courseLazyEarlier(c, lm);
+  const R = courseRounds(cid, uid); if(!R) return courseShow('course-lesson', {cid, uid}, cid, true);
+  let p;
+  if(opts.redo !== undefined) p = {r:opts.redo, s:courseROpenerIdx(R, opts.redo)};
+  else if(opts.r !== undefined) p = {r:opts.r, s:courseROpenerIdx(R, opts.r)};
+  else p = courseRPlace(cid, uid);
+  if(p.all) return courseShow('course-done', {cid, uid}, cid, true);
+  courseUi.rd = {cid, uid, r:p.r, s:p.s, redo:opts.redo !== undefined, open:-1, ex:null, landed:{}, recap:null};
+  courseUi.rq = null; courseUi.judge = null; courseUi.wres = null; courseUi.wdraft = null;
+  if(opts.redo === undefined && (p.saved || p.s > courseROpenerIdx(R, p.r))) courseRSetRecap(R, p.r, p.s);
+  if(p.r === 2) courseRFreeze(cid, uid);
+  state.courseReturn = {cid, uid, type:'round'};
+  if(opts.redo === undefined) courseRSaveAt(cid, uid, p.r, p.s);
+  go('course-step', {cid, uid, type:'round', r:p.r, s:p.s}); navHistory = courseTrailTo(cid, true);
+}
+function courseRSaveAt(cid, uid, r, s){ const cp = courseProg(cid); if(!cp.roundAt || typeof cp.roundAt !== 'object') cp.roundAt = {}; cp.roundAt[uid] = {r, s, at:Date.now()}; cp.lastAt = Date.now(); }
+// Moves inside the rounds: the saved place follows every screen (not on a redo); entering a round's last screen lands its stamp.
+function courseRGoTo(r, s){
+  const rd = courseUi.rd; if(!rd) return; const cid = rd.cid, uid = rd.uid, R = courseRounds(cid, uid); if(!R || !R[r]) return;
+  s = Math.max(0, Math.min(s, R[r].screens.length - 1));
+  const from = {r:rd.r, s:rd.s}; rd.r = r; rd.s = s; rd.open = -1; rd.ex = null; rd.tryPick = null; rd.recap = null;
+  try{ stopAllSpeech(); }catch(e){}
+  if(r === 1 && !rd.redo && from.r === 1 && from.s <= R[1].screens.lastTeach && s > R[1].screens.lastTeach && !courseStepDone(uid, 'explain')) courseMarkDone(cid, uid, 'explain');
+  if(r === 2) courseRFreeze(cid, uid);
+  const scr = R[r].screens[s];
+  if(scr.t === 'done' && !rd.redo) courseRRoundEnd(cid, uid, R, r);
+  else if(!rd.redo) courseRSaveAt(cid, uid, r, s);
+  state.viewParams = {cid, uid, type:'round', r, s};
+  save(); render(); window.scrollTo(0, 0);
+}
+function courseRRoundEnd(cid, uid, R, r){
+  const cp = courseProg(cid);
+  if(r === 1 && !courseStepDone(uid, 'explain')) cp.done[uid + ':explain'] = Date.now();
+  if(r === 2){
+    const qs = [].concat(...R.map(x=>x.screens.filter(y=>y.t === 'q'))), st = qs.map(x=>courseRQState(cid, uid, x.key));
+    cp.scores[uid + ':exit'] = {right:st.filter(x=>x.res === 'right').length, total:qs.length, rounds:1};
+    const fresh = R[2].screens.filter(x=>x.t === 'q' && x.kind === 'fresh').map(x=>courseRQ(cid, uid, x.o));
+    courseRememberCheck(cid, {uid, qs:fresh});
+    cp.done[uid + ':exit'] = Date.now();
+    if(cp.roundAt) delete cp.roundAt[uid];
+  } else courseRSaveAt(cid, uid, r + 1, courseROpenerIdx(R, r + 1));
+  courseMarkDone(cid, uid, 'r' + (r + 1));
+}
+function courseRNext(){
+  const rd = courseUi.rd; if(!rd) return; const R = courseRounds(rd.cid, rd.uid); if(!R) return;
+  const scr = R[rd.r].screens; let s = rd.s + 1;
+  // Round 2 of an old-flow learner (Learn done before rounds existed): after its recognition task the round ends, its check is not asked
+  if(rd.r === 1 && !rd.redo && courseROldLearn(rd.cid, rd.uid) && scr[s] && scr[s].t === 'q') s = scr.findIndex(x=>x.t === 'done');
+  courseRGoTo(rd.r, s);
+}
+function courseRBack(){ const rd = courseUi.rd; if(!rd) return; const R = courseRounds(rd.cid, rd.uid); if(!R) return;
+  const scr = R[rd.r].screens[rd.s];
+  if(!scr || scr.t === 'opener' || scr.t === 'before' || rd.s <= 0) return courseRLeave();
+  courseRGoTo(rd.r, rd.s - 1); }
+function courseRLeave(){ const rd = courseUi.rd, vp = state.viewParams || {}, cid = rd ? rd.cid : (state.courseReturn || {}).cid || vp.cid, uid = rd ? rd.uid : (state.courseReturn || {}).uid || vp.uid;
+  courseSheetRemove(); try{ courseSpLeave(); }catch(e){} state.courseReturn = null; courseUi.rd = null; courseUi.judge = null;
+  if(cid && uid && courseFindUnit(cid, uid)) return courseShow('course-lesson', {cid, uid}, cid, true); goBack(); }
+// The task now on screen (speaking, writing, judge ...), for the timers and players that stop when their screen goes.
+function courseRScreenType(){ const vp = state.viewParams || {}, rd = courseUi.rd; if(state.view !== 'course-step' || vp.type !== 'round' || !rd) return '';
+  const R = courseRounds(rd.cid, rd.uid), x = R && R[rd.r] && R[rd.r].screens[rd.s]; return x && x.t === 'task' ? x.task : ''; }
+function courseRIs(t){ const vp = state.viewParams || {}; return state.view === 'course-step' && (vp.type === t || (vp.type === 'round' && courseRScreenType() === t)); }
+
+/* ---- screens ---- */
+function courseREyebrow(parts){ return `<div class="lx-eyebrow tr-eb" dir="${courseTD()}">${parts.filter(Boolean).map(x=>isoHtml(x)).join(esc(courseSep()))}</div>`; }
+function courseRH(text, cls){ return `<h2 class="display tr-h ${cls || ''}" dir="${courseTD()}">${isoHtml(text)}<span class="dot">.</span></h2>`.replace(/([.!?؟])<span class="dot">\.<\/span>/, '$1'); }
+function courseRBtn(action, label, extra){ return `<button class="btn btn-primary cs-main" data-action="${action}"${extra || ''}>${esc(label)}</button>`; }
+function courseRNextLabel(){ return CL('Next', 'Sonraki', 'بعدی', 'Siguiente'); }
+function courseRKpPoint(uid, n){ const ex = courseUnitItems(uid).explain; return ex ? (n === 'b2' ? ex.b2Point : (ex.points || [])[n - 1]) : null; }
+function courseRKpEye(r, n, p){ return [r >= 0 ? trs('rn', {n:r + 1}) : '', n === 'b2' ? (p.eyebrow ? cl(p.eyebrow) : 'B2') : trs('kp', {n}), n !== 'b2' && p.eyebrow ? cl(p.eyebrow) : '']; }
+// Key point A/B/C/D (also read-only in the Look again sheet: r = -1)
+function courseRKpHtml(cid, uid, scr, r, sheet){
+  const p = courseRKpPoint(uid, scr.n); if(!p) return '';
+  const rd = courseUi.rd, head = cl(p.head), eye = courseREyebrow(courseRKpEye(r, scr.n, p));
+  if(scr.part === 'A'){
+    const bt = (scr.body || []).length && p.body ? courseRSlice(cl(p.body), courseREn(p.body), scr.body) : '';
+    const body = bt ? `<p class="cx-body" dir="${courseTD()}">${isoHtml(bt)}</p>` : '';
+    let steps = '';
+    if((scr.rows || []).length){ steps = `<div class="tr-rows">${scr.rows.map(i=>{ const s = p.steps[i], ui = cl(s), sl = courseRStepLab(s), lab = !!sl;
+        const title = lab ? sl[0] : (courseRSentences(ui)[0] || ui), rest = lab ? sl[1] : courseRSentences(ui).slice(1).join(' ');
+        const rule = rest ? rest.charAt(0).toUpperCase() + rest.slice(1) : '', open = !sheet && rd && rd.open === i;
+        return `<button type="button" class="tr-row${open || sheet ? ' open' : ''}" ${sheet ? 'disabled' : `data-action="course-r-row" data-i="${i}" aria-expanded="${open ? 'true' : 'false'}"`}><span class="lx-n">${trN(i + 1)}</span><span class="tr-row-b"><b dir="${courseTD()}">${isoHtml(title)}${lab ? ':' : ''}</b>${s.ex ? ` <span class="tr-ex" dir="ltr" translate="no">“${esc(s.ex)}”</span>` : ''}${(open || sheet) && rule ? `<span class="tr-rule" dir="${courseTD()}">${isoHtml(rule)}</span>` : ''}</span></button>`; }).join('')}</div>
+        ${sheet ? '' : `<p class="tr-tip" dir="${courseTD()}">${trsH('tap.hint')}</p>`}`; }
+    else if((scr.steps || []).length) steps = `<div class="cx-rules">${scr.steps.map(i=>{ const s = p.steps[i]; return `<div class="cx-rule"><span class="lx-n">${trN(i + 1)}</span><div><p dir="${courseTD()}">${isoHtml(cl(s))}</p>${s.ex ? `<div class="lx-ex-line" dir="ltr" translate="no">${esc(s.ex)}</div>` : ''}</div></div>`; }).join('')}</div>`;
+    return `<div class="tr-kp">${eye}${courseRH(head)}<div class="lx-card cx-card">${body}${steps}</div></div>`;
+  }
+  if(scr.part === 'B'){
+    const t = p.table && (scr.rows || []).length ? courseExplainTableHtml(Object.assign({}, p.table, {rows:scr.rows.map(i=>p.table.rows[i])})) : '';
+    const mk = scr.mk && p.wrong && p.right ? `<div class="cx-mk"><div class="lx-eyebrow">${CL('Common mistake', 'Sık yapılan hata', 'اشتباه رایج', 'Error frecuente')}</div><p class="cx-mk-l bad" dir="ltr" translate="no"><span aria-hidden="true">✗</span> ${esc(p.wrong)}</p><p class="cx-mk-l ok" dir="ltr" translate="no"><span aria-hidden="true">✓</span> ${esc(p.right)}</p></div>` : '';
+    return `<div class="tr-kp">${eye}${courseRH(head)}<div class="lx-card cx-card">${t}${mk}</div></div>`;
+  }
+  if(scr.part === 'C'){
+    let tip = cl(p.tip);
+    if(scr.tip){ const all = courseRSentences(tip), en = courseRSentences(courseREn(p.tip));
+      if(all.length === en.length) tip = all.slice(scr.tip[0], scr.tip[1] + 1).join(' ');
+      else { const half = Math.ceil(all.length / scr.tipOf); tip = all.slice(scr.tipK * half, (scr.tipK + 1) * half).join(' '); } }
+    return `<div class="tr-kp">${eye}${courseRH(trs('slip.h'))}<div class="cx-tip tr-tipcard" dir="${courseTD()}">${isoHtml(tip)}</div></div>`;
+  }
+  if(scr.part === 'D'){
+    const ph = (scr.phrases || []).map(i=>p.phrases[i]);
+    return `<div class="tr-kp">${eye}${courseRH(head)}<div class="lx-card cx-card"><div class="cx-phrs">${ph.map(x=>x.copy ? courseCopyPhraseHtml(x) : `<div class="cx-phr"><button type="button" class="lx-spk" data-action="speak-sentence" data-text="${esc(x.phrase)}" aria-label="${esc(CL('Listen', 'Dinle', 'گوش کن', 'Escuchar'))}">${ICONS.soundOn}</button><div><b dir="ltr" translate="no">${esc(x.phrase)}</b>${x.meaning ? `<small dir="${courseTD()}">${isoHtml(cl(x.meaning))}</small>` : ''}</div></div>`).join('')}</div></div></div>`;
+  }
+  return '';
+}
+function courseRBeforeHtml(cid, uid){
+  const it = courseUnitItems(uid), ex = it.explain, w = it.writing, a = courseProg(cid).answers[uid + ':before'], rd = courseUi.rd;
+  const head = ex.before ? cl(ex.before) : (w && w.title ? cl(w.title) : cl(ex.title));
+  const text = rd && typeof rd.beforeDraft === 'string' ? rd.beforeDraft : (a && a.text) || '';
+  const c = courseGet(cid);
+  return `<div class="tr-before">${courseRImg('roadmap-start-clay.png', 'tr-start')}
+    ${courseREyebrow([trs('before.eye')])}${courseRH(head)}
+    <p class="tr-body" dir="${courseTD()}">${trsH('before.body')}</p>
+    <textarea id="tr-before" class="game-input tr-ta" rows="3" dir="ltr" translate="no" placeholder="${esc(CL('Write here', 'Buraya yaz', 'اینجا بنویس', 'Escribe aquí'))}">${esc(text)}</textarea>
+    ${w && w.prompt ? `<button type="button" class="link-btn tr-link" data-action="course-r-sample">${esc(c && c.sampleLine ? cl(c.sampleLine) : trs('sample.link'))}</button>` : ''}
+    ${courseRBtn('course-r-before', trs('before.save'))}
+    <button class="btn btn-ghost tr-ghost" data-action="course-r-before" data-skip="1">${esc(trs('skip'))}</button></div>`;
+}
+function courseROpenerHtml(cid, uid, R, r){
+  const ex = courseUnitItems(uid).explain, rd = R[r];
+  let head = '', body = '';
+  if(r < 2){ const p = courseRKpPoint(uid, rd.pts[0]); head = p ? cl(p.head) : courseRName(r);
+    if(r === 0) body = ex.hook ? cl(courseGt(cid, ex, 'hook')) : '';
+    else { const withBody = rd.pts.map(n=>courseRKpPoint(uid, n)).find(x=>x && x.body); body = withBody ? (courseRSentences(cl(withBody.body))[0] || '') : ''; } }
+  else { const it = courseUnitItems(uid); head = it.writing && it.writing.title ? cl(it.writing.title) : it.speaking ? cl(it.speaking.topic) : courseRName(r); body = courseRCando(courseUnitObjective(cid, uid)); }
+  const parts = trs('opener.meta', {s:rd.rail.length, q:rd.qs, m:rd.min}).split(' · '); if(!rd.qs) parts.splice(1, 1);
+  return `<header class="fs-hero tr-hero">
+      <span class="fs-pill"><bdi>${esc(trs('round', {n:r + 1}) + courseSep() + courseRName(r))}</bdi></span>
+      <h1 class="display" dir="${courseTD()}">${isoHtml(head)}<span class="dot">.</span></h1>
+      ${body ? `<p class="fs-sub tr-hsub" dir="${courseTD()}">${isoHtml(body)}</p>` : ''}
+      <div class="fs-art tr-cover" aria-hidden="true" style="--g:var(--fs-orange);"><i class="fs-disc"></i>${courseRImg(COURSE_R_COVER[r], '', COURSE_R_COVER_FB[r])}</div>
+    </header>
+    <p class="tr-meta">${COURSE_CLOCK_SVG}<span dir="${courseTD()}">${esc(parts.join(courseSep()))}</span></p>
+    ${courseRBtn('course-r-next', trs('go'))}`;
+}
+function courseRTryHtml(cid, uid){
+  const ex = courseUnitItems(uid).explain, q = ex.quick, rd = courseUi.rd; if(!q) return '';
+  if(!rd.tryOrder || rd.tryOrder.length !== q.options.length) rd.tryOrder = shuffle(q.options.map((_, i)=>i));
+  const pk = rd.tryPick, picked = pk !== null && pk !== undefined;
+  return `<div class="tr-q">${courseREyebrow([trs('try.eye')])}<h2 class="display tr-h tr-qp" dir="ltr" translate="no">${esc(q.prompt)}</h2>
+    <div class="fs-opts tr-opts">${rd.tryOrder.map(i=>`<button type="button" class="fs-opt tr-opt${picked ? (i === q.correct ? ' ok' : i === pk ? ' bad' : ' off') : ''}" data-action="course-r-try" data-i="${i}" ${picked ? 'disabled' : ''}><span class="fs-ot"><b dir="ltr" translate="no">${esc(q.options[i])}</b></span><span class="fs-chk" aria-hidden="true">${picked && i === q.correct ? ICONS.check : ''}</span></button>`).join('')}</div>
+    ${picked ? `<div class="cx-fb ${pk === q.correct ? 'ok' : 'bad'} tr-fb"><b dir="${courseTD()}">${trsH('q.answer', {x:trIso(q.options[q.correct])})}</b> ${q.why ? `<span dir="${courseTD()}">${isoHtml(cl(q.why))}</span>` : ''}</div>` : ''}</div>
+    ${picked ? courseRBtn('course-r-next', courseRNextLabel()) : ''}`;
+}
+// The worked example: tap what the reader can't use, then each move rewrites the draft until the fixed text stands (SPEC 3.2).
+function courseRExampleHtml(cid, uid, r){
+  const ex = courseUnitItems(uid).explain, e = ex.example, rd = courseUi.rd; if(!e) return '';
+  const eye = courseREyebrow([trs('rn', {n:r + 1}), e.eyebrow ? cl(e.eyebrow) : CL('Worked example', 'Çözümlü örnek', 'مثال حل‌شده', 'Ejemplo resuelto')]);
+  if((e.lines || []).length || e.instruction || e.text) return `<div class="tr-wex">${eye}${courseRH(cl(e.head))}<div class="lx-card cx-card">
+      ${e.instruction ? `<p class="cx-instr" dir="ltr" translate="no">${esc(e.instruction)}</p>` : ''}${(e.lines || []).length ? `<div class="cx-dlg" dir="ltr" translate="no">${e.lines.map(l=>`<div><b>${esc(l[0])}:</b> ${esc(l[1])}</div>`).join('')}</div>` : ''}${e.text ? `<p class="cx-text" dir="ltr" translate="no">${esc(e.text)}</p>` : ''}
+      ${e.answer ? `<div class="cx-answer"><span>${CL('Answer', 'Cevap', 'پاسخ', 'Respuesta')}</span><b dir="ltr" translate="no">${esc(e.answer)}</b></div>` : ''}</div></div>${courseRBtn('course-r-next', courseRNextLabel())}`;
+  const sp = courseRExSplit(e.item), walk = e.walk || [], cut = (e.cut || []).filter(x=>sp.draft.indexOf(x) >= 0);
+  const st = rd.ex || (rd.ex = {found:[], ws:0, fixed:false});
+  const facts = sp.facts ? `<button type="button" class="link-btn tr-link" data-action="course-r-facts">${esc(trs('facts.link'))}</button>` : '';
+  if(!cut.length){   // no cut list: the First draft | Fixed toggle
+    const fixed = st.fixed;
+    return `<div class="tr-wex">${eye}${courseRH(cl(e.head))}
+      <div class="tr-seg" role="tablist"><button type="button" class="${fixed ? '' : 'on'}" data-action="course-r-fix" data-v="0">${esc(trs('ex.draft'))}</button><button type="button" class="${fixed ? 'on' : ''}" data-action="course-r-fix" data-v="1">${esc(trs('ex.fixed'))}</button></div>
+      <div class="lx-card cx-card tr-draft${fixed ? ' fixed' : ''}" dir="ltr" translate="no">${esc(fixed ? e.answer || '' : sp.draft)}</div>
+      ${fixed ? `<div class="cx-rules cx-walk">${walk.map((w, i)=>`<div class="cx-rule"><span class="lx-n">${trN(i + 1)}</span><div><p dir="${courseTD()}">${isoHtml(cl(w))}</p></div></div>`).join('')}</div>${e.why && cl(e.why) ? `<p class="cx-body" dir="${courseTD()}">${isoHtml(cl(e.why))}</p>` : ''}` : ''}
+      ${facts}</div>${courseRBtn(fixed ? 'course-r-next' : 'course-r-fix', fixed ? courseRNextLabel() : trs('ex.fixed'), fixed ? '' : ' data-v="1"')}`;
+  }
+  const all = st.found.length >= cut.length, W = walk.length;
+  let text, step = '', btn;
+  if(st.ws === 0){
+    // the draft with each cut target as a tap target; the rest is plain text
+    const spans = cut.map((x, i)=>({i, a:sp.draft.indexOf(x), b:sp.draft.indexOf(x) + x.length})).sort((x, y)=>x.a - y.a);
+    let h = '', at = 0; spans.forEach(sx=>{ h += esc(sp.draft.slice(at, sx.a)); const f = st.found.includes(sx.i); h += `<button type="button" class="tr-cut${f ? ' gone' : ''}" data-action="course-r-cut" data-i="${sx.i}" ${f ? 'disabled' : ''}>${esc(sp.draft.slice(sx.a, sx.b))}</button>`; at = sx.b; });
+    h += esc(sp.draft.slice(at)); text = `<div class="lx-card cx-card tr-draft" dir="ltr" translate="no">${h}</div>`;
+    const hint = (e.cutHint ? cl(e.cutHint) : trs('cut.default')) + ' ' + trs('cut.left', {k:cut.length - st.found.length});
+    step = all ? '' : `<p class="tr-tip" dir="${courseTD()}">${isoHtml(hint)}</p>`;
+    btn = all ? courseRBtn('course-r-move', trs('walk.next')) : courseRBtn('course-r-showme', trs('cut.show'));
+  } else {
+    const sents = courseRSentences(e.answer || ''), k = st.ws;
+    if(k === 1){ let h = '', at = 0; cut.map(x=>({a:sp.draft.indexOf(x), x})).sort((x, y)=>x.a - y.a).forEach(o=>{ h += esc(sp.draft.slice(at, o.a)) + `<s class="tr-cutgone">${esc(o.x)}</s>`; at = o.a + o.x.length; }); h += esc(sp.draft.slice(at));
+      text = `<div class="lx-card cx-card tr-draft" dir="ltr" translate="no">${h}</div>`; }
+    else { const show = k >= W ? sents.length : Math.max(1, Math.round(sents.length * (k - 1) / Math.max(1, W - 1)));
+      text = `<div class="lx-card cx-card tr-draft fixed" dir="ltr" translate="no">${esc(sents.slice(0, show).join(' '))}</div>`; }
+    step = walk[k - 1] ? `<div class="cx-rule tr-step"><span class="lx-n">${trN(k)}</span><div><p dir="${courseTD()}">${isoHtml(cl(walk[k - 1]))}</p></div></div>` : '';
+    const end = k >= W;
+    if(end && W < 2){ text = `<div class="lx-card cx-card tr-draft fixed" dir="ltr" translate="no">${esc(e.answer || '')}</div>`; }
+    btn = end ? courseRBtn('course-r-next', courseRNextLabel()) : courseRBtn('course-r-move', trs('walk.next'));
+    if(end && e.why && cl(e.why)) step += `<p class="cx-body" dir="${courseTD()}">${isoHtml(cl(e.why))}</p>`;
+  }
+  return `<div class="tr-wex">${eye}${courseRH(cl(e.head))}${step}${text}${st.ws === 0 && !all ? `` : ''}${facts}</div>${btn}`;
+}
+// The hint of a missed question (SPEC 4.2): hint2, else built from the key point it tests; never the answer itself.
+function courseRNames(ans, s){ return new RegExp('(^|[^\\p{L}\\p{N}])' + reEsc(String(ans).toLowerCase()) + '(?![\\p{L}\\p{N}])', 'u').test(String(s).toLowerCase()); }
+function courseRHint(cid, uid, q){
+  const ans = q.options[q.correct];
+  if(q.hint2){ const h = cl(q.hint2); return courseRNames(ans, h) ? '' : h; }
+  const src = q.kpU || uid, it = courseUnitItems(src), ex = it.explain; if(!ex) return '';
+  if(q.kp === 'b2' || /#x$/.test(q.key || '')){ const b = courseB2(cid, src) || it.b2; if(!ex.b2Point) return ''; const t = b && b.expParts && b.expParts.test ? cl(b.expParts.test) : '';
+    const h = 'B2' + courseSep() + cl(ex.b2Point.head) + (t ? ': ' + t : ''); return courseRNames(ans, h) ? '' : h; }
+  const n = q.point || 0, p = (ex.points || [])[n - 1]; if(!p) return '';
+  let extra = '';
+  if(n === courseRGp(it) && it.grammar && it.grammar.expParts && it.grammar.expParts.test) extra = cl(it.grammar.expParts.test);
+  else if(courseRLabelled(p)) extra = p.steps.map(s=>{ const sl = courseRStepLab(s); let l = sl ? sl[0] : trIso(courseREn(s).split(':')[0].trim());
+      // "the customer, the offer, ...": a label inside the line starts lower-case (not an acronym such as KPI)
+      if(LANG !== 'fa' && l.length > 1 && l.charAt(1) === l.charAt(1).toLowerCase()) l = l.charAt(0).toLocaleLowerCase(LANG === 'tr' ? 'tr-TR' : undefined) + l.slice(1);
+      return l; }).join(LANG === 'fa' ? '، ' : ', ');
+  else if(p.body) extra = courseRSentences(cl(p.body))[0] || '';
+  const full = trs('hint', {n, head:cl(p.head)}) + (extra ? ': ' + extra : ''), bare = trs('hint', {n, head:cl(p.head)});
+  return !courseRNames(ans, full) ? full : !courseRNames(ans, bare) ? bare : '';
+}
+// One question, the 4.1 flow: right first time / not this one + hint + second try / the answer first, then why and Look again.
+function courseRQuestionHtml(cid, uid, q, st, eye, foot, actions, note){
+  const right = q.options[q.correct], p = st.p || [], done = !!st.res, two = q.options.length < 3;
+  const opts = q.options.map((o, i)=>{ const on = p.includes(o), cls = done ? (o === right ? ' ok' : on ? ' bad' : ' off') : on ? ' gone' : '';
+    return `<button type="button" class="fs-opt tr-opt${cls}" data-action="${actions.pick}" data-i="${i}" ${done || on ? 'disabled' : ''}><span class="fs-ot"><b dir="ltr" translate="no">${esc(o)}</b></span><span class="fs-chk" aria-hidden="true">${done && o === right ? ICONS.check : ''}</span></button>`; }).join('');
+  let fb = '';
+  if(!done && p.length === 1){ const h = courseRHint(cid, uid, q);
+    fb = `<div class="tr-miss"><p class="tr-not" dir="${courseTD()}">${trsH('q.notThis', {pick:trIso('“' + p[0] + '”')})}</p>${h ? `<p class="tr-hint" dir="${courseTD()}">${isoHtml(h)}</p>` : ''}<p class="tr-again" dir="${courseTD()}">${trsH('q.again')}</p></div>`; }
+  if(done){ const why = q.why && cl(q.why) ? `<span dir="${courseTD()}">${isoHtml(cl(q.why))}</span>` : '';
+    const lk = st.res === 'look' || st.res === 'soft' ? courseRLookLink(cid, uid, q, actions.look) : '';
+    fb = `<div class="cx-fb ${st.res === 'right' ? 'ok' : st.res === 'soft' ? 'ok' : 'bad'} tr-fb"><b dir="${courseTD()}">${trsH('q.answer', {x:trIso(q.full || right)})}</b> ${why}</div>${st.res === 'look' ? lk : ''}`; }
+  return `<div class="tr-q">${eye}<div class="card-flat tr-qcard" dir="ltr" translate="no">${esc(q.prompt)}</div>
+    ${q.hint ? `<p class="tr-tip" dir="${courseTD()}">${esc(q.hint)}</p>` : ''}
+    <div class="fs-opts tr-opts">${opts}</div>${fb}${note || ''}</div>${done ? foot : ''}`;
+}
+function courseRLookLink(cid, uid, q, action){
+  const lk = courseLookLine(cid, uid, q.earlier ? q : Object.assign({}, q, {earlier:false})); if(!lk) return '';
+  return `<button type="button" class="link-btn tr-look" data-action="${action || 'course-r-look'}" data-u="${esc(lk.u)}" data-n="${lk.n}"><span dir="${courseTD()}">${isoHtml(lk.t)}${lk.head ? ': <b>' + isoHtml(lk.head) + '</b>' : ''}</span></button>`;
+}
+function courseRQHtml(cid, uid, scr){
+  const q = courseRQ(cid, uid, scr.o), st = courseRQState(cid, uid, scr.key);
+  let eye;
+  if(scr.kind === 'fresh') eye = `<div class="tr-freshh">${courseRImg('icon-review.png', 'tr-clock')}${courseREyebrow([trs('fresh.eye', {no:trN(courseUnitNo(cid, q.from || uid))})])}</div>`;
+  else if(scr.kind === 'lock') eye = courseREyebrow([trs('lockin.eye')]);
+  else eye = `<div class="tr-qhead">${courseREyebrow([trs('check.eye', {i:scr.i + 1, n:scr.n})])}<span class="tr-dots" aria-hidden="true">${Array.from({length:scr.n}, (_, k)=>`<i class="${k < scr.i ? 'on' : k === scr.i ? 'cur' : ''}"></i>`).join('')}</span></div>`;
+  const note = scr.kind === 'fresh' ? `<p class="tr-tip tr-freshnote" dir="${courseTD()}">${trN(scr.i + 1)} ${LANG === 'fa' ? 'از' : LANG === 'tr' ? '/' : LANG === 'es' ? 'de' : 'of'} ${trN(scr.n)}${esc(courseSep())}${trsH('fresh.note')}</p>` : '';
+  return courseRQuestionHtml(cid, uid, q, st, eye, courseRBtn('course-r-next', courseRNextLabel()), {pick:'course-r-pick', look:'course-r-look'}, note);
+}
+function courseRNotesVals(cid, uid){ const a = courseProg(cid).answers[uid + ':notes']; return a && Array.isArray(a.parts) ? a.parts : []; }
+function courseRNotesFields(cid, uid, prefix){
+  const w = courseUnitItems(uid).writing, vals = courseRNotesVals(cid, uid), rd = courseUi.rd, draft = rd && rd.notesDraft;
+  return courseRNoteParts(w).map(({p, i})=>`<label class="tr-note"><span dir="${courseTD()}">${trN(i + 1)}${esc(courseSep())}${isoHtml(cl(p.t))}</span>
+    <input class="game-input tr-note-in" data-i="${i}" dir="ltr" translate="no" value="${esc(draft && typeof draft[i] === 'string' ? draft[i] : vals[i] || '')}" placeholder="${esc(p.sample || '')}" data-sample="${esc(p.sample || '')}"></label>`).join('');
+}
+function courseRNotesHtml(cid, uid){
+  return `<div class="tr-notes">${courseREyebrow([trs('notes.eye')])}${courseRH(trs('notes.head'))}<p class="tr-body" dir="${courseTD()}">${trsH('notes.body')}</p>
+    <div class="tr-notelist">${courseRNotesFields(cid, uid)}</div>
+    <button type="button" class="link-btn tr-link" data-action="course-r-notes-sample">${esc(trs('notes.sample'))}</button>
+    ${courseRBtn('course-r-notes-save', trs('notes.save'))}<button class="btn btn-ghost tr-ghost" data-action="course-r-next">${esc(trs('skip.now'))}</button></div>`;
+}
+// The notes pinned on top of speaking and writing: one line, tap to open, read-only with an Edit link.
+function courseRPinHtml(cid, uid){
+  const w = courseUnitItems(uid).writing, vals = courseRNotesVals(cid, uid), parts = courseRNoteParts(w).map(x=>({t:cl(x.p.t), v:vals[x.i] || ''})).filter(x=>x.v);
+  if(!courseRNoteParts(w).length) return '';
+  const line = parts.map(x=>x.v).join(' · ');
+  return `<details class="card-flat tr-pin"><summary><span class="lx-eyebrow">${esc(trs('shownotes'))}</span> <span class="tr-pinline" dir="ltr" translate="no">${esc(line || '…')}</span></summary>
+    ${parts.length ? `<ul class="tr-pinlist">${parts.map(x=>`<li><small dir="${courseTD()}">${isoHtml(x.t)}</small><span dir="ltr" translate="no">${esc(x.v)}</span></li>`).join('')}</ul>` : ''}
+    <button type="button" class="link-btn tr-link" data-action="course-r-notes-open">${esc(trs('notes.edit'))}</button></details>`;
+}
+// "Your first try, checked" (Round 2): the lesson's errorWatch rules (and the B2 item's) and the worked example's cut words, found in the before line.
+function courseRFirstHits(cid, uid, text){
+  const it = courseUnitItems(uid), hits = [];
+  [it.grammar, courseB2(cid, uid)].forEach(g=>{ if(g) errorWatchHits(text, g).forEach(h=>{ if(!hits.some(x=>x.phrase === h.phrase)) hits.push(h); }); });
+  const low = String(text || '').toLowerCase().replace(/[’‘]/g, "'"), e = it.explain && it.explain.example;
+  const cuts = ((e && e.cut) || []).filter(c=>coursePartCueRe(c).test(low));
+  return {hits, cuts};
+}
+function courseRMarkText(text, phrases){
+  const t = String(text || ''), low = t.toLowerCase().replace(/[’‘]/g, "'"), spans = [];
+  phrases.forEach(ph=>{ const p = String(ph).trim().toLowerCase(); if(!p) return; const re = new RegExp("(^|[^\\p{L}\\p{N}'])(" + reEsc(p) + ")(?![\\p{L}\\p{N}])", 'gu'); let m;
+    while((m = re.exec(low))){ const a = m.index + m[1].length; spans.push([a, a + m[2].length]); if(!m[0].length) re.lastIndex++; } });
+  spans.sort((a, b)=>a[0] - b[0]); let h = '', at = 0;
+  spans.forEach(sp=>{ if(sp[0] < at) return; h += esc(t.slice(at, sp[0])) + '<u>' + esc(t.slice(sp[0], sp[1])) + '</u>'; at = sp[1]; });
+  return h + esc(t.slice(at));
+}
+function courseRFirstHtml(cid, uid, r){
+  const a = courseProg(cid).answers[uid + ':before'], text = (a && a.text) || '', f = courseRFirstHits(cid, uid, text);
+  const fixes = f.hits.map(h=>`<p class="tr-fix"><b dir="ltr" translate="no">${esc(String(h.phrase).trim())}</b> <span dir="${courseTD()}">${isoHtml(cl(h.fix))}</span></p>`).join('');
+  const cuts = f.cuts.length ? `<p class="tr-fix" dir="${courseTD()}">${trsH('first.cut', {words:f.cuts.map(x=>trIso('“' + x + '”')).join(LANG === 'fa' ? '، ' : ', ')})}</p>` : '';
+  return `<div class="tr-first">${courseREyebrow([trs('first.eye', {n:r + 1})])}${courseRH(trs('first.head'))}
+    <div class="card-flat tr-mine" dir="ltr" translate="no">${courseRMarkText(text, f.hits.map(h=>h.phrase).concat(f.cuts))}</div>
+    ${fixes || cuts ? fixes + cuts : `<p class="tr-body" dir="${courseTD()}">${trsH('first.none')}</p>`}
+    ${courseRNoteParts(courseUnitItems(uid).writing).length ? `<button type="button" class="link-btn tr-link" data-action="course-r-notes-open">${esc(trs('first.fix'))}</button>` : ''}</div>
+    ${courseRBtn('course-r-next', courseRNextLabel())}`;
+}
+// Speaking in Round 3: the notes pinned, question 1 in shrinking tries (90/60/45), the other questions once each, then listen back.
+function courseRSpeakHtml(cid, uid, sp){
+  const st = courseSpState(uid), R = st.R = courseSpRounds(sp), last = R.length - 1, sec = s=>trN(s);
+  const q1 = (sp.questions || [])[0], rest = (sp.questions || []).slice(1), fol = sp.followups || [];
+  const tries = `<div class="cs-rounds tr-tries">${R.map((s, i)=>`<span class="cs-rdot${st.stage > 0 && (i < st.round || (i === st.round && !st.running)) ? ' done' : st.stage > 0 && i === st.round ? ' cur' : ''}">${esc(trs('try.n', {n:i + 1, s}))}</span>`).join('')}</div>`;
+  const notes = st.notes.length ? `<div class="card-flat cs-notes"><div class="eyebrow">${CL('Useful phrases', 'Faydalı kalıplar', 'عبارت‌های مفید', 'Frases útiles')}</div><div dir="ltr" translate="no">${st.notes.map(i=>`<span class="cs-note">${esc((sp.expressions[i] || {}).phrase || '')}</span>`).join('')}</div></div>` : '';
+  const q1card = q1 ? `<div class="card-flat tr-q1"><p dir="${courseTD()}">${isoHtml(cl(q1))}</p></div>` : '';
+  const listen = courseListenBackHtml(courseSpChecks(sp).map(x=>`<span dir="${courseTD()}">${isoHtml(cl(x))}</span>`));
+  const btn = (action, label)=>`<button class="btn btn-primary cs-main" data-action="${action}" data-cid="${cid}" data-uid="${esc(uid)}">${esc(label)}</button>`;
+  if(st.stage === 0){
+    const phrase = (e, i)=>`<button class="cs-phr${st.notes.includes(i) ? ' on' : ''}" data-action="course-sp-note" data-i="${i}"><b dir="ltr" translate="no">${esc(e.phrase)}</b><span>${isoHtml(cl(e.meaning))}</span></button>`;
+    const recRow = courseRecSupported() ? `<button class="cs-rec${st.rec ? ' on' : ''}" data-action="course-sp-rec" aria-pressed="${st.rec ? 'true' : 'false'}"><span class="cs-box">${st.rec ? ICONS.check : ''}</span><span><b>${CL('Record myself', 'Sesimi kayda al', 'صدایم را ضبط کن', 'Grabarme')}</b><small>${CL('You hear it back after each round. It stays on this phone and is not saved.', 'Her turdan sonra dinlersin. Bu telefonda kalır, saklanmaz.', 'بعد از هر دور دوباره گوشش می‌کنی. ضبطت از همین گوشی بیرون نمی‌رود و ذخیره هم نمی‌شود.', 'Lo escuchas después de cada ronda. Se queda en este móvil y no se guarda.')}</small></span></button>` : '';
+    return `${courseRPinHtml(cid, uid)}${courseREyebrow([trs('round', {n:3}), courseRName(2)])}${courseRH(trs('say.head'))}${q1card}${tries}${courseUseInHtml(cid, uid)}
+      <div class="stack" style="gap:8px; margin-top:12px;">${(sp.expressions || []).map(phrase).join('')}</div>${notes}${recRow}
+      ${btn('course-sp-go', trs('try.start', {n:1}))}`;
+  }
+  if(st.stage === 1){
+    const r = st.round, secs = R[r], left = st.running ? st.left : 0;
+    const clip = !st.running && st.clips[r] ? `<div class="card-flat cs-clip"><div class="eyebrow">${CL('Listen to yourself', 'Kendini dinle', 'به صدای خودت گوش کن', 'Escúchate')}</div><audio controls preload="auto" src="${st.clips[r]}"></audio></div>` : '';
+    const recNote = st.recErr ? `<p style="font-size:12px; color:var(--ink-soft); margin:8px 0 0;">${CL('The microphone is off, so this round is not recorded. The timer still works.', 'Mikrofon kapalı, bu yüzden tur kaydedilmiyor. Süre yine çalışır.', 'میکروفون خاموش است، پس این دور ضبط نمی‌شود. زمان‌سنج همچنان کار می‌کند.', 'El micrófono está apagado, así que esta ronda no se graba. El temporizador sigue funcionando.')}</p>` : '';
+    const tip = r > 0 ? `<p class="cs-rtip">${CL('Same facts, fewer words.', 'Aynı bilgiler, daha az kelime.', 'همان نکته‌ها، با کلمه‌های کمتر.', 'Los mismos datos, menos palabras.')}</p>` : '';
+    let b;
+    if(st.running) b = btn('course-sp-done', CL('Done', 'Bitti', 'تمام', 'Listo'));
+    else if(r < last) b = btn('course-sp-go', trs('try.start', {n:r + 2}));
+    else b = btn('course-r-sp-more', courseRNextLabel());
+    return `${courseRPinHtml(cid, uid)}${q1card}${tries}
+      <div class="cs-count${st.running ? ' on' : ''}"><div class="eyebrow">${esc(trs('try.n', {n:r + 1, s:secs}))}</div><b>${courseClock(st.running ? left : 0)}</b><span class="cs-cbar"><i style="width:${st.running ? 100 * left / secs : 0}%;"></i></span></div>
+      ${tip}${recNote}${clip}${notes}${!st.running ? listen : ''}${b}`;
+  }
+  if(st.stage === 3){
+    return `${courseRPinHtml(cid, uid)}${courseRH(trs('singles'))}<div class="stack" style="gap:8px;">${rest.map((q, i)=>`<div class="card-flat"><b>${trN(i + 2)}.</b> <span dir="${courseTD()}">${isoHtml(cl(q))}</span></div>`).join('')}
+      ${fol.map(q=>`<div class="card-flat" style="background:var(--cat-lis-soft); border-color:var(--cat-lis-soft);"><div class="eyebrow" style="color:color-mix(in srgb, var(--cat-lis) 75%, var(--ink));">${CL('Then', 'Sonra', 'بعد', 'Después')}</div><span dir="${courseTD()}">${isoHtml(cl(q))}</span></div>`).join('')}</div>
+      ${btn('course-r-sp-check', courseRNextLabel())}`;
+  }
+  return `${sp.model ? `<div class="card-flat cs-spmodel"><div class="row between" style="align-items:center; gap:8px;"><div class="eyebrow" style="color:color-mix(in srgb, var(--cat-lis) 75%, var(--ink));">${CL('Listen to a model', 'Bir örnek dinle', 'یک نمونه گوش کن', 'Escucha un modelo')}</div>
+      <button class="btn btn-sm cs-play" data-action="speak-sentence" data-text="${esc(sp.model)}">${ICONS.soundOn} ${CL('Play', 'Dinle', 'پخش', 'Escuchar')}</button></div>
+      <details style="margin-top:8px;"><summary style="cursor:pointer; font-size:13px; font-weight:700; color:var(--ink-soft);">${CL('Read it', 'Metni gör', 'متنش را ببین', 'Leerlo')}</summary><p dir="ltr" translate="no" style="margin:6px 0 0; font-size:14px; line-height:1.55;">${esc(sp.model)}</p></details></div>` : ''}
+    ${listen}
+    ${sp.culture ? `<div class="card-flat" style="margin-top:14px; background:var(--cat-review-soft); border-color:var(--cat-review-soft);"><div class="eyebrow">${CL('Culture note', 'Kültür notu', 'نکته‌ی فرهنگی', 'Nota cultural')}</div><p style="margin:4px 0 0; font-size:13.5px;" dir="${courseTD()}">${isoHtml(cl(sp.culture))}</p></div>` : ''}
+    ${btn('course-sp-finish', courseNextBtnLabel())}`;
+}
+function courseRTaskHtml(cid, uid, scr, r){
+  const it = courseUnitItems(uid), t = scr.task, head = (eyeTxt, title)=>courseREyebrow([trs('rn', {n:r + 1}), eyeTxt]) + (title ? courseRH(title) : '');
+  const noScore = h=>h.replace(/<p class="cx-qnote"[^>]*>[\s\S]*?<\/p>/g, '');   // no "X of N right" in round mode
+  if(t === 'speaking' && it.speaking) return courseRSpeakHtml(cid, uid, it.speaking);
+  if(t === 'writing' && it.writing){
+    const a = courseProg(cid).answers[uid + ':before'], bt = a && a.text ? `<details class="card-flat tr-fold"><summary>${esc(trs('firsttry.fold'))}</summary><p dir="ltr" translate="no">${esc(a.text)}</p></details>` : '';
+    return courseRPinHtml(cid, uid) + head(courseStepLabel('writing'), courseCardTitle(cid, uid, 'writing')) + bt + renderCourseWriting(cid, uid, it.writing);
+  }
+  if(t === 'judge' && it.judge) return head(courseStepLabel('judge'), courseCardTitle(cid, uid, 'judge')) + renderCourseJudge(cid, uid, it.judge);
+  if(t === 'listening' && it.listening) return head(courseStepLabel('listening'), cl(it.listening.title)) + noScore(renderCourseListening(cid, uid, it.listening));
+  if(t === 'story' && it.story) return head(courseStepLabel('story'), cl(it.story.title)) + noScore(courseStoryOneHtml(cid, uid, it.story));
+  if(t === 'branch' && it.branch) return head(courseStepLabel('branch'), cl(it.branch.title)) + renderCourseBranch(cid, uid, it.branch);
+  if(t === 'perspective' && it.perspective) return head(courseStepLabel('perspective'), courseCardTitle(cid, uid, 'perspective')) + renderCoursePerspective(cid, uid, it.perspective);
+  return courseRBtn('course-r-next', courseRNextLabel());
+}
+// The ticket: three stamp slots; an earned stamp shows its clay seal (a missing picture: the UI ring), the label in Fredoka under it.
+function courseRTicketHtml(st, land){
+  return `<div class="tr-ticket"><div class="lx-eyebrow">${esc(trs('ticket'))}</div><div class="tr-slots">${[0, 1, 2].map(i=>`<div class="tr-slot${st[i] ? ' on' : ''}${land === i ? ' land' : ''}"><span class="tr-stamp">${st[i] ? courseRImg(COURSE_R_STAMP[i], '') : ''}<i class="tr-ring" aria-hidden="true"></i></span><b>${esc(courseRName(i))}</b></div>`).join('')}</div></div>`;
+}
+function courseRNextLesson(cid, uid){ const o = courseOrder(cid), i = o.indexOf(uid); const nx = i >= 0 ? o.slice(i + 1).find(id=>!courseIsMock(cid, id) && !courseIsCp(cid, id)) : null; return nx ? trN(courseUnitNo(cid, nx)) : ''; }
+function courseRDoneHtml(cid, uid, R, r){
+  const rd = courseUi.rd, st = rd && rd.redo ? [0, 1, 2].map(i=>i <= r || courseRStatus(cid, uid)[i]) : courseRStatus(cid, uid), land = rd && !rd.landed[r] ? r : -1;
+  if(rd) rd.landed[r] = 1;
+  const got = courseRGot(cid, uid, R, r), nl = courseRNextLesson(cid, uid);
+  const lines = rd && rd.redo ? [] : R[r].screens.filter(x=>x.t === 'q' && x.kind !== 'fresh').map((x, k)=>({k, s:courseRQState(cid, uid, x.key)})).filter(x=>x.s.res === 'soft' || x.s.res === 'look')
+    .map(x=>nl ? `<p class="tr-line" dir="${courseTD()}">${trsH(x.s.res === 'soft' ? 'done.soft' : 'done.look', {i:x.k + 1, no:nl})}</p>` : '').join('');
+  const next = r < 2 ? `<p class="tr-nextline" dir="${courseTD()}">${trsH('done.next', {n:r + 2, name:courseRName(r + 1), m:R[r + 1].min})}</p>` : '';
+  const btns = r < 2 ? `${courseRBtn('course-r-round', trs('btn.startRound', {n:r + 2}))}<button class="btn btn-ghost tr-ghost" data-action="course-r-stop">${esc(trs('btn.stop'))}</button>`
+    : courseRBtn('course-r-finish', courseNextBtnLabel());
+  return `<div class="tr-done">${courseRTicketHtml(st, land)}<h1 class="display cs-h1 tr-h1" dir="${courseTD()}">${trsH('done.round', {n:r + 1})}</h1>
+    ${got.length ? `<div class="card-flat tr-got"><b dir="${courseTD()}">${trsH('done.got')}</b><p dir="${courseTD()}">${got.map(x=>isoHtml(x)).join(esc(courseSep()))}</p></div>` : ''}
+    ${lines}${next}</div>${btns}`;
+}
+function renderCourseRound(){
+  const vp = state.viewParams || {}, cid = vp.cid, uid = vp.uid;
+  if(!courseRoundsOn(cid, uid)){ state.view = 'course-lesson'; state.viewParams = {cid, uid}; state.courseReturn = null; return renderCourseLesson(); }
+  // after a reload the lesson file may not be there yet: wait for it (the view renders again when it lands), then resume at the saved place
+  { const lm = courseLazyUnitMod(uid); if(lm && !courseLazyReady(lm)){ courseUi.rd = null; return `<div class="fade-in course-card tr-page lx-page lx-course fs-scr" data-type="round">
+      <div class="cs-top"><button class="cs-x" data-action="course-r-x" aria-label="${esc(CL('Close', 'Kapat', 'بستن', 'Cerrar'))}">${COURSE_X_SVG}</button><span style="flex:1;"></span></div>
+      <div class="screen tr-screen">${courseLazyWaitHtml(cid, uid, lm)}</div></div>`; } }
+  const rd = courseRState(cid, uid); state.courseReturn = state.courseReturn && state.courseReturn.uid === uid ? state.courseReturn : {cid, uid, type:'round'};
+  const R = courseRounds(cid, uid); if(!R) return renderCourseLesson();
+  rd.r = Math.max(0, Math.min(2, rd.r)); rd.s = Math.max(0, Math.min(rd.s, R[rd.r].screens.length - 1));
+  const r = rd.r, scr = R[r].screens[rd.s];
+  if(courseUi.sp && !(scr.t === 'task' && scr.task === 'speaking')) courseSpLeave();
+  let inner = '';
+  if(scr.t === 'before') inner = courseRBeforeHtml(cid, uid);
+  else if(scr.t === 'opener') inner = courseROpenerHtml(cid, uid, R, r);
+  else if(scr.t === 'kp') inner = courseRKpHtml(cid, uid, scr, r) + courseRBtn('course-r-next', courseRNextLabel());
+  else if(scr.t === 'try') inner = courseRTryHtml(cid, uid);
+  else if(scr.t === 'example') inner = courseRExampleHtml(cid, uid, r);
+  else if(scr.t === 'q') inner = courseRQHtml(cid, uid, scr);
+  else if(scr.t === 'notes') inner = courseRNotesHtml(cid, uid);
+  else if(scr.t === 'first') inner = courseRFirstHtml(cid, uid, r);
+  else if(scr.t === 'task') inner = courseRTaskHtml(cid, uid, scr, r);
+  else if(scr.t === 'done') inner = courseRDoneHtml(cid, uid, R, r);
+  const mm = inner.match(/<button class="btn btn-primary cs-main"[^>]*>[\s\S]*?<\/button>/);
+  let body = mm ? inner.replace(mm[0], '') : inner, foot = mm ? mm[0] : '';
+  const gm = body.match(/<button class="btn btn-ghost tr-ghost"[^>]*>[\s\S]*?<\/button>/); if(gm && foot){ body = body.replace(gm[0], ''); foot += gm[0]; }
+  const pos = courseRRailPos(R, r, rd.s), cur = R[r].rail.indexOf(scr);
+  const segs = R[r].rail.map((x, k)=>`<i class="${scr.t === 'done' || k < cur ? 'done' : k === cur ? 'cur' : ''}"></i>`).join('');
+  const label = pos.i && scr.t !== 'done' ? trs('rail', {r:r + 1, i:pos.i, k:pos.k}) : trs('round', {n:r + 1}) + courseSep() + courseRName(r);
+  const recap = rd.recap && rd.recap.until > Date.now() ? `<p class="tr-recap" dir="${courseTD()}">${isoHtml(rd.recap.text)}</p>` : '';
+  if(recap){ const until = rd.recap.until; setTimeout(()=>{ const n = document.querySelector('.tr-recap'); if(n && courseUi.rd === rd && rd.recap && rd.recap.until === until) n.remove(); }, Math.max(0, until - Date.now())); }
+  const back = scr.t === 'done' ? '' : `<button class="cl-back tr-back" data-action="course-r-back">${LANG === 'fa' ? '›' : '‹'} ${CL('Back', 'Geri', 'قبلی', 'Atrás')}</button>`;
+  return `<div class="fade-in course-card tr-page lx-page lx-course fs-scr" data-type="round" data-screen="${scr.t}${scr.part ? '-' + scr.part : ''}${scr.task ? '-' + scr.task : ''}${scr.kind ? '-' + scr.kind : ''}" data-r="${r}">
+    <div class="cs-top"><button class="cs-x" data-action="course-r-x" aria-label="${esc(CL('Close', 'Kapat', 'بستن', 'Cerrar'))}">${COURSE_X_SVG}</button>
+      <div class="tr-rail" role="img" aria-label="${esc(label)}">${segs}</div></div>
+    <div class="tr-railrow">${back || '<span></span>'}<span class="cl-n" dir="${courseTD()}">${esc(label)}</span></div>
+    ${recap}
+    <div class="screen tr-screen">${body}</div>
+    ${foot ? `<div class="cs-foot">${foot}</div>` : ''}
+  </div>`;
+}
+
+/* ---- the lesson page in rounds (SPEC 5): 3 round rows, the stamp ticket, ~N min · 3 rounds ---- */
+function courseRCando(obj){ let s = String(obj || '').trim();
+  const res = [/^After this lesson,?\s*you can\s*/i, /^Bu dersin sonunda,?\s*/i, /^بعد از این درس،?\s*/, /^(Después de|Al final de) esta lección,?\s*(puedes|podrás)\s*/i];
+  res.forEach(re=>{ s = s.replace(re, ''); }); return s ? s.charAt(0).toUpperCase() + s.slice(1) : s; }
+function courseRRowLine(cid, uid, R, r){ if(r < 2) return courseRGot(cid, uid, R, r).join(courseSep());
+  const ts = R[2].screens.filter(x=>x.t === 'task').map(x=>x.task); return ts.length === 2 && ts[0] === 'speaking' && ts[1] === 'writing' ? trs('say.write') : ts.map(t=>courseStepLabel(t, uid)).join(courseSep()); }
+function courseRLessonParts(c, cid, uid, nu){
+  const R = courseRounds(cid, uid); if(!R) return null;
+  const st = courseRStatus(cid, uid), cur = st.indexOf(false), at = (courseProg(cid).roundAt || {})[uid], prev = coursePreviewOn();
+  const rows = R.map((x, r)=>{
+    const done = st[r], here = r === cur, pos = here && at && at.r === r ? courseRRailPos(R, r, at.s) : null;
+    const k = done ? CL('Done', 'Bitti', 'انجام شد', 'Hecho') : here ? (pos && pos.i ? trs('row.here', {s:pos.i, k:pos.k}) : trs('row.here0')) : trs('row.after', {n:r});
+    const redo = done ? `<button class="cl-redo" data-action="course-r-start" data-cid="${cid}" data-uid="${esc(uid)}" data-redo="${r}">${CL('Do it again', 'Yeniden yap', 'دوباره انجامش بده', 'Hazlo otra vez')}</button>` : '';
+    const peek = !done && !here && prev ? `<button class="cl-redo" data-action="course-r-start" data-cid="${cid}" data-uid="${esc(uid)}" data-r="${r}">${CL('Open', 'Aç', 'باز کن', 'Abrir')}</button>` : '';
+    return `<div class="cl-step fs-row tr-rrow${done ? ' done' : here ? ' cur' : ''}" data-r="${r}">
+      <span class="cl-sn tr-sn">${courseRImg(COURSE_R_COVER[r], '', COURSE_R_COVER_FB[r])}${done ? `<i class="tr-tick">${ICONS.check}</i>` : ''}</span>
+      <div class="cl-sb"><span class="fs-k">${esc(k)}</span><b class="display">${esc(trs('rn', {n:r + 1}) + courseSep() + courseRName(r))}</b><p dir="${courseTD()}">${isoHtml(courseRRowLine(cid, uid, R, r))}</p>${redo}${peek}</div>
+      <span class="cl-min">${esc(courseMinText(trN(x.min)))}</span></div>`;
+  }).join('');
+  const total = courseRMinutes(R), ph = trs('plan.h').split(' · '), meta = trs('lesson.meta', {m:total}).split(' · ');
+  const stopLine = meta[2] ? meta[2].charAt(0).toUpperCase() + meta[2].slice(1) + '.' : '';
+  const plan = `<div class="lx-sec fs-sec fs-plan tr-plan"><div class="lx-head"><div class="lx-eyebrow">${esc(ph[0])}</div><h2 class="display">${esc(ph[1] || '')}<span class="dot">.</span></h2></div>
+      <div class="cl-steps">${rows}</div>${courseRTicketHtml(st, -1)}${stopLine ? `<p class="tr-stopline" dir="${courseTD()}">${esc(stopLine)}</p>` : ''}</div>`;
+  const chip = meta.slice(0, 2).join(courseSep());
+  let btn;
+  if(cur >= 0){ const started = courseRStarted(cid, uid); btn = `<button class="btn btn-primary cs-main fs-cta" data-action="course-r-start" data-cid="${cid}" data-uid="${esc(uid)}">${esc(started ? trs('btn.continue', {n:cur + 1}) : trs('btn.startRound', {n:1}))}</button>`; }
+  else btn = nu ? `<button class="btn btn-primary cs-main fs-cta" data-action="course-go" data-cid="${cid}" data-uid="${esc(nu)}">${esc(courseNextLabel(cid, nu))}</button>`
+    : `<button class="btn btn-primary cs-main fs-cta" data-action="course-close" data-cid="${cid}">${CL('Back to the course', 'Kursa dön', 'برگشت به دوره', 'Volver al curso')}</button>`;
+  return {plan, chip, btn};
+}
+// The course page "Your next step" (SPEC 6.4): "Lesson 5.1 · Round 2", the objective, Continue: Round 2 / Start: Lesson 5.1, the three round chips.
+function courseRNextCardHtml(c, nx){
+  if(!nx || nx.final || nx.locked || !courseRoundsOn(c.id, nx.uid)) return '';
+  const cid = c.id, uid = nx.uid, R = courseRounds(cid, uid); if(!R) return '';
+  const st = courseRStatus(cid, uid), cur = st.indexOf(false), started = courseRStarted(cid, uid), no = trN(courseUnitNo(cid, uid));
+  const title = started && cur >= 0 ? trs('next.step', {no, n:cur + 1}) : courseLessonTitleLine(cid, uid);
+  const label = started && cur >= 0 ? trs('btn.continue', {n:cur + 1}) : CL('Start: ' + courseLessonHeadName(cid, uid), 'Başla: ' + courseLessonHeadName(cid, uid), 'شروع: ' + courseLessonHeadName(cid, uid), 'Empieza: ' + courseLessonHeadName(cid, uid));
+  const chips = `<div class="cd-mini fs-chips">${[0, 1, 2].map(r=>`<span class="${st[r] ? 'done' : r === cur ? 'cur' : ''}">${st[r] ? ICONS.check : '<bdi>' + trN(r + 1) + '</bdi>'} ${esc(courseRName(r))}</span>`).join('')}</div>`;
+  const obj = courseUnitObjective(cid, uid);
+  return `<div class="cd-next-card">
+    <div class="lx-eyebrow cd-next-eb">${CL('Your next step', 'Sıradaki adımın', 'قدم بعدی تو', 'Tu siguiente paso')}</div>
+    <h2 class="display" dir="${courseTD()}"><bdi>${esc(title)}</bdi><span class="dot">.</span></h2>
+    ${obj ? `<p class="cd-obj" dir="${courseTD()}">${esc(obj)}</p>` : ''}${chips}
+    <div class="fs-btnrow"><button class="btn btn-primary cd-go fs-cta" data-action="course-r-start" data-cid="${cid}" data-uid="${esc(uid)}">${esc(label)}</button></div>
+  </div>`;
+}
+
+/* ---- lesson done in rounds (SPEC 6.2) ---- */
+function courseRKeyHits(w, text){ const low = String(text || '').toLowerCase().replace(/[’‘]/g, "'"); return ((w && w.words) || []).filter(x=>coursePartCueRe(String(x.word).toLowerCase()).test(low)).length; }
+function courseRChangedLine(w, before, after){
+  if(!after) return ''; const out = [], n = ((w && w.parts) || []).length;
+  if(n){ const a = coursePartsCheck(w, before, []).filter(p=>p.ok).length, b = coursePartsCheck(w, after, []).filter(p=>p.ok).length; out.push(trs('l.parts', {a, b, n})); }
+  if(((w && w.words) || []).length) out.push(trs('l.phrases', {a:courseRKeyHits(w, before), b:courseRKeyHits(w, after)}));
+  return out.join(courseSep());
+}
+function courseRDoneLessonHtml(cid, uid){
+  const f = courseFindUnit(cid, uid), c = f.c, it = courseUnitItems(uid), ex = it.explain, cp = courseProg(cid), w = it.writing;
+  const bef = cp.answers[uid + ':before'], wr = cp.answers[uid + ':writing'], btxt = bef && bef.text ? String(bef.text) : '', atxt = wr && wr.text ? String(wr.text) : '';
+  const R = courseRounds(cid, uid), nl = courseRNextLesson(cid, uid);
+  const ba = btxt || atxt ? `<div class="tr-ba">${btxt ? `<div class="card-flat tr-bcard"><div class="lx-eyebrow">${esc(trs('l.before'))}</div><p dir="ltr" translate="no">${esc(btxt)}</p></div>` : ''}
+      ${atxt ? `<div class="card-flat tr-acard"><div class="lx-eyebrow">${esc(trs('l.after'))}</div><details class="tr-more"><summary><span class="tr-clamp" dir="ltr" translate="no">${esc(atxt)}</span><span class="tr-showall">${esc(trs('show.all'))}</span></summary><p dir="ltr" translate="no">${esc(atxt)}</p></details></div>` : ''}
+      ${btxt && atxt ? `<p class="tr-changed" dir="${courseTD()}">${esc(courseRChangedLine(w, btxt, atxt))}</p>` : ''}</div>` : '';
+  const cando = courseRCando(courseUnitObjective(cid, uid)), rem = ex && ex.remember ? cl(ex.remember) : '';
+  const back = []; if(R && nl) R.forEach(x=>x.screens.filter(y=>y.t === 'q' && y.kind !== 'fresh').forEach(y=>{ const s = courseRQState(cid, uid, y.key), n = y.o.kp || y.o.item.point;
+    if((s.res === 'soft' || s.res === 'look') && n && n !== 'b2' && !back.includes(n) && back.length < 2) back.push(n); }));
+  const nextUid = courseUnitAfter(cid, uid), nf = nextUid ? courseFindUnit(cid, nextUid) : null, pd = courseFinalData(c), mock = courseMockAfter(cid, uid);
+  let nextCard = '', btn = '';
+  if(nf){ const access = courseUnitAccess(c, nextUid), nobj = courseUnitObjective(cid, nextUid);
+    nextCard = `<div class="card-flat cs-card-lav cd-next" style="margin-top:12px; text-align:start;">${claySparkles()}
+      <div class="eyebrow">${esc(courseUp(courseIsCp(cid, nextUid) ? courseFinaleName(cid) : CL('Next lesson', 'Sıradaki ders', 'درس بعدی', 'Siguiente lección') + courseSep() + courseUnitNo(cid, nextUid)))}</div>
+      <div class="display" style="font-size:19px; margin-top:4px; color:#fff;"><bdi>${esc(courseIsCp(cid, nextUid) ? courseLessonLine(cid, nextUid) : cl(nf.u.title))}</bdi></div>
+      ${nobj ? `<p style="margin:6px 0 0; font-size:13.5px; line-height:1.45; opacity:.95;" dir="${courseTD()}">${esc(nobj)}</p>` : ''}</div>`;
+    btn = access ? `<button class="btn btn-primary cs-main" data-action="course-go" data-cid="${cid}" data-uid="${esc(nextUid)}">${esc(courseNextLabel(cid, nextUid))}</button>`
+      : `<button class="btn btn-primary cs-main" data-action="course-open" data-view="course-gate" data-cid="${cid}" data-uid="${esc(nextUid)}">${esc(CL('Unlock ' + courseLessonHeadName(cid, nextUid), 'Aç: ' + courseLessonHeadName(cid, nextUid), 'باز کردن ' + courseLessonHeadName(cid, nextUid), 'Desbloquear: ' + courseLessonHeadName(cid, nextUid)))}</button>`;
+  } else if(pd) btn = `<button class="btn btn-primary cs-main" data-action="course-open" data-view="${courseUnitAccess(c, pd.id) && courseFinalUnlocked(c) ? 'course-final' : 'course-gate'}" data-cid="${cid}">${CL('Final project', 'Final projesi', 'پروژه‌ی پایانی', 'Proyecto final')}</button>`;
+  const mk = mock ? courseFindUnit(cid, mock) : null;
+  const mockCard = mk ? `<div class="card-flat cd-mock"><div class="eyebrow">${esc(courseUp(courseLessonName(cid, mock)))}</div><p dir="${courseTD()}">${esc(cl(mk.u.title))}</p><button class="btn btn-sm btn-ghost" data-action="course-go" data-cid="${cid}" data-uid="${esc(mock)}">${CL('Open the mock test', 'Deneme sınavını aç', 'باز کردن آزمون آزمایشی', 'Abrir el simulacro')}</button></div>` : '';
+  return `<div class="fade-in course-done tr-ldone lx-page lx-course fs-scr">
+    <div class="cs-top"><button class="cs-x" data-action="course-close" data-cid="${cid}" aria-label="${esc(CL('Close', 'Kapat', 'بستن', 'Cerrar'))}">${COURSE_X_SVG}</button><span style="flex:1;"></span></div>
+    <div class="screen" style="padding-top:6px;">
+      <div class="tr-target">${courseRImg('art/course-clay/tile-goals-cutout-320.webp', '', 'tile-goals-cutout.png')}</div>
+      ${courseRTicketHtml([true, true, true], -1)}
+      <h1 class="display cs-h1 tr-h1" dir="${courseTD()}">${esc(trs('l.done', {no:trN(courseUnitNo(cid, uid))}))}</h1>
+      ${ba}
+      ${cando || rem ? `<div class="card-flat cs-card-green tr-cando"><b>${esc(trs('l.cando'))}</b>${cando ? `<p dir="${courseTD()}">${isoHtml(cando)}</p>` : ''}${rem ? `<p class="tr-rem" dir="${courseTD()}">${isoHtml(rem)}</p>` : ''}</div>` : ''}
+      ${back.map(n=>`<p class="tr-line" dir="${courseTD()}">${trsH('l.back', {no:nl, n})}</p>`).join('')}
+      ${btxt && atxt ? `<p class="tr-line" dir="${courseTD()}">${trsH('l.saved')}</p>` : ''}
+      ${nextCard}${mockCard}
+      <button class="link-btn cs-back-course" data-action="course-close" data-cid="${cid}" style="display:block; margin:16px auto 0;">${CL('Back to the course', 'Kursa dön', 'برگشت به دوره', 'Volver al curso')}</button>
+    </div>
+    <div class="cs-foot">${btn}</div>
+  </div>`;
+}
+
+/* ---- Your work in rounds (SPEC 6.3): Look again, Before and after, What you've got; then today's sections ---- */
+function courseRItemByKey(cid, key){
+  const m = /^(.*)#(\d+|x|b1|b2|q)$/.exec(String(key || '')); if(!m) return null; const id = m[1], k = m[2];
+  if(/^\d+$/.test(k)){ const ex = (COURSE_EXTRA.exit || []).find(x=>x.id === id && x.course === cid); const it = ex && ex.items && ex.items[Number(k)]; return it ? {item:it, uid:ex.unit} : null; }
+  if(k === 'x'){ const g = GRAMMAR_ITEMS.find(x=>x.id === id && x.course === cid); return g && g.exitItem ? {item:g.exitItem, uid:g.unit, kp:'b2'} : null; }
+  if(k === 'b1' || k === 'b2'){ const g = GRAMMAR_ITEMS.find(x=>x.id === id && x.course === cid), b = g && g[k === 'b2' ? 'blank2' : 'blank']; if(!b) return null;
+    const gp = courseRGp(courseUnitItems(g.unit)); return {item:{kind:'blank', prompt:b.sentence, options:[b.word].concat(b.distractors || []), correct:0, point:gp, why:g.expParts && g.expParts.test}, uid:g.unit}; }
+  if(k === 'q'){ const ex = (COURSE_EXTRA.explain || []).find(x=>x.id === id && x.course === cid), q = ex && ex.quick; return q ? {item:{prompt:q.prompt, options:q.options, correct:q.correct, why:q.why, point:Number(q.point) || 1}, uid:ex.unit} : null; }
+  return null;
+}
+function courseRLookRows(cid){
+  const srs = courseProg(cid).srs || {}, groups = {};
+  Object.keys(srs).forEach(key=>{ const e = srs[key]; if(!e || !(e.look || e.soft) || !e.u) return; const g = e.u + '|' + e.kp;
+    const at = e.lookAt || e.at || 0; if(!groups[g]) groups[g] = {u:e.u, n:e.kp, keys:[], at:0}; groups[g].keys.push(key); groups[g].at = Math.max(groups[g].at, at); });
+  return Object.values(groups).filter(g=>courseFindUnit(cid, g.u)).sort((a, b)=>b.at - a.at);
+}
+function courseRDoneLessons(c){ const d = courseProg(c.id).done; return courseOrder(c.id).filter(uid=>!courseIsCp(c.id, uid) && !courseIsMock(c.id, uid) && d[uid + ':r3'])
+  .sort((a, b)=>(d[b + ':r3'] || 0) - (d[a + ':r3'] || 0)); }
+function courseRWorkCount(c){ if(!courseRCourseOn(c)) return 0; const cp = courseProg(c.id);
+  return courseRDoneLessons(c).filter(uid=>{ const b = cp.answers[uid + ':before'], w = cp.answers[uid + ':writing']; return (b && b.text) || (w && w.text); }).length; }
+function courseRLookCount(c){ return courseRCourseOn(c) ? courseRLookRows(c.id).length : 0; }
+function courseRWorkTopHtml(c){
+  if(!courseRCourseOn(c)) return '';
+  const cid = c.id, cp = courseProg(cid), rows = courseRLookRows(cid), all = !!(courseUi.rwAll), gotOpen = !!(courseUi.rwGot);
+  // the lessons named here may sit in chapters that are not loaded yet: load them, then show the heads
+  const need = new Set(rows.map(g=>g.u).concat(courseRDoneLessons(c))); need.forEach(u=>{ const m = courseLazyUnitMod(u); if(m && !courseLazyReady(m) && COURSE_LAZY.state[m.lazy.key] !== 'error' && !COURSE_LAZY.wait[m.lazy.key]) courseLazyLoad(c, m).then(()=>{ if(state.view === 'course-work') render(); }); });
+  const kpHead = (u, n)=>{ const p = courseRKpPoint(u, n); return p ? cl(p.head) : ''; };
+  const look = rows.length ? `<h2 class="cs-wh tr-wh">${esc(trs('w.look', {n:rows.length}))}</h2><p class="cs-wsub">${esc(trs('w.lookhint'))}</p>
+    <div class="stack tr-looks" style="gap:8px;">${(all ? rows : rows.slice(0, 3)).map(g=>`<button class="item-row tr-lookrow" data-action="course-r-wlook" data-key="${esc(g.keys[0])}" data-cid="${cid}">
+      <span class="tr-lookic">${courseRImg('art/course-clay/story-thriller-cutout-160.webp', '', 'story-thriller-cutout.png')}</span>
+      <div class="item-body"><div class="item-title" dir="${courseTD()}">${isoHtml(courseRLessonName(cid, g.u) + courseSep() + (g.n === 'b2' ? 'B2' : trs('kp', {n:g.n})) + (kpHead(g.u, g.n) ? courseSep() + kpHead(g.u, g.n) : ''))}</div></div><span class="chevron">${ICONS.chev}</span></button>`).join('')}</div>
+    ${rows.length > 3 ? `<button class="link-btn" data-action="course-r-wall">${esc(all ? trs('show.less') : trs('show.all'))}</button>` : ''}` : '';
+  const done = courseRDoneLessons(c), cards = done.map(uid=>{ const b = cp.answers[uid + ':before'], w = cp.answers[uid + ':writing'], bt = b && b.text ? String(b.text) : '', at = w && w.text ? String(w.text) : '';
+    if(!bt && !at) return ''; const wi = courseUnitItems(uid).writing, f = courseFindUnit(cid, uid), title = wi && wi.title ? cl(wi.title) : f ? cl(f.u.title) : '', cut = s=>s.length > 60 ? s.slice(0, 58).replace(/\s+\S*$/, '') + '…' : s;
+    return `<details class="card-flat tr-bacard"><summary><div class="cs-eyebrow" dir="${courseTD()}"><bdi>${esc(trN(courseUnitNo(cid, uid)))}</bdi>${esc(courseSep())}${isoHtml(title)}</div>
+      ${bt ? `<p class="tr-baline"><b>${esc(trs('l.before'))}:</b> <span dir="ltr" translate="no">“${esc(cut(bt))}”</span></p>` : ''}${at ? `<p class="tr-baline"><b>${esc(trs('l.after'))}:</b> <span dir="ltr" translate="no">“${esc(cut(at))}”</span></p>` : ''}</summary>
+      ${bt ? `<div class="tr-bafull"><div class="lx-eyebrow">${esc(trs('l.before'))}</div><p dir="ltr" translate="no">${esc(bt)}</p></div>` : ''}${at ? `<div class="tr-bafull"><div class="lx-eyebrow">${esc(trs('l.after'))}</div><p dir="ltr" translate="no">${esc(at)}</p></div>` : ''}</details>`; }).filter(Boolean);
+  const ba = cards.length ? `<h2 class="cs-wh tr-wh">${esc(trs('w.ba'))}</h2><div class="stack" style="gap:10px;">${cards.join('')}</div>` : '';
+  const lookSet = new Set(rows.map(g=>g.u + '|' + g.n)), got = [];
+  done.forEach(uid=>{ const ex = courseUnitItems(uid).explain; if(!ex) return; (ex.points || []).forEach((p, i)=>{ if(!lookSet.has(uid + '|' + (i + 1))) got.push({uid, n:i + 1, head:cl(p.head)}); }); });
+  const gotH = got.length ? `<button class="link-btn tr-gotbtn" data-action="course-r-wgot">${esc(trs('w.got', {n:got.length}))} (${esc(gotOpen ? trs('show.less') : trs('w.show'))})</button>
+    ${gotOpen ? `<ul class="tr-gotlist">${got.map(x=>`<li dir="${courseTD()}"><small>${esc(courseRLessonName(cid, x.uid))}</small> ${isoHtml(x.head)}</li>`).join('')}</ul>` : ''}` : '';
+  return look + ba + gotH;
+}
+function courseRWorkArt(c){ return courseRCourseOn(c) ? `<span class="tr-folder">${courseRImg('art/course-clay/portfolio-folder.webp', '', 'studio-icon-cutout.png')}</span>` : ''; }
+function courseRFpArt(c){ return courseRCourseOn(c) ? courseRImg('roadmap-goal-clay.png', 'tr-fpart') : ''; }
+// Your work › Look again: the key point (read-only), then the missed item again, the 4.1 flow; right first time and it leaves the list.
+function courseRWorkSheetHtml(cid, key){
+  const found = courseRItemByKey(cid, key); if(!found) return '';
+  const uid = found.uid, n = found.kp || found.item.point, wl = courseUi.rwl && courseUi.rwl.key === key ? courseUi.rwl : (courseUi.rwl = {key, p:[], res:null, q:null});
+  if(!wl.q){ wl.q = courseQ(found.item, key); wl.q.hint2 = found.item.hint2 || null; wl.q.kpU = uid; if(found.kp) wl.q.kp = found.kp; }
+  const p = courseRKpPoint(uid, n), kp = p ? courseRKpScreens(p, n, -1).filter(x=>x.part === 'A' || x.part === 'B').map(x=>courseRKpHtml(cid, uid, x, -1, true)).join('') : '';
+  const q = courseRQuestionHtml(cid, uid, wl.q, wl, courseREyebrow([CL('Quick check', 'Hızlı kontrol', 'سؤال سریع', 'Comprobación rápida')]), '', {pick:'course-r-wpick', look:'course-noop'});
+  return `<div class="cs-grab"></div><div class="tr-sheet"><div class="cs-eyebrow">${esc(courseRLessonName(cid, uid))}</div>${kp}${q}
+    <button class="btn btn-ghost" style="margin-top:14px;" data-action="course-r-sheet-close" data-re="1">${CL('Close', 'Kapat', 'بستن', 'Cerrar')}</button></div>`;
+}
+function courseRSheetPaint(html){ const s = document.querySelector('.cs-sheet'); if(s) s.innerHTML = html; else courseSheetShow(html); }
+function courseRSheetCloseBtn(){ return `<button class="btn btn-ghost" style="margin-top:14px;" data-action="course-r-sheet-close">${CL('Close', 'Kapat', 'بستن', 'Cerrar')}</button>`; }
+function courseRStash(){ const ta = document.getElementById('cw-text'), rd = courseUi.rd; if(ta && rd) courseUi.wdraft = {uid:rd.uid, text:ta.value}; const b = document.getElementById('tr-before'); if(b && rd) rd.beforeDraft = b.value; }
+// The scheduler (SPEC 4.4): right first time = secure; right on the second try = soft (comes back once); wrong twice = look (Look again list).
+function courseRSeen(cid, q, res, uid){
+  if(!q.key) return; courseItemSeen(cid, q.key, res === 'right');
+  const e = courseProg(cid).srs[q.key]; if(!e) return;
+  if(res === 'right'){ delete e.soft; delete e.look; delete e.lookAt; return; }
+  e.u = q.kpU || uid; e.kp = q.kp || q.point || 0; e.at = Date.now();
+  if(res === 'soft'){ e.soft = 1; delete e.look; delete e.lookAt; } else { e.look = 1; e.lookAt = Date.now(); delete e.soft; }
+}
+function courseRPickResult(st, q, i){
+  const pick = q.options[i], right = pick === q.options[q.correct]; if(st.res || st.p.includes(pick)) return null;
+  st.p.push(pick);
+  if(st.p.length === 1) st.res = right ? 'right' : q.options.length < 3 ? 'look' : null;
+  else st.res = right ? 'soft' : 'look';
+  return st.res;
+}
+Object.assign(HANDLERS, {
+  'course-r-start'(el){ const d = el.dataset; courseSheetRemove(); courseROpen(d.cid, d.uid, d.redo !== undefined ? {redo:Number(d.redo)} : d.r !== undefined ? {r:Number(d.r)} : {}); },
+  'course-r-next'(){ courseRStash(); courseRNext(); },
+  'course-r-back'(){ courseRStash(); courseRBack(); },
+  'course-r-x'(){ courseRLeave(); },
+  'course-r-stop'(){ courseRLeave(); },
+  'course-r-round'(){ const rd = courseUi.rd; if(!rd || rd.r >= 2) return; const R = courseRounds(rd.cid, rd.uid); if(rd.redo){ courseRLeave(); return; } courseRGoTo(rd.r + 1, courseROpenerIdx(R, rd.r + 1)); },
+  'course-r-finish'(){ const rd = courseUi.rd; if(!rd) return; const cid = rd.cid, uid = rd.uid, redo = rd.redo; courseUi.rd = null; state.courseReturn = null;
+    if(redo) return courseShow('course-lesson', {cid, uid}, cid, true); courseShow('course-done', {cid, uid}, cid, true); },
+  'course-r-before'(el){ const rd = courseUi.rd; if(!rd) return; const ta = document.getElementById('tr-before'), text = el.dataset.skip ? '' : (ta ? ta.value.trim() : '');
+    courseProg(rd.cid).answers[rd.uid + ':before'] = text ? {text, date:todayISO(), sample:!!rd.sampleSeen} : {text:'', date:todayISO(), skip:1};
+    rd.beforeDraft = null; courseRNext(); },
+  'course-r-sample'(){ const rd = courseUi.rd; if(!rd) return; const w = courseUnitItems(rd.uid).writing; if(!w) return; rd.sampleSeen = true; courseRStash();
+    courseSheetShow(`<div class="cs-grab"></div><div class="tr-sheet"><div class="cs-eyebrow">${esc(trs('sample.h'))}</div><p class="tr-body" dir="${courseTD()}">${isoHtml(cl(w.prompt))}</p>${courseRSheetCloseBtn()}</div>`); },
+  'course-r-facts'(){ const rd = courseUi.rd; if(!rd) return; const e = (courseUnitItems(rd.uid).explain || {}).example; if(!e) return; const sp = courseRExSplit(e.item);
+    courseSheetShow(`<div class="cs-grab"></div><div class="tr-sheet"><div class="cs-eyebrow">${esc(trs('facts.link'))}</div><p class="tr-body" dir="ltr" translate="no">${esc(sp.facts)}</p>${courseRSheetCloseBtn()}</div>`); },
+  'course-r-sheet-close'(el){ courseSheetRemove(); if(el && el.dataset.re){ courseUi.rwl = null; render(); } },
+  'course-r-row'(el){ const rd = courseUi.rd; if(!rd) return; const i = Number(el.dataset.i); rd.open = rd.open === i ? -1 : i; render(); },
+  'course-r-try'(el){ const rd = courseUi.rd; if(!rd || (rd.tryPick !== null && rd.tryPick !== undefined)) return; rd.tryPick = Number(el.dataset.i); render(); },
+  'course-r-cut'(el){ const rd = courseUi.rd; if(!rd || !rd.ex) return; const i = Number(el.dataset.i); if(!rd.ex.found.includes(i)) rd.ex.found.push(i); render(); },
+  'course-r-showme'(){ const rd = courseUi.rd; if(!rd) return; const e = (courseUnitItems(rd.uid).explain || {}).example; if(!e || !rd.ex) return; rd.ex.found = (e.cut || []).map((_, i)=>i); render(); },
+  'course-r-move'(){ const rd = courseUi.rd; if(!rd || !rd.ex) return; const e = (courseUnitItems(rd.uid).explain || {}).example; if(!e) return; rd.ex.ws = Math.min((e.walk || []).length || 1, rd.ex.ws + 1); render(); window.scrollTo(0, 0); },
+  'course-r-fix'(el){ const rd = courseUi.rd; if(!rd) return; rd.ex = rd.ex || {found:[], ws:0}; rd.ex.fixed = el.dataset.v === '1'; render(); },
+  'course-r-pick'(el){ const rd = courseUi.rd; if(!rd) return; const R = courseRounds(rd.cid, rd.uid), scr = R && R[rd.r].screens[rd.s]; if(!scr || scr.t !== 'q') return;
+    const q = courseRQ(rd.cid, rd.uid, scr.o), st = courseRQState(rd.cid, rd.uid, scr.key, true), res = courseRPickResult(st, q, Number(el.dataset.i));
+    if(res && !rd.redo) courseRSeen(rd.cid, q, res, rd.uid);
+    save(); render(); },
+  'course-r-look'(el){ const rd = courseUi.rd; if(!rd) return; const u = el.dataset.u, n = el.dataset.n === 'b2' ? 'b2' : Number(el.dataset.n), p = courseRKpPoint(u, n); if(!p) return;
+    const html = courseRKpScreens(p, n, -1).filter(x=>x.part === 'A' || x.part === 'B').map(x=>courseRKpHtml(rd.cid, u, x, -1, true)).join('');
+    courseSheetShow(`<div class="cs-grab"></div><div class="tr-sheet"><div class="cs-eyebrow">${esc(courseRLessonName(rd.cid, u))}</div>${html}${courseRSheetCloseBtn()}</div>`); },
+  'course-r-notes-sample'(){ document.querySelectorAll('.tr-note-in').forEach(i=>{ i.value = i.dataset.sample || ''; }); const rd = courseUi.rd; if(rd) rd.notesSample = true; },
+  'course-r-notes-save'(el){ const rd = courseUi.rd; if(!rd) return; const w = courseUnitItems(rd.uid).writing, parts = ((w && w.parts) || []).map(()=>''), old = courseRNotesVals(rd.cid, rd.uid);
+    old.forEach((v, i)=>{ if(i < parts.length) parts[i] = v || ''; });
+    document.querySelectorAll('.tr-note-in').forEach(i=>{ parts[Number(i.dataset.i)] = i.value.trim(); });
+    if(parts.some(Boolean)) courseProg(rd.cid).answers[rd.uid + ':notes'] = {parts, date:todayISO(), sample:!!rd.notesSample};
+    rd.notesDraft = null;
+    if(el && el.dataset.sheet){ courseSheetRemove(); courseRStash(); save(); render(); return; }
+    courseRNext(); },
+  'course-r-notes-open'(){ const rd = courseUi.rd; if(!rd) return; courseRStash();
+    courseSheetShow(`<div class="cs-grab"></div><div class="tr-sheet"><div class="cs-eyebrow">${esc(trs('shownotes'))}</div><div class="tr-notelist">${courseRNotesFields(rd.cid, rd.uid)}</div>
+      <button type="button" class="link-btn tr-link" data-action="course-r-notes-sample">${esc(trs('notes.sample'))}</button>
+      <button class="btn btn-primary" style="margin-top:12px;" data-action="course-r-notes-save" data-sheet="1">${esc(trs('notes.save'))}</button>${courseRSheetCloseBtn()}</div>`); },
+  'course-r-sp-more'(){ const st = courseUi.sp, rd = courseUi.rd; if(!st || !rd) return; courseSpStop(true); const sp = courseUnitItems(rd.uid).speaking;
+    st.stage = ((sp.questions || []).length > 1 || (sp.followups || []).length) ? 3 : 2; render(); window.scrollTo(0, 0); },
+  'course-r-sp-check'(){ const st = courseUi.sp; if(!st) return; st.stage = 2; render(); window.scrollTo(0, 0); },
+  'course-r-wlook'(el){ courseUi.rwl = null; const html = courseRWorkSheetHtml(el.dataset.cid, el.dataset.key); if(html) courseSheetShow(html); },
+  'course-r-wpick'(el){ const wl = courseUi.rwl, cid = (state.viewParams || {}).cid; if(!wl || !wl.q) return; const res = courseRPickResult(wl, wl.q, Number(el.dataset.i));
+    if(res){ courseRSeen(cid, wl.q, res, wl.q.kpU); save(); } courseRSheetPaint(courseRWorkSheetHtml(cid, wl.key)); },
+  'course-r-wall'(){ courseUi.rwAll = !courseUi.rwAll; render(); },
+  'course-r-wgot'(){ courseUi.rwGot = !courseUi.rwGot; render(); }
+});
+// The task handlers end with courseAdvance(); in rounds that is the next screen. The judge's last Next goes straight on (no "X of N marks right").
+{ const jn = HANDLERS['course-judge-next'];
+  HANDLERS['course-judge-next'] = function(el){ const st = courseUi.judge, vp = state.viewParams || {};
+    if(vp.type === 'round' && st){ const j = courseUnitItems(st.uid).judge; if(j && st.i + 1 >= j.items.length){ const rd = courseUi.rd; if(!(rd && rd.redo)) courseProg(rd.cid).scores[st.uid + ':judge'] = {right:st.right, total:st.total}; courseMarkDone(rd.cid, st.uid, 'judge'); courseUi.judge = null; return courseRNext(); } }
+    return jn.apply(this, arguments); }; }
+/* ========== THREE-ROUNDS-END ========== */
 /* ---------- admin › Course access (Trello Hr03Iu6C): issue, list, revoke and re-issue course passwords ----------
    Lives in the same hidden #admin route (Firebase-auth sign-in). Docs are progress/ca-<hash> (see the
    courseAccess* helpers above). The password itself is shown once, right after Generate, together with

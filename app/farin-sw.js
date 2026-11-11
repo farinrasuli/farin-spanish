@@ -199,17 +199,29 @@ function staleWhileRevalidate(e) {
   return caches.match(e.request).then((hit) => hit || net);
 }
 
+// A slow open was answered with the saved copy and the fresh page that landed afterwards is different: tell this app's open
+// windows, so the page reloads the next time the learner comes back to it on Home (2026-11-11, farin-app). Same text = no message.
+function tellPageUpdated() {
+  return self.clients.matchAll({ type: 'window' }).then((list) => list.forEach((cl) => {
+    if (cl.url.split(/[?#]/)[0] === PAGE_URL) cl.postMessage({ type: 'farin-page-updated' });
+  }));
+}
+
 function pageWithTimeout(e) {
+  let servedSaved = false;
   const net = fetch(e.request, { cache: 'no-store' }).then((res) => {
-    if (res.ok) { const copy = res.clone(); return caches.open(CACHE).then((c) => c.put(PAGE_URL, copy)).then(() => res); }
-    return res;
+    if (!res.ok) return res;
+    const copy = res.clone();
+    return caches.open(CACHE).then((c) => c.match(PAGE_URL).then((old) => c.put(PAGE_URL, copy.clone()).then(() => (servedSaved && old
+      ? Promise.all([old.text(), copy.text()]).then(([a, b]) => (a !== b ? tellPageUpdated() : null)).catch(() => {})
+      : null)))).then(() => res);
   });
   e.waitUntil(net.catch(() => {}));
   return new Promise((resolve) => {
     let done = false;
-    const finish = (res) => { if (!done && res) { done = true; resolve(res); } };
+    const finish = (res) => { if (!done && res) { done = true; resolve(res); return true; } return false; };
     const saved = () => caches.match(PAGE_URL);
-    const timer = setTimeout(() => saved().then(finish), PAGE_TIMEOUT_MS);
+    const timer = setTimeout(() => saved().then((hit) => { if (finish(hit)) servedSaved = true; }), PAGE_TIMEOUT_MS);
     net.then((res) => { clearTimeout(timer); finish(res); })
       .catch(() => { clearTimeout(timer); saved().then((hit) => finish(hit || Response.error())); });
   });

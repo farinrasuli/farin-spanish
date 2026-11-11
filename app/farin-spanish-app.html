@@ -2227,11 +2227,9 @@
   .cmp-cover-tag .cmp-cover{position:static; width:14px; height:18px;}
   .rm2-endcap-row{display:flex; align-items:flex-end; justify-content:center; gap:2px;}
   .rm2-goal-wrap{position:relative; display:inline-block;}
-  .rm2-head-count{display:flex; align-items:center; gap:10px; flex:0 0 auto;}
-  .rm2-empty-slot{display:inline-block; width:26px; height:34px; box-sizing:border-box; border-radius:6px; border:2px dashed var(--border); background:var(--bg-sunken);}
-  /* Gamification v2 (Journey Journal §5/§6): header fan, journal pages, page complete. */
-  .rm2-fan{display:flex; align-items:center; padding:0 0 0 10px; margin:0; border:none; background:none; cursor:pointer;}
-  .rm2-fan-card{display:inline-block; margin-inline-start:-10px;}
+  /* the level + stage line above the roadmap (its box went 2026-11-11) */
+  .rm2-stage-title{margin:-6px 2px 14px; font-size:13px; font-weight:800; color:var(--ink-soft); line-height:1.4;}
+  /* Gamification v2 (Journey Journal §5/§6): journal pages, page complete. */
   .jr-grid{display:grid; grid-template-columns:repeat(3, 96px); gap:10px; justify-content:center; margin-top:12px;}
   .jr-slot{padding:0; margin:0; border:none; background:none; cursor:pointer; border-radius:14px;}
   .jr-empty{box-sizing:border-box; border:2px dashed var(--border); background:var(--bg-sunken); display:flex; align-items:center; justify-content:center;}
@@ -14148,6 +14146,14 @@ function renderProfile(){
         </div>
         <span class="chevron">${ICONS.chev}</span>
       </button>
+      <button class="item-row" data-action="nav" data-view="journal" style="margin-top:10px; cursor:pointer;">
+        <span class="item-ic" style="background:var(--cat-story); color:#fff;">${ICONS.book}</span>
+        <div class="item-body">
+          <div class="item-title">${esc(journalName())}</div>
+          <div class="item-sub">${(()=>{ const n = (pr.souvenirs || []).length; return n ? (n === 1 ? L('1 souvenir','1 hatıra','۱ یادگاری','1 recuerdo') : L(n+' souvenirs',n+' hatıra',n.toLocaleString('fa-IR')+' یادگاری',n+' recuerdos')) : L('Your first souvenir is waiting','İlk hatıran seni bekliyor','اولین یادگاری‌ات منتظرت است','Tu primer recuerdo te espera'); })()}</div>
+        </div>
+        <span class="chevron">${ICONS.chev}</span>
+      </button>
       <button class="item-row" data-action="nav" data-view="studio-lab" style="margin-top:10px; cursor:pointer;">
         <span class="item-ic" style="background:var(--clay-sky); color:#fff;">${ICONS.mic}</span>
         <div class="item-body">
@@ -14397,14 +14403,6 @@ function runRoadmapAdvance(currentIndex, fromIdx, oldFill, newFill){
   }, 1400);
 }
 // End goal warms up with progress p (0..1).
-function roadmapHeaderSlots(doneCount){
-  // 0%: one empty dashed slot ("your first souvenir is waiting"); otherwise a fan of the last 3 souvenirs.
-  if(doneCount === 0) return '<span class="rm2-empty-slot" aria-hidden="true"></span>';
-  const last = ((state.progress && state.progress.souvenirs) || []).slice(-3);
-  if(!last.length) return '';
-  const rot = [-8,0,8].slice(3-last.length);
-  return `<button class="rm2-fan" data-action="nav" data-view="journal" aria-label="${esc(journalName())}">${last.map((sv,k)=>`<span class="rm2-fan-card" style="transform:rotate(${rot[k]}deg);">${souvenirCardHtml(sv, 'fan')}</span>`).join('')}</button>`;
-}
 function roadmapGoalHtml(p, allDone){
   const size = allDone ? 128 : 112;
   const sat = (.35 + .65*p).toFixed(3);
@@ -15342,18 +15340,11 @@ function renderRoadmapCard(p){
   const startMedia = '';
   const endMedia = allDone ? `<button class="btn btn-primary rm2-page-btn" data-action="open-page-complete">${L('Page complete','Sayfa tamam','صفحه کامل شد','Página completa')}</button>` : '';
 
+  // Farin 2026-11-09 + 2026-11-11 ("delete the box above roadmap"): the header card above the roadmap is gone (level, "check
+  // everything off", the souvenir fan into the journal, the done count, the progress bar; the Home ring keeps the %). The level and
+  // stage title stay as one plain line; the journal and the Vocab Box open from Profile.
   return `
-      <div class="card-flat" style="margin-bottom:14px; background:linear-gradient(135deg, ${archColor}18, var(--bg-elevated) 65%);">
-        <div class="row between" style="align-items:center;">
-          <div>
-            <div style="font-weight:700; font-size:14px;">${esc(displayLevel(p))} ${L('roadmap','yol haritası','نقشه‌ی راه', 'hoja de ruta')}</div>
-            ${(() => { const th = roadmapThemeLabel(p); return th ? `<div class="rm2-theme" style="font-size:12.5px; font-weight:800; color:${archColor}; margin-top:2px;">${esc(th)}</div>` : ''; })()}
-            <div style="font-size:12px; color:var(--ink-soft); margin-top:2px;">${doneCount===0 ? L('Your first souvenir is waiting','İlk hatıran seni bekliyor','اولین یادگاری‌ات منتظرت است','Tu primer recuerdo te espera') : L('Check everything off to reach','Hepsini işaretle ve şuraya ulaş:','همه را علامت بزن تا برسی به','Marca todo para llegar a')+' '+esc(nextDisplayLevel(p))}</div>
-          </div>
-          <div class="rm2-head-count">${roadmapHeaderSlots(doneCount)}<div class="num" style="font-weight:800; font-size:15px; color:${archColor}; white-space:nowrap;">${allDone ? L('Page complete','Sayfa tamam','صفحه کامل شد','Página completa') : (doneCount/roadmap.length <= .5 ? doneCount+' '+L('done','tamam','انجام شد','hechos') : (roadmap.length-doneCount)+' '+L('to go','kaldı','مانده','por hacer'))}</div></div>
-        </div>
-        <div class="progress-track" style="margin-top:10px;"><div class="progress-fill" style="width:${(doneCount/roadmap.length)*100}%; background:${archColor};"></div></div>
-      </div>
+      <div class="rm2-stage-title">${esc(displayLevel(p))} ${L('roadmap','yol haritası','نقشه‌ی راه', 'hoja de ruta')}${(() => { const th = roadmapThemeLabel(p); return th ? ` <span aria-hidden="true">·</span> <span class="rm2-theme" style="color:${archColor};">${esc(th)}</span>` : ''; })()}</div>
       <div class="card-flat" style="position:relative; overflow:visible; padding:20px 10px;">
         ${stackedRoadmap(roadmap.length, pinFn, cardFn, L(arch.name.en,arch.name.tr,arch.name.fa, arch.name.es), startMedia, allDone ? L("You've made it!",'Başardın!','موفق شدی!', '¡Lo lograste!') : nextDisplayLevel(p), endMedia)}
       </div>
@@ -36122,6 +36113,13 @@ if(location.hash === '#admin'){
 try{
   if('serviceWorker' in navigator){
     navigator.serviceWorker.register('farin-sw.js', { scope: 'farin-spanish-app.html' }).catch(function(){});
+    // farin-sw.js answers a slow open with the saved copy and says so when a newer page has landed in the cache since (2026-11-11):
+    // reload the next time the learner comes back to the app on Home, so a change reaches them this session, not one open later.
+    var pageUpdateReady = false;
+    navigator.serviceWorker.addEventListener('message', function(ev){ if(ev.data && ev.data.type === 'farin-page-updated') pageUpdateReady = true; });
+    document.addEventListener('visibilitychange', function(){
+      if(pageUpdateReady && document.visibilityState === 'visible' && state.view === 'dashboard' && !document.querySelector('.celebrate-overlay')) location.reload();
+    });
   }
 }catch(e){}
 

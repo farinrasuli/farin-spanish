@@ -17349,10 +17349,10 @@ function shelfSets(kind){
 }
 function shelfGames(){
   const met = gamesMet();
-  // Story Path stays off the shelf while it is dormant (PATH_LIVE), then appears once a chapter has been played.
+  // Your Call is listed for every learner at any level (2026-11-12): the comic album plays there as free play (ycShelf), marked New until met.
   // Cozy Chores is listed from go-live (own content, like Order Up!), marked New until the learner has met it.
   // Trap Dash and Word Rush (off the roadmap, games-all-levels §4 item 6) are listed from the start too, marked New until played.
-  return SHELF_GAMES.filter(k=>k === 'path' ? (PATH_LIVE && met.has('path')) : (k === 'mystery' ? (g2Applies('mystery') ? !!caseShelfEpisode() : true) : (k === 'order' || k === 'desk' || k === 'trap' || k === 'match') ? true : (k === 'chores' ? (g2Applies('chores') ? !!cozyShelfProject() : (met.has('chores') && CHORES_OPEN.some(chTidiedEver))) : ((k === 'cross' || k === 'spell') ? (met.has(k) || shelfSets(k).length > 0) : met.has(k)))));
+  return SHELF_GAMES.filter(k=>k === 'path' ? true : (k === 'mystery' ? (g2Applies('mystery') ? !!caseShelfEpisode() : true) : (k === 'order' || k === 'desk' || k === 'trap' || k === 'match') ? true : (k === 'chores' ? (g2Applies('chores') ? !!cozyShelfProject() : (met.has('chores') && CHORES_OPEN.some(chTidiedEver))) : ((k === 'cross' || k === 'spell') ? (met.has(k) || shelfSets(k).length > 0) : met.has(k)))));
 }
 function shelfSubLine(){
   const n = shelfGames().length;
@@ -17383,7 +17383,7 @@ function renderGamesShelf(){
   const sub = L('Replay any game you have met, as often as you like. Scores here are just for fun.','Tanıştığın her oyunu istediğin kadar tekrar oyna. Buradaki skorlar sadece eğlence için.','هر بازی‌ای که دیده‌ای را هر چند بار که بخواهی دوباره بازی کن. امتیازهای اینجا فقط برای تفریح است.','Vuelve a jugar cualquier juego que ya conozcas, tantas veces como quieras. Aquí los puntos son solo por diversión.');
   const rows = kinds.map(k=>{
     const a = SHELF_ART[k] || SHELF_ART.match;
-    const isNew = !met.has(k);
+    const isNew = !met.has(k) && !(k === 'path' && ycFreePlayed());
     return `<button class="item-row" data-action="shelf-play" data-kind="${k}">
       <span class="item-ic" style="background:${a.c}; color:#fff;">${ICONS[a.ic]}</span>
       <div class="item-body">
@@ -21984,12 +21984,15 @@ function ycLoad(){
   return ycLoading;
 }
 function ycIsV2Arc(){ const p = pathState(); return p.v === 2 && YC_LEVELS.includes(p.level); }
-// a learner in the middle of the old A1 story keeps it until that arc ends
+// the old (v1) story of a level in progress: choices saved, that arc not finished
+function ycOldMid(level){
+  const p = pathState();
+  return p.level === level && p.v !== 2 && p.choices.some(Boolean) && !p.history.some(h=>h && h.level === level && h.done);
+}
+// a learner in the middle of the old A1 story keeps it until that arc ends, unless they pick the new edition (ycAskEdition)
 function ycEligible(refId){
   const r = pathRefParts(refId); if(!r || !YC_LEVELS.includes(r.level)) return false;
-  const p = pathState();
-  if(p.level === r.level && p.v !== 2 && p.choices.some(Boolean) && !p.history.some(h=>h && h.level === r.level && h.done)) return false;
-  return true;
+  return !ycOldMid(r.level);
 }
 function ycCard(refId){ const r = pathRefParts(refId); return r ? (r.chB !== r.ch ? [r.ch, r.chB] : [r.ch]) : null; }
 function ycReadyFor(refId){ return !!(window.YourCall && window.YC_CONTENT && ycEligible(refId) && YourCall.ready(YC_CONTENT, ycCard(refId))); }
@@ -22034,10 +22037,10 @@ function ycExtra(ds, handler){
   if(ds.kind !== 'path') return Promise.resolve({});
   const shelf = handler === 'shelf-play';
   if(!shelf && !ycEligible(ds.refId)) return Promise.resolve({});
-  if(shelf && !ycIsV2Arc()) return Promise.resolve({});
   return ycLoad().then(()=>{
-    const card = shelf ? [] : ycCard(ds.refId);
-    if(!shelf && !ycReadyFor(ds.refId)) return {};
+    if(shelf) return ycShelfPoster();   // Games shelf: the comic for every learner (ycShelf)
+    const card = ycCard(ds.refId);
+    if(!ycReadyFor(ds.refId)) return {};
     return YourCall.poster(YC_CONTENT, ycPathView(), {ui:LANG, card, muted:()=>sfxMuted,   // muted: the poster's sea bed follows the sound toggle
       onChapter:(n, o)=>{ ycPending = {n, replay:!!(o && o.replay)}; Theatre.play(); },
       onAlbum:()=>YourCall.album({root:(window.Theatre && Theatre.stageEl()) || document.body, content:YC_CONTENT, path:ycPathView(), ui:LANG})})
@@ -22048,14 +22051,114 @@ function ycStart(params){
   if(!params.free) ycBegin('A1');
   go('game-yc', Object.assign({round:{level:'A1', ch:0, finished:false}}, params));
 }
-// Games shelf: a v2 chapter already played, nothing saved
+/* Games shelf (2026-11-12, Farin could not find the new Your Call): the comic album for every learner at any level, as free play.
+   It opens at the first chapter not played yet (in the v2 roadmap arc or on the shelf), at chapter 1 once all six are played;
+   a played photo on the poster strip replays that chapter. The shelf keeps its own record, progress.ycFree[level] =
+   {choices, prints, notes}, and the engine runs in mode 'replay' (no commit, no saveRun), so progress.path, the old v1 arc,
+   the roadmap and its cards never change. Story memory reads the shelf's choices first, then the roadmap arc's. */
+function ycShelfLevel(){ return (window.YC_CONTENT && YC_CONTENT.level) || YC_LEVELS[0]; }
+function ycFreeOf(level){ const f = state.progress.ycFree; return (f && typeof f === 'object' && f[level] && typeof f[level] === 'object') ? f[level] : null; }
+function ycFreePlayed(){ const f = state.progress.ycFree; return !!(f && typeof f === 'object' && Object.keys(f).some(l=>f[l] && Array.isArray(f[l].choices) && f[l].choices.some(Boolean))); }
+// read-only (no pathState(), so nothing is added to progress.path): the level's v2 arc, live or kept in history
+function ycArcOf(level){
+  const p = state.progress.path;
+  if(!p || typeof p !== 'object') return null;
+  if(p.v === 2 && p.level === level && Array.isArray(p.choices)) return p;
+  return (Array.isArray(p.history) ? p.history : []).filter(h=>h && h.v === 2 && h.level === level && Array.isArray(h.choices)).pop() || null;
+}
+function ycShelfView(){
+  const lv = ycShelfLevel(), a = ycArcOf(lv) || {}, f = ycFreeOf(lv) || {}, ac = a.choices || [], fc = Array.isArray(f.choices) ? f.choices : [], choices = [];
+  for(let n = 0; n <= PATH_CH; n++) choices.push(fc[n] || ac[n] || '');
+  return {choices, prints:Object.assign({}, a.prints, f.prints), notes:Object.assign({}, a.notes, f.notes)};
+}
+function ycShelfNext(view){ const ch = (view || ycShelfView()).choices; return [1, 2, 3, 4, 5, 6].find(n=>!ch[n]) || 0; }
+// a chapter finished on the shelf (engine onChapterDone): the shelf's own record only
+function ycShelfSave(res){
+  if(!res || !res.ch) return;
+  const pr = state.progress, lv = res.level || ycShelfLevel();
+  if(!pr.ycFree || typeof pr.ycFree !== 'object') pr.ycFree = {};
+  const f = pr.ycFree[lv] = ycFreeOf(lv) || {};
+  if(!Array.isArray(f.choices)) f.choices = [];
+  if(!f.prints || typeof f.prints !== 'object') f.prints = {};
+  if(!f.notes || typeof f.notes !== 'object') f.notes = {};
+  while(f.choices.length <= PATH_CH) f.choices.push('');
+  f.choices[res.ch] = res.picks;
+  f.prints[lv + ':ch' + res.ch] = {found:res.found || [], date:todayISO()};
+  if(res.note) f.notes[lv + ':ch' + res.ch] = res.note;
+  f.date = todayISO();
+  save();
+}
+// the shelf's poster: played chapters developed (tap = replay), the next one open, the rest grey "After chapter {n}"
+function ycShelfPoster(){
+  ycPending = null;
+  const view = ycShelfView(), next = ycShelfNext(view);
+  return YourCall.poster(YC_CONTENT, view, {ui:LANG, card:next ? [1, 2, 3, 4, 5, 6].filter(n=>n >= next) : [], muted:()=>sfxMuted,
+    onChapter:n=>{ ycPending = {n, replay:true}; Theatre.play(); },
+    onAlbum:()=>YourCall.album({root:(window.Theatre && Theatre.stageEl()) || document.body, content:YC_CONTENT, path:ycShelfView(), ui:LANG})})
+    .then(cfg=>{
+      const after = (YourCall.UI && YourCall.UI.afterCh) || {};   // the shelf has no roadmap pages to name
+      (cfg.strip || []).forEach(it=>{ if(it.state === 'locked' && it.n > 1) it.note = String(after[LANG] || after.en || '').replace('{n}', it.n - 1); });
+      return Object.assign(cfg, {level:ycShelfLevel(), onClose:()=>{ if(ycGame){ ycGame.destroy(); ycGame = null; } try{ YourCall.hush(); }catch(e){} }});
+    });
+}
 function ycShelf(ds){
-  if(!(ycIsV2Arc() && window.YourCall && window.YC_CONTENT)) return false;
-  const ch = pathState().choices, played = [1, 2, 3, 4, 5, 6].filter(n=>ch[n]);
-  if(!played.length) return false;
-  ycPending = {n:played[Math.floor(Math.random() * played.length)], replay:true};
-  go('game-yc', {round:{level:'A1', ch:0, finished:false}, refId:ds.refId, goal:'', free:true, shelf:true});
+  if(!(window.YourCall && window.YC_CONTENT)) return false;
+  const n = (ycPending && ycPending.n) || ycShelfNext() || 1;
+  ycPending = {n, replay:true};
+  go('game-yc', {round:{level:ycShelfLevel(), ch:0, finished:false}, refId:ds.refId, goal:'', free:true, shelf:true});
   return true;
+}
+/* The old A1 story in progress (2026-11-12): its next Your Call roadmap card asks once, "New edition" (the comic: ycBegin keeps
+   the old arc in progress.path.history as it is, done:false) or "Continue the old story" (v1, as before). The answer is kept
+   in progress.ycEdition[level] ('new' | 'old'); tapping outside asks again next time. The comic is on the Games shelf either way. */
+function ycAskEdition(el){
+  const ds = (el && el.dataset) || {}, r = pathRefParts(ds.refId);
+  if(ds.free || ds.ycEd || ds.theatre || state.courseReturn || !r || !YC_LEVELS.includes(r.level) || !ycOldMid(r.level)) return false;
+  if((state.progress.ycEdition || {})[r.level] || document.querySelector('.celebrate-overlay')) return false;
+  const view = state.view;
+  const again = pick=>{
+    if(pick){
+      state.progress.ycEdition = Object.assign({}, state.progress.ycEdition, {[r.level]:pick});
+      if(pick === 'new') ycBegin(r.level);
+      save();
+    }
+    const d = Object.assign({}, ds, {ycEd:'1'});
+    HANDLERS['start-game'](el.isConnected ? {dataset:d, isConnected:true, getBoundingClientRect:()=>el.getBoundingClientRect()} : {dataset:d});
+  };
+  ycLoad().then(()=>{
+    if(state.view !== view) return;
+    if(!YourCall.ready(YC_CONTENT, ycCard(ds.refId))){ again(null); return; }
+    ycEditionSheet(again);
+  }, ()=>{ if(state.view === view) again(null); });
+  return true;
+}
+function ycEditionSheet(done){
+  hideCharTip(true);
+  const C = YC_CONTENT, th = C.thumb && C.art.items[C.thumb], img = th && th.src ? C.art.base + th.src : '';
+  const el = document.createElement('div');
+  el.className = 'celebrate-overlay rh-overlay yc-ed-overlay';
+  el.innerHTML = `<div class="rh-sheet" role="dialog" aria-modal="true" aria-labelledby="yc-ed-title" style="text-align:start;">
+    ${img ? `<img src="${esc(img)}" alt="" style="display:block; width:96px; height:120px; object-fit:cover; border-radius:16px; margin:0 auto 10px; box-shadow:0 0 0 2px var(--ink);">` : ''}
+    <div class="rh-title" id="yc-ed-title" style="text-align:center;">${L('Your Call has a new edition','Karar Senin’in yeni bir sürümü var','«تصمیم با تو» نسخه‌ی جدید دارد','Tú decides tiene una nueva edición')}</div>
+    <div class="rh-line" style="text-align:center;">${L('It is now a comic album, with new pictures and voices. Your old story stays saved.','Artık yeni çizimleri ve sesleriyle bir çizgi roman albümü. Eski hikâyen kayıtlı kalıyor.','حالا یک آلبوم کمیک است، با نقاشی‌ها و صداهای تازه. داستان قبلی‌ات ذخیره می‌ماند.','Ahora es un álbum de cómic, con dibujos y voces nuevos. Tu historia anterior queda guardada.')}</div>
+    <div class="stack" style="gap:10px; margin-top:14px;">
+      <button type="button" class="item-row" data-yc-ed="new">
+        <span class="item-ic" style="background:var(--accent); color:#fff;">${ICONS.play}</span>
+        <div class="item-body"><div class="item-title">${L('New edition','Yeni sürüm','نسخه‌ی جدید','Nueva edición')}</div><div class="item-sub" style="color:var(--ink-soft);">${L('Play the new comic','Yeni çizgi romanı oyna','کمیک جدید را بازی کن','Juega el cómic nuevo')}</div></div>
+      </button>
+      <button type="button" class="item-row" data-yc-ed="old">
+        <span class="item-ic" style="background:var(--cat-story); color:#fff;">${ICONS.book}</span>
+        <div class="item-body"><div class="item-title">${L('Continue the old story','Eski hikâyeye devam et','داستان قبلی را ادامه بده','Sigue con la historia anterior')}</div><div class="item-sub" style="color:var(--ink-soft);">${L('Pick up where you left off','Kaldığın yerden devam et','از همان‌جا که ماندی ادامه بده','Sigue donde lo dejaste')}</div></div>
+      </button>
+    </div>
+    <div class="rh-rest" style="text-align:center;">${L('You can also play the new comic in Games, from chapter 1.','Yeni çizgi romanı Oyunlar bölümünde de 1. bölümden oynayabilirsin.','کمیک جدید را در بخش «بازی‌ها» هم می‌توانی از فصل ۱ بازی کنی.','También puedes jugar el cómic nuevo en Juegos, desde el capítulo 1.')}</div>
+  </div>`;
+  el.addEventListener('click', e=>{
+    const b = e.target.closest('[data-yc-ed]');
+    if(b){ el.remove(); done(b.dataset.ycEd); return; }
+    if(!e.target.closest('.rh-sheet')) el.remove();
+  });
+  document.body.appendChild(el);
 }
 function renderGameYc(){
   queueFx(ycMount);
@@ -22067,17 +22170,19 @@ function ycMount(){
   const root = (window.Theatre && Theatre.isOpen() && Theatre.stageEl()) || document.getElementById('yc-host');
   if(!root || !window.YourCall) return;
   const pend = ycPending; ycPending = null;
-  const p = pathState(), card = vp.free ? [pend ? pend.n : 1] : ycCard(vp.refId);
+  const shelf = !!(vp.free && vp.shelf);   // Games shelf: free play on its own record (ycShelf); progress.path is not read or written
+  const p = shelf ? null : pathState(), card = vp.free ? [pend ? pend.n : ((shelf && ycShelfNext()) || 1)] : ycCard(vp.refId);
   const replay = !!vp.free || !!(pend && pend.replay);
-  let startCh = pend ? pend.n : (card.every(n=>p.choices[n]) ? card[0] : card.find(n=>!p.choices[n]));
+  let startCh = pend ? pend.n : (vp.free ? card[0] : (card.every(n=>p.choices[n]) ? card[0] : card.find(n=>!p.choices[n])));
   // chapter flow (UI0ejg05): never start after an unplayed earlier chapter of the same step (the strip used to open chapter 2 first)
   if(pend && !replay && card.includes(pend.n)){ const first = card.find(n=>!p.choices[n]); if(first && first < pend.n) startCh = first; }
   const resume = !replay && p.ycRun && card.includes(p.ycRun.ch) ? p.ycRun : null;
   ycGame = YourCall.start({root, content:YC_CONTENT, ui:LANG, chapters:card, start:startCh, mode:replay ? 'replay' : 'card', resume, theatre:window.Theatre || null,
     host:{
       speak:(t, o)=>new Promise(ok=>{ try{ ttsSpeak(t, o && o.rate ? o.rate * 0.92 : 0.92, {end:ok, error:ok}); }catch(e){ ok(); } }),
-      stopSpeech:stopAllSpeech, muted:()=>sfxMuted, reduced:reducedMotion, path:ycPathView,
-      saveRun:r=>{ pathState().ycRun = r; save(); }, commit:ycCommit},
+      stopSpeech:stopAllSpeech, muted:()=>sfxMuted, reduced:reducedMotion, path:shelf ? ycShelfView : ycPathView,
+      saveRun:shelf ? null : r=>{ pathState().ycRun = r; save(); }, commit:shelf ? null : ycCommit},
+    onChapterDone:shelf ? ycShelfSave : null,
     onPause:()=>{ ycGame = null; backToRoadmap(); },
     onCardDone:(res)=>{
       ycGame = null;
@@ -25905,7 +26010,7 @@ function theatreGate(el, handler){
   const seen = state.progress.theatreSeen || (state.progress.theatreSeen = {});
   theatreLoad().then(T=>(ds.kind === 'chores' ? cozyExtra(ds, handler) : ycExtra(ds, handler)).then(yx=>T.open(Object.assign({kind, cover, from, views:THEATRE_VIEWS, seen:!!seen[kind],
     // no LEVEL stamp on the Cozy Chores poster (GDD 3.2, gamification gap 2 on bD0fWJAk): its title is one string, so level only drew the stamp
-    app:{lang:LANG, name:(state.profile && state.profile.name) || '', level:kind === 'chores' ? '' : ((state.profile && state.profile.level) || ''), gameName:gameDisplayName(kind),
+    app:{lang:LANG, name:(state.profile && state.profile.name) || '', level:kind === 'chores' ? '' : ((yx && yx.level) || (state.profile && state.profile.level) || ''), gameName:gameDisplayName(kind),   // yx.level: the Your Call album's own level on the shelf
       view:()=>state.view, muted:()=>sfxMuted, setMuted:m=>{ sfxMuted = !!m; localStorage.setItem('farinSfxMuted', m ? '1' : '0'); }},
     onPlay:(info)=>{ if(!info || info.poster) seen[kind] = 1; play(); },   // no art yet = no poster shown, not "seen"
     onExit:theatreGameExit}, yx))))
@@ -25916,7 +26021,7 @@ function theatreGate(el, handler){
 function theatreFallsBack(ds, handler){
   const ref = ds.free ? null : ds.refId;
   try{
-    if(ds.kind === 'path') return !(handler === 'shelf-play' ? pathShelfRound() : pathRoundForRef(ds.refId));
+    if(ds.kind === 'path') return handler === 'shelf-play' ? false : !pathRoundForRef(ds.refId);   // the shelf always has the Your Call comic (ycShelf)
     if(ds.kind === 'mystery') return g2Applies('mystery') ? false : !buildCaseRound(ref);
     if(ds.kind === 'desk') return !buildDeskRound(ref);
     if(ds.kind === 'spell'){ const set = VOCAB_SETS.find(x=>x.id===ds.setId); return !set || !buildSpellRound(set, ref); }
@@ -27293,8 +27398,14 @@ const HANDLERS = {
     hideCharTip(true); gcBubble = null;
     const ds = {kind, refId:'shelf-'+kind, goal:'', free:'1', shelf:'1', setId:''};
     if(kind === 'path'){
-      // a chapter already played, fresh choices, nothing saved; none yet -> Word Rush
-      if(ycShelf(ds)) return;   // Your Call v2: replay a played chapter
+      // Your Call v2, the comic, for every learner (ycShelf); its files not loaded yet (no Theatre): load them first.
+      // Only if they cannot load: the old Story Path, a chapter already played, nothing saved; none yet -> Word Rush
+      if(ycShelf(ds)) return;
+      if(!el.dataset.ycTry){
+        const v = state.view;
+        ycLoad().then(()=>true, ()=>false).then(ok=>{ if(state.view !== v) return; if(!(ok && ycShelf(ds))) HANDLERS['shelf-play']({dataset:Object.assign({}, el.dataset, {ycTry:'1', theatre:'1'})}); });
+        return;
+      }
       const pr = pathShelfRound();
       if(pr){ go('game-path', {round:pr, refId:ds.refId, goal:'', free:true, shelf:true}); return; }
       ds.kind = 'match';
@@ -27323,6 +27434,7 @@ const HANDLERS = {
   },
   'start-game'(el){
     const kind = el.dataset.kind;
+    if(kind === 'path' && ycAskEdition(el)) return;   // the old A1 story in progress: "New edition" or "Continue the old story", asked once
     if(theatreGate(el, 'start-game')) return;   // Game Theatre: scenario games open full screen behind their poster
     if(g2Applies(kind) && !el.dataset.nov2){ g2Start(el.dataset); return; }   // games v2 behind GAMES_V2_LIVE (off live)
     gcBubble = null; trapWarnKey = null;

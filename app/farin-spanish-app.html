@@ -11143,6 +11143,130 @@ function roadmapThemeLabel(p){
   if(!gIds.length || !gIds.every(id=>(th.grammar || []).includes(id))) return '';
   return L(th.theme.en, th.theme.tr, th.theme.fa, th.theme.es) || '';
 }
+/* ======== Learn, then play (rot:5; Claude/specs/roadmap-half-games-2026-11-11/SPEC.md; Farin 2026-11-11 "half of the roadmap be games") ========
+   Every lesson card on a page is followed by a game card that plays what the page (or an earlier page) has taught. The rotation games keep
+   their places (anchors); roadmapPlayFill() puts one "partner" game into every gap between two lesson cards. Partner kinds are the quick
+   games and the two scenario games; the story games (Your Call, Case Closed, Cozy Chores, Mini Radio) stay on their own steps, and Story
+   Hunt only comes right after a story. No labels, counters or XP on any card (Farin 2026-09-30). Both apps, byte-identical. */
+// Variety: tried in this order until a kind fits. First: at most 2 of a kind on the page (rotation games included) and none of the
+// same kind among the 2 nearest games on either side; then 3 of a kind; then only the nearest game on each side; last resort 4.
+const PLAY_PASSES = [[2, 2], [3, 2], [3, 1], [4, 1]];
+const PLAY_AFF = {    // partner kinds by the lesson right before the gap, best fit first
+  vocab:['bingo','cross','spell','match'], slang:['echo','spell','match'], grammar:['build','order','desk'],
+  speaking:['echo','order','desk'], dialogue:['order','desk','echo'], story:['hunt'], media:['dictation','echo','bingo'],
+  writing:['build','cross','spell'], song:['dictation','echo','cross'], box:['bingo','cross','spell','match']
+};
+const PLAY_ANY = ['dictation','echo','bingo','cross','spell','match','build','order','desk'];
+const PLAY_REVIEW = ['echo','spell','cross','dictation'];   // the READY-5 review kinds, in READY-5 order
+const PLAY_WEIGHT = {match:1};   // Word Rush (the simplest game) is picked as if it were already on the page once more
+function playSetFits(s, k){
+  if(!s || !s.cards) return false;
+  if(k === 'bingo') return s.cards.length >= 9;
+  if(k === 'cross') return s.category !== 'slang' && crossSetOk(s);
+  if(k === 'spell') return spellSetOk(s);
+  if(k === 'dictation' || k === 'echo') return s.cards.filter(c=>c.sentence).length >= 3;
+  return s.cards.length >= 4;   // match (Word Rush)
+}
+/* items: the page (changed in place). o = {profile, stage, from, before, gramBefore, avoid}
+   from: the first index a new card may take (0 on a new page; the step after the open step on a saved page)
+   before: vocab sets taught on earlier pages (page 2: page 1's; page 1: the carry sets), used after the page's own sets
+   gramBefore: grammar items taught before this page (Build It)
+   avoid: refIds that must not be used (page 1's game cards, progress.completedGames): such a card would show as done already
+   saved: true on a saved page (step 0 is skipped: saved cards never move) */
+function roadmapPlayFill(items, o){
+  const isG = it => !!it && it.type === 'game';
+  const p = o.profile, lvl = p.level, st = o.stage, from = o.from || 0, avoid = o.avoid || new Set();
+  const goal = (items.find(it=>isG(it) && it.goal) || {}).goal || profileGoalKeys(p)[0] || 'everyday';
+  let fp = 20 + items.filter(it=>isG(it) && it.fill).length;   // partner positions 20, 21, ... (unique per page, so own-content refIds are too)
+  const near = (at, dir, n) => { const out = []; for(let j = dir < 0 ? at - 1 : at; j >= 0 && j < items.length && out.length < n; j += dir) if(isG(items[j])) out.push(items[j].gameKind); return out; };
+  const count = k => items.filter(it=>isG(it) && it.gameKind === k).length;
+  const spread = (k, at, w) => !near(at, -1, w).includes(k) && !near(at, 1, w).includes(k);
+  const node = (k, pos, refId, setId, name) => ({type:'game', gameKind:k, slot:st * 100 + pos, pos, rot:5, fill:true, refId, setId:setId || null, goal,
+    title:L('Game','Oyun','بازی','Juego') + ': ' + (name || gameDisplayName(k))});
+  const taughtSets = at => { const seen = new Set();
+    return items.slice(0, at).filter(it=>it.type === 'vocab' || it.type === 'slang').map(it=>VOCAB_SETS.find(s=>s.id === it.refId)).filter(Boolean).reverse()
+      .concat(o.before || []).filter(s=>!seen.has(s.id) && seen.add(s.id)); };
+  const make = (k, at) => {
+    const pos = fp, refs = new Set(items.filter(isG).map(it=>it.refId)), free = r => !refs.has(r) && !avoid.has(r);
+    if(k === 'hunt'){   // Story Hunt: only right after the story it plays, one per page
+      const sv = items[at - 1], hs = sv && sv.type === 'story' && !count('hunt') ? STORY_LIBRARY_FREE.find(x=>x.id === sv.refId) : null;
+      return hs && huntable(hs) && free(hs.id + '-hunt') ? node('hunt', pos, hs.id + '-hunt', null, gameDisplayName('hunt') + ' — ' + L(hs.title.en, hs.title.tr, hs.title.fa, hs.title.es)) : null;
+    }
+    if(k === 'build'){   // Build It plays the grammar taught before this card (4 sentences or more)
+      const taught = (o.gramBefore || []).concat(items.slice(0, at).filter(it=>it.type === 'grammar').map(it=>GRAMMAR_ITEMS.find(x=>x.id === it.refId)).filter(Boolean));
+      if(buildCandidates(p, taught).length < BUILD_MIN) return null;
+    }
+    if(k === 'build' || k === 'order' || k === 'desk'){ const r = k + '-' + lvl + '-s' + st + '-p' + pos; return free(r) ? node(k, pos, r) : null; }
+    // a set game: the newest taught set with no game on this page yet, else one with a single game (of another kind); never a third
+    const games = items.filter(isG), uses = id => games.filter(it=>it.setId === id).length;
+    const sets = taughtSets(at).filter(x=>playSetFits(x, k) && free(x.id + '-' + k));
+    const s = sets.find(x=>!uses(x.id)) || sets.find(x=>uses(x.id) === 1);
+    return s ? node(k, pos, s.id + '-' + k, s.id, gameDisplayName(k) + ' — ' + setTitle(s)) : null;
+  };
+  // 0. A review game (READY-5) or a partner game that touches another game moves to the nearest gap between two lessons: forward first,
+  //    else backward, never before the card that taught its set. A review game whose kind repeats one of the 2 nearest games on either
+  //    side takes another review kind (echo, spell, cross, dictation) its set fits. Trello ebh7xbv8.
+  const spreadAt = (k, i) => !near(i, -1, 2).includes(k) && !near(i + 1, 1, 2).includes(k);
+  //    New pages only: on a saved page no saved card moves or changes (o.saved).
+  if(!o.saved) items.filter(it=>isG(it) && (it.review || it.fill)).forEach(it=>{
+    const i = items.indexOf(it);
+    if(i >= from && (isG(items[i - 1]) || isG(items[i + 1]))){
+      items.splice(i, 1);
+      const taughtAt = it.setId ? items.findIndex(n=>(n.type === 'vocab' || n.type === 'slang') && n.refId === it.setId) : -1;
+      const minAt = Math.max(from, taughtAt + 1);
+      const gaps = [];
+      for(let j = Math.max(0, minAt - 1); j < items.length - 1; j++) if(j + 1 >= minAt && !isG(items[j]) && !isG(items[j + 1])) gaps.push(j + 1);
+      const order = gaps.filter(a=>a >= i).concat(gaps.filter(a=>a < i).reverse());
+      const to = order.find(a=>spread(it.gameKind, a, 2));
+      items.splice(to != null ? to : (order.length ? order[0] : i), 0, it);
+    }
+    if(it.review && !spreadAt(it.gameKind, items.indexOf(it))){
+      const at = items.indexOf(it), s = VOCAB_SETS.find(x=>x.id === it.setId), refs = new Set(items.filter(isG).map(n=>n.refId));
+      const k = s && PLAY_REVIEW.find(x=>x !== it.gameKind && count(x) < 3 && spreadAt(x, at) && playSetFits(s, x) && !refs.has(s.id + '-' + x) && !avoid.has(s.id + '-' + x));
+      if(k){ it.gameKind = k; it.refId = s.id + '-' + k; it.title = L('Game','Oyun','بازی','Juego') + ': ' + gameDisplayName(k) + ' — ' + setTitle(s); }
+    }
+  });
+  // 1. Every gap between two lesson cards (Vocab Box, song and media count as lessons) gets one partner game.
+  for(let i = Math.max(0, from - 1); i < items.length - 1; i++){
+    if(isG(items[i]) || isG(items[i + 1])) continue;
+    const at = i + 1, aff = PLAY_AFF[items[i].type] || [];
+    let n = null;
+    for(const [cap, w] of PLAY_PASSES){   // cap = most of one kind on the page; w = no same kind among the w nearest games on each side
+      const ok = k => count(k) < (k === 'hunt' ? 1 : cap) && spread(k, at, w);
+      const w8 = k => count(k) + (PLAY_WEIGHT[k] || 0);
+      const tier = arr => arr.filter(ok).sort((a, b)=>w8(a) - w8(b) || arr.indexOf(a) - arr.indexOf(b));
+      for(const k of tier(aff).concat(tier(PLAY_ANY.filter(k=>!aff.includes(k))))){ n = make(k, at); if(n) break; }
+      if(n) break;
+    }
+    if(n){ items.splice(at, 0, n); fp++; i++; }
+  }
+  return items;
+}
+/* Saved pages (made before rot:5) get their partner games once, in the part the learner has not reached: nothing at or before the open
+   step moves, done nodes / progress / souvenirs stay as they are, the golden node is re-pointed (like ensureRoadmapBox). */
+function ensureRoadmapPlay(){
+  const rm = state.roadmap, p = state.profile;
+  if(!rm || !rm.length || !p || !p.completedDiagnostic || !p.level) return false;
+  const key = p.level + '.' + (p.levelStage === 2 ? 2 : 1);
+  if(state.progress.playFill === key || rm.some(n=>n.type === 'game' && n.rot === 5)) return false;
+  state.progress.playFill = key;
+  return roadmapPlayTail(rm, p);
+}
+// Shared by the saved-page upgrade and the goal-edit merge: partner games from the step after the open step on.
+function roadmapPlayTail(rm, p){
+  const open = rm.findIndex(n=>rmRequired(n) && !isRoadmapNodeDone(n));
+  if(open < 0) return false;   // page finished, waiting for "Go to the next level": nothing to add
+  const n0 = rm.length;
+  roadmapPlayFill(rm, {profile:p, stage:p.levelStage === 2 ? 2 : 1, from:open + 1, saved:true,
+    before:carrySetIds(p).map(id=>VOCAB_SETS.find(s=>s.id === id)).filter(Boolean),
+    gramBefore:completedGrammarItems(p.level), avoid:new Set(state.progress.completedGames || [])});
+  if(rm.length === n0) return false;
+  rm.forEach((n, i)=>{ n.n = i + 1; });
+  const g = state.progress.roadmapGolden;
+  if(g && g.nodeId){ const gi = rm.findIndex(n=>roadmapNodeId(n) === g.nodeId); if(gi > -1) g.goldenIdx = gi; }
+  return true;
+}
+function roadmapPlayAfterMerge(){ if(state.roadmap && state.profile) roadmapPlayTail(state.roadmap, state.profile); }
 function buildRoadmap(profile){
   const goals = profileGoalKeys(profile);
   const gPoolAll = GRAMMAR_ITEMS_FREE.filter(g=>g.level===profile.level);
@@ -11257,9 +11381,9 @@ function buildRoadmap(profile){
      stage — 0 opener (first node of the page, after a driller's vocab warm-up), 1 right after the
      speaking-practice node, 2 after the 3rd grammar item, 3 mid (after the 4th grammar item and the
      stage dialogue), 4 right after the story (+ media; Story Hunt), 5 end (after writing), 6 closer
-     (last node of the page). Kinds come from gameKindForPosition(); node.slot = (stage-1)*7 + pos,
-     node.pos and node.rot = 3 mark this scheme (roadmaps saved before it keep their own game nodes,
-     see mergeRoadmapForGoalChange).
+     (last node of the page). Kinds come from gameKindForPosition(); node.slot = stage*100 + pos,
+     node.pos and node.rot = 5 mark this scheme (rot:5 "Learn, then play", 2026-11-11: roadmapPlayFill() then puts a partner game
+     between every two lesson cards; saved rot:3/rot:4 pages get theirs from ensureRoadmapPlay(), see mergeRoadmapForGoalChange).
      A game only ever uses content the page has already taught: a vocab game takes the most recent
      vocab node before it in this stage (stage 2: then the stage-1 vocab nodes), preferring a set no
      other game in this roadmap or the stage-1 games uses and that was not played before; when no
@@ -11269,12 +11393,13 @@ function buildRoadmap(profile){
      Order Up! (B1+); Order Up! never falls back; Trap Dash is shelf-only now. */
   const playedSetIds = new Set(((state.progress && state.progress.completedGames) || []).map(r=>String(r).replace(/-(match|dictation|bingo|echo|cross|spell)$/, '')));
   // the sets the stage-1 games of this level use, and the stage-1 vocab nodes (taught before this page)
-  let stage1Sets = new Set(), stage1Vocab = [], stage1Radio = [];
+  let stage1Sets = new Set(), stage1Vocab = [], stage1Radio = [], stage1Refs = new Set();
   if(stage === 2){
     try{
       const s1 = buildRoadmap(Object.assign({}, profile, {levelStage:1}));
       stage1Sets = new Set(s1.filter(n=>n.type==='game' && n.setId).map(n=>n.setId));
       stage1Radio = s1.filter(n=>n.type==='game' && n.gameKind==='radio').map(n=>n.refId);
+      stage1Refs = new Set(s1.filter(n=>n.type==='game').map(n=>n.refId));
       stage1Vocab = s1.filter(n=>n.type==='vocab').map(n=>VOCAB_SETS.find(s=>s.id===n.refId)).filter(Boolean).reverse();
     }catch(e){}
   }
@@ -11282,7 +11407,7 @@ function buildRoadmap(profile){
   const pickGameSet = (kind, reuse) => {
     const usedByGames = items.filter(it=>it.type==='game' && it.setId).map(it=>it.setId);
     const usedRefs = new Set(items.filter(it=>it.type==='game').map(it=>it.refId));
-    const fits = s => !!s && !usedRefs.has(s.id+'-'+kind) && (kind !== 'bingo' || s.cards.length >= 9) && (kind !== 'cross' || crossSetOk(s)) && (kind !== 'spell' || spellSetOk(s)) && ((kind !== 'dictation' && kind !== 'echo') || s.cards.filter(c=>c.sentence).length >= 3);
+    const fits = s => !!s && !usedRefs.has(s.id+'-'+kind) && !stage1Refs.has(s.id+'-'+kind) && (kind !== 'bingo' || s.cards.length >= 9) && (kind !== 'cross' || crossSetOk(s)) && (kind !== 'spell' || spellSetOk(s)) && ((kind !== 'dictation' && kind !== 'echo') || s.cards.filter(c=>c.sentence).length >= 3);
     // LXD READY-6 R3b: sets taught before this page, weakest first (stage 2: stage 1's; stage 1: the stage before). Vocab nodes only, never song/media.
     const rankSets = arr => { const ids = carryRank(arr.map(s=>s.id), 'vocab'); return ids.map(id=>arr.find(s=>s.id===id)).concat(arr.filter(s=>!ids.includes(s.id))); };
     const before = stage === 2 ? rankSets(stage1Vocab) : carrySetIds(profile).map(id=>VOCAB_SETS.find(s=>s.id===id)).filter(Boolean);
@@ -11297,8 +11422,8 @@ function buildRoadmap(profile){
     const g = primaryGoal || 'everyday';
     const low = profile.level === 'A1' || profile.level === 'A2';
     const G2 = gamesV2On();   // games v2: 8 positions per stage + the rot:4 marker; flag off = the rot:3 scheme unchanged
-    const slot = (stage - 1) * (G2 ? 8 : 7) + pos;
-    const gameNode = (k, refId, setId, name) => ({type:'game', gameKind:k, slot, pos, rot:G2 ? 4 : 3, refId, setId:setId || null, goal:g,
+    const slot = stage * 100 + pos;   // rot:5: 100-107 / 200-207 rotation, 120+ / 220+ partner games; never collides
+    const gameNode = (k, refId, setId, name) => ({type:'game', gameKind:k, slot, pos, rot:5, refId, setId:setId || null, goal:g,
       title:L('Game','Oyun','بازی','Juego')+': '+(name || gameDisplayName(k))});
     if(kind === 'path'){   // Your Call: two chapters per card (PATH_PAIR): page 1 opens with 1-2, page 2 with 3-4 and closes with 5-6
       const pair = (PATH_PAIR['s' + stage] || {})[pos] || null;
@@ -11338,7 +11463,6 @@ function buildRoadmap(profile){
       const hs = si >= 0 ? STORY_LIBRARY_FREE.find(s=>s.id===items[si].refId) : null;
       if(hs && huntable(hs)){
         let at = si + 1;
-        if(items[at] && items[at].type === 'media') at++;
         items.splice(at, 0, gameNode('hunt', hs.id+'-hunt', null, gameDisplayName('hunt')+' — '+L(hs.title.en, hs.title.tr, hs.title.fa, hs.title.es)));
         return;
       }
@@ -11420,8 +11544,8 @@ function buildRoadmap(profile){
   // legwork, as a pay-off read rather than an opener.
   if(profile.learnerType!=='immersive'){
     // Rule D (game-spacing SPEC 2026-10-22): position 7 right before the story. Dormant until rotation v4 (w2fUgaNg)
-    // fills GAME_ROTATION[..][7]: gameKindForPosition() returns null and pushGame() skips it. NB v4 must also give
-    // pos 7 its own slot number (slot = (stage-1)*7 + pos would collide with stage 2 pos 0).
+    // fills GAME_ROTATION[..][7]: gameKindForPosition() returns null and pushGame() skips it. rot:5 gives every position
+    // its own slot number (slot = stage*100 + pos), so pos 7 never collides with stage 2 pos 0.
     pushStory();
     pushGame(gameKindForPosition(profile.level, stage, 4), 4);   // position 4: right after the story (+ media)
   }
@@ -11475,8 +11599,9 @@ function buildRoadmap(profile){
           seen.add(it.type + '|' + it.refId); kept.push(it); return;
         }
         const set = VOCAB_SETS.find(s=>s.id===it.refId);
-        const k = set && ['echo','spell','cross','dictation'].find(x=>!gameOnPage(set.id+'-'+x) && gameFits(set, x));
-        if(k) kept.push({type:'game', gameKind:k, slot:null, pos:null, rot:gamesV2On() ? 4 : 3, review:true, refId:set.id+'-'+k, setId:set.id, goal:it.goal || primaryGoal,
+        const playedRefs = new Set((state.progress && state.progress.completedGames) || []);
+        const k = set && ['echo','spell','cross','dictation'].find(x=>!gameOnPage(set.id+'-'+x) && gameFits(set, x) && !stage1Refs.has(set.id+'-'+x) && !playedRefs.has(set.id+'-'+x));
+        if(k) kept.push({type:'game', gameKind:k, slot:null, pos:null, rot:5, review:true, refId:set.id+'-'+k, setId:set.id, goal:it.goal || primaryGoal,
           title:L('Game','Oyun','بازی','Juego')+': '+gameDisplayName(k)+' — '+setTitle(set)});
         return;
       }
@@ -11500,6 +11625,9 @@ function buildRoadmap(profile){
       if(to > 0){ const t = items[ri]; items[ri] = items[to]; items[to] = t; }
     }
   }
+  roadmapPlayFill(items, {profile, stage, from:0,
+    before: stage === 2 ? stage1Vocab.slice() : carrySetIds(profile).map(id=>VOCAB_SETS.find(s=>s.id===id)).filter(Boolean),
+    gramBefore: gStage1, avoid: new Set([...stage1Refs, ...((state.progress && state.progress.completedGames) || [])])});
   const seenNodeKeys = {};
   items.forEach(it=>{
     const baseKey = it.type+':'+it.refId;
@@ -11528,12 +11656,15 @@ function roadmapNodeId(item){ return item.type+':'+item.refId+(item.occ?('#'+ite
    (null = no node: no page opens on content it has not taught). Word Rush stays the runtime fallback and
    Trap Dash stays off roadmaps (Games shelf only, listed from the start). New roadmaps only: game nodes
    already saved keep their kind and refId (rot:3 marks this scheme). */
+/* rot:5 (Claude/specs/roadmap-half-games-2026-11-11, Farin 2026-11-11 "half of the roadmap be games"): s2 position 5 = Case Closed
+   at every level, so page 2 holds Episode 1 (position 3) and Episode 2 (position 5; Trello n1qUypxI). The kinds it replaced (Magic
+   Words, Say It Back, Mini Cross) come back as partner games (roadmapPlayFill). */
 const GAME_ROTATION = {
-  A1:{ s1:['path','bingo','order','desk',  'hunt','cross',    'build' ], s2:['path','dictation','chores',   'mystery','echo', 'spell','path'] },
-  A2:{ s1:['path','bingo','order','chores','hunt','cross',    'build' ], s2:['path','dictation','desk',     'mystery','spell','echo', 'path'] },
-  B1:{ s1:['path','bingo','order','chores','hunt','dictation','desk'  ], s2:['path','build',    'echo',     'mystery','spell','cross','path'] },
-  B2:{ s1:['path','bingo','order','chores','hunt','cross',    'desk'  ], s2:['path','build',    'dictation','mystery','echo', 'spell','path'] },
-  C1:{ s1:['path','bingo','desk', 'order', 'hunt','dictation','chores'], s2:['path','build',    'echo',     'mystery','spell','cross','path'] }
+  A1:{ s1:['path','bingo','order','desk',  'hunt','cross',    'build' ], s2:['path','dictation','chores',   'mystery','echo', 'mystery','path'] },
+  A2:{ s1:['path','bingo','order','chores','hunt','cross',    'build' ], s2:['path','dictation','desk',     'mystery','spell','mystery','path'] },
+  B1:{ s1:['path','bingo','order','chores','hunt','dictation','desk'  ], s2:['path','build',    'echo',     'mystery','spell','mystery','path'] },
+  B2:{ s1:['path','bingo','order','chores','hunt','cross',    'desk'  ], s2:['path','build',    'dictation','mystery','echo', 'mystery','path'] },
+  C1:{ s1:['path','bingo','desk', 'order', 'hunt','dictation','chores'], s2:['path','build',    'echo',     'mystery','spell','mystery','path'] }
 };
 // Your Call chapter pairs by position.
 const PATH_PAIR = { s1:{0:[1,2]}, s2:{0:[3,4], 6:[5,6]} };
@@ -12483,6 +12614,7 @@ function ensureRoadmap(){
   if(state.profile && state.profile.completedDiagnostic){ try{ mediaAdded = ensureRoadmapMedia(); }catch(e){} }
   if(state.profile && state.profile.completedDiagnostic){ try{ if(ensureRoadmapBox()) mediaAdded = true; }catch(e){} }
   if(state.profile && state.profile.completedDiagnostic){ try{ if(ensureRoadmapSong()) mediaAdded = true; }catch(e){} }
+  if(state.profile && state.profile.completedDiagnostic){ try{ if(ensureRoadmapPlay()) mediaAdded = true; }catch(e){} }
   if(state.profile && state.profile.completedDiagnostic){ try{ awardSouvenirs(null); }catch(e){} }
   return mediaAdded;
 }
@@ -12506,7 +12638,7 @@ function mergeRoadmapForGoalChange(){
   const currentGoals = state.profile.goals || [];
   // A roadmap built before rotation v3 (any game node without rot 3: the five-position scheme or older)
   // keeps its own game nodes and gets no new ones (new roadmaps only).
-  const legacyGames = existing.some(it=>it.type==='game' && it.rot !== 3 && it.rot !== 4);
+  const legacyGames = existing.some(it=>it.type==='game' && it.rot !== 3 && it.rot !== 4 && it.rot !== 5);
   const kept = existing.filter(it=>
     isRoadmapNodeDone(it) || currentGoals.includes(it.goal) || !GOAL_ORDER.includes(it.goal) || (legacyGames && it.type==='game')
   );
@@ -12514,11 +12646,12 @@ function mergeRoadmapForGoalChange(){
   try{ target = buildRoadmap(state.profile); }catch(e){ return; }
   const keptIds = new Set(kept.map(roadmapNodeId));
   // media: never appended at the end; ensureRoadmapMedia() puts it after the story
-  const newNodes = target.filter(it=>!keptIds.has(roadmapNodeId(it)) && !(legacyGames && it.type==='game') && it.type!=='media' && it.type!=='box' && it.type!=='song' && !(it.type==='game' && it.gameKind==='radio' && !existing.some(n=>n.rot===4)));
+  const newNodes = target.filter(it=>!keptIds.has(roadmapNodeId(it)) && !(legacyGames && it.type==='game') && !(it.type==='game' && (it.fill || it.review)) && it.type!=='media' && it.type!=='box' && it.type!=='song' && !(it.type==='game' && it.gameKind==='radio' && !existing.some(n=>n.rot===4 || n.rot===5)));
   state.roadmap = kept.concat(newNodes).map((it,idx)=>Object.assign({}, it, {n:idx+1}));
   try{ ensureRoadmapMedia(); }catch(e){}
   try{ ensureRoadmapBox(); }catch(e){}
   try{ ensureRoadmapSong(); }catch(e){}
+  try{ roadmapPlayAfterMerge(); }catch(e){}
 }
 
 /* ============================= FARIN THE CHARACTER =============================

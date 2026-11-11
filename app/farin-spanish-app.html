@@ -33007,7 +33007,8 @@ Object.assign(screens, {
    (explain, judge, speaking, writing, exit), plus r1 / r2 / r3, so courseNext, Home, unit progress, finales and the certificate
    behave as before. The scheduler is the existing Leitner one (courseItemSeen) with two extra flags: soft (right on the second
    try, comes back once) and look (wrong twice, on the Look again list).
-   GATE: a course opts in with rounds:true in its app-only literal (pilot: business). ROUNDS_LIVE is true since 2026-11-11 (Farin
+   GATE: a course opts in with rounds:true in its app-only literal (pilot: business; sales since 2026-11-11, Trello JUXq3lhZ, with the
+   SPEC 18b engine notes: "Your facts:" in courseRExSplit, hint2 on the quick and grammar-blank round items, the blank's own why). ROUNDS_LIVE is true since 2026-11-11 (Farin
    approved the demo: "the demo of the courses is approved go with it"). Set it back to false to switch rounds off for every learner;
    then ?rounds=1 turns it on in one browser (dev / review), ?rounds=0 off. Courses without rounds:true run today's flow, untouched.
    Byte-identical in the English and Spanish apps. Every string goes through CL(en, tr, fa, es); Persian uses informal تو. */
@@ -33134,8 +33135,9 @@ const COURSE_R_STAMP = ['art/course-clay/stamp-know-256.webp', 'art/course-clay/
 function courseRLessonName(cid, uid){ const no = courseUnitNo(cid, uid); return CL('Lesson ' + no, 'Ders ' + no, 'درس ' + trN(no), 'Lección ' + no); }
 function courseRName(r){ return trs('r.' + COURSE_R_KEYS[r]); }
 // Clay pictures: decorative (alt=""), lazy; a missing file falls back to its stand-in or, for a stamp, to the UI ring (never a broken image).
-function courseRImg(src, cls, fb){ return `<img class="${cls || ''}" src="${esc(src)}" alt="" loading="lazy" decoding="async"${fb ? ` data-fb="${esc(fb)}"` : ''} onerror="courseRImgFail(this)">`; }
-function courseRImgFail(img){ try{ const fb = img.getAttribute('data-fb'); if(fb){ img.removeAttribute('data-fb'); img.src = fb; return; } const p = img.parentNode; if(p && p.classList) p.classList.add('noimg'); img.remove(); }catch(e){} }
+// The onerror code is inline: an inline handler runs in the page's global scope, where the app's functions do not exist (the old
+// onerror="courseRImgFail(this)" threw "courseRImgFail is not defined" and left the broken image; found by course-link-check 2026-11-11).
+function courseRImg(src, cls, fb){ return `<img class="${cls || ''}" src="${esc(src)}" alt="" loading="lazy" decoding="async"${fb ? ` data-fb="${esc(fb)}"` : ''} onerror="try{var f=this.getAttribute('data-fb');if(f){this.removeAttribute('data-fb');this.src=f;}else{if(this.parentNode)this.parentNode.classList.add('noimg');this.remove();}}catch(e){}">`; }
 
 /* ---- the gate ---- */
 function courseRCourseOn(c){ return !!(c && c.rounds && roundsLive() && !courseIsExam(c)); }
@@ -33204,7 +33206,7 @@ function courseRSplit(ex){ const n = (ex.points || []).length, ok = r=>Array.isA
 function courseRExSplit(item){
   const s = String(item || ''); let m = s.match(/^([\s\S]*?)\s*(?:Your )?[Dd]raft[^:]{0,30}:\s*([\s\S]+)$/);
   let r = m ? {facts:m[1].trim(), draft:m[2].trim()} : null;
-  if(!r){ m = s.match(/^([\s\S]*?)\s+(?:Facts(?: from the call)?|Situation):\s*([\s\S]+)$/); if(m) r = {facts:m[2].trim(), draft:m[1].trim()}; }
+  if(!r){ m = s.match(/^([\s\S]*?)\s+(?:Facts(?: from the call)?|Situation|Your facts):\s*([\s\S]+)$/); if(m) r = {facts:m[2].trim(), draft:m[1].trim()}; }
   if(!r) return {facts:'', draft:s};
   if(/^"[\s\S]*"$/.test(r.draft) && !/"/.test(r.draft.slice(1, -1))) r.draft = r.draft.slice(1, -1);
   return r;
@@ -33263,10 +33265,10 @@ function courseRounds(cid, uid){
   const q = ex.quick && (ex.quick.options || []).length ? ex.quick : null;
   const qPoint = q ? (Number(q.point) || Number(ex.quickAfter) || 1) : 0;
   let quickTry = !!q;
-  if(c1.length < 2 && q){ c1.push({key:ex.id + '#q', item:{prompt:q.prompt, options:q.options, correct:q.correct, why:q.why, point:qPoint}, idx:900}); quickTry = false; }
+  if(c1.length < 2 && q){ c1.push({key:ex.id + '#q', item:{prompt:q.prompt, options:q.options, correct:q.correct, why:q.why, point:qPoint, hint2:q.hint2}, idx:900}); quickTry = false; }
   const g = it.grammar, gRound = roundOfPt(gp) === 0 ? c1 : c2;
   if(g) [['blank2', '#b2'], ['blank', '#b1']].forEach(([f, k])=>{ const b = g[f]; if(gRound.length < 2 && b && b.word && (b.distractors || []).length)
-    gRound.push({key:g.id + k, item:{kind:'blank', prompt:b.sentence, options:[b.word].concat(b.distractors), correct:0, point:gp, why:g.expParts && g.expParts.test ? g.expParts.test : null}, idx:950}); });
+    gRound.push({key:g.id + k, item:{kind:'blank', prompt:b.sentence, options:[b.word].concat(b.distractors), correct:0, point:gp, hint2:b.hint2, why:b.why || (g.expParts && g.expParts.test ? g.expParts.test : null)}, idx:950}); });
   if(b2 && b2.exitItem) c2.push({key:b2.id + '#x', item:b2.exitItem, idx:999, kp:'b2'});
   // before and the learner's text
   const w = it.writing, redo = !!(courseUi.rd && courseUi.rd.uid === uid && courseUi.rd.redo);
@@ -33856,8 +33858,8 @@ function courseRItemByKey(cid, key){
   if(/^\d+$/.test(k)){ const ex = (COURSE_EXTRA.exit || []).find(x=>x.id === id && x.course === cid); const it = ex && ex.items && ex.items[Number(k)]; return it ? {item:it, uid:ex.unit} : null; }
   if(k === 'x'){ const g = GRAMMAR_ITEMS.find(x=>x.id === id && x.course === cid); return g && g.exitItem ? {item:g.exitItem, uid:g.unit, kp:'b2'} : null; }
   if(k === 'b1' || k === 'b2'){ const g = GRAMMAR_ITEMS.find(x=>x.id === id && x.course === cid), b = g && g[k === 'b2' ? 'blank2' : 'blank']; if(!b) return null;
-    const gp = courseRGp(courseUnitItems(g.unit)); return {item:{kind:'blank', prompt:b.sentence, options:[b.word].concat(b.distractors || []), correct:0, point:gp, why:g.expParts && g.expParts.test}, uid:g.unit}; }
-  if(k === 'q'){ const ex = (COURSE_EXTRA.explain || []).find(x=>x.id === id && x.course === cid), q = ex && ex.quick; return q ? {item:{prompt:q.prompt, options:q.options, correct:q.correct, why:q.why, point:Number(q.point) || 1}, uid:ex.unit} : null; }
+    const gp = courseRGp(courseUnitItems(g.unit)); return {item:{kind:'blank', prompt:b.sentence, options:[b.word].concat(b.distractors || []), correct:0, point:gp, hint2:b.hint2, why:b.why || (g.expParts && g.expParts.test)}, uid:g.unit}; }
+  if(k === 'q'){ const ex = (COURSE_EXTRA.explain || []).find(x=>x.id === id && x.course === cid), q = ex && ex.quick; return q ? {item:{prompt:q.prompt, options:q.options, correct:q.correct, why:q.why, point:Number(q.point) || 1, hint2:q.hint2}, uid:ex.unit} : null; }
   return null;
 }
 function courseRLookRows(cid){

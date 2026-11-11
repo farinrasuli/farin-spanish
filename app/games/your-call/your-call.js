@@ -38,7 +38,7 @@
 'use strict';
 if(window.YourCall) return;
 var D = document, W = window;
-var VERSION = '0.2.0';
+var VERSION = '0.2.1';
 
 /* ---------- chrome strings (the UI language; Persian informal) ---------- */
 var UI = {
@@ -92,6 +92,13 @@ function prefersReduced(){ try{ return W.matchMedia('(prefers-reduced-motion: re
 
 /* ---------- story logic (pure; also used by the app hook and the tests) ---------- */
 function pickOf(choices, c, d){ return String((choices && choices[c]) || '').charAt(d - 1); }
+// the picture on a chapter's postcard and its poster-strip photo: its own postcard, else its 1970 print (then / now); the trail
+// chapter (ch3) has no single print, so its first trail plate; the last-photo chapter (ch6) the 1970 half of the learner's last photo.
+// 0.2.1 (2026-11-12): ch3 and ch6 used to show a DEV placeholder on the postcard and a blank strip photo.
+function postcardArt(c, choices){
+  var ph = c.photo || {}, V = ph.vars || {};
+  return c.postcard || ph.then || ph.now || (ph.trail && ph.trail[0] && ph.trail[0].plate) || (ph.mode === 'last' ? (pickOf(choices, 4, 2) === 'b' ? V.lb : V.la) : null) || null;
+}
 function whenOk(when, choices){
   if(!when) return true;
   return Object.keys(when).every(function(k){ var p = k.split('.'); return pickOf(choices, +p[0], +p[1]) === when[k]; });
@@ -1324,7 +1331,7 @@ function start(o){
     return new Promise(function(ok){ ov.addEventListener('click', function(){ G.speakTok++; stopSpeech(); ov.remove(); G.wait = null; ok(); }, {once:true}); });
   }
   function postcard(ch, last){
-    var sv = ch.glosses[ch.souvenir], pic = ch.postcard || (ch.photo && (ch.photo.then || ch.photo.now));
+    var sv = ch.glosses[ch.souvenir], pic = postcardArt(ch, arcChoices());
     var nextN = cards.indexOf(ch.n) >= 0 && cards[cards.indexOf(ch.n) + 1];
     var ov = overlay('yc-post', '<div class="yc-postcard"><img src="' + esc(pic ? artSrc(pic, {era:'then'}) : devSvg('postcard', .8, 'then')) + '" alt="">' +
       '<p lang="' + ui + '" dir="' + uiDir() + '">' + esc(us('chapter', {n:ch.n})) + ' · <span lang="' + target + '">' + esc(tg(ch.title)) + '</span></p>' +
@@ -1513,7 +1520,7 @@ function poster(content, path, o){
   var firstOpen = card.filter(function(n){ return !chs[n]; })[0];
   var items = C.chapters.map(function(c){
     var played = !!chs[c.n], inCard = card.indexOf(c.n) >= 0;
-    var pic = c.postcard || (c.photo && (c.photo.then || c.photo.now));
+    var pic = postcardArt(c, chs);
     var st = played ? 'developed' : (inCard && c.n === firstOpen ? 'developing' : 'locked');
     // GDD 4: a grey chapter says where it opens (ch1-2 = the level's .1 page, ch3-6 = the .2 page)
     var note = st === 'locked' ? (inCard ? fmt(UI.afterCh[ui] || UI.afterCh.en, {n:firstOpen})

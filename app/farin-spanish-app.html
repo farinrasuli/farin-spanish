@@ -2712,6 +2712,68 @@
   .tr-sheet .tr-kp{margin-top:12px;}
   .tr-sheet .tr-q{margin-top:18px;}
   /* THREE-ROUNDS-CSS-END */
+  /* LESSONS-PLAY-CSS-BEGIN: roadmap word cards in three rounds + the Vocab Box guess (Trello rC52b1hH, 2026-11-12, SPEC
+     lessons-that-play-2026-11-11 §3.2-3.4, §11). The round rail, round cover and clay stamp ticket are copied from the Three Rounds
+     block above under rl-* names, so the premium engine and the free cards can each change without the other. Byte-identical EN/ES. */
+  .rl-page .cs-top{gap:12px;}
+  .rl-page, .game-screen.rl-guess{overflow-x:clip;}   /* the deck's ghost stack (rotated, offset) would widen the page past 390 px */
+  .rl-rail{flex:1; min-width:0; display:flex; gap:4px; padding:14px 2px;}
+  .rl-rail i{flex:1; height:8px; border-radius:99px; background:var(--border-soft);}
+  .rl-rail i.done{background:var(--fs-green);}
+  .rl-rail i.cur{background:var(--fs-orange);}
+  .rl-railrow{display:flex; justify-content:space-between; align-items:center; gap:10px; padding:0 20px; min-height:28px;}
+  .rl-back{font-family:inherit;}
+  .rl-screen{padding-top:10px !important; padding-bottom:150px !important;}
+  .rl-page .cs-foot{display:flex; flex-direction:column;}
+  .rl-ghost{margin-top:8px;}
+  .rl-eb{margin:0 0 -6px; color:var(--fs-orange-ink);}
+  html[dir="rtl"] .rl-eb{letter-spacing:0; font-size:12px;}
+  .rl-hero{min-height:236px; padding-bottom:28px;}
+  .rl-hero h1{font-size:28px;}
+  .rl-meta{display:flex; align-items:center; gap:8px; margin:16px 4px 0; font-weight:800; font-size:13.5px; color:var(--ink-soft);}
+  .rl-meta svg{flex:none; width:15px; height:15px;}
+  .rl-cover .fs-disc{background:color-mix(in srgb, #fff 26%, transparent);}
+  .rl-cover img{object-fit:contain; object-position:center 70%; padding:8px 4px 0;}
+  .rl-cover.noimg .fs-disc{opacity:.6;}
+  .rl-ticket{margin:18px 0 0; padding:14px 14px 12px; border-radius:20px; border:1.5px dashed color-mix(in srgb, var(--fs-purple) 35%, var(--border-soft)); background:var(--bg-elevated);}
+  .rl-ticket .lx-eyebrow{text-align:center; color:var(--fs-purple-ink);}
+  .rl-slots{display:flex; justify-content:space-around; gap:8px; margin-top:10px;}
+  .rl-slot{display:flex; flex-direction:column; align-items:center; gap:6px; min-width:0; flex:1;}
+  .rl-slot b{font-family:'Fredoka',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; font-weight:600; font-size:13px; text-align:center; color:var(--ink-soft);}
+  .rl-slot.on b{color:var(--ink);}
+  .rl-stamp{position:relative; width:64px; height:64px; display:grid; place-items:center;}
+  .rl-stamp img{position:relative; z-index:1; width:64px; height:64px; object-fit:contain;}
+  .rl-ring{position:absolute; inset:4px; border-radius:50%; border:2.5px dashed var(--border);}
+  .rl-slot.on .rl-ring{display:none;}
+  .rl-slot.on .rl-stamp.noimg .rl-ring{display:block; border-color:var(--fs-orange); background:var(--fs-orange-soft);}
+  .rl-slot.land .rl-stamp img, .rl-slot.land .rl-stamp.noimg .rl-ring{animation:rlStamp .28s ease-out both;}
+  @keyframes rlStamp{from{transform:scale(1.15) rotate(-8deg); opacity:0;} to{transform:scale(1) rotate(-3deg); opacity:1;}}
+  @media (prefers-reduced-motion: reduce){ .rl-slot.land .rl-stamp img, .rl-slot.land .rl-stamp.noimg .rl-ring{animation:none;} }
+  .rl-done .rl-ticket{margin-top:6px;}
+  .rl-done .rl-stamp, .rl-done .rl-stamp img{width:84px; height:84px;}
+  .rl-h1{text-align:center; margin:18px 0 0;}
+  .rl-got{margin-top:14px; padding:16px 18px;}
+  .rl-got b{font-size:14px;} .rl-got p{margin:6px 0 0; font-size:14.5px; line-height:1.5; font-weight:700;}
+  .rl-line{font-size:13.5px; line-height:1.5; color:var(--ink-soft); margin:12px 2px 0;}
+  .rl-nextline{font-size:14px; font-weight:800; margin:16px 2px 0; color:var(--fs-orange-ink);}
+  /* the play screens inside a round: the game screens' cards and options, a shorter card so the three meanings fit at 390 x 844 */
+  .rl-body{display:flex; flex-direction:column; gap:18px;}
+  .rl-body .game-status{min-height:0; justify-content:flex-end;}
+  .rl-guess .flash-wrap{margin:0;}
+  .rl-guess .flashcard, .rl-guess .flash-face{min-height:200px; border-radius:26px;}
+  .rl-guess .flash-face{border:0; padding:24px 22px; box-shadow:var(--clay-shadow-soft);}
+  .rl-guess .flash-word{font-family:'Fredoka',-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; font-weight:700; font-size:30px; line-height:1.2; color:var(--ink); overflow-wrap:anywhere;}
+  .rl-guess .deck-ghost{border-radius:26px;}
+  .rl-tiles2{grid-template-columns:repeat(2, minmax(0, 1fr));}
+  .rl-tiles2 .game-tile{min-height:64px;}
+  .rl-fly{position:fixed; z-index:95; pointer-events:none; margin:0; box-sizing:border-box;}
+  .rl-pills{display:flex; flex-wrap:wrap; gap:6px; justify-content:center; min-height:28px; margin:14px 0 18px;}
+  .rl-pills .pill{font-size:13px; padding:5px 11px;}
+  .rl-sheetwrap{position:fixed; inset:0; z-index:45; background:rgba(20,16,40,.42); display:flex; align-items:flex-end; justify-content:center; animation:fadeIn .2s ease;}
+  @media (prefers-reduced-motion: reduce){ .rl-sheetwrap{animation:none;} }
+  .rl-sheet .lx-words{margin-top:16px;}
+  .rl-resface{display:block; width:96px; height:96px; object-fit:contain; margin:12px auto 0;}
+  /* LESSONS-PLAY-CSS-END */
 </style>
 
 <div id="app"></div>
@@ -13615,7 +13677,7 @@ function maybeCelebrate(){
     return;
   }
   if(v==='quiz' && state.quiz && state.quiz.index >= state.quiz.questions.length && !state.quiz.retryOffered && state.quiz.kind !== 'stagecheck'){
-    target = state.quiz; kind = state.quiz.kind; detail = state.quiz.correct+' / '+state.quiz.questions.length+' '+L('correct','doğru','درست','correctas');
+    target = state.quiz; kind = state.quiz.kind; detail = lpOn('finish') && LESSON_KINDS.includes(kind) ? '' : state.quiz.correct+' / '+state.quiz.questions.length+' '+L('correct','doğru','درست','correctas');   // SPEC lessons-that-play §3.11: no "7 / 7 correct" after a lesson quiz
     low = state.quiz.correct/state.quiz.questions.length < .5;
   } else if(v==='game-match' && vp.round && vp.round.matchedKeys && vp.round.matchedKeys.length === vp.round.pairCount){
     target = vp.round; kind = 'game';
@@ -16904,7 +16966,7 @@ function fillMarkedTextHtml(result, round, text){
   const re = new RegExp('\\b(?:(' + (alts.join('|') || '(?!x)x') + ')\\p{L}*|(' + (marker || '(?!x)x') + ')\\b)', 'giu');
   return esc(text).replace(re, (m0, w)=> w ? `<span class="vocab-hl">${m0}</span>` : `<u class="fill-structure">${m0}</u>`);
 }
-function studioResultHtml(result, round, mode, text){
+function studioResultHtml(result, round, mode, text, small){
   const band = result.score>=80 ? 'good' : result.score>=60 ? 'ok' : 'low';
   const bandColor = band==='good' ? 'var(--success)' : band==='ok' ? 'var(--cat-gram)' : 'var(--error)';
   const bandSoft = band==='good' ? 'var(--success-soft)' : band==='ok' ? 'var(--cat-gram-soft)' : 'var(--error-soft)';
@@ -16914,6 +16976,17 @@ function studioResultHtml(result, round, mode, text){
             <span style="font-size:13.5px; line-height:1.5;">${esc(line.text)}</span>
           </div>`).join('');
   const pills = round.words.map(w=>`<span class="pill" style="margin:2px 4px 2px 0; background:${result.wordsHit.includes(w.word)?'var(--success-soft)':'var(--error-soft)'}; color:${result.wordsHit.includes(w.word)?'var(--success)':'var(--error)'};">${esc(w.word)}</span>`).join('');
+  if(mode !== 'writing' && small) return `<div class="card-flat fill-result" style="margin-top:14px;">
+        ${small === 'words' ? `<div class="eyebrow" style="color:var(--cat-voc);">${L('Your words','Senin sözlerin','حرف‌های تو','Tus palabras')}</div>
+        <p class="fill-text" dir="ltr">${fillMarkedTextHtml(result, round, text)}</p>` : ''}
+        <div class="row between" style="align-items:center;${small === 'words' ? ' margin-top:12px;' : ''}">
+          <div class="eyebrow" style="color:${bandColor};">${headline}</div>
+          <span class="pill" style="background:${bandSoft}; color:${bandColor}; font-size:11px; padding:3px 8px;">${result.score}/100</span>
+        </div>
+        <div class="stack" style="gap:9px; margin-top:10px;">${lines}</div>
+        <div style="margin-top:10px;">${pills}</div>
+        ${speakingModelHtml(round)}
+      </div>`;
   if(mode !== 'writing') return `<div class="card-flat" style="margin-top:14px;">
         <div class="row between" style="align-items:center;">
           <div class="eyebrow" style="color:${bandColor};">${headline}</div>
@@ -17113,7 +17186,7 @@ function speakResultHtml(vp){
   if(!vp.checked || !vp.result) return '';
   const takes = Array.isArray(vp.takes) && vp.takes.length ? vp.takes : [{text:vp.transcript || '', result:vp.result}];
   const best = speakBetterTake(takes), kept = takes[best] || takes[takes.length - 1];
-  return speakTakesHtml(takes, best, vp.round) + studioResultHtml(kept.result, vp.round, 'speaking', kept.text) + speakNextHtml(vp);
+  return speakTakesHtml(takes, best, vp.round) + studioResultHtml(kept.result, vp.round, 'speaking', kept.text, vp.rm && lpOn('studio') ? (takes.length < 2 ? 'words' : 'small') : '') + speakNextHtml(vp);
 }
 function fxSpeakKept(best){
   const el = document.getElementById('speak-take-' + best);
@@ -17169,10 +17242,10 @@ function renderStudioRound(){
       ${mode==='speaking' ? speakResultHtml(vp) : (result ? studioResultHtml(result, round, mode, vp.transcript || '') : '')}
       ${(result && result.passed) ? renderBadgeUnlockCard(pullJustEarnedBadges()) : ''}
 
-      <div class="row" style="gap:8px; margin-top:16px;">
+      ${vp.rm ? '' : `<div class="row" style="gap:8px; margin-top:16px;">
         <button class="btn btn-ghost" style="flex:1;" data-action="studio-new-round">${L('New round','Yeni tur','تمرین جدید', 'Nueva ronda')}</button>
         <button class="btn btn-ghost" style="flex:1;" data-action="studio-change-difficulty">${L('Change difficulty','Zorluğu değiştir','تغییر سطح', 'Cambiar dificultad')}</button>
-      </div>
+      </div>`}
     </div>
   </div>`;
 }
@@ -23506,7 +23579,7 @@ function deckSortTap(setId, keep){
   if(!a){ render(); return; }
   deckBusy = true;
   let fired = false;
-  const done = ()=>{ if(fired) return; fired = true; deckBusy = false; if(state.view === 'vocab-set') render(); };
+  const done = ()=>{ if(fired) return; fired = true; deckBusy = false; if(state.view === 'vocab-set' || state.view === 'vocab-rounds') render(); };
   a.onfinish = done; a.oncancel = done;
 }
 /* Vocab Box (Farin 2026-10-18). A flashcard the learner sorts "Practice again" goes into the Vocab Box
@@ -23578,7 +23651,7 @@ function boxSortTap(keep){
   const d = state.viewParams.boxDeck;
   if(!d || d.done || deckBusy) return;
   const e = d.queue[d.pos];
-  if(keep){ boxRemove(e); d.knew += 1; sfx('hop'); }
+  if(keep){ boxRemove(e); d.knew += 1; (Array.isArray(d.out) ? d.out : (d.out = [])).push({set:e.set, w:e.w}); sfx('hop'); }
   else { d.again += 1; sfx('flip'); }
   d.pos += 1;
   if(d.pos >= d.queue.length){ d.done = true; boxMarkDone(state.viewParams.node); }
@@ -23601,6 +23674,7 @@ function renderVocabBox(){
   const left = boxList().length;
   if(!d.queue.length || d.done){
     if(!d.queue.length) boxMarkDone(state.viewParams.node);
+    if(lpOn('deck')) return rlBoxEndHtml(d, title);   // SPEC lessons-that-play §3.4: no number line, the words that left the box
     const line = !d.queue.length
       ? L('When a word feels shaky, tap "Practice again" on its card. I will keep it here for you.','Bir kelimeden emin olmadığında kartındaki "Tekrar çalışayım"a dokun. Onu senin için burada saklarım.','وقتی کلمه‌ای را خوب بلد نیستی، روی کارتش «دوباره تمرین کنم» را بزن. من برایت اینجا نگهش می‌دارم.','Cuando una palabra no la tengas clara, toca «Practicar otra vez» en su tarjeta. Yo te la guardo aquí.')
       : L(`Words you knew, now out of the box: ${d.knew}.`, `Bildiğin ve kutudan çıkan kelime: ${d.knew}.`, `کلمه‌هایی که بلد بودی و از جعبه بیرون رفتند: ${d.knew}.`, `Palabras que sabías y salen de la caja: ${d.knew}.`)
@@ -23615,6 +23689,7 @@ function renderVocabBox(){
     </div>
   </div>`;
   }
+  if(lpOn('deck')){ const h = rlBoxPlayHtml(d, title); if(h) return h; }   // SPEC lessons-that-play §3.4: the same guess as the round deck
   const e = d.queue[d.pos], card = boxCard(e) || {word:e.w, meaning:null};
   const rest = d.queue.length - d.pos - 1;
   return `<div class="fade-in game-screen">
@@ -23712,20 +23787,16 @@ function slangSayLine(sc, card, a){
   if(sc.register === 'formal') return L('This one works at work too.','Bu iş yerinde de olur.','این یکی سر کار هم جواب می‌دهد.','Esta también vale en el trabajo.') + ' ' + scene;
   return L('It works here.','Burada olur.','اینجا جواب می‌دهد.','Aquí sí vale.') + ' ' + scene + ' ' + L('Go ahead and say it.','Rahatça söyle.','راحت بگو.','Dilo tranquilamente.');
 }
-function slangSayHtml(s){
+function slangSayHtml(s, inRounds){
   const y = slangSayState(s);
   if(y.done || !y.rounds.length) return null;
   const r = y.rounds[y.i], sc = SLANG_SCENES[r.scene], card = s.cards[r.card];
   const sayOk = slangSayOk(sc, card), a = y.answered;
   const cls = (mine, right) => a ? (right ? ' ok' : (a === mine ? ' no' : ' dim')) : '';
   const last = y.i + 1 >= y.rounds.length;
-  return `<div class="fade-in game-screen">
-    ${gameTopHtml(setTitle(s))}
-    <div class="game-status">
-      <span class="game-status-text">${L(`Scene ${y.i+1} of ${y.rounds.length}`, `Sahne ${y.i+1}/${y.rounds.length}`, `صحنه ${y.i+1} از ${y.rounds.length}`, `Escena ${y.i+1} de ${y.rounds.length}`)}</span>
-      <span class="game-status-end"><span class="game-chip">${ICONS.check} ${y.right}</span></span>
-    </div>
-    <p class="game-hint">${L('Would you say this here?','Bunu burada söyler miydin?','اینجا این را می‌گویی؟','¿Lo dirías aquí?')}</p>
+  const why = a && (a === 'say') !== sayOk ? `<div class="game-why">${farinImg('mood-thinking')}<div dir="auto">${esc(slangSayLine(sc, card, a))}</div></div>` : '';
+  const next = last ? L('Done','Tamam','تمام','Listo') : L('Next scene','Sonraki sahne','صحنه بعدی','Siguiente escena');
+  const play = `<p class="game-hint">${L('Would you say this here?','Bunu burada söyler miydin?','اینجا این را می‌گویی؟','¿Lo dirías aquí?')}</p>
     <div class="game-card tight say-card">
       <p class="say-scene" dir="auto">${esc(trLine(sc.text))}</p>
       <p class="game-sentence${String(card.word).length > 26 ? ' long' : ''}" dir="ltr">${esc(card.word)}</p>
@@ -23733,9 +23804,19 @@ function slangSayHtml(s){
     <div class="game-opts say-opts">
       <button class="game-opt${cls('say', sayOk)}" data-action="slang-say" data-a="say" ${a ? 'disabled' : ''}>${L('Say it','Söyle','بگو','Dilo')}</button>
       <button class="game-opt${cls('not', !sayOk)}" data-action="slang-say" data-a="not" ${a ? 'disabled' : ''}>${L('Not here','Burada değil','اینجا نه','Aquí no')}</button>
+    </div>`;
+  // Round 1 of a slang card in rounds (LESSONS_PLAY.deck): the round rail is the progress, so no "Scene n of 4" and no tick count;
+  // the button sits in the round footer, "Skip" ends the scenes.
+  if(inRounds) return {body:`<div class="rl-body">${play}${why}</div>`, foot:a ? `<button class="btn btn-primary cs-main" data-action="slang-say-next">${next}</button>` : `<button class="btn btn-ghost rl-ghost" data-action="slang-say-skip">${esc(rlS('skip'))}</button>`};
+  return `<div class="fade-in game-screen">
+    ${gameTopHtml(setTitle(s))}
+    <div class="game-status">
+      <span class="game-status-text">${L(`Scene ${y.i+1} of ${y.rounds.length}`, `Sahne ${y.i+1}/${y.rounds.length}`, `صحنه ${y.i+1} از ${y.rounds.length}`, `Escena ${y.i+1} de ${y.rounds.length}`)}</span>
+      <span class="game-status-end"><span class="game-chip">${ICONS.check} ${y.right}</span></span>
     </div>
-    ${a ? `${(a === 'say') === sayOk ? '' : `<div class="game-why">${farinImg('mood-thinking')}<div dir="auto">${esc(slangSayLine(sc, card, a))}</div></div>`}
-      <button class="btn btn-primary game-cta" data-action="slang-say-next">${last ? L('Done','Tamam','تمام','Listo') : L('Next scene','Sonraki sahne','صحنه بعدی','Siguiente escena')}</button>`
+    ${play}
+    ${a ? `${why}
+      <button class="btn btn-primary game-cta" data-action="slang-say-next">${next}</button>`
       : `<button class="btn btn-ghost" data-action="slang-say-skip">${L('Skip to the game','Oyuna geç','برو سراغ بازی','Saltar al juego')}</button>`}
   </div>`;
 }
@@ -23756,7 +23837,7 @@ function renderVocabSet(id, cardIndex){
     <div class="game-card">
       <div class="game-result-title">${L('Deck sorted','Deste sıralandı','دسته مرتب شد','Baraja ordenada')}</div>
       <div class="game-result-line">${L(`You kept ${d.kept} straight away.`, `${d.kept} kartı hemen tuttun.`, `${d.kept} کارت را همان اول بلد بودی.`, `Sabías ${d.kept} a la primera.`)}${d.again.length ? ' ' + L(`${d.again.length} went to your Vocab Box for a review later.`, `${d.again.length} tanesi daha sonra tekrar için Kelime Kutuna gitti.`, `${d.again.length} مورد برای مرور بعدی به جعبه‌ی لغاتت رفت.`, `${d.again.length} han ido a tu Caja de palabras para repasarlas luego.`) : ''}${s.category === 'slang' ? esc(slangSaySummary(s)) : ''}</div>
-      <button class="btn btn-primary game-cta" data-action="start-vocab-quiz" data-id="${s.id}">${inCourseStep() ? L('Practise the words','Kelimeleri çalış','واژه‌ها را تمرین کن','Practica las palabras') : L('Play Game!','Oyunu Oyna!','بازی کن!','¡Juega!')}</button>
+      <button class="btn btn-primary game-cta" data-action="start-vocab-quiz" data-id="${s.id}">${inCourseStep() || lpOn('finish') ? L('Practise the words','Kelimeleri çalış','واژه‌ها را تمرین کن','Practica las palabras') : L('Play Game!','Oyunu Oyna!','بازی کن!','¡Juega!')}</button>
     </div>
   </div>`;
   const i = d.queue[d.pos];
@@ -23786,6 +23867,494 @@ function renderVocabSet(id, cardIndex){
     </div>
   </div>`;
 }
+
+/* ========== LESSONS-PLAY-BEGIN: roadmap lessons that play, pass 1 (Trello rC52b1hH + yFQHDHZd, farin-app 2026-11-12) ==========
+   Spec Claude/specs/lessons-that-play-2026-11-11/SPEC.md §3.2-3.4, §3.7-3.8, §3.11 and §11, the Three Rounds frame on roadmap lessons
+   that Farin approved on 2026-11-12 ("i think that could be good, put that in job plus i asked for more gamification"). One switch per
+   part in LESSONS_PLAY; all off = the app as it was (?lessonsplay=0 switches every part off in one browser, ?lessonsplay=1 back on).
+   - deck: a roadmap word or slang card plays in three rounds, in the premium Three Rounds look (rail, round cover, clay stamp ticket,
+     copied under rl-* names: the THREE-ROUNDS block is not touched, its round words are copied from its TRS table). Round 1 Know it =
+     the guess deck: the word plays, the learner picks 1 of 3 meanings; a right guess flips and leaves after 700 ms, a miss stays and
+     "Next card" sends it to the Vocab Box; slang adds its Say it? scenes. Round 2 Say it right = 3 fill-the-gap items. Round 3 Use it =
+     3 typed recalls, then the set's Use it task when it has one. A round's last 2 items are its check (hint and one more try, as in
+     every lesson quiz). The word list opens from "See all (n)" in a sheet. The Vocab Box card plays the same guess (one lap, at most
+     BOX_REVIEW_MAX words, the back shows the meaning only; a right guess takes the word out of the box).
+   - finish: no score after a lesson quiz (grammar, words, slang, story): no ring, no "x / N correct", no "7 / 7" in the bubble.
+   - studio: a roadmap writing / speaking step opens its round straight away (no setup screen, no New round / Change difficulty).
+   What the rounds write, so everything that reads today's stores keeps working:
+   - the deck writes progress.deckSort[set] = {again:[missed words], twice:[], date} (Shuffle seed, souvenir choice) and puts every
+     miss in progress.vocabBox (boxAdd), as "Practice again" did; a right guess is "I knew it" (deckSortTap keep);
+   - the 6 items of Rounds 2 + 3 are the lesson quiz: their first tries go through completeLessonQuiz (the 60% rule and "One more go?",
+     nodeScores, calibration, updateSRS, notePlayed, completedVocabSets = the roadmap tick), then markActivity, the celebration and the
+     souvenir (souvenirContent reads the same results and deckSort: a word missed in the deck and then got right comes first);
+   - progress.lessonRounds[set] = {r, d, miss, kept, a1, a2, more, firstPct} keeps the stamps between visits ("Stop here, come back
+     later"); numbers and booleans only (the cloud copy takes no nested arrays); removed when the card is done.
+   Byte-identical in the English and Spanish apps; every string in en/tr/fa/es, Persian in informal تو. */
+var LESSONS_PLAY = {deck:true, finish:true, studio:true};
+let lpDevOff = null;
+function lpOn(k){
+  if(lpDevOff === null){ try{ const q = new URLSearchParams(location.search).get('lessonsplay');
+    if(q === '0') localStorage.setItem('farinLessonsPlay', '0'); if(q === '1') localStorage.removeItem('farinLessonsPlay');
+    lpDevOff = localStorage.getItem('farinLessonsPlay') === '0'; }catch(e){ lpDevOff = false; } }
+  return !lpDevOff && !!(LESSONS_PLAY && LESSONS_PLAY[k]);
+}
+// The round words, copied as they are from the Three Rounds engine's TRS table, so a free card reads like a premium lesson
+// (Claude/qa/lessons-play-check.mjs compares them with TRS on every run).
+const RL_TRS = {
+  round:['Round {n} of 3', 'Tur {n} / 3', 'دور {n} از ۳', 'Ronda {n} de 3'],
+  rail:['Round {r} · {i} of {k}', '{r}. tur · {i}/{k}', 'دور {r} · {i} از {k}', 'Ronda {r} · {i} de {k}'],
+  'r.know':['Know it', 'Anla', 'بشناس', 'Entiéndelo'],
+  'r.say':['Say it right', 'Doğru söyle', 'درست بگو', 'Dilo bien'],
+  'r.use':['Use it', 'Kullan', 'به کار ببر', 'Úsalo'],
+  'opener.meta':['{s} short screens · {q} questions · about {m} min', '{s} kısa ekran · {q} soru · yaklaşık {m} dk', '{s} صفحه‌ی کوتاه · {q} سؤال · حدود {m} دقیقه', '{s} pantallas cortas · {q} preguntas · unos {m} min'],
+  go:['Go', 'Başla', 'برویم', 'Vamos'],
+  skip:['Skip', 'Atla', 'رد شو', 'Saltar'],
+  'check.eye':['Quick check · {i} of {n}', 'Hızlı kontrol · {i}/{n}', 'سؤال سریع · {i} از {n}', 'Comprobación rápida · {i} de {n}'],
+  ticket:['Your stamps', 'Damgaların', 'مهرهای تو', 'Tus sellos'],
+  'done.round':['Round {n} done.', '{n}. tur bitti.', 'دور {n} تمام شد.', 'Ronda {n} terminada.'],
+  'done.got':["What you've got:", 'Öğrendiklerin:', 'چیزی که یاد گرفتی:', 'Lo que ya tienes:'],
+  'done.next':['Next: Round {n} · {name} · {m} min', 'Sırada: {n}. tur · {name} · {m} dk', 'بعدی: دور {n} · {name} · {m} دقیقه', 'Siguiente: ronda {n} · {name} · {m} min'],
+  'btn.startRound':['Start Round {n}', '{n}. tura başla', 'دور {n} را شروع کن', 'Empezar la ronda {n}'],
+  'btn.stop':['Stop here, come back later', 'Burada dur, sonra devam et', 'همین‌جا دست نگه دار، بعداً برگرد', 'Déjalo aquí y vuelve más tarde']
+};
+// New lines (SPEC §10, plus the two Vocab Box lines), [en, tr, fa, es].
+const RL_STR = {
+  mean:['What does it mean?', 'Ne anlama geliyor?', 'یعنی چه؟', '¿Qué significa?'],
+  next:['Next card', 'Sonraki kart', 'کارت بعدی', 'Siguiente tarjeta'],
+  boxed:['In your Vocab Box for later.', 'Sonra tekrar etmek için Kelime Kutunda.', 'توی جعبه‌ی لغاتت ماند برای بعد.', 'En tu Caja de palabras para luego.'],
+  all:['See all ({n})', 'Hepsini gör ({n})', 'همه را ببین ({n})', 'Ver todas ({n})'],
+  notNow:['Not now', 'Şimdi değil', 'الان نه', 'Ahora no'],
+  finish:['Finish', 'Bitir', 'تمامش کن', 'Terminar'],
+  'done.grammar':['Grammar done.', 'Dilbilgisi tamam.', 'گرامر تمام شد.', 'Gramática lista.'],
+  'done.vocab':['Words in your pocket.', 'Kelimeler cebinde.', 'کلمه‌ها توی جیبت.', 'Palabras en el bolsillo.'],
+  'done.story':['Story read.', 'Hikâye bitti.', 'داستان را خواندی.', 'Historia leída.'],
+  'box.empty':['When you miss a word, I keep it here for you.', 'Bir kelimeyi kaçırdığında onu senin için burada saklarım.', 'وقتی کلمه‌ای را اشتباه جواب بدهی، اینجا برایت نگهش می‌دارم.', 'Cuando fallas una palabra, te la guardo aquí.'],
+  'box.stay':['These words stay in your box for next time.', 'Bu kelimeler bir dahaki sefere kadar kutunda kalıyor.', 'این کلمه‌ها برای دفعه‌ی بعد توی جعبه‌ات می‌مانند.', 'Estas palabras se quedan en tu caja para la próxima vez.']
+};
+function rlN(x){ return LANG === 'fa' ? String(x).replace(/\d/g, d=>'۰۱۲۳۴۵۶۷۸۹'[d]) : String(x); }
+// English inside a Persian line goes in an isolate (isoHtml shows it as an LTR <bdi>)
+function rlIso(s){ s = String(s == null ? '' : s); return LANG === 'fa' && /[A-Za-z]/.test(s) && !/^⁨/.test(s) ? '⁨' + s + '⁩' : s; }
+function rlS(k, v){ const a = RL_TRS[k] || RL_STR[k]; if(!a) return k; let s = L(a[0], a[1], a[2], a[3]); v = v || {}; if(LANG === 'fa') s = s.split(' · ').join(courseSep());
+  return s.replace(/\{(\w+)\}/g, (m, x)=>v[x] === undefined ? m : (typeof v[x] === 'number' ? rlN(v[x]) : String(v[x]))); }
+const RL_KEYS = ['know', 'say', 'use'];
+function rlName(r){ return rlS('r.' + RL_KEYS[r]); }
+// The clay round covers and stamps already in the app (the Three Rounds pictures, by path; no copies)
+const RL_COVER = ['icon-story.png', 'icon-speaking.png', 'art/course-clay/studio-icon-cutout-320.webp'], RL_COVER_FB = ['', '', 'studio-icon-cutout.png'];
+const RL_STAMP = ['art/course-clay/stamp-know-256.webp', 'art/course-clay/stamp-say-256.webp', 'art/course-clay/stamp-use-256.webp'];
+function rlImg(src, cls, fb){ return `<img class="${cls || ''}" src="${esc(src)}" alt="" loading="lazy" decoding="async"${fb ? ` data-fb="${esc(fb)}"` : ''} onerror="try{var f=this.getAttribute('data-fb');if(f){this.removeAttribute('data-fb');this.src=f;}else{if(this.parentNode)this.parentNode.classList.add('noimg');this.remove();}}catch(e){}">`; }
+function rlCta(action, label){ return `<button class="btn btn-primary cs-main" data-action="${action}">${esc(label)}</button>`; }
+function rlGhost(action, label){ return `<button class="btn btn-ghost rl-ghost" data-action="${action}">${esc(label)}</button>`; }
+// A free word set the rounds can play (a course set keeps its own flow)
+function rlSet(id){ const s = VOCAB_SETS.find(x=>x.id === id); return s && !s.course && Array.isArray(s.cards) && s.cards.length >= 3 ? s : null; }
+function rlMeaning(c){ return (c && c.meaning && (L(c.meaning.en, c.meaning.tr, c.meaning.fa, c.meaning.es) || c.meaning.en)) || (c ? c.word : ''); }
+// A roadmap card's study button, or openRoadmapNode (the companion's next step), which calls HANDLERS.nav with a plain {dataset}
+function lpFromRoadmap(el){ return !!el && (!el.nodeType || !!(el.classList && el.classList.contains('roadmap-study'))); }
+
+/* ---- the card's record between visits ---- */
+function rlRecs(){ const p = state.progress; if(!p.lessonRounds || typeof p.lessonRounds !== 'object' || Array.isArray(p.lessonRounds)) p.lessonRounds = {}; return p.lessonRounds; }
+function rlRec(s, make){
+  const all = rlRecs();
+  if(!all[s.id] && make){
+    // the store stays small: a card left half done for 30 days starts again from Round 1
+    const cut = localDateStr(new Date(Date.now() - 30 * 86400000));
+    Object.keys(all).forEach(k=>{ if(!all[k] || !(String(all[k].d || '') >= cut)) delete all[k]; });
+    all[s.id] = {r:0, d:todayISO()};
+  }
+  const rec = all[s.id] || null;
+  if(rec && make) rec.d = todayISO();
+  return rec;
+}
+function rlRecDrop(s){ delete rlRecs()[s.id]; }
+function rlUseTask(s){ return !!(s.useTask && s.useTask.prompt && !useItRec(s.id)); }
+// screens in a round (the rail): the deck (+ the Say it? scenes), 3 items, 3 items (+ Use it)
+function rlLen(s, R, r){
+  if(r === 0) return s.cards.length + (s.category === 'slang' ? slangSayState(s).rounds.length : 0);
+  if(r === 1) return 3;
+  return 3 + ((R.use != null ? R.use : rlUseTask(s)) ? 1 : 0);
+}
+function rlState(s){
+  const vp = state.viewParams;
+  let R = vp.rl;
+  if(!R || R.id !== s.id){
+    const rec = rlRec(s, false), r = rec ? Math.max(0, Math.min(2, rec.r || 0)) : 0;
+    R = vp.rl = {id:s.id, r, ph:rec && rec.more ? 'more' : 'opener', st:[0, 1, 2].map(i=>i < r ? 1 : 0), landed:{}, got:{}};
+    vp.deck = null; vp.flipped = false; vp.say = null; vp.rlSheet = false;
+    if(r === 0 && state.quiz && state.quiz.contextId === s.id && state.quiz.rl != null) state.quiz = null;   // a new run never resumes an old run's items
+  }
+  return R;
+}
+
+/* ---- the screens ---- */
+let rlLastKey = '';
+function renderVocabRounds(){
+  const vp = state.viewParams || {}, s = rlSet(vp.id);
+  if(!s || !lpOn('deck')) return renderVocabSetIntro(vp.id);
+  const R = rlState(s);
+  let scr = null;
+  if(R.ph === 'play') scr = R.r === 0 ? rlKnowScreen(s, vp, R) : rlQuizScreen(s, vp, R);
+  else if(R.ph === 'more') scr = state.quiz && state.quiz.rl === 'more' && state.quiz.contextId === s.id ? rlQuizScreen(s, vp, R) : rlMoreScreen(s, R);
+  else if(R.ph === 'use') scr = rlUseScreen(s, R);
+  else if(R.ph === 'done') scr = rlDoneScreen(s, R);
+  if(!scr) scr = rlOpenerScreen(s, R);
+  return rlFrameHtml(s, vp, R, scr);
+}
+// renderCourseRound's frame: X, the round rail (the only progress on these screens), Back, the screen, the footer button
+function rlFrameHtml(s, vp, R, scr){
+  const r = R.r, k = scr.k || rlLen(s, R, r), i = scr.i, content = i != null && i >= 0;
+  const segs = Array.from({length:k}, (_, n)=>`<i class="${R.ph === 'done' || (content && n < i) ? 'done' : (content && n === i ? 'cur' : '')}"></i>`).join('');
+  const label = content ? rlS('rail', {r:r + 1, i:i + 1, k}) : rlS('round', {n:r + 1}) + courseSep() + rlName(r);
+  const back = content && R.ph === 'play' ? `<button class="cl-back rl-back" data-action="rl-back">${LANG === 'fa' ? '›' : '‹'} ${L('Back', 'Geri', 'قبلی', 'Atrás')}</button>` : '<span></span>';
+  const key = s.id + '|' + r + '|' + R.ph + '|' + (scr.key || ''), fade = key !== rlLastKey; rlLastKey = key;
+  return `<div class="${fade ? 'fade-in ' : ''}rl-page lx-page ${s.category === 'slang' ? 'lx-slang' : 'lx-voc'} fs-scr" data-rl="${R.ph}" data-r="${r}" data-screen="${esc(scr.key || '')}">
+    <div class="cs-top"><button class="cs-x" data-action="rl-x" aria-label="${esc(L('Close', 'Kapat', 'بستن', 'Cerrar'))}">${COURSE_X_SVG}</button>
+      <div class="rl-rail" role="img" aria-label="${esc(label)}">${segs}</div></div>
+    <div class="rl-railrow">${back}<span class="cl-n" dir="${courseTD()}">${esc(label)}</span></div>
+    <div class="screen rl-screen">${scr.body}</div>
+    ${scr.foot ? `<div class="cs-foot">${scr.foot}</div>` : ''}
+    ${vp.rlSheet ? rlSheetHtml(s) : ''}
+  </div>`;
+}
+// courseROpenerHtml: the round cover on the purple hero, one line of meta, Go
+function rlOpenerScreen(s, R){
+  const r = R.r, q = r ? 3 : 0, parts = rlS('opener.meta', {s:rlLen(s, R, r), q, m:2}).split(courseSep());
+  if(!q) parts.splice(1, 1);
+  const head = String(r === 0 ? setTitle(s) : rlName(r)).trim().replace(/[.。]+$/, '');
+  return {key:'open', body:`<header class="fs-hero rl-hero">
+      <span class="fs-pill"><bdi>${esc(rlS('round', {n:r + 1}) + courseSep() + rlName(r))}</bdi></span>
+      <h1 class="display" dir="${courseTD()}">${LANG === 'fa' && /[A-Za-z]/.test(head) && !/[؀-ۿ]/.test(head) ? `<bdi dir="ltr">${esc(head)}<span class="dot">.</span></bdi>` : isoHtml(rlIso(head)) + '<span class="dot">.</span>'}</h1>
+      <div class="fs-art rl-cover" aria-hidden="true" style="--g:var(--fs-orange);"><i class="fs-disc"></i>${rlImg(RL_COVER[r], '', RL_COVER_FB[r])}</div>
+    </header>
+    <p class="rl-meta">${COURSE_CLOCK_SVG}<span dir="${courseTD()}">${esc(parts.join(courseSep()))}</span></p>`, foot:rlCta('rl-go', rlS('go'))};
+}
+// courseRTicketHtml: three stamp slots; an earned stamp shows its clay seal, the round name in Fredoka under it
+function rlTicketHtml(st, land){
+  return `<div class="rl-ticket"><div class="lx-eyebrow">${esc(rlS('ticket'))}</div><div class="rl-slots">${[0, 1, 2].map(i=>`<div class="rl-slot${st[i] ? ' on' : ''}${land === i ? ' land' : ''}"><span class="rl-stamp">${st[i] ? rlImg(RL_STAMP[i], '') : ''}<i class="rl-ring" aria-hidden="true"></i></span><b>${esc(rlName(i))}</b></div>`).join('')}</div></div>`;
+}
+// courseRDoneHtml: the clay stamp lands once (with its sound and one spark burst, SPEC §6 TR-1), "Round n done.", What you've got, Next
+function rlDoneScreen(s, R){
+  const r = R.r, land = R.landed[r] ? -1 : r; R.landed[r] = 1;
+  if(land >= 0) queueFx(()=>setTimeout(()=>{ if(reducedMotion()) return; const el = document.querySelector('.rl-slot.land .rl-stamp'); if(!el) return;
+    sfx('stamp'); buzz(12); const c = centerOf(el); sparkBurst(c.x, c.y, 8, 'var(--fs-orange)'); }, 220));
+  const got = (R.got[r] || []).filter(Boolean);
+  if(r === 2 && !Array.isArray(R.badges)) R.badges = pullJustEarnedBadges();
+  const weak = r === 2 && R.final && R.final.weak ? `<p class="rl-line" dir="auto">${L('Done. This one will come back in your review tomorrow.', 'Tamam. Bu yarın tekrarında geri gelecek.', 'تمام شد. این فردا در مرورت برمی‌گردد.', 'Hecho. Este volverá en tu repaso de mañana.')}</p>` : '';
+  const next = r < 2 ? `<p class="rl-nextline" dir="${courseTD()}">${isoHtml(rlS('done.next', {n:r + 2, name:rlName(r + 1), m:2}))}</p>` : '';
+  return {key:'done', body:`<div class="rl-done">${rlTicketHtml(R.st, land)}<h1 class="display cs-h1 rl-h1" dir="${courseTD()}">${isoHtml(rlS('done.round', {n:r + 1}))}</h1>
+      ${got.length ? `<div class="card-flat rl-got"><b dir="${courseTD()}">${isoHtml(rlS('done.got'))}</b><p dir="${courseTD()}">${got.map(x=>isoHtml(rlIso(x))).join(esc(courseSep()))}</p></div>` : ''}
+      ${weak}${r === 2 && R.badges && R.badges.length ? renderBadgeUnlockCard(R.badges) : ''}${next}</div>`,
+    foot:r < 2 ? rlCta('rl-start', rlS('btn.startRound', {n:r + 2})) + rlGhost('rl-stop', rlS('btn.stop')) : rlCta('rl-finish', rlS('finish'))};
+}
+
+/* ---- Round 1, Know it: the guess deck (SPEC §3.2 V1), then the slang Say it? scenes (§3.3) ---- */
+// three meanings in the UI language: the card's own and two other cards' of the same set, never the same text twice
+function rlGuessOpts(cards, ci){
+  const seen = new Set([rlMeaning(cards[ci]).trim().toLowerCase()]), others = [];
+  shuffle(cards.map((c, k)=>k).filter(k=>k !== ci)).forEach(k=>{ const m = rlMeaning(cards[k]).trim().toLowerCase(); if(others.length < 2 && m && !seen.has(m)){ seen.add(m); others.push(k); } });
+  return shuffle([ci].concat(others));
+}
+function rlDeckOpts(s, d, i){ if(!d.opts || typeof d.opts !== 'object' || Array.isArray(d.opts)) d.opts = {}; const o = d.opts[i]; if(Array.isArray(o) && o.includes(i)) return o; return (d.opts[i] = rlGuessOpts(s.cards, i)); }
+function rlDeckCur(vp){ const s = rlSet(vp && vp.id), d = vp && vp.deck; if(!s || !d || d.done || d.setId !== s.id) return null; const i = d.queue[d.pos]; return {d, set:s, ci:i, opts:rlDeckOpts(s, d, i)}; }
+function rlBoxCur(vp){
+  const d = vp && vp.boxDeck; if(!d || d.done || !d.queue || !d.queue[d.pos]) return null;
+  const e = d.queue[d.pos], set = VOCAB_SETS.find(x=>x.id === e.set); if(!set) return null;
+  const ci = set.cards.findIndex(c=>c.word === e.w); if(ci < 0) return null;
+  if(!d.opts || typeof d.opts !== 'object' || Array.isArray(d.opts)) d.opts = {};
+  let o = d.opts[d.pos]; if(!Array.isArray(o) || !o.includes(ci)) o = d.opts[d.pos] = rlGuessOpts(set.cards, ci);
+  return {d, set, ci, opts:o};
+}
+// the word plays once when its card comes up: the natural clip only, never the device voice
+function rlSayWord(w){ try{ if(!w || (ttsClips && !ttsHasClip(w))) return; ttsSpeak(w, 0.85, null, {natural:true}); }catch(e){} }
+function rlGuessCardHtml(card, flipped, left, soft){
+  const face = flipped ? flashFaceHtml(card, true)
+    : `<div class="flash-hint">${L('Word', 'Kelime', 'کلمه', 'Palabra')}</div><div class="flash-word" dir="ltr">${esc(card.word)}</div>${ttsButton(card.word, 'on-card')}`;
+  return `<div class="flash-wrap deck-wrap">${deckGhostsHtml(left, soft)}<div class="flashcard" id="deck-card" translate="no"><div class="flash-face" style="background:${soft};">${face}</div></div></div>`;
+}
+function rlGuessOptsHtml(cards, opts, ci, P, action){
+  const long = opts.some(k=>rlMeaning(cards[k]).length > 26);
+  return `<div class="game-opts">${opts.map((k, j)=>{ let cls = 'game-opt' + (long ? ' long' : ''); if(P) cls += k === ci ? ' ok' : (P.k === j ? ' no' : ' dim');
+    return `<button class="${cls}" dir="auto" data-action="${action}" data-k="${j}"${P ? ' disabled' : ''}>${esc(rlMeaning(cards[k]))}</button>`; }).join('')}</div>`;
+}
+function rlKnowScreen(s, vp, R){
+  const d = deckState(s), slang = s.category === 'slang';
+  if(!Array.isArray(d.rlKept)) d.rlKept = [];
+  if(!Array.isArray(d.rlMiss)) d.rlMiss = [];
+  if(d.done){
+    if(slang){ const y = slangSayState(s); if(!y.done && y.rounds.length){ const o = slangSayHtml(s, true); if(o) return {key:'say' + y.i, i:s.cards.length + y.i, body:o.body, foot:o.foot}; } }
+    // the last card (and the scenes) done: Round 1 ends in its stamp
+    const rec = rlRec(s, true);
+    rec.miss = d.rlMiss.slice(); rec.kept = d.rlKept.slice(); rec.r = Math.max(rec.r || 0, 1);
+    R.got[0] = (d.rlKept.length ? d.rlKept : s.cards.map((c, i)=>i)).map(i=>s.cards[i] && s.cards[i].word).filter(Boolean);
+    R.st[0] = 1; R.ph = 'done';
+    save(); queueFx(()=>window.scrollTo(0, 0));
+    return rlDoneScreen(s, R);
+  }
+  const i = d.queue[d.pos], card = s.cards[i], soft = slang ? 'var(--cat-diag-soft)' : 'var(--cat-voc-soft)';
+  const opts = rlDeckOpts(s, d, i), P = d.pick && d.pick.i === i ? d.pick : null, flipped = !!vp.flipped;
+  if(!P && !flipped && d.said !== d.pos){ d.said = d.pos; queueFx(()=>rlSayWord(card.word)); }
+  return {key:'card' + d.pos, i:d.pos, body:`<div class="rl-body rl-guess">
+      <div class="game-status"><span class="game-status-end"><button type="button" class="game-chip" data-action="rl-sheet">${esc(rlS('all', {n:s.cards.length}))}</button></span></div>
+      ${rlGuessCardHtml(card, flipped, d.queue.length - d.pos - 1, soft)}
+      <p class="game-hint">${esc(rlS('mean'))}</p>
+      ${rlGuessOptsHtml(s.cards, opts, i, P, 'rl-pick')}
+      ${P && !P.ok && flipped && d.note === i ? `<div class="game-why">${farinImg('mood-thinking')}<div dir="auto">${esc(rlS('boxed'))}</div></div>` : ''}
+    </div>`, foot:P && !P.ok && flipped ? rlCta('rl-deck-next', rlS('next')) : ''};
+}
+let rlBusy = false;
+// One pick on a guess card (the round deck or the Vocab Box): right = sparks, the card flips to its meaning and leaves 700 ms after the
+// flip (kept / out of the box); a miss shakes, the right meaning lights up, the card flips and waits for "Next card".
+function rlGuessPick(el, e, box){
+  const vp = state.viewParams, view = state.view, g = box ? rlBoxCur(vp) : rlDeckCur(vp);
+  if(!g || g.d.pick || rlBusy || deckBusy) return;
+  const k = +el.dataset.k, ok = g.opts[k] === g.ci;
+  g.d.pick = {i:g.ci, k, ok, pos:g.d.pos};
+  if(!box){ g.d.streak = ok ? (g.d.streak || 0) + 1 : 0; if(!ok && g.d.note == null) g.d.note = g.ci; }
+  document.querySelectorAll('[data-action="' + el.dataset.action + '"]').forEach(b=>{ const kk = +b.dataset.k; b.disabled = true; b.classList.add(g.opts[kk] === g.ci ? 'ok' : (kk === k ? 'no' : 'dim')); });
+  if(ok){ fxCorrectButton(el, tapPoint(e) || centerOf(el)); if(!box) comboCheck(g.d.streak); } else fxWrongButton(el);
+  save();
+  rlBusy = true;
+  const live = ()=>state.view === view && state.viewParams === vp;
+  setTimeout(()=>{
+    if(!live()){ rlBusy = false; return; }
+    rlFlip(vp, ()=>{
+      if(!ok || !live()){ rlBusy = false; return; }
+      setTimeout(()=>{ rlBusy = false; if(!live() || !g.d.pick) return; g.d.pick = null;
+        if(box) boxSortTap(true); else { g.d.rlKept.push(g.ci); deckSortTap(g.set.id, true); } }, 700);
+    });
+  }, ok ? 200 : 280);
+}
+function rlFlip(vp, done){
+  let fired = false; const fin = ()=>{ if(fired) return; fired = true; done(); };
+  sfx('flip');
+  const swap = ()=>{ if(state.viewParams !== vp){ fin(); return; } vp.flipped = true; save(); render();
+    const b = anim(document.getElementById('deck-card'), [{transform:'rotateY(90deg)'}, {transform:'rotateY(0deg)'}], {duration:140, easing:'ease-out'});
+    if(b){ b.onfinish = fin; b.oncancel = fin; } else fin(); };
+  const a = anim(document.getElementById('deck-card'), [{transform:'rotateY(0deg)'}, {transform:'rotateY(90deg)'}], {duration:140, easing:'ease-in', fill:'forwards'});
+  if(a){ let gone = false; const go2 = ()=>{ if(gone) return; gone = true; swap(); }; a.onfinish = go2; a.oncancel = go2; } else swap();
+}
+
+/* ---- Rounds 2 and 3, Say it right / Use it: 3 fill-the-gap items, 3 typed recalls (SPEC §3.2 V2-V3) ---- */
+// One item for one card, built like vocabQuizQuestions' fillQ / recallQ / meaningQ (same prompt, options, why and answer), with its card
+// index. kind 'fill' | 'type'; a card whose gap is not in its sentence is asked by its meaning (Trello Zuq1fEjy).
+function rlVocabQ(s, c, kind, ci){
+  const sibling = VOCAB_SETS_FREE.filter(x=>x.level === s.level && x.category === s.category).flatMap(x=>x.cards);
+  const m = c.meaning || {};
+  const why = L('"' + c.word + '" means: ' + m.en + '. Example: ' + c.sentence, '"' + c.word + '" anlamı: ' + m.tr + '. Örnek: ' + c.sentence,
+    m.fa ? ('"' + c.word + '" یعنی: ' + m.fa + '. مثال: ' + c.sentence) : undefined, m.es ? ('"' + c.word + '": ' + m.es + '. Ejemplo: ' + c.sentence) : undefined);
+  const base = {why, answerText:c.sentence, answerTr:'"' + c.word + '" = ' + (L(m.en, m.tr, m.fa, m.es) || m.en || ''), _ci:ci};
+  if(cardHasGap(c) && kind === 'type'){
+    const mt = String(c.sentence).match(cardGapRe(c)), gapTxt = mt ? mt[2] : cardGap(c), f = (gapTxt.match(/\p{L}/u) || [gapTxt.charAt(0)])[0];
+    const mean = L(m.en, m.tr, m.fa, m.es) || m.en || '';
+    const acc = (Array.isArray(c.accept) && c.accept.length ? c.accept : [c.word]).concat([gapTxt]).map(x=>String(x).toLowerCase().trim()).filter((x, i, a)=>x && a.indexOf(x) === i);
+    return Object.assign({qt:'type', prompt:L(`${mean} · first letter: ${f}`, `${mean} · ilk harf: ${f}`, `${mean} · حرف اول: ${f}`, `${mean} · primera letra: ${f}`) + '\n' + cardBlank(c), options:[gapTxt], correct:0, accept:acc}, base);
+  }
+  if(cardHasGap(c)){ const ans = cardGapText(c), options = shuffle([ans, ...gapOptions(c, [sibling], 3)]); return Object.assign({qt:'fill', prompt:cardBlank(c), options, correct:options.indexOf(ans)}, base); }
+  const seen = new Set([c.word.toLowerCase()]), words = [];
+  [s.cards, sibling].forEach(p=>shuffle(p).forEach(x=>{ const w = x.word.toLowerCase(); if(words.length < 3 && !seen.has(w)){ seen.add(w); words.push(x.word); } }));
+  const options = shuffle([c.word].concat(words));
+  return Object.assign({qt:'meaning', prompt:L('Which word means this?', 'Hangi kelime bu anlama geliyor?', 'کدام کلمه این معنی را دارد؟', '¿Qué palabra significa esto?') + '\n' + (L(m.en, m.tr, m.fa, m.es) || m.en || ''), options, correct:options.indexOf(c.word)}, base);
+}
+// Which cards a round asks: the words missed in the deck first; Round 3 prefers cards Round 2 did not ask.
+function rlPickCards(s, rec, r){
+  const all = s.cards.map((c, i)=>i), gap = all.filter(i=>cardHasGap(s.cards[i])), miss = (rec && Array.isArray(rec.miss)) ? rec.miss : [];
+  const used = r === 2 && rec && rec.a1 && Array.isArray(rec.a1.ci) ? rec.a1.ci : [];
+  const first = miss.filter(i=>gap.includes(i) && !used.includes(i));
+  return first.concat(shuffle(gap.filter(i=>!first.includes(i) && !used.includes(i))), shuffle(gap.filter(i=>used.includes(i))), shuffle(all.filter(i=>!gap.includes(i)))).slice(0, 3);
+}
+function rlStartQuiz(s, R, want){
+  const rec = rlRec(s, true);
+  let qs;
+  if(want === 'more'){
+    // "One more go?" (the second lesson-quiz round): the items missed in Rounds 2 + 3 again, then fresh cards up to 6
+    const miss = [], seen = new Set();
+    [['a1', 'fill'], ['a2', 'type']].forEach(([key, kind])=>{ const a = rec[key]; if(a && Array.isArray(a.ci)) a.ci.forEach((ci, j)=>{ seen.add(ci); if(!(a.ok && a.ok[j] === true) && s.cards[ci]) miss.push(rlVocabQ(s, s.cards[ci], kind, ci)); }); });
+    qs = miss.concat(shuffle(s.cards.map((c, i)=>i).filter(i=>!seen.has(i))).map(i=>rlVocabQ(s, s.cards[i], 'fill', i))).slice(0, 6);
+  } else qs = rlPickCards(s, rec, want).map(ci=>rlVocabQ(s, s.cards[ci], want === 1 ? 'fill' : 'type', ci));
+  qs.forEach(x=>{ x.itemId = s.id; x.kind = 'vocab'; });
+  return (state.quiz = {kind:'vocab', contextId:s.id, questions:qs, index:0, correct:0, streak:0, answered:false, selected:null, results:[], backView:'dashboard', backParams:{}, timeLimit:questionTimeLimit(qs[0]), deadline:null, lastTickSecond:null, rl:want});
+}
+function rlRoundQuiz(s, R){
+  const want = R.ph === 'more' ? 'more' : R.r, q = state.quiz;
+  return q && q.contextId === s.id && q.rl === want && q.questions && q.questions.length ? q : rlStartQuiz(s, R, want);
+}
+// The lesson quiz screen (renderQuiz's markup) inside the round: no "Question n of N", no tick count; "Quick check" over the round's
+// last 2 items; short fill options as a 2 x 2 tile grid, and a right tile flies into the gap.
+function rlQuizScreen(s, vp, R){
+  const q = rlRoundQuiz(s, R), item = q.questions[q.index], n = q.questions.length, miss = q.miss || [];
+  const longOpts = item.options.some(o=>String(o).length > 26);
+  const tiles = item.qt === 'fill' && item.options.length === 4 && item.options.every(o=>String(o).length <= 14);
+  const cls = (i, base)=>{ let c = base; if(q.answered){ if(i === item.correct) c += ' ok'; else if(i === q.selected || miss.includes(i)) c += ' no'; else if(!tiles) c += ' dim'; } else if(miss.includes(i)) c += ' no'; return c; };
+  const dis = i=>(q.answered || miss.includes(i)) ? ' disabled' : '';
+  const opts = item.qt === 'type' ? quizTypeHtml(q, item) : tiles
+    ? `<div class="game-tiles rl-tiles2" translate="no">${item.options.map((o, i)=>`<button class="${cls(i, 'game-tile')}" dir="ltr"${dis(i)} data-action="quiz-answer" data-i="${i}">${esc(o)}</button>`).join('')}</div>`
+    : `<div class="game-opts" translate="no">${item.options.map((o, i)=>`<button class="${cls(i, 'game-opt' + (longOpts ? ' long' : ''))}" dir="ltr"${dis(i)} data-action="quiz-answer" data-i="${i}">${esc(o)}</button>`).join('')}</div>`;
+  const ok = !!(q.results && q.results[q.index] === true);
+  const eye = q.rl !== 'more' && q.index >= n - 2 ? `<div class="lx-eyebrow rl-eb" dir="${courseTD()}">${esc(rlS('check.eye', {i:1, n:2}).split(courseSep())[0])}</div>` : '';
+  if(q.answered && tiles && q.selected === item.correct){ if(!q.flew || typeof q.flew !== 'object') q.flew = {}; if(!q.flew[q.index]){ q.flew[q.index] = 1; queueFx(rlFlyTile); } }
+  return {key:'q' + q.rl + '-' + q.index, i:q.index, k:q.rl === 'more' ? n : 0, body:`<div class="rl-body">${eye}
+      <div class="game-card${longOpts ? ' tight' : ''}" translate="no">${quizPromptHtml(item, q)}</div>
+      ${opts}
+      ${!q.answered && miss.length ? `<div class="game-why">${farinImg('mood-thinking')}<div dir="auto">${esc(quizHintText(q, item))}</div></div>` : ''}
+      ${q.answered ? answerBannerHtml(item, ok, q.selected, '') + quizTypedNoteHtml(q, item) : ''}
+    </div>`, foot:q.answered ? rlCta('rl-qnext', q.index + 1 < n ? L('Next question', 'Sonraki soru', 'سوال بعدی', 'Siguiente pregunta') : L('Continue', 'Devam', 'ادامه', 'Continuar')) : ''};
+}
+// the right tile flies into the gap (SPEC §3.2 V2), then the word there pops
+function rlFlyTile(){
+  const to = document.getElementById('trap-fill'), from = document.querySelector('.rl-tiles2 .game-tile.ok');
+  if(!to || !from || reducedMotion() || !document.body.animate) return;
+  const a = from.getBoundingClientRect(), b = to.getBoundingClientRect(), el = document.createElement('span');
+  el.className = 'rl-fly game-tile'; el.textContent = from.textContent;
+  el.style.cssText = `left:${a.left}px; top:${a.top}px; width:${a.width}px; height:${a.height}px;`;
+  document.body.appendChild(el); to.style.opacity = '0';
+  let done = false; const end = ()=>{ if(done) return; done = true; el.remove(); to.style.opacity = ''; anim(to, [{transform:'scale(1)'}, {transform:'scale(1.18)'}, {transform:'scale(1)'}], {duration:260, easing:SPRING}); sfx('hop'); };
+  const dx = (b.left + b.width / 2) - (a.left + a.width / 2), dy = (b.top + b.height / 2) - (a.top + a.height / 2), sc = Math.max(.4, Math.min(1, b.width / (a.width || 1)));
+  const f = el.animate([{transform:'translate(0,0) scale(1)', opacity:1}, {transform:`translate(${dx}px, ${dy}px) scale(${sc})`, opacity:.9}], {duration:360, easing:SPRING});
+  f.onfinish = end; f.oncancel = end; setTimeout(end, 700);
+}
+function rlQuizEnd(s, vp, R, q){
+  if(q.rl === 'more'){ rlComplete(s, R, 2); return; }
+  const rec = rlRec(s, true);
+  rec['a' + q.rl] = {ci:q.questions.map(x=>x._ci), ok:q.questions.map((x, i)=>q.results[i] === true)};
+  R.got[q.rl] = q.questions.map(x=>x.options[x.correct]).filter(Boolean);
+  if(q.rl === 1){ rec.r = Math.max(rec.r || 0, 2); R.st[1] = 1; R.ph = 'done'; save(); render(); window.scrollTo(0, 0); return; }
+  rlComplete(s, R, 1);
+}
+// The end of Round 3: the 6 items of Rounds 2 + 3 run through today's lesson-quiz completion (completeLessonQuiz: the 60% rule,
+// nodeScores, SRS, the roadmap tick). Under 60% on the first try: "One more go?" first, as after today's word quiz.
+function rlComplete(s, R, round){
+  const rec = rlRec(s, true), qs = [], res = [];
+  [['a1', 'fill'], ['a2', 'type']].forEach(([key, kind])=>{ const a = rec[key]; if(a && Array.isArray(a.ci)) a.ci.forEach((ci, j)=>{ const c = s.cards[ci]; if(!c) return;
+    qs.push(Object.assign(rlVocabQ(s, c, kind, ci), {itemId:s.id, kind:'vocab'})); res.push(!!(a.ok && a.ok[j] === true)); }); });
+  const q = {kind:'vocab', contextId:s.id, questions:qs, results:res, correct:res.filter(Boolean).length, round, index:qs.length, answered:true, rl:'final'};
+  if(round === 2 && typeof rec.firstPct === 'number') q.firstPct = rec.firstPct;
+  completeLessonQuiz(q);
+  markActivity();
+  if(q.retryOffered){ rec.more = 1; rec.firstPct = q.firstPct; rec.r = 2; R.ph = 'more'; save(); render(); window.scrollTo(0, 0); return; }
+  rlRecDrop(s);
+  R.final = q; R.st[2] = 1; R.use = rlUseTask(s) ? 1 : 0; R.ph = R.use ? 'use' : 'done';
+  save(); render(); window.scrollTo(0, 0);
+}
+function rlMoreScreen(s, R){
+  return {key:'more', i:2, body:`<div class="rl-body"><div class="game-card tight" style="text-align:center;">
+      ${farinImg('mood-thinking', 'rl-resface')}
+      <div class="game-result-title" style="font-size:20px; margin-top:8px;">${L('Almost there. One more go?', 'Neredeyse oldu. Bir tur daha?', 'نزدیک بود. یک دور دیگر؟', 'Casi. ¿Otra vuelta?')}</div>
+      <p class="game-result-line">${L('Practise again with the ones you missed plus a few new ones. Then this step is done.', 'Kaçırdıklarınla birkaç yeni soruyla tekrar çalış. Sonra bu adım tamamlanır.', 'دوباره با سوال‌هایی که اشتباه کردی و چند سوال تازه تمرین کن. بعد این قدم تمام می‌شود.', 'Practica otra vez con los que has fallado y algunos nuevos. Después este paso queda hecho.')}</p>
+    </div></div>`, foot:rlCta('rl-more', L('Practise again', 'Tekrar çalış', 'دوباره تمرین کن', 'Practicar otra vez')) + rlGhost('rl-stop', rlS('btn.stop'))};
+}
+// SPEC §3.2 V4: the set's Use it task as the last screen of Round 3 (today it came after the celebration, on the word list page)
+function rlUseScreen(s, R){
+  return {key:'use', i:3, body:`<div class="rl-body">${useItHtml(s)}</div>`, foot:useItRec(s.id) ? rlCta('rl-use-done', L('Continue', 'Devam', 'ادامه', 'Continuar')) : rlGhost('rl-use-done', rlS('notNow'))};
+}
+// "See all (n)": today's word list, in the bottom sheet
+function rlSheetHtml(s){
+  const slang = s.category === 'slang';
+  return `<div class="rl-sheetwrap" data-action="rl-sheet-close" data-quiet="1"><div class="lsh fs-scr rl-sheet lx-page ${slang ? 'lx-slang' : 'lx-voc'}" role="dialog" aria-modal="true" aria-labelledby="rl-sheet-t" data-action="rl-sheet-noop" data-quiet="1">
+    <div class="lsh-head"><h2 class="onb-h1" id="rl-sheet-t">${slang ? L('The phrases', 'İfadeler', 'عبارت‌ها', 'Las frases') : L('The words', 'Kelimeler', 'کلمات', 'Las palabras')}<span class="dot">.</span></h2><button class="lsh-x" data-action="rl-sheet-close" aria-label="${esc(L('Close', 'Kapat', 'بستن', 'Cerrar'))}">×</button></div>
+    <div class="lx-words" dir="ltr" translate="no">${s.cards.map((c, idx)=>`<div class="lx-word"><div class="lx-word-top"><span class="lx-n">${idx + 1}</span><div class="lx-term">${esc(c.word)}</div>${ttsButton(c.sentence || c.word, '')}</div>
+      <div class="lx-mean" dir="auto">${esc(rlMeaning(c))}</div><div class="phrase-example">${highlightWord(c.sentence, cardGap(c))}</div>
+      ${c.note ? `<div class="flash-note row" style="align-items:flex-start; gap:6px;"><span style="flex:0 0 auto; color:var(--ink-faint);">${ICONS.warn}</span><span dir="auto" style="font-size:12px; color:var(--ink-soft);">${esc(L(c.note.en, c.note.tr, c.note.fa, c.note.es))}</span></div>` : ''}</div>`).join('')}</div>
+  </div></div>`;
+}
+function rlLeave(){ stopAllSpeech(); backToRoadmap(); }
+
+/* ---- the Vocab Box card: the same guess (SPEC §3.4) ---- */
+function rlBoxPlayHtml(d, title){
+  const vp = state.viewParams, g = rlBoxCur(vp);
+  if(!g) return '';
+  const card = g.set.cards[g.ci], P = d.pick && d.pick.pos === d.pos ? d.pick : null, flipped = !!vp.flipped;
+  if(!P && !flipped && d.said !== d.pos){ d.said = d.pos; queueFx(()=>rlSayWord(card.word)); }
+  const key = 'box|' + d.pos, fade = key !== rlLastKey; rlLastKey = key;
+  return `<div class="${fade ? 'fade-in ' : ''}game-screen rl-guess">
+    ${gameTopHtml(title)}
+    <div class="game-status"><span class="game-status-text">${L(`Card ${d.pos+1} of ${d.queue.length}`, `Kart ${d.pos+1}/${d.queue.length}`, `کارت ${d.pos+1} از ${d.queue.length}`, `Tarjeta ${d.pos+1} de ${d.queue.length}`)}</span></div>
+    ${rlGuessCardHtml(card, flipped, d.queue.length - d.pos - 1, 'var(--cat-voc-soft)')}
+    <p class="game-hint">${esc(rlS('mean'))}</p>
+    ${rlGuessOptsHtml(g.set.cards, g.opts, g.ci, P, 'rl-box-pick')}
+    ${P && !P.ok && flipped ? `<button class="btn btn-primary game-cta" data-action="rl-box-next">${esc(rlS('next'))}</button>` : ''}
+  </div>`;
+}
+// "Box reviewed": no number line; the words that left the box come in one by one, 160 ms apart, up the C5-E5-G5-C6 ladder
+function rlBoxEndHtml(d, title){
+  const empty = !d.queue.length, out = Array.isArray(d.out) ? d.out : [], sweep = !empty && out.length && !d.swept;
+  if(sweep || (empty && !d.swept)){ d.swept = 1; queueFx(()=>{ window.scrollTo(0, 0); if(sweep) rlBoxSweep(out); }); }
+  const pills = sweep ? '' : out.map(e=>`<span class="pill vocab-hl">${esc(e.w)}</span>`).join('');
+  return `<div class="fade-in game-screen">
+    ${gameTopHtml(title, empty)}
+    <div class="game-card">
+      ${empty ? farinImg('body-sit-knees', 'farin-empty') : ''}
+      <div class="game-result-title">${empty ? L('Your box is empty', 'Kutun boş', 'جعبه‌ات خالی است', 'Tu caja está vacía') : L('Box reviewed', 'Kutu tekrarlandı', 'جعبه مرور شد', 'Caja repasada')}</div>
+      ${empty ? `<div class="game-result-line">${esc(rlS('box.empty'))}</div>` : `<div class="rl-pills" id="box-out" dir="ltr" translate="no">${pills}</div>${out.length ? '' : `<div class="game-result-line">${esc(rlS('box.stay'))}</div>`}`}
+      <button class="btn btn-primary game-cta" data-action="box-finish">${L('Done', 'Tamam', 'تمام', 'Listo')}</button>
+    </div>
+  </div>`;
+}
+function rlBoxSweep(out){
+  const box = document.getElementById('box-out'); if(!box) return;
+  const ladder = [523.25, 659.25, 783.99, 1046.5], rm = reducedMotion();
+  out.forEach((e, k)=>{
+    const add = ()=>{ if(!box.isConnected) return; const p = document.createElement('span'); p.className = 'pill vocab-hl'; p.textContent = e.w; box.appendChild(p);
+      anim(p, [{transform:'scale(.6)', opacity:0}, {transform:'scale(1)', opacity:1}], {duration:260, easing:SPRING});
+      if(!rm && !sfxMuted){ try{ const ctx = sfxCtx(); playPlink(ladder[k % 4] * Math.pow(2, Math.floor(k / 4)), ctx.currentTime + 0.01, 0.07, 0.5); }catch(err){} } };
+    if(rm) add(); else setTimeout(add, 200 + k * 160);
+  });
+}
+
+/* ---- writing / speaking straight in (SPEC §3.7-3.8) ---- */
+// The round the setup screen would start, with the roadmap step's own goal and difficulty; false = no difficulty, the setup screen opens.
+function studioStraightIn(ds){
+  const dif = ds && ds.difficulty;
+  if(!state.profile || !state.profile.level || !dif || !STUDIO_DIFFICULTY_LABEL[dif]) return false;
+  const mode = ds.mode === 'speaking' ? 'speaking' : 'writing';
+  const chosen = profileGoalKeys(state.profile), goals = chosen.length ? chosen : GOAL_ORDER, all = chosen.length > 1;
+  const goal = ds.goal && (goals.includes(ds.goal) || (all && ds.goal === 'all')) ? ds.goal : (all ? 'all' : goals[0]);
+  const vp0 = {mode, goal, difficulty:dif};
+  const round = withSpeakingTopic(withWritingTask(buildPracticeRound(goal, state.profile.level, dif), vp0), vp0);
+  go('studio-round', {mode, goal, difficulty:dif, round, transcript:'', checked:false, result:null, reflection:null, rm:1});
+  return true;
+}
+
+/* ---- the taps (registered on HANDLERS after it is defined) ---- */
+const RL_HANDLERS = {
+  'rl-go'(){
+    const vp = state.viewParams, s = rlSet(vp && vp.id), R = vp && vp.rl; if(!s || !R || R.ph !== 'opener') return;
+    stopAllSpeech(); R.ph = 'play';
+    if(R.r === 0) deckState(s); else rlRoundQuiz(s, R);
+    save(); render(); window.scrollTo(0, 0);
+  },
+  'rl-back'(){ const vp = state.viewParams, R = vp && vp.rl; if(!R || R.ph !== 'play' || rlBusy || deckBusy) return; stopAllSpeech(); R.ph = 'opener'; save(); render(); window.scrollTo(0, 0); },
+  'rl-x'(){ rlLeave(); },
+  'rl-stop'(){ rlLeave(); },
+  'rl-start'(){ const vp = state.viewParams, R = vp && vp.rl; if(!R || R.ph !== 'done' || R.r >= 2) return; R.r += 1; R.ph = 'opener'; save(); render(); window.scrollTo(0, 0); },
+  'rl-finish'(){
+    const vp = state.viewParams, s = rlSet(vp && vp.id), R = vp && vp.rl;
+    if(!s || !R || R.ph !== 'done' || R.r !== 2 || document.querySelector('.celebrate-overlay')) return;
+    const q = R.final; if(!q){ rlLeave(); return; }
+    state.quiz = q;   // celebrationExtras and souvenirContent read the finished lesson quiz, as at the end of today's word quiz
+    const extra = celebrationExtras('quiz', vp, 'vocab'), first = typeof q.firstPct === 'number' ? q.firstPct : q.correct / (q.questions.length || 1);
+    save();
+    showCelebration('vocab', lpOn('finish') ? '' : q.correct + ' / ' + q.questions.length + ' ' + L('correct', 'doğru', 'درست', 'correctas'), first < .5, extra);
+  },
+  'rl-pick'(el, e){ rlGuessPick(el, e, false); },
+  'rl-deck-next'(){
+    const vp = state.viewParams, s = rlSet(vp && vp.id), d = vp && vp.deck;
+    if(!s || !d || d.done || rlBusy || deckBusy || !d.pick || d.pick.ok) return;
+    const i = d.queue[d.pos]; if(!d.rlMiss.includes(i)) d.rlMiss.push(i);
+    d.pick = null; deckSortTap(s.id, false);   // "Practice again": behind the stack and into the Vocab Box
+  },
+  'rl-qnext'(){
+    const vp = state.viewParams, s = rlSet(vp && vp.id), R = vp && vp.rl, q = state.quiz;
+    if(!s || !R || !q || q.contextId !== s.id || q.rl == null || q.rl === 'final' || !q.answered) return;
+    if(q.index + 1 < q.questions.length){ q.index++; q.answered = false; q.selected = null; q.miss = null; q.typed = null; q.bp = null; save(); render(); window.scrollTo(0, 0); return; }
+    rlQuizEnd(s, vp, R, q);
+  },
+  'rl-more'(){ const vp = state.viewParams, s = rlSet(vp && vp.id), R = vp && vp.rl; if(!s || !R || R.ph !== 'more') return; rlStartQuiz(s, R, 'more'); save(); render(); window.scrollTo(0, 0); },
+  'rl-use-done'(){ const vp = state.viewParams, R = vp && vp.rl; if(!R || R.ph !== 'use') return; R.ph = 'done'; save(); render(); window.scrollTo(0, 0); },
+  'rl-sheet'(){ state.viewParams.rlSheet = true; render(); },
+  'rl-sheet-close'(){ state.viewParams.rlSheet = false; render(); },
+  'rl-sheet-noop'(){},
+  'rl-box-pick'(el, e){ rlGuessPick(el, e, true); },
+  'rl-box-next'(){ const d = state.viewParams && state.viewParams.boxDeck; if(!d || d.done || rlBusy || deckBusy || !d.pick || d.pick.ok) return; d.pick = null; boxSortTap(false); }
+};
+/* ========== LESSONS-PLAY-END ========== */
 
 /* ============================= RENDER: STUDIO (Teacher + Lab) ============================= */
 function renderSpeakingClub(){
@@ -24235,7 +24804,7 @@ function renderStoryDetail(id){
       <div class="card-flat" dir="ltr">
         ${s.discussionQuestions.map((q,i)=>storyAnswerHtml(s, q, i)).join('')}
       </div>` : ''}
-      <button class="btn btn-primary" style="margin-top:16px;" data-action="start-story-quiz" data-id="${s.id}">${exam ? L('Check your understanding','Anladığını kontrol et','ببین چقدر فهمیدی','Comprueba lo que has entendido') : inCourseStep() ? L('Check what you noticed','Ne fark ettiğini kontrol et','ببین چه چیزهایی را متوجه شدی','Comprueba lo que has notado') : L('Play Game!','Oyunu Oyna!','بازی کن!','¡Juega!')}</button>
+      <button class="btn btn-primary" style="margin-top:16px;" data-action="start-story-quiz" data-id="${s.id}">${exam ? L('Check your understanding','Anladığını kontrol et','ببین چقدر فهمیدی','Comprueba lo que has entendido') : inCourseStep() ? L('Check what you noticed','Ne fark ettiğini kontrol et','ببین چه چیزهایی را متوجه شدی','Comprueba lo que has notado') : lpOn('finish') ? L('Check your understanding','Anladığını kontrol et','ببین چقدر فهمیدی','Comprueba lo que has entendido') : L('Play Game!','Oyunu Oyna!','بازی کن!','¡Juega!')}</button>
       ` : ''}
     </div>
   </div>`;
@@ -25505,12 +26074,12 @@ function renderQuizResults(){
   return `<div class="fade-in game-screen" style="gap:0;">
     ${gameTopHtml(quizKindTitle(q))}
     <div style="text-align:center;">
-      <div class="result-ring" style="background:var(--cat-${CAT}-soft); color:var(--cat-${CAT});">
+      ${lpOn('finish') && LESSON_KINDS.includes(q.kind) ? (q.retryOffered ? '' : `${farinImg('face-proud', 'rl-resface')}<h2 class="game-result-title" style="margin-top:10px;">${esc(rlS('done.' + q.kind))}</h2>`) : `<div class="result-ring" style="background:var(--cat-${CAT}-soft); color:var(--cat-${CAT});">
         <div class="big num">${pct}%</div>
         <div class="small">${L('Score','Skor','امتیاز','Puntuación')}</div>
       </div>
       <h2 class="game-result-title" style="margin-top:10px;">${q.correct} / ${q.questions.length} ${L('correct','doğru','درست','correctas')}</h2>
-      <p class="game-result-line" style="margin-bottom:6px;">${resultLead(pct)} ${kindLabel.toLowerCase()}.</p>
+      <p class="game-result-line" style="margin-bottom:6px;">${resultLead(pct)} ${kindLabel.toLowerCase()}.</p>`}
       ${renderBadgeUnlockCard(justEarned)}
 
       ${q.retryOffered ? `<div class="game-card tight" style="margin-top:14px; text-align:center;">
@@ -25559,6 +26128,7 @@ const screens = {
   'vocab-set': ()=>renderVocabSet(state.viewParams.id, state.viewParams.cardIndex||0),
   'vocab-set-intro': ()=>renderVocabSetIntro(state.viewParams.id),
   'vocab-box': ()=>renderVocabBox(),
+  'vocab-rounds': renderVocabRounds,
   'goals-list': renderGoalsList,
   'goal-levels': ()=>renderGoalLevels(state.viewParams.goal),
   'goal-level-detail': ()=>renderGoalLevelDetail(state.viewParams.goal, state.viewParams.level),
@@ -27078,6 +27648,10 @@ const HANDLERS = {
   },
   'nav'(el){
     const view = el.dataset.view;
+    // Lessons that play (LESSONS_PLAY, Trello rC52b1hH): from the roadmap, a word / slang card opens in three rounds and a writing /
+    // speaking step opens its round straight away. The free lists, course steps and Studio Lab keep today's screens.
+    if(view === 'vocab-set-intro' && lpOn('deck') && lpFromRoadmap(el) && rlSet(el.dataset.id)){ go('vocab-rounds', {id:el.dataset.id, goal:el.dataset.goal || '', cat:el.dataset.cat || 'vocab'}); return; }
+    if(view === 'studio-setup' && lpOn('studio') && lpFromRoadmap(el) && studioStraightIn(el.dataset)) return;
     const params = {id: el.dataset.id};
     if(view==='grammar-list' || view==='grammar-trap') params.level = state.viewParams.level || state.profile.level;
     if(view==='vocab-list' || view==='vocab-set' || view==='vocab-set-intro'){ params.level = state.viewParams.level || state.profile.level; params.cat = el.dataset.cat || state.viewParams.cat || 'vocab'; }
@@ -28417,6 +28991,7 @@ const HANDLERS = {
   },
   'back'(){ try{ history.back(); }catch(e){ goBack(); } }
 };
+Object.assign(HANDLERS, RL_HANDLERS);   // Lessons that play (LESSONS-PLAY block)
 
 /* ============================= PAID COURSES: ENGINE + SCREENS (Trello B5O9MOM8) =============================
    Views: courses-home, course-detail, course-unit, course-step, course-gate.
@@ -36489,7 +37064,7 @@ try{ document.addEventListener('pointerdown', orderPeekStart); document.addEvent
 
 // Typed quiz answers (teaching redesign item 12): Enter checks.
 try{ document.addEventListener('keydown', function(e){
-  if(e.key !== 'Enter' || (state.view !== 'quiz' && state.view !== 'souvenir-shuffle') || !e.target || e.target.id !== 'quiz-type-input') return;
+  if(e.key !== 'Enter' || (state.view !== 'quiz' && state.view !== 'souvenir-shuffle' && state.view !== 'vocab-rounds') || !e.target || e.target.id !== 'quiz-type-input') return;
   e.preventDefault();
   const act = state.view === 'souvenir-shuffle' ? 'shuffle-type-check' : 'quiz-type-check';
   const b = document.querySelector('[data-action="' + act + '"]');

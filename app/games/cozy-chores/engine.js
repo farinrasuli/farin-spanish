@@ -36,7 +36,7 @@
 'use strict';
 if(window.CozyChores) return;
 var W = window, D = document;
-var VERSION = '0.5.0';
+var VERSION = '0.5.1';
 var ABORT = {abort:true};
 var G = null;                       // the running game (one at a time, like chStage in the app)
 var SPRING = 'cubic-bezier(.34,1.56,.64,1)';
@@ -530,6 +530,8 @@ function mountLayer(host, Lr, reg, opts){
   d.style.zIndex = Lr.z == null ? 5 : Lr.z;
   if(Lr.origin) d.style.transformOrigin = Lr.origin;
   if(Lr.composite){ d.classList.add('oh-comp'); d.innerHTML = ''; buildComposite(d, Lr.composite, {live:!!Lr.live && !opts.snap, boxed:!!Lr.boxed, from:Lr.from}, reg); }
+  // persp (fix 3, 2026-11-11): a top-down composite (the learner's cake) seen from a raised eye level on an eye-level plate: flattened from its base
+  if(Lr.composite && Lr.persp && !Lr.live){ var pw = el('div', 'oh-persp'); pw.style.cssText = 'position:absolute;inset:0;transform-origin:50% 100%;transform:scaleY(' + Lr.persp + ')'; while(d.firstChild) pw.appendChild(d.firstChild); d.appendChild(pw); }
   else d.innerHTML = artHtml(Lr.art || Lr.id, {tint:Lr.tint ? tintOf(Lr.tint) : null});
   d.dataset.art = Lr.art || '';
   if(Lr.word && (G.band === 'A1' || isPictured(Lr.word)) && !opts.snap){
@@ -566,6 +568,9 @@ function mountShot(sdef, skey, opts){
     b.dataset.ohHot = Hd.id;
     b.style.left = Hd.x + '%'; b.style.top = Hd.y + '%'; b.style.width = Hd.w + '%'; b.style.height = Hd.h + '%';
     b.setAttribute('aria-label', Hd.label || Hd.id); b.tabIndex = -1;
+    // a visible paper tag in the target language (fix 1, 2026-11-11: the laundry piles say whites / colours / delicates)
+    if(Hd.mark) b.classList.add('oh-mark-' + Hd.mark);   // fix 4: a visible dashed cut line where the learner cuts
+    if(Hd.tag){ var tg = el('b', 'oh-hot-tag'); tg.textContent = Hd.tag[G.lang] || Hd.tag.en || ''; tg.lang = G.lang; b.appendChild(tg); }
     cam.appendChild(b); shot.H[Hd.id] = b;
   });
   wrap.appendChild(cam);
@@ -1312,6 +1317,7 @@ function findLayerDef(id){
 
 /* ---- drag-to: items [{item|layer, n}] onto hot 'to'; extras spring back with their line; tap item then tap target ---- */
 GESTURE['drag-to'] = function(g){
+  if(g.recipe) dockRecipe(true);
   // g.to = the default target hot; an item may name its own (item.to) or several spots (item.spots: any of them is right, the learner's
   // choice sets memory and plays that spot's line: CZ1 expressive). g.zones = off-target drop areas with their own line (spring back).
   // g.misdrop[item] = the line for a needed item dropped on another item's target. g.captain = Captain's moment after the nth drop.
@@ -1643,7 +1649,13 @@ GESTURE['turn-dial'] = function(g){
     cue('dial');
     function ang(k){ return g.arc[0] + (g.arc[1] - g.arc[0]) * k / steps; }
     function val(k){ return g.min + k * g.step; }
-    function paint(){ dial.style.transform = 'rotate(' + ang(i) + 'deg)'; if(ring) ring.querySelectorAll('.oh-dt').forEach(function(t){ t.classList.toggle('oh-at', +t.dataset.v === val(i)); }); }
+    // fix 12 (2026-11-11): tighten = {layer, part}: every detent redraws the bow, loose before the target, as drawn at the target, tighter past it
+    function bow(){
+      if(!g.tighten) return; var tl = L(g.tighten.layer), tp = tl && tl.querySelector('.oh-cpart[data-part="' + g.tighten.part + '"]'); if(!tp) return;
+      var d = ti - i, sx = d >= 0 ? 1 + .3 * d / Math.max(1, ti) : 1 + .07 * d, sy = d >= 0 ? 1 + .25 * d / Math.max(1, ti) : 1 + .06 * d;
+      tp.style.transition = RM() ? '' : 'transform .2s ' + SPRING; tp.style.transform = 'scale(' + sx.toFixed(3) + ',' + sy.toFixed(3) + ')';
+    }
+    function paint(){ dial.style.transform = 'rotate(' + ang(i) + 'deg)'; if(ring) ring.querySelectorAll('.oh-dt').forEach(function(t){ t.classList.toggle('oh-at', +t.dataset.v === val(i)); }); bow(); }
     paint();
     function setI(k, voice){
       k = clamp(k, 0, steps);
@@ -2040,6 +2052,9 @@ async function evProduce(){
   var model = T(pr.model), chips = pr.chips || [];
   var hit = chips.filter(function(c){ return model.indexOf(c) >= 0; }).sort(function(a, b){ return b.length - a.length; })[0];
   var frame = hit ? model.replace(hit, '___') : model;
+  // fix 15 (farin-lxd 2026-11-11): production.colourOf maps colour chips to cake.colour; with no known colour the colour chips are not offered
+  var colourOf = pr.colourOf || {}, truth = memGet('cake.colour');
+  if(Object.keys(colourOf).length && !Object.keys(colourOf).some(function(c){ return colourOf[c] === truth; })) chips = chips.filter(function(c){ return !colourOf[c]; });
   await lineSay(pr.prompt);
   cue('choose');
   var pre = frame.split('___');
@@ -2062,6 +2077,23 @@ async function evProduce(){
     });
     G.ctl.querySelector('.oh-say-btn').addEventListener('click', function(){ if(w){ hn.stop(); G.status = {kind:'scripted', station:G.sid}; G.root.classList.remove('oh-compact'); res(w); } });
   });
+  // fix 15: a colour that is not the cake's: Ada says one kind line (after Done, never on a tap), the blank refills with the true colour,
+  // and the souvenir keeps the true sentence. No sound, no red, nothing counted.
+  var picked = colourOf[chosen];
+  if(picked && truth && picked !== truth){
+    var trueChip = chips.filter(function(c){ return colourOf[c] === truth; })[0], fixLn = lineFor('fix.' + truth);
+    if(trueChip){
+      G.status = {kind:'scripted', station:G.sid};
+      G.ctl.querySelectorAll('button').forEach(function(b){ b.disabled = true; });
+      if(fixLn) await lineSay(fixLn);
+      live();
+      chosen = trueChip;
+      var bl2 = G.ctl.querySelector('.oh-blank');
+      if(bl2){ bl2.textContent = chosen; if(!RM()) await fx(bl2, [{transform:'scale(.7)'}, {transform:'scale(1.08)'}, {transform:'none'}], {duration:280, easing:SPRING}); }
+      G.ctl.querySelectorAll('.oh-pchip').forEach(function(x){ x.classList.toggle('oh-sel', x.dataset.w === chosen); });
+      await wait(350);
+    }
+  }
   var sentence = pre[0] + chosen + (pre[1] || '');
   G.status = {kind:'scripted', station:G.sid};
   controls(''); cue(null);
@@ -2193,6 +2225,12 @@ function recipeShow(){
   if(!RM()) return run(card, [{opacity:0, transform:'translate(-30px,-20px) rotate(-12deg) scale(.8)'}, {opacity:1, transform:'rotate(-2deg)'}], {duration:480, easing:SPRING});
 }
 function recipeExplain(){ if(G.recipe) G.recipe.classList.add('oh-explain'); }
+// fix 10 (2026-11-11): once the drag starts the card docks to its title tab at the top (it covered the flour and sugar); a tap opens it again
+function dockRecipe(on){
+  var c = G && G.recipe; if(!c) return;
+  c.classList.toggle('oh-docked', !!on);
+  if(!c.dataset.dock){ c.dataset.dock = '1'; c.style.pointerEvents = 'auto'; c.addEventListener('click', function(ev){ ev.stopPropagation(); c.classList.toggle('oh-docked'); sfx('paper'); }); }
+}
 function recipeTick(item){
   if(!G.recipe) return;
   var li = G.recipe.querySelector('li[data-item="' + item + '"]'); if(!li || li.classList.contains('oh-ticked')) return;
@@ -2224,6 +2262,8 @@ function mountShotUi(){
         html += '<span class="oh-dt' + (v % u.every === 0 ? ' oh-dt-big' : '') + '" data-v="' + v + '" style="--a:' + a + 'deg"><i></i>' + (v % u.every === 0 ? '<b style="--na:' + (-a) + 'deg">' + v + '</b>' : '') + '</span>';
       }
       ring.innerHTML = html;
+      // fix 9 (2026-11-11): the numbers sit 15 % of the ring above it; with no room above (stage 4:5, 1 cqw = .8 % of the height) they go inside the ticks
+      if((y + h / 2) - w * .75 * .8 - w * 1.5 * .8 * .15 < 1) ring.classList.add('oh-in');
       G.uiLayer.appendChild(ring);
     }
   });
@@ -2548,10 +2588,22 @@ async function windowShot(){
     VERB.appear('pol-' + mine);
     VERB.burst(w.x + w.w / 2, w.y + w.h / 2, 12, '#FFD166', .1);
     sfx('reveal');
-    if(!skip) await Promise.race([wait(2200), skipP]);
+    if(!skip) await Promise.race([wait(500), skipP]);
+    // fix 17 (2026-11-11): push in on the window over 700 ms and hold 1.2 s, so the polaroid reads (>= 56 px at the hold; at least x1.3)
+    if(!skip){
+      camStill();
+      var pol = L('pol-' + mine), cs = getComputedStyle(shot.cam).transform, s0 = 1;
+      if(cs && cs !== 'none'){ var mm = /matrix\(([^,]+)/.exec(cs); if(mm) s0 = +mm[1] || 1; }
+      var pw = pol ? rect(pol).width / s0 : 0;
+      var z = clamp(pw ? 60 / pw : 1.3, 1.3, 3.6);
+      await Promise.race([VERB.cam(z, w.x + w.w / 2, w.y + w.h / 2, 700), skipP]);
+      if(!skip) await Promise.race([wait(1200), skipP]);
+    }
   } else {
     var a = L('win-' + mine), b = L('lit-' + mine), p = L('pol-' + mine);
     if(a) a.classList.add('oh-gone'); if(b) b.classList.remove('oh-gone'); if(p) p.classList.remove('oh-gone');
+    // reduced motion: an ink + gold ring around the window instead of the push-in (fix 17)
+    if(w){ var ringW = el('div', 'oh-winring'); ringW.style.cssText = 'left:' + w.x + '%;top:' + w.y + '%;width:' + w.w + '%;height:' + w.h + '%'; G.uiLayer.appendChild(ringW); }
     sfx('reveal');
     await Promise.race([wait(1200, true), skipP]);
   }
@@ -2715,7 +2767,10 @@ async function souvenir(){
   } else deliverThumb = thumbHtml(SV.station || G.round.albumSid || 'deliver');
   G.say.innerHTML = ''; cue(null);
   var card = el('div', 'oh-souv');
-  card.innerHTML = '<div class="oh-souv-card"><div class="oh-souv-face oh-souv-front"><figure class="oh-bigpol oh-souv-pol">' + deliverThumb + '<figcaption lang="' + G.lang + '">' + esc(T(G.V.title)) + '</figcaption></figure><p class="oh-souv-flip" dir="' + uiDir() + '">' + esc(U('flip')) + '</p></div>' +
+  card.innerHTML = '<div class="oh-souv-card"><div class="oh-souv-face oh-souv-front"><figure class="oh-bigpol oh-souv-pol">' + deliverThumb + '<figcaption lang="' + G.lang + '">' + esc(T(G.V.title)) + '</figcaption></figure>' +
+    // fix 16 (CZ11): the sentence and its play button are on the front, next to the learner's own thing; no auto-flip
+    (sv.text ? '<div class="oh-souv-fl"><p class="oh-souv-t" lang="' + G.lang + '" dir="ltr">' + esc(sv.text) + '</p>' + '<button type="button" class="oh-tool oh-souv-say" aria-label="' + esc(U('hear')) + '"><svg viewBox="0 0 24 24"><path d="M4 9.5h3.2L12 5.5v13l-4.8-4H4z" fill="currentColor" stroke="none"/><path d="M15.5 9a4 4 0 010 6M17.8 6.5a7.5 7.5 0 010 11"/></svg></button>' + '</div>' : '') +
+    '<p class="oh-souv-flip" dir="' + uiDir() + '">' + esc(U('flip')) + '</p></div>' +
     '<div class="oh-souv-face oh-souv-back"><p class="oh-souv-k" lang="' + G.lang + '">' + esc(sv.back || '') + '</p><p class="oh-souv-t" lang="' + G.lang + '" dir="ltr">' + esc(sv.text || '') + '</p>' +
     '<button type="button" class="oh-tool oh-souv-say" aria-label="' + esc(U('hear')) + '"><svg viewBox="0 0 24 24"><path d="M4 9.5h3.2L12 5.5v13l-4.8-4H4z" fill="currentColor" stroke="none"/><path d="M15.5 9a4 4 0 010 6M17.8 6.5a7.5 7.5 0 010 11"/></svg></button>' +
     '<p class="oh-souv-kept" dir="' + uiDir() + '">' + esc(U('kept')) + '</p></div></div>';
@@ -2727,7 +2782,6 @@ async function souvenir(){
     if(e.target.closest('.oh-souv-say')){ speak(sv.say || sv.text, {who:'you', interrupt:true}); return; }
     inner.classList.toggle('oh-flipped'); sfx('paper');
   });
-  setTimeout(function(){ if(G && !inner.classList.contains('oh-flipped')){ inner.classList.add('oh-flipped'); } }, 1600 * G.pace);
   try{ if(G.host.keep && sv.text) G.host.keep({kind:'chores', project:G.P.id, text:sv.text, say:sv.say || sv.text, note:sv.back || ''}); }catch(e){}
   await wait(600);
   controls('<div class="oh-askrow"><button type="button" class="oh-chip oh-primary oh-finish">' + esc(U('finish')) + '</button></div>');

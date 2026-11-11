@@ -25770,8 +25770,9 @@ function theatreGate(el, handler){
   if(from && from.width && !reducedMotion()) anim(cover, [{clipPath:`inset(${from.top}px ${innerWidth-from.right}px ${innerHeight-from.bottom}px ${from.left}px round 22px)`}, {clipPath:'inset(0px 0px 0px 0px round 0px)'}], {duration:400, easing:'cubic-bezier(.2,.7,.2,1)'});
   const play = ()=>HANDLERS[handler]({dataset:Object.assign({}, ds, {theatre:'1'})});
   const seen = state.progress.theatreSeen || (state.progress.theatreSeen = {});
-  theatreLoad().then(T=>ycExtra(ds, handler).then(yx=>T.open(Object.assign({kind, cover, from, views:THEATRE_VIEWS, seen:!!seen[kind],
-    app:{lang:LANG, name:(state.profile && state.profile.name) || '', level:(state.profile && state.profile.level) || '', gameName:gameDisplayName(kind),
+  theatreLoad().then(T=>(ds.kind === 'chores' ? cozyExtra(ds, handler) : ycExtra(ds, handler)).then(yx=>T.open(Object.assign({kind, cover, from, views:THEATRE_VIEWS, seen:!!seen[kind],
+    // no LEVEL stamp on the Cozy Chores poster (GDD 3.2, gamification gap 2 on bD0fWJAk): its title is one string, so level only drew the stamp
+    app:{lang:LANG, name:(state.profile && state.profile.name) || '', level:kind === 'chores' ? '' : ((state.profile && state.profile.level) || ''), gameName:gameDisplayName(kind),
       view:()=>state.view, muted:()=>sfxMuted, setMuted:m=>{ sfxMuted = !!m; localStorage.setItem('farinSfxMuted', m ? '1' : '0'); }},
     onPlay:(info)=>{ if(!info || info.poster) seen[kind] = 1; play(); },   // no art yet = no poster shown, not "seen"
     onExit:theatreGameExit}, yx))))
@@ -25810,7 +25811,7 @@ function theatreExit(){
    their nodes, Cozy Chores and Case Closed play the old way. Set GAMES_V2_LIVE.radio / .mystery / .chores to true (both apps) to put that game live; bump GAMES_VER
    whenever a games/ engine changes. (var, not const: SHELF_GAMES reads the flag earlier in the file.) */
 // (GAMES_V2_LIVE, the per-game switch, is declared above SHELF_GAMES)
-var GAMES_VER = '7';
+var GAMES_VER = '8';
 var g2Flag = null, g2Game = null, g2KeepNow = null, g2Pending = null;
 var G2_KINDS = ['chores', 'mystery', 'radio'];
 var G2_COZY = {A1:'movein', A2:'cake', B1:'bouquet', B2:'laundry', C1:'party'};   // the anchor project per level (Cozy GDD 0)
@@ -25870,6 +25871,18 @@ function caseShelfEpisode(){
 function cozyShelfProject(){
   const mine = Object.keys(((state.progress && state.progress.house) || {}).projects || {}).filter(id=>Object.values(G2_COZY).includes(id));
   return mine.length ? mine[Math.floor(Math.random() * mine.length)] : null;
+}
+// Cozy Chores v2 key art (Trello 2V8pPKGK, 2026-11-11): the Open House poster (games/posters/chores.webp) shows before the project,
+// only when this round plays the v2 game (GAMES_V2_LIVE.chores or ?games2=1); the v1 rooms keep no poster, and content.js keeps
+// artReady:false for them. Preloaded so the push-in never starts on an empty frame; a file that fails to load = no poster at all.
+function cozyExtra(ds, handler){
+  if(!g2Applies('chores') || ((handler === 'shelf-play' || ds.free) && !cozyShelfProject())) return Promise.resolve({});
+  const art = 'games/posters/chores.webp?v=' + GAMES_VER;
+  return new Promise(res=>{
+    const im = new Image(); let t = null;
+    const ok = ()=>{ clearTimeout(t); res({poster:{art, artReady:true}}); }, no = ()=>{ clearTimeout(t); res({}); };
+    im.onload = ok; im.onerror = no; t = setTimeout(ok, 2500); im.src = art;
+  });
 }
 // Cozy v1 shelf: a room counts once it was tidied at some level
 function chTidiedEver(id){ return Object.keys(chProgress()[id] || {}).length > 0; }

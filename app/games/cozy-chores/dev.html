@@ -148,9 +148,10 @@
     var title = V.title[opt.lang] || V.title.en;
     Theatre.open({
       kind:'chores', cover:cover, from:from, forcePoster:Q.get('poster') !== '0',   // a preview: show the poster even before its key art (THEATRE-API poster rule)
-      poster:{title:POSTER[opt.lang].title, sub:title, tagline:POSTER[opt.lang].tagline},
+      // the key art (2026-11-11): games/posters/chores.webp, the same file the app passes for v2 rounds
+      poster:{title:POSTER[opt.lang].title, sub:title, tagline:POSTER[opt.lang].tagline, art:'../posters/chores.webp', artReady:true},
       strip:strip(), seen:!!saved || localStorage.getItem(key('seen')) === '1',
-      app:{lang:opt.ui, name:NAME[opt.lang], level:saved ? saved.band : opt.band, gameName:'Cozy Chores', view:function(){ return 'game-chores'; },
+      app:{lang:opt.ui, name:NAME[opt.lang], level:'' /* no LEVEL stamp (GDD 3.2) */, gameName:'Cozy Chores', view:function(){ return 'game-chores'; },
         muted:host.muted, setMuted:function(m){ localStorage.setItem('farinSfxMuted', m ? '1' : '0'); }},
       onPlay:function(){
         localStorage.setItem(key('seen'), '1');

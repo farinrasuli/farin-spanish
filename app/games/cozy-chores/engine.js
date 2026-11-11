@@ -36,7 +36,7 @@
 'use strict';
 if(window.CozyChores) return;
 var W = window, D = document;
-var VERSION = '0.4.1';
+var VERSION = '0.5.0';
 var ABORT = {abort:true};
 var G = null;                       // the running game (one at a time, like chStage in the app)
 var SPRING = 'cubic-bezier(.34,1.56,.64,1)';
@@ -360,19 +360,46 @@ function noise(c, t, dur, peak, freq){
   s.connect(bp); bp.connect(g); g.connect(c.destination); s.start(t); s.stop(t + dur);
 }
 function muted(){ try{ return G && G.host.muted ? !!G.host.muted() : false; }catch(e){ return false; } }
-// UI tones keep the app's names (tick / correct / reveal / combo); the rest stand in for sfx/*.mp3 until the files exist (GDD 9)
+// UI tones keep the app's names (tick / correct / reveal / combo); a name with files in shared.sfx plays the file (GDD 9)
 var lastVar = {};
-// CZ13 foley: sfx/<file>.mp3 from shared.sfx when the CC0 files land (3 variants per material x surface, never the same variant
-// twice in a row, playbackRate 0.96-1.04); until then a synth stand-in with the same variant + detune rule
+// CZ13 foley (2026-11-11): sfx/<name>-<n>.mp3 from shared.sfx (CC0 Kenney / Freesound + sounds made in Node, all listed in
+// Claude/specs/games-expansion-2026-10-22/chores-art/sfx/LICENSES.md). Variants never repeat twice in a row; playbackRate 0.96-1.04
+// (pitch moves with it) so a repeated action never sounds the same. Levels are baked into the files, 12-16 dB under the voice clips.
+// The files win over the host's UI tones (the app's tick / correct / reveal / combo): in the game they are soft paper and kalimba
+// takes on the same notes. Decoded once per game into WebAudio buffers (sfxWarm); until a buffer is ready an <audio> element plays it.
+// A name without files keeps the old order: the host first, then the synth stand-in below.
+var sfxBufs = {}, SFX_LOG = [];
+function sfxLog(name, via, file){ SFX_LOG.push({name:name, via:via, file:file || '', t:Date.now()}); if(SFX_LOG.length > 600) SFX_LOG.shift(); }
+function sfxWarm(){
+  var map = (G && G.data.shared && G.data.shared.sfx) || {}, root = G.appRoot || '', c = ctx();
+  if(!c || !W.fetch) return;
+  Object.keys(map).forEach(function(k){ (map[k] || []).forEach(function(f){
+    var url = root + f; if(sfxBufs[url]) return; sfxBufs[url] = 'wait';
+    fetch(url).then(function(r){ if(!r.ok) throw new Error(url); return r.arrayBuffer(); })
+      .then(function(b){ return new Promise(function(ok, no){ var p = c.decodeAudioData(b, ok, no); if(p && p.then) p.then(ok, no); }); })
+      .then(function(buf){ sfxBufs[url] = buf; }, function(){ sfxBufs[url] = 'fail'; });
+  }); });
+}
 function sfxFile(name){
   var map = (G.data.shared && G.data.shared.sfx) || {}, list = map[name]; if(!list || !list.length) return false;
   var i = Math.floor(Math.random() * list.length); if(list.length > 1 && i === lastVar[name]) i = (i + 1) % list.length; lastVar[name] = i;
-  try{ var a = new Audio((G.appRoot || '') + list[i]); a.playbackRate = 0.96 + Math.random() * 0.08; a.volume = .7; var p = a.play(); if(p && p.catch) p.catch(function(){}); return true; }catch(e){ return false; }
+  var url = (G.appRoot || '') + list[i], rate = 0.96 + Math.random() * 0.08, buf = sfxBufs[url], c = actx;
+  if(buf === 'fail') return false;   // not reachable (offline before the first load): the host / synth tone instead
+  sfxLog(name, 'file', list[i]);
+  if(c && buf && typeof buf === 'object'){
+    try{
+      if(c.state === 'suspended') c.resume().catch(function(){});
+      var s = c.createBufferSource(); s.buffer = buf; s.playbackRate.value = rate; s.connect(c.destination); s.start();
+      return true;
+    }catch(e){}
+  }
+  try{ var a = new Audio(url); a.preservesPitch = false; a.webkitPreservesPitch = false; a.playbackRate = rate; var p = a.play(); if(p && p.catch) p.catch(function(){}); return true; }catch(e){ return false; }
 }
 function sfx(name){
   if(!G || muted()) return;
-  try{ if(G.host.sfx && G.host.sfx(name) === true) return; }catch(e){}
   if(sfxFile(name)) return;
+  try{ if(G.host.sfx && G.host.sfx(name) === true){ sfxLog(name, 'host'); return; } }catch(e){}
+  sfxLog(name, 'synth');
   var c = ctx(); if(!c) return;
   var t = c.currentTime + 0.01;
   var v = Math.floor(Math.random() * 3); if(v === lastVar[name]) v = (v + 1) % 3; lastVar[name] = v;
@@ -382,7 +409,7 @@ function sfx(name){
       case 'correct': tone(c,'sine',523.25,0,t,.11,.14); tone(c,'sine',659.25,0,t+.07,.11,.14); break;
       case 'combo': [523.25,659.25,784].forEach(function(f,i){ tone(c,'sine',f,0,t+i*.06,.11,.14); }); break;
       case 'reveal': [523.25,659.25,784,1046.5].forEach(function(f,i){ tone(c,'sine',f,0,t+i*.07,.14,.12); }); break;
-      case 'tick': case 'paper': case 'pencil': noise(c,t,.03,.05,2200); break;
+      case 'tick': case 'lift': case 'paper': case 'pencil': noise(c,t,.03,.05,2200); break;
       case 'click': noise(c,t,.018,.06,3600); break;
       case 'pop': tone(c,'sine',520,880,t,.08,.08); break;
       case 'bell': tone(c,'sine',1568,0,t,.5,.06); tone(c,'sine',2093,0,t+.09,.45,.05); break;
@@ -394,7 +421,7 @@ function sfx(name){
       case 'purr': tone(c,'sawtooth',48,44,t,.7,.03); break;
       case 'ring': [0,.16,.32].forEach(function(d){ tone(c,'square',1320,0,t+d,.07,.03); tone(c,'square',1480,0,t+d+.08,.07,.03); }); break;
       case 'flash': noise(c,t,.08,.08,5000); break;
-      case 'swish': noise(c,t,.14,.035,1400); break;
+      case 'swish': case 'pour': case 'pour-liquid': noise(c,t,.14,.035,1400); break;
       case 'clink': tone(c,'sine',2400,0,t,.12,.05); tone(c,'sine',3100,0,t+.02,.1,.03); break;
       case 'land': case 'land-food': tone(c,'sine',300,180,t,.07,.07); break;
       case 'land-light': tone(c,'sine',620,420,t,.05,.05); break;
@@ -414,7 +441,7 @@ function sfx(name){
   }catch(e){}
   DET = 1;
 }
-function sfxf(name){ sfx(name); }   // sfx/<name>.mp3 when the CC0 files land (GDD 9); the synth tone until then
+function sfxf(name){ sfx(name); }   // the verb: the same shared.sfx file lookup as sfx()
 var synthVoice = {};
 function defaultSpeak(text, o){
   return new Promise(function(res){
@@ -1339,7 +1366,7 @@ GESTURE['drag-to'] = function(g){
       var n = shot.L[id], z = n.style.zIndex;
       n.classList.add('oh-grab');
       var off = onPress(n, {
-        start:function(){ if(n.dataset.done || n.classList.contains('oh-gone')) return false; if(G.hold){ notYet(n); return false; } cutLine(); if(!remaining().length) return false; G.dragging = true; liftOn(n); sfx('tick'); if(g.speakWord && G.band === 'A1' && n.dataset.item){ speak(objWord(n.dataset.item), {interrupt:true}); } },
+        start:function(){ if(n.dataset.done || n.classList.contains('oh-gone')) return false; if(G.hold){ notYet(n); return false; } cutLine(); if(!remaining().length) return false; G.dragging = true; liftOn(n); sfx('lift'); if(g.speakWord && G.band === 'A1' && n.dataset.item){ speak(objWord(n.dataset.item), {interrupt:true}); } },
         move:function(e, d){ moveBy(n, d); },
         end:function(e, tap){
           G.dragging = false;
@@ -1366,7 +1393,7 @@ GESTURE['drag-to'] = function(g){
       if(sel && shot.L[sel]) shot.L[sel].classList.remove('oh-selected');
       sel = id;
       if(id){
-        shot.L[id].classList.add('oh-selected'); sfx('tick');
+        shot.L[id].classList.add('oh-selected'); sfx('lift');
         // the guide (h45): tapping an item flies it to its target by itself
         var gr = groupOf(id);
         if(hn.guide && gr){ var n = shot.L[id]; select(null); drop(id, n.style.zIndex, gr.to[0]); }
@@ -1465,7 +1492,7 @@ GESTURE['pour-until'] = function(g){
       if(bagP && bag){ bag.classList.add('oh-gone'); bagP.classList.remove('oh-gone'); }
       if(stream){ stream.classList.remove('oh-gone'); stream.classList.add('oh-flowing'); }
       if(first && g.puff){ first = false; VERB.burst(g.puff[0], g.puff[1], 10, '#ffffff', .12); }
-      sfx('swish');
+      sfx(g.unit === 'ml' ? 'pour-liquid' : 'pour');
       var loop = function(t){
         if(!pouring || !G) return;
         var dt = Math.min(0.1, (t - last) / 1000); last = t;
@@ -1514,7 +1541,7 @@ GESTURE['pour-until'] = function(g){
         if(busyCheck){ cutLine(); notYet(b); return; }
         var add = +b.dataset.add, from = v, to = Math.min(g.max, v + add), t0 = performance.now();
         if(first && g.puff){ first = false; VERB.burst(g.puff[0], g.puff[1], 10, '#ffffff', .12); }
-        sfx('swish');
+        sfx(g.unit === 'ml' ? 'pour-liquid' : 'pour');
         var f = function(t){ var k = clamp((t - t0) / (RM() ? 1 : 360), 0, 1); v = from + (to - from) * k; paint(); if(k < 1) requestAnimationFrame(f); else check(); };
         requestAnimationFrame(f);
       });
@@ -1841,7 +1868,7 @@ GESTURE.place = function(g){
             piece.style.width = (cw.width * ring.size[0] / 100) + 'px'; piece.style.height = (cw.height * ring.size[1] / 100) + 'px';
             G.uiLayer.appendChild(piece);
             piece._w = cw.width * ring.size[0] / 100; piece._h = cw.height * ring.size[1] / 100;
-            sfx('tick');
+            sfx('lift');
           }
           if(piece){
             var f2 = frameRect();
@@ -1869,7 +1896,7 @@ GESTURE.place = function(g){
         }
       }));
     });
-    function selSrc(src){ sel = src; srcs.forEach(function(s){ if(s.node) s.node.classList.toggle('oh-selected', s === src); }); sfx('tick'); }
+    function selSrc(src){ sel = src; srcs.forEach(function(s){ if(s.node) s.node.classList.toggle('oh-selected', s === src); }); sfx('lift'); }
     dots.forEach(function(d, i){
       d.addEventListener('click', function(e){
         e.stopPropagation();
@@ -2855,6 +2882,7 @@ function start(o){
   g.V = variant(data, lang, band);
   if(!g.V) throw new Error('cozy: no content for ' + lang + ' ' + band);
   build(g.box);
+  sfxWarm();
   g.unguard = guardExit(g);
   // a closed Theatre removes the stage: stop everything with it
   g.mo = new MutationObserver(function(){ if(G === g && !g.box.isConnected) destroy(); });
@@ -2940,7 +2968,9 @@ W.CozyChores = {
     status:function(){ return G ? G.status : null; },
     game:function(){ return G; },
     hint:function(level){ if(G && G.hint) G.hint.force(level || 15); },
-    skip:skipNow
+    skip:skipNow,
+    sfx:function(){ return SFX_LOG.slice(); },   // what played: {name, via:file|host|synth, file} (QA, 2026-11-11)
+    sfxReady:function(){ var v = Object.keys(sfxBufs).map(function(k){ return sfxBufs[k]; }); return {n:v.length, ready:v.filter(function(b){ return b && typeof b === 'object'; }).length, fail:v.filter(function(b){ return b === 'fail'; }).length}; }
   }
 };
 })();

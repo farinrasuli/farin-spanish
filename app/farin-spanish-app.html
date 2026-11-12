@@ -11661,6 +11661,155 @@ function roadmapPlayTail(p){
   }
 }
 function roadmapPlayAfterMerge(){ if(state.roadmap && state.roadmap.length && state.profile && state.progress) roadmapPlayTail(state.profile); }
+/* ======== Story steps: one chapter or one episode per roadmap card (2026-11-12) ========
+   Farin 2026-11-09, again 2026-11-12: each Your Call chapter is its own roadmap card; Harbour Files (code kind 'mystery', the old name
+   Case Closed) is on the roadmap too, one episode per card. A level holds 6 Your Call cards (the album has 6 chapters): 3 on page 1
+   (the opener + 2) and 3 on page 2 (the opener, one in the middle, the closer). It holds 2 Harbour Files cards, both on page 2
+   (rotation positions 3 and 5). The engines decide what a card plays: Your Call the learner's next unplayed chapter; Harbour Files with
+   games v2 the Nth step of the level opens episode N (caseEpisodeForStep), the old game a case seeded by the refId (another case on each
+   step). roadmapStorySteps() tops a page up to these counts:
+   - a new page: partner games (rot:5, fill) become story steps, so the half-games share and the learn-play rhythm stay as they were;
+   - a saved page: only after the learner's current step, on a partner game not done yet or in a gap between two lessons. No saved card
+     moves, a done card is never touched, no spot left = no card (never two games side by side). What page 1 could not hold goes to
+     page 2 (progress.ycPage1, written at "Go to the next level").
+   Each new card goes where it is farthest from a card of the same game, away from the other story games when it can, never the same
+   kind across a hidden Vocab Box; a partner kind the page holds only once (or the page's Story Hunt) is replaced last. Card faces are
+   ordinary game cards: no labels, counters or XP (Farin 2026-09-30). Both apps, byte-identical. */
+const STORY_BIG = ['path', 'mystery', 'chores', 'radio'];
+// The Your Call cards page 1 of this level held: progress.ycPage1 ('B1:3'); no record = 3 on a page this build made (one chapter per
+// card), else 1 (rotation v3 to rot:5 put chapters 1-2 on page 1's one card).
+function ycPage1Count(p, items){
+  const m = /^(A1|A2|B1|B2|C1):(\d)$/.exec(String((state.progress && state.progress.ycPage1) || ''));
+  if(m && m[1] === p.level) return +m[2];
+  const yc = items.filter(n=>n.type === 'game' && n.gameKind === 'path');
+  return (yc.length >= 3 || yc.some(n=>n.rot === 5 && Array.isArray(n.pathEps) && n.pathEps.length === 1)) ? PATH_STEPS.s1.length : 1;
+}
+// How many cards of a story game a page holds: Your Call 3 on page 1, page 2 the rest of the level's 6 (3, at most 5); Harbour Files 2 on page 2.
+function storyStepTarget(kind, p, st, items){
+  if(kind === 'mystery') return st === 2 ? 2 : 0;
+  if(kind !== 'path' || !pathLevelLive(p.level)) return 0;
+  for(let c = 1; c <= PATH_CH; c++) if(!pathChapter(p.level, c)) return 0;
+  if(st !== 2) return PATH_STEPS.s1.length;
+  return Math.min(5, Math.max(PATH_STEPS.s2.length, PATH_CH - ycPage1Count(p, items)));
+}
+// Your Call refIds a page can still use, best first: chapters no card names yet (on the page, below its first card, or in avoid), in the page's own order
+// (first) else 1-6, then the other chapters, then the pairs of the 2-chapter builds. Never a refId on the page or in avoid (a played
+// refId would show the card as done before it is played).
+function ycStepRefs(lvl, items, avoid, first){
+  const used = new Set(items.filter(n=>n.type === 'game').map(n=>n.refId)), covered = new Set();
+  let low = PATH_CH + 1;   // a chapter below the page's first Your Call card belongs to an earlier page
+  used.forEach(r=>{ const x = pathRefParts(r); if(x && x.level === lvl){ low = Math.min(low, x.ch); for(let c = x.ch; c <= x.chB; c++) covered.add(c); } });
+  for(let c = 1; c < low && low <= PATH_CH; c++) covered.add(c);
+  avoid.forEach(r=>{ const x = pathRefParts(r); if(x && x.level === lvl) for(let c = x.ch; c <= x.chB; c++) covered.add(c); });
+  const all = []; for(let c = 1; c <= PATH_CH; c++) all.push(c);
+  const order = (first || []).concat(all.filter(c=>!(first || []).includes(c)));
+  const eps = order.filter(c=>!covered.has(c)).concat(order.filter(c=>covered.has(c))).map(c=>[c]).concat([[1, 2], [3, 4], [5, 6], [2, 3], [4, 5]]);
+  return eps.map(e=>({e, ref:'path-lane-' + lvl + '-e' + e.join('-')})).filter(x=>!used.has(x.ref) && !avoid.has(x.ref));
+}
+/* items: the page (changed in place). o = {profile, stage, from, saved, avoid, done, gramBefore}
+   from: the first index a new card may take (0 on a new page; the step after the current step on a saved page)
+   avoid: refIds a new card must not use (page 1's game cards, progress.completedGames); done: progress.completedGames only
+   gramBefore: grammar taught before this page (the old Harbour Files game wants 3 clue types taught, as pushGame)
+   Returns the number of cards added. */
+function roadmapStorySteps(items, o){
+  const isG = it => !!it && it.type === 'game';
+  const p = o.profile, lvl = p.level, st = o.stage === 2 ? 2 : 1, from = Math.max(0, o.from || 0);
+  const avoid = o.avoid || new Set(), done = o.done || avoid;
+  const goal = (items.find(it=>isG(it) && it.goal) || {}).goal || profileGoalKeys(p)[0] || 'everyday';
+  const cnt = k => items.filter(it=>isG(it) && it.gameKind === k).length;
+  const gold = state.progress && state.progress.roadmapGolden, goldId = gold && gold.nodeId;
+  const near = (at, dir) => { for(let j = at; j >= 0 && j < items.length; j += dir) if(isG(items[j])) return items[j]; return null; };
+  const taughtOk = at => {   // the old Harbour Files game (games v2 off): 3 clue types from the grammar taught before the card
+    const ids = new Set((o.gramBefore || []).concat(items.slice(0, at).filter(n=>n.type === 'grammar').map(n=>GRAMMAR_ITEMS.find(x=>x.id === n.refId)).filter(Boolean)).map(x=>x.id));
+    return caseTypeCount(lvl, orderLang(), ids) >= 3;
+  };
+  const best = kind => {
+    const same = items.map((n, j)=>isG(n) && n.gameKind === kind ? j : -1).filter(j=>j >= 0);
+    const marks = same.length ? same : [from - 1];
+    let pick = null, top = -Infinity;
+    for(let i = from; i <= items.length; i++){
+      const it = items[i];
+      const rep = !!(it && isG(it) && it.fill && !isRoadmapNodeDone(it) && roadmapNodeId(it) !== goldId);
+      if(!rep && !(i >= 1 && !isG(items[i - 1]) && !isG(it))) continue;   // a partner game not done yet, or a gap between two lessons
+      const after = rep ? i + 1 : i, prevG = near(i - 1, -1), nextG = near(after, 1);
+      // R4: never the same kind across a Vocab Box (an empty box hides and the two games touch)
+      if(items[i - 1] && items[i - 1].type === 'box' && isG(items[i - 2]) && items[i - 2].gameKind === kind) continue;
+      if(items[after] && items[after].type === 'box' && isG(items[after + 1]) && items[after + 1].gameKind === kind) continue;
+      let s = Math.min(...marks.map(j=>Math.abs(j - i))) * 10;
+      if((prevG && prevG.gameKind === kind) || (nextG && nextG.gameKind === kind)) s -= 40;
+      if((prevG && STORY_BIG.includes(prevG.gameKind)) || (nextG && STORY_BIG.includes(nextG.gameKind))) s -= 50;
+      if(rep){ const k = it.gameKind; s -= k === 'hunt' ? 100 : (cnt(k) < 2 ? 60 : (k === 'match' ? -5 : 0)); }
+      if(kind === 'mystery' && !gamesV2On() && !taughtOk(i)) s -= 200;
+      if(s >= top){ top = s; pick = {i, rep}; }   // a tie goes to the later spot
+    }
+    return pick;
+  };
+  let added = 0;
+  const pos = () => 10 + items.filter(it=>isG(it) && it.story).length;   // story steps: positions 10, 11, ... (slot = stage*100 + pos)
+  // Harbour Files: mystery-<L>-s<N>-p<d> (one digit, as caseEpisodeForStep reads it); 5 = the rot:5 Episode 2 step
+  while(cnt('mystery') < storyStepTarget('mystery', p, st, items)){
+    const refs = new Set(items.filter(isG).map(n=>n.refId)), d = [5, 3, 9, 8, 7, 4, 2, 0].find(x=>!refs.has('mystery-' + lvl + '-s' + st + '-p' + x) && !avoid.has('mystery-' + lvl + '-s' + st + '-p' + x));
+    const at = d != null && best('mystery'); if(!at) break;
+    items.splice(at.i, at.rep ? 1 : 0, {type:'game', gameKind:'mystery', slot:st * 100 + d, pos:d, rot:5, story:true, refId:'mystery-' + lvl + '-s' + st + '-p' + d, setId:null, goal,
+      title:L('Game','Oyun','بازی','Juego') + ': ' + gameDisplayName('mystery')});
+    added++;
+  }
+  // Your Call: placed first, then labelled in page order. A new page labels every card (PATH_STEPS: 1-3 / 4-6); a saved page only its new ones.
+  const tgt = storyStepTarget('path', p, st, items);
+  if(cnt('path') < tgt){
+    // page 1 held fewer cards: page 1's refIds are the played ones (done), and a new page 2 goes on from the chapter after them
+    const short = st === 2 && ycPage1Count(p, items) < PATH_STEPS.s1.length;
+    const pAvoid = short ? done : avoid, first = short && !o.saved ? null : PATH_STEPS['s' + st];
+    const keep = o.saved ? items : items.filter(n=>!(isG(n) && n.gameKind === 'path'));
+    const refs = ycStepRefs(lvl, keep, pAvoid, first);
+    const mine = [];
+    while(cnt('path') < tgt && (o.saved ? mine.length : cnt('path')) < refs.length){
+      const at = best('path'); if(!at) break;
+      const n = {type:'game', gameKind:'path', slot:0, pos:pos(), rot:5, story:true, refId:'path-lane-' + lvl + '-new' + mine.length, setId:null, goal, pathEps:[], title:''};
+      n.slot = st * 100 + n.pos;
+      items.splice(at.i, at.rep ? 1 : 0, n); mine.push(n); added++;
+    }
+    const label = o.saved ? mine.slice().sort((a, b)=>items.indexOf(a) - items.indexOf(b)) : items.filter(n=>isG(n) && n.gameKind === 'path');
+    label.forEach((n, k)=>{ const r = refs[k]; if(!r) return; const pc = pathChapter(lvl, r.e[0]);
+      Object.assign(n, {refId:r.ref, pathEps:r.e.slice(), title:L('Game','Oyun','بازی','Juego') + ': ' + gameDisplayName('path') + (pc ? ' — ' + svText(pc.title) : '')}); });
+  }
+  return added;
+}
+/* Saved pages get their story steps once (progress.storySteps = level.stage of the last page a pass completed on, written only after a
+   completed pass): any page made before 2026-11-12 (September/October pages, rot:3, rot:4, rot:5 with 3 Your Call cards a level and one
+   Harbour Files step). Runs before the partner-game pass, so the gaps it leaves get their partner games. Works on a copy: an error leaves
+   the page as it was, is reported in the console and marks nothing, so the next open tries again. A finished page gets nothing (the
+   next page is built with its story steps). The golden node is re-pointed (like ensureRoadmapBox). */
+function ensureRoadmapStory(){
+  const p = state.profile;
+  if(!state.roadmap || !state.roadmap.length || !p || !p.completedDiagnostic || !p.level || !state.progress) return false;
+  const key = p.level + '.' + (p.levelStage === 2 ? 2 : 1);
+  if(state.progress.storySteps === key) return false;
+  return roadmapStoryTail(p, key);
+}
+function roadmapStoryTail(p, key){
+  try{
+    // the current step: a Vocab Box is skipped (one added on this open sits at the current step and hides itself once it is empty)
+    const rm = state.roadmap.slice(), open = rm.findIndex(n=>rmRequired(n) && !isRoadmapNodeDone(n) && n.type !== 'box');
+    if(open < 0) return false;
+    const done = new Set(state.progress.completedGames || []);
+    const n = roadmapStorySteps(rm, {profile:p, stage:p.levelStage === 2 ? 2 : 1, from:open + 1, saved:true, avoid:done, done, gramBefore:completedGrammarItems(p.level)});
+    if(key) state.progress.storySteps = key;
+    if(!n) return false;
+    rm.forEach((x, i)=>{ x.n = i + 1; });
+    state.roadmap = rm;
+    const g = state.progress.roadmapGolden;
+    if(g && g.nodeId){ const gi = rm.findIndex(x=>roadmapNodeId(x) === g.nodeId); if(gi > -1) g.goldenIdx = gi; }
+    return true;
+  }catch(e){
+    try{ console.warn('Roadmap: story steps not added to this page; it stays as it was and the next open tries again.', e); }catch(e2){}
+    return false;
+  }
+}
+// a goal edit keeps the rotation's story steps where they are, drops an added one not done yet (like a partner game) and tops the page up after the current step
+function roadmapStoryAfterMerge(){ if(state.roadmap && state.roadmap.length && state.profile && state.progress) roadmapStoryTail(state.profile, null); }
+// "Go to the next level" from page 1: how many Your Call cards it held (page 2 brings the rest of the level's 6)
+function ycNotePage1(rm){ if(state.profile && state.progress && state.profile.level) state.progress.ycPage1 = state.profile.level + ':' + Math.min(9, (rm || []).filter(n=>n && n.type === 'game' && n.gameKind === 'path').length); }
 function buildRoadmap(profile){
   const goals = profileGoalKeys(profile);
   const gPoolAll = GRAMMAR_ITEMS_FREE.filter(g=>g.level===profile.level);
@@ -11819,11 +11968,10 @@ function buildRoadmap(profile){
     const slot = stage * 100 + pos;   // rot:5: 100-107 / 200-207 rotation, 120+ / 220+ partner games; never collides
     const gameNode = (k, refId, setId, name) => ({type:'game', gameKind:k, slot, pos, rot:5, refId, setId:setId || null, goal:g,
       title:L('Game','Oyun','بازی','Juego')+': '+(name || gameDisplayName(k))});
-    if(kind === 'path'){   // Your Call: two chapters per card (PATH_PAIR): page 1 opens with 1-2, page 2 with 3-4 and closes with 5-6
-      const pair = (PATH_PAIR['s' + stage] || {})[pos] || null;
-      const pa = pair && typeof pathChapter === 'function' ? pathChapter(profile.level, pair[0]) : null;
-      const pb = pair && typeof pathChapter === 'function' ? pathChapter(profile.level, pair[1]) : null;
-      if(pa && pb) items.push(Object.assign(gameNode('path', 'path-lane-'+profile.level+'-e'+pair[0]+'-'+pair[1], null, gameDisplayName('path')+' — '+svText(pa.title)), {pathEps:pair.slice()}));
+    if(kind === 'path'){   // Your Call: one chapter per card (Farin 2026-11-12); roadmapStorySteps() adds the page's other cards and labels all of them in page order (PATH_STEPS)
+      const ch = (PATH_STEPS['s' + stage] || [])[items.filter(it=>it.type==='game' && it.gameKind==='path').length];
+      const pc = ch && typeof pathChapter === 'function' ? pathChapter(profile.level, ch) : null;
+      if(pc) items.push(Object.assign(gameNode('path', 'path-lane-'+profile.level+'-e'+ch, null, gameDisplayName('path')+' — '+svText(pc.title)), {pathEps:[ch]}));
       return;
     }
     // Build It plays the grammar taught so far (stage 2: all of stage 1 too) and needs 4 sentences.
@@ -12022,6 +12170,9 @@ function buildRoadmap(profile){
   roadmapPlayFill(items, {profile, stage, from:0,
     before: stage === 2 ? stage1Vocab.slice() : carrySetIds(profile).map(id=>VOCAB_SETS.find(s=>s.id===id)).filter(Boolean),
     gramBefore: gStage1, avoid: new Set([...stage1Refs, ...((state.progress && state.progress.completedGames) || [])])});
+  // one chapter / one episode per card (2026-11-12): the page's other Your Call cards (and Harbour Files steps) take partner-game places
+  roadmapStorySteps(items, {profile, stage, from:0, gramBefore:gStage1,
+    avoid:new Set([...stage1Refs, ...((state.progress && state.progress.completedGames) || [])]), done:new Set((state.progress && state.progress.completedGames) || [])});
   const seenNodeKeys = {};
   items.forEach(it=>{
     const baseKey = it.type+':'+it.refId;
@@ -12045,8 +12196,8 @@ function roadmapNodeId(item){ return item.type+':'+item.refId+(item.occ?('#'+ite
    whole system, not just a level", Trello 57HYNzbO; supersedes games-content/rotation.md §2 for new roadmaps).
    Seven game positions per stage: 0 opener · 1 after speaking · 2 after grammar 3 · 3 mid (after grammar 4 +
    dialogue) · 4 after the story (+ media; Story Hunt) · 5 end (after writing) · 6 closer. Each level holds all
-   12 roadmap games once (14 cards, 7 per page). Your Call ('path') holds s1 pos 0 (chapters 1-2), s2 pos 0
-   (3-4) and s2 pos 6 (5-6 + the ending), see PATH_PAIR; PATH_FALLBACK stands in where a level has no arc
+   12 roadmap games once (14 cards, 7 per page). Your Call ('path') holds s1 pos 0, s2 pos 0 and s2 pos 6 (since
+   2026-11-12 one chapter per card, 6 cards a level: see PATH_STEPS, roadmapStorySteps); PATH_FALLBACK stands in where a level has no arc
    (null = no node: no page opens on content it has not taught). Word Rush stays the runtime fallback and
    Trap Dash stays off roadmaps (Games shelf only, listed from the start). New roadmaps only: game nodes
    already saved keep their kind and refId (rot:3 marks this scheme). */
@@ -12060,8 +12211,9 @@ const GAME_ROTATION = {
   B2:{ s1:['path','bingo','order','chores','hunt','cross',    'desk'  ], s2:['path','build',    'dictation','mystery','echo', 'mystery','path'] },
   C1:{ s1:['path','bingo','desk', 'order', 'hunt','dictation','chores'], s2:['path','build',    'echo',     'mystery','spell','mystery','path'] }
 };
-// Your Call chapter pairs by position.
-const PATH_PAIR = { s1:{0:[1,2]}, s2:{0:[3,4], 6:[5,6]} };
+// Your Call: one chapter per card (2026-11-12, was PATH_PAIR: chapters 1-2 / 3-4 / 5-6 on three cards). The rotation keeps s1 pos 0 and
+// s2 pos 0 + 6; roadmapStorySteps() adds the rest of the level's 6 cards and labels a new page's cards with these chapters in page order.
+const PATH_STEPS = {s1:[1, 2, 3], s2:[4, 5, 6]};
 // Used when the level has no arc. Index = s1:[pos 0]  s2:[pos 0, pos 6].
 const PATH_FALLBACK = {
   A1:{ s1:[null], s2:['order','desk'] }, A2:{ s1:[null], s2:['order','build'] },
@@ -12992,6 +13144,7 @@ function checkRoadmapStageAdvance(){
     if(li < LEVELS.length-1) state.profile.level = LEVELS[li+1];
     state.profile.levelStage = 1;
   } else {
+    ycNotePage1(roadmap);   // page 2 brings the rest of the level's 6 Your Call cards (roadmapStorySteps)
     state.profile.levelStage = 2;
   }
   regenerateRoadmap();
@@ -13008,6 +13161,8 @@ function ensureRoadmap(){
   if(state.profile && state.profile.completedDiagnostic){ try{ mediaAdded = ensureRoadmapMedia(); }catch(e){} }
   if(state.profile && state.profile.completedDiagnostic){ try{ if(ensureRoadmapBox()) mediaAdded = true; }catch(e){} }
   if(state.profile && state.profile.completedDiagnostic){ try{ if(ensureRoadmapSong()) mediaAdded = true; }catch(e){} }
+  // story steps (one Your Call chapter / one Harbour Files episode per card, 2026-11-12) once per saved page, before the partner games
+  if(state.profile && state.profile.completedDiagnostic){ try{ if(ensureRoadmapStory()) mediaAdded = true; }catch(e){ try{ console.warn('Roadmap: story-step pass failed', e); }catch(e2){} } }
   // partner games last, after every pass above has added its cards (rot:5; ensureRoadmapPlay reports its own errors)
   if(state.profile && state.profile.completedDiagnostic){ try{ if(ensureRoadmapPlay()) mediaAdded = true; }catch(e){ try{ console.warn('Roadmap: partner-game pass failed', e); }catch(e2){} } }
   if(state.profile && state.profile.completedDiagnostic){ try{ awardSouvenirs(null); }catch(e){} }
@@ -13036,18 +13191,22 @@ function mergeRoadmapForGoalChange(){
   const legacyGames = existing.some(it=>it.type==='game' && it.rot !== 3 && it.rot !== 4 && it.rot !== 5);
   // partner games (rot:5) that are not done yet go, whatever their goal: they sit after the current step next to lessons this edit may
   // drop, and roadmapPlayAfterMerge() below puts fresh ones between the lessons that stay (a done one always stays)
-  const kept = existing.filter(it=>(it.type==='game' && it.fill) ? isRoadmapNodeDone(it) :
+  // story steps (Your Call, Harbour Files) follow no goal: the rotation's stay where they are; an added one (story) not done yet goes like a
+  // partner game, and roadmapStoryAfterMerge() puts the page's missing ones back between the lessons that stay, after the current step
+  const story = it => it.type==='game' && (it.gameKind==='path' || it.gameKind==='mystery');
+  const kept = existing.filter(it=>(it.type==='game' && (it.fill || it.story)) ? isRoadmapNodeDone(it) : story(it) ? true :
     (isRoadmapNodeDone(it) || currentGoals.includes(it.goal) || !GOAL_ORDER.includes(it.goal) || (legacyGames && it.type==='game'))
   );
   let target;
   try{ target = buildRoadmap(state.profile); }catch(e){ return; }
   const keptIds = new Set(kept.map(roadmapNodeId));
   // media: never appended at the end; ensureRoadmapMedia() puts it after the story
-  const newNodes = target.filter(it=>!keptIds.has(roadmapNodeId(it)) && !(legacyGames && it.type==='game') && !(it.type==='game' && (it.fill || it.review)) && it.type!=='media' && it.type!=='box' && it.type!=='song' && !(it.type==='game' && it.gameKind==='radio' && !existing.some(n=>n.rot===4 || n.rot===5)));
+  const newNodes = target.filter(it=>!keptIds.has(roadmapNodeId(it)) && !(legacyGames && it.type==='game') && !(it.type==='game' && (it.fill || it.review)) && !story(it) && it.type!=='media' && it.type!=='box' && it.type!=='song' && !(it.type==='game' && it.gameKind==='radio' && !existing.some(n=>n.rot===4 || n.rot===5)));
   state.roadmap = kept.concat(newNodes).map((it,idx)=>Object.assign({}, it, {n:idx+1}));
   try{ ensureRoadmapMedia(); }catch(e){}
   try{ ensureRoadmapBox(); }catch(e){}
   try{ ensureRoadmapSong(); }catch(e){}
+  try{ roadmapStoryAfterMerge(); }catch(e){}
   try{ roadmapPlayAfterMerge(); }catch(e){}
 }
 

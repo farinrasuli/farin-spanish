@@ -287,6 +287,7 @@
   .rm2-node.rm2-poster{display:flex; flex-direction:column; justify-content:flex-end; align-items:flex-start; padding:40px 14px 46px !important;}
   .rm2-poster .roadmap-study{position:relative; z-index:1; flex:0 0 auto; width:fit-content !important; max-width:60%; box-sizing:border-box; padding:10px 12px !important; margin:0; background:rgba(255,255,255,.85) !important; -webkit-backdrop-filter:blur(8px); backdrop-filter:blur(8px); border-radius:16px !important; box-shadow:0 6px 16px -8px rgba(20,51,46,.35);}
   .rm2-poster .rm2-title{padding-inline-end:0 !important; color:#14332e !important; font-size:16px !important; margin-top:4px !important;}
+  @media (max-width:370px){ .rm2-poster .roadmap-study{max-width:66%;} }   /* 360 px phones: a long single word (Spanish "Minicrucigrama") fits the panel instead of running into its edge; fit-content keeps short titles small */
   .rm2-poster .rm2-sub{color:#4d6b66 !important; font-size:10.5px !important;}
   .rm2-poster .rm2-chev{color:#4d6b66 !important;}
   /* a poster whose subject stands right of centre (Your Call cover) keeps the panel on the left in RTL too, so it never covers her */
@@ -13328,7 +13329,7 @@ function farinHelloHtml(){
      end (proud face). Never two decorated cards side by side, never Farin and an item on one card.
    - A sheet item only where it means something (FARIN_ITEM_RULES); no match = no item; at most 5 a page.
    Cards with their own art (vocab/story book, writing/speaking studio art, song vinyl) get nothing extra. */
-const YC_POSTER = '';
+const YC_POSTER = 'art/posters/card-path.webp';   // the Your Call album cover, cut for the card (games/your-call/art/cudillero/cover-2.webp)
 const RM_OWN_ART = {vocab:1, story:1, writing:1, speaking:1, song:1};
 const FARIN_ITEM_RULES = [
   ['headphones', it => it.type === 'media' || it.type === 'dialogue'],
@@ -13338,23 +13339,27 @@ const FARIN_ITEM_RULES = [
   ['tote', (it, t) => /travel|trip|airport|hotel|holiday|shop|market|clothes|\bbuy|viaje|compras|tienda|ropa|vacacion/i.test(t)],
   ['flower', (it, t) => it.type === 'story' || /\bstor(y|ies)|journal|diary|historia|diario/i.test(t)]
 ];
-// Dedicated 960x480 card plates (farin-gamification POSTER-BRIEFS.md, 2026-10-28): list a kind here only once its
-// art/posters/card-<kind>.webp exists in BOTH repos (and in farin-sw.js precache), so a card never shows a broken image.
-const CARD_POSTERS = new Set([]);
+// Roadmap game-card posters (Farin 2026-11-12, again: "for games on the roadmap, as I said before, put the poster on the card"):
+// one 960x480 plate per game kind, art/posters/card-<kind>.webp, cut from the game's own poster where it has one (Your Call album
+// cover, Open House key art, Mini Radio's walnut radio on its sill), the others drawn for the card (POSTER-BRIEFS.md 2026-10-28,
+// Claude/specs/game-card-posters-2026-10-28/plates). Every plate keeps its subject on the right and no lettering (the title is the
+// card's own text). List a kind here only once its file exists in this repo and in farin-sw.js precache, so a card never shows a
+// broken image. The poster is picked from the node's gameKind at render time, so saved roadmaps show it too.
+const CARD_POSTERS = new Set(['path', 'chores', 'radio', 'order', 'desk', 'mystery', 'spell', 'bingo', 'hunt', 'cross', 'build', 'dictation', 'echo', 'match']);   // trap has none: it never sits on a roadmap (buildRoadmap turns it into match/order)
 // Where each poster's subject sits, so the bottom-corner panel never covers it (mnM0D4yh). Values are CSS object-position.
+const CARD_POSTER_FOCUS = {path:'50% 50%'};      // Your Call: the hood sits mid-right, a centred cut keeps it whole on tall cards
 function posterFocus(src){
-  if(/yc-/.test(src)) return '50% 66%';          // Your Call cover: the woman's hood and face above the panel, title band cropped off
-  if(/facade/.test(src)) return '50% 42%';       // Cozy Chores: the two upper floors of rooms
-  if(/card-/.test(src)) return '50% 50%';        // card plates are drawn for the 2:1 card
+  const k = /card-([a-z]+)\.webp$/.exec(src);
+  if(k) return CARD_POSTER_FOCUS[k[1]] || '70% 50%';   // plates: subject at x 55-90 %, so tall cards trim the quiet left side first
+  if(/yc-/.test(src)) return '50% 66%';          // (old) Your Call cover crop
+  if(/facade/.test(src)) return '50% 42%';       // (old) Cozy Chores facade
   return '50% 55%';                              // Story Path plates: town and harbour
 }
 function gamePosterSrc(it){
   if(!it || it.type !== 'game') return '';
-  if(it.gameKind === 'chores') return 'art/posters/plate-facade.webp';
-  if(CARD_POSTERS.has(it.gameKind)) return 'art/posters/card-' + it.gameKind + '.webp';
-  if(it.gameKind !== 'path') return '';
+  if(it.gameKind !== 'path') return CARD_POSTERS.has(it.gameKind) ? 'art/posters/card-' + it.gameKind + '.webp' : '';
   const r = pathRefParts(it.refId); if(!r) return '';
-  if(YC_POSTER && typeof YC_LEVELS !== 'undefined' && (YC_LEVELS.includes(r.level) || ycEligible(it.refId))) return YC_POSTER;   // every level opens the comic (2026-11-12)
+  if(CARD_POSTERS.has('path') && typeof YC_LEVELS !== 'undefined' && (YC_LEVELS.includes(r.level) || ycEligible(it.refId))) return YC_POSTER;   // every level opens the comic (2026-11-12)
   const sc = (typeof PATH_SCENES !== 'undefined') && PATH_SCENES['lane-ch' + r.ch + '-1'];
   const plate = sc && sc.layers && sc.layers.find(l=>l.plate);
   const m = plate && /(plate-lane-ch\d-\d)\.webp$/.exec(plate.src);
@@ -16008,7 +16013,7 @@ function renderRoadmapCard(p){
     // token), the current card gets the full solid brand color, and titles switch
     // to the app's existing Fredoka "display" treatment (same font used for hero
     // headings like the profile name) instead of the default body font.
-    const cls = 'rm2-node' + (poster ? ' rm2-poster' + (/yc-/.test(poster) ? ' rm2-poster-subj-r' : '') : '') + (item.type === 'song' && !checked ? ' song-node' : '') + (isCurrent ? ' rm2-node-current' : '') + (checked ? ' rm2-node-done' : '') + (locked ? ' rm2-node-locked' : '');
+    const cls = 'rm2-node' + (poster ? ' rm2-poster' + (/yc-|card-/.test(poster) ? ' rm2-poster-subj-r' : '') : '') + (item.type === 'song' && !checked ? ' song-node' : '') + (isCurrent ? ' rm2-node-current' : '') + (checked ? ' rm2-node-done' : '') + (locked ? ' rm2-node-locked' : '');
     // 2026-09-30, Farin (3rd correction, emphatic): "DO YOU SEE THE COLORS AND GOAL
     // TABS? I WANT THOSE COLORS AND SPARKLE IN THE ROADMAP TOO". The Goals screen's
     // .goal-card is the reference: a FULL-STRENGTH var(--cat-x) fill + white text +

@@ -12734,7 +12734,7 @@ function gamePosterSrc(it){
   if(CARD_POSTERS.has(it.gameKind)) return 'art/posters/card-' + it.gameKind + '.webp';
   if(it.gameKind !== 'path') return '';
   const r = pathRefParts(it.refId); if(!r) return '';
-  if(YC_POSTER && typeof YC_LEVELS !== 'undefined' && YC_LEVELS.includes(r.level)) return YC_POSTER;
+  if(YC_POSTER && typeof YC_LEVELS !== 'undefined' && (YC_LEVELS.includes(r.level) || ycEligible(it.refId))) return YC_POSTER;   // every level opens the comic (2026-11-12)
   const sc = (typeof PATH_SCENES !== 'undefined') && PATH_SCENES['lane-ch' + r.ch + '-1'];
   const plate = sc && sc.layers && sc.layers.find(l=>l.plate);
   const m = plate && /(plate-lane-ch\d-\d)\.webp$/.exec(plate.src);
@@ -21895,7 +21895,7 @@ function pathGlossRowHtml(ch, g){
 }
 // The souvenir of a chapter node: its glossed feeling word.
 function pathSouvenirWord(node){
-  const yw = ycSouvenirWord(node); if(yw) return yw;   // Your Call v2
+  const yw = ycSouvenirWord(node); if(yw || ycBorrows(node && node.refId)) return yw;   // Your Call v2 (a borrowed card: the comic's word only)
   const r = node && pathRefParts(node.refId), c = r && pathChapter(r.level, r.chB), gl = c && c[c.souvenir];   // a pair: its last chapter
   return gl ? {id:pathSrsId(r.level, r.chB), word:String(gl.word), meaning:pathMeaning(gl), ch:r.chB} : null;
 }
@@ -21990,12 +21990,86 @@ function ycOldMid(level){
   const p = pathState();
   return p.level === level && p.v !== 2 && p.choices.some(Boolean) && !p.history.some(h=>h && h.level === level && h.done);
 }
-// a learner in the middle of the old A1 story keeps it until that arc ends, unless they pick the new edition (ycAskEdition)
+/* Every Your Call roadmap card at every level opens the comic (2026-11-12, Farin on a B1 roadmap: "your call is not in the new
+   version"). A level with its own album (YC_LEVELS) plays it on progress.path as before (A1). A level with no album yet borrows the
+   A1 album on the shared comic save, progress.ycFree[album level] (the same save the Games shelf uses): each card takes the next
+   chapter pair not played yet (kept per card in .cards[refId]), 2 chapters per card as at A1; once all six are played a card
+   replays a pair (from chapter 1, then 3-4, 5-6) and still completes. progress.path is never written for a borrowed card.
+   A learner in the middle of the old story of a level keeps it until that arc ends, unless they pick the new edition (ycAskEdition). */
 function ycEligible(refId){
-  const r = pathRefParts(refId); if(!r || !YC_LEVELS.includes(r.level)) return false;
-  return !ycOldMid(r.level);
+  const r = pathRefParts(refId); if(!r) return false;
+  if(!ycOldMid(r.level)) return true;
+  // A1 moves the old story to history when "New edition" is picked (ycBegin); a level with no album keeps it in place
+  return !YC_LEVELS.includes(r.level) && (state.progress.ycEdition || {})[r.level] === 'new';
 }
-function ycCard(refId){ const r = pathRefParts(refId); return r ? (r.chB !== r.ch ? [r.ch, r.chB] : [r.ch]) : null; }
+// a roadmap card of a level with no album yet that plays the comic (on the shared save)
+function ycBorrows(refId){ const r = pathRefParts(refId); return !!r && !YC_LEVELS.includes(r.level) && ycEligible(refId); }
+function ycCard(refId){
+  const r = pathRefParts(refId); if(!r) return null;
+  if(!YC_LEVELS.includes(r.level)) return ycBorrowCard(refId).ch.slice();
+  return r.chB !== r.ch ? [r.ch, r.chB] : [r.ch];
+}
+// the card's chapter pair on the shared save: the one it took, else the first pair not fully played and not held by another
+// unfinished card; all six played -> a replay pair ({replay:true}: the saved story stays as it is)
+function ycBorrowCard(refId){
+  const f = ycFreeOf(ycShelfLevel()) || {}, cards = (f.cards && typeof f.cards === 'object') ? f.cards : {};
+  const own = cards[refId];
+  if(own && Array.isArray(own.ch) && own.ch.length) return own;
+  const ch = ycShelfView().choices, held = new Set();
+  Object.keys(cards).forEach(id=>{ const c = cards[id]; if(id !== refId && c && Array.isArray(c.ch) && !c.replay && !c.finished && !c.ch.every(n=>ch[n])) c.ch.forEach(n=>held.add(n)); });
+  for(const a of [1, 3, 5]){ const pair = [a, a + 1]; if(!pair.every(n=>ch[n]) && !pair.some(n=>held.has(n))) return {ch:pair, replay:false}; }
+  const rp = [1, 3, 5].includes(f.rp) ? f.rp : 1;
+  return {ch:[rp, rp + 1], replay:true};
+}
+function ycFreeRec(){
+  const pr = state.progress, lv = ycShelfLevel();
+  if(!pr.ycFree || typeof pr.ycFree !== 'object') pr.ycFree = {};
+  const f = pr.ycFree[lv] = ycFreeOf(lv) || {};
+  if(!Array.isArray(f.choices)) f.choices = [];
+  ['prints', 'notes', 'cards', 'souvenirs'].forEach(k=>{ if(!f[k] || typeof f[k] !== 'object') f[k] = {}; });
+  return f;
+}
+// the card opens: its pair is kept on the save, so it stays the same until the card is done
+function ycBorrowAssign(refId){
+  const f = ycFreeRec();
+  if(!f.cards[refId] || !Array.isArray(f.cards[refId].ch)){ f.cards[refId] = Object.assign({}, ycBorrowCard(refId), {done:[]}); save(); }
+  return f.cards[refId];
+}
+// a chapter finished on a borrowed card: the shared save (a replay pair only notes the chapter, the saved story stays)
+function ycBorrowCommit(refId, res){
+  const f = ycFreeRec(), c = f.cards[refId] || (f.cards[refId] = {ch:[res.ch], replay:false, done:[]});
+  if(!Array.isArray(c.done)) c.done = [];
+  if(c.done.indexOf(res.ch) < 0) c.done.push(res.ch);
+  if(!c.replay){
+    while(f.choices.length <= PATH_CH) f.choices.push('');
+    f.choices[res.ch] = res.picks;
+    f.prints[res.level + ':ch' + res.ch] = {found:res.found || [], date:todayISO()};
+    if(res.note) f.notes[res.level + ':ch' + res.ch] = res.note;
+  }
+  if(res.souvenir) f.souvenirs[res.souvenir.id] = res.souvenir;
+  f.run = null; f.date = todayISO();
+  save();
+}
+function ycBorrowDone(refId){
+  const f = ycFreeRec(), c = f.cards[refId];
+  if(!c || c.finished) return;
+  c.finished = true;
+  if(c.replay) f.rp = c.ch[0] >= 5 ? 1 : c.ch[0] + 2;   // the next replay card takes the next pair
+}
+// a saved comic souvenir (the A1 arc's, or the shared save's), else the chapter's own from the loaded content
+function ycSouvenirOf(id){
+  const m = /^yc-(A1|A2|B1|B2|C1)-ch([1-6])$/.exec(String(id || '')); if(!m) return null;
+  const s = (pathState().souvenirs || {})[id] || ((ycFreeOf(m[1]) || {}).souvenirs || {})[id];
+  if(s) return s;
+  const c = window.YC_CONTENT && YC_CONTENT.level === m[1] && YC_CONTENT.chapters[+m[2] - 1], g = c && c.glosses && c.glosses[c.souvenir];
+  return g ? {id, word:g.word, meaning:g.m, ch:+m[2], title:c.title, cards:Object.keys(c.glosses).map(k=>({word:c.glosses[k].word, meaning:c.glosses[k].m}))} : null;
+}
+// the borrowed card's poster: chapters outside the card wait for the one before them (no A1 roadmap pages to name)
+function ycBorrowNotes(cfg, card){
+  const after = (YourCall.UI && YourCall.UI.afterCh) || {};
+  (cfg.strip || []).forEach(it=>{ if(it.state === 'locked' && it.n > 1 && card.indexOf(it.n) < 0) it.note = String(after[LANG] || after.en || '').replace('{n}', it.n - 1); });
+  return cfg;
+}
 function ycReadyFor(refId){ return !!(window.YourCall && window.YC_CONTENT && ycEligible(refId) && YourCall.ready(YC_CONTENT, ycCard(refId))); }
 function ycPathView(){
   const p = pathState();
@@ -22042,14 +22116,15 @@ function ycExtra(ds, handler){
     if(shelf) return ycShelfPoster();   // Games shelf: the comic for every learner (ycShelf)
     const card = ycCard(ds.refId);
     if(!ycReadyFor(ds.refId)) return {};
-    return YourCall.poster(YC_CONTENT, ycPathView(), {ui:LANG, card, muted:()=>sfxMuted,   // muted: the poster's sea bed follows the sound toggle
+    const borrow = ycBorrows(ds.refId), view = borrow ? ycShelfView : ycPathView;   // a level with no album: the shared comic save
+    return YourCall.poster(YC_CONTENT, view(), {ui:LANG, card, muted:()=>sfxMuted,   // muted: the poster's sea bed follows the sound toggle
       onChapter:(n, o)=>{ ycPending = {n, replay:!!(o && o.replay)}; Theatre.play(); },
-      onAlbum:()=>YourCall.album({root:(window.Theatre && Theatre.stageEl()) || document.body, content:YC_CONTENT, path:ycPathView(), ui:LANG})})
-      .then(cfg=>Object.assign(cfg, {onClose:()=>{ if(ycGame){ ycGame.destroy(); ycGame = null; } try{ YourCall.hush(); }catch(e){} }}));
+      onAlbum:()=>YourCall.album({root:(window.Theatre && Theatre.stageEl()) || document.body, content:YC_CONTENT, path:view(), ui:LANG})})
+      .then(cfg=>Object.assign(borrow ? ycBorrowNotes(cfg, card) : cfg, borrow ? {level:ycShelfLevel()} : {}, {onClose:()=>{ if(ycGame){ ycGame.destroy(); ycGame = null; } try{ YourCall.hush(); }catch(e){} }}));
   }).catch(()=>({}));
 }
 function ycStart(params){
-  if(!params.free) ycBegin('A1');
+  if(!params.free){ if(ycBorrows(params.refId)) ycBorrowAssign(params.refId); else ycBegin('A1'); }
   go('game-yc', Object.assign({round:{level:'A1', ch:0, finished:false}}, params));
 }
 /* Games shelf (2026-11-12, Farin could not find the new Your Call): the comic album for every learner at any level, as free play.
@@ -22086,6 +22161,7 @@ function ycShelfSave(res){
   f.choices[res.ch] = res.picks;
   f.prints[lv + ':ch' + res.ch] = {found:res.found || [], date:todayISO()};
   if(res.note) f.notes[lv + ':ch' + res.ch] = res.note;
+  if(res.souvenir){ if(!f.souvenirs || typeof f.souvenirs !== 'object') f.souvenirs = {}; f.souvenirs[res.souvenir.id] = res.souvenir; }   // for a borrowed card's souvenir later
   f.date = todayISO();
   save();
 }
@@ -22109,18 +22185,19 @@ function ycShelf(ds){
   go('game-yc', {round:{level:ycShelfLevel(), ch:0, finished:false}, refId:ds.refId, goal:'', free:true, shelf:true});
   return true;
 }
-/* The old A1 story in progress (2026-11-12): its next Your Call roadmap card asks once, "New edition" (the comic: ycBegin keeps
-   the old arc in progress.path.history as it is, done:false) or "Continue the old story" (v1, as before). The answer is kept
-   in progress.ycEdition[level] ('new' | 'old'); tapping outside asks again next time. The comic is on the Games shelf either way. */
+/* The old story of a level in progress (2026-11-12, any level): its next Your Call roadmap card asks once, "New edition" (the
+   comic: at A1 ycBegin keeps the old arc in progress.path.history as it is, done:false; at a level with no album the old arc stays
+   in progress.path untouched) or "Continue the old story" (v1, as before). The answer is kept in progress.ycEdition[level]
+   ('new' | 'old'); tapping outside asks again next time. The comic is on the Games shelf either way. */
 function ycAskEdition(el){
   const ds = (el && el.dataset) || {}, r = pathRefParts(ds.refId);
-  if(ds.free || ds.ycEd || ds.theatre || state.courseReturn || !r || !YC_LEVELS.includes(r.level) || !ycOldMid(r.level)) return false;
+  if(ds.free || ds.ycEd || ds.theatre || state.courseReturn || !r || !ycOldMid(r.level)) return false;   // any level (2026-11-12)
   if((state.progress.ycEdition || {})[r.level] || document.querySelector('.celebrate-overlay')) return false;
   const view = state.view;
   const again = pick=>{
     if(pick){
       state.progress.ycEdition = Object.assign({}, state.progress.ycEdition, {[r.level]:pick});
-      if(pick === 'new') ycBegin(r.level);
+      if(pick === 'new' && YC_LEVELS.includes(r.level)) ycBegin(r.level);   // a level with no album: the old story stays where it is
       save();
     }
     const d = Object.assign({}, ds, {ycEd:'1'});
@@ -22172,34 +22249,47 @@ function ycMount(){
   if(!root || !window.YourCall) return;
   const pend = ycPending; ycPending = null;
   const shelf = !!(vp.free && vp.shelf);   // Games shelf: free play on its own record (ycShelf); progress.path is not read or written
-  const p = shelf ? null : pathState(), card = vp.free ? [pend ? pend.n : ((shelf && ycShelfNext()) || 1)] : ycCard(vp.refId);
+  const borrow = !vp.free && ycBorrows(vp.refId);   // a roadmap card of a level with no album yet: the shared comic save, never progress.path
+  const bc = borrow ? ycBorrowAssign(vp.refId) : null;
+  const p = (shelf || borrow) ? null : pathState(), card = vp.free ? [pend ? pend.n : ((shelf && ycShelfNext()) || 1)] : (borrow ? bc.ch.slice() : ycCard(vp.refId));
+  const chs = borrow ? ycShelfView().choices : (p ? p.choices : []);
+  const played = n=>bc && bc.replay ? (bc.done || []).indexOf(n) >= 0 : !!chs[n];   // a replay pair counts what this card replayed
   const replay = !!vp.free || !!(pend && pend.replay);
-  let startCh = pend ? pend.n : (vp.free ? card[0] : (card.every(n=>p.choices[n]) ? card[0] : card.find(n=>!p.choices[n])));
+  let startCh = pend ? pend.n : (vp.free ? card[0] : (card.every(played) ? card[0] : card.find(n=>!played(n))));
   // chapter flow (UI0ejg05): never start after an unplayed earlier chapter of the same step (the strip used to open chapter 2 first)
-  if(pend && !replay && card.includes(pend.n)){ const first = card.find(n=>!p.choices[n]); if(first && first < pend.n) startCh = first; }
-  const resume = !replay && p.ycRun && card.includes(p.ycRun.ch) ? p.ycRun : null;
+  if(pend && !replay && card.includes(pend.n)){ const first = card.find(n=>!played(n)); if(first && first < pend.n) startCh = first; }
+  const run = borrow ? (ycFreeOf(ycShelfLevel()) || {}).run : (p && p.ycRun);
+  const resume = !replay && run && card.includes(run.ch) ? run : null;
   ycGame = YourCall.start({root, content:YC_CONTENT, ui:LANG, chapters:card, start:startCh, mode:replay ? 'replay' : 'card', resume, theatre:window.Theatre || null,
     host:{
       speak:(t, o)=>new Promise(ok=>{ try{ ttsSpeak(t, o && o.rate ? o.rate * 0.92 : 0.92, {end:ok, error:ok}); }catch(e){ ok(); } }),
-      stopSpeech:stopAllSpeech, muted:()=>sfxMuted, reduced:reducedMotion, path:shelf ? ycShelfView : ycPathView,
-      saveRun:shelf ? null : r=>{ pathState().ycRun = r; save(); }, commit:shelf ? null : ycCommit},
+      stopSpeech:stopAllSpeech, muted:()=>sfxMuted, reduced:reducedMotion, path:(shelf || borrow) ? ycShelfView : ycPathView,
+      saveRun:shelf ? null : (borrow ? r=>{ ycFreeRec().run = r; save(); } : r=>{ pathState().ycRun = r; save(); }),
+      commit:shelf ? null : (borrow ? res=>ycBorrowCommit(vp.refId, res) : ycCommit)},
     onChapterDone:shelf ? ycShelfSave : null,
     onPause:()=>{ ycGame = null; backToRoadmap(); },
     onCardDone:(res)=>{
       ycGame = null;
       if(replay){ backToRoadmap(); return; }
+      if(borrow) ycBorrowDone(vp.refId);
       vp.round = {level:'A1', ch:res.ch, finished:true};
       markGameComplete(vp.refId);
       save(); render();   // maybeCelebrate: the path celebration with the chapter souvenir
     }});
 }
 function ycVocabSet(id){
-  const s = (pathState().souvenirs || {})[id];
+  const s = ycSouvenirOf(id);
   return s ? {id, level:'A1', category:'vocab', path:true, title:s.title || {en:id}, cards:s.cards || [{word:s.word, meaning:s.meaning}]} : null;
 }
 function ycSouvenirWord(node){
   const r = node && pathRefParts(node.refId);
-  if(!r || !YC_LEVELS.includes(r.level) || !ycIsV2Arc()) return null;
+  if(!r) return null;
+  if(ycBorrows(node.refId)){   // the comic chapter this card played last (its pair's last chapter)
+    const c = ((ycFreeOf(ycShelfLevel()) || {}).cards || {})[node.refId], n = c && Array.isArray(c.ch) ? c.ch[c.ch.length - 1] : 0;
+    const s = n ? ycSouvenirOf('yc-' + ycShelfLevel() + '-ch' + n) : null;
+    return s ? {id:s.id || ('yc-' + ycShelfLevel() + '-ch' + n), word:String(s.word), meaning:s.meaning, ch:n} : null;
+  }
+  if(!YC_LEVELS.includes(r.level) || !ycIsV2Arc()) return null;
   const s = (pathState().souvenirs || {})['yc-' + r.level + '-ch' + r.chB];
   return s ? {id:s.id, word:String(s.word), meaning:s.meaning, ch:r.chB} : null;
 }

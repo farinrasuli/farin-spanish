@@ -265,3 +265,42 @@
 .yc-tone-1970 .yc-pic, .yc-photo.yc-tone-1970 .yc-pic{filter:sepia(.55) saturate(.85);}
 .yc-sfx-static{position:static; align-self:center; margin:4px 0;}
 .yc-insintro{font-weight:400; font-size:15px; margin-top:6px; color:var(--ink-soft);}
+
+/* ---- 0.3.0 (Farin 2026-11-12): phones. Overlays scroll on a short screen and stay centred when they fit; the postcard is sized
+   to the screen; the Then & Now photo is sized from the panel under it and the whole step scrolls only when even that cannot fit ---- */
+.yc-ov{overflow-y:auto; overscroll-behavior:contain; -webkit-overflow-scrolling:touch; justify-content:flex-start;}
+.yc-ov > :first-child{margin-top:auto;}
+.yc-ov > :last-child{margin-bottom:auto;}
+.yc-album > *{margin-top:0 !important; margin-bottom:0 !important;}
+.yc-postcard{flex:0 0 auto;}   /* full width (min(100%, 380px)), never shrunk to the screen height: the overlay scrolls */
+.yc-post-btns{flex:0 0 auto;}
+.yc-post-count{margin:0; text-align:center; font-family:var(--f-ui); font-weight:700; font-size:14px; color:var(--ink-soft);}
+.yc-post-bar{display:block; height:4px; border-radius:2px; background:rgba(27,26,23,.12); overflow:hidden;}
+.yc-post-bar i{display:block; height:100%; background:var(--red); transform-origin:0 50%;}
+.yc-post{cursor:pointer;}
+.yc-tn{overflow-y:auto; overscroll-behavior:contain;}
+.yc-tn-stagewrap{flex:1 0 auto;}
+.yc-tn-stage{width:100%;}   /* full width at 4:5, never squeezed to the screen height (Farin: "full… not pressed down"); the step scrolls */
+.yc-tn-stagewrap{align-items:flex-start;}
+/* the pictures on the page are full width too (a print, Robert's card, the "Previously" photos) */
+.yc-print{width:100%; transform:rotate(-.8deg);}
+.yc-card3{width:100%;}
+.yc-prev-in{width:100%;}
+.yc-thumbs{width:100%;}
+.yc-thumb{flex:1 1 0; width:auto; min-width:0;}
+.yc-tn-tip{position:absolute; left:50%; top:8px; transform:translateX(-50%); width:max-content; max-width:calc(100% - 16px); z-index:7; padding:6px 11px;
+  background:var(--cap); color:var(--ink); border:2.5px solid var(--ink); box-shadow:3px 3px 0 var(--ink); font-family:var(--f-comic); font-weight:700;
+  font-size:15px; line-height:1.2; text-align:center; pointer-events:none;}
+.yc-tn-tip.yc-tip-low{top:auto; bottom:8px;}
+.yc-tn-tip small{display:block; margin-top:2px; font-family:var(--f-ui); font-weight:600; font-size:12px; color:var(--ink-soft);}
+.yc-tn-dots{position:absolute; left:0; right:0; bottom:9px; z-index:7; display:flex; justify-content:center; gap:7px; pointer-events:none;}
+.yc-tn-dots.yc-dots-top{bottom:auto; top:9px;}
+.yc-tn-tip:not([hidden]) ~ .yc-tn-dots:not(.yc-dots-top){bottom:9px;}
+.yc-tn-dots i{width:12px; height:12px; border-radius:50%; border:2.5px solid var(--ink); background:#fff; box-shadow:0 0 0 2px rgba(255,255,255,.75);}
+.yc-tn-dots i.on{background:var(--red);}
+.yc-softring{fill:rgba(255,255,255,.12); stroke:#fff; stroke-width:2.5; stroke-dasharray:5 5; vector-effect:non-scaling-stroke; animation:yc-soft 1.4s ease-in-out 2;}
+.yc-softink{fill:none; stroke:rgba(27,26,23,.6); stroke-width:5; vector-effect:non-scaling-stroke;}   /* an ink line under the white dashes: the ring shows on light and dark photos */
+.yc-soft-settle .yc-soft{opacity:.6;} .yc-soft-settle .yc-softring{animation:none;}
+@keyframes yc-soft{0%,100%{opacity:1} 50%{opacity:.35}}
+.yc-rm .yc-softring{animation:none;}
+@media (prefers-reduced-motion: reduce){ .yc-softring{animation:none;} }

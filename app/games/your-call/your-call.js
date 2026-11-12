@@ -20,7 +20,7 @@
    3 misses in 5 s -> shimmer, 45 s -> auto-circle; tap tolerance max(9 % of the stage width, 28 px).
 
    API
-     YourCall.start({root, content, ui, host, chapters:[a,b], start, mode:'card'|'replay', resume, pace, theatre,
+     YourCall.start({root, content, ui, host, chapters:[a,b], start, mode:'card'|'replay', resume, pace, theatre, autoReturn:{ms, to:'map'|'games'},
                      onChapterDone(result), onCardDone(result), onPause(), onLeave()}) -> game {destroy(), askLeave(cb), status()}
      YourCall.ready(content, [chapters])      true only when every beat has final (non-dev) art and a comic sheet
      YourCall.stance(content, choices) / endings(content, choices) / tracks(content)
@@ -38,7 +38,7 @@
 'use strict';
 if(window.YourCall) return;
 var D = document, W = window;
-var VERSION = '0.2.1';
+var VERSION = '0.3.0';
 
 /* ---------- chrome strings (the UI language; Persian informal) ---------- */
 var UI = {
@@ -73,6 +73,12 @@ var UI = {
   inStep:{en:'One more chapter in this step.', tr:'Bu adımda bir bölüm daha var.', fa:'در همین قدم یک فصل دیگر هم هست.', es:'En este paso hay un capítulo más.'},
   tbcStory:{en:'To be continued… in a later step on your roadmap.', tr:'Devam edecek… yol haritanda ilerideki bir adımda.', fa:'ادامه دارد… در یکی از قدم‌های بعدیِ نقشه‌ی راهت.', es:'Continuará… en un paso más adelante de tu hoja de ruta.'},
   backMap:{en:'Back to roadmap', tr:'Yol haritasına dön', fa:'بازگشت به نقشه‌ی راه', es:'Volver a la hoja de ruta'},
+  // 0.3.0 (Farin 2026-11-12): one chapter per roadmap card, then back to the roadmap by itself; a clearer Then & Now
+  inCard:{en:'Chapter {n} continues in a later card.', tr:'{n}. bölüm ilerideki bir kartta devam ediyor.', fa:'فصل {n} در یکی از کارت‌های بعدی ادامه دارد.', es:'El capítulo {n} sigue en una tarjeta más adelante.'},
+  backIn:{en:'Back to your roadmap in {s}…', tr:'{s} saniye sonra yol haritana dönüyorsun…', fa:'{s} ثانیه‌ی دیگر به نقشه‌ی راهت برمی‌گردی…', es:'Vuelves a tu hoja de ruta en {s}…'},
+  backGames:{en:'Back to Games in {s}…', tr:'{s} saniye sonra Oyunlar’a dönüyorsun…', fa:'{s} ثانیه‌ی دیگر به بازی‌ها برمی‌گردی…', es:'Vuelves a Juegos en {s}…'},
+  tapChanged:{en:'Tap the things that changed.', tr:'Değişen şeylere dokun.', fa:'چیزهایی را که عوض شده‌اند بزن.', es:'Toca las cosas que han cambiado.'},
+  tapFind:{en:'Tap it in the photo.', tr:'Fotoğrafta ona dokun.', fa:'توی عکس رویش بزن.', es:'Tócalo en la foto.'},
   dev:{en:'DEV ART · not for learners', tr:'DEV ART · not for learners', fa:'DEV ART · not for learners', es:'DEV ART · not for learners'}
 };
 var ICON = {
@@ -754,7 +760,13 @@ function start(o){
       scrollEnd();
     });
   }
-  function scrollEnd(){ var last = page.lastElementChild; if(!last) return; try{ last.scrollIntoView({block:'end', behavior:reduced() ? 'auto' : 'smooth'}); }catch(e){ page.scrollTop = page.scrollHeight; } }
+  // 0.3.0 (Farin 2026-11-12, "the new photos can't be seen"): the page itself scrolls to its foot, now and once more after the new
+  // panel's pictures have laid out. scrollIntoView on the sticky Next button did nothing (it is always "in view"), so new panels
+  // stayed under the fold, and on phones it could scroll the overflow-hidden frames around the page.
+  function scrollEnd(){
+    var go = function(){ if(!page.lastElementChild) return; try{ page.scrollTo({top:page.scrollHeight, behavior:reduced() ? 'auto' : 'smooth'}); }catch(e){ page.scrollTop = page.scrollHeight; } };
+    go(); later(go, 450);
+  }
 
   /* ---------- panels ---------- */
   function panelEl(p, ch, instant){
@@ -968,10 +980,14 @@ function start(o){
         '<svg class="yc-tn-ov" viewBox="0 0 100 125" preserveAspectRatio="none" role="img" aria-label="' + esc(tg(cu('find')) || 'Find') + '"></svg>' +
         '<div class="yc-vf" aria-hidden="true"></div><div class="yc-white" aria-hidden="true"></div>' +
         '<div class="yc-printout" aria-hidden="true"><div class="yc-ph"><img src="' + esc(thenSrc || nowSrc) + '" alt=""><div class="yc-cover"></div></div><span class="yc-tab"></span><i>' + esc(us(st.then ? 'y1970' : 'today')) + '</i></div>' +
+        '<div class="yc-tn-tip" hidden></div><div class="yc-tn-dots" aria-hidden="true" hidden></div>' +
         ((art(st.then) && art(st.then).dev) || (art(st.now) && art(st.now).dev) || !art(st.then || st.now) ? '<span class="yc-devtag">' + esc(us('dev')) + '</span>' : '') +
       '</div></div><div class="yc-tn-ui"><div class="yc-ins" aria-live="polite"></div><div class="yc-ctl"></div></div>';
     layer.appendChild(scr);
     G.tn = {scr:scr, steps:steps, st:st};
+    // 0.3.0 (Farin: "the pictures be full… not pressed down"): the photo is always full width at 4:5; the step scrolls when the
+    // phone is shorter than photo + panel, so it starts at the top
+    scr.scrollTop = 0;
     var stage = scr.querySelector('.yc-tn-stage'), ov = scr.querySelector('.yc-tn-ov'), ins = scr.querySelector('.yc-ins'), ctl = scr.querySelector('.yc-ctl');
     var imgThen = scr.querySelector('.yc-tn-then'), imgNow = scr.querySelector('.yc-tn-now');
     var hintT = null, autoT = null, misses = [], current = null;
@@ -985,10 +1001,29 @@ function start(o){
     function arm(){
       clear(hintT); clear(autoT);
       if(!current) return;
-      hintT = later(function(){ hint(); }, 15000 * pace);
+      hintT = later(function(){ hint(); }, 6000 * pace);   // 0.3.0: a gentle hint after ~6 s with no tap (was 15 s)
       autoT = later(function(){ if(current) hit(current, true); }, 45000 * pace);
     }
     function hint(){ if(!current) return; clearHints(); circle(current, 'yc-hint'); G.hinted = (G.hinted || 0) + 1; }
+    // 0.3.0 (Farin 2026-11-12: "the user doesn't know what to do"): one short line on the photo itself, soft rings on what to tap,
+    // a dot per change (filled when found); the line sits at the top or the bottom, wherever it covers less of what is left to find
+    var tip = scr.querySelector('.yc-tn-tip'), dotsN = scr.querySelector('.yc-tn-dots');
+    function tipLine(){
+      var k = imgThen && imgNow && st.finds.length > 1 ? 'tapChanged' : 'tapFind', e = UI[k] || {};
+      return '<span lang="' + target + '">' + esc(e[target] || e.en) + '</span>' + (ui !== target && e[ui] ? '<small dir="auto" lang="' + ui + '">' + esc(e[ui]) + '</small>' : '');
+    }
+    function placeTip(){
+      var cover = function(y0, y1){ return remaining().reduce(function(n, f){ return n + boxesOf(f).reduce(function(m, b){ return m + Math.max(0, Math.min(y1, b.y + b.h) - Math.max(y0, b.y)) * b.w; }, 0); }, 0); };
+      var low = cover(0, 18) > cover(82, 100);
+      tip.classList.toggle('yc-tip-low', low); dotsN.classList.toggle('yc-dots-top', low);
+    }
+    function showTip(){ tip.innerHTML = tipLine(); tip.hidden = false; placeTip(); }
+    function drawDots(){ dotsN.innerHTML = st.finds.map(function(f){ return '<i' + (tn.found.indexOf(f.id) >= 0 ? ' class="on"' : '') + '></i>'; }).join(''); dotsN.hidden = st.finds.length < 2; }
+    function softRings(){
+      ov.querySelectorAll('.yc-soft').forEach(function(x){ x.remove(); });
+      remaining().forEach(function(f){ ov.insertAdjacentHTML('beforeend', '<g class="yc-soft" data-f="' + esc(f.id) + '">' + boxesOf(f).map(function(b){ return ellipse(b, 'yc-softink', 0) + ellipse(b, 'yc-softring', 0); }).join('') + '</g>'); });
+      later(function(){ ov.classList.add('yc-soft-settle'); }, 2800 * pace);
+    }
     // restore the circles already found (resume mid Then & Now)
     tn.found.forEach(function(id){ var f = st.finds.filter(function(x){ return x.id === id; })[0]; if(f) circle(f, 'yc-pencil yc-drawn'); });
 
@@ -1061,6 +1096,7 @@ function start(o){
         if(ph.mode === 'split') scr.classList.add('yc-split');
       }
       snd.era(tnEra());
+      showTip(); drawDots(); softRings();
       nextTarget();
     }
     function nextTarget(){
@@ -1090,6 +1126,9 @@ function start(o){
       clear(hintT); clear(autoT); clearHints();
       if(auto) G.autoSolved = (G.autoSolved || 0) + 1;
       circle(f, 'yc-pencil'); snd.play('pencil');
+      ov.querySelectorAll('.yc-soft[data-f="' + f.id + '"]').forEach(function(x){ x.remove(); });
+      drawDots(); placeTip();
+      if(imgThen && imgNow && ph.mode !== 'split' && !(G.tn && G.tn.sticky)){ set70(true); later(function(){ if(G.tn && G.tn.scr === scr && !G.tn.sticky) set70(false); }, 1100 * pace); }   // this change, then and now
       var was = current; current = null;
       setIns(f.line);
       var tok = G.speakTok = (G.speakTok || 0) + 1; stopSpeech();
@@ -1102,9 +1141,17 @@ function start(o){
     }
     function chips(after){
       tn.quiz = true; save();
+      var c = st.chips, todayT = cu('today') || {en:us('today')};
+      if(o.tnReveal !== false){
+        // 0.3.0: the answer is revealed and spoken ("Today: TV."), then the step goes on by itself
+        var said = (tg(todayT) || us('today')) + ': ' + c.right + '.';
+        ins.insertAdjacentHTML('beforeend', '<div class="yc-chips yc-chips-done" dir="ltr"><span lang="' + target + '">' + esc(said) + '</span></div>');
+        snd.play('chime'); G.speakTok++;
+        speak(said).then(function(){ later(after, muted() ? 900 * pace : 0); });
+        return;
+      }
       G.wait = 'tn-chips';
-      var c = st.chips, order = Math.random() < .5 ? [c.right, c.wrong] : [c.wrong, c.right];
-      var todayT = cu('today') || {en:us('today')};
+      var order = Math.random() < .5 ? [c.right, c.wrong] : [c.wrong, c.right];
       ins.insertAdjacentHTML('beforeend', '<div class="yc-chips" dir="ltr"><span lang="' + target + '">' + esc(tg(todayT) || us('today')) + ':</span>' + order.map(function(w){ return '<button type="button" class="yc-chip" lang="' + target + '">' + esc(w) + '</button>'; }).join('') + '</div>');
       var box = ins.querySelector('.yc-chips');
       box.addEventListener('click', function(e){
@@ -1135,17 +1182,30 @@ function start(o){
         if(!reduced()) stage.classList.add('yc-zoom'); else ov.insertAdjacentHTML('beforeend', '<circle class="yc-hint" cx="' + at.x + '" cy="' + at.y * 1.25 + '" r="9"/>');
         snd.play('creak');
         setIns(st.clue, ph.set && ph.mode === 'split' ? '<div class="yc-insintro">' + lineHtml(ph.set, ch) + '</div>' : '');
-        speakAll([ph.mode === 'split' ? tg(ph.set) : '', tg(st.clue)].filter(Boolean));
+        if(!(o.tnReveal !== false)) speakAll([ph.mode === 'split' ? tg(ph.set) : '', tg(st.clue)].filter(Boolean));
       }
-      ctl.innerHTML = '<button type="button" class="yc-btn yc-tn-done">' + esc(us('cont')) + '</button>';
-      ctl.querySelector('.yc-tn-done').addEventListener('click', function(){
+      var finished = false, finish = function(){
+        if(finished || !scr.isConnected) return; finished = true;
         clear(hintT); clear(autoT); G.speakTok++; stopSpeech(); snd.era(0);
         tn.found.push(doneKey); save();
         scr.remove(); G.tn = null; G.wait = null;
         printPanel(ch, st, tn.found);
         if(host.keepPrint) try{ host.keepPrint({ch:ch.n, found:tn.found.filter(function(x){ return x[0] !== '#'; })}); }catch(e){}
         done();
-      }, {once:true});
+      };
+      if(o.tnReveal !== false){
+        // 0.3.0 (Farin 2026-11-12): every change found -> the step goes on by itself after a short beat (plus reading time when the
+        // voice is off); a tap on the photo goes sooner. No Continue button.
+        ctl.innerHTML = '';
+        if(tip) tip.hidden = true;
+        var words = st.clue ? tg(st.clue).split(/\s+/).length + (ph.set && ph.mode === 'split' ? tg(ph.set).split(/\s+/).length : 0) : 0;
+        var lineDone = st.clue ? speakAll([ph.mode === 'split' ? tg(ph.set) : '', tg(st.clue)].filter(Boolean)) : Promise.resolve();
+        Promise.resolve(lineDone).then(function(){ later(finish, 1500 * pace + (muted() ? words * 300 * pace : 0)); });
+        stage.addEventListener('click', finish);
+        return;
+      }
+      ctl.innerHTML = '<button type="button" class="yc-btn yc-tn-done">' + esc(us('cont')) + '</button>';
+      ctl.querySelector('.yc-tn-done').addEventListener('click', finish, {once:true});
     }
     // start (or resume) at the saved phase
     snd.era(tnEra());
@@ -1332,13 +1392,17 @@ function start(o){
   }
   function postcard(ch, last){
     var sv = ch.glosses[ch.souvenir], pic = postcardArt(ch, arcChoices());
-    var nextN = cards.indexOf(ch.n) >= 0 && cards[cards.indexOf(ch.n) + 1];
+    var nextN = cards.indexOf(ch.n) >= 0 && cards[cards.indexOf(ch.n) + 1], auto = !!(o.autoReturn && !nextN);
     var ov = overlay('yc-post', '<div class="yc-postcard"><img src="' + esc(pic ? artSrc(pic, {era:'then'}) : devSvg('postcard', .8, 'then')) + '" alt="">' +
       '<p lang="' + ui + '" dir="' + uiDir() + '">' + esc(us('chapter', {n:ch.n})) + ' · <span lang="' + target + '">' + esc(tg(ch.title)) + '</span></p>' +
       (sv ? '<div class="yc-stamp"><span lang="' + target + '">' + esc(sv.word) + '</span><small dir="auto" lang="' + ui + '">' + esc(String(sv.m[ui] || sv.m.en || '').split(/ \(| — |; /)[0]) + '</small></div>' : '') + '</div>' +
       // chapter flow (UI0ejg05): the 2nd chapter of a step stays one tap away (same step, GDD 4) with a line that says so; the step's
       // last chapter closes to the roadmap with "to be continued in a later step" (not after ch6: the credits teaser ends the arc)
-      '<div class="yc-post-btns">' + (nextN && mode !== 'replay'
+      '<div class="yc-post-btns">' + (auto
+        // 0.3.0: one chapter per roadmap card (Farin 2026-11-09 / 11-12): a line that the story goes on in a later card, then back by itself
+        ? (mode !== 'replay' && ch.n < C.chapters.length ? '<p class="yc-tbc" lang="' + ui + '" dir="' + uiDir() + '">' + esc(us('inCard', {n:ch.n + 1})) + '</p>' : '') +
+          '<p class="yc-post-count" lang="' + ui + '" dir="' + uiDir() + '" aria-live="polite"></p><span class="yc-post-bar" aria-hidden="true"><i></i></span>'
+        : nextN && mode !== 'replay'
         ? '<p class="yc-post-note" lang="' + ui + '" dir="' + uiDir() + '">' + esc(us('inStep')) + '</p><button type="button" class="yc-btn yc-readnext">' + esc(us('readNext', {n:nextN})) + '</button><button type="button" class="yc-btn yc-ghost yc-later">' + esc(us('later')) + '</button>'
         : mode === 'replay' ? '<button type="button" class="yc-btn yc-postdone">' + esc(us('cont')) + '</button>'
         : (ch.n < C.chapters.length ? '<p class="yc-tbc" lang="' + ui + '" dir="' + uiDir() + '">' + esc(us('tbcStory')) + '</p>' : '') + '<button type="button" class="yc-btn yc-postdone">' + esc(us('backMap')) + '</button>') + '</div>');
@@ -1346,10 +1410,25 @@ function start(o){
     if(nextN) preload(C.chapters[nextN - 1]);
     G.wait = 'postcard';
     return new Promise(function(ok){
+      var fin = function(r){ if(!ov.isConnected) return; ov.remove(); G.wait = null; ok(r); };
+      if(auto){
+        var ms = Math.max(1500, +o.autoReturn.ms || 3500), t0 = Date.now(), cnt = ov.querySelector('.yc-post-count'), bar = ov.querySelector('.yc-post-bar i');
+        var key = o.autoReturn.to === 'games' ? 'backGames' : 'backIn';
+        var tick = function(){
+          if(!ov.isConnected || !G.alive) return;
+          var left = Math.max(0, ms - (Date.now() - t0));
+          if(cnt) cnt.textContent = us(key, {s:Math.ceil(left / 1000)});
+          if(left <= 0){ fin({done:true}); return; }
+          later(tick, Math.min(250, left));
+        };
+        if(bar && !reduced()) anim(bar, [{transform:'scaleX(1)'}, {transform:'scaleX(0)'}], {duration:ms, easing:'linear', fill:'forwards'});
+        tick();
+        ov.addEventListener('click', function(){ fin({done:true}); });   // a tap goes now
+        return;
+      }
       ov.addEventListener('click', function(e){
         var b = e.target.closest('button'); if(!b) return;
-        ov.remove(); G.wait = null;
-        ok(b.classList.contains('yc-readnext') ? {next:nextN} : (b.classList.contains('yc-later') ? {later:true} : {done:true}));
+        fin(b.classList.contains('yc-readnext') ? {next:nextN} : (b.classList.contains('yc-later') ? {later:true} : {done:true}));
       });
     });
   }

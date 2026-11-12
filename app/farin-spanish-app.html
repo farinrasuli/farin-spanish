@@ -214,6 +214,7 @@
   .game-status-text{font-size:14px; font-weight:800; color:var(--ink-soft);}
   .game-status-end{margin-inline-start:auto; display:inline-flex; align-items:center; gap:8px;}
   .game-chip{display:inline-flex; align-items:center; gap:6px; font-weight:800; font-size:14px; padding:7px 13px; border-radius:999px; background:var(--bg-sunken); color:var(--ink-soft);}
+  button.game-chip{border:0;}   /* a bare <button class="game-chip"> drew the browser's 2px outset border (the dialogue "I said it" chip); keyboard focus keeps the :focus-visible ring */
   .game-streak{position:relative; overflow:visible; display:inline-flex; align-items:center; gap:6px; font-weight:800; font-size:14px; padding:7px 13px; border-radius:999px; background:var(--accent-soft); color:var(--accent-strong);}
   .game-streak svg{width:14px; height:14px;}
   .game-streak.hot{background:var(--clay-coral); color:#fff; box-shadow:0 0 16px 2px color-mix(in srgb, var(--clay-coral) 45%, transparent);}
@@ -795,7 +796,7 @@
   .sp5 .song-seek::-moz-range-thumb{width:16px; height:16px; border-radius:50%; background:#fff; border:0; box-shadow:0 2px 6px rgba(20,10,60,.35);}
   .sp5 .song-time{color:rgba(255,255,255,.82); font-size:13px; min-width:0;}
   .sp5 .song-pills{margin-top:12px;}
-  .sp5 .song-pills .game-chip{background:rgba(255,255,255,.18); color:#fff; border-color:rgba(255,255,255,.4);}
+  .sp5 .song-pills .game-chip{background:rgba(255,255,255,.18); color:#fff; border:2px solid rgba(255,255,255,.4);}
   .sp5 .song-gloss-row{position:relative; margin:12px 16px 0; padding:12px 16px; border-radius:18px; background:rgba(255,255,255,.16); color:#fff; font-size:14px; font-weight:600; line-height:1.5;}
   .sp5 .song-gloss-row b{font-family:'Fredoka',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; font-size:19px; font-weight:600; color:#ffc53d;}
   .sp5 .song-gloss-x{display:block; margin:4px 0 0 auto; border:0; background:none; color:rgba(255,255,255,.82); font:inherit; font-size:12px; font-weight:700; cursor:pointer; padding:0;}
@@ -33732,7 +33733,7 @@ function courseROpenerHtml(cid, uid, R, r){
     if(r === 0) body = ex.hook ? cl(courseGt(cid, ex, 'hook')) : '';
     else { const withBody = rd.pts.map(n=>courseRKpPoint(uid, n)).find(x=>x && x.body); body = withBody ? (courseRSentences(cl(withBody.body))[0] || '') : ''; } }
   else { const it = courseUnitItems(uid); head = it.writing && it.writing.title ? cl(it.writing.title) : it.speaking ? cl(it.speaking.topic) : courseRName(r); body = courseRCando(courseUnitObjective(cid, uid)); }
-  const parts = trs('opener.meta', {s:rd.rail.length, q:rd.qs, m:rd.min}).split(' · '); if(!rd.qs) parts.splice(1, 1);
+  const parts = trs('opener.meta', {s:rd.rail.length, q:rd.qs, m:rd.min}).split(courseSep()); if(!rd.qs) parts.splice(1, 1);   // split as trs() joined it (Persian: " – ")
   return `<header class="fs-hero tr-hero">
       <span class="fs-pill"><bdi>${esc(trs('round', {n:r + 1}) + courseSep() + courseRName(r))}</bdi></span>
       <h1 class="display" dir="${courseTD()}">${isoHtml(head)}<span class="dot">.</span></h1>
@@ -34022,7 +34023,7 @@ function courseRLessonParts(c, cid, uid, nu){
       <div class="cl-sb"><span class="fs-k">${esc(k)}</span><b class="display">${esc(trs('rn', {n:r + 1}) + courseSep() + courseRName(r))}</b><p dir="${courseTD()}">${isoHtml(courseRRowLine(cid, uid, R, r))}</p>${redo}${peek}</div>
       <span class="cl-min">${esc(courseMinText(trN(x.min)))}</span></div>`;
   }).join('');
-  const total = courseRMinutes(R), ph = trs('plan.h').split(' · '), meta = trs('lesson.meta', {m:total}).split(' · ');
+  const total = courseRMinutes(R), ph = trs('plan.h').split(courseSep()), meta = trs('lesson.meta', {m:total}).split(courseSep());   // as trs() joined them
   const stopLine = meta[2] ? meta[2].charAt(0).toUpperCase() + meta[2].slice(1) + '.' : '';
   const plan = `<div class="lx-sec fs-sec fs-plan tr-plan"><div class="lx-head"><div class="lx-eyebrow">${esc(ph[0])}</div><h2 class="display">${esc(ph[1] || '')}<span class="dot">.</span></h2></div>
       <div class="cl-steps">${rows}</div>${courseRTicketHtml(st, -1)}${stopLine ? `<p class="tr-stopline" dir="${courseTD()}">${esc(stopLine)}</p>` : ''}</div>`;

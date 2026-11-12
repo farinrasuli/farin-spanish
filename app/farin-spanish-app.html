@@ -3062,6 +3062,9 @@ function L(en, tr, fa, es){ if(LANG==='tr') return tr; if(LANG==='fa') return fa
 
 /* ============================= CONFIG ============================= */
 const WHATSAPP_NUMBER = '905467615951'; // country code (90) + number, no + or spaces
+// Farin's bank account for course payments in TL (Farin 2026-11-12). The one place for it: reuse these, don't retype the IBAN.
+const PAYMENT_IBAN = 'TR320006400000112760432223';
+const PAYMENT_IBAN_NAME = 'FARIN RASOULIFATHABAD';
 const APP_URL = 'https://farinrasuli.github.io/farin-english-app/farin-english-app.html';
 const ONB_APP = {self:'es', other:'en', word:'Spanish', natives:['tr','fa','en','es'], otherUrl:'https://farinrasuli.github.io/farin-english-app/farin-english-app.html', otherLangs:['tr','fa','en']};   // language-choice screen (renderLangPick)
 const COURSE_LABEL = 'Spanish';
@@ -35208,12 +35211,57 @@ function adminWaitlistRows(){
   return order.map(k=>groups[k]);
 }
 function adminWaitlistWaiting(){ return adminWaitlistRows().filter(r=>!r.messaged); }
+/* The WhatsApp message Farin sends from the Waiting list (Farin 2026-11-12). Each row is one person + one course, so a learner who
+   asked for HR and IELTS gets two separate messages, each with its own course link. Language follows the phone number: +90 = Turkish
+   (TL price + PAYMENT_IBAN in the text, since the TR course pages have no payment box), +98 = Farin's own Persian text with the
+   course's /fa/c/ sale page (toman price + card number are on that page). Other numbers follow the app language (tr, fa, else English
+   with the TL price + IBAN). Links and TL prices = the live site (site-src/build-pages.mjs GOALS + FA_SALE): change both together. */
+const WAITLIST_SITE = 'https://thefeschool.com';
+const WAITLIST_COURSE_INFO = {
+  hr:{fa:'/fa/c/hr.html', tr:'/is-ingilizcesi.html', en:'/en/#kurs-is', tl:'3.490', nameFa:'HR', nameTr:'İK ve İş İngilizcesi', nameEn:'HR & Business English'},
+  ielts:{fa:'/fa/c/ielts.html', tr:'/ielts-hazirlik.html#ielts-kursu', en:'/en/#kurs-ielts', tl:'9.490', nameFa:'IELTS', nameTr:'IELTS: 10 tam sınav', nameEn:'IELTS: 10 full exams'},
+  interview:{fa:'/fa/c/interview.html', tr:'/ingilizce-mulakat-hazirligi.html', en:'/en/#kurs-mulakat', tl:'1.290', nameFa:'مصاحبه‌ی شغلی به انگلیسی', nameTr:'İngilizce İş Mülakatı', nameEn:'Job Interview English'},
+  marketing:{fa:'/fa/c/copywriting.html', tr:'/ingilizce-metin-yazarligi.html', en:'/en/#kurs-is', tl:'1.690', nameFa:'کپی‌رایتینگ و تولید محتوا', nameTr:'Metin Yazarlığı ve İçerik İngilizcesi', nameEn:'Copywriting & Content English'},
+  sales:{fa:'/fa/c/sales.html', tr:'/dis-ticaret-ingilizcesi.html', en:'/en/#kurs-is', tl:'1.690', nameFa:'انگلیسی فروش و بازرگانی', nameTr:'Satış ve Dış Ticaret İngilizcesi', nameEn:'Sales & Trade English'},
+  'ai-internet':{fa:'/fa/c/ai.html', tr:'/ingilizce-prompt-yazma.html', en:'/en/#kurs-is', tl:'1.690', nameFa:'انگلیسی برای هوش مصنوعی و اینترنت', nameTr:'Yapay Zekâ ve İnternet için İngilizce', nameEn:'English for AI and the Internet'},
+  business:{fa:'/fa/c/business.html', tr:'/is-ingilizcesi.html#kapsamli-kurs', en:'/en/#kurs-is', tl:'5.990', nameFa:'جامع انگلیسی تجاری', nameTr:'Kapsamlı İş İngilizcesi', nameEn:'Complete Business English'}
+};
+function adminWaitlistMessageLang(r){
+  const wa = adminWaitlistWaNumber(r);
+  if(wa.indexOf('90') === 0) return 'tr';
+  if(wa.indexOf('98') === 0) return 'fa';
+  return (r.lang === 'tr' || r.lang === 'fa') ? r.lang : 'en';
+}
 function adminWaitlistMessage(r){
-  const n = r.name.split(' ')[0];
-  if(r.lang === 'tr') return 'Merhaba ' + n + '! ' + r.title + ' kursunda yer açıldı.';
-  if(r.lang === 'fa') return 'سلام ' + n + '! در دوره‌ی ' + r.title + ' جا باز شد.';
-  if(r.lang === 'es') return '¡Hola, ' + n + '! Se ha abierto una plaza en el curso ' + r.title + '.';
-  return 'Hi ' + n + '! A spot has opened in the course: ' + r.title + '.';
+  const n = String(r.name || '').trim().split(/\s+/)[0], info = WAITLIST_COURSE_INFO[r.course] || null, lang = adminWaitlistMessageLang(r);
+  const url = info ? WAITLIST_SITE + info[lang] : '', tl = info ? info.tl : '';
+  if(lang === 'fa'){
+    const name = info ? info.nameFa : r.title;
+    return [(n ? 'سلام ' + n + ' جان! 🌸' : 'سلام! 🌸') + '\nامیدوارم حالت خوب باشه.',
+      'به FEschool خیلی خوش اومدی! خوشحالم که برای دوره‌ی ' + name + ' علاقه‌مند بودی و اسمت رو در لیست ثبت‌نام قرار داده بودی.',
+      (url ? 'لینک ثبت‌نام دوره رو برات می‌فرستم. ' : '') + 'بعد از تکمیل ثبت‌نام، کد اختصاصی ورود به دوره برات صادر می‌شه و می‌تونی از همون لحظه به محتوای دوره دسترسی داشته باشی و قدم‌به‌قدم مسیر یادگیریت رو پیش ببری.',
+      url ? '🔗 لینک ثبت‌نام دوره‌ی ' + name + ':\n' + url : '',
+      'بعد از ثبت‌نام، لطفاً تصویر فیش واریزی رو همین‌جا برام ارسال کن تا کد ورود اختصاصی رو برات بفرستم. 💜',
+      'به امید یک تجربه یادگیری مفید و متفاوت در FEschool!'].filter(Boolean).join('\n\n');
+  }
+  if(lang === 'tr'){
+    const name = info ? info.nameTr : r.title;
+    return [(n ? 'Merhaba ' + n + '! 🌸' : 'Merhaba! 🌸') + '\nUmarım iyisindir.',
+      'FEschool\'a hoş geldin! ' + name + ' kursuyla ilgilendiğin ve kayıt listesine adını yazdırdığın için çok mutluyum.',
+      (url ? 'Kursun bağlantısını aşağıya bırakıyorum. ' : '') + 'Kaydını tamamladıktan sonra kursa özel giriş kodun oluşturulacak ve o andan itibaren kursun içeriğine erişip öğrenme yolunda adım adım ilerleyebileceksin.',
+      url ? '🔗 ' + name + ':\n' + url : '',
+      tl ? '💳 Kurs ücreti: ₺' + tl + '\nKayıt için ücreti şu hesaba yatırman yeterli:\nIBAN: ' + PAYMENT_IBAN + '\nAlıcı: ' + PAYMENT_IBAN_NAME : '',
+      'Ödemeden sonra lütfen dekontun görüntüsünü buraya gönder, sana özel giriş kodunu göndereyim. 💜',
+      'FEschool\'da faydalı ve farklı bir öğrenme deneyimi yaşaman dileğiyle!'].filter(Boolean).join('\n\n');
+  }
+  const name = info ? info.nameEn : r.title;
+  return [(n ? 'Hi ' + n + '! 🌸' : 'Hi! 🌸') + '\nI hope you\'re doing well.',
+    'Welcome to FEschool! I\'m really glad you\'re interested in the ' + name + ' course and put your name on the sign-up list.',
+    (url ? 'Here is the course link. ' : '') + 'Once you register, you\'ll get your own access code for the course, and from that moment you can open the course and move through your learning path step by step.',
+    url ? '🔗 ' + name + ':\n' + url : '',
+    tl ? '💳 Course fee: ₺' + tl.replace('.', ',') + '\nTo register, transfer the fee to this account:\nIBAN: ' + PAYMENT_IBAN + '\nName: ' + PAYMENT_IBAN_NAME : '',
+    'After you pay, please send me a photo of the receipt here and I\'ll send you your access code. 💜',
+    'Wishing you a useful and different learning experience at FEschool!'].filter(Boolean).join('\n\n');
 }
 function adminWaitlistSetMessaged(key, on){
   const r = adminWaitlistRows().find(x=>x.key === key);
@@ -35268,7 +35316,7 @@ function renderAdminWaitlistTab(){
         ${noCode ? `<div class="item-sub" style="color:var(--error);">No country code. Check the number on WhatsApp${wa !== adminWaitlistDigits(r.phone) ? ': the button guessed +' + esc(wa.slice(0, 2)) + ' from the app language' : ''}.</div>` : ''}
       </div>
       <div class="row" style="gap:6px; flex-wrap:wrap; width:100%; margin-top:6px;">
-        <a class="btn btn-sm btn-whatsapp" style="text-decoration:none;" target="_blank" rel="noopener" href="${esc(waLinkTo(wa, adminWaitlistMessage(r)))}">WhatsApp</a>
+        <a class="btn btn-sm btn-whatsapp" style="text-decoration:none;" target="_blank" rel="noopener" href="${esc(waLinkTo(wa, adminWaitlistMessage(r)))}">WhatsApp · ${({tr:'Turkish', fa:'Persian', en:'English'})[adminWaitlistMessageLang(r)]}</a>
         <button class="btn btn-sm ${r.messaged ? 'btn-ghost' : 'btn-primary'}" data-admin-action="waitlist-messaged" data-key="${esc(r.key)}" data-on="${r.messaged ? '0' : '1'}" ${adminWaitlistBusy ? 'disabled' : ''}>${r.messaged ? 'Undo Messaged' : 'Mark as Messaged'}</button>
         <button class="btn btn-sm btn-ghost" data-admin-action="waitlist-remove" data-key="${esc(r.key)}" ${adminWaitlistBusy ? 'disabled' : ''}>Remove</button>
       </div>

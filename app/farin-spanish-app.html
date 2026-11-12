@@ -17405,7 +17405,7 @@ function fallbackGameSet(minCards){
 /* Games v2 go-live switch, one per game (farin-gamification build queue 2026-11-05: Mini Radio can ship before the Cozy and Case Closed art).
    Declared here, before SHELF_GAMES reads it (a var declared further down is still undefined at this point, so flipping it there never reached the shelf).
    radio = the Mini Radio node (position 7, the 8-position stage) + its shelf entry; mystery = Case Closed v2; chores = Cozy Chores v2. All false = the app as before. */
-var GAMES_V2_LIVE = {radio:true, mystery:false, chores:false};   // radio on for learners 2026-11-10 (Farin: switch on any game that is done)
+var GAMES_V2_LIVE = {radio:true, mystery:false, chores:true};   // radio on for learners 2026-11-10 (Farin: switch on any game that is done)
 const SHELF_GAMES = ['path','order','desk','mystery','cross','spell','bingo','match','dictation','build','trap','hunt','echo','chores'];
 if(g2KindLive('radio')) SHELF_GAMES.push('radio');   // Mini Radio on the shelf only with games v2 on
 const SHELF_ART = {path:{ic:'book', c:'var(--cat-story)'}, order:{ic:'chat', c:'var(--cat-gram)'}, desk:{ic:'suitcase', c:'var(--clay-sky)'}, mystery:{ic:'search', c:'var(--cat-story)'}, cross:{ic:'cards', c:'var(--cat-voc)'}, spell:{ic:'mic', c:'var(--clay-lavender-deep)'}, bingo:{ic:'headphones', c:'var(--cat-voc)'}, match:{ic:'cards', c:'var(--cat-review)'}, dictation:{ic:'headphones', c:'var(--cat-lis)'}, build:{ic:'dumbbell', c:'var(--cat-gram)'}, trap:{ic:'bolt', c:'var(--clay-coral)'}, hunt:{ic:'search', c:'var(--cat-story)'}, echo:{ic:'mic', c:'var(--cat-lis)'}, chores:{ic:'home', c:'var(--clay-sky)'}, radio:{ic:'headphones', c:'var(--cat-lis)'}};
@@ -26734,7 +26734,7 @@ function theatreExit(){
    their nodes, Cozy Chores and Case Closed play the old way. Set GAMES_V2_LIVE.radio / .mystery / .chores to true (both apps) to put that game live; bump GAMES_VER
    whenever a games/ engine changes. (var, not const: SHELF_GAMES reads the flag earlier in the file.) */
 // (GAMES_V2_LIVE, the per-game switch, is declared above SHELF_GAMES)
-var GAMES_VER = '9';
+var GAMES_VER = '10';
 var g2Flag = null, g2Game = null, g2KeepNow = null, g2Pending = null;
 var G2_KINDS = ['chores', 'mystery', 'radio'];
 var G2_COZY = {A1:'movein', A2:'cake', B1:'bouquet', B2:'laundry', C1:'party'};   // the anchor project per level (Cozy GDD 0)

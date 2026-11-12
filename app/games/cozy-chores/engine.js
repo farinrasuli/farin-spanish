@@ -36,7 +36,7 @@
 'use strict';
 if(window.CozyChores) return;
 var W = window, D = document;
-var VERSION = '0.5.1';
+var VERSION = '0.5.2';
 var ABORT = {abort:true};
 var G = null;                       // the running game (one at a time, like chStage in the app)
 var SPRING = 'cubic-bezier(.34,1.56,.64,1)';
@@ -529,9 +529,11 @@ function mountLayer(host, Lr, reg, opts){
   placeBox(d, Lr.x, Lr.y, Lr.w, Lr.h);
   d.style.zIndex = Lr.z == null ? 5 : Lr.z;
   if(Lr.origin) d.style.transformOrigin = Lr.origin;
-  if(Lr.composite){ d.classList.add('oh-comp'); d.innerHTML = ''; buildComposite(d, Lr.composite, {live:!!Lr.live && !opts.snap, boxed:!!Lr.boxed, from:Lr.from}, reg); }
-  // persp (fix 3, 2026-11-11): a top-down composite (the learner's cake) seen from a raised eye level on an eye-level plate: flattened from its base
-  if(Lr.composite && Lr.persp && !Lr.live){ var pw = el('div', 'oh-persp'); pw.style.cssText = 'position:absolute;inset:0;transform-origin:50% 100%;transform:scaleY(' + Lr.persp + ')'; while(d.firstChild) pw.appendChild(d.firstChild); d.appendChild(pw); }
+  if(Lr.composite){ d.classList.add('oh-comp'); d.innerHTML = ''; buildComposite(d, Lr.composite, {live:!!Lr.live && !opts.snap, boxed:!!Lr.boxed, from:Lr.from}, reg);
+    // persp (fix 3, 2026-11-11): a top-down composite (the learner's cake) seen from a raised eye level on an eye-level plate: flattened from its base
+    // (R1, re-review 2026-11-12: this sits INSIDE the composite branch; outside it the else below lost its if and every composite drew a stand-in)
+    if(Lr.persp && !Lr.live){ var pw = el('div', 'oh-persp'); pw.style.cssText = 'position:absolute;inset:0;transform-origin:50% 100%;transform:scaleY(' + Lr.persp + ')'; while(d.firstChild) pw.appendChild(d.firstChild); d.appendChild(pw); }
+  }
   else d.innerHTML = artHtml(Lr.art || Lr.id, {tint:Lr.tint ? tintOf(Lr.tint) : null});
   d.dataset.art = Lr.art || '';
   if(Lr.word && (G.band === 'A1' || isPictured(Lr.word)) && !opts.snap){

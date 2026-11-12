@@ -34527,10 +34527,32 @@ function courseRPinHtml(cid, uid){
     ${parts.length ? `<ul class="tr-pinlist">${parts.map(x=>`<li><small dir="${courseTD()}">${isoHtml(x.t)}</small><span dir="ltr" translate="no">${esc(x.v)}</span></li>`).join('')}</ul>` : ''}
     <button type="button" class="link-btn tr-link" data-action="course-r-notes-open">${esc(trs('notes.edit'))}</button></details>`;
 }
+// The Before sample sheet shows the writing's facts too, as the writing step does ("use the facts below", AI 2.1).
+function courseRFactsHtml(w){ return (w && (w.facts || []).length) ? `<div class="card-flat cs-facts"><div class="eyebrow">${CL('Use these facts', 'Bu bilgileri kullan', 'از این اطلاعات استفاده کن', 'Usa estos datos')}</div><ul dir="ltr" translate="no">${w.facts.map(x=>`<li>${esc(x)}</li>`).join('')}</ul></div>` : ''; }
+// errorWatchHits skips a match with do/can/will/to... among the 3 words before it, so "Does she have" is not flagged. In Your first try a slip
+// right after will/can/must/should/to is still marked ("we will leverage of", AI 3.2), unless a modal or "to" can make the phrase right: it starts
+// with a subject, an auxiliary or an adverb ("can I send you", "will have finished", "to better test"), or ends in until / that ("you can submit
+// until Friday", "to prevent that"). English words only: in a Spanish course nothing more is marked.
+const COURSE_R_MODAL = ['will', "won't", 'can', "can't", 'must', 'should', 'to'];
+const COURSE_R_KEEPSKIP = ['i', "i'm", "i'd", "i'll", 'you', 'he', 'she', 'it', 'we', 'they', 'there', 'have', 'has', 'had', 'be', 'been', 'being', 'is', 'are', 'was', 'were', 'am',
+  'do', 'does', 'did', 'get', 'got', 'better', 'also', 'still', 'just', 'not', 'never', 'always', 'only', 'even', 'really', 'first', 'often', 'usually', 'then', 'now', 'soon', 'all', 'both'];
+function courseRWatchHits(text, g){
+  const out = errorWatchHits(text, g); if(!text || !g || !g.errorWatch) return out;
+  const low = String(text).toLowerCase().replace(/[’‘]/g, "'").replace(/\s+/g, ' ');
+  g.errorWatch.forEach(rule=>(rule.find || []).forEach(phrase=>{
+    const ph = String(phrase).trim().toLowerCase(), ws = ph.split(/[^\p{L}\p{N}'%-]+/u).filter(Boolean);
+    if(!ws.length || out.some(h=>h.phrase === phrase) || COURSE_R_KEEPSKIP.includes(ws[0]) || ['until', 'that'].includes(ws[ws.length - 1])) return;
+    const re = new RegExp("(^|[^\\p{L}\\p{N}'])" + reEsc(ph) + "(?![\\p{L}\\p{N}])", 'gu'); let m;
+    while((m = re.exec(low))){ const before = low.slice(0, m.index + m[1].length).split(/[^\p{L}\p{N}']+/u).filter(Boolean);
+      if(COURSE_R_MODAL.includes(before[before.length - 1])){ out.push({phrase, fix:rule.fix}); break; }
+      if(!m[0].length) re.lastIndex++; }
+  }));
+  return out;
+}
 // "Your first try, checked" (Round 2): the lesson's errorWatch rules (and the B2 item's) and the worked example's cut words, found in the before line.
 function courseRFirstHits(cid, uid, text){
   const it = courseUnitItems(uid), hits = [];
-  [it.grammar, courseB2(cid, uid)].forEach(g=>{ if(g) errorWatchHits(text, g).forEach(h=>{ if(!hits.some(x=>x.phrase === h.phrase)) hits.push(h); }); });
+  [it.grammar, courseB2(cid, uid)].forEach(g=>{ if(g) courseRWatchHits(text, g).forEach(h=>{ if(!hits.some(x=>x.phrase === h.phrase)) hits.push(h); }); });
   const low = String(text || '').toLowerCase().replace(/[’‘]/g, "'"), e = it.explain && it.explain.example;
   const cuts = ((e && e.cut) || []).filter(c=>coursePartCueRe(c).test(low));
   return {hits, cuts};
@@ -34770,7 +34792,7 @@ function courseRItemByKey(cid, key){
   if(k === 'x'){ const g = GRAMMAR_ITEMS.find(x=>x.id === id && x.course === cid); return g && g.exitItem ? {item:g.exitItem, uid:g.unit, kp:'b2'} : null; }
   if(k === 'b1' || k === 'b2'){ const g = GRAMMAR_ITEMS.find(x=>x.id === id && x.course === cid), b = g && g[k === 'b2' ? 'blank2' : 'blank']; if(!b) return null;
     const gp = courseRGp(courseUnitItems(g.unit)); return {item:{kind:'blank', prompt:b.sentence, options:[b.word].concat(b.distractors || []), correct:0, point:gp, hint2:b.hint2, why:b.why || (g.expParts && g.expParts.test)}, uid:g.unit}; }
-  if(k === 'q'){ const ex = (COURSE_EXTRA.explain || []).find(x=>x.id === id && x.course === cid), q = ex && ex.quick; return q ? {item:{prompt:q.prompt, options:q.options, correct:q.correct, why:q.why, point:Number(q.point) || 1, hint2:q.hint2}, uid:ex.unit} : null; }
+  if(k === 'q'){ const ex = (COURSE_EXTRA.explain || []).find(x=>x.id === id && x.course === cid), q = ex && ex.quick; return q ? {item:{prompt:q.prompt, options:q.options, correct:q.correct, why:q.why, point:Number(q.point) || Number(ex.quickAfter) || 1, hint2:q.hint2}, uid:ex.unit} : null; }
   return null;
 }
 function courseRLookRows(cid){
@@ -34850,7 +34872,7 @@ Object.assign(HANDLERS, {
     courseProg(rd.cid).answers[rd.uid + ':before'] = text ? {text, date:todayISO(), sample:!!rd.sampleSeen} : {text:'', date:todayISO(), skip:1};
     rd.beforeDraft = null; courseRNext(); },
   'course-r-sample'(){ const rd = courseUi.rd; if(!rd) return; const w = courseUnitItems(rd.uid).writing; if(!w) return; rd.sampleSeen = true; courseRStash();
-    courseSheetShow(`<div class="cs-grab"></div><div class="tr-sheet"><div class="cs-eyebrow">${esc(trs('sample.h'))}</div><p class="tr-body" dir="${courseTD()}">${isoHtml(cl(w.prompt))}</p>${courseRSheetCloseBtn()}</div>`); },
+    courseSheetShow(`<div class="cs-grab"></div><div class="tr-sheet"><div class="cs-eyebrow">${esc(trs('sample.h'))}</div><p class="tr-body" dir="${courseTD()}">${isoHtml(cl(w.prompt))}</p>${courseRFactsHtml(w)}${courseRSheetCloseBtn()}</div>`); },
   'course-r-facts'(){ const rd = courseUi.rd; if(!rd) return; const e = (courseUnitItems(rd.uid).explain || {}).example; if(!e) return; const sp = courseRExSplit(e.item);
     courseSheetShow(`<div class="cs-grab"></div><div class="tr-sheet"><div class="cs-eyebrow">${esc(trs('facts.link'))}</div><p class="tr-body" dir="ltr" translate="no">${esc(sp.facts)}</p>${courseRSheetCloseBtn()}</div>`); },
   'course-r-sheet-close'(el){ courseSheetRemove(); if(el && el.dataset.re){ courseUi.rwl = null; render(); } },

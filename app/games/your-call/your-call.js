@@ -38,7 +38,7 @@
 'use strict';
 if(window.YourCall) return;
 var D = document, W = window;
-var VERSION = '0.3.0';
+var VERSION = '0.3.1';
 
 /* ---------- chrome strings (the UI language; Persian informal) ---------- */
 var UI = {
@@ -101,9 +101,11 @@ function pickOf(choices, c, d){ return String((choices && choices[c]) || '').cha
 // the picture on a chapter's postcard and its poster-strip photo: its own postcard, else its 1970 print (then / now); the trail
 // chapter (ch3) has no single print, so its first trail plate; the last-photo chapter (ch6) the 1970 half of the learner's last photo.
 // 0.2.1 (2026-11-12): ch3 and ch6 used to show a DEV placeholder on the postcard and a blank strip photo.
+// 0.3.1: the chapter's own 1970 photo comes first; a separate postcard art is a whole print on black (EN ch1), which put black strips
+// inside the card
 function postcardArt(c, choices){
   var ph = c.photo || {}, V = ph.vars || {};
-  return c.postcard || ph.then || ph.now || (ph.trail && ph.trail[0] && ph.trail[0].plate) || (ph.mode === 'last' ? (pickOf(choices, 4, 2) === 'b' ? V.lb : V.la) : null) || null;
+  return ph.then || c.postcard || ph.now || (ph.trail && ph.trail[0] && ph.trail[0].plate) || (ph.mode === 'last' ? (pickOf(choices, 4, 2) === 'b' ? V.lb : V.la) : null) || null;
 }
 function whenOk(when, choices){
   if(!when) return true;
@@ -996,7 +998,47 @@ function start(o){
     function setIns(t, extra){ ins.innerHTML = (t ? '<div class="yc-insl" data-say="' + esc(tg(t)) + '">' + lineHtml(t, ch) + '</div>' : '') + (extra || ''); }
     function set70(v){ if(!imgThen || !imgNow) return; imgThen.classList.toggle('yc-hide', !v); scr.classList.toggle('yc-is70', !!v); var h = ctl.querySelector('.yc-hold'); if(h) h.classList.toggle('on', !!v); snd.era(tnEra()); }
     function remaining(){ return st.finds.filter(function(f){ return tn.found.indexOf(f.id) < 0; }); }
-    function circle(f, cls){ boxesOf(f).forEach(function(b){ ov.insertAdjacentHTML('beforeend', ellipse(b, cls, cls.indexOf('pencil') >= 0 ? -6 : 0)); }); }
+    function circle(f, cls){ ringsOf(f).forEach(function(r){ ov.insertAdjacentHTML('beforeend', ringSvg(r, cls, cls.indexOf('pencil') >= 0 ? -6 : 0)); }); }
+    // 0.3.1 (Farin's review): one ring per OBJECT, sized to it (a change in several places, e.g. three flower boxes, has a ring on
+    // each; places too close to ring apart share one ring), and no two rings overlap: they shrink toward their centres, never under
+    // 44 px across, then step apart. Units = the overlay's viewBox (100 x 125, the same scale both ways).
+    var rings = null;
+    function ringsOf(f){
+      if(!rings){
+        rings = {};
+        var ow = ov.getBoundingClientRect().width, minR = 22 / (ow > 50 ? ow : 340) * 100, all = [];
+        var bb = function(bs){ var x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9; bs.forEach(function(q){ x0 = Math.min(x0, q.x); y0 = Math.min(y0, q.y); x1 = Math.max(x1, q.x + q.w); y1 = Math.max(y1, q.y + q.h); }); return {x:x0, y:y0, w:x1 - x0, h:y1 - y0}; };
+        st.finds.forEach(function(x){
+          // the places of this change, merged while two of them sit closer than two minimum rings
+          var groups = boxesOf(x).map(function(q){ return [q]; }), merged = true;
+          while(merged && groups.length > 1){
+            merged = false;
+            for(var i = 0; i < groups.length && !merged; i++) for(var j = i + 1; j < groups.length && !merged; j++){
+              var p = bb(groups[i]), q = bb(groups[j]), dx = (p.x + p.w / 2) - (q.x + q.w / 2), dy = ((p.y + p.h / 2) - (q.y + q.h / 2)) * 1.25;
+              if(Math.sqrt(dx * dx + dy * dy) < 2 * minR + 1){ groups[i] = groups[i].concat(groups[j]); groups.splice(j, 1); merged = true; }
+            }
+          }
+          rings[x.id] = groups.map(function(g){ var q = bb(g), r = {cx:q.x + q.w / 2, cy:(q.y + q.h / 2) * 1.25, rx:Math.max(minR, q.w / 2 + 1.5), ry:Math.max(minR, (q.h / 2 + 1.5) * 1.25), min:minR}; all.push(r); return r; });
+        });
+        var along = function(r, ux, uy){ return r.rx * r.ry / Math.sqrt(Math.pow(r.ry * ux, 2) + Math.pow(r.rx * uy, 2)); };
+        for(var pass = 0; pass < 24; pass++){
+          var moved = false;
+          for(var i2 = 0; i2 < all.length; i2++) for(var j2 = i2 + 1; j2 < all.length; j2++){
+            var A = all[i2], B = all[j2], ddx = B.cx - A.cx, ddy = B.cy - A.cy, d = Math.sqrt(ddx * ddx + ddy * ddy) || .001, ux = ddx / d, uy = ddy / d;
+            var ra = along(A, ux, uy), rb = along(B, ux, uy), gap = d - ra - rb;
+            if(gap >= .5) continue;
+            moved = true;
+            var k = Math.max(.6, (d - .5) / (ra + rb));
+            [A, B].forEach(function(r){ r.rx = Math.max(r.min, r.rx * k); r.ry = Math.max(r.min, r.ry * k); });
+            ra = along(A, ux, uy); rb = along(B, ux, uy); gap = d - ra - rb;
+            if(gap < .5){ var push = (.5 - gap) / 2; A.cx -= ux * push; A.cy -= uy * push; B.cx += ux * push; B.cy += uy * push; }   // at the minimum: step apart
+          }
+          if(!moved) break;
+        }
+      }
+      return rings[f.id] || [];
+    }
+    function ringSvg(r, cls, rot){ return '<ellipse class="' + cls + '" cx="' + r.cx + '" cy="' + r.cy + '" rx="' + r.rx + '" ry="' + r.ry + '"' + (rot ? ' transform="rotate(' + rot + ' ' + r.cx + ' ' + r.cy + ')"' : '') + '/>'; }
     function clearHints(){ ov.querySelectorAll('.yc-hint').forEach(function(x){ x.remove(); }); }
     function arm(){
       clear(hintT); clear(autoT);
@@ -1021,7 +1063,7 @@ function start(o){
     function drawDots(){ dotsN.innerHTML = st.finds.map(function(f){ return '<i' + (tn.found.indexOf(f.id) >= 0 ? ' class="on"' : '') + '></i>'; }).join(''); dotsN.hidden = st.finds.length < 2; }
     function softRings(){
       ov.querySelectorAll('.yc-soft').forEach(function(x){ x.remove(); });
-      remaining().forEach(function(f){ ov.insertAdjacentHTML('beforeend', '<g class="yc-soft" data-f="' + esc(f.id) + '">' + boxesOf(f).map(function(b){ return ellipse(b, 'yc-softink', 0) + ellipse(b, 'yc-softring', 0); }).join('') + '</g>'); });
+      remaining().forEach(function(f){ ov.insertAdjacentHTML('beforeend', '<g class="yc-soft" data-f="' + esc(f.id) + '">' + ringsOf(f).map(function(r){ return ringSvg(r, 'yc-softink', 0) + ringSvg(r, 'yc-softring', 0); }).join('') + '</g>'); });
       later(function(){ ov.classList.add('yc-soft-settle'); }, 2800 * pace);
     }
     // restore the circles already found (resume mid Then & Now)
@@ -1200,7 +1242,7 @@ function start(o){
         if(tip) tip.hidden = true;
         var words = st.clue ? tg(st.clue).split(/\s+/).length + (ph.set && ph.mode === 'split' ? tg(ph.set).split(/\s+/).length : 0) : 0;
         var lineDone = st.clue ? speakAll([ph.mode === 'split' ? tg(ph.set) : '', tg(st.clue)].filter(Boolean)) : Promise.resolve();
-        Promise.resolve(lineDone).then(function(){ later(finish, 1500 * pace + (muted() ? words * 300 * pace : 0)); });
+        Promise.resolve(lineDone).then(function(){ later(finish, 1500 * pace + (muted() ? Math.min(words * 300, 1500) * pace : 0)); });   // 0.3.1: about 3 s at most with the sound off
         stage.addEventListener('click', finish);
         return;
       }
@@ -1383,7 +1425,7 @@ function start(o){
     var t = C.prev && C.prev['card' + card];
     if(!t) return Promise.resolve();
     var chs = arcChoices(), prevChs = card === 2 ? [1, 2] : [3, 4];
-    var thumbs = prevChs.map(function(n){ var c = C.chapters[n - 1]; var id = c && (c.postcard || (c.photo && c.photo.then)); return '<div class="yc-thumb"><img src="' + esc(id ? artSrc(id, {era:'then'}) : devSvg('ch' + n, .8, 'then')) + '" alt=""></div>'; }).join('');
+    var thumbs = prevChs.map(function(n){ var c = C.chapters[n - 1]; var id = c && postcardArt(c, chs); return '<div class="yc-thumb"><img src="' + esc(id ? artSrc(id, {era:'then'}) : devSvg('ch' + n, .8, 'then')) + '" alt=""></div>'; }).join('');
     var ov = overlay('yc-prev', '<div class="yc-prev-in"><div class="yc-kicker" lang="' + ui + '" dir="' + uiDir() + '">' + esc(us('previously')) + '</div><div class="yc-thumbs">' + thumbs + '</div><div class="yc-cap yc-cap-static">' + lineHtml(t, G.ch) + '</div><small lang="' + ui + '" dir="' + uiDir() + '">' + esc(us('tapGo')) + '</small></div>');
     void chs;
     G.wait = 'previously';

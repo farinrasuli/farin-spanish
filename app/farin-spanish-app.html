@@ -11523,7 +11523,11 @@ function roadmapThemeLabel(p){
    Hunt only comes right after a story. No labels, counters or XP on any card (Farin 2026-09-30). Both apps, byte-identical. */
 // Variety: tried in this order until a kind fits. First: at most 2 of a kind on the page (rotation games included) and none of the
 // same kind among the 2 nearest games on either side; then 3 of a kind; then only the nearest game on each side; last resort 4.
-const PLAY_PASSES = [[2, 2], [3, 2], [3, 1], [4, 1]];
+// [99, 0] (2026-11-12): no cap, never the same kind as a game that could touch it (two cards away: an empty Vocab Box between hides).
+// Only reached when the four passes before find
+// nothing, which never happens on a new page (2,880 pages measured); a long saved page (a September page with no games, a page a goal
+// edit made longer) runs out of capped content, and Order Up! / Passport Desk always have a seeded round, so every gap gets a game.
+const PLAY_PASSES = [[2, 2], [3, 2], [3, 1], [4, 1], [99, 0]];
 const PLAY_AFF = {    // partner kinds by the lesson right before the gap, best fit first
   vocab:['bingo','cross','spell','match'], slang:['echo','spell','match'], grammar:['build','order','desk'],
   speaking:['echo','order','desk'], dialogue:['order','desk','echo'], story:['hunt'], media:['dictation','echo','bingo'],
@@ -11553,7 +11557,7 @@ function roadmapPlayFill(items, o){
   let fp = 20 + items.filter(it=>isG(it) && it.fill).length;   // partner positions 20, 21, ... (unique per page, so own-content refIds are too)
   const near = (at, dir, n) => { const out = []; for(let j = dir < 0 ? at - 1 : at; j >= 0 && j < items.length && out.length < n; j += dir) if(isG(items[j])) out.push(items[j].gameKind); return out; };
   const count = k => items.filter(it=>isG(it) && it.gameKind === k).length;
-  const spread = (k, at, w) => !near(at, -1, w).includes(k) && !near(at, 1, w).includes(k);
+  const spread = (k, at, w) => w ? !near(at, -1, w).includes(k) && !near(at, 1, w).includes(k) : ![items[at - 2], items[at + 1]].some(x=>isG(x) && x.gameKind === k);
   const node = (k, pos, refId, setId, name) => ({type:'game', gameKind:k, slot:st * 100 + pos, pos, rot:5, fill:true, refId, setId:setId || null, goal,
     title:L('Game','Oyun','بازی','Juego') + ': ' + (name || gameDisplayName(k))});
   const taughtSets = at => { const seen = new Set();
@@ -11615,31 +11619,48 @@ function roadmapPlayFill(items, o){
   }
   return items;
 }
-/* Saved pages (made before rot:5) get their partner games once, in the part the learner has not reached: nothing at or before the open
-   step moves, done nodes / progress / souvenirs stay as they are, the golden node is re-pointed (like ensureRoadmapBox). */
-function ensureRoadmapPlay(){
-  const rm = state.roadmap, p = state.profile;
-  if(!rm || !rm.length || !p || !p.completedDiagnostic || !p.level) return false;
-  const key = p.level + '.' + (p.levelStage === 2 ? 2 : 1);
-  if(state.progress.playFill === key || rm.some(n=>n.type === 'game' && n.rot === 5)) return false;
-  state.progress.playFill = key;
-  return roadmapPlayTail(rm, p);
-}
-// Shared by the saved-page upgrade and the goal-edit merge: partner games from the step after the open step on.
-function roadmapPlayTail(rm, p){
+/* Saved pages get their partner games after the learner's current step: any page made before rot:5 (September/October pages
+   without rot, rot:3, rot:4), a page a goal edit changed, a page an earlier pass could not finish. Runs on every open while a gap
+   between two lesson cards is left after the current step (a page with none is skipped at once); nothing at or before the current
+   step moves, done nodes / progress / souvenirs stay as they are, the golden node is re-pointed (like ensureRoadmapBox). The pass
+   works on a copy: an error leaves the page as it was, is reported in the console and marks nothing, so the next open tries again.
+   progress.playFill = level.stage of the last page a pass completed on; since 2026-11-12 it is a record only and never stops a page
+   from being upgraded (the first version set it before the pass, also on a finished page or a pass that added nothing, and skipped
+   any page holding one rot:5 card, so some saved pages never got their games: Farin, "my roadmap hasn't changed to half game"). */
+function roadmapPlayGap(rm){
   const open = rm.findIndex(n=>rmRequired(n) && !isRoadmapNodeDone(n));
-  if(open < 0) return false;   // page finished, waiting for "Go to the next level": nothing to add
-  const n0 = rm.length;
-  roadmapPlayFill(rm, {profile:p, stage:p.levelStage === 2 ? 2 : 1, from:open + 1, saved:true,
-    before:carrySetIds(p).map(id=>VOCAB_SETS.find(s=>s.id === id)).filter(Boolean),
-    gramBefore:completedGrammarItems(p.level), avoid:new Set(state.progress.completedGames || [])});
-  if(rm.length === n0) return false;
-  rm.forEach((n, i)=>{ n.n = i + 1; });
-  const g = state.progress.roadmapGolden;
-  if(g && g.nodeId){ const gi = rm.findIndex(n=>roadmapNodeId(n) === g.nodeId); if(gi > -1) g.goldenIdx = gi; }
-  return true;
+  if(open < 0) return false;   // page finished, waiting for "Go to the next level": the next page is built with its partner games
+  for(let i = open; i < rm.length - 1; i++) if(rm[i].type !== 'game' && rm[i + 1].type !== 'game') return true;
+  return false;
 }
-function roadmapPlayAfterMerge(){ if(state.roadmap && state.profile) roadmapPlayTail(state.roadmap, state.profile); }
+function ensureRoadmapPlay(){
+  const p = state.profile;
+  if(!state.roadmap || !state.roadmap.length || !p || !p.completedDiagnostic || !p.level || !state.progress) return false;
+  if(!roadmapPlayGap(state.roadmap)) return false;
+  return roadmapPlayTail(p);
+}
+// Shared by the saved-page upgrade and the goal-edit merge: partner games from the step after the current step on.
+function roadmapPlayTail(p){
+  try{
+    const rm = state.roadmap.slice(), open = rm.findIndex(n=>rmRequired(n) && !isRoadmapNodeDone(n));
+    if(open < 0) return false;
+    const n0 = rm.length;
+    roadmapPlayFill(rm, {profile:p, stage:p.levelStage === 2 ? 2 : 1, from:open + 1, saved:true,
+      before:carrySetIds(p).map(id=>VOCAB_SETS.find(s=>s.id === id)).filter(Boolean),
+      gramBefore:completedGrammarItems(p.level), avoid:new Set(state.progress.completedGames || [])});
+    state.progress.playFill = p.level + '.' + (p.levelStage === 2 ? 2 : 1);
+    if(rm.length === n0) return false;
+    rm.forEach((n, i)=>{ n.n = i + 1; });
+    state.roadmap = rm;
+    const g = state.progress.roadmapGolden;
+    if(g && g.nodeId){ const gi = rm.findIndex(n=>roadmapNodeId(n) === g.nodeId); if(gi > -1) g.goldenIdx = gi; }
+    return true;
+  }catch(e){
+    try{ console.warn('Roadmap: partner games not added to this page; it stays as it was and the next open tries again.', e); }catch(e2){}
+    return false;
+  }
+}
+function roadmapPlayAfterMerge(){ if(state.roadmap && state.roadmap.length && state.profile && state.progress) roadmapPlayTail(state.profile); }
 function buildRoadmap(profile){
   const goals = profileGoalKeys(profile);
   const gPoolAll = GRAMMAR_ITEMS_FREE.filter(g=>g.level===profile.level);
@@ -12987,7 +13008,8 @@ function ensureRoadmap(){
   if(state.profile && state.profile.completedDiagnostic){ try{ mediaAdded = ensureRoadmapMedia(); }catch(e){} }
   if(state.profile && state.profile.completedDiagnostic){ try{ if(ensureRoadmapBox()) mediaAdded = true; }catch(e){} }
   if(state.profile && state.profile.completedDiagnostic){ try{ if(ensureRoadmapSong()) mediaAdded = true; }catch(e){} }
-  if(state.profile && state.profile.completedDiagnostic){ try{ if(ensureRoadmapPlay()) mediaAdded = true; }catch(e){} }
+  // partner games last, after every pass above has added its cards (rot:5; ensureRoadmapPlay reports its own errors)
+  if(state.profile && state.profile.completedDiagnostic){ try{ if(ensureRoadmapPlay()) mediaAdded = true; }catch(e){ try{ console.warn('Roadmap: partner-game pass failed', e); }catch(e2){} } }
   if(state.profile && state.profile.completedDiagnostic){ try{ awardSouvenirs(null); }catch(e){} }
   return mediaAdded;
 }
@@ -13012,8 +13034,10 @@ function mergeRoadmapForGoalChange(){
   // A roadmap built before rotation v3 (any game node without rot 3: the five-position scheme or older)
   // keeps its own game nodes and gets no new ones (new roadmaps only).
   const legacyGames = existing.some(it=>it.type==='game' && it.rot !== 3 && it.rot !== 4 && it.rot !== 5);
-  const kept = existing.filter(it=>
-    isRoadmapNodeDone(it) || currentGoals.includes(it.goal) || !GOAL_ORDER.includes(it.goal) || (legacyGames && it.type==='game')
+  // partner games (rot:5) that are not done yet go, whatever their goal: they sit after the current step next to lessons this edit may
+  // drop, and roadmapPlayAfterMerge() below puts fresh ones between the lessons that stay (a done one always stays)
+  const kept = existing.filter(it=>(it.type==='game' && it.fill) ? isRoadmapNodeDone(it) :
+    (isRoadmapNodeDone(it) || currentGoals.includes(it.goal) || !GOAL_ORDER.includes(it.goal) || (legacyGames && it.type==='game'))
   );
   let target;
   try{ target = buildRoadmap(state.profile); }catch(e){ return; }
@@ -38592,10 +38616,31 @@ try{
     navigator.serviceWorker.register('farin-sw.js', { scope: 'farin-spanish-app.html' }).catch(function(){});
     // farin-sw.js answers a slow open with the saved copy and says so when a newer page has landed in the cache since (2026-11-11):
     // reload the next time the learner comes back to the app on Home, so a change reaches them this session, not one open later.
-    var pageUpdateReady = false;
-    navigator.serviceWorker.addEventListener('message', function(ev){ if(ev.data && ev.data.type === 'farin-page-updated') pageUpdateReady = true; });
+    var pageUpdateReady = false, pageBootAt = Date.now(), pageStamp = null, pageStampAt = 0;
+    // reload only on Home, visible, with nothing over it; a reload for a new server stamp happens once per stamp (sessionStorage), so it can never loop
+    var pageReloadIfReady = function(stamp){
+      if(!pageUpdateReady || document.visibilityState !== 'visible' || state.view !== 'dashboard' || document.querySelector('.celebrate-overlay')) return;
+      if(stamp){ try{ if(sessionStorage.getItem('farinReloadedFor') === stamp) return; sessionStorage.setItem('farinReloadedFor', stamp); }catch(e){} }
+      location.reload();
+    };
+    navigator.serviceWorker.addEventListener('message', function(ev){
+      if(!(ev.data && ev.data.type === 'farin-page-updated')) return;
+      pageUpdateReady = true;
+      // the newer page landed in the first moments after a slow open, while the learner is still looking at Home: reload now (2026-11-12)
+      if(Date.now() - pageBootAt < 30000) pageReloadIfReady();
+    });
+    // An app brought back from the background (the Android app, an installed web app, a tab left open) never opens the page again, so a
+    // release only reached it after a full restart (2026-11-12, Farin: "my roadmap hasn't changed to half game"). Coming back, at most
+    // every 10 minutes, it asks the server for the page's stamp (HEAD, no body; GitHub Pages sends the same ETag from every edge) and
+    // reloads on Home when the stamp changed.
+    var pageStampNow = function(){ return fetch(location.pathname, {method:'HEAD', cache:'no-store'}).then(function(r){ return r.ok ? (r.headers.get('etag') || r.headers.get('last-modified')) : null; }).catch(function(){ return null; }); };
+    setTimeout(function(){ pageStampNow().then(function(st){ pageStamp = st; pageStampAt = Date.now(); }); }, 15000);
     document.addEventListener('visibilitychange', function(){
-      if(pageUpdateReady && document.visibilityState === 'visible' && state.view === 'dashboard' && !document.querySelector('.celebrate-overlay')) location.reload();
+      if(document.visibilityState !== 'visible') return;
+      if(pageUpdateReady){ pageReloadIfReady(); return; }
+      if(!pageStamp || Date.now() - pageStampAt < 600000) return;
+      pageStampAt = Date.now();
+      pageStampNow().then(function(st){ if(st && st !== pageStamp){ pageUpdateReady = true; pageReloadIfReady(st); } });
     });
   }
 }catch(e){}

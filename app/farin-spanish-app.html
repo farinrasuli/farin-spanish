@@ -1554,6 +1554,169 @@
   .adm-act input{border:1.5px solid var(--border); border-radius:14px; padding:10px 12px; font:inherit; font-size:14px; font-weight:700; color:var(--ink); background:var(--bg-elevated);}
   .adm-comp{display:flex; flex-direction:column; gap:8px; background:var(--bg-elevated); border:1.5px solid var(--border); border-radius:22px; padding:10px;}
   .adm-comp textarea{border:0; resize:vertical; font:inherit; font-size:14.5px; color:var(--ink); background:transparent; padding:4px 6px; min-height:64px;}
+  /* Admin panel v2 (Farin 2026-11-13: "sections, easy to enter, users in a separate one, the others each their own box, a number when I
+     have to check something, neat and clean, each student's profile better, our brand design"). Home = hero + "To check" + one box per
+     section; each section is its own page; from 900px the sections sit in a sidebar. The Course Report pieces (.fs-hero, .fs-stats,
+     .fs-ico, .fs-ring, .fs-pill) are reused as they are; .ap-* is only the admin's own layout. */
+  body.ap-body #app{max-width:1180px; padding-bottom:56px;}
+  .ap{font-family:'Nunito',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; color:var(--ink); padding:18px 16px 64px;}
+  .ap .btn, .ap button, .ap input, .ap select, .ap textarea{font-family:inherit;}
+  .ap .btn-primary{background:var(--fs-orange); color:var(--fs-cta-ink); border-color:transparent; font-weight:800; box-shadow:0 8px 16px -8px rgba(168,90,5,.5);}
+  .ap .dot{color:var(--fs-orange);}
+  .ap .back{all:unset; box-sizing:border-box; cursor:pointer; display:inline-flex; align-items:center; gap:6px; padding:6px 12px 6px 6px; border-radius:999px; font-weight:800; font-size:14px; color:var(--ink-soft);}
+  .ap .back:hover{background:var(--bg-sunken); color:var(--ink);}
+  .ap .back svg{width:18px; height:18px;}
+  .ap .item-row{border-radius:20px; padding:14px 16px; box-shadow:0 1px 2px rgba(26,20,16,.04);}
+  .ap .card-flat{border-radius:22px; padding:18px; box-shadow:0 1px 2px rgba(26,20,16,.05), 0 10px 28px -14px rgba(26,20,16,.18);}
+  .ap-main{min-width:0; max-width:820px;}
+  .ap .fs-stats .lx-stat span{white-space:normal; overflow:visible; text-overflow:clip; line-height:1.25;}
+  @media (min-width:600px){ .ap .fs-hero + .fs-stats{margin-inline-end:156px;} }
+  .ap-side{display:none;}
+  .ap-top{display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:16px;}
+  .ap-brand{display:flex; align-items:center; gap:8px; font-weight:800; font-size:15px; color:var(--ink);}
+  .ap-brand img{width:36px; height:36px; object-fit:contain;}
+  .ap-brand small{display:block; font-size:10px; font-weight:800; letter-spacing:.14em; text-transform:uppercase; color:var(--fs-orange-ink);}
+  .ap-eb{display:block; font-size:11px; font-weight:800; letter-spacing:.16em; text-transform:uppercase; color:var(--fs-orange-ink);}
+  .ap-sec{margin-top:36px;}
+  .ap-sh{margin-bottom:14px;}
+  .ap-sh h2{font-size:22px; letter-spacing:-.01em; margin-top:4px;}
+  .ap-card{background:var(--bg-elevated); border:1px solid var(--border-soft); border-radius:22px; padding:16px 18px; box-shadow:0 1px 2px rgba(26,20,16,.05), 0 10px 28px -14px rgba(26,20,16,.18);}
+  .ap-empty{padding:28px 16px; text-align:center; color:var(--ink-faint); font-size:14px;}
+  /* Home: To check */
+  .ap-todo{display:flex; flex-direction:column; gap:10px;}
+  .ap-todo-row{all:unset; box-sizing:border-box; cursor:pointer; display:flex; align-items:center; gap:14px; background:var(--bg-elevated); border:1px solid var(--border-soft); border-radius:20px; padding:14px 16px; box-shadow:0 1px 2px rgba(26,20,16,.05), 0 10px 28px -16px rgba(26,20,16,.18); color:var(--ink); -webkit-tap-highlight-color:transparent;}
+  .ap-todo-row:focus-visible, .ap-box:focus-visible, .ap-person:focus-visible, .ap-nav:focus-visible, .ap-chip:focus-visible, .ap-linkrow:focus-visible{outline:2px solid var(--fs-purple); outline-offset:2px;}
+  .ap-num{flex:none; min-width:34px; height:34px; padding:0 9px; box-sizing:border-box; border-radius:999px; display:grid; place-items:center; background:var(--fs-orange); color:var(--fs-cta-ink); font-weight:900; font-size:15px; font-variant-numeric:tabular-nums;}
+  .ap-num.hot{background:var(--error); color:#fff;}
+  .ap-todo-t{flex:1; min-width:0; display:flex; flex-direction:column; gap:2px;}
+  .ap-todo-t b{font-size:15px; font-weight:800;}
+  .ap-todo-t small{font-size:12.5px; color:var(--ink-soft); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .ap-chev{flex:none; width:26px; height:26px; border-radius:50%; display:grid; place-items:center; background:var(--bg-sunken); color:var(--ink-soft);}
+  .ap-chev svg{width:14px; height:14px;}
+  .ap-clear{display:flex; align-items:center; gap:12px; padding:16px 18px; border-radius:20px; background:color-mix(in srgb, var(--fs-green) 18%, var(--bg-elevated)); font-weight:800; font-size:14.5px;}
+  .ap-clear svg{width:22px; height:22px; flex:none;}
+  /* Home: one box per section */
+  .ap-grid{display:grid; grid-template-columns:repeat(2, minmax(0,1fr)); gap:14px;}
+  .ap-box{all:unset; box-sizing:border-box; cursor:pointer; position:relative; min-width:0; display:flex; flex-direction:column; gap:6px; background:var(--bg-elevated); border:1px solid var(--border-soft); border-radius:22px; padding:16px; box-shadow:0 1px 2px rgba(26,20,16,.05), 0 10px 28px -14px rgba(26,20,16,.18); color:var(--ink); -webkit-tap-highlight-color:transparent;}
+  .ap-box .fs-ico{margin-bottom:6px;}
+  .ap-box b{font-family:'Fredoka',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; font-weight:700; font-size:17px; line-height:1.15;}
+  .ap-box small{font-size:12.5px; line-height:1.35; color:var(--ink-soft);}
+  .ap-badge{position:absolute; top:12px; inset-inline-end:12px; min-width:26px; height:26px; padding:0 8px; box-sizing:border-box; border-radius:999px; display:grid; place-items:center; background:var(--fs-orange); color:var(--fs-cta-ink); font-weight:900; font-size:13px; font-variant-numeric:tabular-nums; box-shadow:0 0 0 3px var(--bg-elevated);}
+  .ap-badge.hot{background:var(--error); color:#fff;}
+  @media (min-width:600px){ .ap-grid{grid-template-columns:repeat(3, minmax(0,1fr));} }
+  /* a section's own page */
+  .ap-bar{display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:18px;}
+  .ap-bell{all:unset; box-sizing:border-box; cursor:pointer; display:inline-flex; align-items:center; gap:8px; padding:5px 13px 5px 5px; border-radius:999px; background:var(--fs-orange-soft); color:var(--fs-orange-ink); font-weight:800; font-size:12.5px;}
+  .ap-bell .ap-num{min-width:26px; height:26px; font-size:12.5px; padding:0 7px;}
+  .ap-head{margin-bottom:22px;}
+  .ap-head h2{font-size:28px; letter-spacing:-.02em; margin-top:4px;}
+  .ap-head p{font-size:13.5px; line-height:1.5; color:var(--ink-soft); margin-top:6px; max-width:560px;}
+  .ap-tiles{display:grid; grid-template-columns:repeat(2, minmax(0,1fr)); gap:10px;}
+  .ap-tile{background:var(--bg-elevated); border:1px solid var(--border-soft); border-radius:18px; padding:12px 14px; min-width:0;}
+  .ap-tile span{display:block; font-size:10px; font-weight:800; letter-spacing:.12em; text-transform:uppercase; color:var(--ink-faint); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .ap-tile b{display:block; font-family:'Fredoka',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; font-weight:700; font-size:24px; line-height:1.2; font-variant-numeric:tabular-nums;}
+  @media (min-width:600px){ .ap-tiles{grid-template-columns:repeat(4, minmax(0,1fr));} }
+  .ap-search{display:flex; align-items:center; gap:10px; background:var(--bg-elevated); border:1.5px solid var(--border); border-radius:999px; padding:0 16px;}
+  .ap-search svg{width:18px; height:18px; color:var(--ink-faint); flex:none;}
+  .ap-search input{flex:1; min-width:0; border:0; background:transparent; padding:12px 0; font-size:15px; color:var(--ink); outline:none;}
+  .ap-chips{display:flex; flex-wrap:wrap; gap:8px;}
+  .ap-chip{all:unset; box-sizing:border-box; cursor:pointer; display:inline-flex; align-items:center; gap:6px; padding:7px 13px; border-radius:999px; border:1.5px solid var(--border); background:var(--bg-elevated); color:var(--ink-soft); font-weight:800; font-size:12.5px; white-space:nowrap;}
+  .ap-chip.on{background:var(--fs-purple); border-color:var(--fs-purple); color:#fff;}
+  .ap-chip i{font-style:normal; min-width:18px; height:18px; padding:0 5px; box-sizing:border-box; border-radius:999px; display:inline-grid; place-items:center; background:var(--fs-orange); color:var(--fs-cta-ink); font-size:11px; font-weight:900;}
+  .ap-tools{display:flex; align-items:center; justify-content:space-between; gap:8px; flex-wrap:wrap;}
+  .ap-tools label{display:flex; align-items:center; gap:8px; font-size:12.5px; font-weight:800; color:var(--ink-soft);}
+  .ap-tools select{border:1.5px solid var(--border); border-radius:999px; padding:7px 12px; font-size:13px; font-weight:700; background:var(--bg-elevated); color:var(--ink);}
+  .ap-link{all:unset; box-sizing:border-box; cursor:pointer; font-weight:800; font-size:12.5px; color:var(--ink-soft); padding:7px 10px; border-radius:999px; white-space:nowrap;}
+  .ap-link:hover{background:var(--bg-sunken); color:var(--ink);}
+  /* person rows (Users, 1-to-1 students, Contacts) */
+  .ap-list{display:flex; flex-direction:column; gap:10px;}
+  .ap-count-line{font-size:12px; font-weight:700; color:var(--ink-faint); margin:0 4px;}
+  .ap-person{all:unset; box-sizing:border-box; cursor:pointer; display:flex; align-items:center; gap:14px; width:100%; background:var(--bg-elevated); border:1px solid var(--border-soft); border-radius:20px; padding:12px 14px; box-shadow:0 1px 2px rgba(26,20,16,.04); color:var(--ink); -webkit-tap-highlight-color:transparent;}
+  .ap-person.static{cursor:default;}
+  .ap-av{position:relative; flex:none; width:44px; height:44px; border-radius:50%; display:grid; place-items:center; background:color-mix(in srgb, var(--g, #7C5CFC) 24%, var(--bg-elevated)); color:color-mix(in srgb, var(--g, #7C5CFC) 72%, var(--ink)); font-family:'Fredoka',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; font-weight:700; font-size:19px;}
+  .ap-av i{position:absolute; right:-1px; bottom:-1px; width:13px; height:13px; border-radius:50%; box-shadow:0 0 0 2.5px var(--bg-elevated); background:var(--border);}
+  .ap-av i.today{background:var(--success);}
+  .ap-av i.week{background:var(--cat-lis);}
+  .ap-p-main{flex:1; min-width:0; display:flex; flex-direction:column; gap:3px;}
+  .ap-p-name{display:flex; align-items:center; gap:6px; flex-wrap:wrap; min-width:0;}
+  .ap-p-name b{font-weight:800; font-size:15px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:100%;}
+  .ap-p-meta{font-size:12.5px; line-height:1.4; color:var(--ink-soft); overflow:hidden; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical;}
+  .ap-tag{display:inline-flex; align-items:center; gap:4px; font-size:10.5px; font-weight:900; letter-spacing:.03em; padding:2px 8px; border-radius:999px; background:var(--bg-sunken); color:var(--ink-soft); white-space:nowrap;}
+  .ap-tag.new{background:var(--fs-orange-soft); color:var(--fs-orange-ink);}
+  .ap-tag.ok{background:color-mix(in srgb, var(--fs-green) 24%, var(--bg-elevated)); color:var(--ink);}
+  .ap-tag.purple{background:var(--fs-purple-soft); color:var(--fs-purple-ink);}
+  .ap-tag.warn{background:var(--error-soft); color:var(--error);}
+  .ap-ring{position:relative; flex:none; width:42px; height:42px;}
+  .ap-ring svg{width:100%; height:100%; transform:rotate(-90deg);}
+  .ap-ring circle{fill:none; stroke-width:4.5;}
+  .ap-ring .bg{stroke:var(--fs-purple-soft);}
+  .ap-ring .fg{stroke:var(--fs-purple); stroke-linecap:round;}
+  .ap-ring b{position:absolute; inset:0; display:grid; place-items:center; font-weight:900; font-size:10.5px; font-variant-numeric:tabular-nums; color:var(--ink);}
+  .ap-ring.lg{width:68px; height:68px;} .ap-ring.lg b{font-size:14px;}
+  .ap-acts{display:flex; align-items:center; gap:6px; flex:none;}
+  @media (max-width:420px){ .ap-person > .ap-chev{display:none;} }
+  @media (max-width:520px){ .ap-person.static{flex-wrap:wrap;} .ap-person.static .ap-acts{width:100%; padding-inline-start:58px;} }
+  /* a learner's profile */
+  .ap-phero h1{max-width:60%; overflow-wrap:anywhere;}
+  .fs-hero.ap-mini{min-height:0; padding-bottom:24px;}
+  .fs-hero.ap-mini h1, .fs-hero.ap-mini .fs-sub{max-width:100%;}
+  /* inside a panel (student, course access) a chosen tab / option is purple; the orange stays for the page's own action */
+  .ap .card-flat .btn-sm.btn-primary{background:var(--fs-purple); border-color:var(--fs-purple); color:#fff; box-shadow:none;}
+  .ap-tagrow{display:flex; flex-wrap:wrap; gap:6px; margin:18px 4px 0;}
+  .ap-kv{display:flex; justify-content:space-between; align-items:baseline; gap:14px; padding:10px 0; border-bottom:1px solid var(--border-soft); font-size:13.5px;}
+  .ap-kv:first-child{padding-top:0;}
+  .ap-kv:last-child{border-bottom:0; padding-bottom:0;}
+  .ap-kv > span{color:var(--ink-soft); flex:none;}
+  .ap-kv > b{font-weight:800; text-align:end; overflow-wrap:anywhere; min-width:0;}
+  .ap-goalbox{background:var(--fs-purple-soft); border-radius:22px; padding:18px;}
+  .ap-goalbox .ap-kv{border-color:color-mix(in srgb, var(--fs-purple) 16%, transparent);}
+  .ap-goals{display:flex; flex-wrap:wrap; gap:8px; margin-bottom:14px;}
+  .ap-goal{display:inline-flex; align-items:center; gap:8px; background:var(--bg-elevated); border-radius:999px; padding:5px 13px 5px 5px; font-weight:800; font-size:13px;}
+  .ap-goal i{width:22px; height:22px; border-radius:50%; background:var(--g); display:grid; place-items:center; color:#fff; font-style:normal; font-size:11.5px; font-weight:900;}
+  .ap-prog{display:flex; align-items:center; gap:16px; margin-bottom:16px;}
+  .ap-prog .big{display:block; font-family:'Fredoka',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; font-weight:700; font-size:20px; line-height:1.2;}
+  .ap-prog small{font-size:12.5px; color:var(--ink-soft);}
+  .ap-counts{display:grid; grid-template-columns:repeat(3, minmax(0,1fr)); gap:8px;}
+  .ap-count{background:var(--bg-sunken); border-radius:14px; padding:10px 12px; min-width:0;}
+  .ap-count b{display:block; font-family:'Fredoka',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; font-weight:700; font-size:19px; line-height:1.1; font-variant-numeric:tabular-nums;}
+  .ap-count span{display:block; font-size:11px; font-weight:700; color:var(--ink-soft); margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .ap-note{font-size:12px; color:var(--ink-faint); margin-top:12px; line-height:1.45;}
+  .ap-rec{display:flex; align-items:flex-start; gap:12px; padding:10px 0; border-bottom:1px solid var(--border-soft);}
+  .ap-rec:last-child{border-bottom:0; padding-bottom:0;}
+  .ap-rec .n{flex:none; width:28px; height:28px; border-radius:50%; display:grid; place-items:center; background:var(--fs-purple-soft); color:var(--fs-purple-ink); font-weight:900; font-size:13px;}
+  .ap-rec > div{min-width:0; font-size:12.5px; line-height:1.45; color:var(--ink-soft);}
+  .ap-rec > div b{display:block; font-size:13px; color:var(--ink); overflow-wrap:anywhere;}
+  .ap-linkrow{all:unset; box-sizing:border-box; cursor:pointer; display:flex; align-items:center; gap:12px; width:100%; padding:12px 0; border-bottom:1px solid var(--border-soft); color:var(--ink);}
+  .ap-linkrow:first-child{padding-top:0;}
+  .ap-linkrow:last-child{border-bottom:0; padding-bottom:0;}
+  .ap-linkrow .t{flex:1; min-width:0; display:flex; flex-direction:column; gap:2px;}
+  .ap-linkrow .t b{font-size:14px; font-weight:800; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+  .ap-linkrow .t small{font-size:12px; color:var(--ink-soft);}
+  .ap-linkrow .ap-tag{flex:none; min-width:76px; justify-content:center;}
+  .ap-cta{all:unset; box-sizing:border-box; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px; width:100%; border-radius:999px; padding:13px 18px; font-weight:800; font-size:15px; background:var(--fs-orange); color:var(--fs-cta-ink); box-shadow:0 8px 16px -8px rgba(168,90,5,.5); text-align:center;}
+  .ap-cta::after{content:"\2192"; font-weight:800;}
+  .ap-btns{display:flex; flex-direction:column; gap:8px; margin-top:16px;}
+  /* sign in */
+  .ap.ap-solo{display:block;}
+  .ap-signin{max-width:420px; margin:0 auto; padding-top:12px;}
+  .ap-signin .fs-hero{min-height:0; padding-bottom:28px;}
+  .ap-signin .fs-hero h1{max-width:100%;}
+  .ap-field{display:block; width:100%; box-sizing:border-box; padding:13px 16px; border-radius:16px; border:1.5px solid var(--border); font-size:15px; background:var(--bg-elevated); color:var(--ink); margin-top:10px;}
+  .ap-field:first-of-type{margin-top:0;}
+  .ap-msg{font-size:13px; font-weight:700; margin:0 0 12px; line-height:1.45;}
+  /* the sidebar (desk width) */
+  .ap-nav{all:unset; box-sizing:border-box; cursor:pointer; display:flex; align-items:center; gap:11px; padding:10px 12px; border-radius:14px; font-weight:800; font-size:14px; color:var(--ink-soft);}
+  .ap-nav svg{width:18px; height:18px; flex:none;}
+  .ap-nav:hover{background:var(--bg-sunken); color:var(--ink);}
+  .ap-nav.on{background:var(--fs-purple-soft); color:var(--fs-purple-ink);}
+  .ap-nav .ap-badge{position:static; margin-inline-start:auto; box-shadow:none; min-width:24px; height:24px; font-size:12px;}
+  .ap-nav.out{margin-top:16px; font-weight:700; font-size:13px; color:var(--ink-faint);}
+  @media (min-width:900px){
+    .ap{display:grid; grid-template-columns:236px minmax(0,1fr); gap:44px; padding:28px 32px 72px;}
+    .ap-side{display:flex; flex-direction:column; gap:3px; position:sticky; top:24px; align-self:start;}
+    .ap-side .ap-brand{margin:0 0 20px 8px;}
+    .ap-bar, .ap-top{display:none;}
+  }
   .btn-whatsapp:active{box-shadow:inset 0 2px 4px -1px rgba(0,0,0,.3);}
   .btn-sm{padding:9px 14px; font-size:13px; width:auto;}
   .btn-block{width:100%;}
@@ -35862,7 +36025,7 @@ function renderAdminAccessTab(){
     </div>
     <div class="row between" style="align-items:center;">
       <div class="eyebrow">Issued passwords (${(adminAccessList||[]).length})</div>
-      <button class="btn btn-sm btn-ghost" data-admin-action="access-reload">${adminAccessLoading ? '…' : '↻'}</button>
+      <button class="ap-link" data-admin-action="access-reload">${adminAccessLoading ? '…' : '↻ Reload'}</button>
     </div>
     ${adminAccessLoading && !adminAccessList ? `<p style="text-align:center; padding:20px; color:var(--ink-faint);">Loading…</p>` : (rows || `<p style="padding:20px; text-align:center; color:var(--ink-faint);">No passwords issued yet.</p>`)}
   </div>`;
@@ -35950,12 +36113,11 @@ function renderAdminReviewsTab(){
       </button>
       ${open ? adminReviewDetailHtml(d) : ''}
     </div>`; }).join('');
-  const fbtn = (k, label)=>`<button class="btn btn-sm ${f === k ? 'btn-primary' : 'btn-ghost'}" data-admin-action="review-filter" data-filter="${k}">${label}</button>`;
+  const fbtn = (k, label)=>`<button class="ap-chip${f === k ? ' on' : ''}" data-admin-action="review-filter" data-filter="${k}">${label}</button>`;
   return `<div class="stack" style="gap:10px;">
-    <p style="font-size:12px; color:var(--ink-faint); margin:0;">Course writing that learners sent with "Send to Farin for review" (courses with teacher review: IELTS). Newest first. Promise to the learner: feedback within 2–3 days.</p>
     <div class="row between" style="align-items:center; gap:6px; flex-wrap:wrap;">
       <div class="row" style="gap:6px; flex-wrap:wrap;">${fbtn('open', 'To do')}${fbtn('new', 'New')}${fbtn('reviewed', 'Reviewed')}${fbtn('all', 'All')}</div>
-      <button class="btn btn-sm btn-ghost" data-admin-action="review-reload">${adminReviewsLoading ? '…' : '↻'}</button>
+      <button class="ap-link" data-admin-action="review-reload">${adminReviewsLoading ? '…' : '↻ Reload'}</button>
     </div>
     ${adminReviewsError ? `<p style="color:var(--error); font-size:12.5px; margin:0;">${esc(adminReviewsError)}</p>` : ''}
     ${adminReviewsInfo ? `<p style="color:var(--success); font-size:12.5px; margin:0;">${esc(adminReviewsInfo)}</p>` : ''}
@@ -36182,12 +36344,12 @@ function renderAdminInboxTab(){
   const byNew = (a, b)=>Math.max(Number(b.lAt) || 0, Number(b.fAt) || 0) - Math.max(Number(a.lAt) || 0, Number(a.fAt) || 0);
   const rows = f === 'todo' ? todo : f === 'requests' ? all.filter(d=>d.type === 'request').sort(byNew) : f === 'questions' ? all.filter(d=>d.type !== 'request').sort(byNew)
     : f === 'done' ? all.filter(d=>d.type === 'request' && d.status === 'done').sort(byNew) : all.slice().sort(byNew);
-  const fb = (k, label, n)=>`<button class="btn btn-sm ${f === k ? 'btn-primary' : 'btn-ghost'}" data-admin-action="chat-filter" data-filter="${k}">${label}${n != null ? ' (' + n + ')' : ''}</button>`;
+  const fb = (k, label, n)=>`<button class="ap-chip${f === k ? ' on' : ''}" data-admin-action="chat-filter" data-filter="${k}">${label}${n ? '<i>' + n + '</i>' : ''}</button>`;
   const tabbed = rows.some(d=>d.type === 'request');
   return `<div class="stack" style="gap:10px;">
     <div class="row between" style="align-items:center; gap:6px; flex-wrap:wrap;">
       <div class="row" style="gap:6px; flex-wrap:wrap;">${fb('todo', 'To do', todo.length)}${fb('requests', 'Requests')}${fb('questions', 'Questions')}${fb('done', 'Done')}${fb('all', 'All')}</div>
-      <button class="btn btn-sm btn-ghost" data-admin-action="chat-reload">${adminChatsLoading ? '…' : '↻'}</button>
+      <button class="ap-link" data-admin-action="chat-reload">${adminChatsLoading ? '…' : '↻ Reload'}</button>
     </div>
     ${f === 'todo' ? '<p style="font-size:12px; color:var(--ink-faint); margin:0;">Oldest first. Age turns amber after 24 h and red after 48 h. New messages show up here every 30 s.</p>' : ''}
     ${adminChatsError ? `<p style="color:var(--error); font-size:12.5px; margin:0;">${esc(adminChatsError)}</p>` : ''}
@@ -36324,7 +36486,7 @@ function renderAdminWaitlistTab(){
   all.forEach(r=>{ if(!courses.find(c=>c.filter === r.filter)) courses.push({filter:r.filter, title:r.title, app:r.app}); });
   courses.sort((a,b)=>a.title.localeCompare(b.title));
   const list = f === 'all' ? all : all.filter(r=>r.filter === f);
-  const fbtn = (k, label, n)=>`<button class="btn btn-sm ${f === k ? 'btn-primary' : 'btn-ghost'}" data-admin-action="waitlist-filter" data-filter="${esc(k)}">${esc(label)} (${n})</button>`;
+  const fbtn = (k, label, n)=>`<button class="ap-chip${f === k ? ' on' : ''}" data-admin-action="waitlist-filter" data-filter="${esc(k)}">${esc(label)} · ${n}</button>`;
   const rows = list.map(r=>{
     const noCode = adminWaitlistNoCode(r.phone), wa = adminWaitlistWaNumber(r);
     return `<div class="item-row" style="align-items:flex-start; flex-wrap:wrap; cursor:default; ${r.messaged ? 'opacity:.72;' : ''}">
@@ -36340,10 +36502,9 @@ function renderAdminWaitlistTab(){
       </div>
     </div>`; }).join('');
   return `<div class="stack" style="gap:10px;">
-    <p style="font-size:12px; color:var(--ink-faint); margin:0;">People who tapped "I want this course" and left their number, from both apps, newest first. Learners were told you will message them as soon as a spot opens.</p>
     <div class="row between" style="align-items:center; gap:6px; flex-wrap:wrap;">
       <div class="row" style="gap:6px; flex-wrap:wrap;">${fbtn('all', 'All courses', all.length)}${courses.map(c=>fbtn(c.filter, c.title + ' · ' + c.app.toUpperCase(), all.filter(r=>r.filter === c.filter).length)).join('')}</div>
-      <button class="btn btn-sm btn-ghost" data-admin-action="waitlist-reload">${adminWaitlistLoading ? '…' : '↻'}</button>
+      <button class="ap-link" data-admin-action="waitlist-reload">${adminWaitlistLoading ? '…' : '↻ Reload'}</button>
     </div>
     ${adminWaitlistError ? `<p style="color:var(--error); font-size:12.5px; margin:0;">${esc(adminWaitlistError)}</p>` : ''}
     ${adminWaitlistLoading && !adminWaitlist ? `<p style="text-align:center; padding:20px; color:var(--ink-faint);">Loading…</p>` : (rows || `<p style="padding:20px; text-align:center; color:var(--ink-faint);">Nobody on the list yet.</p>`)}
@@ -36363,7 +36524,7 @@ function buildHomeworkWhatsAppMessage(student, item){
 let adminContacts = null;
 let adminError = '';
 let adminLoading = false;
-let adminTab = 'inbox';   // Messages (2026-11-12): admin opens on the Inbox
+let adminTab = 'home';   // Admin v2 (2026-11-13): opens on Home (To check + section boxes); the Inbox is its first row and box
 let adminStudents = null;
 let adminStudentsLoading = false;
 let adminStudentsLoadErrors = [];
@@ -36399,61 +36560,279 @@ function studentSectionOpen(key){
 function studentSectionClose(){
   return `</div>`;
 }
+/* ============================= ADMIN PANEL v2: Home, one page per section, numbers (Farin 2026-11-13) =============================
+   "give admin panel a better UX: having sections, easy to enter, users in a separate one, the others also get their own box; if I have
+   to check something put a number as a notification so I can check that later; easy to handle, everything sorted out, neat and clean;
+   make each student's profile better and give it all the design of our brand."
+   The admin opens on Home: the purple hero, "To check" (one numbered row per thing waiting, a tap opens that section with the right
+   filter), then one box per section with its own number. Each section is its own page with a back button; from 900 px the sections sit
+   in a sidebar with the same numbers. The Inbox's banner and the Waiting list's banner (the "on every tab" panels) became the To check
+   rows + the numbers on the boxes, the sidebar and the "N to check" pill on every section page (renderAdminInboxBanner /
+   renderAdminWaitlistBanner are kept, unused). Numbers:
+     Inbox = to answer (adminChatTodoList) · Users = new learners since you last opened Users + "contact me" learners not marked contacted
+     · Waiting list = still waiting · Writing reviews = not reviewed yet (tests left out; red after 3 days) · Course access = active
+     passwords on 4+ devices (red) or ending within 14 days · 1-to-1 students = homework links not sent yet · Contacts = new since you
+     last opened Contacts.
+   "Last opened" and "contacted" live in progress/admin-seen ({kind:'admin', seen:{users, contacts}, contacted:[…]}; no profile, so it is
+   never listed as a learner). contacted = SHA-256 of the learner's recovery code, like admin-hidden-users: the doc never shows a code.
+   Before the first visit, "new" means the last 7 days. */
+let adminSeen = null, adminSeenPrev = {}, adminContacted = [], adminLoadedFor = '', adminUsersScrollY = 0;
+const ADMIN_SEEN_DOC = 'admin-seen';
+const ADMIN_SECTIONS = [
+  {key:'inbox', title:'Inbox', eb:'Messages', icon:'chat', c:'#7C5CFC', sub:'Questions and course requests learners send in the app.'},
+  {key:'users', title:'Users', eb:'Learners', icon:'users', c:'#7C93FF', sub:'Everyone who uses the app, one row per learner. Tap a name to open the profile.'},
+  {key:'waitlist', title:'Waiting list', eb:'Course sign-ups', icon:'star', c:'#FFA53D', sub:'People who tapped “I want this course” and left their number, from both apps. Newest first.'},
+  {key:'reviews', title:'Writing reviews', eb:'Feedback', icon:'pen', c:'#FF8FB3', sub:'Course writing sent to you for review. The learner was promised feedback within 2–3 days.'},
+  {key:'access', title:'Course access', eb:'Passwords', icon:'book', c:'#5FC9B8', sub:'Course passwords: create one after the money is in; revoke or re-issue it here.'},
+  {key:'students', title:'1-to-1 students', eb:'Student panels', icon:'compass', c:'#8FAE85', sub:'Your private students: roadmap, sessions, lessons and homework.'},
+  {key:'contacts', title:'Contacts', eb:'Leads', icon:'whatsapp', c:'#4FC3E8', sub:'Numbers learners left in the app (Student Club and “contact me”).'}
+];
+function adminSection(key){ return ADMIN_SECTIONS.find(s=>s.key === key) || null; }
+// Everything loads once after sign-in, so Home can count every section at the same time.
+function adminLoadAll(){
+  const u = firebase.auth().currentUser, uid = (u && (u.uid || u.email)) || 'admin';
+  if(adminLoadedFor === uid) return;
+  adminLoadedFor = uid;
+  adminSeenLoad(); loadAdminContacts(); loadAdminUsers(); adminWaitlistLoad(); adminChatsLoad(); adminReviewsLoad(); adminAccessLoad(); loadAdminStudents();
+}
+function adminSeenLoad(){
+  firebase.firestore().collection('progress').doc(ADMIN_SEEN_DOC).get().then(doc=>{
+    const d = (doc.exists && doc.data()) || {};
+    adminSeen = Object.assign({}, d.seen || {});
+    adminContacted = Array.isArray(d.contacted) ? d.contacted.slice() : [];
+    renderAdminPage();
+  }).catch(()=>{ adminSeen = {}; renderAdminPage(); });
+}
+function adminSeenAt(k){ return adminSeen && adminSeen[k] ? Number(adminSeen[k]) : Date.now() - 7*DAY_MS; }
+// Rows newer than the time before this visit keep their "New" mark while you are in the section.
+function adminSeenBefore(k){ return Object.prototype.hasOwnProperty.call(adminSeenPrev, k) ? adminSeenPrev[k] : adminSeenAt(k); }
+function adminSeenSave(){
+  if(!adminSeen) return;   // not loaded yet: never overwrite the stored times with nothing
+  firebase.firestore().collection('progress').doc(ADMIN_SEEN_DOC).set({kind:'admin', seen:adminSeen, contacted:adminContacted, savedAt:Date.now()}, {merge:true}).catch(()=>{});
+}
+function adminMarkSeen(k){
+  if(!adminSeen) return;
+  if(!Object.prototype.hasOwnProperty.call(adminSeenPrev, k)) adminSeenPrev[k] = adminSeenAt(k);
+  adminSeen[k] = Date.now();
+  adminSeenSave();
+}
+function adminPersonContacted(p){ const h = p && p.contact && p.contact.hash; return !!(h && adminContacted.indexOf(h) !== -1); }
+function adminToggleContacted(key){
+  const p = adminPersonByKey(key), h = p && p.contact && p.contact.hash;
+  if(!h || !adminSeen) return;
+  adminContacted = adminPersonContacted(p) ? adminContacted.filter(x=>x !== h) : adminContacted.concat([h]);
+  adminSeenSave();
+  renderAdminPage();
+}
+// Everything waiting for Farin, grouped by section: [{sec, n, title, sub, filter, hot}].
+function adminTodo(){
+  const now = Date.now(), out = {};
+  const add = (sec, n, one, many, sub, filter, hot)=>{ if(n > 0) (out[sec] = out[sec] || []).push({sec, n, title:n === 1 ? one : many, sub:sub || '', filter:filter || '', hot:!!hot}); };
+  const names = list=>list.slice(0, 3).join(', ') + (list.length > 3 ? ' +' + (list.length - 3) : '');
+  if(adminChats){
+    const t = adminChatTodoList(), o = t[0];
+    add('inbox', t.length, 'Message to answer', 'Messages to answer', o ? 'Oldest: ' + adminChatName(o) + ' · ' + msgTopicName(o.topic, 'admin') + ' · ' + adminAgo(Number(o.lAt) || Number(o.createdAt) || 0) : '', 'todo', !!o && adminChatAgeCls(o.lAt || o.createdAt) === 'red');
+  }
+  if(adminPeople){
+    const live = adminPeople.filter(p=>!p.hidden);
+    const fresh = adminSeen ? live.filter(p=>p.joined && p.joined > adminSeenAt('users')).sort((a,b)=>b.joined - a.joined) : [];
+    add('users', fresh.length, 'New learner', 'New learners', 'Since you last opened Users · ' + names(fresh.map(p=>p.profile.name || '(no name)')), 'new');
+    const want = live.filter(p=>p.contact && !adminPersonContacted(p));
+    add('users', want.length, 'Learner asked you to contact them', 'Learners asked you to contact them', names(want.map(p=>p.profile.name || '(no name)')), 'contact');
+  }
+  if(adminWaitlist){
+    const w = adminWaitlistWaiting();
+    add('waitlist', w.length, 'Person waiting for a course', 'People waiting for a course', w[0] ? 'Newest: ' + w[0].name + ' · ' + w[0].title : '', 'all');
+  }
+  if(adminReviews){
+    const r = adminReviews.filter(d=>adminReviewState(d) !== 'reviewed' && !d.test);
+    const late = r.filter(d=>now - (Number(d.submittedAt) || 0) >= 72*3600000).length;
+    add('reviews', r.length, 'Writing to review', 'Writings to review', late ? late + ' waiting more than 3 days' : 'Within the 2–3 day promise', 'open', late > 0);
+  }
+  if(adminAccessList){
+    const act = adminAccessList.filter(d=>adminAccessStatus(d) === 'active');
+    const shared = act.filter(d=>adminAccessDevices(d) > 3), ending = act.filter(d=>d.expiresAt && d.expiresAt - now < 14*DAY_MS);
+    add('access', shared.length, 'Password used on 4+ devices', 'Passwords used on 4+ devices', names(shared.map(d=>d.name || '—')), '', true);
+    add('access', ending.length, 'Course access ends within 14 days', 'Course accesses end within 14 days', names(ending.map(d=>(d.name || '—') + ' (' + adminDate(d.expiresAt) + ')')), '');
+  }
+  if(adminStudents){
+    const who = [];
+    let hw = 0;
+    adminStudents.forEach(s=>{ const n = adminStudentHomeworkToSend(s); if(n){ hw += n; who.push(s.name || s.code); } });
+    add('students', hw, 'Homework ready to send', 'Homework links ready to send', names(who), '');
+  }
+  if(adminContacts && adminSeen){
+    const c = adminContacts.filter(x=>Number(x.createdAt) > adminSeenAt('contacts'));
+    add('contacts', c.length, 'New contact', 'New contacts', 'Since you last opened Contacts · ' + names(c.map(x=>x.name || '—')), '');
+  }
+  return out;
+}
+function adminTodoCount(todo, sec){ return (todo[sec] || []).reduce((n, t)=>n + t.n, 0); }
+function adminTodoHot(todo, sec){ return (todo[sec] || []).some(t=>t.hot); }
+function adminStudentHomeworkToSend(s){ return (Array.isArray(s.roadmap) ? s.roadmap : []).filter(r=>r && r.homeworkLink && !r.sentAt).length; }
+// Opens a section page (also every older 'tab-…' action), optionally with a filter.
+function adminGo(key, filter){
+  if(!adminSection(key)){ adminTab = 'home'; renderAdminPage(); window.scrollTo(0, 0); return; }
+  adminTab = key;
+  if(key === 'inbox'){ adminChatOpen = null; adminChatConfirm = false; if(filter) adminChatFilter = filter; if(adminChats === null) adminChatsLoad(); }
+  if(key === 'users'){ adminUserOpen = null; if(filter) adminUsersFilter = filter; adminMarkSeen('users'); if(adminUsers === null && !adminUsersLoading) loadAdminUsers(); }
+  if(key === 'waitlist'){ if(filter) adminWaitlistFilter = filter; if(adminWaitlist === null && !adminWaitlistLoading) adminWaitlistLoad(); }
+  if(key === 'reviews'){ if(filter){ adminReviewFilter = filter; adminReviewOpen = null; } if(adminReviews === null && !adminReviewsLoading) adminReviewsLoad(); }
+  if(key === 'access'){ if(adminAccessList === null && !adminAccessLoading) adminAccessLoad(); }
+  if(key === 'students'){ if(adminStudents === null && !adminStudentsLoading) loadAdminStudents(); }
+  if(key === 'contacts') adminMarkSeen('contacts');
+  renderAdminPage();
+  window.scrollTo(0, 0);
+}
+function adminBrandHtml(){ return `<div class="ap-brand"><img src="logo-fe-cutout.png" alt="" decoding="async"><span>FEschool<small>Admin</small></span></div>`; }
+function adminRingHtml(d, t, lg){
+  const r = 18, cc = 2 * Math.PI * r, f = t ? Math.min(1, d / t) : 0;
+  return `<span class="ap-ring${lg ? ' lg' : ''}" title="${d} of ${t}"><svg viewBox="0 0 46 46" aria-hidden="true"><circle class="bg" cx="23" cy="23" r="${r}"/>${f ? `<circle class="fg" cx="23" cy="23" r="${r}" stroke-dasharray="${(cc * f).toFixed(1)} ${cc.toFixed(1)}"/>` : ''}</svg><b>${Math.round(f * 100)}%</b></span>`;
+}
+function adminGoalKey(goals){ const g = (Array.isArray(goals) ? goals : [goals]).find(x=>COURSE_GOAL_COLORS[x]); return g || 'everyday'; }
+// The round initial in the goal colour; the dot = seen today (green) / this week (pink).
+function adminAvatarHtml(name, goal, seenAgo){
+  const t = String(name || '').trim(), ch = t ? Array.from(t)[0].toUpperCase() : '?';
+  const dot = seenAgo === undefined || seenAgo === null ? '' : `<i class="${seenAgo < DAY_MS ? 'today' : seenAgo < 7*DAY_MS ? 'week' : ''}" title="green: seen today · pink: this week"></i>`;
+  return `<span class="ap-av" aria-hidden="true" style="--g:${COURSE_GOAL_COLORS[goal] || '#7C5CFC'};">${esc(ch)}${dot}</span>`;
+}
+function renderAdminSignIn(){
+  let saved = ''; try{ saved = localStorage.getItem('farin-admin-email') || ''; }catch(e){}
+  return `<div class="ap ap-solo"><div class="ap-signin">
+    <header class="fs-hero">
+      <span class="fs-pill">FEschool</span>
+      <h1 class="display">Admin<span class="dot">.</span></h1>
+      <p class="fs-sub">Your learners, messages and courses in one place.</p>
+    </header>
+    <div class="ap-card" style="margin-top:18px; padding:20px;">
+      ${adminError ? `<p class="ap-msg" style="color:var(--error);">${esc(adminError)}</p>` : ''}
+      ${adminResetStatus ? `<p class="ap-msg" style="color:var(--success);">${esc(adminResetStatus)}</p>` : ''}
+      <input id="admin-email" class="ap-field" type="email" autocomplete="username" placeholder="Email" value="${esc(saved)}">
+      <input id="admin-password" class="ap-field" type="password" autocomplete="current-password" placeholder="Password">
+      <button class="btn btn-primary fs-cta" style="width:100%; margin-top:16px;" data-admin-action="signin">Sign in </button>
+      <button class="btn btn-ghost" style="width:100%; margin-top:8px;" data-admin-action="forgot-password">Forgot password?</button>
+    </div>
+  </div></div>`;
+}
+function renderAdminNav(todo){
+  const item = (key, label, icon, n, hot)=>`<button class="ap-nav${adminTab === key ? ' on' : ''}" data-admin-action="${key === 'home' ? 'ap-home' : 'ap-go'}" data-section="${key}"${adminTab === key ? ' aria-current="page"' : ''}>${ICONS[icon] || ''}<span>${esc(label)}</span>${n ? `<span class="ap-badge${hot ? ' hot' : ''}">${n}</span>` : ''}</button>`;
+  return `<aside class="ap-side" aria-label="Admin sections">${adminBrandHtml()}
+    ${item('home', 'Home', 'home', 0)}
+    ${ADMIN_SECTIONS.map(s=>item(s.key, s.title, s.icon, adminTodoCount(todo, s.key), adminTodoHot(todo, s.key))).join('')}
+    <button class="ap-nav out" data-admin-action="signout">Sign out</button>
+  </aside>`;
+}
+// The one line under each box's name.
+function adminBoxSub(key){
+  const wait = v=>v === null ? 'Loading…' : '';
+  const live = (adminPeople || []).filter(p=>!p.hidden), now = Date.now();
+  if(key === 'inbox'){ if(adminChatsError && !adminChats) return 'Could not load'; if(!adminChats) return wait(null); const n = adminChatTodoList().length; return (n ? n + ' to answer' : 'All answered') + ' · ' + adminChats.length + ' chat' + (adminChats.length === 1 ? '' : 's'); }
+  if(key === 'users'){ if(adminUsersError && !adminPeople) return 'Could not load'; if(!adminPeople) return wait(null); return live.length + ' learners · ' + live.filter(p=>now - p.lastSeen < DAY_MS).length + ' today'; }
+  if(key === 'waitlist'){ if(adminWaitlistError && !adminWaitlist) return 'Could not load'; if(!adminWaitlist) return wait(null); const n = adminWaitlistWaiting().length; return n ? n + ' still waiting' : 'Nobody waiting'; }
+  if(key === 'reviews'){ if(adminReviewsError && !adminReviews) return 'Could not load'; if(!adminReviews) return wait(null); const n = adminReviews.filter(d=>adminReviewState(d) !== 'reviewed' && !d.test).length; return n ? n + ' to review' : 'All reviewed'; }
+  if(key === 'access'){ if(adminAccessError && !adminAccessList) return 'Could not load'; if(!adminAccessList) return wait(null); const n = adminAccessList.filter(d=>adminAccessStatus(d) === 'active').length; return n + ' active password' + (n === 1 ? '' : 's'); }
+  if(key === 'students'){ if(!adminStudents) return wait(null); return adminStudents.length + ' student' + (adminStudents.length === 1 ? '' : 's'); }
+  if(key === 'contacts'){ if(!adminContacts) return adminError ? 'Could not load' : wait(null); return adminContacts.length + ' contact' + (adminContacts.length === 1 ? '' : 's'); }
+  return '';
+}
+function renderAdminHome(todo){
+  // One To check row per section (a section with two kinds of things, e.g. new learners + "contact me", joins them in one row).
+  const lc = s=>s.charAt(0).toLowerCase() + s.slice(1);
+  const rows = ADMIN_SECTIONS.filter(s=>todo[s.key]).map(s=>{
+    const it = todo[s.key];
+    if(it.length === 1) return it[0];
+    const title = it.map(t=>t.n + ' ' + lc(t.title)).join(' · ');
+    return {sec:s.key, n:it.reduce((a, t)=>a + t.n, 0), title:title.charAt(0).toUpperCase() + title.slice(1), sub:(it.find(t=>t.sub) || {}).sub || '', filter:'', hot:it.some(t=>t.hot)};
+  });
+  const total = rows.reduce((n, t)=>n + t.n, 0);
+  const loading = [adminChats, adminPeople, adminWaitlist, adminReviews, adminAccessList, adminStudents, adminContacts].some(v=>v === null);
+  const live = (adminPeople || []).filter(p=>!p.hidden), now = Date.now(), h = new Date().getHours();
+  const hello = h < 12 ? 'Good morning' : h < 18 ? 'Good afternoon' : 'Good evening';
+  const day = new Date().toLocaleDateString('en-GB', {weekday:'short', day:'numeric', month:'short'});
+  const sub = total ? total + (total === 1 ? ' thing is' : ' things are') + ' waiting for you.' : loading ? 'Counting what is waiting for you…' : 'Nothing is waiting for you.';
+  const num = v=>adminPeople ? v : '…';
+  const todoRow = t=>`<button class="ap-todo-row" data-admin-action="ap-go" data-section="${t.sec}" data-filter="${esc(t.filter)}">
+      <span class="ap-num${t.hot ? ' hot' : ''}">${t.n}</span>
+      <span class="ap-todo-t"><b>${esc(t.title)}</b>${t.sub ? `<small dir="auto">${esc(t.sub)}</small>` : ''}</span>
+      <span class="ap-chev">${ICONS.chev}</span>
+    </button>`;
+  const box = s=>{ const n = adminTodoCount(todo, s.key);
+    return `<button class="ap-box" data-admin-action="ap-go" data-section="${s.key}">
+      ${n ? `<span class="ap-badge${adminTodoHot(todo, s.key) ? ' hot' : ''}" aria-label="${n} to check">${n}</span>` : ''}
+      <span class="fs-ico" style="--c:${s.c};">${ICONS[s.icon] || ''}</span>
+      <b>${esc(s.title)}</b>
+      <small>${esc(adminBoxSub(s.key))}</small>
+    </button>`; };
+  return `<div class="ap-top">${adminBrandHtml()}<button class="btn btn-ghost btn-sm" data-admin-action="signout">Sign out</button></div>
+    <header class="fs-hero">
+      <span class="fs-pill">FEschool admin · ${esc(day)}</span>
+      <h1 class="display">${hello}<span class="dot">.</span></h1>
+      <p class="fs-sub">${esc(sub)}</p>
+      <div class="fs-art" aria-hidden="true" style="--g:#FFA53D;"><i class="fs-disc"></i><img src="char-career.png" alt="" decoding="async"></div>
+    </header>
+    <div class="lx-stats fs-stats">
+      <div class="lx-stat"><span>Learners</span><b class="display">${num(live.length)}</b></div>
+      <div class="lx-stat"><span>Active today</span><b class="display">${num(live.filter(p=>now - p.lastSeen < DAY_MS).length)}</b></div>
+      <div class="lx-stat"><span>New this week</span><b class="display">${num(live.filter(p=>p.joined && now - p.joined < 7*DAY_MS).length)}</b></div>
+    </div>
+    <section class="ap-sec">
+      <div class="ap-sh"><span class="ap-eb">Your school</span><h2 class="display">Sections<span class="dot">.</span></h2></div>
+      <div class="ap-grid">${ADMIN_SECTIONS.map(box).join('')}</div>
+    </section>
+    <section class="ap-sec">
+      <div class="ap-sh"><span class="ap-eb">Today</span><h2 class="display">To check<span class="dot">.</span></h2></div>
+      <div class="ap-todo">${rows.length ? rows.map(todoRow).join('') + (loading ? '<p class="ap-count-line">Still loading some sections…</p>' : '')
+        : loading ? '<p class="ap-empty">Loading…</p>' : `<div class="ap-clear">${ICONS.check}<span>All clear. Nothing is waiting for you.</span></div>`}</div>
+    </section>`;
+}
+function renderAdminSectionPage(s, todo){
+  const inner = ({inbox:renderAdminInboxTab, users:renderAdminUsersTab, waitlist:renderAdminWaitlistTab, reviews:renderAdminReviewsTab,
+    access:renderAdminAccessTab, students:renderAdminStudentsTab, contacts:renderAdminContactsTab})[s.key]();
+  // A chat, a learner's profile or a student's panel has its own header and back button.
+  const deep = (s.key === 'inbox' && adminChatOpen) || (s.key === 'users' && adminUserOpen) || (s.key === 'students' && adminEditingStudent);
+  const others = ADMIN_SECTIONS.filter(x=>x.key !== s.key).reduce((n, x)=>n + adminTodoCount(todo, x.key), 0);
+  return `<div class="ap-bar"><button class="back" data-admin-action="ap-home">${ICONS.back} Admin</button>${others ? `<button class="ap-bell" data-admin-action="ap-home"><span class="ap-num">${others}</span>to check</button>` : ''}</div>
+    ${deep ? '' : `<header class="ap-head"><span class="ap-eb">${esc(s.eb)}</span><h2 class="display">${esc(s.title)}<span class="dot">.</span></h2><p>${esc(s.sub)}</p></header>`}
+    ${inner}`;
+}
 function renderAdminPage(){
   const root = document.getElementById('app');
   document.documentElement.lang = 'en'; document.documentElement.dir = 'ltr';   // Messages (2026-11-12): admin UI is English
+  document.body.classList.add('ap-body');
   const user = firebase.auth().currentUser;
   let html;
-  if(!user){
-    html = `<div class="screen" style="padding-top:40px; max-width:360px; margin:0 auto;">
-      <h1 class="display" style="font-size:20px; margin-bottom:16px;">Admin sign in</h1>
-      ${adminError ? `<p style="color:var(--error); font-size:13px; margin-bottom:10px;">${esc(adminError)}</p>` : ''}
-      ${adminResetStatus ? `<p style="color:var(--success); font-size:13px; margin-bottom:10px;">${esc(adminResetStatus)}</p>` : ''}
-      <input id="admin-email" type="email" placeholder="Email" style="width:100%; box-sizing:border-box; padding:12px 14px; border-radius:12px; border:1.5px solid var(--border); font-size:15px; margin-bottom:10px; background:var(--bg-elevated); color:var(--ink);">
-      <input id="admin-password" type="password" placeholder="Password" style="width:100%; box-sizing:border-box; padding:12px 14px; border-radius:12px; border:1.5px solid var(--border); font-size:15px; margin-bottom:10px; background:var(--bg-elevated); color:var(--ink);">
-      <button class="btn btn-primary" style="width:100%;" data-admin-action="signin">Sign in</button>
-      <button class="btn btn-ghost" style="width:100%; margin-top:8px;" data-admin-action="forgot-password">Forgot password?</button>
-    </div>`;
-  } else {
-    const tabs = `<div class="row" style="gap:8px; margin-bottom:14px; flex-wrap:wrap;">
-      <button class="btn btn-sm ${adminTab==='inbox'?'btn-primary':'btn-ghost'}" data-admin-action="tab-inbox">Inbox${adminChats ? ` (${adminChatTodoList().length})` : ''}</button>
-      <button class="btn btn-sm ${adminTab==='users'?'btn-primary':'btn-ghost'}" data-admin-action="tab-users">Users${adminUsers ? ` (${adminUsersBase().length})` : ''}</button>
-      <button class="btn btn-sm ${adminTab==='contacts'?'btn-primary':'btn-ghost'}" data-admin-action="tab-contacts">Contacts (${(adminContacts||[]).length})</button>
-      <button class="btn btn-sm ${adminTab==='students'?'btn-primary':'btn-ghost'}" data-admin-action="tab-students">Student Panels (${(adminStudents||[]).length})</button>
-      <button class="btn btn-sm ${adminTab==='access'?'btn-primary':'btn-ghost'}" data-admin-action="tab-access">Course access${adminAccessList ? ` (${adminAccessList.length})` : ''}</button>
-      <button class="btn btn-sm ${adminTab==='reviews'?'btn-primary':'btn-ghost'}" data-admin-action="tab-reviews">Writing reviews${adminReviews ? ` (${adminReviewNewCount()} new)` : ''}</button>
-      <button class="btn btn-sm ${adminTab==='waitlist'?'btn-primary':'btn-ghost'}" data-admin-action="tab-waitlist">Waiting list${adminWaitlist ? ` (${adminWaitlistWaiting().length})` : ''}</button>
-    </div>`;
-    const body = adminTab === 'inbox' ? renderAdminInboxTab() : adminTab === 'waitlist' ? renderAdminWaitlistTab() : adminTab === 'reviews' ? renderAdminReviewsTab() : adminTab === 'contacts' ? renderAdminContactsTab() : adminTab === 'users' ? renderAdminUsersTab() : adminTab === 'access' ? renderAdminAccessTab() : renderAdminStudentsTab();
-    html = `<div class="screen" style="padding-top:24px; max-width:480px; margin:0 auto;">
-      <div class="row between" style="margin-bottom:14px;">
-        <h1 class="display" style="font-size:20px;">Admin</h1>
-        <button class="btn btn-ghost" data-admin-action="signout">Sign out</button>
-      </div>
-      ${renderAdminInboxBanner()}
-      ${renderAdminWaitlistBanner()}
-      ${tabs}
-      ${body}
-    </div>`;
+  if(!user) html = renderAdminSignIn();
+  else {
+    const todo = adminTodo(), s = adminSection(adminTab);
+    if(!s) adminTab = 'home';
+    const main = s ? renderAdminSectionPage(s, todo) : renderAdminHome(todo);
+    html = `<div class="ap">${renderAdminNav(todo)}<main class="ap-main">${main}</main></div>`;
   }
   root.innerHTML = html;
   bindAdminActions(root);
 }
 function renderAdminContactsTab(){
-  if(adminLoading) return `<p style="text-align:center; padding:20px; color:var(--ink-faint);">Loading…</p>`;
-  const rows = (adminContacts||[]).map(c=>`
-    <div class="item-row" style="align-items:flex-start;">
-      <div class="item-body">
-        <div class="item-title">${esc(c.name||'—')}${c.source==='student-club' ? ' <span class="pill" style="background:var(--cat-diag-soft); color:var(--cat-diag);">Club</span>' : ''}</div>
-        <div class="item-sub">${esc(c.level||'')} ${c.goal ? '· '+esc(c.goal) : ''}</div>
-        <div class="item-sub">${esc(c.phone||'')}</div>
-      </div>
-      <div class="stack" style="gap:6px; flex:0 0 auto;">
-        <a class="btn btn-whatsapp btn-sm" target="_blank" rel="noopener" href="${waLinkTo(c.phone, 'Hi '+c.name+'! This is your Farin English teacher.')}">${ICONS.whatsapp}</a>
-        <button class="btn btn-ghost btn-sm" style="color:var(--error); border-color:var(--error-soft);" data-admin-action="delete-contact" data-id="${esc(c.id)}">✕</button>
-      </div>
-    </div>`).join('') || '<p style="padding:20px; text-align:center; color:var(--ink-faint);">No contacts yet.</p>';
-  return `<div class="stack" style="gap:8px;">${rows}</div>`;
+  if(adminLoading && !adminContacts) return `<p class="ap-empty">Loading…</p>`;
+  const before = adminSeenBefore('contacts');
+  // A contact left from inside the app carries the learner's recovery code: "Profile" opens that learner in Users.
+  const rows = (adminContacts||[]).map(c=>{
+    const person = c.recoveryCode ? (adminPeople || []).find(p=>p.accounts.some(u=>u.id === c.recoveryCode)) : null;
+    const fresh = adminSeen && Number(c.createdAt) > before;
+    return `<div class="ap-person static">
+      ${adminAvatarHtml(c.name, person ? adminGoalKey(person.profile.goals) : '', null)}
+      <span class="ap-p-main">
+        <span class="ap-p-name"><b dir="auto">${esc(c.name||'—')}</b>${fresh ? '<span class="ap-tag new">New</span>' : ''}${c.source==='student-club' ? '<span class="ap-tag purple">Club</span>' : ''}</span>
+        <span class="ap-p-meta">${esc([c.level, c.goal].filter(Boolean).join(' · ') || '—')}${c.createdAt ? ' · ' + esc(adminAgo(Number(c.createdAt))) : ''}</span>
+        <span class="ap-p-meta" dir="ltr" style="text-align:start;">${esc(c.phone||'')}</span>
+      </span>
+      <span class="ap-acts">
+        ${person ? `<button class="ap-link" data-admin-action="ap-open-learner" data-id="${esc(person.key)}">Profile</button>` : ''}
+        <a class="btn btn-whatsapp btn-sm" target="_blank" rel="noopener" aria-label="WhatsApp" href="${esc(waLinkTo(c.phone, 'Hi '+(c.name||'')+'! This is your Farin English teacher.'))}">${ICONS.whatsapp}</a>
+        <button class="btn btn-ghost btn-sm" style="color:var(--error); border-color:var(--error-soft);" aria-label="Delete contact" data-admin-action="delete-contact" data-id="${esc(c.id)}">✕</button>
+      </span>
+    </div>`;
+  }).join('') || '<p class="ap-empty">No contacts yet.</p>';
+  return `<div class="ap-list">${rows}</div>`;
 }
 function saveStudentRoadmap(course, code, roadmap, onDone){
   const coll = STUDENT_COLLECTION[course==='es'?'es':'en'];
@@ -37013,14 +37392,14 @@ function renderAdminStudentsTab(){
     const activeCourse = courses.find(c=>c.id===adminActiveCourseId) || null;
     const visibleRoadmap = activeCourse ? (activeCourse.sessionIds||[]).map(id=>roadmap.find(r=>r.id===id)).filter(Boolean) : roadmap;
     const courseDone = activeCourse ? (activeCourse.sessionIds||[]).filter(id=>{ const r = roadmap.find(x=>x.id===id); return r && r.done; }).length : 0;
-    return `<div class="card-flat" style="background:linear-gradient(180deg, var(--cat-diag-soft) 0%, var(--bg-elevated) 90px);">
-      <div style="display:flex; align-items:center; gap:10px; margin-bottom:14px;">
-        <div style="width:42px; height:42px; border-radius:50%; background:var(--cat-diag-soft); display:flex; align-items:center; justify-content:center; font-size:19px; flex:0 0 auto;">👤</div>
-        <div>
-          <div style="font-weight:800; font-size:16px;">${esc(s.name||s.code||'New student')}</div>
-          <div style="font-size:11.5px; color:var(--ink-faint);">${adminCourseLabel(s.course)} · pass: ${esc(s.code||'—')}</div>
-        </div>
-      </div>
+    const hwToSend = adminStudentHomeworkToSend(s);
+    return `<button class="back" data-admin-action="cancel-edit-student">${ICONS.back} All students</button>
+    <header class="fs-hero ap-mini" style="margin:12px 0 18px;">
+      <span class="fs-pill">1-to-1 · ${esc(adminCourseLabel(s.course))}</span>
+      <h1 class="display"><bdi>${esc(s.name||s.code||'New student')}</bdi><span class="dot">.</span></h1>
+      <p class="fs-sub">${s.isNew ? 'Fill in the basics, then tap Save.' : 'Pass ' + esc(s.code||'—') + ' · ' + esc(s.level||'no level yet') + ' · ' + (Number(s.package)||8) + ' sessions a month' + (hwToSend ? ' · ' + hwToSend + ' homework to send' : '')}</p>
+    </header>
+    <div class="card-flat">
       <div class="row" style="gap:8px; margin-bottom:12px;">
         <button type="button" class="btn btn-sm ${adminStudentTab==='roadmap'?'btn-primary':'btn-ghost'}" style="flex:1;" data-admin-action="admin-student-tab" data-tab="roadmap">🗺️ Roadmap</button>
         <button type="button" class="btn btn-sm ${adminStudentTab==='info'?'btn-primary':'btn-ghost'}" style="flex:1;" data-admin-action="admin-student-tab" data-tab="info">👤 Student Info</button>
@@ -37179,19 +37558,24 @@ function renderAdminStudentsTab(){
         <button class="btn btn-sm btn-ghost" data-admin-action="retry-load-students">↻ Retry</button>
       </div>`
     : '';
-  const rows = (adminStudents||[]).map(s=>`
-    <button class="item-row" data-admin-action="edit-student" data-code="${esc(s.code)}" data-course="${esc(s.course||'en')}">
-      <div class="item-body">
-        <div class="item-title">${esc(s.name||s.code)}</div>
-        <div class="item-sub">${esc(s.level||'—')} · pass: ${esc(s.code)} · ${Number(s.package)||8}/mo${s.freezeUntil?` · ❄️ ${esc(s.freezeUntil)}`:''}</div>
-      </div>
-      <span class="pill" style="background:${s.course==='es'?'var(--cat-lis-soft)':'var(--cat-story-soft)'}; color:${s.course==='es'?'var(--cat-lis)':'var(--cat-story)'}; flex:0 0 auto;">${s.course==='es'?'🇪🇸 ES':'🇬🇧 EN'}</span>
-      <span class="chevron">${ICONS.chev}</span>
-    </button>`).join('') || '<p style="padding:20px; text-align:center; color:var(--ink-faint);">No student panels yet.</p>';
-  return `<div class="stack" style="gap:8px;">
+  // Homework waiting to be sent first, then by name.
+  const list = (adminStudents||[]).slice().sort((a,b)=>(adminStudentHomeworkToSend(b) ? 1 : 0) - (adminStudentHomeworkToSend(a) ? 1 : 0) || String(a.name||a.code).localeCompare(String(b.name||b.code)));
+  const rows = list.map(s=>{
+    const rm = Array.isArray(s.roadmap) ? s.roadmap : [], done = rm.filter(r=>r && r.done).length, hw = adminStudentHomeworkToSend(s);
+    return `<button class="ap-person" data-admin-action="edit-student" data-code="${esc(s.code)}" data-course="${esc(s.course||'en')}">
+      ${adminAvatarHtml(s.name||s.code, adminGoalKey(studentGoalKeys(s)), null)}
+      <span class="ap-p-main">
+        <span class="ap-p-name"><b dir="auto">${esc(s.name||s.code)}</b>${hw ? `<span class="ap-tag new">${hw} homework to send</span>` : ''}${s.freezeUntil ? '<span class="ap-tag">❄️ paused</span>' : ''}</span>
+        <span class="ap-p-meta">${s.course==='es'?'Spanish':'English'} · ${esc(s.level||'no level')} · ${Number(s.package)||8} a month · pass ${esc(s.code)}</span>
+      </span>
+      ${rm.length ? adminRingHtml(done, rm.length) : ''}
+      <span class="ap-chev">${ICONS.chev}</span>
+    </button>`;
+  }).join('') || '<p class="ap-empty">No 1-to-1 students yet.</p>';
+  return `<div class="stack" style="gap:14px;">
     ${errBanner}
-    <button class="btn btn-primary" data-admin-action="add-student">+ Add student</button>
-    ${rows}
+    <button class="btn btn-primary fs-cta" style="align-self:flex-start;" data-admin-action="add-student">Add a student </button>
+    <div class="ap-list">${rows}</div>
   </div>`;
 }
 function bindAdminActions(root){
@@ -37200,16 +37584,24 @@ function bindAdminActions(root){
   root.querySelectorAll('[data-admin-action]').forEach(el=>{
     el.onclick = function(){
       const action = el.dataset.adminAction;
+      // Admin v2 (2026-11-13): Home, section pages, a learner's profile. Every older 'tab-…' action opens its section page.
+      if(action === 'ap-home'){ adminTab = 'home'; renderAdminPage(); window.scrollTo(0, 0); return; }
+      if(action === 'ap-go'){ adminGo(el.dataset.section, el.dataset.filter || ''); return; }
+      if(action.indexOf('tab-') === 0){ adminGo(action.slice(4)); return; }
+      if(action === 'ap-user-back'){ adminUserOpen = null; renderAdminPage(); window.scrollTo(0, adminUsersScrollY); return; }
+      if(action === 'ap-contacted'){ adminToggleContacted(el.dataset.id); return; }
+      if(action === 'ap-open-learner'){ adminTab = 'users'; adminUserOpen = el.dataset.id; adminUsersScrollY = 0; renderAdminPage(); window.scrollTo(0, 0); return; }
+      if(action === 'ap-open-review'){ adminGo('reviews', 'all'); if(adminReviewOpen !== el.dataset.id) adminReviewOpenItem(el.dataset.id); return; }
       if(action === 'signin'){
         const email = document.getElementById('admin-email').value.trim();
         const pw = document.getElementById('admin-password').value;
         adminError = '';
         adminResetStatus = '';
+        try{ if(email) localStorage.setItem('farin-admin-email', email); }catch(e){}
         firebase.auth().setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(()=>{}).then(()=>{
           return firebase.auth().signInWithEmailAndPassword(email, pw);
         }).then(()=>{
-          loadAdminContacts();
-          loadAdminUsers();
+          adminLoadAll();
         }).catch(err=>{
           adminError = err.message || String(err);
           renderAdminPage();
@@ -37232,7 +37624,7 @@ function bindAdminActions(root){
         });
       } else if(action === 'signout'){
         firebase.auth().signOut().then(()=>{
-          adminContacts = null; adminStudents = null; adminTab = 'inbox'; adminChats = null; adminChatOpen = null; adminChatsSig = ''; adminChatCleaned = false; adminEditingStudent = null; adminUsers = null; adminUserOpen = null; adminUsersShowHidden = false; adminAccessList = null; adminAccessLast = null; adminReviews = null; adminReviewOpen = null; adminReviewNote = ''; adminWaitlist = null; adminWaitlistError = ''; adminWaitlistFilter = 'all';
+          adminContacts = null; adminStudents = null; adminTab = 'home'; adminLoadedFor = ''; adminSeen = null; adminSeenPrev = {}; adminContacted = []; adminUsersFilter = 'all'; adminChats = null; adminChatOpen = null; adminChatsSig = ''; adminChatCleaned = false; adminEditingStudent = null; adminUsers = null; adminUserOpen = null; adminUsersShowHidden = false; adminAccessList = null; adminAccessLast = null; adminReviews = null; adminReviewOpen = null; adminReviewNote = ''; adminWaitlist = null; adminWaitlistError = ''; adminWaitlistFilter = 'all';
           renderAdminPage();
         });
       } else if(action === 'tab-users'){
@@ -37249,8 +37641,11 @@ function bindAdminActions(root){
         adminUsersSort = el.dataset.sort;
         renderAdminPage();
       } else if(action === 'toggle-user'){
-        adminUserOpen = adminUserOpen === el.dataset.id ? null : el.dataset.id;
-        refreshAdminUsersList();
+        // Admin v2: a learner opens on a profile page of their own (Back returns to the same place in the list).
+        adminUsersScrollY = window.scrollY;
+        adminUserOpen = el.dataset.id;
+        renderAdminPage();
+        window.scrollTo(0, 0);
       } else if(action === 'users-show-hidden'){
         adminUsersShowHidden = !adminUsersShowHidden;
         adminUserOpen = null;
@@ -37597,6 +37992,10 @@ function bindAdminActions(root){
   });
   const usersSearch = root.querySelector('#admin-users-search');
   if(usersSearch) usersSearch.oninput = function(){ adminUsersQuery = usersSearch.value; adminUserOpen = null; refreshAdminUsersList(); };
+  const usersSort = root.querySelector('#admin-users-sort');
+  if(usersSort) usersSort.onchange = function(){ adminUsersSort = usersSort.value; refreshAdminUsersList(); };
+  const adminPw = root.querySelector('#admin-password');   // Enter signs in
+  if(adminPw) adminPw.onkeydown = function(e){ if(e.key === 'Enter'){ const b = root.querySelector('[data-admin-action="signin"]'); if(b) b.click(); } };
 }
 function loadAdminContacts(){
   adminLoading = true;
@@ -37787,11 +38186,12 @@ function adminToggleUserHidden(key){
   }).catch(err=>{ alert("Couldn't save: " + (err.message || err)); });
 }
 function adminUsersFiltered(){
-  const now = Date.now(), q = adminUsersQuery.trim().toLowerCase();
+  const now = Date.now(), q = adminUsersQuery.trim().toLowerCase(), before = adminSeenBefore('users');
   const pass = {
     all: ()=>true, login: p=>p.hasLogin, en: p=>p.app==='en', es: p=>p.app==='es',
     today: p=>now - p.lastSeen < DAY_MS, week: p=>now - p.lastSeen < 7*DAY_MS,
-    gone: p=>now - p.lastSeen >= 14*DAY_MS, contact: adminUserWantsContact
+    gone: p=>now - p.lastSeen >= 14*DAY_MS, contact: adminUserWantsContact,
+    new: p=>!!p.joined && p.joined > before
   }[adminUsersFilter] || (()=>true);
   const sorters = {
     recent: (a,b)=>b.lastSeen - a.lastSeen,
@@ -37800,133 +38200,168 @@ function adminUsersFiltered(){
     name: (a,b)=>String(a.profile.name||'').localeCompare(String(b.profile.name||''))
   };
   const matches = p=>!q || p.accounts.some(u=>[u.profile.name, u.profile.loginName, u.id, u.profile.contactPhone, u.profile.clubCode].some(v=>v && String(v).toLowerCase().indexOf(q) !== -1));
-  return adminUsersBase().filter(p=>pass(p) && matches(p)).sort(sorters[adminUsersSort] || sorters.recent);
+  const list = adminUsersBase().filter(p=>pass(p) && matches(p)).sort(sorters[adminUsersSort] || sorters.recent);
+  // "Contact me": the ones you haven't marked as contacted come first.
+  return adminUsersFilter === 'contact' ? list.filter(p=>!adminPersonContacted(p)).concat(list.filter(adminPersonContacted)) : list;
 }
+function adminPersonByKey(key){ return (adminPeople || []).find(p=>p.key === key) || null; }
 function renderAdminUsersTab(){
-  if(adminUsersLoading && !adminUsers) return `<p style="text-align:center; padding:20px; color:var(--ink-faint);">Loading users…</p>`;
-  if(adminUsersError) return `<div style="background:var(--error-soft); border-radius:14px; padding:10px 13px;">
-      <p style="color:var(--error); font-size:12.5px; font-weight:600; margin:0 0 8px;">Couldn't load users — ${esc(adminUsersError)}</p>
-      <button class="btn btn-sm btn-ghost" data-admin-action="reload-users">↻ Retry</button>
+  if(adminUsersLoading && !adminUsers) return `<p class="ap-empty">Loading learners…</p>`;
+  if(adminUsersError) return `<div class="ap-card" style="background:var(--error-soft); border-color:transparent;">
+      <p style="color:var(--error); font-size:13px; font-weight:700; margin:0 0 10px;">Couldn't load learners: ${esc(adminUsersError)}</p>
+      <button class="btn btn-sm btn-ghost" data-admin-action="reload-users">↻ Try again</button>
     </div>`;
-  const all = adminUsersBase(), now = Date.now();
+  if(adminUserOpen){ const p = adminPersonByKey(adminUserOpen); if(p) return renderAdminUserProfile(p); adminUserOpen = null; }
+  const all = adminUsersBase(), now = Date.now(), before = adminSeenBefore('users');
   const hiddenCount = (adminPeople||[]).filter(p=>p.hidden).length;
-  const records = all.reduce((n,p)=>n + p.accounts.length, 0);
   const within = ms=>all.filter(p=>now - p.lastSeen < ms).length;
-  const tile = (n, label, color)=>`<div style="flex:1 1 30%; min-width:92px; background:var(--bg-elevated); border:1.5px solid var(--border); border-radius:14px; padding:10px 12px;">
-      <div style="font-size:22px; font-weight:800; color:${color||'var(--ink)'}; line-height:1.1;">${n}</div>
-      <div style="font-size:11.5px; color:var(--ink-soft); font-weight:600; margin-top:2px;">${label}</div>
-    </div>`;
-  const byLevel = {};
-  all.forEach(p=>{ const l = p.profile.level || '?'; byLevel[l] = (byLevel[l]||0) + 1; });
-  const levels = Object.keys(byLevel).sort().map(l=>`<span class="pill" style="background:var(--bg-sunken); color:var(--ink-soft);">${esc(l)} · ${byLevel[l]}</span>`).join(' ');
-  const chip = (key, label)=>`<button class="btn btn-sm ${adminUsersFilter===key?'btn-primary':'btn-ghost'}" data-admin-action="users-filter" data-filter="${key}">${label}</button>`;
-  const sortChip = (key, label)=>`<button class="btn btn-sm ${adminUsersSort===key?'btn-primary':'btn-ghost'}" style="padding:4px 10px; font-size:12px;" data-admin-action="users-sort" data-sort="${key}">${label}</button>`;
-  return `<div class="stack" style="gap:10px;">
-    <div class="row" style="gap:6px; flex-wrap:wrap; align-items:center;">
-      <button class="btn btn-sm ${adminUsersShowHidden?'btn-ghost':'btn-primary'}" data-admin-action="users-show-hidden" ${adminUsersShowHidden ? '' : 'disabled'}>Learners (${(adminPeople||[]).length - hiddenCount})</button>
-      ${hiddenCount || adminUsersShowHidden ? `<button class="btn btn-sm ${adminUsersShowHidden?'btn-primary':'btn-ghost'}" data-admin-action="users-show-hidden">🙈 Hidden (${hiddenCount})</button>` : ''}
+  const nNew = adminSeen ? all.filter(p=>p.joined && p.joined > before).length : 0;
+  const nWant = all.filter(p=>p.contact && !adminPersonContacted(p)).length;
+  const tile = (n, label)=>`<div class="ap-tile"><span>${label}</span><b>${n}</b></div>`;
+  const chip = (key, label, n)=>`<button class="ap-chip${adminUsersFilter===key ? ' on' : ''}" data-admin-action="users-filter" data-filter="${key}">${label}${n ? `<i>${n}</i>` : ''}</button>`;
+  const sorts = [['recent','Last seen'],['new','Newest'],['xp','Most XP'],['name','Name']];
+  return `<div class="stack" style="gap:16px;">
+    ${adminUsersShowHidden
+      ? `<div class="ap-card" style="display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;"><span style="font-size:13.5px; font-weight:700;">🙈 Hidden learners (${hiddenCount}). Open one to show it in the list again.</span><button class="ap-chip" data-admin-action="users-show-hidden">Back to all learners</button></div>`
+      : `<div class="ap-tiles">${tile(all.length, 'Learners')}${tile(within(DAY_MS), 'Active today')}${tile(within(7*DAY_MS), 'Active 7 days')}${tile(all.filter(p=>p.joined && now - p.joined < 7*DAY_MS).length, 'New this week')}</div>`}
+    <label class="ap-search">${ICONS.search}<input id="admin-users-search" type="search" value="${esc(adminUsersQuery)}" placeholder="Search name, phone or recovery code" aria-label="Search learners"></label>
+    <div class="ap-chips">${chip('all', 'All')}${chip('new', 'New', nNew)}${chip('contact', 'Contact me', nWant)}${chip('today', 'Today')}${chip('week', '7 days')}${chip('gone', 'Gone 14d+')}${chip('login', '🔑 Password')}${chip('en', 'English')}${chip('es', 'Spanish')}</div>
+    <div class="ap-tools">
+      <label>Sort <select id="admin-users-sort">${sorts.map(([k, l])=>`<option value="${k}"${adminUsersSort === k ? ' selected' : ''}>${l}</option>`).join('')}</select></label>
+      <span class="row" style="gap:2px; flex-wrap:wrap;">
+        ${hiddenCount && !adminUsersShowHidden ? `<button class="ap-link" data-admin-action="users-show-hidden">🙈 Hidden (${hiddenCount})</button>` : ''}
+        <button class="ap-link" data-admin-action="users-csv" title="Download the list below as CSV">⬇ CSV</button>
+        <button class="ap-link" data-admin-action="reload-users">${adminUsersLoading ? '…' : '↻ Reload'}</button>
+      </span>
     </div>
-    <p style="font-size:12px; color:var(--ink-faint); margin:-2px 0 0;">${adminUsersShowHidden ? 'Hidden learners. Open one and tap “Show in list again” to bring it back.' : 'One row per learner with everything inside it. A learner who comes back on another day, another phone or after logging out is the same row, never a second one (the records are listed inside). 🔑 = has a name + password login.'}</p>
-    <div class="row" style="gap:8px; flex-wrap:wrap;">
-      ${tile(all.length, adminUsersShowHidden ? 'Hidden' : 'Learners')}
-      ${tile(within(DAY_MS), 'Active today', 'var(--success)')}
-      ${tile(within(7*DAY_MS), 'Active 7 days', 'var(--accent)')}
-      ${tile(within(30*DAY_MS), 'Active 30 days')}
-      ${tile(all.filter(p=>p.joined && now - p.joined < 7*DAY_MS).length, 'New this week', 'var(--cat-story)')}
-      ${tile(all.filter(adminUserWantsContact).length, 'Want contact', 'var(--cat-diag)')}
-    </div>
-    <div style="font-size:12px; color:var(--ink-soft); line-height:1.9;">
-      English ${all.filter(p=>p.app==='en').length} · Spanish ${all.filter(p=>p.app==='es').length} · with password ${all.filter(p=>p.hasLogin).length} · ${records} account record${records===1?'':'s'} &nbsp; ${levels}
-    </div>
-    <input id="admin-users-search" type="search" value="${esc(adminUsersQuery)}" placeholder="Search name, phone, recovery code…" style="width:100%; box-sizing:border-box; padding:10px 13px; border-radius:12px; border:1.5px solid var(--border); font-size:14px; background:var(--bg-elevated); color:var(--ink);">
-    <div class="row" style="gap:6px; flex-wrap:wrap;">
-      ${chip('all','All')}${chip('today','Today')}${chip('week','7 days')}${chip('gone','Gone 14d+')}${chip('contact','Want contact')}${chip('login','🔑 Password')}${chip('en','EN')}${chip('es','ES')}
-    </div>
-    <div class="row between" style="align-items:center; gap:6px; flex-wrap:wrap;">
-      <div class="row" style="gap:4px; align-items:center; flex-wrap:wrap;">
-        <span style="font-size:12px; color:var(--ink-faint); margin-right:2px;">Sort</span>
-        ${sortChip('recent','Last seen')}${sortChip('new','Newest')}${sortChip('xp','XP')}${sortChip('name','Name')}
-      </div>
-      <div class="row" style="gap:6px;">
-        <button class="btn btn-sm btn-ghost" data-admin-action="users-csv" title="Download as CSV">⬇ CSV</button>
-        <button class="btn btn-sm btn-ghost" data-admin-action="reload-users" title="Reload">${adminUsersLoading ? '…' : '↻'}</button>
-      </div>
-    </div>
-    <div id="admin-users-list" class="stack" style="gap:8px;">${renderAdminUsersList()}</div>
+    <div id="admin-users-list" class="ap-list">${renderAdminUsersList()}</div>
   </div>`;
 }
 function renderAdminUsersList(){
   const list = adminUsersFiltered();
-  if(!list.length) return `<p style="padding:20px; text-align:center; color:var(--ink-faint);">${(adminUsers||[]).length ? 'No learners match.' : 'No learners yet.'}</p>`;
-  return `<p style="font-size:12px; color:var(--ink-faint); margin:0;">${list.length} shown</p>` + list.map(p=>{
-    const pf = p.profile, open = adminUserOpen === p.key, rs = p.roadmapStats;
-    const age = Date.now() - p.lastSeen;
-    const dot = `<span title="green: today · pink: this week · grey: longer" style="width:9px; height:9px; border-radius:50%; flex:0 0 auto; background:${age < DAY_MS ? 'var(--success)' : age < 7*DAY_MS ? 'var(--cat-lis)' : 'var(--border)'};"></span>`;
-    return `<div>
-      <button class="item-row" data-admin-action="toggle-user" data-id="${esc(p.key)}" style="margin-bottom:0; width:100%; ${open?'border-radius:14px 14px 0 0;':''}">
-        ${dot}
-        <div class="item-body">
-          <div class="item-title">${esc(pf.name || '(no name)')}${p.hasLogin ? ' 🔑' : ''}${p.accounts.length > 1 ? ` <span class="pill" style="background:var(--bg-sunken); color:var(--ink-soft);" title="account records merged into this row">${p.accounts.length} records</span>` : ''}${p.joined && Date.now() - p.joined < 7*DAY_MS ? ' <span class="pill" style="background:var(--success-soft); color:var(--success);">new</span>' : ''}</div>
-          <div class="item-sub">${p.app==='es'?'ES':'EN'} · ${esc(pf.level||'—')} · seen ${adminAgo(p.lastSeen)} · ${p.activity.days ? p.activity.days + ' day' + (p.activity.days===1?'':'s') + ' · ' : ''}🔥${p.streak} · ${p.totals.xp} XP${rs ? ` · map ${rs.done}/${rs.total}` : ''}</div>
-        </div>
-        <span class="chevron" style="transform:rotate(${open?'90deg':'0deg'});">${ICONS.chev}</span>
-      </button>
-      ${open ? renderAdminUserDetail(p) : ''}
-    </div>`;
+  if(!list.length) return `<p class="ap-empty">${(adminUsers||[]).length ? 'No learners match.' : 'No learners yet.'}</p>`;
+  const before = adminSeenBefore('users'), now = Date.now();
+  return `<p class="ap-count-line">${list.length} shown</p>` + list.map(p=>{
+    const pf = p.profile, rs = p.roadmapStats;
+    const tags = (adminSeen && p.joined && p.joined > before ? '<span class="ap-tag new">New</span>' : '')
+      + (p.contact ? (adminPersonContacted(p) ? '<span class="ap-tag ok">Contacted</span>' : '<span class="ap-tag new">Contact me</span>') : '')
+      + (p.hasLogin ? '<span class="ap-tag" title="name + password login">🔑</span>' : '');
+    return `<button class="ap-person" data-admin-action="toggle-user" data-id="${esc(p.key)}">
+      ${adminAvatarHtml(pf.name, adminGoalKey(pf.goals && pf.goals.length ? pf.goals : pf.motivationTag), now - p.lastSeen)}
+      <span class="ap-p-main">
+        <span class="ap-p-name"><b dir="auto">${esc(pf.name || '(no name)')}</b>${tags}</span>
+        <span class="ap-p-meta">${p.app==='es' ? 'ES' : 'EN'} · ${esc(pf.level||'—')} · seen ${adminAgo(p.lastSeen)}${p.activity.days ? ' · ' + p.activity.days + ' day' + (p.activity.days===1 ? '' : 's') : ''} · 🔥 ${p.streak} · ${p.totals.xp} XP</span>
+      </span>
+      ${rs && rs.total ? adminRingHtml(rs.done, rs.total) : ''}
+      <span class="ap-chev">${ICONS.chev}</span>
+    </button>`;
   }).join('');
 }
-function renderAdminUserDetail(p){
+// Everything else the admin knows about this learner: their Inbox chats and writing reviews (same account hash), course passwords
+// (password id from a review, issued from one of their chats, same name in the same app, or same phone), waiting-list rows (same
+// phone) and contact-form entries (same recovery code).
+function adminPersonLinks(p){
+  const hashes = p.accounts.map(u=>u.hash).filter(Boolean), ids = p.accounts.map(u=>u.id);
+  const names = p.accounts.map(u=>normalizeLoginName(u.profile.loginName || u.profile.name)).filter(Boolean);
+  const mine = d=>!!(d && d.learner && d.learner.accountHash && hashes.indexOf(d.learner.accountHash) !== -1);
+  const chats = (adminChats || []).filter(mine), reviews = (adminReviews || []).filter(mine);
+  const phones = [p.contact && p.contact.profile.contactPhone].concat(chats.map(d=>d.learner.phone), reviews.map(d=>d.learner.phone))
+    .filter(Boolean).map(adminWaitlistDigits).filter(x=>x.length >= 6);
+  const samePhone = ph=>{ const d = adminWaitlistDigits(ph); return d.length >= 6 && phones.indexOf(d) !== -1; };
+  const accessIds = reviews.map(d=>d.learner.accessId).filter(Boolean), chatIds = chats.map(d=>d.id);
+  const access = (adminAccessList || []).filter(d=>accessIds.indexOf(d.id) !== -1 || (d.chat && chatIds.indexOf(d.chat) !== -1)
+    || (d.app === p.app && names.indexOf(normalizeLoginName(d.name)) !== -1) || samePhone(d.phone));
+  const wait = adminWaitlistRows().filter(r=>samePhone(r.phone));
+  const contacts = (adminContacts || []).filter(c=>c.recoveryCode && ids.indexOf(c.recoveryCode) !== -1);
+  const phone = (p.contact && p.contact.profile.contactPhone) || (chats.find(d=>d.learner.phone) || {learner:{}}).learner.phone || (access.find(d=>d.phone) || {}).phone || (contacts.find(c=>c.phone) || {}).phone || '';
+  return {chats, reviews, access, wait, contacts, phone};
+}
+// A learner's profile page (Admin v2, 2026-11-13): hero in the goal colour, the three numbers, then To do (contact), Courses & messages,
+// Progress, Goals & level, Activity, Account + records. Same data as the old row, nothing new is stored except "contacted".
+function renderAdminUserProfile(p){
   const u = p.main, pf = p.profile, pr = p.progress, a = pf.activity || {}, act = p.activity, rs = p.roadmapStats, t = p.totals, many = p.accounts.length > 1;
-  const row = (k, v)=>`<div class="row between" style="gap:10px; padding:3px 0; font-size:13px; border-bottom:1px solid var(--border-soft);"><span style="color:var(--ink-soft);">${k}</span><span style="font-weight:600; text-align:right; word-break:break-word;">${v}</span></div>`;
-  const head = t=>`<div class="eyebrow" style="margin:12px 0 4px;">${t}</div>`;
+  const goals = (pf.goals && pf.goals.length ? pf.goals : (pf.motivationTag ? [pf.motivationTag] : []));
+  const goal = adminGoalKey(goals), L = adminPersonLinks(p);
+  const kv = (k, v)=>`<div class="ap-kv"><span>${k}</span><b>${v}</b></div>`;
+  const faint = s=>`<span style="color:var(--ink-faint); font-weight:600;">${s}</span>`;
   const list = v=>Array.isArray(v) && v.length ? esc(v.join(', ')) : '—';
-  const faint = s=>`<span style="color:var(--ink-faint); font-weight:500;">${s}</span>`;
   const uiName = {en:'English', tr:'Turkish', fa:'Persian', es:'Spanish'};
-  const sum = (k, label)=>many ? `${t[k]} ${faint('(' + label + ' ' + adminUserCount(u,k) + ')')}` : String(t[k]);
-  return `<div style="border:1.5px solid var(--border); border-top:none; border-radius:0 0 14px 14px; padding:4px 14px 14px; margin-bottom:4px;">
-    ${head('Account')}
-    ${row('App', p.app==='es' ? 'Spanish' : 'English')}
-    ${row('Password login', p.loginNames.length ? '✓ as ' + p.loginNames.map(n=>'“' + esc(n) + '”').join(', ') : pf.passwordPending ? 'pending (offline when set)' : '—')}
-    ${pf.clubCode ? row('Club pass', esc(pf.clubCode)) : ''}
-    ${row('Joined', p.joined ? adminDate(p.joined) : faint('before tracking'))}
-    ${row('Recovery code', `<code>${esc(u.id)}</code>${many ? ' ' + faint('newest of ' + p.accounts.length) : ''}`)}
-    ${head('Activity')}
-    ${row('Last seen', p.lastSeen ? adminAgo(p.lastSeen) + ' · ' + adminDate(p.lastSeen) : '—')}
-    ${row('Last backup', u.savedAt ? new Date(Number(u.savedAt)).toLocaleString('en-GB') : '—')}
-    ${row('Last active day', esc(pr.lastActiveDate || '—'))}
-    ${row('Days active / app opens', act.days ? `${act.days} / ${act.opens} ${faint('since ' + adminDate(act.first) + (many ? ', all records' : ''))}` : faint('not tracked yet'))}
-    ${row('Streak', '🔥 ' + (Number(pr.streak)||0) + (many && p.streak > (Number(pr.streak)||0) ? ' ' + faint('(best record ' + p.streak + ')') : ''))}
-    ${row('Device', a.os ? esc(a.os + ' · ' + (a.mode||'browser')) : '—')}
-    ${row('App language', a.ui ? esc(uiName[a.ui] || a.ui) : '—')}
-    ${head('Learner')}
-    ${row('Level', esc((pf.level||'—') + (pf.levelStage ? ' · stage ' + pf.levelStage : '')))}
-    ${row('Goals', list(pf.goals && pf.goals.length ? pf.goals : (pf.motivationTag ? [pf.motivationTag] : [])))}
-    ${row('Learner type', esc(pf.learnerType || '—'))}
-    ${row('Priority area', esc(pf.priorityArea || '—'))}
-    ${row('Topics', list(pf.topics))}
-    ${head('Progress' + (many ? ' · all records together' : ''))}
-    ${row('XP', sum('xp', 'newest'))}
-    ${row('Roadmap', rs ? `${rs.done} / ${rs.total} steps` : '—')}
-    ${row('Activities done', sum('sessionsExplored', 'newest'))}
-    ${row('Stories · word sets · scenes', `${t.completedStories} · ${t.completedVocabSets} · ${t.completedScenes}`)}
-    ${row('Grammar traps · games', `${t.completedTraps} · ${t.completedGames}`)}
-    ${row('Reviews · writing · speaking', `${t.reviewsCompleted} · ${t.writingRoundsDone} · ${t.speakingRoundsDone}`)}
-    ${row('Words in review', Object.keys(pr.srs || {}).length)}
-    ${p.contact ? `${head('Contact')}
-    <div class="row between" style="align-items:center; gap:10px;">
-      <span style="font-weight:600;">${esc(p.contact.profile.contactPhone)}</span>
-      <a class="btn btn-whatsapp btn-sm" target="_blank" rel="noopener" href="${waLinkTo(p.contact.profile.contactPhone, 'Hi ' + (pf.name||'') + '! This is your Farin English teacher.')}">${ICONS.whatsapp}</a>
-    </div>` : ''}
-    ${head('Records (' + p.accounts.length + ')')}
-    <p style="font-size:11.5px; color:var(--ink-faint); margin:0 0 4px;">${many ? 'Every account doc this learner has made (new phone, logged out, test redone). Newest first; the numbers above add them all up.' : 'This learner has one account doc.'}</p>
-    ${p.accounts.map((o,i)=>{
-      const oa = o.profile.activity || {};
-      return row(`<code>${esc(o.id)}</code>${o.hasLogin ? ' 🔑' : ''}${i===0 && many ? ' ' + faint('newest') : ''}`,
-        `${o.joined ? adminDate(o.joined) : '?'} → ${adminDate(o.lastSeen)} ${faint('·')} ${esc(o.profile.level||'—')} · ${adminUserCount(o,'xp')} XP · ${adminUserCount(o,'sessionsExplored')} activities${oa.days ? ' · ' + oa.days + 'd / ' + (oa.opens||0) + ' opens' : ''}${oa.os ? ' · ' + esc(oa.os) : ''}`);
-    }).join('')}
-    <button class="btn btn-sm btn-ghost" style="width:100%; margin-top:14px;" data-admin-action="toggle-hide-user" data-id="${esc(p.key)}">${p.hidden ? '👁 Show in list again' : many ? '🙈 Hide from list (all ' + p.accounts.length + ' records)' : '🙈 Hide from list (test or duplicate account)'}</button>
-    <p style="font-size:11.5px; color:var(--ink-faint); text-align:center; margin:6px 0 0;">Hiding never deletes the account; the learner can still use it.</p>
-  </div>`;
+  const count = (n, label)=>`<div class="ap-count"><b>${n}</b><span>${label}</span></div>`;
+  const sec = (eb, title, body)=>`<section class="ap-sec"><div class="ap-sh"><span class="ap-eb">${eb}</span><h2 class="display">${title}<span class="dot">.</span></h2></div>${body}</section>`;
+  const chev = `<span class="ap-chev">${ICONS.chev}</span>`;
+  const contacted = adminPersonContacted(p);
+  const tags = (p.hasLogin ? '<span class="ap-tag">🔑 Password login</span>' : '')
+    + (p.contact ? (contacted ? '<span class="ap-tag ok">Contacted</span>' : '<span class="ap-tag new">Asked you to contact them</span>') : '')
+    + (many ? `<span class="ap-tag">${p.accounts.length} records</span>` : '')
+    + (p.hidden ? '<span class="ap-tag">🙈 Hidden</span>' : '');
+  const contact = L.phone ? sec(p.contact && !contacted ? 'To do' : 'Contact', 'Get in touch', `<div class="ap-card">
+      ${kv('Phone', `<bdi dir="ltr">${esc(L.phone)}</bdi>`)}
+      ${p.contact ? kv('Asked to be contacted', contacted ? 'Yes · you marked it done' : 'Yes · not contacted yet') : ''}
+      <div class="ap-btns">
+        <a class="ap-cta" target="_blank" rel="noopener" href="${esc(waLinkTo(L.phone, 'Hi ' + (pf.name || '') + '! This is your Farin English teacher.'))}">Message on WhatsApp</a>
+        ${p.contact ? `<button class="btn btn-ghost" data-admin-action="ap-contacted" data-id="${esc(p.key)}"${adminSeen ? '' : ' disabled'}>${contacted ? 'Undo “contacted”' : '✓ Mark as contacted'}</button>` : ''}
+      </div>
+    </div>`) : '';
+  const links = [].concat(
+    L.chats.map(d=>`<button class="ap-linkrow" data-admin-action="chat-open" data-id="${esc(d.id)}"><span class="ap-tag purple">Inbox</span><span class="t"><b>${esc(msgTopicName(d.topic, 'admin'))}</b><small>${esc(msgKindLabel(d.type, d.req, 'admin'))} · ${adminChatTodo(d) ? 'to answer' : 'answered'} · ${esc(adminAgo(Math.max(Number(d.lAt) || 0, Number(d.fAt) || 0) || Number(d.createdAt) || 0))}</small></span>${chev}</button>`),
+    L.access.map(d=>{ const st = adminAccessStatus(d); return `<button class="ap-linkrow" data-admin-action="ap-go" data-section="access"><span class="ap-tag ${st === 'active' ? 'ok' : ''}">Password</span><span class="t"><b>${esc(adminAccessCourse(d.course).title)}</b><small>${esc(st)} · until ${adminDate(d.expiresAt)}${adminAccessDevices(d) > 3 ? ' · ⚠ 4+ devices' : ''}</small></span>${chev}</button>`; }),
+    L.reviews.map(d=>`<button class="ap-linkrow" data-admin-action="ap-open-review" data-id="${esc(d.id)}"><span class="ap-tag ${adminReviewState(d) === 'reviewed' ? 'ok' : 'new'}">Writing</span><span class="t"><b>${esc(adminReviewTask(d))}</b><small>${esc(adminReviewState(d))} · sent ${adminDate(d.submittedAt)}</small></span>${chev}</button>`),
+    L.wait.map(r=>`<button class="ap-linkrow" data-admin-action="ap-go" data-section="waitlist"><span class="ap-tag ${r.messaged ? 'ok' : 'new'}">Waiting list</span><span class="t"><b>${esc(r.title)}</b><small>${r.messaged ? 'messaged' : 'still waiting'} · signed up ${adminDate(r.createdAt)}</small></span>${chev}</button>`),
+    L.contacts.map(c=>`<button class="ap-linkrow" data-admin-action="ap-go" data-section="contacts"><span class="ap-tag">Contact</span><span class="t"><b>${c.source === 'student-club' ? 'Student Club form' : 'Left a number'}</b><small>${c.createdAt ? adminDate(Number(c.createdAt)) : '—'}</small></span>${chev}</button>`)
+  );
+  return `<button class="back" data-admin-action="ap-user-back">${ICONS.back} All learners</button>
+    <header class="fs-hero ap-phero" style="margin-top:12px;">
+      <span class="fs-pill">${p.app === 'es' ? 'Spanish' : 'English'} app · ${esc(pf.level || 'no level')}</span>
+      <h1 class="display"><bdi>${esc(pf.name || '(no name)')}</bdi><span class="dot">.</span></h1>
+      <p class="fs-sub">${p.joined ? 'Joined ' + adminDate(p.joined) + ' · ' : ''}seen ${adminAgo(p.lastSeen)}</p>
+      <div class="fs-art" aria-hidden="true" style="--g:${COURSE_GOAL_COLORS[goal]};"><i class="fs-disc"></i><img src="char-${goal}.png" alt="" decoding="async"></div>
+    </header>
+    <div class="lx-stats fs-stats">
+      <div class="lx-stat"><span>Days active</span><b class="display">${act.days || '—'}</b></div>
+      <div class="lx-stat"><span>Streak</span><b class="display">${p.streak}<small>${p.streak === 1 ? 'day' : 'days'}</small></b></div>
+      <div class="lx-stat"><span>XP</span><b class="display">${t.xp}</b></div>
+    </div>
+    ${tags ? `<div class="ap-tagrow">${tags}</div>` : ''}
+    ${contact}
+    ${links.length ? sec('Courses & messages', 'With you', `<div class="ap-card">${links.join('')}</div>`) : ''}
+    ${sec('Progress', 'Roadmap', `<div class="ap-card">
+      <div class="ap-prog">${rs && rs.total ? adminRingHtml(rs.done, rs.total, true) : ''}<div><span class="big">${rs ? rs.done + ' of ' + rs.total + ' steps' : 'Roadmap not shown here'}</span><small>${rs ? 'done on the roadmap' + (many ? ' (newest record)' : '') : 'This learner uses the ' + (p.app === 'es' ? 'Spanish' : 'English') + ' app: open its admin to count the roadmap.'}</small></div></div>
+      <div class="ap-counts">
+        ${count(t.sessionsExplored, 'Activities')}${count(t.completedStories, 'Stories')}${count(t.completedVocabSets, 'Word sets')}
+        ${count(t.completedScenes, 'Scenes')}${count(t.completedTraps, 'Grammar traps')}${count(t.completedGames, 'Games')}
+        ${count(t.reviewsCompleted, 'Reviews')}${count(t.writingRoundsDone, 'Writing')}${count(t.speakingRoundsDone, 'Speaking')}
+      </div>
+      <p class="ap-note">${Object.keys(pr.srs || {}).length} words in review${many ? ' · the numbers add up all ' + p.accounts.length + ' records' : ''}</p>
+    </div>`)}
+    ${sec('About', 'Goals and level', `<div class="ap-goalbox">
+      ${goals.length ? `<div class="ap-goals">${goals.map((g, i)=>`<span class="ap-goal" style="--g:${COURSE_GOAL_COLORS[g] || '#7C5CFC'};"><i>${i + 1}</i>${esc(GOAL_LABELS[g] || g)}</span>`).join('')}</div>` : ''}
+      ${kv('Level', esc((pf.level || '—') + (pf.levelStage ? ' · stage ' + pf.levelStage : '')))}
+      ${kv('Learner type', esc(pf.learnerType || '—'))}
+      ${kv('Priority area', esc(pf.priorityArea || '—'))}
+      ${kv('Topics', list(pf.topics))}
+    </div>`)}
+    ${sec('Activity', 'When they learn', `<div class="ap-card">
+      ${kv('Last seen', p.lastSeen ? adminAgo(p.lastSeen) + ' · ' + adminDate(p.lastSeen) : '—')}
+      ${kv('Last backup', u.savedAt ? esc(new Date(Number(u.savedAt)).toLocaleString('en-GB')) : '—')}
+      ${kv('Last active day', esc(pr.lastActiveDate || '—'))}
+      ${kv('Days active / app opens', act.days ? `${act.days} / ${act.opens} ${faint('since ' + adminDate(act.first) + (many ? ', all records' : ''))}` : faint('not tracked yet'))}
+      ${kv('Device', a.os ? esc(a.os + ' · ' + (a.mode || 'browser')) : '—')}
+      ${kv('App language', a.ui ? esc(uiName[a.ui] || a.ui) : '—')}
+    </div>`)}
+    ${sec('Account', 'Login and records', `<div class="ap-card">
+      ${kv('Password login', p.loginNames.length ? '✓ as ' + p.loginNames.map(n=>'“' + esc(n) + '”').join(', ') : pf.passwordPending ? 'pending (offline when set)' : '—')}
+      ${pf.clubCode ? kv('Club pass', esc(pf.clubCode)) : ''}
+      ${kv('Joined', p.joined ? adminDate(p.joined) : faint('before tracking'))}
+      ${kv('Recovery code', `<code>${esc(u.id)}</code>${many ? ' ' + faint('newest') : ''}`)}
+    </div>
+    <div class="ap-card" style="margin-top:12px;">
+      <span class="ap-eb" style="margin-bottom:4px;">Records (${p.accounts.length})</span>
+      <p class="ap-note" style="margin:0 0 6px;">${many ? 'Every account doc this learner made (new phone, logged out, test redone), newest first. The numbers above add them all up.' : 'This learner has one account doc.'}</p>
+      ${p.accounts.map((o, i)=>{ const oa = o.profile.activity || {};
+        return `<div class="ap-rec"><span class="n">${i + 1}</span><div><b><code>${esc(o.id)}</code>${o.hasLogin ? ' 🔑' : ''}</b>${o.joined ? adminDate(o.joined) : '?'} → ${adminDate(o.lastSeen)} · ${esc(o.profile.level || '—')} · ${adminUserCount(o, 'xp')} XP · ${adminUserCount(o, 'sessionsExplored')} activities${oa.days ? ' · ' + oa.days + 'd / ' + (oa.opens || 0) + ' opens' : ''}${oa.os ? ' · ' + esc(oa.os) : ''}</div></div>`; }).join('')}
+    </div>`)}
+    <button class="btn btn-ghost" style="width:100%; margin-top:32px;" data-admin-action="toggle-hide-user" data-id="${esc(p.key)}">${p.hidden ? '👁 Show in the list again' : many ? '🙈 Hide from the list (all ' + p.accounts.length + ' records)' : '🙈 Hide from the list (test or duplicate account)'}</button>
+    <p class="ap-note" style="text-align:center; margin-top:8px;">Hiding never deletes the account; the learner can still use it.</p>`;
 }
 // Re-renders only the list, so the search box keeps focus while typing.
 function refreshAdminUsersList(){
@@ -38087,7 +38522,7 @@ if(location.hash === '#admin'){
   firebase.auth().setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(()=>{});
   firebase.auth().onAuthStateChanged(function(user){
     adminAuthResolved = true;
-    if(user){ loadAdminContacts(); loadAdminUsers(); adminWaitlistLoad(); adminChatsLoad(); }
+    if(user) adminLoadAll();   // contacts, users, waiting list, inbox chats, reviews, course access, 1-to-1 students, admin-seen
     else renderAdminPage();
   });
   setTimeout(()=>{ if(!adminAuthResolved) renderAdminPage(); }, 4000);

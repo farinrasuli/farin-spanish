@@ -3132,6 +3132,13 @@
   .rl-cult p, .rl-persp p{margin:6px 0 0; font-size:14.5px; line-height:1.55;}
   .rl-persp p{font-weight:700;}
   .rl-yt .yt-card{margin-top:0 !important;}
+  /* pass 3: the story card in three rounds (SPEC §3.6, §11) */
+  .lx-page.lx-story{--lx:var(--cat-story); --lx-soft:var(--cat-story-soft);}
+  .rl-spage{line-height:1.7; font-size:15px;}
+  .rl-spage .story-sent{border-radius:6px; transition:background-color .2s ease;}
+  .rl-spage .story-sent.cur{background:var(--cat-story-soft);}
+  .rl-feel .sp-card{margin-top:0 !important;}
+  .rl-body .story-turn .game-why{margin-bottom:0;}
   /* LESSONS-PLAY-CSS-END */
 </style>
 
@@ -24573,7 +24580,7 @@ function renderVocabSet(id, cardIndex){
    - progress.lessonRounds[set] = {r, d, miss, kept, a1, a2, more, firstPct} keeps the stamps between visits ("Stop here, come back
      later"); numbers and booleans only (the cloud copy takes no nested arrays); removed when the card is done.
    Byte-identical in the English and Spanish apps; every string in en/tr/fa/es, Persian in informal تو. */
-var LESSONS_PLAY = {deck:true, finish:true, studio:true, grammar:true, dialogue:true};
+var LESSONS_PLAY = {deck:true, finish:true, studio:true, grammar:true, dialogue:true, story:true};
 let lpDevOff = null;
 function lpOn(k){
   if(lpDevOff === null){ try{ const q = new URLSearchParams(location.search).get('lessonsplay');
@@ -24688,7 +24695,7 @@ function rlFrameHtml(s, vp, R, scr){
   const label = content ? rlS('rail', {r:r + 1, i:i + 1, k}) : rlS('round', {n:r + 1}) + courseSep() + rlName(r);
   const back = content && R.ph === 'play' ? `<button class="cl-back rl-back" data-action="rl-back">${LANG === 'fa' ? '›' : '‹'} ${L('Back', 'Geri', 'قبلی', 'Atrás')}</button>` : '<span></span>';
   const key = s.id + '|' + r + '|' + R.ph + '|' + (scr.key || ''), fade = key !== rlLastKey; rlLastKey = key;
-  const cat = R.kind === 'g' ? 'lx-gram' : R.kind === 'd' ? 'lx-dlg' : s.category === 'slang' ? 'lx-slang' : 'lx-voc';
+  const cat = R.kind === 'g' ? 'lx-gram' : R.kind === 'd' ? 'lx-dlg' : R.kind === 's' ? 'lx-story' : s.category === 'slang' ? 'lx-slang' : 'lx-voc';
   return `<div class="${fade ? 'fade-in ' : ''}rl-page lx-page ${cat} fs-scr" data-rl="${R.ph}" data-r="${r}" data-screen="${esc(scr.key || '')}">
     <div class="cs-top"><button class="cs-x" data-action="rl-x" aria-label="${esc(L('Close', 'Kapat', 'بستن', 'Cerrar'))}">${COURSE_X_SVG}</button>
       <div class="rl-rail" role="img" aria-label="${esc(label)}">${segs}</div></div>
@@ -24866,7 +24873,8 @@ function rlRoundQuiz(s, R){
 function rlQuizScreen(s, vp, R){ return rlQuizView(rlRoundQuiz(s, R), 'rl-qnext'); }
 // One lesson-quiz item inside a round (renderQuiz's markup without its counters). Used by the word cards (fill / typed) and the grammar
 // card (also built answers, the carry question with its own eyebrow, and "Look again at the rule" after a miss).
-function rlQuizView(q, next){
+function rlQuizView(q, next, o){
+  o = o || {};
   const item = q.questions[q.index], n = q.questions.length, miss = q.miss || [];
   const longOpts = item.options.some(o=>String(o).length > 26);
   const tiles = item.qt === 'fill' && item.options.length === 4 && item.options.every(o=>String(o).length <= 14);
@@ -24877,15 +24885,15 @@ function rlQuizView(q, next){
     ? `<div class="game-tiles rl-tiles2" translate="no">${item.options.map((o, i)=>`<button class="${cls(i, 'game-tile')}" dir="ltr"${dis(i)} data-action="quiz-answer" data-i="${i}">${esc(o)}</button>`).join('')}</div>`
     : `<div class="game-opts" translate="no">${item.options.map((o, i)=>`<button class="${cls(i, 'game-opt' + (longOpts ? ' long' : ''))}" dir="${od(o)}"${dis(i)} data-action="quiz-answer" data-i="${i}">${esc(o)}</button>`).join('')}</div>`;
   const ok = !!(q.results && q.results[q.index] === true);
-  const eye = item.carry ? `<div class="lx-eyebrow rl-eb" dir="${courseTD()}">${esc(carryEyebrow(item.carry))}</div>`
+  const eye = o.noEye ? '' : item.carry ? `<div class="lx-eyebrow rl-eb" dir="${courseTD()}">${esc(carryEyebrow(item.carry))}</div>`
     : q.rl !== 'more' && q.index >= n - 2 ? `<div class="lx-eyebrow rl-eb" dir="${courseTD()}">${esc(rlS('check.eye', {i:1, n:2}).split(courseSep())[0])}</div>` : '';
   if(q.answered && tiles && q.selected === item.correct){ if(!q.flew || typeof q.flew !== 'object') q.flew = {}; if(!q.flew[q.index]){ q.flew[q.index] = 1; queueFx(rlFlyTile); } }
-  return {key:'q' + q.rl + '-' + q.index, i:q.index, k:q.rl === 'more' || q.kind === 'grammar' ? n : 0, body:`<div class="rl-body">${eye}
+  return {key:'q' + q.rl + '-' + q.index, i:o.i != null ? o.i : q.index, k:o.k || (q.rl === 'more' || q.kind === 'grammar' ? n : 0), body:`<div class="rl-body">${eye}
       <div class="game-card${longOpts ? ' tight' : ''}" translate="no">${item.qt === 'build' ? quizBuildHtml(q, item) : quizPromptHtml(item, q)}</div>
       ${opts}
       ${!q.answered && miss.length ? `<div class="game-why">${farinImg('mood-thinking')}<div dir="auto">${esc(quizHintText(q, item))}</div></div>` : ''}
       ${q.answered ? answerBannerHtml(item, ok, q.selected, '') + quizLookAgainHtml(q, item, ok) + quizTypedNoteHtml(q, item) : ''}
-    </div>`, foot:q.answered ? rlCta(next, q.index + 1 < n ? L('Next question', 'Sonraki soru', 'سوال بعدی', 'Siguiente pregunta') : L('Continue', 'Devam', 'ادامه', 'Continuar')) : ''};
+    </div>`, foot:q.answered ? rlCta(next, o.label || (q.index + 1 < n ? L('Next question', 'Sonraki soru', 'سوال بعدی', 'Siguiente pregunta') : L('Continue', 'Devam', 'ادامه', 'Continuar'))) : ''};
 }
 // the right tile flies into the gap (SPEC §3.2 V2), then the word there pops
 function rlFlyTile(){
@@ -25145,6 +25153,7 @@ function rl2Go(R){
 
 // screens in a round of a grammar or dialogue card (the rail)
 function rl2Len(s, vp, R, r){
+  if(R.kind === 's') return r < 2 ? rlsPlan(s).steps[r].length : 1;
   if(R.kind === 'g'){ if(r === 0) return rlgScreens(s, rlgEff(s, vp.goal)).length; if(r === 1){ const q = state.quiz; return q && q.contextId === s.id && q.kind === 'grammar' && q.rl === 1 && q.questions ? q.questions.length : 4; } return 1; }
   return r === 0 ? rldList1(s).length : r === 1 ? dialogueTurns(s).length : rldList3(s).length;
 }
@@ -25546,7 +25555,7 @@ const RL2_HANDLERS = {
   'rld-place'(){ const x = rldCur(); if(!x || x.R.ph !== 'play' || x.R.r !== 1 || !x.R.c || !x.R.c.reveal) return; rldPlace(x.d, x.R, x.vp); },
   // dialogue, Round 3
   'rld-say'(el){
-    const x = rldCur(); if(!x || x.R.ph !== 'play' || x.R.r !== 2) return;
+    const vp0 = state.viewParams, R0 = vp0 && vp0.rl, x = R0 && R0.ph === 'play' && ((R0.kind === 'd' && R0.r === 2) || (R0.kind === 's' && R0.r === 1)) ? {vp:vp0, R:R0} : null; if(!x) return;
     const R = x.R, vp = x.vp, t = +el.dataset.t;
     if(!R.said) R.said = {};
     if(R.said[t] || (R.lis === t && rlMic)) return;
@@ -25595,6 +25604,186 @@ const RL2_HANDLERS = {
   }
 };
 Object.assign(RL_HANDLERS, RL2_HANDLERS);
+/* ---- pass 3 (Trello rC52b1hH, farin-app 2026-11-12): the roadmap story card in three rounds ----
+   SPEC §3.6 (story checkpoints) in the §11 frame. The story's pages (storyPages: today's word budget per level) are split in two:
+   Round 1 Know it = the first half, Round 2 Say it right = the rest, then one line of the story to say out loud (Say it: the microphone
+   when there is one, else "I said it"; a tick stamp, never blocking). The story's own 4 questions come between the pages, each after
+   the page that answers it: a gist question after the last page, a detail question after the page that shares most words with its
+   question and answer (the later page on a tie), a language question after the page that holds its quoted sentence; a question on the
+   turning-point page moves one page on, two questions never share a page (quiz[i].afterPct, when farin-lxd adds it, wins). The
+   turning point keeps its place and its "What happens next?" beat. Each checkpoint is the lesson quiz's own item (untimed, a hint and a
+   second try); the 4 answers are the node's quiz (completeLessonQuiz at the end of Round 2: 60% rule, "One more go?" with the missed
+   questions, nodeScores, SRS, completedStories = the roadmap tick). Round 3 Use it = "Through their eyes" (storyPerspectiveHtml) ->
+   Finish -> the celebration and the souvenir. "Hear it" on a page reads its sentences with their natural clips (never the device
+   voice). The old reader (story-detail) stays for course steps and every other way in; progress.storyPages[id].read is set too. */
+const RL_STR3 = {
+  'st.next':['Next page', 'Sonraki sayfa', 'صفحه بعد', 'Siguiente página'],
+  'st.keep':['Keep reading', 'Okumaya devam et', 'ادامه بده', 'Sigue leyendo'],
+  'st.say':['Listen, then say this line out loud.', 'Dinle, sonra bu cümleyi yüksek sesle söyle.', 'گوش کن، بعد این جمله را بلند بگو.', 'Escucha y luego di esta frase en voz alta.']
+};
+Object.assign(RL_STR, RL_STR3);
+function rlStory(id){
+  const s = STORY_LIBRARY.find(x=>x.id === id);
+  return s && !s.course && s.genre !== 'Exam focus' && Array.isArray(s.quiz) && s.quiz.length >= 2 && s.quiz.every(q=>q && Array.isArray(q.options) && q.options.length >= 2) && storyPages(s).length >= 2 ? s : null;
+}
+const RLS_STOP = new Set('the a an and or but of to in on at for with by from is was were are be been it its this that these those he she they we you his her their our my your him them as not so do did does had have has will would can could what why how who which when where because about into than then there here out up over after before very just also all some one two'.split(' '));
+function rlsWords(t){ return String(t || '').toLowerCase().match(/[\p{L}\p{N}']+/gu) || []; }
+// the page each question is asked after (n - 1 = after the last page)
+function rlsPlace(s, pages, turnAt){
+  const n = pages.length, sets = pages.map(pg=>new Set(rlsWords(pg.map(x=>x.t).join(' '))));
+  const best = txt=>{ const w = rlsWords(txt).filter(x=>x.length > 2 && !RLS_STOP.has(x)); let bi = n - 1, bs = 0;
+    sets.forEach((set, i)=>{ const sc = w.filter(x=>set.has(x)).length; if(sc > 0 && sc >= bs){ bs = sc; bi = i; } }); return bi; };
+  const want = s.quiz.map(q=>{
+    if(typeof q.afterPct === 'number') return Math.max(0, Math.min(n - 1, Math.round(q.afterPct * n / 100) - 1));
+    if(q.kind === 'gist') return n - 1;
+    if(q.kind === 'language'){ const m = String(q.prompt || '').match(/["“]([^"”]+)["”]/); return best(m ? m[1] : q.prompt); }
+    return best(String(q.prompt || '') + ' ' + (q.options[q.correct] || ''));
+  });
+  const after = {}, at = [];
+  want.map((p, i)=>({p, i})).sort((a, b)=>a.p - b.p || a.i - b.i).forEach(({p, i})=>{
+    if(p === turnAt && p < n - 1) p++;
+    while(p < n - 1 && after[p] != null) p++;
+    if(p < n - 1) after[p] = i;
+    at[i] = p;
+  });
+  return at;
+}
+// the plan of a story card: Round 1 and Round 2 as lists of steps (pages, the turning point, checkpoints, the line to say)
+function rlsPlan(s){
+  const pages = storyPages(s), n = pages.length, turnAt = storyTurnAfter(s, pages), at = rlsPlace(s, pages, turnAt), h = Math.ceil(n / 2);
+  const steps = [[], []];
+  for(let p = 0; p < n; p++){
+    const r = p < h ? 0 : 1;
+    steps[r].push({t:'page', p});
+    if(p === turnAt) steps[r].push({t:'turn'});
+    at.forEach((ap, q)=>{ if(ap === p) steps[r].push({t:'q', q}); });
+  }
+  const say = rlsSayLine(s, pages.slice(h));
+  if(say) steps[1].push({t:'say', text:say});
+  return {pages, n, turnAt, steps};
+}
+// one line from the second half to say: a sentence of 5-14 words with a story word in it, else the shortest one of 5+ words
+function rlsSayLine(s, pages){
+  const sents = pages.flat().map(x=>x.t).filter(t=>{ const w = rlsWords(t).length; return w >= 5 && w <= 14; });
+  const vw = (s.vocab || []).map(v=>String(v.word || '').toLowerCase()).filter(Boolean);
+  return sents.find(t=>vw.some(w=>String(t).toLowerCase().includes(w))) || sents.sort((a, b)=>a.length - b.length)[0] || '';
+}
+function rlsQuiz(s){
+  const q = state.quiz;
+  if(q && q.contextId === s.id && q.kind === 'story' && q.rl === 'story' && q.questions && q.questions.length === s.quiz.length) return q;
+  const qs = storyQuizQuestions(s), rec = rlRecs()[s.id], qa = String((rec && rec.qa) || ''), R = state.viewParams && state.viewParams.rl;
+  // questions answered in an earlier visit keep their first-try result (progress.lessonRounds[id].qa: '1' right, '0' missed, '-' not yet)
+  const results = s.quiz.map((_, k)=>qa[k] === '1' ? true : qa[k] === '0' ? false : undefined);
+  if(R && R.kind === 's'){ if(!R.qd) R.qd = {}; results.forEach((v, k)=>{ if(v !== undefined && !R.qd[k]) R.qd[k] = {sel:qs[k].correct}; }); }
+  return (state.quiz = {kind:'story', contextId:s.id, questions:qs, index:-1, correct:results.filter(v=>v === true).length, streak:0, answered:false, selected:null, results, backView:'dashboard', backParams:{}, timeLimit:questionTimeLimit(qs[0]), deadline:null, lastTickSecond:null, rl:'story', proveAt:-1});
+}
+function renderStoryRounds(){
+  const vp = state.viewParams || {}, s = rlStory(vp.id);
+  if(!s || !lpOn('story')) return renderStoryDetail(vp.id);
+  const R = rl2State(s.id, 's'), P = rlsPlan(s);
+  let scr = null;
+  if(R.ph === 'play') scr = R.r < 2 ? rlsStep(s, P, R, vp) : rlsUseScreen(s, R);
+  else if(R.ph === 'more') scr = state.quiz && state.quiz.rl === 'more' && state.quiz.contextId === s.id ? rlQuizView(state.quiz, 'rls-qnext') : rlMoreScreen(s, R, 'rls-more');
+  else if(R.ph === 'done') scr = rlDoneScreen(s, R, 'rls-finish');
+  if(!scr) scr = rlOpenerHtml(R, R.r === 0 ? svText(s.title) : rlName(R.r), R.r < 2 ? P.steps[R.r].length : 1, R.r < 2 ? P.steps[R.r].filter(x=>x.t === 'q').length : 0);
+  return rlFrameHtml(s, vp, R, scr);
+}
+function rlsStep(s, P, R, vp){
+  const list = P.steps[R.r], i = Math.max(0, Math.min(list.length - 1, R.i || 0)), st = list[i], k = list.length, last = i === k - 1;
+  const base = {key:'s' + R.r + '-' + i, i, k};
+  const cta = label=>rlCta('rls-next', label);
+  // the button names what comes next: a page after a page = "Next page", a page after a question = "Keep reading", else "Next"
+  const nextLabel = last ? rlS('cont') : list[i + 1].t === 'page' ? rlS(st.t === 'page' ? 'st.next' : 'st.keep') : rlS('go.next');
+  if(st.t === 'page') return Object.assign(base, {body:`<div class="rl-body"><div class="card-flat story-page rl-spage" id="rl-spage" dir="ltr" translate="no">${storyPageHtml(s, {pages:P.pages, pg:st.p})}</div>${rlPlayRow('rls-hear')}</div>`,
+    foot:cta(nextLabel)});
+  if(st.t === 'turn'){
+    const call = storyCallOf(s.id);
+    return Object.assign(base, {body:`<div class="rl-body">${storyTurnHtml(s, {call}).replace(/<button class="btn btn-primary game-cta" data-action="story-turn-go">[\s\S]*?<\/button>/, '')}</div>`, foot:call ? cta(nextLabel) : ''});
+  }
+  if(st.t === 'q'){
+    const q = rlsQuiz(s), D = R.qd || (R.qd = {});
+    if(q.index !== st.q){ q.index = st.q; q.answered = !!D[st.q]; q.selected = D[st.q] ? D[st.q].sel : null; q.miss = null; q.typed = null; }
+    const v = rlQuizView(q, 'rls-next', {noEye:true, i, k, label:nextLabel});
+    return Object.assign(v, {key:base.key});
+  }
+  // the line to say (Round 2's last step)
+  const said = !!(R.said || {})[0], lis = R.lis === 0 && !!rlMic, sr = !!(window.SpeechRecognition || window.webkitSpeechRecognition);
+  return Object.assign(base, {body:`<div class="rl-body"><p class="game-hint">${esc(rlS('st.say'))}</p>
+      <div class="card-flat gc-card rl-chat"><div class="rl-dl rl-mine${said ? ' said' : ''}" id="rl-mine"><div class="gc-line" dir="ltr"><div class="gc-body"><div class="gc-text">${esc(st.text)}</div></div>${ttsButton(st.text, '')}</div>${said ? '<span class="rl-tick" aria-hidden="true">✓</span>' : ''}</div></div>
+      <div class="rl-chips">${said ? '' : `<button type="button" class="game-chip rl-saychip${lis ? ' on' : ''}" data-action="rld-say" data-t="0"${lis ? ' disabled' : ''}>${lis ? esc(rlS('d.listening')) : sr ? ICONS.mic + esc(rlS('d.say')) : esc(rlS('d.said'))}</button>`}</div></div>`,
+    foot:cta(rlS('cont'))});
+}
+function rlsUseScreen(s, R){
+  const has = !!(s.perspective && s.perspective.prompt), rec = has ? storyFeelRec(s.id) : null;
+  return {key:'feel', i:0, k:1, body:`<div class="rl-body rl-feel">${has ? storyPerspectiveHtml(s) : ''}</div>`, foot:rec || !has ? rlCta('rls-use-done', rlS('cont')) : rlGhost('rls-use-done', rlS('notNow'))};
+}
+function rlsCur(){ const vp = state.viewParams, R = vp && vp.rl, s = R && R.kind === 's' ? rlStory(R.id) : null; return s ? {vp, R, s} : null; }
+// the end of Round 2: the 4 checkpoint answers are the lesson quiz (today's completion, the 60% rule)
+function rlsQuizEnd(s, R, q){
+  const rec = rlRec(s, true);
+  storyPageSet(s.id, {read:true});
+  completeLessonQuiz(q);
+  markActivity();
+  if(q.retryOffered){ rec.more = 1; rec.firstPct = q.firstPct; rec.r = 1; R.ph = 'more'; save(); render(); window.scrollTo(0, 0); return; }
+  rec.more = 0; delete rec.firstPct; delete rec.qa; rec.r = 2;
+  R.final = q; R.st[1] = 1; R.got[1] = []; R.ph = 'done';
+  save(); render(); window.scrollTo(0, 0);
+}
+const RL3_HANDLERS = {
+  'rls-hear'(){
+    const x = rlsCur(); if(!x || x.R.ph !== 'play' || x.R.r > 1) return;
+    const P = rlsPlan(x.s), st = P.steps[x.R.r][x.R.i || 0]; if(!st || st.t !== 'page') return;
+    const sents = P.pages[st.p], mark = (si, on)=>{ const el = document.querySelector('#rl-spage .story-sent[data-si="' + si + '"]'); if(el) el.classList.toggle('cur', on); };
+    rlSeqPlay(sents.map(y=>y.t), i=>mark(sents[i].si, true), i=>mark(sents[i].si, false), null);
+  },
+  'rls-next'(){
+    const x = rlsCur(); if(!x || x.R.ph !== 'play' || x.R.r > 1) return;
+    const R = x.R, s = x.s, P = rlsPlan(s), list = P.steps[R.r], i = R.i || 0, st = list[i];
+    if(st && st.t === 'turn' && !storyCallOf(s.id)) return;
+    if(st && st.t === 'q'){ const q = state.quiz; if(!q || q.contextId !== s.id || q.rl !== 'story' || !q.answered) return; if(!R.qd) R.qd = {}; R.qd[st.q] = {sel:q.selected};
+      const rec0 = rlRec(s, true), qa = String(rec0.qa || '').padEnd(s.quiz.length, '-').split(''); qa[st.q] = q.results && q.results[st.q] === true ? '1' : '0'; rec0.qa = qa.join(''); }
+    rlSeqTok++; rlMicStop(); ttsStop(); R.lis = -1;
+    if(i < list.length - 1){ R.i = i + 1; save(); render(); window.scrollTo(0, 0); return; }
+    const rec = rlRec(s, true);
+    if(R.r === 0){ rec.r = Math.max(rec.r || 0, 1); R.got[0] = (s.vocab || []).map(v=>v.word).filter(w=>P.pages.slice(0, Math.ceil(P.n / 2)).flat().some(y=>String(y.t).toLowerCase().includes(String(w).toLowerCase()))).slice(0, 4);
+      R.st[0] = 1; R.ph = 'done'; R.i = 0; save(); render(); window.scrollTo(0, 0); return; }
+    // Round 2 ends: every question the plan asked has an answer (a skipped one counts as missed)
+    const q = rlsQuiz(s); q.results = s.quiz.map((_, k)=>!!(q.results && q.results[k] === true)); q.correct = q.results.filter(Boolean).length; q.index = q.questions.length; q.answered = true;
+    R.i = 0; rlsQuizEnd(s, R, q);
+  },
+  'rls-more'(){
+    const x = rlsCur(); if(!x || x.R.ph !== 'more') return;
+    const s = x.s, rec = rlRec(s, true), q0 = state.quiz && state.quiz.contextId === s.id && state.quiz.rl === 'story' ? state.quiz : null;
+    let qs = q0 ? q0.questions.filter((m, i)=>!(q0.results && q0.results[i])) : [];
+    if(!qs.length) qs = storyQuizQuestions(s);
+    qs = qs.map(m=>{ const order = shuffle(m.options.map((_, i)=>i)); return Object.assign({}, m, {options:order.map(i=>m.options[i]), correct:order.indexOf(m.correct)}); });
+    state.quiz = {kind:'story', contextId:s.id, questions:qs, index:0, correct:0, streak:0, answered:false, selected:null, results:[], backView:'dashboard', backParams:{}, timeLimit:questionTimeLimit(qs[0]), deadline:null, lastTickSecond:null, rl:'more', proveAt:-1, round:2, firstPct:typeof rec.firstPct === 'number' ? rec.firstPct : (q0 ? q0.firstPct : 0)};
+    save(); render(); window.scrollTo(0, 0);
+  },
+  'rls-qnext'(){
+    const x = rlsCur(), q = state.quiz; if(!x || !q || q.contextId !== x.s.id || q.rl !== 'more' || !q.answered) return;
+    if(q.index + 1 < q.questions.length){ q.index++; q.answered = false; q.selected = null; q.miss = null; q.typed = null; save(); render(); window.scrollTo(0, 0); return; }
+    rlsQuizEnd(x.s, x.R, q);
+  },
+  'rls-use-done'(){
+    const x = rlsCur(); if(!x || x.R.ph !== 'play' || x.R.r !== 2) return;
+    const fr = storyFeelRec(x.s.id), p = x.s.perspective;
+    x.R.got[2] = fr && p && p.feelings && p.feelings[fr.f] ? [p.feelings[fr.f]] : []; x.R.st[2] = 1; x.R.ph = 'done';
+    save(); render(); window.scrollTo(0, 0);
+  },
+  'rls-finish'(){
+    const x = rlsCur(); if(!x || x.R.ph !== 'done' || x.R.r !== 2 || document.querySelector('.celebrate-overlay')) return;
+    const s = x.s, R = x.R;
+    rlRecDrop(s);
+    let q = R.final;
+    if(!q){ const ns = (state.progress.nodeScores || {})[nodeScoreKey('story', s.id)]; q = {kind:'story', contextId:s.id, questions:[], results:[], correct:0, round:2, firstPct:ns && typeof ns.first === 'number' ? ns.first : 1}; }
+    state.quiz = q;
+    const extra = celebrationExtras('quiz', x.vp, 'story'), first = typeof q.firstPct === 'number' ? q.firstPct : q.correct / (q.questions.length || 1);
+    save();
+    showCelebration('story', lpOn('finish') ? '' : q.correct + ' / ' + q.questions.length + ' ' + L('correct', 'doğru', 'درست', 'correctas'), first < .5, extra);
+  }
+};
+Object.assign(RL_HANDLERS, RL3_HANDLERS);
 /* ========== LESSONS-PLAY-END ========== */
 
 /* ============================= RENDER: STUDIO (Teacher + Lab) ============================= */
@@ -27372,6 +27561,7 @@ const screens = {
   'vocab-rounds': renderVocabRounds,
   'grammar-rounds': renderGrammarRounds,
   'dialogue-rounds': renderDialogueRounds,
+  'story-rounds': renderStoryRounds,
   'goals-list': renderGoalsList,
   'goal-levels': ()=>renderGoalLevels(state.viewParams.goal),
   'goal-level-detail': ()=>renderGoalLevelDetail(state.viewParams.goal, state.viewParams.level),
@@ -28905,6 +29095,8 @@ const HANDLERS = {
     // pass 2: a roadmap grammar card and a roadmap dialogue card play in three rounds too
     if(view === 'grammar-trap' && lpOn('grammar') && lpFromRoadmap(el) && rlItem(el.dataset.id)){ go('grammar-rounds', {id:el.dataset.id, goal:el.dataset.goal || ''}); return; }
     if(view === 'dialogue' && lpOn('dialogue') && lpFromRoadmap(el) && rlDlg(el.dataset.id)){ go('dialogue-rounds', {id:el.dataset.id}); return; }
+    // pass 3: a roadmap story card too
+    if(view === 'story-detail' && lpOn('story') && lpFromRoadmap(el) && rlStory(el.dataset.id)){ go('story-rounds', {id:el.dataset.id}); return; }
     const params = {id: el.dataset.id};
     if(view==='grammar-list' || view==='grammar-trap') params.level = state.viewParams.level || state.profile.level;
     if(view==='vocab-list' || view==='vocab-set' || view==='vocab-set-intro'){ params.level = state.viewParams.level || state.profile.level; params.cat = el.dataset.cat || state.viewParams.cat || 'vocab'; }

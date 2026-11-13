@@ -14709,12 +14709,12 @@ function renderPrivacyPolicy(){
 
         <h3 class="display" style="font-size:15px; margin:18px 0 8px;">1. Information We Collect</h3>
         <p>When you set up your profile, the App collects the name and learning preferences (level, goals, learning style) you enter. This information, along with your learning progress, is saved on your device and also backed up to our database (provided by Google Firebase) under a private recovery code, so you can continue your progress on another device by entering that code. If you choose a password, you can also continue by entering your name and that password. Your password itself is never stored; the App only keeps a one-way scrambled version of your name and password, used to find your account.</p>
-        <p>We do not require you to create an account with a password, and we do not collect your phone number unless you specifically choose to share it (see Section 2).</p>
+        <p>When you create your profile, the App also asks for a password, so you can log back in on any device, and for your WhatsApp number (see Section 2).</p>
         <p>The App also saves basic usage information with your backup: when you joined, when you last opened the App, how many days and times you have opened it, your device type (for example Android or Windows, installed app or browser) and the App's display language.</p>
         <p>When you use a speaking activity with the microphone (for example Say It Back or speaking practice), the App uses your browser's built-in speech recognition to turn your voice into text. In Chrome this sends the audio to Google's speech service for processing while you speak; the App itself does not record or store your voice. The microphone is only used when you tap the microphone button, and you can decline the permission - the activity then works without it.</p>
 
-        <h3 class="display" style="font-size:15px; margin:18px 0 8px;">2. Optional Contact Information</h3>
-        <p>When you create your profile, when the App invites you to join the club, or in Settings, you may voluntarily enter your WhatsApp number so the designated teacher can message you directly with news, offers and help. This is entirely optional. If you opt in, your name, phone number, level, and goal are stored so the teacher can reach out to you, primarily via WhatsApp.</p>
+        <h3 class="display" style="font-size:15px; margin:18px 0 8px;">2. Contact Information</h3>
+        <p>When you create your profile, the App asks for your WhatsApp number so the designated teacher can message you directly with news, offers and help. You can also add or change it from the club invite or in Settings. Your name, phone number, level, and goal are stored so the teacher can reach out to you, primarily via WhatsApp. The number is used only for this and is never shown to other learners.</p>
         <p>You can also choose to contact the teacher yourself at any time through the WhatsApp option in the App, in which case you may voluntarily share your name, level, goals, or any other information you include in your message.</p>
 
         <h3 class="display" style="font-size:15px; margin:18px 0 8px;">3. How Your Information Is Used</h3>
@@ -16267,8 +16267,8 @@ function renderContactOptIn(){
 }
 
 /* ---------- WhatsApp number at signup + "Join our club" pop-up (Farin 2026-11-13) ----------
-   Signup asks for the WhatsApp number next to name + password. It stays the learner's choice: the privacy policy and the store
-   forms say the number is optional. Learners already in get one "Join our club" pop-up (news, discounts, interesting things) on
+   Signup asks for the WhatsApp number next to name + password: required since Farin's "yes required" (2026-11-13; privacy policy
+   updated the same day). Redoing the diagnostic with a number already saved skips the field. Learners already in get one "Join our club" pop-up (news, discounts, interesting things) on
    Home: only when no number is saved, once per account (profile.clubAskAt), not in the first 2 days after joining, never on top
    of another pop-up (char tip, celebration, splash, any dialog) and with no motion. A number saved here = profile.contactPhone +
    wantsContact (admin › Users "Want contact") + one contacts doc (admin › Contacts), the same as the Settings opt-in.
@@ -16294,7 +16294,7 @@ function signupPhoneFieldHtml(){
           <label class="field-label" for="unlock-phone">${CL('Your WhatsApp number','WhatsApp numaran','شماره‌ی واتس‌اپت','Tu número de WhatsApp')}</label>
           <input class="name-input${err ? ' wl-bad' : ''}" id="unlock-phone" type="tel" inputmode="tel" autocomplete="tel" dir="ltr" maxlength="24" placeholder="${esc(contactPhoneExample())}" value="${esc(signupPhoneDraft)}" />
           <p class="field-hint">${CL('So Farin can send you news, discounts and help on WhatsApp. Only Farin sees it.','Farin sana WhatsApp\'tan haberler, indirimler ve yardım gönderebilsin diye. Bunu sadece Farin görür.','تا فرین بتواند اخبار، تخفیف‌ها و کمک را در واتس‌اپ برایت بفرستد. فقط فرین آن را می‌بیند.','Para que Farin te envíe novedades, descuentos y ayuda por WhatsApp. Solo Farin lo ve.')}</p>
-          ${err ? `<div class="unlock-error" role="alert" style="margin-top:8px;">${esc(contactPhoneErrText())}</div>` : ''}
+          ${err ? `<div class="unlock-error" role="alert" style="margin-top:8px;">${esc(err === 'empty' ? CL('We need your WhatsApp number to continue.','Devam etmek için WhatsApp numarana ihtiyacımız var.','برای ادامه به شماره‌ی واتس‌اپت نیاز داریم.','Necesitamos tu número de WhatsApp para continuar.') : contactPhoneErrText())}</div>` : ''}
         </div>`;
 }
 let clubAskTimer = null, clubAskTries = 0;
@@ -28622,7 +28622,7 @@ const HANDLERS = {
       render();
       return;
     }
-    if(phone && !courseWaitlistPhoneOk(phone)){ state.viewParams = {phoneError:true, name}; render(); return; }
+    if(!state.profile.contactPhone && !courseWaitlistPhoneOk(phone)){ state.viewParams = {phoneError: phone ? 'bad' : 'empty', name}; render(); return; }   // required (Farin 2026-11-13)
     const prev = state.profile;
     const keepLogin = !!prev.loginId;
     if(!keepLogin && password.length < PASSWORD_MIN){

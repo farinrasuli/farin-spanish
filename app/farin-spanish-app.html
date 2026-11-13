@@ -10390,7 +10390,12 @@ function nodeTitle(it){
     else if(it.type==='box'){ tail = L('review','tekrar','مرور','repaso'); }
     else if(it.type==='game'){
       tail = gameDisplayName(it.gameKind);
-      if(it.gameKind === 'path'){ const pc = pathNodeChapter(it); if(pc) tail += ' — ' + svText(pc.title); }
+      if(it.gameKind === 'path'){
+        // the comic: the chapter this card will play (one per card, the learner's next unplayed one), not the chapter in its id
+        const yn = ycEligible(it.refId) ? ycTitleChapter(it) : 0, yc = yn && window.YC_CONTENT && YC_CONTENT.chapters && YC_CONTENT.chapters[yn - 1];
+        if(yn) tail += ' — ' + L('Chapter ' + yn, yn + '. Bölüm', 'فصل ' + yn, 'Capítulo ' + yn) + (yc && yc.title ? ' · ' + svText(yc.title) : '');
+        else { const pc = pathNodeChapter(it); if(pc) tail += ' — ' + svText(pc.title); }
+      }
       const sv = it.setId ? set(it.setId) : null; if(sv) tail += ' — ' + setTitle(sv);
     }
     if(p && tail) return p + ': ' + tail;
@@ -22740,6 +22745,25 @@ function ycCardOf(refId){
   return {ch:[rp], replay:true};
 }
 function ycBorrowCard(refId){ return ycCardOf(refId); }
+/* The chapter a Your Call card will play, for its title (2026-11-13: "the title can differ from what plays"). Resolved at render time
+   in page order: a card that holds a chapter (taken, under way, done) shows it; the open cards after it take the next unplayed
+   chapters in turn, as they will when the learner reaches them. Read-only. */
+function ycTitleChapter(it){
+  const rm = currentRoadmap(), virt = new Set(), f = ycFreeOf(ycShelfLevel()) || {}, cards = (f.cards && typeof f.cards === 'object') ? f.cards : {};
+  for(const n of rm){
+    if(!n || n.type !== 'game' || n.gameKind !== 'path' || !ycEligible(n.refId)) continue;
+    const c = ycCardOf(n.refId); if(!c) continue;
+    const held = !!(c.finished || (cards[n.refId] && Array.isArray(cards[n.refId].ch) && cards[n.refId].ch.length === 1));
+    let ch = c.ch[0];
+    if(!held && !c.replay && virt.has(ch)){
+      const r = pathRefParts(n.refId), chs = (r && YC_LEVELS.includes(r.level) ? ycPathView() : ycShelfView()).choices;
+      for(let m = 1; m <= PATH_CH; m++) if(!chs[m] && !virt.has(m)){ ch = m; break; }
+    }
+    if(!held) virt.add(ch);
+    if(n === it || n.refId === it.refId) return ch;
+  }
+  const c = ycCardOf(it.refId); return c ? c.ch[0] : 0;
+}
 function ycFreeRec(){
   const pr = state.progress, lv = ycShelfLevel();
   if(!pr.ycFree || typeof pr.ycFree !== 'object') pr.ycFree = {};

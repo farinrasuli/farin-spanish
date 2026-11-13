@@ -38,7 +38,7 @@
 'use strict';
 if(window.YourCall) return;
 var D = document, W = window;
-var VERSION = '0.3.1';
+var VERSION = '0.4.0';
 
 /* ---------- chrome strings (the UI language; Persian informal) ---------- */
 var UI = {
@@ -98,6 +98,8 @@ function prefersReduced(){ try{ return W.matchMedia('(prefers-reduced-motion: re
 
 /* ---------- story logic (pure; also used by the app hook and the tests) ---------- */
 function pickOf(choices, c, d){ return String((choices && choices[c]) || '').charAt(d - 1); }
+// 0.4.0: the year of the "then" photos and labels: content.thenYear (A2 "The Bazaar Key": 1890), else 1970 (A1); Persian digits in fa
+function yearLabel(C, ui){ var y = String((C && C.thenYear) || 1970); return ui === 'fa' ? y.replace(/[0-9]/g, function(d){ return '۰۱۲۳۴۵۶۷۸۹'.charAt(+d); }) : y; }
 // the picture on a chapter's postcard and its poster-strip photo: its own postcard, else its 1970 print (then / now); the trail
 // chapter (ch3) has no single print, so its first trail plate; the last-photo chapter (ch6) the 1970 half of the learner's last photo.
 // 0.2.1 (2026-11-12): ch3 and ch6 used to show a DEV placeholder on the postcard and a blank strip photo.
@@ -598,7 +600,7 @@ function bedOf(p){
     else if(/hospital|corridor|blanket|\bnurse/i.test(b)) set = 'S6';
     else if(/\bflat\b|my door/i.test(b)) set = 'S7';
   }
-  var era = p.era != null ? +p.era : (p.tone === '1970' || /^[\s·•\-]*1970\b/.test(b) ? 1 : 0);
+  var era = p.era != null ? +p.era : (/^1[89]\d\d$/.test(String(p.tone || '')) || /^[\s·•\-]*1[89]\d\d\b/.test(b) ? 1 : 0);   // 0.4.0: any "then" year (1970, 1890)
   return {set:set, night:/\bnight\b|\b(9|10|11|12)\s?pm\b/i.test(b) || p.tone === 'night', fest:/regatta|amuravela|bunting|flags/i.test(b), era:era};
 }
 
@@ -697,23 +699,26 @@ function start(o){
   on(shell, 'pointerdown', function(){ snd.unlock(); });   // iOS: the first touch lets a context made outside a tap play
 
   /* ---- ambience: the set of what is on the page (GDD 10 + 12) ---- */
+  // 0.4.0: an album whose panels name their bed (A2) keeps the bed it is in on a panel without one, never a guess from the brief
+  var bedsNamed = (C.chapters || []).some(function(c){ return (c.seq || []).some(function(x){ return x.type === 'panel' && x.bed; }); });
   function scene(p){
     var b = bedOf(p); if(!b) return;
+    if(bedsNamed && !p.bed){ snd.era(b.era); return; }
     if(b.set) snd.bed(b.set, b);
     snd.era(b.era);
   }
   // the bed at a chapter's start or resume: the last set known before beat i (else the first one ahead)
   function chapterScene(ch, upto){
     var seq = ch.seq || [], last = null, k, b;
-    for(k = 0; k < Math.min(upto, seq.length); k++){ if(seq[k].type === 'panel'){ b = bedOf(seq[k]); if(b && b.set) last = b; else if(b && last) last = Object.assign({}, last, {era:b.era}); } }
-    if(!last) for(k = 0; k < seq.length && !last; k++){ if(seq[k].type === 'panel'){ b = bedOf(seq[k]); if(b && b.set) last = b; } }
+    for(k = 0; k < Math.min(upto, seq.length); k++){ if(seq[k].type === 'panel'){ b = bedOf(seq[k]); if(b && b.set && (!bedsNamed || seq[k].bed)) last = b; else if(b && last) last = Object.assign({}, last, {era:b.era}); } }
+    if(!last) for(k = 0; k < seq.length && !last; k++){ if(seq[k].type === 'panel'){ b = bedOf(seq[k]); if(b && b.set && (!bedsNamed || seq[k].bed)) last = b; } }
     if(last){ snd.bed(last.set, last); snd.era(last.era || 0); }
   }
   // Then & Now: the trail walks the steps (photo 1), the boats (photo 2) and the bench today; other modes keep the bed
   function photoBed(ch, ph, st){
     var id = st && st.finds && st.finds[0] && st.finds[0].id;
     if(ph.bed) return typeof ph.bed === 'string' ? ph.bed : (ph.bed[id] || null);
-    if(ph.mode !== 'trail') return null;
+    if(ph.mode !== 'trail' || bedsNamed) return null;   // 0.4.0: the A1 trail's own sets only for an album that does not name its beds
     if(id === 't1') return 'S5';
     if(id === 't2') return 'S1';
     var bench = null;
@@ -966,7 +971,7 @@ function start(o){
     var src = st.then ? artSrc(st.then, {era:'then', finds:st.finds}) : artSrc(st.now, {era:'now', finds:st.finds});
     var fig = el('figure', 'yc-panel yc-wide yc-printpanel');
     fig.innerHTML = '<div class="yc-print"><img src="' + esc(src) + '" alt=""><svg viewBox="0 0 100 125" preserveAspectRatio="none" aria-hidden="true">' +
-      (st.finds || []).filter(function(f){ return found.indexOf(f.id) >= 0; }).map(function(f){ return boxesOf(f).map(function(b){ return ellipse(b, 'yc-pencil yc-drawn', -6); }).join(''); }).join('') + '</svg><i>' + esc(us(st.then ? 'y1970' : 'today')) + '</i></div>';
+      (st.finds || []).filter(function(f){ return found.indexOf(f.id) >= 0; }).map(function(f){ return boxesOf(f).map(function(b){ return ellipse(b, 'yc-pencil yc-drawn', -6); }).join(''); }).join('') + '</svg><i>' + esc(st.then ? yearLabel(C, ui) : us('today')) + '</i></div>';
     page.appendChild(fig);
   }
   function thenNow(ch, ph, steps, found0, done, doneKey, part){
@@ -981,7 +986,7 @@ function start(o){
         (thenSrc ? '<img class="yc-tn-then' + (nowSrc ? ' yc-hide' : '') + '" src="' + esc(thenSrc) + '" alt="">' : '') +
         '<svg class="yc-tn-ov" viewBox="0 0 100 125" preserveAspectRatio="none" role="img" aria-label="' + esc(tg(cu('find')) || 'Find') + '"></svg>' +
         '<div class="yc-vf" aria-hidden="true"></div><div class="yc-white" aria-hidden="true"></div>' +
-        '<div class="yc-printout" aria-hidden="true"><div class="yc-ph"><img src="' + esc(thenSrc || nowSrc) + '" alt=""><div class="yc-cover"></div></div><span class="yc-tab"></span><i>' + esc(us(st.then ? 'y1970' : 'today')) + '</i></div>' +
+        '<div class="yc-printout" aria-hidden="true"><div class="yc-ph"><img src="' + esc(thenSrc || nowSrc) + '" alt=""><div class="yc-cover"></div></div><span class="yc-tab"></span><i>' + esc(st.then ? yearLabel(C, ui) : us('today')) + '</i></div>' +
         '<div class="yc-tn-tip" hidden></div><div class="yc-tn-dots" aria-hidden="true" hidden></div>' +
         ((art(st.then) && art(st.then).dev) || (art(st.now) && art(st.now).dev) || !art(st.then || st.now) ? '<span class="yc-devtag">' + esc(us('dev')) + '</span>' : '') +
       '</div></div><div class="yc-tn-ui"><div class="yc-ins" aria-live="polite"></div><div class="yc-ctl"></div></div>';
@@ -1125,8 +1130,8 @@ function start(o){
       tn.phase = 'find'; save();
       scr.classList.add('yc-comparing');
       var two = !!(imgThen && imgNow);
-      ctl.innerHTML = two ? '<div class="yc-row"><div class="yc-mini" dir="ltr"><button type="button" class="yc-b70">' + esc(us('y1970')) + '</button><button type="button" class="yc-btoday" lang="' + ui + '">' + esc(us('today')) + '</button></div>' +
-        '<button type="button" class="yc-hold" aria-label="' + esc(tg(cu('hold')) || 'Hold: 1970') + '">' + uiBtnLabel(cu('hold') || {en:'Hold: 1970'}) + '</button></div>' : '';
+      ctl.innerHTML = two ? '<div class="yc-row"><div class="yc-mini" dir="ltr"><button type="button" class="yc-b70">' + esc(yearLabel(C, ui)) + '</button><button type="button" class="yc-btoday" lang="' + ui + '">' + esc(us('today')) + '</button></div>' +
+        '<button type="button" class="yc-hold" aria-label="' + esc(tg(cu('hold')) || 'Hold: ' + yearLabel(C, 'en')) + '">' + uiBtnLabel(cu('hold') || {en:'Hold: ' + yearLabel(C, 'en')}) + '</button></div>' : '';
       if(two){
         var h = ctl.querySelector('.yc-hold');
         h.addEventListener('pointerdown', function(e){ e.preventDefault(); set70(true); });
@@ -1281,7 +1286,9 @@ function start(o){
       '<div><img src="' + esc(artSrc(rArt, {era:'now'})) + '" alt="">' + (right ? '<div class="yc-cap yc-cap-bottom">' + lineHtml(right, ch) + '</div>' : '') + '</div></div>';
     page.appendChild(fig);
     if(instant) return;
-    scrollEnd(); snd.play('firework'); later(function(){ snd.play('firework'); }, 500 * pace);
+    // 0.4.0: the effect is content-driven (A2 ends at dawn on a roof: lastFx 'gull'); no setting = the A1 fireworks
+    var fx = ph.fx != null ? ph.fx : (C.lastFx != null ? C.lastFx : 'firework');
+    scrollEnd(); if(fx && fx !== 'none'){ snd.play(fx); if(fx === 'firework') later(function(){ snd.play('firework'); }, 500 * pace); }
     snd.era(0); snd.dim(.35);
     var audible = !muted();
     later(function(){ snd.motif(); }, 700 * pace);   // GDD 12: a short piano motif for the last photo
@@ -1338,7 +1345,7 @@ function start(o){
     box.innerHTML = '<div class="yc-notecard yc-notecard-done" lang="' + target + '">' + esc(sentence) + '</div>' + (spec.tr && trn(spec.tr) ? '<div class="yc-tr yc-note-tr" dir="auto" lang="' + ui + '">' + esc(trn(spec.tr)) + '</div>' : '');
     if(!pick && N.reply){
       var rep = el('figure', 'yc-panel yc-wide yc-printpanel yc-reply');
-      rep.innerHTML = '<div class="yc-print yc-sign"><div class="yc-signtext" lang="' + target + '">' + esc(tg(N.reply)) + '</div><i>' + esc(us('y1970')) + '</i></div>' + (trn(N.reply) ? '<div class="yc-tr yc-reply-tr" dir="auto" lang="' + ui + '">' + esc(trn(N.reply)) + '</div>' : '');
+      rep.innerHTML = '<div class="yc-print yc-sign"><div class="yc-signtext" lang="' + target + '">' + esc(tg(N.reply)) + '</div><i>' + esc(yearLabel(C, ui)) + '</i></div>' + (trn(N.reply) ? '<div class="yc-tr yc-reply-tr" dir="auto" lang="' + ui + '">' + esc(trn(N.reply)) + '</div>' : '');
       page.appendChild(rep);
       if(!instant){ scrollEnd(); await speak(tg(N.reply)); await waitNext(null, 'next'); }
     }
@@ -1377,7 +1384,7 @@ function start(o){
   async function playFlip(ch, instant){
     var f = ch.flip; if(!f) return;
     var t = pickOf(arcChoices(), 4, 2) === 'b' ? f.b : f.a;
-    var fig = el('figure', 'yc-panel yc-wide yc-flip', '<div class="yc-print yc-sepia"><div class="yc-fliptext" data-say="' + esc(tg(t)) + '">' + lineHtml(t, ch) + '</div><i>' + esc(us('y1970')) + '</i></div>' +
+    var fig = el('figure', 'yc-panel yc-wide yc-flip', '<div class="yc-print yc-sepia"><div class="yc-fliptext" data-say="' + esc(tg(t)) + '">' + lineHtml(t, ch) + '</div><i>' + esc(yearLabel(C, ui)) + '</i></div>' +
       (f.feel ? '<div class="yc-feel"><span class="yc-feel-ic" aria-hidden="true">♡</span><span>' + lineHtml(f.feel, ch) + '</span></div>' : ''));
     page.appendChild(fig);
     if(instant) return;
@@ -1411,7 +1418,7 @@ function start(o){
   }
   async function playCredits(ch, instant){
     if(!ch.credits) return;
-    var fig = el('figure', 'yc-panel yc-wide yc-printpanel yc-credits', '<div class="yc-print yc-sepia yc-developing"><div class="yc-signtext">1890</div><i></i></div><div class="yc-cap yc-cap-static">' + lineHtml(ch.credits, ch) + '</div>');
+    var fig = el('figure', 'yc-panel yc-wide yc-printpanel yc-credits', '<div class="yc-print yc-sepia yc-developing"><div class="yc-signtext">' + esc(ch.creditsSign != null ? ch.creditsSign : (C.creditsSign != null ? C.creditsSign : (C.thenYear ? '?' : '1890'))) + '</div><i></i></div><div class="yc-cap yc-cap-static">' + lineHtml(ch.credits, ch) + '</div>');
     page.appendChild(fig);
     if(instant) return;
     scrollEnd(); snd.play('whirr');
@@ -1421,10 +1428,9 @@ function start(o){
 
   /* ---------- overlays ---------- */
   function overlay(cls, html){ var n = el('div', 'yc-ov ' + cls, html); n.setAttribute('role', 'dialog'); n.setAttribute('aria-modal', 'true'); layer.appendChild(n); return n; }
-  function previously(card){
-    var t = C.prev && C.prev['card' + card];
+  function previously(n, t){
     if(!t) return Promise.resolve();
-    var chs = arcChoices(), prevChs = card === 2 ? [1, 2] : [3, 4];
+    var chs = arcChoices(), prevChs = [n - 2, n - 1].filter(function(k){ return k >= 1 && C.chapters[k - 1]; });   // the two chapters before
     var thumbs = prevChs.map(function(n){ var c = C.chapters[n - 1]; var id = c && postcardArt(c, chs); return '<div class="yc-thumb"><img src="' + esc(id ? artSrc(id, {era:'then'}) : devSvg('ch' + n, .8, 'then')) + '" alt=""></div>'; }).join('');
     var ov = overlay('yc-prev', '<div class="yc-prev-in"><div class="yc-kicker" lang="' + ui + '" dir="' + uiDir() + '">' + esc(us('previously')) + '</div><div class="yc-thumbs">' + thumbs + '</div><div class="yc-cap yc-cap-static">' + lineHtml(t, G.ch) + '</div><small lang="' + ui + '" dir="' + uiDir() + '">' + esc(us('tapGo')) + '</small></div>');
     void chs;
@@ -1510,8 +1516,9 @@ function start(o){
       if(o.theatre && o.theatre.titleCard) await o.theatre.titleCard(title, sub, {ms:1500 * Math.max(pace, .2)});
       else await ownTitle(title, sub);
       if(!G.alive) return;
-      var first = cards[0] === n && mode !== 'replay' && (n === 3 || n === 5);
-      if(first) await previously(n === 3 ? 2 : 3);
+      // 0.4.0: "Previously…" whenever a chapter opens with a recap of its own (prev.chN, A2); else A1's card recaps before ch3 / ch5
+      var prevT = mode === 'replay' || cards[0] !== n ? null : ((C.prev && C.prev['ch' + n]) || (n === 3 || n === 5 ? (C.prev && C.prev['card' + (n === 3 ? 2 : 3)]) : null));
+      if(prevT) await previously(n, prevT);
     }
     save();
     var startI = G.run.i;

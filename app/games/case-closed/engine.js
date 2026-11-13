@@ -1490,7 +1490,8 @@ async function stepDeduction(){
   G.status = {kind:'ded', step:'deduction', clauses:clauses.length, set:function(){ return r.dedSet.slice(); },
     check:function(ci){ return '.cc-check[data-ci="' + (ci || 0) + '"]'; },
     answers:function(ci){ return gaps.map(function(gp, gi){ return gi; }).filter(function(gi){ return ci == null || G.gapClause[gi] === ci; }).map(function(gi){ return sel(gi, gaps[gi].answer); }); },
-    wrong:function(ci){ return gaps.map(function(gp, gi){ return gi; }).filter(function(gi){ return ci == null || G.gapClause[gi] === ci; }).map(function(gi){ var w = gaps[gi].pool.filter(function(c){ return c.id !== gaps[gi].answer; })[0]; return sel(gi, w.id); }); }};
+    // a wrong chip still on the board: after rung 3 only the answer and the strong distractor stay (GPrT3pSj, 2026-11-13)
+    wrong:function(ci){ return gaps.map(function(gp, gi){ return gi; }).filter(function(gi){ return ci == null || G.gapClause[gi] === ci; }).map(function(gi){ var all = gaps[gi].pool.filter(function(c){ return c.id !== gaps[gi].answer; }); var w = all.filter(function(c){ var el = box.querySelector(sel(gi, c.id)); return !el || !el.classList.contains("cc-out"); })[0] || all[0]; return sel(gi, w.id); }); }};
   async function setClause(ci){
     var sec = box.querySelector('.cc-clause[data-ci="' + ci + '"]'), ids = clauseGaps(ci);
     for(var i = 0; i < ids.length; i++){ var gEl = sec.querySelector('.cc-gap[data-g="' + ids[i] + '"]'); if(gEl) gEl.classList.add('cc-solid'); sfx('pop'); await wait(80); }

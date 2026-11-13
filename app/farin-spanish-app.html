@@ -3080,6 +3080,48 @@
   @media (prefers-reduced-motion: reduce){ .rl-sheetwrap{animation:none;} }
   .rl-sheet .lx-words{margin-top:16px;}
   .rl-resface{display:block; width:96px; height:96px; object-fit:contain; margin:12px auto 0;}
+  /* pass 2: the grammar card and the dialogue card in three rounds (SPEC §3.1, §3.5, §11). Grammar keeps the lx-page orange, dialogue is pink. */
+  .lx-page.lx-dlg{--lx:var(--cat-lis); --lx-soft:var(--cat-lis-soft);}
+  .rl-hear .gc-line{opacity:.45; border-radius:12px; padding-inline:6px; transition:opacity .2s ease, background-color .2s ease;}
+  .rl-hear .gc-line.on, .rl-hear.all .gc-line{opacity:1;}
+  .rl-hear .gc-line.cur{opacity:1; background:var(--cat-gram-soft);}
+  .rl-hear .gc-line:last-child, .rl-chat .gc-line:last-child{border-bottom:0;}
+  .rl-playrow{display:flex; align-items:center; justify-content:center; gap:14px;}
+  .rl-playrow .game-play{width:64px; height:64px; margin:0; flex:none;}
+  .rl-playrow .game-play-label{margin:0;}
+  .rl-pair .game-opt, .rl-dopts .game-opt{text-align:start;}
+  .rl-pair .trap-fill{padding:0 6px; border-width:1.5px; border-radius:8px;}
+  .rl-rule{text-align:start;}
+  .rl-rule .lx-eyebrow{color:var(--cat-gram); letter-spacing:.04em;}
+  html[dir="rtl"] .rl-rule .lx-eyebrow{letter-spacing:0;}
+  .rl-rule-t{margin:8px 0 12px; font-size:16px; font-weight:800; line-height:1.5; color:var(--ink);}
+  .rl-rule .contrast{margin:0;}
+  .rl-rule .contrast-line{padding:9px 12px; font-size:14px; line-height:1.45;}
+  .rl-chips{display:flex; flex-wrap:wrap; gap:8px; justify-content:center;}
+  .rl-chips .game-chip{cursor:pointer; font-family:inherit;}
+  .rl-chips .game-chip svg{width:16px; height:16px;}
+  .rl-say{display:flex; align-items:center; gap:8px; margin:8px 0 0; font-weight:800; font-size:14px; color:var(--ink);}
+  .rl-say img{width:34px; height:34px; object-fit:contain; flex:none;}
+  @media (prefers-reduced-motion: reduce){ .rl-rule.badge-unlock-shine, .rl-chat.badge-unlock-shine{animation:none;} }
+  .rl-chat{margin-bottom:0;}
+  .rl-chat .gc-who{width:auto; min-width:24px; padding:0 7px; border-radius:99px; background:var(--cat-lis-soft); color:color-mix(in srgb, var(--cat-lis) 62%, var(--ink));}
+  .rl-chat .dlg-you{flex-direction:row-reverse; text-align:end;}
+  .rl-chat .dlg-you .gc-body{display:flex; justify-content:flex-end;}
+  .rl-chat .dlg-you .gc-text{background:var(--cat-lis-soft); border-radius:16px 16px 4px 16px; padding:8px 12px;}
+  .rl-chat .rl-dl.cur .gc-line{background:var(--cat-lis-soft); border-radius:12px;}
+  .rl-chat-wait{padding:14px 0; text-align:center; letter-spacing:.2em; color:var(--ink-faint);}
+  .rl-gist{background:var(--cat-lis-soft);}
+  .rl-phr{display:flex; flex-wrap:wrap; gap:10px; justify-content:center;}
+  .rl-phr .pill{display:inline-flex; align-items:center; gap:6px; border:0; cursor:pointer; font-family:inherit; font-size:15px; padding:9px 14px; background:var(--cat-lis-soft); color:color-mix(in srgb, var(--cat-lis) 62%, var(--ink));}
+  .rl-phr .pill svg{width:15px; height:15px; flex:none;}
+  .rl-eb2{color:color-mix(in srgb, var(--cat-lis) 62%, var(--ink)); margin:0 0 -8px;}
+  .rl-mine{position:relative;}
+  .rl-tick{position:absolute; top:4px; left:-2px; z-index:1; width:26px; height:26px; border-radius:50%; display:grid; place-items:center; background:var(--success); color:#fff; font-weight:800; font-size:14px; transform:rotate(-3deg); box-shadow:0 4px 10px -4px rgba(0,0,0,.3);}
+  .rl-saychip.on{background:var(--cat-lis-soft); color:color-mix(in srgb, var(--cat-lis) 62%, var(--ink));}
+  .rl-cult{background:var(--cat-lis-soft); border-color:var(--cat-lis-soft);}
+  .rl-cult p, .rl-persp p{margin:6px 0 0; font-size:14.5px; line-height:1.55;}
+  .rl-persp p{font-weight:700;}
+  .rl-yt .yt-card{margin-top:0 !important;}
   /* LESSONS-PLAY-CSS-END */
 </style>
 
@@ -24405,7 +24447,7 @@ function renderVocabSet(id, cardIndex){
    - progress.lessonRounds[set] = {r, d, miss, kept, a1, a2, more, firstPct} keeps the stamps between visits ("Stop here, come back
      later"); numbers and booleans only (the cloud copy takes no nested arrays); removed when the card is done.
    Byte-identical in the English and Spanish apps; every string in en/tr/fa/es, Persian in informal تو. */
-var LESSONS_PLAY = {deck:true, finish:true, studio:true};
+var LESSONS_PLAY = {deck:true, finish:true, studio:true, grammar:true, dialogue:true};
 let lpDevOff = null;
 function lpOn(k){
   if(lpDevOff === null){ try{ const q = new URLSearchParams(location.search).get('lessonsplay');
@@ -24515,25 +24557,27 @@ function renderVocabRounds(){
 }
 // renderCourseRound's frame: X, the round rail (the only progress on these screens), Back, the screen, the footer button
 function rlFrameHtml(s, vp, R, scr){
-  const r = R.r, k = scr.k || rlLen(s, R, r), i = scr.i, content = i != null && i >= 0;
+  const r = R.r, k = scr.k || (R.kind ? rl2Len(s, vp, R, r) : rlLen(s, R, r)), i = scr.i, content = i != null && i >= 0;
   const segs = Array.from({length:k}, (_, n)=>`<i class="${R.ph === 'done' || (content && n < i) ? 'done' : (content && n === i ? 'cur' : '')}"></i>`).join('');
   const label = content ? rlS('rail', {r:r + 1, i:i + 1, k}) : rlS('round', {n:r + 1}) + courseSep() + rlName(r);
   const back = content && R.ph === 'play' ? `<button class="cl-back rl-back" data-action="rl-back">${LANG === 'fa' ? '›' : '‹'} ${L('Back', 'Geri', 'قبلی', 'Atrás')}</button>` : '<span></span>';
   const key = s.id + '|' + r + '|' + R.ph + '|' + (scr.key || ''), fade = key !== rlLastKey; rlLastKey = key;
-  return `<div class="${fade ? 'fade-in ' : ''}rl-page lx-page ${s.category === 'slang' ? 'lx-slang' : 'lx-voc'} fs-scr" data-rl="${R.ph}" data-r="${r}" data-screen="${esc(scr.key || '')}">
+  const cat = R.kind === 'g' ? 'lx-gram' : R.kind === 'd' ? 'lx-dlg' : s.category === 'slang' ? 'lx-slang' : 'lx-voc';
+  return `<div class="${fade ? 'fade-in ' : ''}rl-page lx-page ${cat} fs-scr" data-rl="${R.ph}" data-r="${r}" data-screen="${esc(scr.key || '')}">
     <div class="cs-top"><button class="cs-x" data-action="rl-x" aria-label="${esc(L('Close', 'Kapat', 'بستن', 'Cerrar'))}">${COURSE_X_SVG}</button>
       <div class="rl-rail" role="img" aria-label="${esc(label)}">${segs}</div></div>
     <div class="rl-railrow">${back}<span class="cl-n" dir="${courseTD()}">${esc(label)}</span></div>
     <div class="screen rl-screen">${scr.body}</div>
     ${scr.foot ? `<div class="cs-foot">${scr.foot}</div>` : ''}
-    ${vp.rlSheet ? rlSheetHtml(s) : ''}
+    ${vp.rlSheet ? (R.kind === 'g' ? rlgSheetHtml(s.id) : rlSheetHtml(s)) : ''}
   </div>`;
 }
 // courseROpenerHtml: the round cover on the purple hero, one line of meta, Go
-function rlOpenerScreen(s, R){
-  const r = R.r, q = r ? 3 : 0, parts = rlS('opener.meta', {s:rlLen(s, R, r), q, m:2}).split(courseSep());
+function rlOpenerScreen(s, R){ return rlOpenerHtml(R, R.r === 0 ? setTitle(s) : rlName(R.r), rlLen(s, R, R.r), R.r ? 3 : 0); }
+function rlOpenerHtml(R, title, nS, q){
+  const r = R.r, parts = rlS('opener.meta', {s:nS, q, m:2}).split(courseSep());
   if(!q) parts.splice(1, 1);
-  const head = String(r === 0 ? setTitle(s) : rlName(r)).trim().replace(/[.。]+$/, '');
+  const head = String(title).trim().replace(/[.。]+$/, '');
   return {key:'open', body:`<header class="fs-hero rl-hero">
       <span class="fs-pill"><bdi>${esc(rlS('round', {n:r + 1}) + courseSep() + rlName(r))}</bdi></span>
       <h1 class="display" dir="${courseTD()}">${LANG === 'fa' && /[A-Za-z]/.test(head) && !/[؀-ۿ]/.test(head) ? `<bdi dir="ltr">${esc(head)}<span class="dot">.</span></bdi>` : isoHtml(rlIso(head)) + '<span class="dot">.</span>'}</h1>
@@ -24546,7 +24590,7 @@ function rlTicketHtml(st, land){
   return `<div class="rl-ticket"><div class="lx-eyebrow">${esc(rlS('ticket'))}</div><div class="rl-slots">${[0, 1, 2].map(i=>`<div class="rl-slot${st[i] ? ' on' : ''}${land === i ? ' land' : ''}"><span class="rl-stamp">${st[i] ? rlImg(RL_STAMP[i], '') : ''}<i class="rl-ring" aria-hidden="true"></i></span><b>${esc(rlName(i))}</b></div>`).join('')}</div></div>`;
 }
 // courseRDoneHtml: the clay stamp lands once (with its sound and one spark burst, SPEC §6 TR-1), "Round n done.", What you've got, Next
-function rlDoneScreen(s, R){
+function rlDoneScreen(s, R, fin){
   const r = R.r, land = R.landed[r] ? -1 : r; R.landed[r] = 1;
   if(land >= 0) queueFx(()=>setTimeout(()=>{ if(reducedMotion()) return; const el = document.querySelector('.rl-slot.land .rl-stamp'); if(!el) return;
     sfx('stamp'); buzz(12); const c = centerOf(el); sparkBurst(c.x, c.y, 8, 'var(--fs-orange)'); }, 220));
@@ -24557,7 +24601,7 @@ function rlDoneScreen(s, R){
   return {key:'done', body:`<div class="rl-done">${rlTicketHtml(R.st, land)}<h1 class="display cs-h1 rl-h1" dir="${courseTD()}">${isoHtml(rlS('done.round', {n:r + 1}))}</h1>
       ${got.length ? `<div class="card-flat rl-got"><b dir="${courseTD()}">${isoHtml(rlS('done.got'))}</b><p dir="${courseTD()}">${got.map(x=>isoHtml(rlIso(x))).join(esc(courseSep()))}</p></div>` : ''}
       ${weak}${r === 2 && R.badges && R.badges.length ? renderBadgeUnlockCard(R.badges) : ''}${next}</div>`,
-    foot:r < 2 ? rlCta('rl-start', rlS('btn.startRound', {n:r + 2})) + rlGhost('rl-stop', rlS('btn.stop')) : rlCta('rl-finish', rlS('finish'))};
+    foot:r < 2 ? rlCta('rl-start', rlS('btn.startRound', {n:r + 2})) + rlGhost('rl-stop', rlS('btn.stop')) : rlCta(fin || 'rl-finish', rlS('finish'))};
 }
 
 /* ---- Round 1, Know it: the guess deck (SPEC §3.2 V1), then the slang Say it? scenes (§3.3) ---- */
@@ -24693,24 +24737,29 @@ function rlRoundQuiz(s, R){
 }
 // The lesson quiz screen (renderQuiz's markup) inside the round: no "Question n of N", no tick count; "Quick check" over the round's
 // last 2 items; short fill options as a 2 x 2 tile grid, and a right tile flies into the gap.
-function rlQuizScreen(s, vp, R){
-  const q = rlRoundQuiz(s, R), item = q.questions[q.index], n = q.questions.length, miss = q.miss || [];
+function rlQuizScreen(s, vp, R){ return rlQuizView(rlRoundQuiz(s, R), 'rl-qnext'); }
+// One lesson-quiz item inside a round (renderQuiz's markup without its counters). Used by the word cards (fill / typed) and the grammar
+// card (also built answers, the carry question with its own eyebrow, and "Look again at the rule" after a miss).
+function rlQuizView(q, next){
+  const item = q.questions[q.index], n = q.questions.length, miss = q.miss || [];
   const longOpts = item.options.some(o=>String(o).length > 26);
   const tiles = item.qt === 'fill' && item.options.length === 4 && item.options.every(o=>String(o).length <= 14);
   const cls = (i, base)=>{ let c = base; if(q.answered){ if(i === item.correct) c += ' ok'; else if(i === q.selected || miss.includes(i)) c += ' no'; else if(!tiles) c += ' dim'; } else if(miss.includes(i)) c += ' no'; return c; };
   const dis = i=>(q.answered || miss.includes(i)) ? ' disabled' : '';
-  const opts = item.qt === 'type' ? quizTypeHtml(q, item) : tiles
+  const od = o=>/[\u0590-\u08ff]/.test(String(o)) ? 'auto' : 'ltr';   // a meaning option in Persian reads right to left
+  const opts = item.qt === 'type' ? quizTypeHtml(q, item) : item.qt === 'build' ? quizBuildTrayHtml(q, item) : tiles
     ? `<div class="game-tiles rl-tiles2" translate="no">${item.options.map((o, i)=>`<button class="${cls(i, 'game-tile')}" dir="ltr"${dis(i)} data-action="quiz-answer" data-i="${i}">${esc(o)}</button>`).join('')}</div>`
-    : `<div class="game-opts" translate="no">${item.options.map((o, i)=>`<button class="${cls(i, 'game-opt' + (longOpts ? ' long' : ''))}" dir="ltr"${dis(i)} data-action="quiz-answer" data-i="${i}">${esc(o)}</button>`).join('')}</div>`;
+    : `<div class="game-opts" translate="no">${item.options.map((o, i)=>`<button class="${cls(i, 'game-opt' + (longOpts ? ' long' : ''))}" dir="${od(o)}"${dis(i)} data-action="quiz-answer" data-i="${i}">${esc(o)}</button>`).join('')}</div>`;
   const ok = !!(q.results && q.results[q.index] === true);
-  const eye = q.rl !== 'more' && q.index >= n - 2 ? `<div class="lx-eyebrow rl-eb" dir="${courseTD()}">${esc(rlS('check.eye', {i:1, n:2}).split(courseSep())[0])}</div>` : '';
+  const eye = item.carry ? `<div class="lx-eyebrow rl-eb" dir="${courseTD()}">${esc(carryEyebrow(item.carry))}</div>`
+    : q.rl !== 'more' && q.index >= n - 2 ? `<div class="lx-eyebrow rl-eb" dir="${courseTD()}">${esc(rlS('check.eye', {i:1, n:2}).split(courseSep())[0])}</div>` : '';
   if(q.answered && tiles && q.selected === item.correct){ if(!q.flew || typeof q.flew !== 'object') q.flew = {}; if(!q.flew[q.index]){ q.flew[q.index] = 1; queueFx(rlFlyTile); } }
-  return {key:'q' + q.rl + '-' + q.index, i:q.index, k:q.rl === 'more' ? n : 0, body:`<div class="rl-body">${eye}
-      <div class="game-card${longOpts ? ' tight' : ''}" translate="no">${quizPromptHtml(item, q)}</div>
+  return {key:'q' + q.rl + '-' + q.index, i:q.index, k:q.rl === 'more' || q.kind === 'grammar' ? n : 0, body:`<div class="rl-body">${eye}
+      <div class="game-card${longOpts ? ' tight' : ''}" translate="no">${item.qt === 'build' ? quizBuildHtml(q, item) : quizPromptHtml(item, q)}</div>
       ${opts}
       ${!q.answered && miss.length ? `<div class="game-why">${farinImg('mood-thinking')}<div dir="auto">${esc(quizHintText(q, item))}</div></div>` : ''}
-      ${q.answered ? answerBannerHtml(item, ok, q.selected, '') + quizTypedNoteHtml(q, item) : ''}
-    </div>`, foot:q.answered ? rlCta('rl-qnext', q.index + 1 < n ? L('Next question', 'Sonraki soru', 'سوال بعدی', 'Siguiente pregunta') : L('Continue', 'Devam', 'ادامه', 'Continuar')) : ''};
+      ${q.answered ? answerBannerHtml(item, ok, q.selected, '') + quizLookAgainHtml(q, item, ok) + quizTypedNoteHtml(q, item) : ''}
+    </div>`, foot:q.answered ? rlCta(next, q.index + 1 < n ? L('Next question', 'Sonraki soru', 'سوال بعدی', 'Siguiente pregunta') : L('Continue', 'Devam', 'ادامه', 'Continuar')) : ''};
 }
 // the right tile flies into the gap (SPEC §3.2 V2), then the word there pops
 function rlFlyTile(){
@@ -24748,12 +24797,12 @@ function rlComplete(s, R, round){
   R.final = q; R.st[2] = 1; R.use = rlUseTask(s) ? 1 : 0; R.ph = R.use ? 'use' : 'done';
   save(); render(); window.scrollTo(0, 0);
 }
-function rlMoreScreen(s, R){
-  return {key:'more', i:2, body:`<div class="rl-body"><div class="game-card tight" style="text-align:center;">
+function rlMoreScreen(s, R, act){
+  return {key:'more', i:R.kind === 'g' ? 0 : 2, k:R.kind === 'g' ? 1 : 0, body:`<div class="rl-body"><div class="game-card tight" style="text-align:center;">
       ${farinImg('mood-thinking', 'rl-resface')}
       <div class="game-result-title" style="font-size:20px; margin-top:8px;">${L('Almost there. One more go?', 'Neredeyse oldu. Bir tur daha?', 'نزدیک بود. یک دور دیگر؟', 'Casi. ¿Otra vuelta?')}</div>
       <p class="game-result-line">${L('Practise again with the ones you missed plus a few new ones. Then this step is done.', 'Kaçırdıklarınla birkaç yeni soruyla tekrar çalış. Sonra bu adım tamamlanır.', 'دوباره با سوال‌هایی که اشتباه کردی و چند سوال تازه تمرین کن. بعد این قدم تمام می‌شود.', 'Practica otra vez con los que has fallado y algunos nuevos. Después este paso queda hecho.')}</p>
-    </div></div>`, foot:rlCta('rl-more', L('Practise again', 'Tekrar çalış', 'دوباره تمرین کن', 'Practicar otra vez')) + rlGhost('rl-stop', rlS('btn.stop'))};
+    </div></div>`, foot:rlCta(act || 'rl-more', L('Practise again', 'Tekrar çalış', 'دوباره تمرین کن', 'Practicar otra vez')) + rlGhost('rl-stop', rlS('btn.stop'))};
 }
 // SPEC §3.2 V4: the set's Use it task as the last screen of Round 3 (today it came after the celebration, on the word list page)
 function rlUseScreen(s, R){
@@ -24769,7 +24818,7 @@ function rlSheetHtml(s){
       ${c.note ? `<div class="flash-note row" style="align-items:flex-start; gap:6px;"><span style="flex:0 0 auto; color:var(--ink-faint);">${ICONS.warn}</span><span dir="auto" style="font-size:12px; color:var(--ink-soft);">${esc(L(c.note.en, c.note.tr, c.note.fa, c.note.es))}</span></div>` : ''}</div>`).join('')}</div>
   </div></div>`;
 }
-function rlLeave(){ stopAllSpeech(); backToRoadmap(); }
+function rlLeave(){ rlSeqTok++; rlMicStop(); stopAllSpeech(); backToRoadmap(); }
 
 /* ---- the Vocab Box card: the same guess (SPEC §3.4) ---- */
 function rlBoxPlayHtml(d, title){
@@ -24830,12 +24879,13 @@ function studioStraightIn(ds){
 /* ---- the taps (registered on HANDLERS after it is defined) ---- */
 const RL_HANDLERS = {
   'rl-go'(){
+    if(state.viewParams && state.viewParams.rl && state.viewParams.rl.kind){ rl2Go(state.viewParams.rl); return; }   // a grammar or dialogue card (pass 2)
     const vp = state.viewParams, s = rlSet(vp && vp.id), R = vp && vp.rl; if(!s || !R || R.ph !== 'opener') return;
     stopAllSpeech(); R.ph = 'play';
     if(R.r === 0) deckState(s); else rlRoundQuiz(s, R);
     save(); render(); window.scrollTo(0, 0);
   },
-  'rl-back'(){ const vp = state.viewParams, R = vp && vp.rl; if(!R || R.ph !== 'play' || rlBusy || deckBusy) return; stopAllSpeech(); R.ph = 'opener'; save(); render(); window.scrollTo(0, 0); },
+  'rl-back'(){ const vp = state.viewParams, R = vp && vp.rl; if(!R || R.ph !== 'play' || rlBusy || deckBusy) return; rlSeqTok++; rlMicStop(); stopAllSpeech(); R.ph = 'opener'; save(); render(); window.scrollTo(0, 0); },
   'rl-x'(){ rlLeave(); },
   'rl-stop'(){ rlLeave(); },
   'rl-start'(){ const vp = state.viewParams, R = vp && vp.rl; if(!R || R.ph !== 'done' || R.r >= 2) return; R.r += 1; R.ph = 'opener'; save(); render(); window.scrollTo(0, 0); },
@@ -24869,6 +24919,556 @@ const RL_HANDLERS = {
   'rl-box-pick'(el, e){ rlGuessPick(el, e, true); },
   'rl-box-next'(){ const d = state.viewParams && state.viewParams.boxDeck; if(!d || d.done || rlBusy || deckBusy || !d.pick || d.pick.ok) return; d.pick = null; boxSortTap(false); }
 };
+/* ---- pass 2 (Trello rC52b1hH, farin-app 2026-11-12): the roadmap grammar card and the roadmap dialogue card in three rounds ----
+   SPEC lessons-that-play-2026-11-11 §11 with §3.1 (grammar) and §3.5 (dialogue), in the same frame as the word cards (rlFrameHtml:
+   rail, round cover, stamp ticket). Opened from the roadmap only; course steps, the Grammar list and every other way in keep today's
+   grammar page and dialogue screen, and the grammar page stays one tap away ("Full lesson").
+   Grammar: Round 1 Know it = hear the item's context lines (each line lights up while its clip plays), two "Which one would you say?"
+   pairs (the right sentence is spoken and its words that differ from the wrong one light up), "Why does it work?" (the item's why.rule
+   and its two why.wrong, shuffled) and the rule card with both pairs; "The forms" opens the forms table in the sheet. Round 2 Say it
+   right = 4 practice items from grammarQuizQuestions (the meaning question and a fill, then the round check: a fix or a build and a
+   typed answer), with the page's carry question in 3rd place when one is due. They are the lesson quiz: completeLessonQuiz (60% rule,
+   "One more go?", nodeScores, SRS, completedTraps = the roadmap tick). Prove it does not run inside them (it happened in Round 1).
+   Round 3 Use it = Your turn (yourTurnHtml) -> Finish -> the celebration and the souvenir (the Your turn sentence; the rule emblem when
+   the why was right and the practice was >= 80% on the first try).
+   Dialogue: Round 1 Know it = hear the other person's lines (B1 and up: hidden until heard; "Show the words") and the key phrases
+   (each lights up when heard). Round 2 Say it right = the scene as a chat: the other person's lines drop in with their clips (B1 and up:
+   heard first, then read), the learner picks each of their lines (a wrong pick shows its why and gives one more try, a second miss shows
+   the line), and their line joins the chat in the other voice. Round 3 Use it = say your lines (Say it: the microphone when there is
+   one, else "I said it"; a tick stamp, never blocking) and the culture card -> Finish = today's dlg-done (completedDialogues, souvenir,
+   celebration). progress.lessonRounds[id] = {r, d, pv, more, firstPct} keeps the stamps between visits, as for the word cards.
+   Every line is spoken by ttsSpeak(text, 0.92, cb, {natural:true}) and found by the normal clip lookup, so it plays in its rendered
+   voice (the speaker's own, the learner's line in the other voice of the pair; the accent switch still applies). A line without a
+   clip stays silent, never the device voice. No line is reworded. */
+const RL_STR2 = {
+  'g.hear':['Hear it', 'Dinle', 'گوش کن', 'Escuchar'],
+  'g.first':['Hear it first', 'Önce dinle', 'اول بشنو', 'Escúchalo primero'],
+  'g.pick':['Which one would you say?', 'Hangisini söylerdin?', 'کدام را می‌گویی؟', '¿Cuál dirías tú?'],
+  'g.nextPair':['Next pair', 'Sonraki çift', 'جفت بعدی', 'Siguiente pareja'],
+  'g.why':['Why?', 'Neden?', 'چرا؟', '¿Por qué?'],
+  'g.ask':['Why does it work?', 'Peki neden işe yarıyor?', 'چرا درست است؟', '¿Por qué funciona?'],
+  'g.rule':['✦ The rule', '✦ Kural', '✦ قاعده', '✦ La regla'],
+  'g.full':['Full lesson', 'Dersin tamamı', 'کل درس', 'La lección completa'],
+  'g.forms':['The forms', 'Biçimler', 'شکل‌ها', 'Las formas'],
+  'g.cracked':['You cracked it.', 'Çözdün!', 'حلش کردی!', '¡Lo has resuelto!'],
+  'g.miss':['Look at the coloured words: that is the difference.', 'Renkli kelimelere bak: fark orada.', 'به کلمه‌های رنگی نگاه کن: فرق همین‌جاست.', 'Mira las palabras en color: ahí está la diferencia.'],
+  'go.next':['Next', 'Devam', 'بعدی', 'Siguiente'],
+  cont:['Continue', 'Devam', 'ادامه', 'Continuar'],
+  'd.show':['Show the words', 'Kelimeleri göster', 'کلمه‌ها را نشان بده', 'Muestra las palabras'],
+  'd.expr':['Useful expressions', 'İşe yarar ifadeler', 'عبارت‌های به‌دردبخور', 'Expresiones útiles'],
+  'd.tap':['Tap each one to hear it.', 'Duymak için her birine dokun.', 'روی هر کدام بزن تا بشنوی.', 'Toca cada una para oírla.'],
+  'd.what':['What do you say?', 'Ne dersin?', 'چه می‌گویی؟', '¿Qué dices?'],
+  'd.placed':['Here is a good way to say it.', 'Bunu söylemenin iyi bir yolu şu.', 'یک راه خوب برای گفتنش این است.', 'Aquí tienes una buena forma de decirlo.'],
+  'd.try':['Not quite. Try again.', 'Tam değil. Tekrar dene.', 'کاملاً درست نیست. دوباره امتحان کن.', 'Casi. Inténtalo otra vez.'],
+  'd.sayHint':['Listen, then say your line out loud.', 'Dinle, sonra repliğini yüksek sesle söyle.', 'گوش کن، بعد جمله‌ات را بلند بگو.', 'Escucha y luego di tu frase en voz alta.'],
+  'd.say':['Say it', 'Söyle', 'بگو', 'Dilo'],
+  'd.said':['I said it', 'Söyledim', 'گفتم', 'Ya lo he dicho'],
+  'd.listening':['Listening…', 'Dinliyorum…', 'دارم گوش می‌دهم…', 'Te escucho…'],
+  'd.know':['Did you know?', 'Biliyor muydun?', 'می‌دانستی؟', '¿Sabías que...?'],
+  'd.eyes':['Through their eyes', 'Onun gözünden', 'از چشم او', 'A través de sus ojos']
+};
+Object.assign(RL_STR, RL_STR2);
+let rlSeqTok = 0, rlMic = null, rldRunning = null, rldPending = null;
+// Plays lines one after another with their natural clips. The next line starts when one ends (or after a pause when its audio fails);
+// a watchdog moves on when a tap on a speaker button cut the line. before(i) / after(i) update the screen; the chain stops as soon as
+// the screen changes or another chain starts.
+function rlSeqPlay(texts, before, after, done){
+  const my = ++rlSeqTok, vp = state.viewParams, view = state.view;
+  const live = ()=>my === rlSeqTok && state.viewParams === vp && state.view === view;
+  const step = i=>{
+    if(!live()) return;
+    if(i >= texts.length){ if(done) done(); return; }
+    if(before) before(i);
+    let fired = false, dog = 0;
+    const next = ms=>{ if(fired) return; fired = true; clearTimeout(dog); setTimeout(()=>{ if(!live()) return; if(after) after(i); step(i + 1); }, ms); };
+    dog = setTimeout(()=>next(0), 2500 + 450 * String(texts[i] || '').split(/\s+/).length);
+    try{ ttsSpeak(texts[i], 0.92, {end:()=>next(220), error:()=>next(1200)}, {natural:true}); }catch(e){ next(1200); }
+  };
+  step(0);
+}
+function rlSay(text){ try{ ttsSpeak(text, 0.92, null, {natural:true}); }catch(e){} }
+function rlMicStop(){ const r = rlMic; rlMic = null; if(r){ try{ r.onresult = r.onerror = r.onend = null; r.abort(); }catch(e){} } }
+// the lesson's one aha (SPEC S4): the reveal sound (unless the tap already made one) and a spark burst on the element
+function rlAha(el, color, sound){ if(!el) return; if(sound) sfx('reveal'); const c = centerOf(el); sparkBurst(c.x, c.y, 10, color, 110); }
+function rlPop(el){ anim(el, [{transform:'scale(1)'}, {transform:'scale(1.18)'}, {transform:'scale(1)'}], {duration:260, easing:SPRING}); }
+function rlDrop(el){ anim(el, [{opacity:0, transform:'translateY(8px)'}, {opacity:1, transform:'translateY(0)'}], {duration:200, easing:'ease-out'}); }
+function rlFadeIn(el){ anim(el, [{opacity:0}, {opacity:1}], {duration:200, easing:'ease-out'}); }
+function rlShort(s){ const w = String(s || '').split(/\s+/).filter(Boolean); return w.length > 6 ? w.slice(0, 6).join(' ') + '…' : w.join(' '); }
+function rlPlayRow(action){ return `<div class="rl-playrow"><button type="button" class="game-play" data-action="${action}" aria-label="${esc(rlS('g.hear'))}">${ICONS.soundOn}</button><span class="game-play-label">${esc(rlS('g.hear'))}</span></div>`; }
+function rlEye(){ return `<div class="lx-eyebrow rl-eb" dir="${courseTD()}">${esc(rlS('check.eye', {i:1, n:2}).split(courseSep())[0])}</div>`; }
+// the round state of a grammar ('g') or dialogue ('d') card, rebuilt from its record when the screen opens
+function rl2State(id, kind){
+  const vp = state.viewParams;
+  let R = vp.rl;
+  if(!R || R.id !== id || R.kind !== kind){
+    const rec = rlRecs()[id] || null, r = rec ? Math.max(0, Math.min(2, rec.r || 0)) : 0;
+    R = vp.rl = {id, kind, r, ph:rec && rec.more ? 'more' : 'opener', st:[0, 1, 2].map(i=>i < r ? 1 : 0), landed:{}, got:{}, pv:rec && rec.pv ? 1 : 0};
+    vp.rlSheet = false;
+    if(state.quiz && state.quiz.contextId === id && state.quiz.rl != null && !(rec && rec.more)) state.quiz = null;   // a new run never resumes an old run's items
+  }
+  return R;
+}
+function rl2Go(R){
+  if(!R || R.ph !== 'opener') return;
+  stopAllSpeech(); R.ph = 'play';
+  if(R.kind === 'g' && R.r === 1){ const t = rlItem(R.id); if(t) rlgQuiz(t, state.viewParams, R); }
+  if(R.kind === 'd' && R.r === 1 && !R.c) R.c = {t:0, shown:0, cur:-1, miss:[], reveal:0, done:0, show:0};
+  if(R.kind === 'd' && R.r === 2){ R.lis = -1; R.sp = {}; }
+  save(); render(); window.scrollTo(0, 0);
+}
+
+// screens in a round of a grammar or dialogue card (the rail)
+function rl2Len(s, vp, R, r){
+  if(R.kind === 'g'){ if(r === 0) return rlgScreens(s, rlgEff(s, vp.goal)).length; if(r === 1){ const q = state.quiz; return q && q.contextId === s.id && q.kind === 'grammar' && q.rl === 1 && q.questions ? q.questions.length : 4; } return 1; }
+  return r === 0 ? rldList1(s).length : r === 1 ? dialogueTurns(s).length : rldList3(s).length;
+}
+
+/* ---- the grammar card ---- */
+// a free grammar item with everything the rounds use (SPEC §3.1 content check: every EN and ES item has it)
+function rlItem(id){
+  const t = GRAMMAR_ITEMS.find(x=>x.id === id);
+  return t && !t.course && t.exp && t.right && t.wrong && t.why && t.why.rule && Array.isArray(t.why.wrong) && t.why.wrong.length >= 2 && t.yourTurn && t.yourTurn.prompt ? t : null;
+}
+function rlgVk(t, goal){ return goal && t.goalVariant && t.goalVariant[goal] ? goal : null; }
+function rlgEff(t, goal){ const vk = rlgVk(t, goal); return effectiveGrammarItem(t, vk ? t.goalVariant[vk] : null); }
+function rlgScreens(t, e){ const a = []; if(t.context && t.context.lines && t.context.lines.length) a.push('hear'); a.push('p1'); if(e.wrong2 && e.right2) a.push('p2'); a.push('why'); return a; }
+function renderGrammarRounds(){
+  const vp = state.viewParams || {}, t = rlItem(vp.id);
+  if(!t || !lpOn('grammar')) return renderGrammarTrap(vp.id);
+  const R = rl2State(t.id, 'g'), e = rlgEff(t, vp.goal);
+  let scr = null;
+  if(R.ph === 'play') scr = R.r === 0 ? rlgKnowScreen(t, e, R) : R.r === 1 ? rlQuizView(rlgQuiz(t, vp, R), 'rlg-qnext') : rlgUseScreen(t, R);
+  else if(R.ph === 'more') scr = state.quiz && state.quiz.rl === 'more' && state.quiz.contextId === t.id ? rlQuizView(state.quiz, 'rlg-qnext') : rlMoreScreen(t, R, 'rlg-more');
+  else if(R.ph === 'done') scr = rlDoneScreen(t, R, 'rlg-finish');
+  if(!scr) scr = rlOpenerHtml(R, R.r === 0 ? grammarTitle(t) : rlName(R.r), R.r === 0 ? rlgScreens(t, e).length : R.r === 1 ? 4 : 1, R.r === 1 ? 4 : 0);
+  return rlFrameHtml(t, vp, R, scr);
+}
+function rlgKnowScreen(t, e, R){
+  const list = rlgScreens(t, e), i = Math.max(0, Math.min(list.length - 1, R.i || 0)), w = list[i], base = {key:'k' + w, i, k:list.length};
+  if(w === 'hear') return Object.assign(base, rlgHear(t, R));
+  if(w === 'why') return Object.assign(base, rlgWhy(t, e, R));
+  const n = w === 'p1' ? 1 : 2;
+  return Object.assign(base, rlgPair(t, e, R, n, list[i + 1] === 'p2' ? rlS('g.nextPair') : rlS('g.why')));
+}
+// G1, hear it first: the context lines (today's markup), dimmed until each one is spoken
+function rlgHear(t, R){
+  const c = t.context, H = R.hear || (R.hear = {cur:-1, n:0, done:0});
+  const targets = (c.targets || []).map(x=>String(x).toLowerCase());
+  const showTr = (t.level === 'A1' || t.level === 'A2') && (LANG === 'tr' || LANG === 'fa');
+  const core = w=>w.replace(/^[^\p{L}\p{N}']+|[^\p{L}\p{N}']+$/gu, '').toLowerCase();
+  const word = w=>targets.includes(core(w)) ? `<span class="gc-w lit">${esc(w)}</span>` : esc(w);
+  const lines = c.lines.map((ln, i)=>`<div class="gc-line${i < H.n ? ' on' : ''}${i === H.cur ? ' cur' : ''}" dir="ltr" data-ln="${i}">
+      <span class="gc-who">${esc(ln.who || '')}</span>
+      <div class="gc-body"><div class="gc-text">${String(ln.text || '').split(/(\s+)/).map(w=>(!w || /^\s+$/.test(w)) ? w : word(w)).join('')}</div>${showTr && (ln.tr || ln.fa) ? `<div class="gc-tr" dir="auto">${esc(L('', ln.tr, ln.fa) || '')}</div>` : ''}</div>
+      ${ttsButton(ln.text || '', '')}
+    </div>`).join('');
+  return {body:`<div class="rl-body"><div class="card-flat gc-card rl-hear${H.done ? ' all' : ''}"><div class="eyebrow" style="color:var(--cat-gram);">${esc(rlS('g.first'))}</div>${lines}</div>${rlPlayRow('rlg-hear')}</div>`,
+    foot:H.done ? rlCta('rlg-next', rlS('go.next')) : rlGhost('rlg-next', rlS('skip'))};
+}
+// G2 / G3: which one would you say? (stable order per item, so a reload shows the same screen)
+function rlgPairOrder(t, n){ return dateSeed(t.id + ':pair' + n) % 2 ? ['r', 'w'] : ['w', 'r']; }
+// The right sentence with what differs from the wrong one marked (a word diff, case and punctuation ignored): the words that are not
+// in the wrong sentence; when the right one only leaves words out ("I have finished" -> "I finished"), the word where they were.
+function rlDiffHtml(right, wrong){
+  const core = w=>String(w).toLowerCase().replace(/^[^\p{L}\p{N}']+|[^\p{L}\p{N}']+$/gu, '');
+  const toks = String(right || '').split(/(\s+)/), wi = toks.map((t, i)=>i).filter(i=>toks[i] && !/^\s+$/.test(toks[i]));
+  const a = wi.map(i=>core(toks[i])), b = String(wrong || '').split(/\s+/).filter(Boolean).map(core), n = a.length, m = b.length;
+  const L2 = Array.from({length:n + 1}, ()=>new Array(m + 1).fill(0));
+  for(let x = n - 1; x >= 0; x--) for(let y = m - 1; y >= 0; y--) L2[x][y] = a[x] === b[y] ? L2[x + 1][y + 1] + 1 : Math.max(L2[x + 1][y], L2[x][y + 1]);
+  const mark = new Set(); let x = 0, y = 0, gapAt = -1;
+  while(x < n && y < m){
+    if(a[x] === b[y]){ x++; y++; }
+    else if(L2[x + 1][y] >= L2[x][y + 1]){ if(a[x]) mark.add(x); x++; }
+    else { if(gapAt < 0) gapAt = x; y++; }
+  }
+  for(; x < n; x++) if(a[x]) mark.add(x);
+  if(y < m && gapAt < 0) gapAt = n;
+  if(!mark.size && gapAt >= 0 && n){ const k = Math.min(gapAt, n - 1); mark.add(k); }
+  // the same words, only the punctuation differs ("She failed; however," / "She failed, however"): the words whose marks changed
+  if(!mark.size){ const raw = String(wrong || '').toLowerCase().split(/\s+/); wi.forEach((ti, k)=>{ const j = raw.indexOf(toks[ti].toLowerCase()); if(j >= 0) raw.splice(j, 1); else mark.add(k); }); }
+  const at = new Set([...mark].map(k=>wi[k]));
+  return toks.map((t, i)=>at.has(i) ? `<span class="trap-fill">${esc(t)}</span>` : esc(t)).join('');
+}
+function rlgPair(t, e, R, n, cta){
+  const right = n === 1 ? e.right : e.right2, wrong = n === 1 ? e.wrong : e.wrong2, rt = n === 1 ? e.rightTranslation : e.right2Translation;
+  const P = (R.pk || {})[n], order = rlgPairOrder(t, n), trT = rt ? L(null, rt.tr, rt.fa) : '';
+  const opts = order.map((x, k)=>{ const isR = x === 'r'; let cls = 'game-opt long'; if(P) cls += isR ? ' ok' : (P.k === k ? ' no' : ' dim');
+    return `<button class="${cls}" dir="ltr" translate="no" data-action="rlg-pair" data-n="${n}" data-k="${k}"${P ? ' disabled' : ''}>${P && isR ? rlDiffHtml(right, wrong) : esc(isR ? right : wrong)}</button>`; }).join('');
+  const why = !P ? '' : P.ok ? (trT ? `<div class="game-why">${farinImg('face-smile')}<div dir="auto">${esc(trT)}</div></div>` : '')
+    : `<div class="game-why">${farinImg('mood-thinking')}<div dir="auto">${esc(rlS('g.miss'))}${trT ? `<div style="margin-top:4px; opacity:.85;">${esc(trT)}</div>` : ''}</div></div>`;
+  return {body:`<div class="rl-body"><p class="game-hint">${esc(rlS('g.pick'))}</p><div class="game-opts rl-pair">${opts}</div>${why}</div>`, foot:P ? rlCta('rlg-next', cta) : ''};
+}
+// G4: why does it work? (the item's rule and its two misconceptions), then the rule card with both pairs
+function rlgWhy(t, e, R){
+  const all = [t.why.rule, t.why.wrong[0], t.why.wrong[1]].map(trLine);
+  if(!Array.isArray(R.wo)) R.wo = shuffle([0, 1, 2]);
+  const P = R.wp;
+  const chips = R.wo.map((kk, j)=>{ let cls = 'game-opt long prove-chip'; if(P) cls += kk === 0 ? ' ok' : (P.pick === j ? ' no' : ' dim');
+    return `<button class="${cls}" dir="auto" data-action="rlg-why" data-j="${j}"${P ? ' disabled' : ''}>${esc(all[kk])}</button>`; }).join('');
+  const ask = `<div class="game-why prove-ask">${farinImg('face-smile')}<div dir="auto">${esc(rlS('g.ask'))}</div></div><div class="game-opts prove-opts">${chips}</div>`;
+  const pairs = [[e.wrong, e.right], [e.wrong2, e.right2]].filter(p=>p[0] && p[1]);
+  const say = P && P.ok && (R.sayUntil || 0) > Date.now() ? `<div class="rl-say" id="rl-say">${farinImg('face-proud')}<span>${esc(rlS('g.cracked'))}</span></div>` : '';
+  const card = !P ? '' : `<div class="game-card tight rl-rule badge-unlock-shine" id="rl-rule">
+      <div class="lx-eyebrow" dir="${courseTD()}">${esc(rlS('g.rule'))}</div>${say}
+      <p class="rl-rule-t" dir="auto">${esc(all[0])}</p>
+      <div class="contrast" dir="ltr" translate="no">${pairs.map(p=>`<div class="contrast-line wrong"><b>✗</b><span class="txt">${esc(p[0])}</span></div><div class="contrast-line right"><b>✓</b><span class="txt">${esc(p[1])}</span></div>`).join('')}</div>
+    </div>
+    <div class="rl-chips">${t.formsTable ? `<button type="button" class="game-chip" data-action="rl-sheet">${esc(rlS('g.forms'))}</button>` : ''}<button type="button" class="game-chip" data-action="rlg-full">${esc(rlS('g.full'))}</button></div>`;
+  return {body:`<div class="rl-body">${P && P.ok ? '' : ask}${card}</div>`, foot:P ? rlCta('rlg-next', rlS('cont')) : ''};
+}
+function rlgSheetHtml(id){
+  const t = GRAMMAR_ITEMS.find(x=>x.id === id), ft = t && t.formsTable;
+  if(!ft) return '';
+  return `<div class="rl-sheetwrap" data-action="rl-sheet-close" data-quiet="1"><div class="lsh fs-scr rl-sheet lx-page" role="dialog" aria-modal="true" aria-labelledby="rl-sheet-t" data-action="rl-sheet-noop" data-quiet="1">
+    <div class="lsh-head"><h2 class="onb-h1" id="rl-sheet-t">${esc(rlS('g.forms'))}<span class="dot">.</span></h2><button class="lsh-x" data-action="rl-sheet-close" aria-label="${esc(L('Close', 'Kapat', 'بستن', 'Cerrar'))}">×</button></div>
+    <div class="gx-table" translate="no" style="margin-top:16px; background:var(--bg-elevated); box-shadow:var(--shadow);"><table>
+      <thead><tr>${L(ft.headers.en, ft.headers.tr, ft.headers.fa, ft.headers.es).map(h=>`<th>${esc(h)}</th>`).join('')}</tr></thead>
+      <tbody>${ft.rows.map(row=>`<tr>${row.map(cell=>`<td dir="ltr">${esc(cell)}</td>`).join('')}</tr>`).join('')}</tbody>
+    </table></div>
+  </div></div>`;
+}
+// Round 2's four items: the meaning question and a fill first, then the round check: a fix (or a build) and a typed answer
+function rlgFmt(q, e){
+  if(q.qt === 'type' || q.qt === 'build') return q.qt;
+  if(/_{2,}/.test(String(q.prompt || ''))) return 'fill';
+  const txt = x=>(x && typeof x === 'object') ? (L(x.en, x.tr, x.fa, x.es) || x.en) : x;
+  if((e.practice || []).some(p=>p && p.type === 'meaning' && txt(p.prompt) === q.prompt)) return 'meaning';
+  if(/\n"/.test(String(q.prompt || ''))) return 'fix';
+  return 'pick';
+}
+function rlgPick4(qs, e){
+  const by = f=>qs.filter(q=>rlgFmt(q, e) === f), take = [], use = q=>{ if(q && !take.includes(q)) take.push(q); };
+  use(by('meaning')[0]); use(by('fill')[0]);
+  qs.forEach(q=>{ if(take.length < 2 && q.qt !== 'type' && q.qt !== 'build') use(q); });
+  use(by('fix')[0] || by('build')[0]); use(by('type')[0]);
+  qs.forEach(q=>{ if(take.length < 4) use(q); });
+  return take.slice(0, 4);
+}
+function rlgQuizObj(t, qs, vk, rl, extra){
+  return Object.assign({kind:'grammar', contextId:t.id, questions:qs, index:0, correct:0, streak:0, answered:false, selected:null, results:[], backView:'dashboard', backParams:{}, timeLimit:questionTimeLimit(qs[0]), deadline:null, lastTickSecond:null, rl, goal:vk, proveAt:-1}, extra || {});
+}
+function rlgQuiz(t, vp, R){
+  const q = state.quiz;
+  if(q && q.contextId === t.id && q.kind === 'grammar' && q.rl === 1 && q.questions && q.questions.length) return q;
+  const vk = rlgVk(t, vp.goal), e = rlgEff(t, vp.goal), qs = rlgPick4(grammarQuizQuestions(e, vk || 'base'), e);
+  const cq = carryQuestionFor(t.id);                       // LXD READY-6 R2: the page's carry question, before the round check
+  if(cq) qs.splice(Math.min(2, qs.length), 0, cq);
+  return (state.quiz = rlgQuizObj(t, qs, vk, 1));
+}
+function rlgQuizEnd(t, vp, R, q){
+  const rec = rlRec(t, true);
+  completeLessonQuiz(q);
+  markActivity();
+  if(q.retryOffered){ rec.more = 1; rec.firstPct = q.firstPct; rec.r = 1; R.ph = 'more'; save(); render(); window.scrollTo(0, 0); return; }
+  rec.more = 0; delete rec.firstPct; rec.r = 2;
+  R.final = q; R.st[1] = 1;
+  R.got[1] = q.questions.filter(x=>!x.carry).slice(-2).map(x=>x.answerText || quizAnswerText(x)).filter(Boolean);
+  R.ph = 'done'; save(); render(); window.scrollTo(0, 0);
+}
+// Round 3: Your turn, in the flow (the free page's own card; "Not now" skips it)
+function rlgUseScreen(t, R){
+  const rec = yourTurnRec(t.id), editing = !rec || state.viewParams.ytEdit === t.id;
+  return {key:'yt', i:0, k:1, body:`<div class="rl-body rl-yt">${yourTurnHtml(t)}</div>`, foot:editing ? rlGhost('rlg-yt-done', rlS('notNow')) : rlCta('rlg-yt-done', rlS('cont'))};
+}
+function rlgCur(){ const vp = state.viewParams, R = vp && vp.rl, t = R && R.kind === 'g' ? rlItem(R.id) : null; return t ? {vp, R, t} : null; }
+
+/* ---- the dialogue card ---- */
+function rlDlg(id){
+  const d = dialogueById(id), turns = d ? dialogueTurns(d) : [];
+  return d && Array.isArray(d.lines) && d.lines.length >= 2 && turns.length && turns.every(x=>(x.ln.choices || []).some(c=>c.ok)) ? d : null;
+}
+function rldList1(d){ return ['scene'].concat((d.expressions || []).length ? ['phr'] : []); }
+function rldList3(d){ return dialogueTurns(d).map((x, t)=>'s' + t).concat(d.culture || d.perspective ? ['cult'] : []); }
+function renderDialogueRounds(){
+  const vp = state.viewParams || {}, d = rlDlg(vp.id);
+  if(!d || !lpOn('dialogue')) return renderDialogue(vp.id);
+  const R = rl2State(d.id, 'd');
+  let scr = null;
+  if(R.ph === 'play') scr = R.r === 0 ? rldKnow(d, R) : R.r === 1 ? rldScene(d, R, vp) : rldSay(d, R);
+  else if(R.ph === 'done') scr = rlDoneScreen(d, R, 'rld-finish');
+  const nT = dialogueTurns(d).length;
+  if(!scr) scr = rlOpenerHtml(R, R.r === 0 ? svText(d.title) : rlName(R.r), R.r === 0 ? rldList1(d).length : R.r === 1 ? nT : rldList3(d).length, R.r === 1 ? nT : 0);
+  return rlFrameHtml(d, vp, R, scr);
+}
+function rldKnow(d, R){
+  const list = rldList1(d), i = Math.max(0, Math.min(list.length - 1, R.i1 || 0));
+  return Object.assign({key:'k' + list[i], i, k:list.length}, list[i] === 'scene' ? rldHear(d, R) : rldPhrases(d, R));
+}
+// Round 1: the other person's lines (the gist: the title and the first cue); B1 and up hear them before they read them
+function rldHear(d, R){
+  const H = R.hear || (R.hear = {cur:-1, n:0, done:0, show:0}), low = dialogueChoiceLevel(d), turns = dialogueTurns(d);
+  const cue = turns[0] && turns[0].ln.cue ? trLine(turns[0].ln.cue) : '';
+  const others = d.lines.filter(ln=>ln.who !== 'you');
+  const rows = others.map((ln, i)=>`<div class="rl-dl${i === H.cur ? ' cur' : ''}" data-ln="${i}">${dialogueLineHtml(ln, {hide:!low && !H.show && i >= H.n})}</div>`).join('');
+  return {body:`<div class="rl-body">
+      <div class="game-why rl-gist">${farinImg('face-smile')}<div dir="auto"><b>${esc(svText(d.title))}</b>${cue ? '<br>' + esc(cue) : ''}</div></div>
+      <div class="card-flat gc-card rl-chat rl-hearlist">${rows}</div>
+      ${rlPlayRow('rld-hear')}
+      ${!low && !H.show && H.n < others.length ? `<div class="rl-chips"><button type="button" class="game-chip" data-action="rld-show1">${esc(rlS('d.show'))}</button></div>` : ''}
+    </div>`, foot:H.done ? rlCta('rld-next', rlS('go.next')) : rlGhost('rld-next', rlS('skip'))};
+}
+// Round 1: the key phrases; each one lights up the first time it is heard (SPEC §6 TR-4)
+function rldPhrases(d, R){
+  const heard = R.ex || (R.ex = {});
+  return {body:`<div class="rl-body"><div class="lx-eyebrow rl-eb2" dir="${courseTD()}">${esc(rlS('d.expr'))}</div><p class="game-hint">${esc(rlS('d.tap'))}</p>
+      <div class="rl-phr">${(d.expressions || []).map((x, k)=>`<button type="button" class="pill vocab-hl fill-pill${heard[k] ? ' lit' : ''}" dir="ltr" translate="no" data-action="rld-phrase" data-k="${k}">${ICONS.soundOn}<span>${esc(x)}</span></button>`).join('')}</div></div>`,
+    foot:rlCta('rld-next', rlS('cont'))};
+}
+// Round 2: the scene as a chat that grows (SPEC §3.5 D2-D4)
+function rldScene(d, R, vp){
+  if(!R.c) R.c = {t:0, shown:0, cur:-1, miss:[], reveal:0, done:0, show:0};
+  const c = R.c, turns = dialogueTurns(d), nT = turns.length, low = dialogueChoiceLevel(d);
+  const stop = c.t < nT ? turns[c.t].i : d.lines.length;
+  const running = !!(rldRunning && rldRunning.vp === vp && rldRunning.tok === rlSeqTok);
+  if(!c.done && c.shown < stop && !running && rldPending !== vp){ rldPending = vp; queueFx(()=>setTimeout(()=>{ rldPending = null; rldAdvance(); }, 60)); }
+  const rows = d.lines.slice(0, c.shown).map((ln, k)=>`<div class="rl-dl${k === c.cur ? ' cur' : ''}" data-ln="${k}">${dialogueLineHtml(ln, {hide:ln.who !== 'you' && !low && !c.show && k === c.cur})}</div>`).join('');
+  const cur = c.t < nT ? turns[c.t] : null;
+  let task = '';
+  if(cur && !c.done && c.shown === cur.i && !running){
+    const ln = cur.ln, order = dialogueOrder(d, c.t, ln.choices.length), miss = c.miss || [], rv = !!c.reveal;
+    const opts = order.map(k=>{ const ch = ln.choices[k]; let cls = 'game-opt long'; if(rv) cls += ch.ok ? ' ok' : (miss.includes(k) ? ' no' : ' dim'); else if(miss.includes(k)) cls += ' no';
+      return `<button class="${cls}" dir="ltr" translate="no" data-action="rld-pick" data-k="${k}"${rv || miss.includes(k) ? ' disabled' : ''}>${esc(ch.text)}</button>`; }).join('');
+    const last = miss.length ? ln.choices[miss[miss.length - 1]] : null;
+    const why = last ? `<div class="game-why">${farinImg('mood-thinking')}<div dir="auto">${esc(trLine(last.why) || rlS('d.try'))}${rv ? `<div style="margin-top:6px;">${esc(rlS('d.placed'))}</div>` : ''}</div></div>` : '';
+    task = `${nT >= 2 && c.t >= nT - 2 ? rlEye() : ''}<p class="game-hint" dir="auto">${esc(low ? rlS('d.what') : (trLine(ln.cue) || rlS('d.what')))}</p><div class="game-opts rl-dopts">${opts}</div>${why}`;
+  }
+  const show = !low && !c.show && !c.done ? `<div class="rl-chips"><button type="button" class="game-chip" data-action="rld-show">${esc(rlS('d.show'))}</button></div>` : '';
+  return {key:'chat', i:Math.min(c.t, nT - 1), k:nT, body:`<div class="rl-body"><div class="card-flat gc-card rl-chat${c.done ? ' badge-unlock-shine' : ''}" id="rl-chat">${rows || '<div class="rl-chat-wait" aria-hidden="true">• • •</div>'}</div>${task}${show}</div>`,
+    foot:c.done ? rlCta('rld-next', rlS('cont')) : c.reveal ? rlCta('rld-place', rlS('cont')) : ''};
+}
+// the other person's lines up to the learner's next turn (or to the end) drop in one by one, each with its clip
+function rldAdvance(){
+  const vp = state.viewParams, R = vp && vp.rl, d = R && R.kind === 'd' ? rlDlg(R.id) : null;
+  if(!d || R.ph !== 'play' || R.r !== 1 || !R.c || (rldRunning && rldRunning.vp === vp && rldRunning.tok === rlSeqTok)) return;
+  const c = R.c, turns = dialogueTurns(d), low = dialogueChoiceLevel(d), stop = c.t < turns.length ? turns[c.t].i : d.lines.length;
+  c.cur = -1;
+  if(c.shown >= stop){
+    if(c.t >= turns.length && !c.done){ c.done = 1; queueFx(()=>rlAha(document.getElementById('rl-chat'), 'var(--cat-lis)', true)); }
+    save(); render(); return;
+  }
+  const idx = []; for(let k = c.shown; k < stop; k++) idx.push(k);
+  const row = k=>document.querySelector('.rl-chat [data-ln="' + k + '"]');
+  rldRunning = {vp, tok:rlSeqTok + 1};
+  rlSeqPlay(idx.map(k=>d.lines[k].text || ''), i=>{
+    c.shown = idx[i] + 1; c.cur = idx[i];
+    queueFx(()=>{ const el = row(idx[i]); rlDrop(el); if(el) el.scrollIntoView({block:'nearest'}); });
+    render();
+  }, i=>{
+    c.cur = -1;
+    if(!low && !c.show) queueFx(()=>{ const el = row(idx[i]); rlFadeIn(el && el.querySelector('.gc-text')); });
+    render();
+  }, ()=>{
+    rldRunning = null;
+    if(c.t >= turns.length){ c.done = 1; queueFx(()=>rlAha(document.getElementById('rl-chat'), 'var(--cat-lis)', true)); }
+    else queueFx(()=>{ const o = document.querySelector('.rl-dopts'); if(o) o.scrollIntoView({block:'nearest'}); });
+    save(); render();
+  });
+}
+// the learner's line joins the chat and plays (its clip is in the other voice of the pair), then the scene goes on
+function rldPlace(d, R, vp){
+  const c = R.c, cur = dialogueTurns(d)[c.t];
+  if(!cur) return;
+  c.shown = cur.i + 1; c.miss = []; c.reveal = 0; c.t += 1; c.cur = -1;
+  rldRunning = {vp, tok:rlSeqTok + 1};
+  rlSeqPlay([dialogueOkLine(cur.ln)], ()=>{ queueFx(()=>{ const el = document.querySelector('.rl-chat [data-ln="' + cur.i + '"]'); rlDrop(el); if(el) el.scrollIntoView({block:'nearest'}); }); save(); render(); },
+    null, ()=>{ rldRunning = null; rldAdvance(); });
+}
+// Round 3: say your lines (the line before for context, your line, Say it), then the culture card
+function rldSay(d, R){
+  const list = rldList3(d), i = Math.max(0, Math.min(list.length - 1, R.i3 || 0)), w = list[i], base = {key:'s3' + w, i, k:list.length};
+  if(w === 'cult') return Object.assign(base, {body:`<div class="rl-body">${rldCultureHtml(d)}</div>`, foot:rlCta('rld-next', rlS('cont'))});
+  const t = +w.slice(1), turn = dialogueTurns(d)[t], prev = d.lines.slice(0, turn.i).reverse().find(x=>x.who !== 'you');
+  const said = !!(R.said || {})[t], lis = R.lis === t && !!rlMic, sr = !!(window.SpeechRecognition || window.webkitSpeechRecognition);
+  if(!R.sp) R.sp = {};
+  if(!R.sp[t]){ R.sp[t] = 1; const vp = state.viewParams; queueFx(()=>setTimeout(()=>{ if(state.viewParams === vp && vp.rl === R && R.ph === 'play' && R.r === 2 && (R.i3 || 0) === i) rlSay(dialogueOkLine(turn.ln)); }, 350)); }
+  const chip = said ? '' : `<button type="button" class="game-chip rl-saychip${lis ? ' on' : ''}" data-action="rld-say" data-t="${t}"${lis ? ' disabled' : ''}>${lis ? esc(rlS('d.listening')) : sr ? ICONS.mic + esc(rlS('d.say')) : esc(rlS('d.said'))}</button>`;
+  return Object.assign(base, {body:`<div class="rl-body"><p class="game-hint">${esc(rlS('d.sayHint'))}</p>
+      <div class="card-flat gc-card rl-chat">${prev ? `<div class="rl-dl">${dialogueLineHtml(prev)}</div>` : ''}<div class="rl-dl rl-mine${said ? ' said' : ''}" id="rl-mine">${dialogueLineHtml(turn.ln)}${said ? '<span class="rl-tick" aria-hidden="true">✓</span>' : ''}</div></div>
+      <div class="rl-chips">${chip}</div></div>`, foot:rlCta('rld-next', rlS('go.next'))});
+}
+function rldCultureHtml(d){
+  return (d.culture ? `<div class="card-flat rl-cult"><div class="eyebrow" style="color:var(--cat-lis);">${esc(rlS('d.know'))}</div><p dir="auto">${esc(trLine(d.culture))}</p></div>` : '')
+    + (d.perspective ? `<div class="card-flat rl-persp"${d.culture ? ' style="margin-top:12px;"' : ''}><div class="eyebrow" style="color:var(--cat-story);">${esc(rlS('d.eyes'))}</div><p dir="auto">${esc(trLine(d.perspective))}</p></div>` : '');
+}
+function rldCur(){ const vp = state.viewParams, R = vp && vp.rl, d = R && R.kind === 'd' ? rlDlg(R.id) : null; return d ? {vp, R, d} : null; }
+
+const RL2_HANDLERS = {
+  // grammar, Round 1
+  'rlg-hear'(){
+    const g = rlgCur(); if(!g || g.R.ph !== 'play' || g.R.r !== 0 || !g.t.context) return;
+    const R = g.R, H = R.hear || (R.hear = {cur:-1, n:0, done:0}), lines = g.t.context.lines;
+    rlSeqPlay(lines.map(l=>l.text || ''), i=>{
+      H.cur = i; H.n = Math.max(H.n, i + 1);
+      queueFx(()=>document.querySelectorAll('.rl-hear .gc-line[data-ln="' + i + '"] .gc-w.lit').forEach(rlPop));
+      render();
+    }, null, ()=>{ H.cur = -1; H.done = 1; save(); render(); });
+  },
+  'rlg-pair'(el, e){
+    const g = rlgCur(); if(!g || g.R.ph !== 'play' || g.R.r !== 0) return;
+    const R = g.R, n = +el.dataset.n, k = +el.dataset.k;
+    if(!R.pk) R.pk = {};
+    if(R.pk[n] || !(n === 1 || n === 2)) return;
+    const ev = rlgEff(g.t, g.vp.goal), right = n === 1 ? ev.right : ev.right2, ok = rlgPairOrder(g.t, n)[k] === 'r';
+    R.pk[n] = {k, ok};
+    rlSeqTok++;
+    const pt = tapPoint(e) || centerOf(el), vp = g.vp;
+    queueFx(()=>{ const b = document.querySelector('[data-action="rlg-pair"][data-k="' + k + '"]'); if(ok) fxCorrectButton(b, pt); else fxWrongButton(b);
+      setTimeout(()=>{ if(state.viewParams === vp) rlSay(right); }, 400); });
+    save(); render();
+  },
+  'rlg-why'(el, e){
+    const g = rlgCur(); if(!g || g.R.ph !== 'play' || g.R.r !== 0 || g.R.wp || !Array.isArray(g.R.wo)) return;
+    const R = g.R, j = +el.dataset.j, ok = R.wo[j] === 0;
+    R.wp = {pick:j, ok}; R.pv = ok ? 1 : 0;
+    rlSeqTok++;
+    const from = el.getBoundingClientRect(), pt = tapPoint(e) || centerOf(el);
+    if(ok){
+      sfx('combo'); R.sayUntil = Date.now() + 5000;   // "You cracked it." for 5 s, once, only on a right pick (companion rule)
+      queueFx(()=>{ sparkBurst(pt.x, pt.y, 10, 'var(--cat-gram)'); const card = document.getElementById('rl-rule');
+        if(card){ const to = card.getBoundingClientRect(); if(to.width && to.height) anim(card, [{transform:`translate(${from.left - to.left}px, ${from.top - to.top}px) scale(${from.width / to.width}, ${from.height / to.height})`, opacity:.5}, {transform:'translate(0,0) scale(1)', opacity:1}], {duration:380, easing:SPRING}); }
+        setTimeout(()=>rlAha(document.getElementById('rl-rule'), 'var(--cat-gram)', false), 380);
+        setTimeout(()=>{ const s = document.getElementById('rl-say'); if(s) s.remove(); }, 5000); });
+    } else queueFx(()=>{ fxWrongButton(document.querySelector('[data-action="rlg-why"][data-j="' + j + '"]'));
+      setTimeout(()=>{ const card = document.getElementById('rl-rule'); if(card) card.scrollIntoView({block:'nearest'}); rlAha(card, 'var(--cat-gram)', true); }, 320); });
+    save(); render();
+  },
+  'rlg-next'(){
+    const g = rlgCur(); if(!g || g.R.ph !== 'play' || g.R.r !== 0) return;
+    const R = g.R, t = g.t, list = rlgScreens(t, rlgEff(t, g.vp.goal));
+    rlSeqTok++; ttsStop();
+    if((R.i || 0) < list.length - 1){ R.i = (R.i || 0) + 1; save(); render(); window.scrollTo(0, 0); return; }
+    const rec = rlRec(t, true); rec.r = Math.max(rec.r || 0, 1); rec.pv = R.pv ? 1 : 0;
+    R.got[0] = [trLine(t.why.rule)]; R.st[0] = 1; R.ph = 'done';
+    save(); render(); window.scrollTo(0, 0);
+  },
+  'rlg-full'(){ const g = rlgCur(); if(!g) return; rlSeqTok++; go('grammar-trap', {id:g.t.id, goal:g.vp.goal || ''}); },
+  // grammar, Round 2
+  'rlg-qnext'(){
+    const g = rlgCur(), q = state.quiz;
+    if(!g || !q || q.contextId !== g.t.id || q.kind !== 'grammar' || q.rl == null || q.rl === 'final' || !q.answered) return;
+    if(q.index + 1 < q.questions.length){ q.index++; q.answered = false; q.selected = null; q.miss = null; q.typed = null; q.bp = null; save(); render(); window.scrollTo(0, 0); return; }
+    rlgQuizEnd(g.t, g.vp, g.R, q);
+  },
+  'rlg-more'(){
+    const g = rlgCur(); if(!g || g.R.ph !== 'more') return;
+    const t = g.t, rec = rlRec(t, true), q0 = state.quiz && state.quiz.contextId === t.id && state.quiz.kind === 'grammar' && state.quiz.rl === 1 ? state.quiz : null;
+    // "One more go?" (today's quiz-retry): the round's misses, options reshuffled, then fresh items from the same item, 4 in all
+    const misses = q0 ? q0.questions.filter((m, i)=>!(q0.results && q0.results[i]) && !m.carry).map(m=>{ const order = shuffle(m.options.map((_, i)=>i));
+      return Object.assign({}, m, {options:order.map(i=>m.options[i]), correct:order.indexOf(m.correct)}, m.hints ? {hints:order.map(i=>m.hints[i])} : {}); }) : [];
+    const qid = m=>(m.key || '') + '|' + m.prompt, seen = new Set(misses.map(qid)), vk = rlgVk(t, g.vp.goal);
+    const qs = misses.concat(shuffle(grammarQuizQuestions(rlgEff(t, g.vp.goal), vk || 'base').filter(x=>!seen.has(qid(x))))).slice(0, 4);
+    state.quiz = rlgQuizObj(t, qs, vk, 'more', {round:2, firstPct:typeof rec.firstPct === 'number' ? rec.firstPct : (q0 ? q0.firstPct : 0)});
+    save(); render(); window.scrollTo(0, 0);
+  },
+  // grammar, Round 3
+  'rlg-yt-done'(){
+    const g = rlgCur(); if(!g || g.R.ph !== 'play' || g.R.r !== 2) return;
+    const yr = yourTurnRec(g.t.id);
+    g.R.got[2] = yr && yr.text ? [yr.text] : []; g.R.st[2] = 1; g.R.ph = 'done';
+    save(); render(); window.scrollTo(0, 0);
+  },
+  'rlg-finish'(){
+    const g = rlgCur(); if(!g || g.R.ph !== 'done' || g.R.r !== 2 || document.querySelector('.celebrate-overlay')) return;
+    const t = g.t, R = g.R, rec = rlRecs()[t.id];
+    if(rec && rec.pv) R.pv = 1;
+    rlRecDrop(t);
+    // after a break the round state is rebuilt without the finished quiz: the celebration reads the node's saved first-try score
+    let q = R.final;
+    if(!q){ const ns = (state.progress.nodeScores || {})[nodeScoreKey('grammar', t.id)]; q = {kind:'grammar', contextId:t.id, questions:[], results:[], correct:0, round:2, firstPct:ns && typeof ns.first === 'number' ? ns.first : 1}; }
+    q.proved = R.pv ? {ok:true, pick:0} : null;
+    state.quiz = q;
+    const extra = celebrationExtras('quiz', g.vp, 'grammar'), first = typeof q.firstPct === 'number' ? q.firstPct : q.correct / (q.questions.length || 1);
+    save();
+    showCelebration('grammar', lpOn('finish') ? '' : q.correct + ' / ' + q.questions.length + ' ' + L('correct', 'doğru', 'درست', 'correctas'), first < .5, extra);
+  },
+  // dialogue, Round 1
+  'rld-hear'(){
+    const x = rldCur(); if(!x || x.R.ph !== 'play' || x.R.r !== 0) return;
+    const R = x.R, d = x.d, H = R.hear || (R.hear = {cur:-1, n:0, done:0, show:0}), low = dialogueChoiceLevel(d), others = d.lines.filter(ln=>ln.who !== 'you');
+    rlSeqPlay(others.map(l=>l.text || ''), i=>{
+      H.cur = i; queueFx(()=>{ const el = document.querySelector('.rl-hearlist [data-ln="' + i + '"]'); if(el) el.scrollIntoView({block:'nearest'}); }); render();
+    }, i=>{
+      const was = i >= H.n; H.cur = -1; H.n = Math.max(H.n, i + 1);
+      if(was && !low && !H.show) queueFx(()=>{ const el = document.querySelector('.rl-hearlist [data-ln="' + i + '"] .gc-text'); rlFadeIn(el); });
+      render();
+    }, ()=>{ H.done = 1; save(); render(); });
+  },
+  'rld-show1'(){ const x = rldCur(); if(!x || !x.R.hear) return; x.R.hear.show = 1; save(); render(); },
+  'rld-phrase'(el){
+    const x = rldCur(); if(!x || x.R.ph !== 'play' || x.R.r !== 0) return;
+    const k = +el.dataset.k, p = (x.d.expressions || [])[k]; if(!p) return;
+    if(!x.R.ex) x.R.ex = {};
+    if(!x.R.ex[k]){ x.R.ex[k] = 1; sfx('hop'); el.classList.add('lit'); rlPop(el); }
+    rlSeqTok++; rlSay(p); save();
+  },
+  // dialogue, Round 2
+  'rld-show'(){ const x = rldCur(); if(!x || !x.R.c) return; x.R.c.show = 1; save(); render(); },
+  'rld-pick'(el, e){
+    const x = rldCur(); if(!x || x.R.ph !== 'play' || x.R.r !== 1 || !x.R.c || rlBusy) return;
+    const c = x.R.c, cur = dialogueTurns(x.d)[c.t]; if(!cur || c.reveal || c.shown !== cur.i) return;
+    const k = +el.dataset.k, ch = cur.ln.choices[k]; if(!ch || (c.miss || []).includes(k)) return;
+    if(ch.ok){
+      fxCorrectButton(el, tapPoint(e) || centerOf(el));
+      rlBusy = true; const vp = x.vp;
+      setTimeout(()=>{ rlBusy = false; if(state.viewParams === vp && vp.rl === x.R) rldPlace(x.d, x.R, vp); }, 320);
+      return;
+    }
+    c.miss = (c.miss || []).concat(k); if(c.miss.length >= 2) c.reveal = 1;
+    queueFx(()=>fxWrongButton(document.querySelector('[data-action="rld-pick"][data-k="' + k + '"]')));
+    save(); render();
+  },
+  'rld-place'(){ const x = rldCur(); if(!x || x.R.ph !== 'play' || x.R.r !== 1 || !x.R.c || !x.R.c.reveal) return; rldPlace(x.d, x.R, x.vp); },
+  // dialogue, Round 3
+  'rld-say'(el){
+    const x = rldCur(); if(!x || x.R.ph !== 'play' || x.R.r !== 2) return;
+    const R = x.R, vp = x.vp, t = +el.dataset.t;
+    if(!R.said) R.said = {};
+    if(R.said[t] || (R.lis === t && rlMic)) return;
+    rlSeqTok++; ttsStop();
+    const stamp = ()=>{ rlMic = null; if(state.viewParams !== vp) return; R.lis = -1; R.said[t] = 1; sfx('stamp'); buzz(12);
+      queueFx(()=>anim(document.querySelector('#rl-mine .rl-tick'), [{transform:'scale(1.15) rotate(-8deg)', opacity:0}, {transform:'scale(1) rotate(-3deg)', opacity:1}], {duration:280, easing:'ease-out'}));
+      save(); render(); };
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if(!SR){ stamp(); return; }
+    try{
+      rlMicStop();
+      const r = new SR(); r.lang = TTS_LANG; r.interimResults = false; r.continuous = false; r.maxAlternatives = 1;
+      let fin = false; const end = ()=>{ if(fin) return; fin = true; clearTimeout(tm); if(rlMic === r) stamp(); };
+      const tm = setTimeout(()=>{ try{ r.stop(); }catch(err){} end(); }, 8000);
+      r.onresult = end; r.onerror = end; r.onend = end;
+      rlMic = r; R.lis = t; r.start(); render();
+    }catch(err){ rlMic = null; stamp(); }
+  },
+  'rld-next'(){
+    const x = rldCur(); if(!x || x.R.ph !== 'play') return;
+    const R = x.R, d = x.d, rec = rlRec(d, true);
+    rlSeqTok++; rlMicStop(); ttsStop(); R.lis = -1;
+    if(R.r === 0){
+      if((R.i1 || 0) < rldList1(d).length - 1){ R.i1 = (R.i1 || 0) + 1; save(); render(); window.scrollTo(0, 0); return; }
+      rec.r = Math.max(rec.r || 0, 1); R.got[0] = (d.expressions || []).slice(0, 4); R.st[0] = 1; R.ph = 'done';
+    } else if(R.r === 1){
+      if(!R.c || !R.c.done) return;
+      rec.r = Math.max(rec.r || 0, 2); R.got[1] = dialogueTurns(d).map(y=>rlShort(dialogueOkLine(y.ln))); R.st[1] = 1; R.ph = 'done';
+    } else {
+      if((R.i3 || 0) < rldList3(d).length - 1){ R.i3 = (R.i3 || 0) + 1; save(); render(); window.scrollTo(0, 0); return; }
+      R.got[2] = []; R.st[2] = 1; R.ph = 'done';
+    }
+    save(); render(); window.scrollTo(0, 0);
+  },
+  'rld-finish'(){
+    const x = rldCur(); if(!x || x.R.ph !== 'done' || x.R.r !== 2 || document.querySelector('.celebrate-overlay')) return;
+    const d = x.d, pr = state.progress;
+    // today's dlg-done: the roadmap tick, the souvenir, the celebration
+    if(!Array.isArray(pr.completedDialogues)) pr.completedDialogues = [];
+    if(!pr.completedDialogues.includes(d.id)) pr.completedDialogues.push(d.id);
+    markActivity(); rlRecDrop(d);
+    const node = currentRoadmap().find(n=>n.type === 'dialogue' && n.refId === d.id), fresh = node ? awardSouvenirs({node}) : [];
+    save();
+    if(!node){ rlLeave(); return; }
+    showCelebration('dialogue', '', false, fresh.length ? {souvenir:fresh[0], fresh:true} : {});
+  }
+};
+Object.assign(RL_HANDLERS, RL2_HANDLERS);
 /* ========== LESSONS-PLAY-END ========== */
 
 /* ============================= RENDER: STUDIO (Teacher + Lab) ============================= */
@@ -26644,6 +27244,8 @@ const screens = {
   'vocab-set-intro': ()=>renderVocabSetIntro(state.viewParams.id),
   'vocab-box': ()=>renderVocabBox(),
   'vocab-rounds': renderVocabRounds,
+  'grammar-rounds': renderGrammarRounds,
+  'dialogue-rounds': renderDialogueRounds,
   'goals-list': renderGoalsList,
   'goal-levels': ()=>renderGoalLevels(state.viewParams.goal),
   'goal-level-detail': ()=>renderGoalLevelDetail(state.viewParams.goal, state.viewParams.level),
@@ -28167,6 +28769,9 @@ const HANDLERS = {
     // speaking step opens its round straight away. The free lists, course steps and Studio Lab keep today's screens.
     if(view === 'vocab-set-intro' && lpOn('deck') && lpFromRoadmap(el) && rlSet(el.dataset.id)){ go('vocab-rounds', {id:el.dataset.id, goal:el.dataset.goal || '', cat:el.dataset.cat || 'vocab'}); return; }
     if(view === 'studio-setup' && lpOn('studio') && lpFromRoadmap(el) && studioStraightIn(el.dataset)) return;
+    // pass 2: a roadmap grammar card and a roadmap dialogue card play in three rounds too
+    if(view === 'grammar-trap' && lpOn('grammar') && lpFromRoadmap(el) && rlItem(el.dataset.id)){ go('grammar-rounds', {id:el.dataset.id, goal:el.dataset.goal || ''}); return; }
+    if(view === 'dialogue' && lpOn('dialogue') && lpFromRoadmap(el) && rlDlg(el.dataset.id)){ go('dialogue-rounds', {id:el.dataset.id}); return; }
     const params = {id: el.dataset.id};
     if(view==='grammar-list' || view==='grammar-trap') params.level = state.viewParams.level || state.profile.level;
     if(view==='vocab-list' || view==='vocab-set' || view==='vocab-set-intro'){ params.level = state.viewParams.level || state.profile.level; params.cat = el.dataset.cat || state.viewParams.cat || 'vocab'; }
@@ -38819,7 +39424,7 @@ try{ document.addEventListener('pointerdown', orderPeekStart); document.addEvent
 
 // Typed quiz answers (teaching redesign item 12): Enter checks.
 try{ document.addEventListener('keydown', function(e){
-  if(e.key !== 'Enter' || (state.view !== 'quiz' && state.view !== 'souvenir-shuffle' && state.view !== 'vocab-rounds') || !e.target || e.target.id !== 'quiz-type-input') return;
+  if(e.key !== 'Enter' || (state.view !== 'quiz' && state.view !== 'souvenir-shuffle' && state.view !== 'vocab-rounds' && state.view !== 'grammar-rounds') || !e.target || e.target.id !== 'quiz-type-input') return;
   e.preventDefault();
   const act = state.view === 'souvenir-shuffle' ? 'shuffle-type-check' : 'quiz-type-check';
   const b = document.querySelector('[data-action="' + act + '"]');

@@ -1553,6 +1553,16 @@
   .adm-act label{display:flex; flex-direction:column; gap:4px; font-size:12px; font-weight:900; color:var(--ink-faint); letter-spacing:.04em;}
   .adm-act input{border:1.5px solid var(--border); border-radius:14px; padding:10px 12px; font:inherit; font-size:14px; font-weight:700; color:var(--ink); background:var(--bg-elevated);}
   .adm-comp{display:flex; flex-direction:column; gap:8px; background:var(--bg-elevated); border:1.5px solid var(--border); border-radius:22px; padding:10px;}
+  /* "Join our club" pop-up (2026-11-13): a plain sheet, no motion */
+  .club-ask{position:fixed; inset:0; z-index:90; display:flex; align-items:flex-end; justify-content:center; background:rgba(20,51,46,.45);}
+  .club-ask-card{position:relative; width:100%; max-width:480px; box-sizing:border-box; background:var(--bg-elevated); color:var(--ink); border-radius:28px 28px 0 0; padding:30px 22px calc(22px + env(safe-area-inset-bottom, 0px)); display:flex; flex-direction:column; gap:14px; box-shadow:0 -12px 40px -12px rgba(0,0,0,.3);}
+  @media (min-width:481px){ .club-ask{align-items:center; padding:16px;} .club-ask-card{border-radius:28px;} }
+  .club-ask-dog{position:absolute; top:-44px; inset-inline-end:20px; width:84px; height:auto; pointer-events:none;}
+  .club-ask-eyebrow{color:var(--fs-orange-ink);}
+  .club-ask-title{font-size:27px; line-height:1.1; margin:0;}
+  .club-ask-dot{color:#FFA53D;}
+  .club-ask-text{margin:0; font-size:14.5px; line-height:1.55; color:var(--ink-soft); max-width:36ch;}
+  .club-ask-note{margin:0; text-align:center; font-size:12px; color:var(--ink-faint);}
   .adm-comp textarea{border:0; resize:vertical; font:inherit; font-size:14.5px; color:var(--ink); background:transparent; padding:4px 6px; min-height:64px;}
   /* Admin panel v2 (Farin 2026-11-13: "sections, easy to enter, users in a separate one, the others each their own box, a number when I
      have to check something, neat and clean, each student's profile better, our brand design"). Home = hero + "To check" + one box per
@@ -9271,7 +9281,8 @@ const LOGIN_SALT = 'farin-spanish-login-v1';
 const LOGIN_DOC_PREFIX = 'pw-';
 const PASSWORD_MIN = 6;
 let farinPwBusy = false;          // a login/save request is in flight
-let farinPwDraft = '';            // keeps the typed onboarding password across a re-render; never saved
+let farinPwDraft = '';
+let signupPhoneDraft = '';          // the WhatsApp number typed at signup (2026-11-13), kept across a re-render            // keeps the typed onboarding password across a re-render; never saved
 let farinPwSettingsStatus = null; // {ok:true} | {error:'short'|'mismatch'|'taken'|'network'}
 function normalizeLoginName(name){
   // toLowerCase (not toLocaleLowerCase) so Turkish-locale phones and other
@@ -13383,7 +13394,7 @@ function hideCharTip(instant){
 }
 function showCharTip(motivOnly, line){
   if(state.view !== 'dashboard' || !state.profile || !state.profile.completedDiagnostic) return false;
-  if(document.getElementById('char-tip') || document.querySelector('.celebrate-overlay')) return false;
+  if(document.getElementById('char-tip') || document.querySelector('.celebrate-overlay, .club-ask')) return false;
   // Gamification v3: the bubble also carries the comeback greeting and today's plan (with buttons).
   // line (2026-10-18): a fixed hint instead of the plan/greeting — used by the locked roadmap step
   const offer = (motivOnly || line) ? null : companionBubbleContent();
@@ -14675,6 +14686,7 @@ function renderDiagUnlock(){
           ${pwField('unlock-password', 'new-password', L('At least 6 characters', 'En az 6 karakter', 'حداقل ۶ کاراکتر', 'Al menos 6 caracteres'), farinPwDraft)}
           <p class="field-hint">${L('With your name and this password you can get back into your account on any device.', 'Adın ve bu şifreyle hesabına istediğin cihazdan geri dönebilirsin.', 'با اسمت و این رمز می‌توانی از هر دستگاهی به حسابت برگردی.', 'Con tu nombre y esta contraseña puedes volver a tu cuenta desde cualquier dispositivo.')}</p>
         </div>`}
+        ${state.profile.contactPhone ? '' : signupPhoneFieldHtml()}
         ${showErr ? `<div class="unlock-error">${L("Oops — we need your name to continue.", 'Hop — devam etmek için adını almamız lazım.', 'اوپس — برای ادامه باید اسمت را بگویی.', 'Ups — necesitamos tu nombre para continuar.')}</div>` : ''}
         ${pwErr ? `<div class="unlock-error">${pwErrorText(pwErr)}</div>` : ''}
         <button class="btn btn-primary" data-action="unlock-submit" ${farinPwBusy?'disabled':''}>${farinPwBusy ? L('Saving…', 'Kaydediliyor…', 'در حال ذخیره…', 'Guardando…') : L('Go!', 'Hadi!', 'برو!', '¡Vamos!')}</button>
@@ -14685,7 +14697,7 @@ function renderDiagUnlock(){
 }
 function renderPrivacyPolicy(){
   return `<div class="fade-in">
-    ${sectionHead(L('Privacy Policy','Gizlilik Politikası','حریم خصوصی','Política de Privacidad'), L('Last updated: July 28, 2026','Son güncelleme: 28 Temmuz 2026','آخرین به‌روزرسانی: ۲۸ ژوئیه ۲۰۲۶','Última actualización: 28 de julio de 2026'))}
+    ${sectionHead(L('Privacy Policy','Gizlilik Politikası','حریم خصوصی','Política de Privacidad'), CL('Last updated: November 13, 2026','Son güncelleme: 13 Kasım 2026','آخرین به‌روزرسانی: ۱۳ نوامبر ۲۰۲۶','Última actualización: 13 de noviembre de 2026'))}
     <div class="screen" style="padding-top:0;">
       <div class="card-flat" style="line-height:1.7; font-size:14px;">
         <p>This Privacy Policy explains how this Spanish learning application ("the App") handles information.</p>
@@ -14697,7 +14709,7 @@ function renderPrivacyPolicy(){
         <p>When you use a speaking activity with the microphone (for example Say It Back or speaking practice), the App uses your browser's built-in speech recognition to turn your voice into text. In Chrome this sends the audio to Google's speech service for processing while you speak; the App itself does not record or store your voice. The microphone is only used when you tap the microphone button, and you can decline the permission - the activity then works without it.</p>
 
         <h3 class="display" style="font-size:15px; margin:18px 0 8px;">2. Optional Contact Information</h3>
-        <p>In Settings, you may voluntarily check a box to let the designated teacher message you directly, which requires entering your phone number. This is entirely optional and off by default. If you opt in, your name, phone number, level, and goal are stored so the teacher can reach out to you, primarily via WhatsApp.</p>
+        <p>When you create your profile, when the App invites you to join the club, or in Settings, you may voluntarily enter your WhatsApp number so the designated teacher can message you directly with news, offers and help. This is entirely optional. If you opt in, your name, phone number, level, and goal are stored so the teacher can reach out to you, primarily via WhatsApp.</p>
         <p>You can also choose to contact the teacher yourself at any time through the WhatsApp option in the App, in which case you may voluntarily share your name, level, goals, or any other information you include in your message.</p>
 
         <h3 class="display" style="font-size:15px; margin:18px 0 8px;">3. How Your Information Is Used</h3>
@@ -16248,6 +16260,96 @@ function renderContactOptIn(){
     </div>
   </div>`;
 }
+
+/* ---------- WhatsApp number at signup + "Join our club" pop-up (Farin 2026-11-13) ----------
+   Signup asks for the WhatsApp number next to name + password. It stays the learner's choice: the privacy policy and the store
+   forms say the number is optional. Learners already in get one "Join our club" pop-up (news, discounts, interesting things) on
+   Home: only when no number is saved, once per account (profile.clubAskAt), not in the first 2 days after joining, never on top
+   of another pop-up (char tip, celebration, splash, any dialog) and with no motion. A number saved here = profile.contactPhone +
+   wantsContact (admin › Users "Want contact") + one contacts doc (admin › Contacts), the same as the Settings opt-in.
+   Phone checks reuse the waiting-list ones (Persian digits allowed, country code needed). */
+function contactPhoneExample(){ return LANG === 'fa' ? '+98 912 345 6789' : LANG === 'es' ? '+34 612 345 678' : '+90 532 123 45 67'; }
+function contactPhoneErrText(){
+  const ex = '⁦' + contactPhoneExample() + '⁩';
+  return CL('Write your number with the country code, like ' + ex + '.', 'Numaranı ülke koduyla yaz, örneğin ' + ex + '.', 'شماره‌ات را با کد کشور بنویس، مثلاً ' + ex + '.', 'Escribe tu número con el código de país, por ejemplo ' + ex + '.');
+}
+function contactSavePhone(phone, source){
+  const p = state.profile;
+  p.contactPhone = phone; p.wantsContact = true; p.contactAt = Date.now();
+  save();
+  try{
+    if(typeof firebase !== 'undefined') firebase.firestore().collection('contacts').add({
+      name:p.name || '', phone, level:p.level || null, goal:goalLabel(p), recoveryCode:p.recoveryCode || null, source, lang:LANG, app:LOGIN_APP, createdAt:Date.now()
+    }).catch(()=>{});
+  }catch(e){}
+}
+function signupPhoneFieldHtml(){
+  const err = state.viewParams && state.viewParams.phoneError;
+  return `<div>
+          <label class="field-label" for="unlock-phone">${CL('Your WhatsApp number','WhatsApp numaran','شماره‌ی واتس‌اپت','Tu número de WhatsApp')}</label>
+          <input class="name-input${err ? ' wl-bad' : ''}" id="unlock-phone" type="tel" inputmode="tel" autocomplete="tel" dir="ltr" maxlength="24" placeholder="${esc(contactPhoneExample())}" value="${esc(signupPhoneDraft)}" />
+          <p class="field-hint">${CL('So Farin can send you news, discounts and help on WhatsApp. Only Farin sees it.','Farin sana WhatsApp\'tan haberler, indirimler ve yardım gönderebilsin diye. Bunu sadece Farin görür.','تا فرین بتواند اخبار، تخفیف‌ها و کمک را در واتس‌اپ برایت بفرستد. فقط فرین آن را می‌بیند.','Para que Farin te envíe novedades, descuentos y ayuda por WhatsApp. Solo Farin lo ve.')}</p>
+          ${err ? `<div class="unlock-error" role="alert" style="margin-top:8px;">${esc(contactPhoneErrText())}</div>` : ''}
+        </div>`;
+}
+let clubAskTimer = null, clubAskTries = 0;
+function clubAskEligible(){
+  const p = state.profile || {};
+  if(location.hash === '#admin' || !p.completedDiagnostic || !p.dashboardIntroShown || p.contactPhone || p.clubAskAt) return false;
+  const joined = Number(p.joinedAt) || 0;
+  return !(joined && Date.now() - joined < 2 * 86400000);
+}
+function clubAskBlocked(){
+  return document.hidden || state.view !== 'dashboard' || !!document.querySelector('#char-tip, .celebrate-overlay, .splash-overlay, .msg-zoom, .club-ask, [role="dialog"]');
+}
+function clubAskSchedule(delay){
+  clearTimeout(clubAskTimer);
+  if(!clubAskEligible() || clubAskTries > 60) return;
+  clubAskTimer = setTimeout(()=>{
+    clubAskTries++;
+    if(!clubAskEligible()) return;
+    if(clubAskBlocked()){ clubAskSchedule(6000); return; }
+    clubAskShow();
+  }, delay);
+}
+function clubAskHtml(done){
+  if(done) return `<div class="club-ask-card"><img class="club-ask-dog" src="${farinSrc('dog')}" alt="">
+      <h2 class="display club-ask-title" id="club-ask-title">${CL("You're in!",'Kulüptesin!','عضو شدی!','¡Ya estás dentro!')}</h2>
+      <p class="club-ask-text">${CL('Farin will message you soon on WhatsApp.','Farin yakında sana WhatsApp\'tan yazacak.','فرین به‌زودی در واتس‌اپ به تو پیام می‌دهد.','Farin te escribirá pronto por WhatsApp.')}</p>
+      <button class="cu-btn cu-orange" data-club="close">${CL('Great','Harika','عالی','Genial')}</button></div>`;
+  return `<div class="club-ask-card"><img class="club-ask-dog" src="${farinSrc('dog')}" alt="">
+      <div class="eyebrow club-ask-eyebrow">FEschool Club</div>
+      <h2 class="display club-ask-title" id="club-ask-title">${CL('Join our club','Kulübümüze katıl','به باشگاه ما بپیوند','Únete a nuestro club')}<span class="club-ask-dot">.</span></h2>
+      <p class="club-ask-text">${CL('News, discounts and lots of interesting things, before everyone else. Leave your WhatsApp number and Farin will add you.','Haberler, indirimler ve bir sürü ilginç şey, herkesten önce. WhatsApp numaranı bırak, Farin seni eklesin.','اخبار، تخفیف‌ها و کلی چیز جالب، زودتر از همه. شماره‌ی واتس‌اپت را بگذار تا فرین اضافه‌ات کند.','Novedades, descuentos y muchas cosas interesantes, antes que nadie. Deja tu número de WhatsApp y Farin te añadirá.')}</p>
+      <div><label class="field-label" for="club-ask-phone">${CL('Your WhatsApp number','WhatsApp numaran','شماره‌ی واتس‌اپت','Tu número de WhatsApp')}</label>
+      <input class="name-input" id="club-ask-phone" type="tel" inputmode="tel" autocomplete="tel" dir="ltr" maxlength="24" placeholder="${esc(contactPhoneExample())}" />
+      <div class="unlock-error" id="club-ask-err" role="alert" style="margin-top:8px;" hidden></div></div>
+      <button class="cu-btn cu-orange" data-club="join">${CL('Join the club','Kulübe katıl','عضو باشگاه شو','Unirme al club')}</button>
+      <button class="msg-link" style="margin-top:0;" data-club="later">${CL('Not now','Şimdi değil','الان نه','Ahora no')}</button>
+      <p class="club-ask-note">${CL('Only Farin sees your number.','Numaranı sadece Farin görür.','شماره‌ات را فقط فرین می‌بیند.','Solo Farin ve tu número.')}</p></div>`;
+}
+function clubAskClose(){ const el = document.querySelector('.club-ask'); if(el) el.remove(); }
+function clubAskShow(){
+  state.profile.clubAskAt = Date.now(); save();   // once per account, even when closed with "Not now"
+  const el = document.createElement('div');
+  el.className = 'club-ask'; el.setAttribute('role', 'dialog'); el.setAttribute('aria-modal', 'true'); el.setAttribute('aria-labelledby', 'club-ask-title');
+  el.innerHTML = clubAskHtml(false);
+  el.addEventListener('click', e=>{
+    if(e.target === el){ clubAskClose(); return; }
+    const b = e.target.closest('[data-club]'); if(!b) return;
+    const k = b.dataset.club;
+    if(k === 'later' || k === 'close'){ clubAskClose(); return; }
+    if(k === 'join'){
+      const inp = document.getElementById('club-ask-phone'), err = document.getElementById('club-ask-err');
+      const phone = courseWaitlistPhone(inp ? inp.value : '');
+      if(!courseWaitlistPhoneOk(phone)){ if(err){ err.textContent = contactPhoneErrText(); err.hidden = false; } if(inp){ inp.classList.add('wl-bad'); inp.focus(); } return; }
+      contactSavePhone(phone, 'club-popup');
+      el.innerHTML = clubAskHtml(true);
+    }
+  });
+  document.body.appendChild(el);
+}
+clubAskSchedule(8000);
 
 /* ============================= RENDER: STUDENT CLUB ============================= */
 function renderStudentClub(){
@@ -28488,11 +28590,15 @@ const HANDLERS = {
     const pwEl = document.getElementById('unlock-password');
     const password = pwEl ? pwEl.value : '';
     farinPwDraft = password;
+    const phoneEl = document.getElementById('unlock-phone');
+    if(phoneEl) signupPhoneDraft = phoneEl.value;
+    const phone = courseWaitlistPhone(signupPhoneDraft);
     if(name.length < 2){
       state.viewParams = {showError:true, name};
       render();
       return;
     }
+    if(phone && !courseWaitlistPhoneOk(phone)){ state.viewParams = {phoneError:true, name}; render(); return; }
     const prev = state.profile;
     const keepLogin = !!prev.loginId;
     if(!keepLogin && password.length < PASSWORD_MIN){
@@ -28516,7 +28622,9 @@ const HANDLERS = {
         loginId: keepLogin ? prev.loginId : (login ? login.id : null),
         loginName: keepLogin ? (prev.loginName || prev.name) : (login ? name : null),
         // true when the password couldn't be saved (offline); Settings asks for it again
-        passwordPending: !keepLogin && !login
+        passwordPending: !keepLogin && !login,
+        contactPhone: phone || prev.contactPhone || '', wantsContact: phone ? true : !!prev.wantsContact, contactAt: phone ? Date.now() : (prev.contactAt || null),
+        clubAskAt: prev.clubAskAt || null
       };
       // Generate-once-then-mutate: this is the moment the roadmap is born, so it's
       // the one point where a fresh buildRoadmap() call is correct — from here on,
@@ -28524,6 +28632,7 @@ const HANDLERS = {
       // of recomputing live (see regenerateRoadmap() comment above).
       regenerateRoadmap();
       save();
+      if(phone){ contactSavePhone(phone, 'signup'); signupPhoneDraft = ''; }
       if(!courseLinkLand()) go('dashboard');
       showSplash();
     };

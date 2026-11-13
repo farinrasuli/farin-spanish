@@ -250,7 +250,7 @@ var TAB = [
 function svg(paths, cls){ return '<svg viewBox="0 0 24 24" class="' + (cls || '') + '" aria-hidden="true">' + paths + '</svg>'; }
 var SPEAKER_SVG = '<svg viewBox="0 0 24 24"><path d="M4 9.5h3.2L12 5.5v13l-4.8-4H4z" fill="currentColor" stroke="none"/><path d="M15.5 9a4 4 0 010 6M17.8 6.5a7.5 7.5 0 010 11"/></svg>';
 function evCardHtml(id, o){
-  var d = evDef(id) || {id:id, name:id}, st = evStage(id), m = man('ev-' + id);
+  var d = evDef(id) || {id:id, name:id}, st = evStage(id), m = man('ev-' + (st.art || id));   // st.art: the art id when two episodes use one evidence id for different things (2026-11-12)
   var art = m && m.ready ? '<img src="' + esc(artUrl(m)) + '" alt="" draggable="false">' : icon(st.icon);
   return '<div class="cc-ev" data-ev="' + esc(id) + '" role="button" tabindex="0" aria-label="' + esc(T(d.name)) + '"><div class="cc-evart" style="--evc:' + esc(st.c || '#f3e3c8') + '">' + art +
     (st.stamp ? '<span class="cc-evstamp" lang="' + G.lang + '">' + esc(T(st.stamp)) + '</span>' : '') + '</div><b lang="' + G.lang + '">' + esc(T(d.name)) + '</b></div>';
@@ -794,7 +794,7 @@ async function stepHub(){
   function detailHtml(vid){
     return findsIn(vid).map(function(f){
       var got = f.secret ? r.secret : r.found.indexOf(f.id) >= 0;
-      var st = evStage(f.id), m = man('find-' + f.id);
+      var st = evStage(f.id), m = man('find-' + (st.art || f.id));
       var inner = m && m.ready ? '<img src="' + esc(artUrl(m)) + '" alt="" style="width:100%;height:100%;object-fit:contain">' : icon(st.icon);
       return '<div class="cc-find' + (got ? ' cc-got' : '') + '" data-find="' + esc(f.id) + '" style="left:' + f.box[0] + '%;top:' + f.box[1] + '%;width:' + f.box[2] + '%;height:' + f.box[3] + '%">' + inner + '</div>';
     }).join('');

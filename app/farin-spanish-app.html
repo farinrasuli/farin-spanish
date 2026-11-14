@@ -33066,9 +33066,9 @@ function courseAfterRender(root){
   // the speaking card's timer / recorder stop as soon as another screen is shown
   if(courseUi.sp){ const vp = state.viewParams || {}; if(!(courseRIs('speaking') && vp.uid===courseUi.sp.uid)) courseSpLeave(); }
   // IELTS practice: the recording stops when the card is left; typed answers and the clock are bound after each render
-  if(courseUi.dr){ const vp = state.viewParams || {}; if(!(state.view==='course-step' && vp.type==='drill' && vp.uid===courseUi.dr.uid)){ courseDrillStop(); courseUi.dr = null; } }
+  if(courseUi.dr){ const vp = state.viewParams || {}; if(!(state.view==='course-step' && (vp.type==='drill' || courseRIs('drill')) && vp.uid===courseUi.dr.uid)){ courseDrillStop(); courseUi.dr = null; } }   // (courseRIs: the IELTS timed part inside Three Rounds)
   if(courseUi.mk){ const vp = state.viewParams || {}; if(!(state.view==='course-step' && vp.type===courseUi.mk.type && vp.uid===courseUi.mk.uid)){ courseMockStop(); courseUi.mk = null; } }
-  if(courseUi.ies){ const vp = state.viewParams || {}; if(!(state.view==='course-step' && vp.type==='sets' && vp.uid===courseUi.ies.uid)) courseIeSpLeave(); }
+  if(courseUi.ies){ const vp = state.viewParams || {}; if(!(state.view==='course-step' && (vp.type==='sets' || courseRIs('sets')) && vp.uid===courseUi.ies.uid)) courseIeSpLeave(); }
   if(state.view==='course-step' && (root.querySelector('.cq-set') || root.querySelector('.cq-clock'))) courseQBind(root);
   if(state.view==='course-step') courseIeBind(root);
   if(state.view==='course-step' && root.querySelector('textarea.cm-text')) courseMockBindText(root);
@@ -36362,7 +36362,10 @@ const TRS = {
   'ex.fixed':['Fixed', 'Düzeltilmiş', 'اصلاح‌شده', 'Corregido'],
   rail:['Round {r} · {i} of {k}', '{r}. tur · {i}/{k}', 'دور {r} · {i} از {k}', 'Ronda {r} · {i} de {k}'],
   'show.all':['Show all', 'Hepsini göster', 'همه را نشان بده', 'Mostrar todo'],
-  'show.less':['Show less', 'Daha az göster', 'کمتر نشان بده', 'Mostrar menos']
+  'show.less':['Show less', 'Daha az göster', 'کمتر نشان بده', 'Mostrar menos'],
+  'ie.hint.word':['Read the whole sentence again and try each option in place of the word. Only one keeps the meaning.', 'Cümlenin tamamını yeniden oku ve her seçeneği kelimenin yerine koyarak dene. Anlamı yalnızca biri korur.', 'کل جمله را دوباره بخوان و هر گزینه را جای آن کلمه بگذار. فقط یکی معنی را حفظ می‌کند.', 'Vuelve a leer la frase entera y prueba cada opción en lugar de la palabra. Solo una mantiene el sentido.'],
+  'ie.hint.para':['Look for the same idea, not the same words. Rule out the options that change the meaning or add to it.', 'Aynı kelimeleri değil, aynı fikri ara. Anlamı değiştiren ya da ona bir şey ekleyen seçenekleri ele.', 'دنبال همان معنا بگرد، نه همان کلمه‌ها. گزینه‌هایی را که معنا را عوض می‌کنند یا چیزی به آن اضافه می‌کنند کنار بگذار.', 'Busca la misma idea, no las mismas palabras. Descarta las opciones que cambian el sentido o le añaden algo.'],
+  'ie.after.eye':['After the timed part · {i} of {n}', 'Süreli bölümden sonra · {i}/{n}', 'بعد از بخش زمان‌دار · {i} از {n}', 'Después de la parte cronometrada · {i} de {n}']
 };
 function trN(x){ return LANG === 'fa' ? String(x).replace(/\d/g, d=>'۰۱۲۳۴۵۶۷۸۹'[d]) : String(x); }
 // English inside a Persian line goes in an isolate (shown as an LTR <bdi> by isoHtml)
@@ -36377,16 +36380,23 @@ const COURSE_R_REC = ['judge', 'listening', 'story'], COURSE_R_PROD = ['speaking
 const COURSE_R_COVER = ['icon-story.png', 'icon-speaking.png', 'art/course-clay/studio-icon-cutout-320.webp'];
 const COURSE_R_COVER_FB = ['', '', 'studio-icon-cutout.png'];
 const COURSE_R_STAMP = ['art/course-clay/stamp-know-256.webp', 'art/course-clay/stamp-say-256.webp', 'art/course-clay/stamp-use-256.webp'];
+// IELTS (SPEC 19, 2026-11-14): its own round names, stamps S4-S6 (exam mauve: globe, target, clock) and round covers; Round 3 is the timed part
+const COURSE_R_TIMED = ['drill', 'writing', 'sets'], COURSE_R_IE_KEYS = ['ctx', 'tech', 'timed'];
+const COURSE_R_IE_STAMP = ['art/course-clay/stamp-ielts-context-256.webp', 'art/course-clay/stamp-ielts-technique-256.webp', 'art/course-clay/stamp-ielts-timed-256.webp'];
+const COURSE_R_IE_COVER = ['story-documentary-cutout.png', 'icon-goals.png', 'icon-review.png'];
+function courseRIe(cid){ return courseIsExam(courseGet(cid)); }
+// the course on screen (round names and stamps follow it): the view's course, else the round runner's
+function courseRIeNow(){ const vp = state.viewParams || {}, rd = courseUi.rd; return courseRIe(vp.cid || (rd && rd.cid)); }
 // 'Lesson 5.1' on the new screens, with the UI's digits (Persian: درس ۵.۱)
 function courseRLessonName(cid, uid){ const no = courseUnitNo(cid, uid); return CL('Lesson ' + no, 'Ders ' + no, 'درس ' + trN(no), 'Lección ' + no); }
-function courseRName(r){ return trs('r.' + COURSE_R_KEYS[r]); }
+function courseRName(r, cid){ return trs('r.' + ((cid ? courseRIe(cid) : courseRIeNow()) ? COURSE_R_IE_KEYS : COURSE_R_KEYS)[r]); }
 // Clay pictures: decorative (alt=""), lazy; a missing file falls back to its stand-in or, for a stamp, to the UI ring (never a broken image).
 // The onerror code is inline: an inline handler runs in the page's global scope, where the app's functions do not exist (the old
 // onerror="courseRImgFail(this)" threw "courseRImgFail is not defined" and left the broken image; found by course-link-check 2026-11-11).
 function courseRImg(src, cls, fb){ return `<img class="${cls || ''}" src="${esc(src)}" alt="" loading="lazy" decoding="async"${fb ? ` data-fb="${esc(fb)}"` : ''} onerror="try{var f=this.getAttribute('data-fb');if(f){this.removeAttribute('data-fb');this.src=f;}else{if(this.parentNode)this.parentNode.classList.add('noimg');this.remove();}}catch(e){}">`; }
 
 /* ---- the gate ---- */
-function courseRCourseOn(c){ return !!(c && c.rounds && roundsLive() && !courseIsExam(c)); }
+function courseRCourseOn(c){ return !!(c && c.rounds && roundsLive()); }   // exam courses too since 2026-11-14 (IELTS: its own round map, SPEC 19)
 function courseRoundsOn(cid, uid){
   const c = courseGet(cid); if(!courseRCourseOn(c)) return false;
   const f = courseFindUnit(cid, uid); if(!f || f.u.isMock || courseIsCp(cid, uid) || courseUnitWaiting(cid, uid)) return false;
@@ -36394,7 +36404,8 @@ function courseRoundsOn(cid, uid){
   if(lm && !courseLazyReady(lm)) return (f.u.sessions || []).some(s=>s.includes('explain'));
   const ex = courseUnitItems(uid).explain; if(!ex || !(ex.points || []).length) return false;
   // a lesson with a step the rounds can't place keeps today's flow
-  return courseUnitSteps(cid, uid).every(s=>s.type === 'explain' || s.type === 'exit' || COURSE_R_REC.includes(s.type) || COURSE_R_PROD.includes(s.type));
+  const ie = courseIsExam(c);
+  return courseUnitSteps(cid, uid).every(s=>s.type === 'explain' || s.type === 'exit' || (ie ? COURSE_R_TIMED.includes(s.type) : COURSE_R_REC.includes(s.type) || COURSE_R_PROD.includes(s.type)));
 }
 // With the switch off, a rounds course's new lesson fields leave today's lesson view as it was (writing.parts feeds only the rounds).
 function courseRPartsOff(cid, uid){ const c = courseGet(cid); return !!(c && c.rounds && !roundsLive() && courseHasExplain(uid)); }
@@ -36498,6 +36509,7 @@ function courseRFreeze(cid, uid){
 /* ---- courseRounds(cid, uid): the three rounds of a lesson, built from today's data (SPEC 3) ----
    [{r, key, screens:[{t, rail, min, ...}]}]; screen types: before, opener, kp (A/B/C/D), try, example, first, q, notes, task, done. */
 function courseRounds(cid, uid){
+  if(courseRIe(cid)) return courseRoundsIe(cid, uid);
   const it = courseUnitItems(uid), ex = it.explain; if(!ex) return null;
   const b2 = courseB2(cid, uid), split = courseRSplit(ex), gp = courseRGp(it), cp = courseProg(cid);
   const items = (it.exit && it.exit.items) || [], tasks = courseRTasks(cid, uid);
@@ -36562,6 +36574,113 @@ function courseRounds(cid, uid){
   R.notAsked = notAsked; R.gp = gp; R.hasBefore = hasBefore; R.redo = redo;
   return R;
 }
+/* ---- IELTS (SPEC 19, farin-lxd 2026-11-12; replaces section 9): the exam method in three rounds.
+   Round 1 The context = the context intro, then every card of the test type (Speaking: all three parts' cards, in part order, so Round 3
+   runs the parts back to back), each split into screens of at most 60 English words and ending with its word check (not marked).
+   Round 2 The technique = the key points (A-D), the worked item (the question first, then the material with the question pinned, one
+   walk step a screen, the answer and its why), then a check of 2: the quick check and the first own method/trap item that is not afterTimed.
+   Round 3 The timed part = the real part (drill, writing or sets) in its real format and timing, no rail and no break, its raw marks as
+   today; then every other own item ("After the timed part"). No Before, Notes, first try or Keep it fresh (courseReviewOn is off for IELTS).
+   Word counts follow farin-lxd's rounds-2026-11-12/screens.cjs (the 19.3 measurement: 4,656 screens, the longest 60). ---- */
+function courseRIeCards(cid, ex){ return courseIeCards(cid, ex).map((k, i)=>({k, i, p:Math.max(1, courseIeCardPart(k))})).sort((a, b)=>a.p - b.p || a.i - b.i).map(x=>x.k); }
+function courseRIeMat(e){ return (e.lines || []).reduce((a, l)=>a + courseRW(l[0]) + courseRW(l[1]), 0) + courseRW(e.text); }
+function courseRIeCardScreens(uid, k, ci){
+  const W = courseRW, T = courseREn, t = W(T(k.title)), out = [], add = o=>out.push(Object.assign({t:'icard', ci, r:0, rail:true, min:0.5, title:cl(k.title)}, o));
+  const asks = W(T(k.asks)), fields = (k.fields || []).reduce((a, x)=>a + W(x), 0);
+  if(t + asks + fields <= 60) add({part:'about', fields:true, w:t + asks + fields}); else { add({part:'about', fields:false, w:t + asks}); if(fields) add({part:'fields', w:fields}); }
+  [['words', x=>W(x.a) + W(x.b)], ['traps', x=>W(T(x))], ['ideas', x=>W(x)]].forEach(([fk, wf])=>{ if((k[fk] || []).length)
+    courseRPack(k[fk].map((x, i)=>({i, w:wf(x)})), 0, 60).forEach(pg=>add({part:fk, rows:pg.map(x=>x.i), w:pg.reduce((a, x)=>a + x.w, 0)})); });
+  const e = k.example || {};
+  if(e.item){ const m = courseRIeMat(e), iw = W(e.item);
+    if(m + iw <= 60) add({part:'ex', show:'both', w:m + iw}); else { add({part:'ex', show:'item', w:iw}); add({part:'ex', show:'mat', w:m}); }
+    add({part:'exans', w:W(e.answer) + W(T(e.why))}); }
+  if(courseIeMatchItems(uid, k).length) add({part:'match', min:1, w:0});
+  return out;
+}
+function courseRIeExScreens(e){
+  if(!e) return []; const W = courseRW, T = courseREn, hw = W(T(e.head)), m = courseRIeMat(e), out = [], add = o=>out.push(Object.assign({t:'iex', r:1, rail:true, min:0.5, title:cl(e.head)}, o));
+  add({part:'item', w:hw + W(e.instruction) + W(e.item)});
+  if(m) add({part:'mat', w:m});
+  (e.walk || []).forEach((s, k)=>add({part:'walk', k, w:hw + W(T(s))}));
+  const aw = W(e.answer), yw = W(T(e.why));
+  if(hw + aw + yw <= 60) add({part:'ans', why:true, w:hw + aw + yw}); else { add({part:'ans', why:false, w:hw + aw}); if(yw) add({part:'why', w:yw}); }
+  return out;
+}
+function courseRIeTimedMin(it, t){ const x = it[t] || {};
+  if(t === 'sets') return (x.sets || []).reduce((a, p)=>a + (Number((p.minutes || [])[1] || (p.minutes || [])[0]) || 4), 0) || courseStepMin(t);
+  return Number(x.timed) || courseStepMin(t); }
+function courseRoundsIe(cid, uid){
+  const it = courseUnitItems(uid), ex = it.explain; if(!ex) return null;
+  const cx = ex.context || {}, items = (it.exit && it.exit.items) || [], redo = !!(courseUi.rd && courseUi.rd.uid === uid && courseUi.rd.redo);
+  const own = items.map((x, i)=>({key:it.exit.id + '#' + i, item:x, idx:i})).filter(o=>!o.item.from || o.item.from === uid);
+  const q = ex.quick && (ex.quick.options || []).length ? ex.quick : null;
+  const first = own.find(o=>(o.item.tests === 'method' || o.item.tests === 'trap') && !o.item.afterTimed);
+  const c2 = (q ? [{key:ex.id + '#q', item:{prompt:q.prompt, options:q.options, correct:q.correct, why:q.why, point:Number(q.point) || Number(ex.quickAfter) || 1, hint2:q.hint2}, idx:900}] : []).concat(first ? [first] : []);
+  const after = own.filter(o=>o !== first), timed = courseUnitSteps(cid, uid).map(s=>s.type).find(t=>COURSE_R_TIMED.includes(t));
+  const qScr = (list, kind, r)=>list.map((o, i)=>({t:'q', r, kind, i, n:list.length, rail:true, min:0.5, key:o.key, o, title:trs(kind === 'after' ? 'ie.after.eye' : 'check.eye', {i:i + 1, n:list.length})}));
+  const R = [0, 1, 2].map(r=>({r, key:COURSE_R_IE_KEYS[r], screens:[]}));
+  const s1 = R[0].screens; s1.push({t:'opener', r:0, rail:false, min:0});
+  if(cx.intro) s1.push({t:'iintro', r:0, rail:true, min:0.5, title:cl(cx.head) || courseRName(0, cid), w:courseRW(courseREn(cx.head)) + courseRW(courseREn(cx.intro))});
+  courseRIeCards(cid, ex).forEach((k, ci)=>s1.push(...courseRIeCardScreens(uid, k, ci)));
+  const s2 = R[1].screens; s2.push({t:'opener', r:1, rail:false, min:0});
+  (ex.points || []).forEach((p, i)=>s2.push(...courseRKpScreens(p, i + 1, 1)));
+  s2.push(...courseRIeExScreens(ex.example));
+  s2.lastTeach = s2.length - 1;
+  s2.push(...qScr(c2, 'check', 1));
+  const s3 = R[2].screens; s3.push({t:'opener', r:2, rail:false, min:0});
+  if(timed) s3.push({t:'task', task:timed, timed:true, r:2, rail:false, min:courseRIeTimedMin(it, timed), title:courseCardTitle(cid, uid, timed) || courseStepLabel(timed, uid)});
+  s3.push(...qScr(after, 'after', 2));
+  R.forEach(rd=>{ rd.screens.push({t:'done', r:rd.r, rail:false, min:0}); rd.rail = rd.screens.filter(x=>x.rail);
+    rd.min = Math.max(1, Math.round(rd.screens.reduce((a, x)=>a + (x.min || 0), 0))); rd.qs = rd.screens.filter(x=>x.t === 'q').length; });
+  R[0].pts = []; R[1].pts = (ex.points || []).map((_, i)=>i + 1); R[2].pts = [];
+  R.ie = true; R.notAsked = []; R.gp = 0; R.hasBefore = false; R.redo = redo; R.timed = timed;
+  return R;
+}
+// The lesson page rows: Round 1 the cards, Round 2 the key points, Round 3 the timed part
+function courseRIeRowLine(cid, uid, R, r){
+  if(r === 0){ const ts = courseRIeCards(cid, courseUnitItems(uid).explain).map(k=>cl(k.title)); return ts.slice(0, 3).join(courseSep()) + (ts.length > 3 ? courseSep() + '…' : ''); }
+  if(r === 1) return courseRGot(cid, uid, R, 1).join(courseSep());
+  const t = R[2].screens.find(x=>x.t === 'task'); return t ? t.title : courseRName(2, cid); }
+// The question pinned in one collapsed line above the material (not counted in the 60 words)
+function courseRPinQ(item){ return `<details class="card-flat tr-pin"><summary><span class="lx-eyebrow">${esc(CL('Question', 'Soru', 'سؤال', 'Pregunta'))}</span> <span class="tr-pinline" dir="ltr" translate="no">${esc(item)}</span></summary><p class="tr-pinfull" dir="ltr" translate="no">${esc(item)}</p></details>`; }
+function courseRIeMatHtml(e){ return `${(e.lines || []).length ? `<div class="cx-dlg" dir="ltr" translate="no">${e.lines.map(l=>`<div><b>${esc(l[0])}:</b> ${esc(l[1])}</div>`).join('')}</div>` : ''}${e.text ? `<p class="cx-text" dir="ltr" translate="no">${esc(e.text)}</p>` : ''}`; }
+function courseRIeIntroHtml(cid, uid, r){ const cx = (courseUnitItems(uid).explain || {}).context || {};
+  return `<div class="tr-kp">${courseREyebrow([trs('rn', {n:r + 1}), courseRName(r, cid)])}${courseRH(cl(cx.head) || courseRName(r, cid))}<div class="lx-card cx-card"><p class="cx-body" dir="${courseTD()}">${isoHtml(cl(cx.intro))}</p></div></div>`; }
+// One screen of a context card (19.3): about (title, what this part is about, the headings when they fit), headings, words, traps, ideas,
+// the example (material + question, or the question and then the material with the question pinned), its answer, the word check.
+function courseRIeCardHtml(cid, uid, scr, r){
+  const ex = courseUnitItems(uid).explain, cx = ex.context || {}, lb = cx.labels || {}, k = courseRIeCards(cid, ex)[scr.ci], next = courseRBtn('course-r-next', courseRNextLabel());
+  if(!k) return next;
+  const kind = k.exam ? CL('This exam', 'Bu sınav', 'این آزمون', 'Este examen') : CL('Across the real tests', 'Gerçek sınavlarda', 'در آزمون‌های واقعی', 'En los exámenes reales');
+  const blk = (l, body)=>`<div class="ie-cblk"><div class="lx-eyebrow">${esc(cl(l))}</div>${body}</div>`, chips = arr=>`<div class="ie-fchips" dir="ltr" translate="no">${arr.map(x=>`<span>${esc(x)}</span>`).join('')}</div>`;
+  const e = k.example || {}, eye = courseREyebrow([trs('rn', {n:r + 1}), kind].concat(scr.part === 'about' ? [] : [cl(k.title)]));
+  let b = '', btn = next;
+  if(scr.part === 'about') b = `${k.often && k.often.label ? `<div class="ie-often"><span aria-hidden="true">📈</span><span dir="${courseTD()}">${esc(cl(k.often.label))}</span></div>` : ''}<h3 class="display" dir="${courseTD()}">${esc(cl(k.title))}</h3>`
+    + (k.asks ? blk(lb.asks || {en:'What this part is about'}, `<p dir="${courseTD()}">${esc(cl(k.asks))}</p>`) : '') + (scr.fields && (k.fields || []).length ? blk(lb.fields || {en:'Headings you will see'}, chips(k.fields)) : '');
+  else if(scr.part === 'fields') b = blk(lb.fields || {en:'Headings you will see'}, chips(k.fields || []));
+  else if(scr.part === 'words') b = blk(lb.words || {en:'Words'}, `<table class="ie-wtbl"><thead><tr><th>${esc(cl(lb.a || {en:'On the paper'}))}</th><th>${esc(cl(lb.b || {en:'What you hear or read'}))}</th></tr></thead><tbody>${scr.rows.map(i=>{ const w = k.words[i]; return `<tr><td><span dir="ltr" translate="no">${esc(w.a)}</span>${LANG !== 'en' && w[LANG] ? `<small dir="${courseTD()}">${esc(w[LANG])}</small>` : ''}</td><td dir="ltr" translate="no">${esc(w.b)}</td></tr>`; }).join('')}</tbody></table>`);
+  else if(scr.part === 'traps') b = blk(lb.traps || {en:'Traps'}, scr.rows.map(i=>`<div class="ie-trap"><span aria-hidden="true">⚠️</span><span dir="${courseTD()}">${esc(cl(k.traps[i]))}</span></div>`).join(''));
+  else if(scr.part === 'ideas') b = blk(lb.ideas || {en:'Ideas'}, chips(scr.rows.map(i=>k.ideas[i])));
+  else if(scr.part === 'ex'){ const item = `<div class="cx-item" dir="ltr" translate="no">${esc(e.item)}</div>`;
+    b = blk(lb.example || {en:'Example'}, scr.show === 'item' ? item : scr.show === 'mat' ? courseRPinQ(e.item) + courseRIeMatHtml(e) : courseRIeMatHtml(e) + item);
+    if(scr.show !== 'item') btn = courseRBtn('course-r-next', CL('Show answer', 'Cevabı göster', 'جواب را نشان بده', 'Mostrar la respuesta')); }
+  else if(scr.part === 'exans') b = blk(lb.example || {en:'Example'}, courseRPinQ(e.item) + `<div class="cx-answer"><span>${CL('Answer', 'Cevap', 'پاسخ', 'Respuesta')}</span><b dir="ltr" translate="no">${esc(e.answer)}</b></div>${e.why && cl(e.why) ? `<div class="cx-fb ok"><span dir="${courseTD()}">${isoHtml(cl(e.why))}</span></div>` : ''}`);
+  else if(scr.part === 'match') b = courseIeMatchHtml(uid, k, lb);
+  return `<div class="tr-kp tr-iecard">${eye}<div class="lx-card cx-card ie-scope">${b}</div></div>${btn}`;
+}
+// One screen of the IELTS worked item (19.3): the question first (the exam habit), the material with the question pinned, one walk step, the answer and its why.
+function courseRIeExHtml(cid, uid, scr, r){
+  const e = (courseUnitItems(uid).explain || {}).example; if(!e) return '';
+  const eye = courseREyebrow([trs('rn', {n:r + 1}), e.eyebrow ? cl(e.eyebrow) : CL('Worked example', 'Çözümlü örnek', 'مثال حل‌شده', 'Ejemplo resuelto')].concat(scr.part === 'mat' || scr.part === 'why' ? [cl(e.head)] : []));
+  const ans = `<div class="cx-answer"><span>${CL('Answer', 'Cevap', 'پاسخ', 'Respuesta')}</span><b dir="ltr" translate="no">${esc(e.answer)}</b></div>`, why = e.why && cl(e.why) ? `<p class="cx-body" dir="${courseTD()}">${isoHtml(cl(e.why))}</p>` : '';
+  let b = '';
+  if(scr.part === 'item') b = `${e.instruction ? `<p class="cx-instr" dir="ltr" translate="no">${esc(e.instruction)}</p>` : ''}<div class="cx-item" dir="ltr" translate="no">${esc(e.item)}</div>`;
+  else if(scr.part === 'mat') b = courseRPinQ(e.item) + courseRIeMatHtml(e);
+  else if(scr.part === 'walk') b = courseRPinQ(e.item) + `<div class="cx-rules cx-walk"><div class="cx-rule"><span class="lx-n">${trN(scr.k + 1)}</span><div><p dir="${courseTD()}">${isoHtml(cl((e.walk || [])[scr.k]))}</p></div></div></div>`;
+  else if(scr.part === 'ans') b = courseRPinQ(e.item) + ans + (scr.why ? why : '');
+  else if(scr.part === 'why') b = why;
+  return `<div class="tr-wex">${eye}${scr.part === 'mat' || scr.part === 'why' ? '' : courseRH(cl(e.head))}<div class="lx-card cx-card">${b}</div></div>`;
+}
 // The heads a round teaches ("What you've got"), Round 3: its tasks.
 function courseRGot(cid, uid, R, r){
   const ex = courseUnitItems(uid).explain;
@@ -36585,7 +36704,8 @@ function courseRPlace(cid, uid){
   const scr = R[r].screens, op = courseROpenerIdx(R, r), bef = courseProg(cid).answers[uid + ':before'];
   if(r === 0) return {r, s:scr[0].t === 'before' && !bef ? 0 : op};
   if(r === 1 && courseROldLearn(cid, uid)){ const k = scr.findIndex(x=>x.t === 'task' && !courseStepDone(uid, x.task)); if(k >= 0) return {r, s:k, mig:true}; }
-  if(r === 2){ const k = scr.findIndex(x=>x.t === 'task' && !courseStepDone(uid, x.task)), any = scr.some(x=>x.t === 'task' && courseStepDone(uid, x.task)); if(any && k >= 0) return {r, s:k}; }
+  if(r === 2){ const k = scr.findIndex(x=>x.t === 'task' && !courseStepDone(uid, x.task)), any = scr.some(x=>x.t === 'task' && courseStepDone(uid, x.task)); if(any && k >= 0) return {r, s:k};
+    if(R.ie && any && k < 0){ const q = scr.findIndex(x=>x.t === 'q'); if(q >= 0) return {r, s:q}; } }   // IELTS: the timed part done, its check not
   return {r, s:op};
 }
 function courseRStarted(cid, uid){ const d = courseProg(cid).done; return !!((courseProg(cid).roundAt || {})[uid] || d[uid + ':r1'] || d[uid + ':explain'] || courseProg(cid).answers[uid + ':before']); }
@@ -36665,7 +36785,8 @@ function courseRNext(){
 function courseRBack(){ const rd = courseUi.rd; if(!rd) return; const R = courseRounds(rd.cid, rd.uid); if(!R) return;
   const scr = R[rd.r].screens[rd.s];
   if(!scr || scr.t === 'opener' || scr.t === 'before' || rd.s <= 0) return courseRLeave();
-  courseRGoTo(rd.r, rd.s - 1); }
+  const prev = R[rd.r].screens[rd.s - 1], skip = prev && prev.timed && courseStepDone(rd.uid, prev.task) && rd.s > 1;   // IELTS: a finished timed part is not reopened by Back
+  courseRGoTo(rd.r, rd.s - (skip ? 2 : 1)); }
 function courseRLeave(){ const rd = courseUi.rd, vp = state.viewParams || {}, cid = rd ? rd.cid : (state.courseReturn || {}).cid || vp.cid, uid = rd ? rd.uid : (state.courseReturn || {}).uid || vp.uid;
   courseSheetRemove(); try{ courseSpLeave(); }catch(e){} state.courseReturn = null; courseUi.rd = null; courseUi.judge = null;
   if(cid && uid && courseFindUnit(cid, uid)) return courseShow('course-lesson', {cid, uid}, cid, true); goBack(); }
@@ -36734,13 +36855,14 @@ function courseROpenerHtml(cid, uid, R, r){
   if(r < 2){ const p = courseRKpPoint(uid, rd.pts[0]); head = p ? cl(p.head) : courseRName(r);
     if(r === 0) body = ex.hook ? cl(courseGt(cid, ex, 'hook')) : '';
     else { const withBody = rd.pts.map(n=>courseRKpPoint(uid, n)).find(x=>x && x.body); body = withBody ? (courseRSentences(cl(withBody.body))[0] || '') : ''; } }
-  else { const it = courseUnitItems(uid); head = it.writing && it.writing.title ? cl(it.writing.title) : it.speaking ? cl(it.speaking.topic) : courseRName(r); body = courseRCando(courseUnitObjective(cid, uid)); }
+  else { const it = courseUnitItems(uid); head = it.writing && it.writing.title ? cl(it.writing.title) : it.speaking ? cl(it.speaking.topic) : courseRName(r); body = courseRCando(courseUnitObjective(cid, uid));
+    if(R.ie){ const t = rd.screens.find(x=>x.t === 'task'); if(t && t.title) head = t.title; } }
   const parts = trs('opener.meta', {s:rd.rail.length, q:rd.qs, m:rd.min}).split(courseSep()); if(!rd.qs) parts.splice(1, 1);   // split as trs() joined it (Persian: " – ")
   return `<header class="fs-hero tr-hero">
       <span class="fs-pill"><bdi>${esc(trs('round', {n:r + 1}) + courseSep() + courseRName(r))}</bdi></span>
       <h1 class="display" dir="${courseTD()}">${isoHtml(head)}<span class="dot">.</span></h1>
       ${body ? `<p class="fs-sub tr-hsub" dir="${courseTD()}">${isoHtml(body)}</p>` : ''}
-      <div class="fs-art tr-cover" aria-hidden="true" style="--g:var(--fs-orange);"><i class="fs-disc"></i>${courseRImg(COURSE_R_COVER[r], '', COURSE_R_COVER_FB[r])}</div>
+      <div class="fs-art tr-cover" aria-hidden="true" style="--g:var(--fs-orange);"><i class="fs-disc"></i>${courseRImg((courseRIe(cid) ? COURSE_R_IE_COVER : COURSE_R_COVER)[r], '', courseRIe(cid) ? '' : COURSE_R_COVER_FB[r])}</div>
     </header>
     <p class="tr-meta">${COURSE_CLOCK_SVG}<span dir="${courseTD()}">${esc(parts.join(courseSep()))}</span></p>
     ${courseRBtn('course-r-next', trs('go'))}`;
@@ -36801,6 +36923,7 @@ function courseRNames(ans, s){ return new RegExp('(^|[^\\p{L}\\p{N}])' + reEsc(S
 function courseRHint(cid, uid, q){
   const ans = q.options[q.correct];
   if(q.hint2){ const h = cl(q.hint2); return courseRNames(ans, h) ? '' : h; }
+  if((q.tests === 'word' || q.tests === 'paraphrase') && courseRIe(cid)) return trs(q.tests === 'word' ? 'ie.hint.word' : 'ie.hint.para');   // IELTS (SPEC 19.5): a strategy line
   const src = q.kpU || uid, it = courseUnitItems(src), ex = it.explain; if(!ex) return '';
   if(q.kp === 'b2' || /#x$/.test(q.key || '')){ const b = courseB2(cid, src) || it.b2; if(!ex.b2Point) return ''; const t = b && b.expParts && b.expParts.test ? cl(b.expParts.test) : '';
     const h = 'B2' + courseSep() + cl(ex.b2Point.head) + (t ? ': ' + t : ''); return courseRNames(ans, h) ? '' : h; }
@@ -36831,6 +36954,7 @@ function courseRQuestionHtml(cid, uid, q, st, eye, foot, actions, note){
     <div class="fs-opts tr-opts">${opts}</div>${fb}${note || ''}</div>${done ? foot : ''}`;
 }
 function courseRLookLink(cid, uid, q, action){
+  if((q.tests === 'word' || q.tests === 'paraphrase') && courseRIe(cid)) return '';   // IELTS: a word/paraphrase item's why line is the teaching (SPEC 19.4)
   const lk = courseLookLine(cid, uid, q.earlier ? q : Object.assign({}, q, {earlier:false})); if(!lk) return '';
   return `<button type="button" class="link-btn tr-look" data-action="${action || 'course-r-look'}" data-u="${esc(lk.u)}" data-n="${lk.n}"><span dir="${courseTD()}">${isoHtml(lk.t)}${lk.head ? ': <b>' + isoHtml(lk.head) + '</b>' : ''}</span></button>`;
 }
@@ -36839,7 +36963,7 @@ function courseRQHtml(cid, uid, scr){
   let eye;
   if(scr.kind === 'fresh') eye = `<div class="tr-freshh">${courseRImg('icon-review.png', 'tr-clock')}${courseREyebrow([trs('fresh.eye', {no:trN(courseUnitNo(cid, q.from || uid))})])}</div>`;
   else if(scr.kind === 'lock') eye = courseREyebrow([trs('lockin.eye')]);
-  else eye = `<div class="tr-qhead">${courseREyebrow([trs('check.eye', {i:scr.i + 1, n:scr.n})])}<span class="tr-dots" aria-hidden="true">${Array.from({length:scr.n}, (_, k)=>`<i class="${k < scr.i ? 'on' : k === scr.i ? 'cur' : ''}"></i>`).join('')}</span></div>`;
+  else eye = `<div class="tr-qhead">${courseREyebrow([trs(scr.kind === 'after' ? 'ie.after.eye' : 'check.eye', {i:scr.i + 1, n:scr.n})])}${q.tests && COURSE_TESTS[q.tests] && courseRIe(cid) ? `<span class="ie-tbadge">${esc(cl(COURSE_TESTS[q.tests]))}</span>` : ''}<span class="tr-dots" aria-hidden="true">${Array.from({length:scr.n}, (_, k)=>`<i class="${k < scr.i ? 'on' : k === scr.i ? 'cur' : ''}"></i>`).join('')}</span></div>`;
   const note = scr.kind === 'fresh' ? `<p class="tr-tip tr-freshnote" dir="${courseTD()}">${trN(scr.i + 1)} ${LANG === 'fa' ? 'از' : LANG === 'tr' ? '/' : LANG === 'es' ? 'de' : 'of'} ${trN(scr.n)}${esc(courseSep())}${trsH('fresh.note')}</p>` : '';
   return courseRQuestionHtml(cid, uid, q, st, eye, courseRBtn('course-r-next', courseRNextLabel()), {pick:'course-r-pick', look:'course-r-look'}, note);
 }
@@ -36956,6 +37080,11 @@ function courseRSpeakHtml(cid, uid, sp){
 function courseRTaskHtml(cid, uid, scr, r){
   const it = courseUnitItems(uid), t = scr.task, head = (eyeTxt, title)=>courseREyebrow([trs('rn', {n:r + 1}), eyeTxt]) + (title ? courseRH(title) : '');
   const noScore = h=>h.replace(/<p class="cx-qnote"[^>]*>[\s\S]*?<\/p>/g, '');   // no "X of N right" in round mode
+  if(COURSE_R_TIMED.includes(t) && courseRIe(cid)){
+    if(t === 'drill' && it.drill && it.drill.exam) return '<div class="ie-scope">' + courseIeDrillHtml(cid, uid, it.drill) + '</div>';
+    if(t === 'writing' && it.writing && it.writing.exam) return '<div class="ie-scope">' + courseIeWritingHtml(cid, uid, it.writing) + '</div>';
+    if(t === 'sets' && it.sets){ const o = courseUi.ieCtxOpen = courseUi.ieCtxOpen || {}; [2, 3].forEach(p=>{ if(o[uid + ':' + p] === undefined) o[uid + ':' + p] = false; });   // SPEC 19.9 step 4: closed behind Show the context
+      return '<div class="ie-scope">' + courseIeSetsHtml(cid, uid, it.sets, it.explain) + '</div>'; } }
   if(t === 'speaking' && it.speaking) return courseRSpeakHtml(cid, uid, it.speaking);
   if(t === 'writing' && it.writing){
     const a = courseProg(cid).answers[uid + ':before'], bt = a && a.text ? `<details class="card-flat tr-fold"><summary>${esc(trs('firsttry.fold'))}</summary><p dir="ltr" translate="no">${esc(a.text)}</p></details>` : '';
@@ -36969,8 +37098,8 @@ function courseRTaskHtml(cid, uid, scr, r){
   return courseRBtn('course-r-next', courseRNextLabel());
 }
 // The ticket: three stamp slots; an earned stamp shows its clay seal (a missing picture: the UI ring), the label in Fredoka under it.
-function courseRTicketHtml(st, land){
-  return `<div class="tr-ticket"><div class="lx-eyebrow">${esc(trs('ticket'))}</div><div class="tr-slots">${[0, 1, 2].map(i=>`<div class="tr-slot${st[i] ? ' on' : ''}${land === i ? ' land' : ''}"><span class="tr-stamp">${st[i] ? courseRImg(COURSE_R_STAMP[i], '') : ''}<i class="tr-ring" aria-hidden="true"></i></span><b>${esc(courseRName(i))}</b></div>`).join('')}</div></div>`;
+function courseRTicketHtml(st, land){ const ie = courseRIeNow();
+  return `<div class="tr-ticket"><div class="lx-eyebrow">${esc(trs('ticket'))}</div><div class="tr-slots">${[0, 1, 2].map(i=>`<div class="tr-slot${st[i] ? ' on' : ''}${land === i ? ' land' : ''}"><span class="tr-stamp">${st[i] ? courseRImg((ie ? COURSE_R_IE_STAMP : COURSE_R_STAMP)[i], '') : ''}<i class="tr-ring" aria-hidden="true"></i></span><b>${esc(ie ? trs('stamp.' + COURSE_R_IE_KEYS[i]) : courseRName(i))}</b></div>`).join('')}</div></div>`;
 }
 function courseRNextLesson(cid, uid){ const o = courseOrder(cid), i = o.indexOf(uid); const nx = i >= 0 ? o.slice(i + 1).find(id=>!courseIsMock(cid, id) && !courseIsCp(cid, id)) : null; return nx ? trN(courseUnitNo(cid, nx)) : ''; }
 function courseRDoneHtml(cid, uid, R, r){
@@ -36982,6 +37111,8 @@ function courseRDoneHtml(cid, uid, R, r){
   const next = r < 2 ? `<p class="tr-nextline" dir="${courseTD()}">${trsH('done.next', {n:r + 2, name:courseRName(r + 1), m:R[r + 1].min})}</p>` : '';
   const btns = r < 2 ? `${courseRBtn('course-r-round', trs('btn.startRound', {n:r + 2}))}<button class="btn btn-ghost tr-ghost" data-action="course-r-stop">${esc(trs('btn.stop'))}</button>`
     : courseRBtn('course-r-finish', courseNextBtnLabel());
+  if(R.ie){ const nx = r < 2 ? trs('r.' + COURSE_R_IE_KEYS[r + 1]) : '', nxl = LANG === 'en' || LANG === 'es' ? nx.charAt(0).toLowerCase() + nx.slice(1) : nx;
+    return `<div class="tr-done">${courseRTicketHtml(st, land)}<h1 class="display cs-h1 tr-h1" dir="${courseTD()}">${r < 2 ? trsH('ielts.done', {round:trs('stamp.' + COURSE_R_IE_KEYS[r]), next:nxl}) : trsH('done.round', {n:r + 1})}</h1></div>${btns}`; }
   return `<div class="tr-done">${courseRTicketHtml(st, land)}<h1 class="display cs-h1 tr-h1" dir="${courseTD()}">${trsH('done.round', {n:r + 1})}</h1>
     ${got.length ? `<div class="card-flat tr-got"><b dir="${courseTD()}">${trsH('done.got')}</b><p dir="${courseTD()}">${got.map(x=>isoHtml(x)).join(esc(courseSep()))}</p></div>` : ''}
     ${lines}${next}</div>${btns}`;
@@ -37002,6 +37133,9 @@ function renderCourseRound(){
   if(scr.t === 'before') inner = courseRBeforeHtml(cid, uid);
   else if(scr.t === 'opener') inner = courseROpenerHtml(cid, uid, R, r);
   else if(scr.t === 'kp') inner = courseRKpHtml(cid, uid, scr, r) + courseRBtn('course-r-next', courseRNextLabel());
+  else if(scr.t === 'iintro') inner = courseRIeIntroHtml(cid, uid, r) + courseRBtn('course-r-next', courseRNextLabel());
+  else if(scr.t === 'icard') inner = courseRIeCardHtml(cid, uid, scr, r);
+  else if(scr.t === 'iex') inner = courseRIeExHtml(cid, uid, scr, r) + courseRBtn('course-r-next', courseRNextLabel());
   else if(scr.t === 'try') inner = courseRTryHtml(cid, uid);
   else if(scr.t === 'example') inner = courseRExampleHtml(cid, uid, r);
   else if(scr.t === 'q') inner = courseRQHtml(cid, uid, scr);
@@ -37017,10 +37151,10 @@ function renderCourseRound(){
   const label = pos.i && scr.t !== 'done' ? trs('rail', {r:r + 1, i:pos.i, k:pos.k}) : trs('round', {n:r + 1}) + courseSep() + courseRName(r);
   const recap = rd.recap && rd.recap.until > Date.now() ? `<p class="tr-recap" dir="${courseTD()}">${isoHtml(rd.recap.text)}</p>` : '';
   if(recap){ const until = rd.recap.until; setTimeout(()=>{ const n = document.querySelector('.tr-recap'); if(n && courseUi.rd === rd && rd.recap && rd.recap.until === until) n.remove(); }, Math.max(0, until - Date.now())); }
-  const back = scr.t === 'done' ? '' : `<button class="cl-back tr-back" data-action="course-r-back">${LANG === 'fa' ? '›' : '‹'} ${CL('Back', 'Geri', 'قبلی', 'Atrás')}</button>`;
+  const back = scr.t === 'done' || scr.timed ? '' : `<button class="cl-back tr-back" data-action="course-r-back">${LANG === 'fa' ? '›' : '‹'} ${CL('Back', 'Geri', 'قبلی', 'Atrás')}</button>`;
   return `<div class="fade-in course-card tr-page lx-page lx-course fs-scr" data-type="round" data-screen="${scr.t}${scr.part ? '-' + scr.part : ''}${scr.task ? '-' + scr.task : ''}${scr.kind ? '-' + scr.kind : ''}" data-r="${r}">
     <div class="cs-top"><button class="cs-x" data-action="course-r-x" aria-label="${esc(CL('Close', 'Kapat', 'بستن', 'Cerrar'))}">${COURSE_X_SVG}</button>
-      <div class="tr-rail" role="img" aria-label="${esc(label)}">${segs}</div></div>
+      ${scr.timed ? '<span style="flex:1;"></span>' : `<div class="tr-rail" role="img" aria-label="${esc(label)}">${segs}</div>`}</div>
     <div class="tr-railrow">${back || '<span></span>'}<span class="cl-n" dir="${courseTD()}">${esc(label)}</span></div>
     ${recap}
     <div class="screen tr-screen">${body}</div>
@@ -37032,7 +37166,8 @@ function renderCourseRound(){
 function courseRCando(obj){ let s = String(obj || '').trim();
   const res = [/^After this lesson,?\s*you can\s*/i, /^Bu dersin sonunda,?\s*/i, /^بعد از این درس،?\s*/, /^(Después de|Al final de) esta lección,?\s*(puedes|podrás)\s*/i];
   res.forEach(re=>{ s = s.replace(re, ''); }); return s ? s.charAt(0).toUpperCase() + s.slice(1) : s; }
-function courseRRowLine(cid, uid, R, r){ if(r < 2) return courseRGot(cid, uid, R, r).join(courseSep());
+function courseRRowLine(cid, uid, R, r){ if(R.ie) return courseRIeRowLine(cid, uid, R, r);
+  if(r < 2) return courseRGot(cid, uid, R, r).join(courseSep());
   const ts = R[2].screens.filter(x=>x.t === 'task').map(x=>x.task); return ts.length === 2 && ts[0] === 'speaking' && ts[1] === 'writing' ? trs('say.write') : ts.map(t=>courseStepLabel(t, uid)).join(courseSep()); }
 function courseRLessonParts(c, cid, uid, nu){
   const R = courseRounds(cid, uid); if(!R) return null;
@@ -37043,7 +37178,7 @@ function courseRLessonParts(c, cid, uid, nu){
     const redo = done ? `<button class="cl-redo" data-action="course-r-start" data-cid="${cid}" data-uid="${esc(uid)}" data-redo="${r}">${CL('Do it again', 'Yeniden yap', 'دوباره انجامش بده', 'Hazlo otra vez')}</button>` : '';
     const peek = !done && !here && prev ? `<button class="cl-redo" data-action="course-r-start" data-cid="${cid}" data-uid="${esc(uid)}" data-r="${r}">${CL('Open', 'Aç', 'باز کن', 'Abrir')}</button>` : '';
     return `<div class="cl-step fs-row tr-rrow${done ? ' done' : here ? ' cur' : ''}" data-r="${r}">
-      <span class="cl-sn tr-sn">${courseRImg(COURSE_R_COVER[r], '', COURSE_R_COVER_FB[r])}${done ? `<i class="tr-tick">${ICONS.check}</i>` : ''}</span>
+      <span class="cl-sn tr-sn">${courseRImg((courseRIe(cid) ? COURSE_R_IE_COVER : COURSE_R_COVER)[r], '', courseRIe(cid) ? '' : COURSE_R_COVER_FB[r])}${done ? `<i class="tr-tick">${ICONS.check}</i>` : ''}</span>
       <div class="cl-sb"><span class="fs-k">${esc(k)}</span><b class="display">${esc(trs('rn', {n:r + 1}) + courseSep() + courseRName(r))}</b><p dir="${courseTD()}">${isoHtml(courseRRowLine(cid, uid, R, r))}</p>${redo}${peek}</div>
       <span class="cl-min">${esc(courseMinText(trN(x.min)))}</span></div>`;
   }).join('');
@@ -37087,11 +37222,11 @@ function courseRDoneLessonHtml(cid, uid){
   const f = courseFindUnit(cid, uid), c = f.c, it = courseUnitItems(uid), ex = it.explain, cp = courseProg(cid), w = it.writing;
   const bef = cp.answers[uid + ':before'], wr = cp.answers[uid + ':writing'], btxt = bef && bef.text ? String(bef.text) : '', atxt = wr && wr.text ? String(wr.text) : '';
   const R = courseRounds(cid, uid), nl = courseRNextLesson(cid, uid);
-  const ba = btxt || atxt ? `<div class="tr-ba">${btxt ? `<div class="card-flat tr-bcard"><div class="lx-eyebrow">${esc(trs('l.before'))}</div><p dir="ltr" translate="no">${esc(btxt)}</p></div>` : ''}
+  const ba = !courseRIe(cid) && (btxt || atxt) ? `<div class="tr-ba">${btxt ? `<div class="card-flat tr-bcard"><div class="lx-eyebrow">${esc(trs('l.before'))}</div><p dir="ltr" translate="no">${esc(btxt)}</p></div>` : ''}
       ${atxt ? `<div class="card-flat tr-acard"><div class="lx-eyebrow">${esc(trs('l.after'))}</div><details class="tr-more"><summary><span class="tr-clamp" dir="ltr" translate="no">${esc(atxt)}</span><span class="tr-showall">${esc(trs('show.all'))}</span></summary><p dir="ltr" translate="no">${esc(atxt)}</p></details></div>` : ''}
       ${btxt && atxt ? `<p class="tr-changed" dir="${courseTD()}">${esc(courseRChangedLine(w, btxt, atxt))}</p>` : ''}</div>` : '';
   const cando = courseRCando(courseUnitObjective(cid, uid)), rem = ex && ex.remember ? cl(ex.remember) : '';
-  const back = []; if(R && nl) R.forEach(x=>x.screens.filter(y=>y.t === 'q' && y.kind !== 'fresh').forEach(y=>{ const s = courseRQState(cid, uid, y.key), n = y.o.kp || y.o.item.point;
+  const back = []; if(R && nl && !R.ie) R.forEach(x=>x.screens.filter(y=>y.t === 'q' && y.kind !== 'fresh').forEach(y=>{ const s = courseRQState(cid, uid, y.key), n = y.o.kp || y.o.item.point;
     if((s.res === 'soft' || s.res === 'look') && n && n !== 'b2' && !back.includes(n) && back.length < 2) back.push(n); }));
   const nextUid = courseUnitAfter(cid, uid), nf = nextUid ? courseFindUnit(cid, nextUid) : null, pd = courseFinalData(c), mock = courseMockAfter(cid, uid);
   let nextCard = '', btn = '';
@@ -37111,7 +37246,7 @@ function courseRDoneLessonHtml(cid, uid){
       <div class="tr-target">${courseRImg('art/course-clay/tile-goals-cutout-320.webp', '', 'tile-goals-cutout.png')}</div>
       ${courseRTicketHtml([true, true, true], -1)}
       <h1 class="display cs-h1 tr-h1" dir="${courseTD()}">${esc(trs('l.done', {no:trN(courseUnitNo(cid, uid))}))}</h1>
-      ${ba}
+      ${ba}${courseRIe(cid) ? courseIeDoneWork(cid, uid, it) : ''}
       ${cando || rem ? `<div class="card-flat cs-card-green tr-cando"><b>${esc(trs('l.cando'))}</b>${cando ? `<p dir="${courseTD()}">${isoHtml(cando)}</p>` : ''}${rem ? `<p class="tr-rem" dir="${courseTD()}">${isoHtml(rem)}</p>` : ''}</div>` : ''}
       ${back.map(n=>`<p class="tr-line" dir="${courseTD()}">${trsH('l.back', {no:nl, n})}</p>`).join('')}
       ${btxt && atxt ? `<p class="tr-line" dir="${courseTD()}">${trsH('l.saved')}</p>` : ''}
@@ -37164,7 +37299,7 @@ function courseRWorkTopHtml(c){
   done.forEach(uid=>{ const ex = courseUnitItems(uid).explain; if(!ex) return; (ex.points || []).forEach((p, i)=>{ if(!lookSet.has(uid + '|' + (i + 1))) got.push({uid, n:i + 1, head:cl(p.head)}); }); });
   const gotH = got.length ? `<button class="link-btn tr-gotbtn" data-action="course-r-wgot">${esc(trs('w.got', {n:got.length}))} (${esc(gotOpen ? trs('show.less') : trs('w.show'))})</button>
     ${gotOpen ? `<ul class="tr-gotlist">${got.map(x=>`<li dir="${courseTD()}"><small>${esc(courseRLessonName(cid, x.uid))}</small> ${isoHtml(x.head)}</li>`).join('')}</ul>` : ''}` : '';
-  return look + ba + gotH;
+  return courseRIe(cid) ? look : look + ba + gotH;
 }
 function courseRWorkArt(c){ return courseRCourseOn(c) ? `<span class="tr-folder">${courseRImg('art/course-clay/portfolio-folder.webp', '', 'studio-icon-cutout.png')}</span>` : ''; }
 function courseRFpArt(c){ return courseRCourseOn(c) ? courseRImg('roadmap-goal-clay.png', 'tr-fpart') : ''; }
@@ -37184,6 +37319,7 @@ function courseRStash(){ const ta = document.getElementById('cw-text'), rd = cou
 // The scheduler (SPEC 4.4): right first time = secure; right on the second try = soft (comes back once); wrong twice = look (Look again list).
 function courseRSeen(cid, q, res, uid){
   if(!q.key) return; courseItemSeen(cid, q.key, res === 'right');
+  if((q.tests === 'word' || q.tests === 'paraphrase') && courseRIe(cid)) return;   // IELTS: Look again lists only the method/trap items (SPEC 19.4)
   const e = courseProg(cid).srs[q.key]; if(!e) return;
   if(res === 'right'){ delete e.soft; delete e.look; delete e.lookAt; return; }
   e.u = q.kpU || uid; e.kp = q.kp || q.point || 0; e.at = Date.now();

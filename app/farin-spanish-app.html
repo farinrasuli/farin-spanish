@@ -3140,6 +3140,17 @@
   .rl-spage .story-sent.cur{background:var(--cat-story-soft);}
   .rl-feel .sp-card{margin-top:0 !important;}
   .rl-body .story-turn .game-why{margin-bottom:0;}
+  /* pass 4: the writing and speaking cards in three rounds */
+  .rl-sttopic{background:var(--accent-soft); border-color:var(--accent-soft);}
+  .rl-sttopic .eyebrow{color:var(--accent-strong);}
+  .rl-sttopic p{margin:6px 0 0; font-size:14.5px; font-weight:600; line-height:1.5; unicode-bidi:plaintext;}
+  .rl-stmodel{transition:background-color .2s ease;}
+  .rl-stmodel.cur{background:var(--cat-lis-soft);}
+  .rl-stmodel p{margin:6px 0 0; font-size:15px; line-height:1.6; font-weight:600; color:var(--ink);}
+  .rl-stgram{font-size:13px; color:var(--ink-soft); margin:4px 2px 0; text-align:center;}
+  .rl-ststarts .game-chip{white-space:normal; text-align:start; line-height:1.3;}
+  .rl-stinput{min-height:72px;}
+  .rl-studio > .card-flat:first-child{margin-top:0;}
   /* LESSONS-PLAY-CSS-END */
 </style>
 
@@ -17385,7 +17396,7 @@ function toggleStudioMic(){
     }
   };
   rec.onend = ()=>{
-    if(!rec.userStopped && state.view === 'studio-round' && state.viewParams === vp0){
+    if(!rec.userStopped && (state.view === 'studio-round' || state.view === 'studio-rounds') && state.viewParams === vp0){   // lessons that play pass 4: Round 3 of a speaking card
       try{ rec.start(); return; }catch(err){}
     }
     if(studioRecognition === rec) studioRecognition = null;
@@ -24626,7 +24637,7 @@ function renderVocabSet(id, cardIndex){
    - progress.lessonRounds[set] = {r, d, miss, kept, a1, a2, more, firstPct} keeps the stamps between visits ("Stop here, come back
      later"); numbers and booleans only (the cloud copy takes no nested arrays); removed when the card is done.
    Byte-identical in the English and Spanish apps; every string in en/tr/fa/es, Persian in informal تو. */
-var LESSONS_PLAY = {deck:true, finish:true, studio:true, grammar:true, dialogue:true, story:true};
+var LESSONS_PLAY = {deck:true, finish:true, studio:true, grammar:true, dialogue:true, story:true, studioRounds:true};
 let lpDevOff = null;
 function lpOn(k){
   if(lpDevOff === null){ try{ const q = new URLSearchParams(location.search).get('lessonsplay');
@@ -24741,7 +24752,7 @@ function rlFrameHtml(s, vp, R, scr){
   const label = content ? rlS('rail', {r:r + 1, i:i + 1, k}) : rlS('round', {n:r + 1}) + courseSep() + rlName(r);
   const back = content && R.ph === 'play' ? `<button class="cl-back rl-back" data-action="rl-back">${LANG === 'fa' ? '›' : '‹'} ${L('Back', 'Geri', 'قبلی', 'Atrás')}</button>` : '<span></span>';
   const key = s.id + '|' + r + '|' + R.ph + '|' + (scr.key || ''), fade = key !== rlLastKey; rlLastKey = key;
-  const cat = R.kind === 'g' ? 'lx-gram' : R.kind === 'd' ? 'lx-dlg' : R.kind === 's' ? 'lx-story' : s.category === 'slang' ? 'lx-slang' : 'lx-voc';
+  const cat = R.kind === 'g' ? 'lx-gram' : R.kind === 'd' ? 'lx-dlg' : R.kind === 's' ? 'lx-story' : R.kind === 'st' ? (vp.mode === 'speaking' ? 'lx-dlg' : 'lx-gram') : s.category === 'slang' ? 'lx-slang' : 'lx-voc';
   return `<div class="${fade ? 'fade-in ' : ''}rl-page lx-page ${cat} fs-scr" data-rl="${R.ph}" data-r="${r}" data-screen="${esc(scr.key || '')}">
     <div class="cs-top"><button class="cs-x" data-action="rl-x" aria-label="${esc(L('Close', 'Kapat', 'بستن', 'Cerrar'))}">${COURSE_X_SVG}</button>
       <div class="rl-rail" role="img" aria-label="${esc(label)}">${segs}</div></div>
@@ -25052,7 +25063,7 @@ function studioStraightIn(ds){
   const goal = ds.goal && (goals.includes(ds.goal) || (all && ds.goal === 'all')) ? ds.goal : (all ? 'all' : goals[0]);
   const vp0 = {mode, goal, difficulty:dif};
   const round = withSpeakingTopic(withWritingTask(buildPracticeRound(goal, state.profile.level, dif), vp0), vp0);
-  go('studio-round', {mode, goal, difficulty:dif, round, transcript:'', checked:false, result:null, reflection:null, rm:1});
+  go(lpOn('studioRounds') ? 'studio-rounds' : 'studio-round', {mode, goal, difficulty:dif, round, transcript:'', checked:false, result:null, reflection:null, rm:1});   // pass 4: in three rounds
   return true;
 }
 
@@ -25200,6 +25211,7 @@ function rl2Go(R){
 // screens in a round of a grammar or dialogue card (the rail)
 function rl2Len(s, vp, R, r){
   if(R.kind === 's') return r < 2 ? rlsPlan(s).steps[r].length : 1;
+  if(R.kind === 'st') return r === 0 ? rlstList1(vp).length : 1;
   if(R.kind === 'g'){ if(r === 0) return rlgScreens(s, rlgEff(s, vp.goal)).length; if(r === 1){ const q = state.quiz; return q && q.contextId === s.id && q.kind === 'grammar' && q.rl === 1 && q.questions ? q.questions.length : 4; } return 1; }
   return r === 0 ? rldList1(s).length : r === 1 ? dialogueTurns(s).length : rldList3(s).length;
 }
@@ -25830,6 +25842,198 @@ const RL3_HANDLERS = {
   }
 };
 Object.assign(RL_HANDLERS, RL3_HANDLERS);
+/* ---- pass 4 (Trello rC52b1hH / YsnBKNuv, farin-app 2026-11-14): the roadmap writing card and speaking card in three rounds ----
+   Farin 2026-11-12: "the 3 round system should be applied to all lessons on the roadmap". The step's own task stays whole as Round 3;
+   Rounds 1 and 2 set it up. Round 1 Know it = the model answer to hear (a writing task's model, a speaking topic's model; a round with
+   no model goes straight to the phrases) and the useful ways to start, each lighting up when heard. Round 2 Say it right = a guided
+   try: writing = your first sentence (tap a start, finish it; error watch on the round's grammar, never blocking; the sentence is
+   already in the box in Round 3), speaking = say your first sentence (the microphone shows what it heard; without one, "I said it").
+   Round 3 Use it = today's studio round (plan, box or microphone, Check, the result with its small /100 under "Your words", Take 2);
+   once it passes: Continue -> stamp -> Finish -> today's celebration and souvenir. Behind LESSONS_PLAY.studioRounds (off = pass 1's
+   straight-in round). No score on the new screens. Every line is a natural clip (models, starters: 170 EN / 266 ES starters were
+   rendered for this, main + other voice). progress.lessonRounds['st:' + mode + ':' + goal + ':' + difficulty] keeps the round. */
+const RL_STR4 = {
+  'st.w':['Writing', 'Yazma', 'نوشتن', 'Escritura'],
+  'st.s':['Speaking', 'Konuşma', 'صحبت کردن', 'Expresión oral'],
+  'st.topic':['Your topic', 'Konun', 'موضوع تو', 'Tu tema'],
+  'st.model':['One way to do it', 'Bunu yapmanın bir yolu', 'یک راه برای انجامش', 'Una forma de hacerlo'],
+  'st.starts':['Useful ways to start', 'Başlamak için işe yarar cümleler', 'جمله‌های مفید برای شروع', 'Frases útiles para empezar'],
+  'st.gram':['Try this grammar:', 'Bu yapıyı dene:', 'این ساختار را امتحان کن:', 'Prueba esta estructura:'],
+  'st.firstW':['Write your first sentence.', 'İlk cümleni yaz.', 'جمله‌ی اولت را بنویس.', 'Escribe tu primera frase.'],
+  'st.firstS':['Say your first sentence.', 'İlk cümleni söyle.', 'جمله‌ی اولت را بگو.', 'Di tu primera frase.'],
+  'st.tapStart':['Tap a start, then finish it your way.', 'Bir başlangıca dokun, sonra kendi cümlenle bitir.', 'یک شروع را بزن، بعد به روش خودت تمامش کن.', 'Toca un comienzo y termínalo a tu manera.'],
+  'st.hearStart':['Tap a start to hear it, then say your sentence.', 'Duymak için bir başlangıca dokun, sonra cümleni söyle.', 'یک شروع را بزن تا بشنوی، بعد جمله‌ات را بگو.', 'Toca un comienzo para oírlo y luego di tu frase.'],
+  'st.check':['Check', 'Kontrol et', 'بررسی کن', 'Comprobar'],
+  'st.more':['Write a few more words.', 'Birkaç kelime daha yaz.', 'چند کلمه‌ی دیگر بنویس.', 'Escribe unas palabras más.'],
+  'st.goodW':['Good start. It is waiting for you in Round 3.', 'İyi başlangıç. 3. turda seni bekliyor.', 'شروع خوبی بود. در دور ۳ منتظرت است.', 'Buen comienzo. Te espera en la ronda 3.'],
+  'st.goodS':['Good start. The whole answer comes in Round 3.', 'İyi başlangıç. Cevabın tamamı 3. turda.', 'شروع خوبی بود. جواب کامل در دور ۳.', 'Buen comienzo. La respuesta completa, en la ronda 3.'],
+  'st.heard':['I heard:', 'Duyduğum:', 'شنیدم:', 'He oído:'],
+  'st.watch':['Check this', 'Şuna bak', 'این را بررسی کن', 'Revisa esto'],
+  'st.write':['Write here.', 'Buraya yaz.', 'اینجا بنویس.', 'Escribe aquí.']
+};
+Object.assign(RL_STR, RL_STR4);
+function rlstKey(vp){ return 'st:' + vp.mode + ':' + (vp.goal || '') + ':' + (vp.difficulty || ''); }
+// A pending journal reflection takes over today's writing round (studioReflection: its prompt, no starters), so Rounds 1-2 follow it too
+function rlstModel(vp){
+  const r = vp.round; if(!r || studioReflection(vp)) return '';
+  if(vp.mode === 'writing'){ const t = writingTaskOf(r); return (t && t.model) || ''; }
+  const tp = speakingTopicOf(r), m = tp && tp.models && r.speak && r.speak.qi >= 0 ? tp.models[r.speak.qi] : '';
+  return m || '';
+}
+function rlstStarts(vp){ return studioReflection(vp) ? [] : ((vp.round && vp.round.starters) || []).filter(Boolean).slice(0, 4); }
+function rlstList1(vp){ const a = []; if(rlstModel(vp)) a.push('model'); if(rlstStarts(vp).length) a.push('starts'); if(!a.length) a.push('topic'); return a; }
+function rlstTopicHtml(vp){
+  const r = vp.round || {}, rf = studioReflection(vp);
+  if(rf) return studioReflectionCardHtml(rf);
+  return r.topic ? `<div class="card-flat rl-sttopic"><div class="eyebrow">${esc(rlS('st.topic'))}</div><p dir="auto">${esc(r.topic)}</p></div>` : '';
+}
+function rlstGramHtml(vp){ const g = vp.round && vp.round.grammar; return g && g.title ? `<p class="rl-stgram" dir="auto"><b>${esc(rlS('st.gram'))}</b> <bdi>${esc(g.title)}</bdi></p>` : ''; }
+// the studio state the rounds keep in the same viewParams as today's studio round (round, transcript, checked, result, rm)
+function rlstState(vp){
+  const id = rlstKey(vp);
+  let R = vp.rl;
+  if(!R || R.id !== id || R.kind !== 'st'){ R = rl2State(id, 'st'); }
+  return R;
+}
+function renderStudioRounds(){
+  const vp = state.viewParams || {};
+  if(!vp.round || !lpOn('studioRounds')) return renderStudioRound();
+  const R = rlstState(vp), self = {id:R.id};
+  let scr = null;
+  if(R.ph === 'play') scr = R.r === 0 ? rlstKnow(vp, R) : R.r === 1 ? rlstTry(vp, R) : rlstUse(vp, R);
+  else if(R.ph === 'done') scr = rlDoneScreen(self, R, 'rlst-finish');
+  if(!scr) scr = rlOpenerHtml(R, R.r === 0 ? rlS(vp.mode === 'writing' ? 'st.w' : 'st.s') : rlName(R.r), R.r === 0 ? rlstList1(vp).length : 1, 0);
+  return rlFrameHtml(self, vp, R, scr);
+}
+// Round 1: the model answer, then the ways to start (each lights up the first time it is heard)
+function rlstKnow(vp, R){
+  const list = rlstList1(vp), i = Math.max(0, Math.min(list.length - 1, R.i1 || 0)), w = list[i], base = {key:'k' + w, i, k:list.length};
+  if(w === 'model'){
+    const m = rlstModel(vp), H = R.hm || (R.hm = {cur:0, done:0});
+    return Object.assign(base, {body:`<div class="rl-body">${rlstTopicHtml(vp)}
+        <div class="card-flat rl-stmodel${H.cur ? ' cur' : ''}" id="rl-stmodel"><div class="eyebrow">${esc(rlS('st.model'))}</div><p dir="ltr" translate="no">${esc(m)}</p></div>
+        ${rlPlayRow('rlst-hear')}</div>`, foot:H.done ? rlCta('rlst-next', rlS('go.next')) : rlGhost('rlst-next', rlS('skip'))});
+  }
+  if(w === 'starts'){
+    const heard = R.hs || (R.hs = {});
+    return Object.assign(base, {body:`<div class="rl-body">${list[0] === 'starts' ? rlstTopicHtml(vp) : ''}<div class="lx-eyebrow rl-eb2" dir="${courseTD()}">${esc(rlS('st.starts'))}</div><p class="game-hint">${esc(rlS('d.tap'))}</p>
+        <div class="rl-phr">${rlstStarts(vp).map((t, k)=>`<button type="button" class="pill vocab-hl fill-pill${heard[k] ? ' lit' : ''}" dir="ltr" translate="no" data-action="rlst-start" data-k="${k}">${ICONS.soundOn}<span>${esc(t)}</span></button>`).join('')}</div>
+        ${rlstGramHtml(vp)}</div>`, foot:rlCta('rlst-next', rlS('cont'))});
+  }
+  return Object.assign(base, {body:`<div class="rl-body">${rlstTopicHtml(vp)}${rlstGramHtml(vp)}</div>`, foot:rlCta('rlst-next', rlS('cont'))});
+}
+// Round 2: a guided try, your first sentence
+function rlstTry(vp, R){
+  const T = R.t2 || (R.t2 = {text:'', checked:0, said:0, heard:''}), base = {key:'try', i:0, k:1}, starts = rlstStarts(vp);
+  const plan0 = vp.mode === 'writing' && !studioReflection(vp) ? (()=>{ const t = writingTaskOf(vp.round); return t && t.plan && t.plan[0] ? trLine(t.plan[0]) : ''; })() : '';
+  if(vp.mode === 'writing'){
+    const g = vp.round.grammar && GRAMMAR_ITEMS.find(x=>x.id === vp.round.grammar.id), hits = T.checked && g ? errorWatchHits(T.text, g) : [];
+    const res = !T.checked ? '' : hits.length
+      ? hits.map(h=>`<div class="game-why">${farinImg('mood-thinking')}<div dir="auto"><b>${esc(rlS('st.watch'))}:</b> "${esc(h.phrase)}" · ${esc(trLine(h.fix))}</div></div>`).join('')
+      : `<div class="game-why">${farinImg('face-smile')}<div dir="auto">${esc(rlS('st.goodW'))}</div></div>`;
+    return Object.assign(base, {body:`<div class="rl-body">${rlstTopicHtml(vp)}
+        <p class="game-hint" dir="auto"><b>${esc(rlS('st.firstW'))}</b> ${esc(plan0 || (starts.length ? rlS('st.tapStart') : ''))}</p>
+        ${starts.length ? `<div class="rl-chips rl-ststarts">${starts.map((t, k)=>`<button type="button" class="game-chip" dir="ltr" translate="no" data-action="rlst-use-start" data-k="${k}">${esc(rlstStem(t))}</button>`).join('')}</div>` : ''}
+        <textarea class="story-answer rl-stinput" id="rlst-input" dir="ltr" translate="no" rows="2" maxlength="200" placeholder="${esc(rlS('st.write'))}">${esc(T.text)}</textarea>
+        ${T.short ? `<p class="rl-line" dir="auto">${esc(rlS('st.more'))}</p>` : ''}${res}</div>`,
+      foot:T.checked ? rlCta('rlst-next', rlS('cont')) : rlCta('rlst-try-check', rlS('st.check'))});
+  }
+  const sr = !!(window.SpeechRecognition || window.webkitSpeechRecognition), lis = !!rlMic;
+  return Object.assign(base, {body:`<div class="rl-body">${rlstTopicHtml(vp)}
+      <p class="game-hint" dir="auto"><b>${esc(rlS('st.firstS'))}</b> ${starts.length ? esc(rlS('st.hearStart')) : ''}</p>
+      ${starts.length ? `<div class="rl-chips rl-ststarts">${starts.map((t, k)=>`<button type="button" class="game-chip" dir="ltr" translate="no" data-action="rlst-start" data-k="${k}">${ICONS.soundOn}${esc(t)}</button>`).join('')}</div>` : ''}
+      <div class="card-flat gc-card rl-chat"><div class="rl-dl rl-mine${T.said ? ' said' : ''}" id="rl-mine"><div class="gc-line dlg-line dlg-you" dir="ltr"><div class="gc-body"><div class="gc-text">${T.heard ? esc(T.heard) : '…'}</div></div></div>${T.said ? '<span class="rl-tick" aria-hidden="true">✓</span>' : ''}</div></div>
+      ${T.heard ? `<p class="rl-line" dir="auto">${esc(rlS('st.heard'))} <bdi dir="ltr">${esc(T.heard)}</bdi></p>` : ''}
+      ${T.said ? `<div class="game-why">${farinImg('face-smile')}<div dir="auto">${esc(rlS('st.goodS'))}</div></div>` : `<div class="rl-chips"><button type="button" class="game-chip rl-saychip${lis ? ' on' : ''}" data-action="rlst-say"${lis ? ' disabled' : ''}>${lis ? esc(rlS('d.listening')) : sr ? ICONS.mic + esc(rlS('d.say')) : esc(rlS('d.said'))}</button></div>`}</div>`,
+    foot:T.said ? rlCta('rlst-next', rlS('cont')) : rlGhost('rlst-next', rlS('skip'))});
+}
+function rlstStem(t){ return String(t || '').replace(/\s*(\.\.\.|…)\s*\??$/, '').trim(); }
+// Round 3: today's studio round (its inner screen), the step's own task
+function rlstUse(vp, R){
+  const h = renderStudioRound(), open = '<div class="screen" style="padding-top:0;">', at = h.indexOf(open);
+  let inner = at >= 0 ? h.slice(at + open.length) : h;
+  if(at >= 0){ const c1 = inner.lastIndexOf('</div>'), c2 = inner.lastIndexOf('</div>', c1 - 1); inner = inner.slice(0, c2); }
+  const passed = !!(vp.checked && vp.result && vp.result.passed);
+  return {key:'use', i:0, k:1, body:`<div class="rl-studio">${inner}</div>`, foot:passed ? rlCta('rlst-done', rlS('cont')) : ''};
+}
+function rlstCur(){ const vp = state.viewParams, R = vp && vp.rl; return R && R.kind === 'st' && vp.round ? {vp, R} : null; }
+const RL4_HANDLERS = {
+  'rlst-hear'(){
+    const x = rlstCur(); if(!x || x.R.ph !== 'play' || x.R.r !== 0) return;
+    const m = rlstModel(x.vp); if(!m) return;
+    const H = x.R.hm || (x.R.hm = {cur:0, done:0});
+    rlSeqPlay([m], ()=>{ H.cur = 1; const el = document.getElementById('rl-stmodel'); if(el) el.classList.add('cur'); }, ()=>{ H.cur = 0; }, ()=>{ H.done = 1; save(); render(); });
+  },
+  'rlst-start'(el){
+    const x = rlstCur(); if(!x || x.R.ph !== 'play') return;
+    const k = +el.dataset.k, t = rlstStarts(x.vp)[k]; if(!t) return;
+    if(x.R.r === 0){ if(!x.R.hs) x.R.hs = {}; if(!x.R.hs[k]){ x.R.hs[k] = 1; sfx('hop'); el.classList.add('lit'); rlPop(el); } save(); }
+    rlSeqTok++; rlSay(t);
+  },
+  'rlst-next'(){
+    const x = rlstCur(); if(!x || x.R.ph !== 'play') return;
+    const R = x.R, vp = x.vp, rec = rlRec({id:R.id}, true);
+    rlSeqTok++; rlMicStop(); ttsStop();
+    if(R.r === 0){
+      if((R.i1 || 0) < rlstList1(vp).length - 1){ R.i1 = (R.i1 || 0) + 1; save(); render(); window.scrollTo(0, 0); return; }
+      rec.r = Math.max(rec.r || 0, 1); R.got[0] = rlstStarts(vp).map(rlstStem).slice(0, 3); R.st[0] = 1; R.ph = 'done';
+    } else if(R.r === 1){
+      const T = R.t2 || {};
+      if(vp.mode === 'writing' && T.text && !String(vp.transcript || '').trim()) vp.transcript = T.text;   // the first sentence waits in Round 3's box
+      rec.r = Math.max(rec.r || 0, 2); R.got[1] = T.text ? [T.text] : T.heard ? [T.heard] : []; R.st[1] = 1; R.ph = 'done';
+    } else return;
+    save(); render(); window.scrollTo(0, 0);
+  },
+  'rlst-use-start'(el){
+    const x = rlstCur(); if(!x || x.R.ph !== 'play' || x.R.r !== 1) return;
+    const t = rlstStem(rlstStarts(x.vp)[+el.dataset.k]); if(!t) return;
+    const ta = document.getElementById('rlst-input'), T = x.R.t2 || (x.R.t2 = {text:''});
+    const cur = ta ? ta.value : T.text;
+    T.text = (cur.trim() ? cur.trim() + ' ' : '') + t + ' '; T.checked = 0; T.short = 0;
+    sfx('hop'); save(); render();
+    const nt = document.getElementById('rlst-input'); if(nt){ nt.focus(); try{ nt.setSelectionRange(nt.value.length, nt.value.length); }catch(e){} }
+  },
+  'rlst-try-check'(){
+    const x = rlstCur(); if(!x || x.R.ph !== 'play' || x.R.r !== 1) return;
+    const ta = document.getElementById('rlst-input'), text = ta ? ta.value.trim() : '', T = x.R.t2 || (x.R.t2 = {text:''});
+    T.text = text.slice(0, 200);
+    if(text.split(/\s+/).filter(Boolean).length < 3){ T.short = 1; save(); render(); anim(document.getElementById('rlst-input'), [{transform:'translateX(0)'}, {transform:'translateX(-4px)'}, {transform:'translateX(4px)'}, {transform:'translateX(0)'}], {duration:240}); return; }
+    T.short = 0; T.checked = 1; sfx('reveal'); markActivity(); save(); render();
+  },
+  'rlst-say'(){
+    const x = rlstCur(); if(!x || x.R.ph !== 'play' || x.R.r !== 1) return;
+    const R = x.R, vp = x.vp, T = R.t2 || (R.t2 = {text:'', heard:''});
+    if(T.said || rlMic) return;
+    rlSeqTok++; ttsStop();
+    const stamp = heard=>{ rlMic = null; if(state.viewParams !== vp) return; if(heard) T.heard = String(heard).slice(0, 200); T.said = 1; sfx('stamp'); buzz(12);
+      queueFx(()=>anim(document.querySelector('#rl-mine .rl-tick'), [{transform:'scale(1.15) rotate(-8deg)', opacity:0}, {transform:'scale(1) rotate(-3deg)', opacity:1}], {duration:280, easing:'ease-out'}));
+      save(); render(); };
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if(!SR){ stamp(''); return; }
+    try{
+      const r = new SR(); r.lang = TTS_LANG; r.interimResults = false; r.continuous = false; r.maxAlternatives = 1;
+      let fin = false, got = ''; const end = ()=>{ if(fin) return; fin = true; clearTimeout(tm); if(rlMic === r) stamp(got); };
+      const tm = setTimeout(()=>{ try{ r.stop(); }catch(err){} end(); }, 9000);
+      r.onresult = e=>{ try{ got = Array.from(e.results).map(x=>x[0] && x[0].transcript || '').join(' ').trim(); }catch(err){} end(); };
+      r.onerror = end; r.onend = end;
+      rlMic = r; r.start(); render();
+    }catch(err){ rlMic = null; stamp(''); }
+  },
+  'rlst-done'(){
+    const x = rlstCur(); if(!x || x.R.ph !== 'play' || x.R.r !== 2 || !(x.vp.checked && x.vp.result && x.vp.result.passed)) return;
+    stopStudioMic(); x.R.st[2] = 1; x.R.got[2] = []; x.R.ph = 'done'; save(); render(); window.scrollTo(0, 0);
+  },
+  'rlst-finish'(){
+    const x = rlstCur(); if(!x || x.R.ph !== 'done' || x.R.r !== 2 || document.querySelector('.celebrate-overlay')) return;
+    const vp = x.vp; rlRecDrop({id:x.R.id});
+    // today's studio-round celebration (maybeCelebrate): the souvenir is awarded here
+    const target = vp.result; if(target) target._celebrated = true;
+    const extra = celebrationExtras('studio-round', vp, vp.mode);
+    save();
+    showCelebration(vp.mode, '', false, extra);
+  }
+};
+Object.assign(RL_HANDLERS, RL4_HANDLERS);
 /* ========== LESSONS-PLAY-END ========== */
 
 /* ============================= RENDER: STUDIO (Teacher + Lab) ============================= */
@@ -27608,6 +27812,7 @@ const screens = {
   'grammar-rounds': renderGrammarRounds,
   'dialogue-rounds': renderDialogueRounds,
   'story-rounds': renderStoryRounds,
+  'studio-rounds': renderStudioRounds,
   'goals-list': renderGoalsList,
   'goal-levels': ()=>renderGoalLevels(state.viewParams.goal),
   'goal-level-detail': ()=>renderGoalLevelDetail(state.viewParams.goal, state.viewParams.level),

@@ -29,16 +29,14 @@ window.THEATRE_CONTENT = {
       palette:{sky:'#f3e6c9', sky2:'#dcc28e', glow:'#fbf3e0', ground:'#c9a66b', ink:'#2b2016', accent:'#b3261e', accentInk:'#ffffff'}
     },
     order:{
-      title:'Hora punta en el café de Sam',
+      title:'Hora punta en el bar de Nacho',   // worlds SPEC 16: Harbour Files ES canon (el bar de Nacho)
       tagline:'Cinco clientes. Una bandeja. Escucha bien.',
-      art:'games/posters/order.webp', artReady:false,
-      palette:{sky:'#fff1e6', sky2:'#ffd2b0', glow:'#fff8ef', ground:'#f19a6b', ink:'#3a1f12', accent:'#1f7a6d', accentInk:'#ffffff'}
+      art:'games/posters/order.webp', artReady:false   // until this portrait key art lands: the card poster + the palette from skins.js
     },
     desk:{
       title:'Llegadas',
       tagline:'Cada viajero tiene una historia. Compruébala.',
-      art:'games/posters/desk.webp', artReady:false,
-      palette:{sky:'#eef6ff', sky2:'#c4e1f6', glow:'#ffffff', ground:'#8dbbe8', ink:'#13304d', accent:'#e2533c', accentInk:'#ffffff'}
+      art:'games/posters/desk.webp', artReady:false   // until this portrait key art lands: the card poster + the palette from skins.js
     },
     radio:{
       // Mini Radio (spec mini-radio-2026-10-21.md 5.3): key art from the poster agent (GW74YH0q queue)
@@ -50,9 +48,18 @@ window.THEATRE_CONTENT = {
     spell:{
       title:'Las puertas de las palabras',
       tagline:'Dila bien y la puerta se abre.',
-      art:'games/posters/spell.webp', artReady:false,
-      palette:{sky:'#f4f0ff', sky2:'#d8cbf8', glow:'#fff7d6', ground:'#a592ea', ink:'#2a1d55', accent:'#f2b632', accentInk:'#2a1d55'}
-    }
+      art:'games/posters/spell.webp', artReady:false   // until this portrait key art lands: the card poster + the palette from skins.js
+    },
+    // quick games (2026-11-14): the poster is the live roadmap card art and its palette (skins.js); titles + taglines from the
+    // worlds SPEC section 16 (farin-gamification)
+    match:{title:'La mesa de cartas', tagline:'Gira dos. Encuentra la pareja. El ferri ya casi llega.'},
+    build:{title:'El taller de palabras', tagline:'Bloque a bloque, la frase se levanta.'},
+    cross:{title:'El crucigrama de la mañana', tagline:'Un café, un lápiz y las palabras que ya sabes.'},
+    bingo:{title:'Bingo en la ventana', tagline:'Nueve palabras. Un cartón al sol. Escucha la tuya.'},
+    hunt:{title:'La caza de palabras', tagline:'En algún lugar de tu historia se esconden las palabras.'},
+    echo:{title:'En antena', tagline:'Escucha. Repite. Oye tu eco.'},
+    dictation:{title:'Junto a la ventana', tagline:'Escucha bien. Escribe lo que oyes.'},
+    trap:{title:'Carrera en el muelle', tagline:'Elige rápido. Salta limpio.'}
   },
   strings:{
     play:{en:'Play', tr:'Oyna', fa:'بازی کن', es:'Jugar'},
@@ -64,6 +71,10 @@ window.THEATRE_CONTENT = {
     starringYou:{en:'starring {you}', tr:'başrolde {you}', fa:'با بازی {you}', es:'protagonizada por {you}'},
     you:{en:'you', tr:'sen', fa:'تو', es:'ti'},
     level:{en:'Level {level}', tr:'Seviye {level}', fa:'سطح {level}', es:'Nivel {level}'},
-    artSoon:{en:'Poster art in production', tr:'Afiş çiziliyor', fa:'پوستر داره کشیده می‌شه', es:'Cartel en producción'}
+    artSoon:{en:'Poster art in production', tr:'Afiş çiziliyor', fa:'پوستر داره کشیده می‌شه', es:'Cartel en producción'},
+    // the leave sheet while a quick game's round is in progress (the card stays open on the roadmap, so this is true)
+    leaveQ:{en:'Leave the game? You can play it again any time.', tr:'Oyundan çıkıyor musun? İstediğin zaman yeniden oynayabilirsin.', fa:'از بازی می‌ری؟ هر وقت بخوای می‌تونی دوباره بازیش کنی.', es:'¿Sales del juego? Puedes volver a jugarlo cuando quieras.'},
+    stay:{en:'Keep playing', tr:'Oynamaya devam et', fa:'بازی رو ادامه بده', es:'Seguir jugando'},
+    leave:{en:'Leave', tr:'Çık', fa:'خروج', es:'Salir'}
   }
 };

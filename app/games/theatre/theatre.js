@@ -13,7 +13,15 @@
                          //   title may be a string or a per-level map {A1:'..', A2:'..', default:'..'}
      strip,              // optional [{id, label, thumb, state:'developed'|'developing'|'locked', note, onTap(item)}] (note = small grey line under the photo)
      controls,           // optional extra HUD buttons, right of sound: [{id, label, icon(svg string), onTap(btn)}]
-     stage,              // 'portrait' (default, full-height tall column) | '4:5' (wider column for 4:5 art)
+     stage,              // 'portrait' (default, full-height tall column) | '4:5' (wider column for 4:5 art) | 'app' (the app's own column, max 480px)
+     skin,               // optional overrides merged over THEATRE_SKINS[kind] (skins.js): {card, focus, palette, backdrop, props}; false = no skin.
+                         //   A kind with a skin and no portrait key art shows its card poster (960x480) in the wide poster layout, and the
+                         //   game runs over the skin's world (backdrop + corner props, palette tint); body gets data-th-skin=<kind>.
+     label,              // 'play' = the poster button says Play even when seen (quick games: every round is a new one)
+     brief,              // true = once seen, the poster rests 1.2 s and goes into the game by itself (a tap goes in at once; x still closes)
+     companion,          // true = the app's game companion stays on screen (quick games); the scenario games draw their own cast
+     confirmExit,        // optional fn -> true while a round is in progress: HUD x / Escape first ask "Leave the game?" (Stay / Leave)
+     world,              // World Kit on for this kind (the app's WORLDS_LIVE switch): {level, gw, world} over skins.js gw / world
      seen,               // true = the learner has met this poster: show it at rest with Continue, no sequence
      forcePoster,        // show the poster even without artReady (previews only; learners never see a placeholder)
      cover, from,        // the app's loading cover element (adopted) and the tapped card's DOMRect
@@ -28,6 +36,11 @@
    Theatre.titleCard(text, sub, {ms}) -> Promise   1.5 s card between chapters, one tap skips
    Theatre.transition(fn) -> Promise   runs a DOM update inside a View Transition (WAAPI fade fallback)
    Theatre.setStrip(items) / Theatre.setControls(list)   update the poster strip / extra HUD buttons
+   Theatre.setSkin(kind)        switch the running game's world to another kind's skin (a round that fell back to another game)
+   Theatre.say(text, {who, kind:'caption'|'balloon', ms, lang})   World Kit caption box / speech balloon, 5 s at most, a new line replaces
+   Theatre.finale({beat, ms}) -> Promise   the world's end beat (2.4 s at most, a tap skips)
+   Theatre.sfx(name) -> bool    World Kit foley (CC0 kit, variants, detune); false = no file, play the app's own sound
+   Theatre.world()              the kind whose world is on, or null
    Theatre.stageEl()            a full-size element over #app for games that draw their own stage (Your Call v2)
    Theatre.isOpen() / Theatre.phase()   'poster' | 'running' | null
    Theatre.version
@@ -65,13 +78,27 @@ function vt(fn){ var de = D.documentElement; de.classList.add('th-vt'); var t = 
   t.ready.catch(no); t.updateCallbackDone.catch(no); t.finished.then(off, off); return t; }
 function anim(n, frames, o){ try{ return n && n.animate ? n.animate(frames, o) : null; }catch(e){ return null; } }
 
+/* ---------- skin: one world per game (skins.js) ---------- */
+function skinData(kind, over){
+  if(over === false) return null;
+  var base = (W.THEATRE_SKINS || {})[kind];
+  if(!base && !over) return null;
+  var sk = {}, k;
+  for(k in (base || {})) sk[k] = base[k];
+  for(k in (over || {})) sk[k] = over[k];
+  return sk;
+}
+function merge(){ var out = {}; for(var i = 0; i < arguments.length; i++){ var a = arguments[i] || {}; for(var k in a) out[k] = a[k]; } return out; }
+
 /* ---------- poster ---------- */
-function posterData(o){
+function posterData(o, sk){
   var base = (content().posters || {})[o.kind] || {};
-  var p = {}; var k;
-  for(k in base) p[k] = base[k];
-  for(k in (o.poster || {})) p[k] = o.poster[k];
-  p.palette = p.palette || {};
+  var over = o.poster || {};
+  var p = merge(base, over);
+  // palette: the skin's (from the poster) under the content's and the caller's
+  p.palette = merge(sk && sk.palette, base.palette, over.palette);
+  // no portrait key art of its own yet: the game's live roadmap card poster (landscape) in the wide layout
+  if(!(p.art && p.artReady) && sk && sk.card){ p.art = sk.card; p.artReady = true; p.shape = 'wide'; p.focus = sk.focus || ''; }
   return p;
 }
 function artHtml(p, kind, title){
@@ -107,21 +134,29 @@ function buildPoster(s){
   var art = artHtml(p, s.kind, title);
   var placeholder = !(p.art && p.artReady);
   var C = content(), q = C.quotes || ['“', '”'], tl = C.target ? ' lang="' + esc(C.target) + '" dir="ltr"' : '';
-  var frame = el('div', 'th-frame' + (first ? ' th-intro' : ' th-rest') + (placeholder ? ' th-is-ph' : ''));
+  var wide = p.shape === 'wide' && !placeholder;
+  var frame = el('div', 'th-frame' + (first ? ' th-intro' : ' th-rest') + (placeholder ? ' th-is-ph' : '') + (wide ? ' th-wide' : ''));
   frame.setAttribute('role', 'dialog');
   frame.setAttribute('aria-modal', 'true');
   frame.setAttribute('aria-label', title);
-  frame.style.cssText = paletteStyle(p.palette);
-  frame.innerHTML =
-    '<div class="th-art">' + art + '</div>' +
-    '<div class="th-grade" aria-hidden="true"></div>' +
+  frame.style.cssText = paletteStyle(p.palette) + (wide && p.focus ? '--th-focus:' + String(p.focus).replace(/[^0-9.%a-z ]/gi, '') + ';' : '');
+  var lockup =
     '<div class="th-lockup">' +
       '<p class="th-kicker"><span>' + esc(p.sub || app.gameName || '') + '</span></p>' +
       '<h1 class="th-title"' + tl + '>' + esc(title) + '</h1>' +
       (p.tagline ? '<p class="th-tagline"' + tl + '>' + esc(q[0]) + esc(p.tagline) + esc(q[1]) + '</p>' : '') +
-    '</div>' +
+    '</div>';
+  // wide = landscape card art (960x480): the same picture, blurred and extended, fills the column; the sharp plate sits between
+  // the title and Play, cropped around the subject (--th-focus). Everything scrolls inside the frame on a short screen.
+  var head = wide
+    ? '<div class="th-art"><img class="th-art-img" src="' + esc(p.art) + '" alt="" decoding="async"></div><div class="th-grade" aria-hidden="true"></div>' +
+      '<div class="th-scroll"><div class="th-scroll-in">' + lockup +
+      '<div class="th-plate" aria-hidden="true"><img class="th-plate-img" src="' + esc(p.art) + '" alt="" decoding="async"></div>'
+    : '<div class="th-art">' + art + '</div><div class="th-grade" aria-hidden="true"></div>' + lockup;
+  frame.innerHTML =
+    head +
     '<div class="th-foot">' +
-      '<button type="button" class="th-play">' + esc(s.seen ? S('continue') : S('play')) + '</button>' +
+      '<button type="button" class="th-play">' + esc(s.seen && s.opts.label !== 'play' ? S('continue') : S('play')) + '</button>' +
       '<div class="th-strip" role="list" aria-label="' + esc(S('episodes')) + '">' + stripHtml(s.strip) + '</div>' +
       '<div class="th-billing">' +
         '<span class="th-bill-line">' + billing(app) + '</span>' +
@@ -129,10 +164,28 @@ function buildPoster(s){
       '</div>' +
       (placeholder ? '<p class="th-ph-tag">' + esc(S('artSoon')) + '</p>' : '') +
     '</div>' +
+    (wide ? '</div></div>' : '') +
     (first ? '<div class="th-flash" aria-hidden="true"></div>' : '');
   return frame;
 }
+function cssNum(v, d, lo, hi){ v = Number(v); if(!isFinite(v)) v = d; return Math.max(lo, Math.min(hi, v)); }
+function cssPos(v){ return String(v || '50% 50%').replace(/[^0-9.%a-z \-]/gi, ''); }
+// the world behind a running game: its backdrop (the card art blurred, or a crisp illustrated one) under the palette's veil,
+// plus the corner props in the game column
+function worldHtml(s){
+  var sk = s.skin, p = s.poster, b = sk.backdrop || {}, src = b.src || sk.card || p.artWide || p.art;
+  var st = paletteStyle(p.palette) + '--th-bd-blur:' + cssNum(b.blur, 30, 0, 60) + 'px;--th-bd-veil:' + Math.round(cssNum(b.veil, .56, 0, 1) * 100) + '%;--th-bd-pos:' + cssPos(b.position) + ';';
+  var props = (sk.props || []).map(function(pr){
+    if(!pr || !pr.src) return '';
+    var at = /^(tl|tr|bl|br)$/.test(pr.at) ? pr.at : 'br';
+    var css = (pr.w ? 'width:' + cssPos(pr.w) + ';' : '') + (pr.h ? 'height:' + cssPos(pr.h) + ';' : '') + (pr.opacity != null ? 'opacity:' + cssNum(pr.opacity, 1, 0, 1) + ';' : '');
+    return '<img class="th-prop th-prop-' + at + '" src="' + esc(pr.src) + '" alt="" style="' + css + '">';
+  }).join('');
+  return '<div class="th-bd-art th-bd-world" style="' + st + '">' + (src ? '<img src="' + esc(src) + '" alt="">' : '') + '</div>' +
+    '<div class="th-bd-veil th-bd-wveil" style="' + st + '"></div><div class="th-props" aria-hidden="true">' + props + '</div>';
+}
 function backdropHtml(s){
+  if(s.skin) return worldHtml(s);
   var p = s.poster, title = pick(p.title, s.app.level);
   var src = p.artReady ? (p.artWide || p.art) : null;
   // no art yet: the sides are just the palette's soft light (no placeholder plate)
@@ -173,9 +226,192 @@ function paintControls(){
   D.body.style.setProperty('--th-hud-r', (58 + 48 * (cur.controls || []).length) + 'px');
 }
 
+/* ---------- leave sheet: "Leave the game?" while a round is in progress (confirmExit) ---------- */
+function askLeave(s, go){
+  if(s.leave) return;
+  var rtl = s.app.lang === 'fa' || D.documentElement.dir === 'rtl';
+  var box = el('div', 'th-leave');
+  box.setAttribute('role', 'alertdialog');
+  box.setAttribute('aria-modal', 'true');
+  box.style.cssText = paletteStyle(s.poster.palette);
+  box.innerHTML = '<div class="th-leave-card" dir="' + (rtl ? 'rtl' : 'ltr') + '" lang="' + esc(s.app.lang || 'en') + '"><p class="th-leave-q">' + esc(S('leaveQ')) + '</p>' +
+    '<div class="th-leave-row"><button type="button" class="th-leave-stay">' + esc(S('stay')) + '</button>' +
+    '<button type="button" class="th-leave-go">' + esc(S('leave')) + '</button></div></div>';
+  box.setAttribute('aria-label', S('leaveQ'));
+  s.leave = box;
+  D.body.appendChild(box);
+  var done = function(){ if(box.parentNode) box.remove(); if(s.leave === box) s.leave = null; };
+  s.leaveStay = done;
+  box.querySelector('.th-leave-stay').addEventListener('click', function(e){ e.stopPropagation(); done(); });
+  box.querySelector('.th-leave-go').addEventListener('click', function(e){ e.stopPropagation(); done(); go(); });
+  box.addEventListener('click', function(e){ if(e.target === box){ e.stopPropagation(); done(); } });
+  if(!reduced()) anim(box.firstChild, [{opacity:0, transform:'translateY(14px) scale(.97)'}, {opacity:1, transform:'none'}], {duration:220, easing:'cubic-bezier(.2,.7,.2,1)'});
+  try{ box.querySelector('.th-leave-stay').focus({preventScroll:true}); }catch(e){}
+}
+
+/* ---------- skin on the page: data-th-skin + the palette as CSS variables on body (the game screen reads them) ---------- */
+var PAL_VARS = {sky:'--th-sky', sky2:'--th-sky2', glow:'--th-glow', ink:'--th-ink', accent:'--th-accent', accentInk:'--th-accent-ink', ground:'--th-ground'};
+function paintSkin(s){
+  var body = D.body, k;
+  for(k in PAL_VARS) body.style.removeProperty(PAL_VARS[k]);
+  if(!s.skin){ body.classList.remove('th-skinned'); body.removeAttribute('data-th-skin'); return; }
+  body.classList.add('th-skinned');
+  body.setAttribute('data-th-skin', s.skinKind || s.kind);
+  var pal = s.poster.palette || {};
+  for(k in PAL_VARS) if(pal[k]) body.style.setProperty(PAL_VARS[k], pal[k]);
+}
+function setSkin(kind){
+  var s = cur; if(!s || !kind || kind === s.skinKind) return;
+  var sk = skinData(kind, null); if(!sk) return;
+  s.skin = sk; s.skinKind = kind;
+  s.poster = merge(s.poster, {palette:merge(sk.palette, ((content().posters || {})[kind] || {}).palette)});
+  paintSkin(s);
+  if(s.backdrop) s.backdrop.innerHTML = worldHtml(s);
+  if(s.world){ s.world.kind = kind; paintWorld(s); }
+}
+
+/* ---------- World Kit (worlds SPEC 4.3-4.10, 2026-11-14): a quick game plays inside its own place ----------
+   Switched on per kind by the app (WORLDS_LIVE, ?worlds=1 previews), never by the Theatre itself. The world tokens live in skins.js
+   (skin.gw = the colours, skin.world = plate / cut-outs / live text / stage height / sounds). Layers, in the game column:
+     .th-world (z 0, behind #app) > .th-world-art (the plate + cut-outs; mirrored in a Persian UI) + .th-world-text (live text on the
+     art, never mirrored) ; .th-say (z 52) = the caption box / speech balloon (Theatre.say).
+   A plate or cut-out shows only when it is ready:true (the file exists): until then the game opens on the flat --gw-bg colour
+   (Farin: nothing low designed), fully playable. body.gw-on.gw-<kind> switches the skin tokens on and lets #app sit over the world. */
+var GW_VARS = {bg:'--gw-bg', surface:'--gw-surface', paper:'--gw-paper', ink:'--gw-ink', hue:'--gw-hue', accent:'--gw-accent', cta:'--gw-cta', ctaInk:'--gw-cta-ink', line:'--gw-line', stage:'--gw-stage'};
+var GW_ED = {A1:'#FFD166', A2:'#5FC9B8', B1:'#4FC3E8', B2:'#A99BEA', C1:'#FF6F5E'};   // the level edition colour (SPEC 4.6)
+function boxStyle(b){
+  b = b || []; var x = cssNum(b[0], 0, -50, 150), y = cssNum(b[1], 0, -50, 150), w = cssNum(b[2], 20, 0, 200);
+  return 'left:' + x + '%;top:' + y + '%;width:' + w + '%;';
+}
+function worldData(s){
+  var sk = skinData(s.world.kind, null) || {};
+  return {gw:merge(sk.gw, s.world.gw), w:merge(sk.world, s.world.world)};
+}
+function paintWorld(s){
+  var body = D.body, d = worldData(s), w = d.w, k;
+  body.className = body.className.replace(/\bgw-(?!on\b)[a-z0-9]+\b/g, '').replace(/\s+/g, ' ').trim();
+  body.classList.add('gw-on', 'gw-' + s.world.kind);
+  for(k in GW_VARS) body.style.removeProperty(GW_VARS[k]);
+  for(k in GW_VARS) if(d.gw[k]) body.style.setProperty(GW_VARS[k], String(d.gw[k]));
+  if(w.stage) body.style.setProperty('--gw-stage', String(w.stage).replace(/[^0-9a-z.,%()+\- ]/gi, ''));
+  var ed = GW_ED[String(s.app.level || s.world.level || '').toUpperCase()];
+  if(ed) body.style.setProperty('--gw-ed', ed); else body.style.removeProperty('--gw-ed');
+  var plate = w.plate && w.plate.ready && w.plate.src ? '<img class="th-world-plate" src="' + esc(w.plate.src) + '" alt="" style="object-position:' + cssPos(w.plate.pos) + ';">' : '';
+  var cut = (w.layers || []).filter(function(l){ return l && l.ready && l.src; }).map(function(l){
+    return '<img class="th-world-cut ' + esc(l.cls || '') + '"' + (l.id ? ' id="' + esc(l.id) + '"' : '') + ' src="' + esc(l.src) + '" alt="" style="' + boxStyle(l.box) + '">';
+  }).join('');
+  var txt = (w.text || []).filter(function(t){ return t && t.ready; }).map(function(t){
+    return '<div class="th-world-live ' + esc(t.cls || '') + '"' + (t.id ? ' id="' + esc(t.id) + '"' : '') + ' style="' + boxStyle(t.box) + '">' + esc(t.text || '') + '</div>';
+  }).join('');
+  s.world.el.innerHTML = '<div class="th-world-art' + (plate ? ' th-has-plate' : '') + '">' + plate + cut + '</div><div class="th-world-text">' + txt + '</div>';
+  if(w.css) loadWorldCss(s.world.kind, w.css);
+  warmSfx(w.sfx);
+}
+var worldCss = {};
+function loadWorldCss(kind, href){
+  if(worldCss[kind]) return;
+  worldCss[kind] = 1;
+  var l = D.createElement('link'); l.rel = 'stylesheet'; l.href = String(href); l.onerror = function(){ l.remove(); worldCss[kind] = 0; };
+  D.head.appendChild(l);
+}
+function openWorld(s){
+  if(!s.opts.world) return;
+  s.world = {kind:s.kind, gw:s.opts.world.gw, world:s.opts.world.world, level:s.opts.world.level, el:el('div', 'th-world')};
+  s.world.el.setAttribute('aria-hidden', 'true');
+  D.body.appendChild(s.world.el);
+  paintWorld(s);
+}
+function closeWorld(s){
+  var body = D.body;
+  if(s.world && s.world.el && s.world.el.parentNode) s.world.el.remove();
+  if(s.sayEl && s.sayEl.parentNode) s.sayEl.remove();
+  clearTimeout(s.sayTimer);
+  body.className = body.className.replace(/\bgw-[a-z0-9]+\b/g, '').replace(/\s+/g, ' ').trim();
+  for(var k in GW_VARS) body.style.removeProperty(GW_VARS[k]);
+  body.style.removeProperty('--gw-ed');
+  s.world = null;
+}
+// Theatre.say(text, {who, kind:'caption'|'balloon', ms, lang}): the narrator / companion caption box at the stage's top inline-start,
+// or a character's balloon over the element `who`. 5 s at most; a new line replaces the old one; nothing on a timer (the app calls it
+// after a learner action or an arrival). Works in any running Theatre; the quick games use it in world mode (SPEC 4.7).
+function say(text, o){
+  var s = cur; if(!s || !text) return false;
+  o = o || {};
+  var ms = Math.min(cssNum(o.ms, 5000, 600, 5000), 5000), kind = o.kind === 'balloon' && o.who ? 'balloon' : 'caption';
+  if(!s.sayEl){ s.sayEl = el('div', 'th-say'); s.sayEl.setAttribute('role', 'status'); s.sayEl.setAttribute('aria-live', 'polite'); D.body.appendChild(s.sayEl); }
+  var lang = o.lang || (kind === 'balloon' ? (content().target || 'en') : s.app.lang) || 'en';
+  var rtl = lang === 'fa';
+  s.sayEl.innerHTML = '<div class="th-' + kind + '" lang="' + esc(lang) + '" dir="' + (rtl ? 'rtl' : 'ltr') + '">' + esc(text) + '</div>';
+  var box = s.sayEl.firstChild;
+  if(kind === 'balloon'){
+    var who = D.getElementById(o.who), r = who && who.getBoundingClientRect();
+    if(r && r.width){
+      var col = s.sayEl.getBoundingClientRect();
+      box.style.left = Math.max(8, Math.min(col.width - 8, r.left - col.left + r.width / 2)) + 'px';
+      box.style.top = Math.max(84, r.top) + 'px';
+    } else box.className = 'th-caption';
+  }
+  if(!reduced()) anim(box, [{opacity:0, transform:(kind === 'balloon' ? 'translate(-50%, calc(-100% + 8px))' : 'translateY(6px)')}, {opacity:1, transform:(kind === 'balloon' ? 'translate(-50%, -100%)' : 'none')}], {duration:200, easing:'cubic-bezier(.2,.7,.2,1)'});
+  clearTimeout(s.sayTimer);
+  s.sayTimer = setTimeout(function(){ if(s.sayEl && s.sayEl.firstChild === box){ var a = reduced() ? null : anim(box, [{opacity:1}, {opacity:0}], {duration:180, fill:'forwards'}); var rm = function(){ if(box.parentNode) box.remove(); }; if(a) a.onfinish = rm; else rm(); } }, ms);
+  return true;
+}
+// Theatre.finale({beat, ms}) -> Promise: the world's own end moment (a class on .th-world for the CSS beat and/or a function),
+// 2.4 s at most, one tap skips. The souvenir and the one button stay the app's own end card (SPEC 4.9).
+function finale(o){
+  var s = cur; o = o || {};
+  return new Promise(function(resolve){
+    if(!s || !s.world || reduced()){ resolve(); return; }
+    var w = s.world.el, done = false, t;
+    var end = function(){ if(done) return; done = true; clearTimeout(t); w.classList.remove('th-beat'); D.removeEventListener('pointerdown', end, true); resolve(); };
+    w.classList.add('th-beat');
+    try{ if(typeof o.beat === 'function') o.beat(w); }catch(e){}
+    D.addEventListener('pointerdown', end, true);
+    t = setTimeout(end, Math.min(cssNum(o.ms, 2400, 0, 2400), 2400));
+  });
+}
+// Theatre.sfx(name): the Open House foley player lifted into the Theatre (SPEC 4.10). A name maps to files (skin.world.sfx over the shared
+// CC0 kit in games/cozy-chores/sfx/); a variant never plays twice in a row, playbackRate 0.96-1.04, decoded once, the mute switch
+// respected. false = no file for that name (the app plays its own sfx()).
+var SFX_KIT = {bell:2, 'card-clack':2, click:2, clink:3, combo:1, correct:1, ding:2, door:2, knock:2, 'land-food':3, 'land-glass':3, 'land-heavy':3,
+  'land-light':3, 'land-soft':3, lift:2, 'medal-clink':2, paper:3, 'paper-rustle':2, pencil:2, pop:2, reveal:1, swish:3, tick:3};
+var sfxBufs = {}, sfxLast = {}, sfxCtx = null;
+function sfxList(name){
+  var w = cur && cur.world ? worldData(cur).w : {}, own = (w.sfx || {})[name];
+  if(own && own.length) return own;
+  var n = SFX_KIT[name]; if(!n) return null;
+  var out = []; for(var i = 1; i <= n; i++) out.push('games/cozy-chores/sfx/' + name + '-' + i + '.mp3');
+  return out;
+}
+function actxGet(){ try{ if(!sfxCtx) sfxCtx = new (W.AudioContext || W.webkitAudioContext)(); if(sfxCtx.state === 'suspended') sfxCtx.resume().catch(function(){}); return sfxCtx; }catch(e){ return null; } }
+function warmSfx(map){
+  if(!W.fetch) return;
+  var names = Object.keys(map || {});
+  names.forEach(function(nm){ (sfxList(nm) || []).forEach(function(url){
+    if(sfxBufs[url]) return; sfxBufs[url] = 'wait';
+    var c = actxGet(); if(!c){ sfxBufs[url] = null; return; }
+    fetch(url).then(function(r){ if(!r.ok) throw new Error(url); return r.arrayBuffer(); })
+      .then(function(b){ return new Promise(function(ok, no){ var p = c.decodeAudioData(b, ok, no); if(p && p.then) p.then(ok, no); }); })
+      .then(function(buf){ sfxBufs[url] = buf; }, function(){ sfxBufs[url] = 'fail'; });
+  }); });
+}
+function sfx(name){
+  if(!cur || muted()) return !!cur;
+  var list = sfxList(name); if(!list || !list.length) return false;
+  var i = Math.floor(Math.random() * list.length); if(list.length > 1 && i === sfxLast[name]) i = (i + 1) % list.length; sfxLast[name] = i;
+  var url = list[i], rate = 0.96 + Math.random() * 0.08, buf = sfxBufs[url];
+  if(buf === 'fail') return false;
+  if(buf && typeof buf === 'object'){
+    try{ var c = actxGet(); var src = c.createBufferSource(); src.buffer = buf; src.playbackRate.value = rate; src.connect(c.destination); src.start(); return true; }catch(e){}
+  }
+  try{ var a = new Audio(url); a.preservesPitch = false; a.webkitPreservesPitch = false; a.playbackRate = rate; var p = a.play(); if(p && p.catch) p.catch(function(){}); if(!buf) warmSfx(merge((function(){ var m = {}; m[name] = 1; return m; })())); return true; }catch(e){ return false; }
+}
+
 /* ---------- sound: a short cinematic swell on Play (never before a tap) ---------- */
 var CHORDS = {path:[220, 261.63, 329.63, 493.88], chores:[174.61, 220, 261.63, 349.23], mystery:[146.83, 174.61, 220, 277.18],
-  order:[261.63, 329.63, 392, 523.25], desk:[196, 261.63, 293.66, 392], spell:[164.81, 207.65, 246.94, 329.63, 659.25]};
+  order:[261.63, 329.63, 392, 523.25], desk:[196, 261.63, 293.66, 392], spell:[164.81, 207.65, 246.94, 329.63, 659.25],
+  match:[293.66, 369.99, 440, 587.33], build:[196, 246.94, 293.66, 392], cross:[220, 277.18, 329.63, 440], bingo:[261.63, 329.63, 392, 659.25],
+  hunt:[174.61, 220, 261.63, 329.63], echo:[246.94, 311.13, 369.99, 493.88], dictation:[233.08, 293.66, 349.23, 466.16], trap:[220, 293.66, 369.99, 440]};
 function swell(kind){
   if(muted()) return;
   try{
@@ -232,19 +468,23 @@ function open(o){
   o = o || {};
   if(cur) close({instant:true});
   var app = o.app || {};
-  var s = cur = {kind:o.kind, opts:o, app:app, poster:posterData(o), strip:o.strip || null, controls:o.controls || [],
+  var sk = skinData(o.kind, o.skin);
+  var s = cur = {kind:o.kind, opts:o, app:app, poster:posterData(o, sk), skin:sk, skinKind:sk ? o.kind : null, strip:o.strip || null, controls:o.controls || [],
     seen:!!o.seen, views:o.views || null, phase:'poster', openView:app.view ? app.view() : null, localMuted:false};
   // Farin's rule "nothing low designed": the poster only shows once its real key art exists (artReady). Until then
   // the Theatre still takes over (full screen, HUD, wake lock, transition) but goes straight into the game: no poster,
   // no billing, no sound swell, and the first view is not marked seen (onPlay gets {poster:false}).
   s.noPoster = !(s.poster.art && s.poster.artReady) && !o.forcePoster;
-  var stage = o.stage === '4:5' ? 'th-4x5' : 'th-portrait';
+  var stage = o.stage === '4:5' ? 'th-4x5' : (o.stage === 'app' ? 'th-appcol' : 'th-portrait');
   var body = D.body;
   body.classList.add('theatre-on', stage);
   body.classList.remove('th-running');
+  body.classList.toggle('th-companion', !!o.companion);
+  paintSkin(s);
 
   s.backdrop = el('div', 'th-backdrop', backdropHtml(s));
   body.appendChild(s.backdrop);
+  openWorld(s);
 
   var root = o.cover && o.cover.parentNode ? o.cover : el('div');
   root.className = 'th-root'; root.removeAttribute('style');
@@ -263,7 +503,7 @@ function open(o){
   paintSound(); paintControls();
 
   s.onKey = function(e){
-    if(e.key === 'Escape' && cur === s){ e.preventDefault(); exit(); }
+    if(e.key === 'Escape' && cur === s){ e.preventDefault(); if(s.leave && s.leaveStay) s.leaveStay(); else exit(); }
   };
   D.addEventListener('keydown', s.onKey, true);
   D.addEventListener('visibilitychange', onVis);
@@ -281,6 +521,8 @@ function open(o){
   });
   try{ play.focus({preventScroll:true}); }catch(e){}
   if(s.frame.classList.contains('th-intro')) s.introTimer = setTimeout(function(){ if(cur === s) s.frame.classList.add('th-done'); }, 2600);
+  // quick games (worlds SPEC 4.2): a poster already seen shows briefly, then dissolves into the game by itself
+  else if(o.brief) s.briefTimer = setTimeout(function(){ if(cur === s && s.phase === 'poster') start(); }, 1200);
   return api;
 }
 function skip(){
@@ -291,7 +533,7 @@ function skip(){
 function start(){
   var s = cur; if(!s || s.phase !== 'poster') return;
   s.phase = 'running';
-  clearTimeout(s.introTimer);
+  clearTimeout(s.introTimer); clearTimeout(s.briefTimer);
   if(!s.noPoster) swell(s.kind);
   var frame = s.frame;
   var update = function(keepCover){
@@ -327,27 +569,40 @@ function start(){
 function exit(){
   var s = cur; if(!s) return;
   if(s.phase === 'poster'){ close(); return; }
-  if(s.opts.onExit){
-    var keep;
-    try{ keep = s.opts.onExit(); }catch(e){ console.error('[theatre] onExit', e); }
-    // onExit returns false = the game asks first ("Leave? Your place is safe.") and navigates itself if the learner leaves
-    if(keep === false) return;
-    // the app's navigation calls sync(); if nothing navigated, close anyway
-    setTimeout(function(){ if(cur === s) close(); }, 700);
-  } else close();
+  if(s.leave) return;
+  var go = function(){
+    if(cur !== s) return;
+    if(s.opts.onExit){
+      var keep;
+      try{ keep = s.opts.onExit(); }catch(e){ console.error('[theatre] onExit', e); }
+      // onExit returns false = the game asks first ("Leave? Your place is safe.") and navigates itself if the learner leaves
+      if(keep === false) return;
+      // the app's navigation calls sync(); if nothing navigated, close anyway
+      setTimeout(function(){ if(cur === s) close(); }, 700);
+    } else close();
+  };
+  // a round in progress (confirmExit): "Leave the game?" first; Stay keeps playing, Leave goes the way x always did
+  var ask = false;
+  try{ ask = !!(s.opts.confirmExit && s.opts.confirmExit()); }catch(e){ ask = false; }
+  if(ask){ askLeave(s, go); return; }
+  go();
 }
 function close(o){
   var s = cur; if(!s) return;
   cur = null; s.phase = 'closed';
-  clearTimeout(s.introTimer);
+  clearTimeout(s.introTimer); clearTimeout(s.briefTimer);
   D.removeEventListener('keydown', s.onKey, true);
   D.removeEventListener('visibilitychange', onVis);
   if(s.wake){ try{ s.wake.release(); }catch(e){} }
   if(s.fs){ s.fs = false; exitFullscreen(true); }
   var body = D.body;
-  body.classList.remove('theatre-on', 'th-running', 'th-portrait', 'th-4x5');
+  body.classList.remove('theatre-on', 'th-running', 'th-portrait', 'th-4x5', 'th-appcol', 'th-companion', 'th-skinned');
+  body.removeAttribute('data-th-skin');
   body.style.removeProperty('--th-hud-r');
-  [s.hud, s.backdrop, s.stage].forEach(function(n){ if(n && n.parentNode) n.remove(); });
+  for(var pv in PAL_VARS) body.style.removeProperty(PAL_VARS[pv]);
+  [s.hud, s.backdrop, s.stage, s.leave].forEach(function(n){ if(n && n.parentNode) n.remove(); });
+  s.leave = null;
+  closeWorld(s);
   var root = s.root;
   if(root && root.parentNode){
     var a = (o && o.instant) || reduced() || !root.childElementCount ? null : anim(root, [{opacity:1}, {opacity:0}], {duration:220, easing:'ease-out', fill:'forwards'});
@@ -412,9 +667,11 @@ function stageEl(){
 }
 
 var api = {
-  version:'1.0.0',
+  version:'1.1.0',
   open:open, close:close, sync:sync, exit:exit, play:start, skip:skip,
-  titleCard:titleCard, transition:transition, setStrip:setStrip, setControls:setControls, stageEl:stageEl,
+  titleCard:titleCard, transition:transition, setStrip:setStrip, setControls:setControls, stageEl:stageEl, setSkin:setSkin,
+  say:say, finale:finale, sfx:sfx, world:function(){ return cur && cur.world ? cur.world.kind : null; },
+  skin:function(){ return cur && cur.skin ? cur.skinKind : null; },
   isOpen:function(){ return !!cur; },
   phase:function(){ return cur ? cur.phase : null; },
   kind:function(){ return cur ? cur.kind : null; }

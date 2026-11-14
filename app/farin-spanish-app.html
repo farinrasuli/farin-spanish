@@ -212,6 +212,11 @@
   .game-companion .gc-bubble{position:absolute; top:8px; inset-inline-end:60px; white-space:nowrap; background:var(--ink); color:var(--bg-elevated); font-size:13px; font-weight:800; line-height:1.3; padding:7px 12px; border-radius:14px; box-shadow:0 8px 16px -10px rgba(0,0,0,.45);}
   .game-status{display:flex; align-items:center; gap:10px; min-height:44px;}
   .game-status-text{font-size:14px; font-weight:800; color:var(--ink-soft);}
+  .gp-pips{display:inline-flex; align-items:center; gap:6px; flex-wrap:wrap; vertical-align:middle;}
+  .gp-pip{display:block; width:22px; height:9px; border-radius:999px; background:color-mix(in srgb, var(--ink) 14%, transparent); transition:background .25s ease, width .25s ease;}
+  .gp-pip.on{background:var(--th-accent, var(--accent));}
+  .gp-pip.cur{width:30px; background:color-mix(in srgb, var(--th-accent, var(--accent)) 38%, transparent); box-shadow:inset 0 0 0 2px var(--th-accent, var(--accent));}
+  @media (prefers-reduced-motion: reduce){ .gp-pip{transition:none;} }
   .game-status-end{margin-inline-start:auto; display:inline-flex; align-items:center; gap:8px;}
   .game-chip{display:inline-flex; align-items:center; gap:6px; font-weight:800; font-size:14px; padding:7px 13px; border-radius:999px; background:var(--bg-sunken); color:var(--ink-soft);}
   button.game-chip{border:0;}   /* a bare <button class="game-chip"> drew the browser's 2px outset border (the dialogue "I said it" chip); keyboard focus keeps the :focus-visible ring */
@@ -14314,7 +14319,7 @@ function render(){
   if(state.view !== 'game-spell'){ try{ spellStopRec(); }catch(e){} }
   bindEvents(root);
   if(state.view !== 'dashboard') hideCharTip(true);
-  if(window.Theatre){ try{ Theatre.sync(state.view); }catch(e){} }   // Game Theatre: leaving a game's views closes the full-screen stage
+  if(window.Theatre){ try{ Theatre.sync(state.view); if(Theatre.setSkin && THEATRE_QUICK_VIEWS.includes(state.view)) Theatre.setSkin(viewGameKind(state.view)); }catch(e){} }   // Game Theatre: leaving a game's views closes the full-screen stage; a quick round that became another game (Play again on the shelf) takes that game's world
   runPendingFx();
   maybeCelebrate();
   try{ maybeShowPageKept(); }catch(e){}
@@ -18122,7 +18127,7 @@ function gameBlurb(kind){
 }
 function renderGamesShelf(){
   const kinds = shelfGames(), met = gamesMet();
-  const sub = L('Replay any game you have met, as often as you like. Scores here are just for fun.','Tanıştığın her oyunu istediğin kadar tekrar oyna. Buradaki skorlar sadece eğlence için.','هر بازی‌ای که دیده‌ای را هر چند بار که بخواهی دوباره بازی کن. امتیازهای اینجا فقط برای تفریح است.','Vuelve a jugar cualquier juego que ya conozcas, tantas veces como quieras. Aquí los puntos son solo por diversión.');
+  const sub = L('Play any game you have met, as often as you like.','Tanıştığın her oyunu istediğin kadar oyna.','هر بازی‌ای که دیده‌ای را هر چند بار که بخواهی بازی کن.','Juega a cualquier juego que ya conozcas, tantas veces como quieras.');   // no scores (worlds SPEC 4.9, Farin's rule)
   const rows = kinds.map(k=>{
     const a = SHELF_ART[k] || SHELF_ART.match;
     const isNew = !met.has(k) && !(k === 'path' && ycFreePlayed());
@@ -18337,7 +18342,6 @@ function renderGameBuild(){
       ${gameTopHtml(title)}
       <div class="game-card tight badge-unlock-shine">
         <div class="game-result-title">${flawless ? L('Flawless!','Kusursuz!','بی‌نقص!','¡Perfecto!') : L('All built!','Hepsi kuruldu!','همه ساخته شد!','¡Todo construido!')}</div>
-        <p class="game-result-line">${L(`${round.firstTry} of ${total} built on the first try`, `${total} cümleden ${round.firstTry} tanesi ilk denemede`, `${round.firstTry} از ${total} در اولین تلاش`, `${round.firstTry} de ${total} a la primera`)}</p>
         ${gameDoneCta(true)}
       </div>
       ${renderBadgeUnlockCard(pullJustEarnedBadges())}
@@ -18349,8 +18353,7 @@ function renderGameBuild(){
   return `<div class="fade-in game-screen">
     ${gameTopHtml(title)}
     <div class="game-status">
-      <span class="game-status-text">${L(`Sentence ${a} of ${b}`, `Cümle ${a}/${b}`, `جمله ${a} از ${b}`, `Oración ${a} de ${b}`)}</span>
-      <span class="game-status-end">${trapStreakChip({streak:round.combo||0})}</span>
+      <span class="game-status-text">${gameProgressHtml(a - 1, b, L(`Sentence ${a} of ${b}`, `Cümle ${a}/${b}`, `جمله ${a} از ${b}`, `Oración ${a} de ${b}`))}</span>
     </div>
     <p class="game-hint">${gameFallbackNote(vp)}${L('Tap the words in the right order.','Kelimelere doğru sırayla dokun.','کلمه‌ها را به ترتیب درست بزن.','Toca las palabras en el orden correcto.')}</p>
     <div class="game-card tight" dir="ltr">
@@ -18469,8 +18472,7 @@ function renderGameBingo(){
   return `<div class="fade-in game-screen">
     ${gameTopHtml(title)}
     <div class="game-status">
-      <span class="game-status-text">${round.finished ? L('Full card!','Tam kart!','کارت کامل!','¡Cartón lleno!') : L(`Call ${a} of 9`, `Çağrı ${a}/9`, `صدا ${a} از ۹`, `Llamada ${a} de 9`)}</span>
-      <span class="game-status-end"><span class="game-chip">${ICONS.check} ${round.first}</span></span>
+      <span class="game-status-text">${round.finished ? L('Full card!','Tam kart!','کارت کامل!','¡Cartón lleno!') : gameProgressHtml(a - 1, 9, L(`Call ${a} of 9`, `Çağrı ${a}/9`, `صدا ${a} از ۹`, `Llamada ${a} de 9`))}</span>
     </div>
     ${cur ? `<div class="game-card tight">
       <button class="game-play" data-action="bingo-replay" aria-label="${esc(L('Play the clue','İpucunu çal','پخش سرنخ','Reproducir la pista'))}">${ICONS.soundOn}</button>
@@ -18486,7 +18488,6 @@ function renderGameBingo(){
     </div>
     ${round.finished ? `<div class="game-card tight badge-unlock-shine">
       <div class="game-result-title">${round.first === BINGO_SCORED_CALLS ? L('Flawless!','Kusursuz!','بی‌نقص!','¡Perfecto!') : L('Bingo!','Tombala!','بینگو!','¡Bingo!')}</div>
-      <p class="game-result-line">${L(`${round.first} of ${BINGO_SCORED_CALLS} on the first tap`, `${BINGO_SCORED_CALLS} çağrıdan ${round.first} tanesi ilk dokunuşta`, `${round.first} از ${BINGO_SCORED_CALLS} با اولین لمس`, `${round.first} de ${BINGO_SCORED_CALLS} al primer toque`)}</p>
       ${gameDoneCta()}
     </div>${renderBadgeUnlockCard(pullJustEarnedBadges())}` : ''}
   </div>`;
@@ -18819,7 +18820,7 @@ function crossReveal(round){
   return {revealed:true};
 }
 /* ---- Mini Cross: screen (layout per spec §7.6: status row, grid card, clue bar, in-game keyboard, help row) ---- */
-function crossCellSize(cols){ const avail = Math.min(window.innerWidth || 480, 480) - 60; return Math.max(24, Math.min(34, Math.floor((avail - (cols-1)*3)/cols))); }
+function crossCellSize(cols){ const avail = Math.min(window.innerWidth || 480, 480) - 84;   /* the screen (2x20) + the card (2x20) + the wrap: -60 cut the last column off a 9-wide grid on a phone */ return Math.max(24, Math.min(34, Math.floor((avail - (cols-1)*3)/cols))); }
 function crossDirName(dir){ return dir === 'A' ? L('Across','Soldan sağa','افقی','Horizontal') : L('Down','Yukarıdan aşağı','عمودی','Vertical'); }
 // A solved entry for the results list and the souvenir: the phrase with its key word bold (a <b>piece</b> of), else the word.
 function crossPhraseHtml(w){ return esc(w.phrase || w.w).replace(new RegExp('(^|[^\\p{L}])(' + reEsc(w.w) + ')(?!\\p{L})', 'giu'), '$1<b>$2</b>'); }
@@ -18852,8 +18853,8 @@ function crossGridHtml(round){
 }
 function crossStatusHtml(round){
   const solved = round.words.filter(w=>w.solved).length, total = round.words.length, n = round.reveals;
-  const chip = n ? `<span class="game-status-end"><span class="game-chip">${n} ${n === 1 ? L('reveal','açılan harf','حرف فاش‌شده','letra revelada') : L('reveals','açılan harf','حرف فاش‌شده','letras reveladas')}</span></span>` : '';
-  return `<div class="game-status" id="cross-status"><span class="game-status-text">${round.finished ? L('Grid complete!','Bulmaca tamam!','جدول کامل شد!','¡Crucigrama completo!') : L(`${solved} of ${total} words`, `${solved}/${total} kelime`, `${solved} از ${total} کلمه`, `${solved} de ${total} palabras`)}</span>${chip}</div>`;
+  const chip = '';   // no reveal counter (Farin's no-scores rule, 2026-11-14)
+  return `<div class="game-status" id="cross-status"><span class="game-status-text">${round.finished ? L('Grid complete!','Bulmaca tamam!','جدول کامل شد!','¡Crucigrama completo!') : gameProgressHtml(solved, total, L(`${solved} of ${total} words`, `${solved}/${total} kelime`, `${solved} از ${total} کلمه`, `${solved} de ${total} palabras`))}</span>${chip}</div>`;
 }
 function crossClueHtml(round){
   if(round.finished) return '';
@@ -18887,8 +18888,6 @@ function crossResultHtml(round){
   const reveals = n ? ' · ' + n + ' ' + (n === 1 ? L('reveal','açılan harf','حرف فاش‌شده','letra revelada') : L('reveals','açılan harf','حرف فاش‌شده','letras reveladas')) : '';
   return `<div class="game-card tight badge-unlock-shine">
     <div class="game-result-title">${st.perfect ? L('Flawless!','Kusursuz!','بی‌نقص!','¡Perfecto!') : L('Grid complete!','Bulmaca tamam!','جدول کامل شد!','¡Crucigrama completo!')}</div>
-    <p class="game-result-line" style="margin-bottom:4px;">${L(`${st.clean} of ${st.total} words clean`, `${st.total} kelimeden ${st.clean} tanesi temiz`, `${st.clean} از ${st.total} کلمه بی‌خطا`, `${st.clean} de ${st.total} palabras limpias`)}${reveals}</p>
-    <p class="game-result-line" style="margin-top:0;">${timeLine}</p>
     <p class="cross-words" dir="ltr">${crossOrder(round).map(wi=>crossPhraseHtml(round.words[wi])).join(' · ')}</p>
     ${gameDoneCta()}
   </div>`;
@@ -19342,8 +19341,8 @@ function orderShelfHtml(round, cust){
 }
 function orderStatusHtml(round){
   const n = Math.min(round.index + 1, ORDER_CUSTOMERS), c = round.combo || 0;
-  const streak = c >= 2 ? `<span class="game-status-end"><span class="game-streak${c >= 3 ? ' hot' : ''}">${ICONS.flame} ${L(`${c} in a row`, `Arka arkaya ${c}`, `${c} پشت سر هم`, `${c} seguidos`)}</span></span>` : '';
-  return `<div class="game-status" id="order-status"><span class="game-status-text">${round.finished ? L('Closed for today','Bugünlük kapalı','امروز بسته است','Cerrado por hoy') : L(`Customer ${n} of ${ORDER_CUSTOMERS}`, `Müşteri ${n} / ${ORDER_CUSTOMERS}`, `مشتری ${n} از ${ORDER_CUSTOMERS}`, `Cliente ${n} de ${ORDER_CUSTOMERS}`)}</span>${streak}</div>`;
+  const streak = '';   // no streak pill (Farin's no-scores rule, 2026-11-14)
+  return `<div class="game-status" id="order-status"><span class="game-status-text">${round.finished ? L('Closed for today','Bugünlük kapalı','امروز بسته است','Cerrado por hoy') : gameProgressHtml(round.index, ORDER_CUSTOMERS, L(`Customer ${n} of ${ORDER_CUSTOMERS}`, `Müşteri ${n} / ${ORDER_CUSTOMERS}`, `مشتری ${n} از ${ORDER_CUSTOMERS}`, `Cliente ${n} de ${ORDER_CUSTOMERS}`))}</span>${streak}</div>`;
 }
 function orderCtaHtml(round){
   return `<button class="btn btn-primary game-cta" id="order-cta" data-action="order-serve"${round.tray.length ? '' : ' disabled'}>${L('Serve','Servis et','سرو کن','Servir')}</button>`;
@@ -19354,7 +19353,6 @@ function orderResultHtml(round){
   return `<div class="game-card tight badge-unlock-shine">
     <div class="order-sign" id="order-sign">${L('Closed','Kapalı','بسته','Cerrado')}</div>
     <div class="game-result-title">${st.perfect ? L('Perfect service!','Kusursuz servis!','سرویس بی‌نقص!','¡Servicio perfecto!') : L('Closing time!','Kapanış vakti!','وقت بستنه!','¡Hora de cerrar!')}</div>
-    <p class="game-result-line">${L(`${st.right} of ${st.total} orders perfect`, `${st.total} siparişten ${st.right} tanesi kusursuz`, `${st.right} از ${st.total} سفارش بی‌نقص`, `${st.right} de ${st.total} pedidos perfectos`)}${tick}</p>
     ${gameDoneCta()}
   </div>`;
 }
@@ -20090,8 +20088,8 @@ function deskPurposeUi(p){
 }
 function deskStatusHtml(round){
   const n = Math.min(round.index + 1, DESK_TRAVELLERS), c = round.combo || 0;
-  const streak = c >= 2 ? `<span class="game-status-end"><span class="game-streak${c >= 3 ? ' hot' : ''}">${ICONS.flame} ${L(`${c} in a row`, `Arka arkaya ${c}`, `${c} پشت سر هم`, `${c} seguidos`)}</span></span>` : '';
-  return `<div class="game-status" id="desk-status"><span class="game-status-text">${round.finished ? L('Desk closed','Masa kapandı','میز بسته شد','Control cerrado') : L(`Traveller ${n} of ${DESK_TRAVELLERS}`, `Yolcu ${n} / ${DESK_TRAVELLERS}`, `مسافر ${n} از ${DESK_TRAVELLERS}`, `Viajero ${n} de ${DESK_TRAVELLERS}`)}</span>${streak}</div>`;
+  const streak = '';   // no streak pill (Farin's no-scores rule, 2026-11-14)
+  return `<div class="game-status" id="desk-status"><span class="game-status-text">${round.finished ? L('Desk closed','Masa kapandı','میز بسته شد','Control cerrado') : gameProgressHtml(round.index, DESK_TRAVELLERS, L(`Traveller ${n} of ${DESK_TRAVELLERS}`, `Yolcu ${n} / ${DESK_TRAVELLERS}`, `مسافر ${n} از ${DESK_TRAVELLERS}`, `Viajero ${n} de ${DESK_TRAVELLERS}`))}</span>${streak}</div>`;
 }
 function deskBubbleHtml(round, t){
   const shown = t.said || round.noVoice;
@@ -20165,7 +20163,6 @@ function deskResultHtml(round){
   return `<div class="game-card tight badge-unlock-shine">
     <div class="desk-lamp" id="desk-lamp" aria-hidden="true"></div>
     <div class="game-result-title">${st.perfect ? L('All clear!','Hepsi temiz!','همه بی‌خطا!','¡Todo en orden!') : L('Desk closed!','Masa kapandı!','میز بسته شد!','¡Control cerrado!')}</div>
-    <p class="game-result-line">${L(`${st.clean} of ${st.total} travellers clean`, `${st.total} yolcudan ${st.clean} tanesi temiz`, `${st.clean} از ${st.total} مسافر بی‌خطا`, `${st.clean} de ${st.total} viajeros limpios`)}${st.said ? '' : ' · ' + L('Sharp ears','Keskin kulak','گوش تیز','Oído fino')}</p>
     ${gameDoneCta()}
   </div>`;
 }
@@ -21357,11 +21354,12 @@ function spellStatusHtml(round){
   const q = round.finished ? null : spellQ(round), total = round.doors.length, c = round.combo || 0;
   const n = q ? q.i + 1 : total;
   const waits = round.finished ? '' : (round.queue || []).slice(round.index + 1).filter(x=>x.back).map(x=>`<span class="spell-wait${x.echo ? ' echo' : ''}"></span>`).join('');
-  const streak = c >= 2 ? `<span class="game-streak${c >= 3 ? ' hot' : ''}">${ICONS.star} ${L(`${c} in a row`, `Arka arkaya ${c}`, `${c} پشت سر هم`, `${c} seguidas`)}</span>` : '';
+  const streak = '';   // no streak pill (Farin's no-scores rule, 2026-11-14)
   const end = (waits || streak) ? `<span class="game-status-end">${waits ? `<span class="spell-waits" aria-hidden="true">${waits}</span>` : ''}${streak}</span>` : '';
   const text = round.finished ? L('Every door is open','Bütün kapılar açık','همه درها باز شد','Todas las puertas abiertas')
     : (q && q.echo ? L(`Door ${n} again`, `Yine ${n}. kapı`, `دوباره در ${n}`, `Otra vez la puerta ${n}`) : L(`Door ${n} of ${total}`, `Kapı ${n} / ${total}`, `در ${n} از ${total}`, `Puerta ${n} de ${total}`));
-  return `<div class="game-status" id="spell-status"><span class="game-status-text">${text}</span>${end}</div>`;
+  const prog = round.finished ? esc(text) : gameProgressHtml(q ? q.i : total, total, text);
+  return `<div class="game-status" id="spell-status"><span class="game-status-text">${prog}</span>${end}</div>`;
 }
 function spellGlow(d){ return d.tried || d.at >= 3 ? 'glow' : (d.at === 2 ? 'bright' : 'gold'); }
 function spellRunesHtml(round, d){
@@ -21476,7 +21474,6 @@ function spellResultHtml(round){
   return `<div class="game-card tight badge-unlock-shine">
     <div class="spell-row">${row}</div>
     <div class="game-result-title">${st.perfect ? L('Pure magic!','Saf büyü!','جادوی ناب!','¡Pura magia!') : L('Every door is open!','Bütün kapılar açık!','همه درها باز شد!','¡Todas las puertas abiertas!')}</div>
-    <p class="game-result-line">${L(`${st.gold} golden ${st.gold === 1 ? 'door' : 'doors'}`, `${st.gold} altın kapı`, `${st.gold} در طلایی`, `${st.gold} ${st.gold === 1 ? 'puerta de oro' : 'puertas de oro'}`)}${st.voice === st.total ? ' · ' + L(`${st.total}/${st.total} by voice`, `${st.total}/${st.total} sesle`, `${st.total}/${st.total} با صدا`, `${st.total}/${st.total} con la voz`) : (st.typed ? ' · ' + L('typed','yazarak','تایپی','escrito') : '')}${st.rescued ? ' · ' + L(`${st.rescued} rescued`, `${st.rescued} kurtarıldı`, `${st.rescued} نجات‌یافته`, `${st.rescued} ${st.rescued === 1 ? 'rescatada' : 'rescatadas'}`) : ''}</p>
     ${gameDoneCta()}
   </div>`;
 }
@@ -21775,7 +21772,6 @@ function renderGameHunt(){
       ${gameTopHtml(title)}
       <div class="game-card tight badge-unlock-shine">
         <div class="game-result-title">${flawless ? L('Flawless!','Kusursuz!','بی‌نقص!','¡Perfecto!') : L('All found!','Hepsi bulundu!','همه پیدا شد!','¡Todas encontradas!')}</div>
-        <p class="game-result-line">${L(`${round.clean} of ${total} found clean`, `${total} kelimeden ${round.clean} tanesi temiz bulundu`, `${round.clean} از ${total} بدون خطا پیدا شد`, `${round.clean} de ${total} encontradas limpias`)}</p>
         ${gameDoneCta(true)}
       </div>
       ${renderBadgeUnlockCard(pullJustEarnedBadges())}
@@ -21795,8 +21791,7 @@ function renderGameHunt(){
   return `<div class="fade-in game-screen">
     ${gameTopHtml(title)}
     <div class="game-status">
-      <span class="game-status-text">${L(`Word ${a} of ${total}`, `Kelime ${a}/${total}`, `کلمه ${a} از ${total}`, `Palabra ${a} de ${total}`)}</span>
-      <span class="game-status-end">${trapStreakChip({streak:round.combo||0})}</span>
+      <span class="game-status-text">${gameProgressHtml(a - 1, total, L(`Word ${a} of ${total}`, `Kelime ${a}/${total}`, `کلمه ${a} از ${total}`, `Palabra ${a} de ${total}`))}</span>
     </div>
     <p class="game-hint">${L('Find the word in the story and tap it.','Kelimeyi hikayede bul ve dokun.','کلمه را در داستان پیدا کن و رویش بزن.','Encuentra la palabra en la historia y tócala.')}</p>
     <div class="game-card hunt-card" id="hunt-passage-${t.pi}">
@@ -21805,7 +21800,6 @@ function renderGameHunt(){
     <div class="hunt-clue" dir="auto">
       <div class="eyebrow" style="color:var(--cat-story);">${L('Find the word that means','Şu anlama gelen kelimeyi bul','کلمه‌ای را پیدا کن که یعنی','Encuentra la palabra que significa')}</div>
       <div class="hunt-clue-text">${esc(svText(t.meaning) || t.word)}</div>
-      <span class="game-chip hunt-clue-n">${a}/${total}</span>
     </div>
   </div>`;
 }
@@ -21998,9 +21992,6 @@ function renderGameEcho(){
       ${gameTopHtml(title)}
       <div class="game-card tight badge-unlock-shine">
         <div class="game-result-title">${round.shadow ? L('Well spoken!','Güzel konuştun!','خوب گفتی!','¡Bien dicho!') : (round.clear === total ? L('Crystal clear!','Pırıl pırıl!','شفاف و واضح!','¡Clarísimo!') : L('Done!','Bitti!','تمام شد!','¡Listo!'))}</div>
-        <p class="game-result-line">${round.shadow
-          ? L(`${total} lines spoken`, `${total} cümle söylendi`, `${total} جمله گفته شد`, `${total} frases dichas`)
-          : L(`${round.clear} of ${total} lines clear`, `${total} cümleden ${round.clear} tanesi net`, `${round.clear} از ${total} جمله واضح`, `${round.clear} de ${total} frases claras`)}</p>
         ${gameDoneCta()}
       </div>
       ${renderBadgeUnlockCard(pullJustEarnedBadges())}
@@ -22020,8 +22011,7 @@ function renderGameEcho(){
   return `<div class="fade-in game-screen">
     ${gameTopHtml(title)}
     <div class="game-status">
-      <span class="game-status-text">${L(`Line ${a} of ${total}`, `Cümle ${a}/${total}`, `جمله ${a} از ${total}`, `Frase ${a} de ${total}`)}</span>
-      <span class="game-status-end">${round.shadow ? '' : `<span class="game-chip">${ICONS.check} ${round.clear}</span>`}${trapStreakChip({streak:round.combo||0})}</span>
+      <span class="game-status-text">${gameProgressHtml(a - 1, total, L(`Line ${a} of ${total}`, `Cümle ${a}/${total}`, `جمله ${a} از ${total}`, `Frase ${a} de ${total}`))}</span>
     </div>
     <p class="game-hint">${round.shadow
       ? L('Listen, then say it out loud.','Dinle, sonra yüksek sesle söyle.','گوش کن، بعد بلند بگو.','Escucha y dilo en voz alta.')
@@ -23673,11 +23663,7 @@ function renderGameMatch(){
   return `<div class="fade-in game-screen">
     ${gameTopHtml(L('Word Rush','Kelime Yarışı','مسابقه کلمات','Carrera de palabras'))}
     <div class="game-status">
-      <span class="game-status-text">${L(`${left} pair${left===1?'':'s'} to go`, `${left} çift kaldı`, `${left} جفت مانده`, left===1 ? 'Falta 1 pareja' : `Faltan ${left} parejas`)}</span>
-      <span class="game-status-end">
-        <span class="game-chip">${L('Time','Süre','زمان','Tiempo')}: ${elapsed}${L('s','sn','s','s')}</span>
-        <span class="game-chip">${L('Mistakes','Hatalar','اشتباهات','Errores')}: ${round.mistakes}</span>
-      </span>
+      <span class="game-status-text">${gameProgressHtml(round.matchedKeys.length, round.pairCount, L(`${left} pair${left===1?'':'s'} to go`, `${left} çift kaldı`, `${left} جفت مانده`, left===1 ? 'Falta 1 pareja' : `Faltan ${left} parejas`))}</span>
     </div>
     ${done ? '' : `<p class="game-hint">${gameFallbackNote(vp)}${L('Tap two tiles to match a word with its meaning.','Bir kelimeyi anlamıyla eşleştirmek için iki karoya dokun.','برای جفت‌کردن یک کلمه با معنی‌اش، روی دو کاشی بزن.','Toca dos fichas para unir una palabra con su significado.')}</p>`}
     <div class="game-tiles">
@@ -23691,7 +23677,6 @@ function renderGameMatch(){
     </div>
     ${done ? `<div class="game-card tight badge-unlock-shine">
       <div class="game-result-title">${L('Matched!','Eşleştirdin!','جفت شد!','¡Emparejado!')}</div>
-      <p class="game-result-line">${L(`Finished in ${elapsed}s with ${round.mistakes} mistake${round.mistakes===1?'':'s'}.`, `${elapsed} saniyede ${round.mistakes} hatayla bitirdin.`, `در ${elapsed} ثانیه با ${round.mistakes} اشتباه تمام کردی.`, `Terminaste en ${elapsed}s con ${round.mistakes} error${round.mistakes===1?'':'es'}.`)}</p>
       ${gameDoneCta()}
     </div>${renderBadgeUnlockCard(pullJustEarnedBadges())}` : ''}
   </div>`;
@@ -23706,7 +23691,6 @@ function renderGameDictation(){
       ${gameTopHtml(title)}
       <div class="game-card tight badge-unlock-shine">
         <div class="game-result-title">${L('Done!','Bitti!','تمام شد!','¡Listo!')}</div>
-        <p class="game-result-line">${L(`Average match: ${avgPct}%`,`Ortalama eşleşme: %${avgPct}`,`میانگین تطابق: ${avgPct}%`,`Coincidencia promedio: ${avgPct}%`)}</p>
         ${gameDoneCta()}
       </div>
       ${renderBadgeUnlockCard(pullJustEarnedBadges())}
@@ -23720,7 +23704,7 @@ function renderGameDictation(){
   return `<div class="fade-in game-screen">
     ${gameTopHtml(title)}
     <div class="game-status">
-      <span class="game-status-text">${L(`Sentence ${a} of ${b}`, `Cümle ${a}/${b}`, `جمله ${a} از ${b}`, `Oración ${a} de ${b}`)}</span>
+      <span class="game-status-text">${gameProgressHtml(a - 1, b, L(`Sentence ${a} of ${b}`, `Cümle ${a}/${b}`, `جمله ${a} از ${b}`, `Oración ${a} de ${b}`))}</span>
     </div>
     <div class="game-card tight">
       <button class="game-play" data-action="speak-sentence" data-text="${esc(item.text)}" aria-label="${esc(L('Play','Çal','پخش','Reproducir'))}">${ICONS.soundOn}</button>
@@ -23731,8 +23715,7 @@ function renderGameDictation(){
     ${!round.checked
       ? `<button class="btn btn-primary game-cta" data-action="game-dictation-check">${L('Check','Kontrol et','بررسی','Revisar')}</button>`
       : (()=>{ const r = round.results[round.results.length-1]; const good = r.pct>=70; return `<div class="game-card tight" style="text-align:start;">
-          <div class="row between" style="align-items:center;"><div class="game-status-text">${L('Match','Eşleşme','تطابق','Coincidencia')}</div><span class="game-chip" style="background:${good?'var(--success-soft)':'var(--error-soft)'}; color:${good?'color-mix(in srgb, var(--success) 62%, var(--ink))':'var(--error)'};" id="dict-pct">${r.pct}%</span></div>
-          <p class="game-sentence long" style="margin-top:10px; font-weight:600;" dir="ltr">${dictationWordsHtml(item.text, round.typed)}</p>
+          <p class="game-sentence long" style="margin-top:0; font-weight:600;" dir="ltr">${dictationWordsHtml(item.text, round.typed)}</p>
           ${r.missed.length ? `<p style="margin-top:8px; font-size:12.5px; color:var(--ink-faint);">${L('Missed:','Kaçırdığın:','از دست‌رفته:','Faltó:')} ${esc(r.missed.join(', '))}</p>` : ''}
           <button class="btn btn-primary game-cta" style="margin-top:16px;" data-action="game-dictation-next">${isLast ? L('See results','Sonuçları gör','دیدن نتایج','Ver resultados') : L('Next sentence','Sonraki cümle','جمله بعدی','Siguiente oración')}</button>
         </div>`; })()}
@@ -23770,7 +23753,6 @@ function renderGameTrap(){
       ${gameTopHtml(title)}
       <div class="game-card tight badge-unlock-shine">
         <div class="game-result-title">${flawless ? L('Flawless!','Kusursuz!','بی‌نقص!','¡Perfecto!') : L('Done!','Bitti!','تمام شد!','¡Listo!')}</div>
-        <p class="game-result-line">${L(`Score: ${round.score} · ${accuracy}% accuracy`,`Skor: ${round.score} · %${accuracy} doğruluk`,`امتیاز: ${round.score} – ${accuracy}% دقت`,`Puntuación: ${round.score} · ${accuracy}% de precisión`)}</p>
         ${gameDoneCta()}
       </div>
       ${renderBadgeUnlockCard(pullJustEarnedBadges())}
@@ -23784,9 +23766,8 @@ function renderGameTrap(){
     ${gameTopHtml(title)}
     <div class="game-status">
       ${trapTimerRingSVG(remaining, round.timeLimit, (!round.answered && remaining>0 && remaining<=3) ? 'var(--error)' : 'var(--cat-gram)')}
-      <span class="game-status-text">${L(`Question ${a} of ${b}`, `Soru ${a}/${b}`, `سوال ${a} از ${b}`, `Pregunta ${a} de ${b}`)}</span>
+      <span class="game-status-text">${gameProgressHtml(a - 1, b, L(`Question ${a} of ${b}`, `Soru ${a}/${b}`, `سوال ${a} از ${b}`, `Pregunta ${a} de ${b}`))}</span>
       <span class="game-status-end">
-        ${round.answered && round.lastPoints>0 ? `<span class="trap-point-pop" style="color:var(--success);">+${round.lastPoints}</span>` : ''}
         ${trapStreakChip(round)}
       </span>
     </div>
@@ -28324,16 +28305,36 @@ let gcBubble = null, gcBubbleTimer = null;
    tap of a scenario game (theatre.js + theatre.css are byte-identical EN/ES; content.js = this app's posters + HUD
    strings; API in theatre.js's header). While it loads, a cover grows from the tapped card. If the files can't load
    (offline before the first use) the game opens the old way. x = the old Back, all the way out of the game's views. */
-const THEATRE_KINDS = ['path','chores','mystery','order','desk','spell','radio'];
-const THEATRE_VIEWS = ['game-path','game-yc','game-chores-building','game-chores-room','game-mystery','game-order','game-desk','game-spell','game-v2'];
-const THEATRE_VER = '5';
+// Quick games (2026-11-14, Farin: "i want each game to get its own design and full screen ... the posters as their reference"):
+// every quick game opens here too, behind its roadmap card poster (art/posters/card-<kind>.webp, the wide poster), in its own world
+// (games/theatre/skins.js: palette, backdrop, corner props), with the companion on screen and "Leave the game?" while a round runs.
+const THEATRE_QUICK = ['match','build','cross','order','desk','spell','bingo','hunt','echo','dictation','trap'];
+const THEATRE_QUICK_VIEWS = THEATRE_QUICK.map(k=>'game-' + k);
+const THEATRE_KINDS = ['path','chores','mystery','radio'].concat(THEATRE_QUICK);
+const THEATRE_VIEWS = ['game-path','game-yc','game-chores-building','game-chores-room','game-mystery','game-v2'].concat(THEATRE_QUICK_VIEWS);
+const THEATRE_VER = '6';
+// World Kit switch (worlds SPEC 4.14): one flag per quick game, on once its art and checks pass (Farin 11-10: switch on what is done).
+// ?worlds=1 previews every world in this browser (?worlds=0 switches the preview off). Off = the game plays over its poster's soft backdrop.
+var WORLDS_LIVE = {order:false, bingo:false, cross:false, build:false, echo:false, desk:false, spell:false, hunt:false, dictation:false, match:false, trap:false};
+let worldsFlag = null;
+function worldsOn(kind){
+  if(worldsFlag == null){
+    try{
+      const q = new URLSearchParams(location.search).get('worlds');
+      if(q === '1') localStorage.setItem('farinWorlds', '1');
+      if(q === '0') localStorage.removeItem('farinWorlds');
+      worldsFlag = localStorage.getItem('farinWorlds') === '1';
+    }catch(e){ worldsFlag = false; }
+  }
+  return THEATRE_QUICK.includes(kind) && (!!WORLDS_LIVE[kind] || worldsFlag);
+}
 let theatreLoading = null;
 function theatreLoad(){
   if(window.Theatre) return Promise.resolve(window.Theatre);
   if(!theatreLoading){
     const add = (tag, a)=>new Promise((ok, no)=>{ const n = document.createElement(tag); Object.assign(n, a); n.onload = ok; n.onerror = ()=>{ n.remove(); no(new Error(a.src || a.href)); }; document.head.appendChild(n); });
     const v = '?v=' + THEATRE_VER;
-    theatreLoading = Promise.all([add('link', {rel:'stylesheet', href:'games/theatre/theatre.css'+v}), add('script', {src:'games/theatre/content.js'+v}), add('script', {src:'games/theatre/theatre.js'+v})])
+    theatreLoading = Promise.all([add('link', {rel:'stylesheet', href:'games/theatre/theatre.css'+v}), add('script', {src:'games/theatre/content.js'+v}), add('script', {src:'games/theatre/skins.js'+v}), add('script', {src:'games/theatre/theatre.js'+v})])
       .then(()=>{ if(!window.Theatre) throw new Error('theatre'); return window.Theatre; })
       .catch(e=>{ theatreLoading = null; throw e; });
   }
@@ -28344,32 +28345,71 @@ function theatreGate(el, handler){
   // No Theatre: inside a course lesson (courseOpenStep needs the game open synchronously), when one is already open,
   // for shelf entries other than Your Call (they reach start-game, gated there), or when this round falls back to another game.
   if(ds.theatre || !THEATRE_KINDS.includes(ds.kind) || state.courseReturn || (window.Theatre && Theatre.isOpen())) return false;
-  if((handler === 'shelf-play' && ds.kind !== 'path' && !g2Applies(ds.kind)) || theatreFallsBack(ds, handler)) return false;
-  const kind = ds.kind, from = (el.isConnected && el.getBoundingClientRect) ? el.getBoundingClientRect() : null;
+  if(handler === 'shelf-play' && ds.kind !== 'path' && !g2Applies(ds.kind)) return false;   // quick games: the shelf picks the round, then start-game / theatreRun opens it
+  // a quick game opens behind the poster of the game this round really plays (Mini Cross on a small set = Word Bingo); nothing to play = no Theatre
+  const kind = THEATRE_QUICK.includes(ds.kind) ? theatreQuickKind(ds) : (theatreFallsBack(ds, handler) ? null : ds.kind);
+  if(!kind) return false;
+  return theatreOpen(el, kind, ()=>HANDLERS[handler]({dataset:Object.assign({}, ds, {theatre:'1'})}), handler);
+}
+// the shelf's own built rounds (Story Hunt, Mini Cross): the Theatre shows the poster and Play runs the round as built
+function theatreRun(el, kind, run){
+  if((el && el.dataset && el.dataset.theatre) || state.courseReturn || (window.Theatre && Theatre.isOpen())) return false;
+  return theatreOpen(el, kind, run, 'shelf-play');
+}
+// The same choices start-game makes (read-only builders, seeded by refId on the roadmap): the kind this round plays, null = none.
+function theatreQuickKind(ds){
+  const k = ds.kind, ref = ds.free ? null : ds.refId, lvl = state.profile.level;
+  const fb = ()=>fallbackGameSet() ? 'match' : null;
+  try{
+    if(k === 'order') return 'order';
+    if(k === 'desk') return buildDeskRound(ref) ? 'desk' : null;
+    if(k === 'build') return buildBuildRound(state.profile) ? 'build' : (lvl !== 'A1' && lvl !== 'A2' ? 'order' : fb());
+    if(k === 'trap') return buildTrapRound(state.profile) ? 'trap' : fb();
+    if(k === 'hunt'){ const st = huntStoryFor(ds.refId); return st && buildHuntRound(st) ? 'hunt' : fb(); }
+    const set = VOCAB_SETS.find(x=>x.id===ds.setId);
+    if(!set) return null;
+    if(k === 'cross') return buildCrossRound(set, ref) ? 'cross' : (buildBingoRound(set) ? 'bingo' : 'match');
+    if(k === 'spell') return buildSpellRound(set, ref) ? 'spell' : (buildBingoRound(set) ? 'bingo' : 'match');
+    if(k === 'bingo') return buildBingoRound(set) ? 'bingo' : 'match';
+    if(k === 'echo') return buildEchoRound(set) ? 'echo' : 'match';
+    return k === 'match' ? 'match' : 'dictation';
+  }catch(e){ return null; }
+}
+// a quick game's round still running: the HUD x asks "Leave the game?" first
+function theatreQuickLive(){
+  const v = state.view, r = state.viewParams && state.viewParams.round;
+  if(!THEATRE_QUICK_VIEWS.includes(v) || !r || document.querySelector('.celebrate-overlay')) return false;
+  if(v === 'game-match') return !(r.matchedKeys && r.matchedKeys.length === r.pairCount);
+  return !r.finished;
+}
+function theatreOpen(el, kind, play, handler){
+  const ds = (el && el.dataset) || {}, quick = THEATRE_QUICK.includes(kind);
+  const from = (el && el.isConnected && el.getBoundingClientRect) ? el.getBoundingClientRect() : null;
   hideCharTip(true); gcBubble = null;
   const cover = document.createElement('div');
   cover.style.cssText = 'position:fixed;inset:0;z-index:85;background:#f6f1e7;';
   document.body.appendChild(cover);
   if(from && from.width && !reducedMotion()) anim(cover, [{clipPath:`inset(${from.top}px ${innerWidth-from.right}px ${innerHeight-from.bottom}px ${from.left}px round 22px)`}, {clipPath:'inset(0px 0px 0px 0px round 0px)'}], {duration:400, easing:'cubic-bezier(.2,.7,.2,1)'});
-  const play = ()=>HANDLERS[handler]({dataset:Object.assign({}, ds, {theatre:'1'})});
   const seen = state.progress.theatreSeen || (state.progress.theatreSeen = {});
-  theatreLoad().then(T=>(ds.kind === 'chores' ? cozyExtra(ds, handler) : ycExtra(ds, handler)).then(yx=>T.open(Object.assign({kind, cover, from, views:THEATRE_VIEWS, seen:!!seen[kind],
+  // quick games (worlds SPEC 4.1-4.2): the app's column, Play on every round (each is a new one), a poster already seen rests 1.2 s and
+  // goes in by itself, the companion stays, "Leave the game?" mid-round
+  const qx = quick ? {stage:'app', label:'play', brief:true, companion:true, confirmExit:theatreQuickLive, world:worldsOn(kind) ? {level:(state.profile && state.profile.level) || ''} : null} : {};
+  theatreLoad().then(T=>(quick ? Promise.resolve({}) : (kind === 'chores' ? cozyExtra(ds, handler) : ycExtra(ds, handler))).then(yx=>T.open(Object.assign({kind, cover, from, views:THEATRE_VIEWS, seen:!!seen[kind]}, qx, {
     // no LEVEL stamp on the Cozy Chores poster (GDD 3.2, gamification gap 2 on bD0fWJAk): its title is one string, so level only drew the stamp
-    app:{lang:LANG, name:(state.profile && state.profile.name) || '', level:kind === 'chores' ? '' : ((yx && yx.level) || (state.profile && state.profile.level) || ''), gameName:gameDisplayName(kind),   // yx.level: the Your Call album's own level on the shelf
+    app:{lang:LANG, name:(state.profile && state.profile.name) || '', level:(kind === 'chores' || quick) ? '' : ((yx && yx.level) || (state.profile && state.profile.level) || ''), gameName:gameDisplayName(kind),   // yx.level: the Your Call album's own level on the shelf
       view:()=>state.view, muted:()=>sfxMuted, setMuted:m=>{ sfxMuted = !!m; localStorage.setItem('farinSfxMuted', m ? '1' : '0'); }},
     onPlay:(info)=>{ if(!info || info.poster) seen[kind] = 1; play(); },   // no art yet = no poster shown, not "seen"
     onExit:theatreGameExit}, yx))))
   .catch(()=>{ cover.remove(); play(); });
   return true;
 }
-// The same builders start-game uses (all read-only, seeded by refId): null = the card plays another game this time.
+// The scenario games (quick games: theatreQuickKind): the same builders start-game uses (all read-only, seeded by refId);
+// true = the card plays another game this time, which runs the old flow.
 function theatreFallsBack(ds, handler){
   const ref = ds.free ? null : ds.refId;
   try{
     if(ds.kind === 'path') return handler === 'shelf-play' ? false : !pathRoundForRef(ds.refId);   // the shelf always has the Your Call comic (ycShelf)
     if(ds.kind === 'mystery') return g2Applies('mystery') ? false : !buildCaseRound(ref);
-    if(ds.kind === 'desk') return !buildDeskRound(ref);
-    if(ds.kind === 'spell'){ const set = VOCAB_SETS.find(x=>x.id===ds.setId); return !set || !buildSpellRound(set, ref); }
   }catch(e){ return true; }
   return false;
 }
@@ -28578,6 +28618,13 @@ function g2Done(kind, ds, res){
   save();
   backToRoadmap();
 }
+// Farin's no-scores rule (2026-11-14, worlds SPEC 4.8): a quick game's progress is a row of pips (done / now / to come), never a
+// count on screen; the count stays for screen readers in a polite live line.
+function gameProgressHtml(done, total, label){
+  let pips = '';
+  for(let i = 0; i < total; i++) pips += '<i class="gp-pip' + (i < done ? ' on' : (i === done ? ' cur' : '')) + '"></i>';
+  return '<span class="gp-pips" aria-hidden="true">' + pips + '</span><span class="visually-hidden" aria-live="polite">' + esc(label) + '</span>';
+}
 function gameTopHtml(title, noFace){
   return `<div class="game-top">
     <button class="game-back" data-action="back" aria-label="${esc(L('Back','Geri','برگشت','Atrás'))}">${ICONS.back}</button>
@@ -28592,6 +28639,8 @@ function gameCompanionHtml(){
 // One bubble at a time: a new line replaces whatever is showing.
 function companionSay(text, ms){
   ms = ms || 1400;
+  // World Kit (worlds SPEC 4.7): in a game's world the companion's line is the caption box, 5 s at most (a short line gets the full 5 s)
+  if(window.Theatre && Theatre.world && Theatre.world() && Theatre.say(text, {kind:'caption', ms:ms > 1400 ? ms : 5000})) return;
   gcBubble = {text, until:Date.now()+ms};
   const wrap = document.querySelector('.game-companion');
   if(wrap){
@@ -28708,6 +28757,7 @@ function fxMatchTap(fx, pt){
 
 /* ---- Trap Dash ---- */
 function trapStreakChip(round){
+  return '';   // Farin's no-scores rule (2026-11-14): no streak pill in play; the combo lines stay with the companion
   if(round.streak < 3) return '';
   const hot = round.streak >= 5;
   const n = round.streak;
@@ -29776,13 +29826,13 @@ const HANDLERS = {
       const pool = ((state.progress.completedStories||[]).map(id=>STORY_LIBRARY_FREE.find(s=>s.id===id))).filter(huntable);
       const story = pool.length ? pool[Math.floor(Math.random()*pool.length)] : null;
       const round = story ? buildHuntRound(story) : null;
-      if(round){ go('game-hunt', {round, refId:ds.refId, goal:'', free:true, shelf:true}); return; }
+      if(round){ const run = ()=>go('game-hunt', {round, refId:ds.refId, goal:'', free:true, shelf:true}); if(!theatreRun(el, 'hunt', run)) run(); return; }   // full screen behind its poster (theatreRun)
       ds.kind = 'match';
     }
     if(ds.kind === 'cross'){
       // up to three finished sets that can host a puzzle, a fresh grid every time; none -> Word Bingo
       const tries = shuffle(shelfSets('cross')).slice(0, 3);
-      for(const s of tries){ const r = buildCrossRound(s, null); if(r){ queueFx(()=>{ sfx('tick'); r.popped = true; }); go('game-cross', {round:r, refId:ds.refId, goal:'', free:true, shelf:true}); return; } }
+      for(const s of tries){ const r = buildCrossRound(s, null); if(r){ const run = ()=>{ queueFx(()=>{ sfx('tick'); r.popped = true; }); go('game-cross', {round:r, refId:ds.refId, goal:'', free:true, shelf:true}); }; if(!theatreRun(el, 'cross', run)) run(); return; } }
       ds.kind = 'bingo';
     }
     if(['bingo','match','dictation','echo','spell'].includes(ds.kind)){
@@ -29791,7 +29841,8 @@ const HANDLERS = {
       if(!s) return;
       ds.setId = s.id;
     }
-    HANDLERS['start-game']({dataset:ds});
+    // start-game opens the Theatre for the round picked here; the tapped row's rect lets the cover grow from it
+    HANDLERS['start-game'](el.isConnected ? {dataset:ds, isConnected:true, getBoundingClientRect:()=>el.getBoundingClientRect()} : {dataset:ds});
   },
   'start-game'(el){
     const kind = el.dataset.kind;

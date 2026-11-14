@@ -18352,7 +18352,7 @@ function fallbackGameSet(minCards){
 /* Games v2 go-live switch, one per game (farin-gamification build queue 2026-11-05: Mini Radio can ship before the Cozy and Case Closed art).
    Declared here, before SHELF_GAMES reads it (a var declared further down is still undefined at this point, so flipping it there never reached the shelf).
    radio = the Mini Radio node (position 7, the 8-position stage) + its shelf entry; mystery = Case Closed v2; chores = Cozy Chores v2. All false = the app as before. */
-var GAMES_V2_LIVE = {radio:true, mystery:false, chores:true};   // radio on for learners 2026-11-10 (Farin: switch on any game that is done)
+var GAMES_V2_LIVE = {radio:true, mystery:true, chores:true};   // radio on for learners 2026-11-10 (Farin: switch on any game that is done); Harbour Files (mystery) on 2026-11-14 (Farin: "harbour files shouldn't be paused", all 276 art pieces in, Trello ywQm2cpH)
 const SHELF_GAMES = ['path','order','desk','mystery','cross','spell','bingo','match','dictation','build','trap','hunt','echo','chores'];
 if(g2KindLive('radio')) SHELF_GAMES.push('radio');   // Mini Radio on the shelf only with games v2 on
 const SHELF_ART = {path:{ic:'book', c:'var(--cat-story)'}, order:{ic:'chat', c:'var(--cat-gram)'}, desk:{ic:'suitcase', c:'var(--clay-sky)'}, mystery:{ic:'search', c:'var(--cat-story)'}, cross:{ic:'cards', c:'var(--cat-voc)'}, spell:{ic:'mic', c:'var(--clay-lavender-deep)'}, bingo:{ic:'headphones', c:'var(--cat-voc)'}, match:{ic:'cards', c:'var(--cat-review)'}, dictation:{ic:'headphones', c:'var(--cat-lis)'}, build:{ic:'dumbbell', c:'var(--cat-gram)'}, trap:{ic:'bolt', c:'var(--clay-coral)'}, hunt:{ic:'search', c:'var(--cat-story)'}, echo:{ic:'mic', c:'var(--cat-lis)'}, chores:{ic:'home', c:'var(--clay-sky)'}, radio:{ic:'headphones', c:'var(--cat-lis)'}};
@@ -28675,7 +28675,7 @@ function theatreOpen(el, kind, play, handler){
   // goes in by itself, the companion stays, "Leave the game?" mid-round
   waitBuddyShow('game');   // while the game's files load, the clay companion on the cover says it is on its way; gone when the Theatre opens (2026-11-14)
   const qx = quick ? {stage:'app', label:'play', brief:true, companion:true, confirmExit:theatreQuickLive, world:worldsOn(kind) ? {level:(state.profile && state.profile.level) || ''} : null} : {};
-  theatreLoad().then(T=>(quick ? Promise.resolve({}) : (kind === 'chores' ? cozyExtra(ds, handler) : ycExtra(ds, handler))).then(yx=>(waitBuddyHide(), T.open(Object.assign({kind, cover, from, views:THEATRE_VIEWS, seen:!!seen[kind]}, qx, {
+  theatreLoad().then(T=>(quick ? Promise.resolve({}) : (kind === 'chores' ? cozyExtra(ds, handler) : kind === 'mystery' ? caseExtra(ds, handler) : ycExtra(ds, handler))).then(yx=>(waitBuddyHide(), T.open(Object.assign({kind, cover, from, views:THEATRE_VIEWS, seen:!!seen[kind]}, qx, {
     // no LEVEL stamp on the Cozy Chores poster (GDD 3.2, gamification gap 2 on bD0fWJAk): its title is one string, so level only drew the stamp
     app:{lang:LANG, name:(state.profile && state.profile.name) || '', level:(kind === 'chores' || quick) ? '' : ((yx && yx.level) || (state.profile && state.profile.level) || ''), gameName:gameDisplayName(kind),   // yx.level: the Your Call album's own level on the shelf
       view:()=>state.view, muted:()=>sfxMuted, setMuted:m=>{ sfxMuted = !!m; localStorage.setItem('farinSfxMuted', m ? '1' : '0'); }},
@@ -28779,9 +28779,18 @@ function cozyShelfProject(){
 // Cozy Chores v2 key art (Trello 2V8pPKGK, 2026-11-11): the Open House poster (games/posters/chores.webp) shows before the project,
 // only when this round plays the v2 game (GAMES_V2_LIVE.chores or ?games2=1); the v1 rooms keep no poster, and content.js keeps
 // artReady:false for them. Preloaded so the push-in never starts on an empty frame; a file that fails to load = no poster at all.
+// Harbour Files (Case Closed v2, Trello ywQm2cpH, 2026-11-14) works the same way: games/posters/mystery.webp, v2 rounds only.
 function cozyExtra(ds, handler){
   if(!g2Applies('chores') || ((handler === 'shelf-play' || ds.free) && !cozyShelfProject())) return Promise.resolve({});
-  const art = 'games/posters/chores.webp?v=' + GAMES_VER;
+  return g2PosterArt('chores');
+}
+function caseExtra(ds, handler){
+  if(!g2Applies('mystery') || ((handler === 'shelf-play' || ds.free) && !caseShelfEpisode())) return Promise.resolve({});
+  const lv = !ds.free && (/-(A1|A2|B1|B2|C1)-/.exec(String(ds.refId || '')) || [])[1];   // the step's own level stamp, as g2Start picks the case
+  return g2PosterArt('mystery').then(x=>(x.poster && lv) ? Object.assign(x, {level:lv}) : x);
+}
+function g2PosterArt(kind){
+  const art = 'games/posters/' + kind + '.webp?v=' + GAMES_VER;
   return new Promise(res=>{
     const im = new Image(); let t = null;
     const ok = ()=>{ clearTimeout(t); res({poster:{art, artReady:true}}); }, no = ()=>{ clearTimeout(t); res({}); };

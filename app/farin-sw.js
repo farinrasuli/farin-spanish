@@ -1,4 +1,4 @@
-const CACHE = 'farin-spanish-v7';
+const CACHE = 'farin-spanish-v8';   // v8 2026-11-14: card-mystery.webp replaced under the same name (Harbour Files poster crop)
 const CACHE_PREFIX = CACHE.replace(/\d+$/, '');   // 'farin-english-v' / 'farin-spanish-v'
 const PAGE_URL = self.registration.scope;
 /* Cozy Chores painted art (Trello 1m2Y0zdU, 8JAiLuV7): the game's plates and cut-outs are sibling files

@@ -9384,7 +9384,8 @@ const LOGIN_DOC_PREFIX = 'pw-';
 const PASSWORD_MIN = 6;
 let farinPwBusy = false;          // a login/save request is in flight
 let farinPwDraft = '';
-let signupPhoneDraft = '';          // the WhatsApp number typed at signup (2026-11-13), kept across a re-render            // keeps the typed onboarding password across a re-render; never saved
+let signupPromoDraft = false;       // the signup "news and offers" box (2026-11-14), unticked by default, kept across a re-render
+let signupPhoneDraft = '';          // the WhatsApp number typed at signup (2026-11-13), kept across a re-render           // keeps the typed onboarding password across a re-render; never saved
 let farinPwSettingsStatus = null; // {ok:true} | {error:'short'|'mismatch'|'taken'|'network'}
 function normalizeLoginName(name){
   // toLowerCase (not toLocaleLowerCase) so Turkish-locale phones and other
@@ -14809,10 +14810,11 @@ function renderDiagUnlock(){
   </div>`;
 }
 /* ---------- In-app privacy policy (short summary) ----------
-   Same facts as the website policy thefeschool.com/privacy-policy.html (+ the Turkish /gizlilik-politikasi.html),
-   updated 2026-11-14 (farin-english a7c1a30c); the full text links out. When the website policy changes, change this
+   Same facts as the website policy thefeschool.com/privacy-policy.html (Turkish /gizlilik-politikasi.html, Persian /fa/privacy.html),
+   updated 2026-11-14 (farin-english a7c1a30c); the full text links out, in the learner's language (es/en: English). When the website policy changes, change this
    too. The block above the credits is the same in the English and Spanish apps (LOGIN_APP picks the IELTS line,
-   English app only); the credits at the end are each app's own. */
+   English app only; it also names each app's Settings button); the credits at the end are each app's own.
+   News and offers on WhatsApp = a separate opt-in since 2026-11-14 (see promoSet). */
 function renderPrivacyPolicy(){
   const H = t => `<h3 class="display" style="font-size:15px; margin:18px 0 8px;">${t}</h3>`;
   const P = t => `<p style="margin:0 0 8px;">${t}</p>`;
@@ -14829,8 +14831,7 @@ function renderPrivacyPolicy(){
               "خلاصه‌ای کوتاه از اینکه Farin English و Farin Spanish چه چیزهایی از تو نگه می‌دارند و چرا. متن کامل در سایت ماست.",
               "Un resumen breve de lo que Farin English y Farin Spanish guardan sobre ti, y por qué. La política completa está en nuestra web."))}
         <div class="row" style="flex-wrap:wrap; gap:8px; margin:4px 0 6px;">
-          <a class="btn btn-ghost btn-sm" href="https://thefeschool.com/privacy-policy.html" target="_blank" rel="noopener">${L('Read the full policy','Politikanın tamamı (İngilizce)','متن کامل (به انگلیسی)','Política completa (en inglés)')} ↗</a>
-          ${LANG === 'tr' ? `<a class="btn btn-ghost btn-sm" href="https://thefeschool.com/gizlilik-politikasi.html" target="_blank" rel="noopener">Türkçe gizlilik ve çerez politikası ↗</a>` : ''}
+          <a class="btn btn-ghost btn-sm" href="${L('https://thefeschool.com/privacy-policy.html','https://thefeschool.com/gizlilik-politikasi.html','https://thefeschool.com/fa/privacy.html','https://thefeschool.com/privacy-policy.html')}" target="_blank" rel="noopener">${L('Read the full policy','Politikanın tamamını oku','خواندن متن کامل','Política completa (en inglés)')} ↗</a>
         </div>
 
         ${H(L('1. What the app keeps','1. Uygulamanın sakladıkları','۱. اپ چه چیزهایی نگه می‌دارد','1. Qué guarda la app'))}
@@ -14843,10 +14844,10 @@ function renderPrivacyPolicy(){
             "Şifren, yalnızca adından ve şifrenden türetilen tek yönlü bir anahtar olarak; bu anahtar sadece hesabını bulmak için kullanılır. Şifrenin kendisi hiçbir zaman saklanmaz.",
             "رمزت، فقط به شکل یک کلید درهم‌شدهٔ یک‌طرفه که از اسم و رمزت ساخته می‌شود و فقط برای پیدا کردن حسابت به کار می‌رود. خود رمز هیچ‌وقت ذخیره نمی‌شود.",
             "Tu contraseña, solo como una clave cifrada de un solo sentido hecha con tu nombre y tu contraseña, que sirve para encontrar tu cuenta. La contraseña en sí nunca se guarda."),
-          L("Your WhatsApp number (see section 2).",
-            "WhatsApp numaran (bkz. 2. bölüm).",
-            "شمارهٔ واتس‌اپت (بخش ۲ را ببین).",
-            "Tu número de WhatsApp (mira la sección 2)."),
+          L("Your WhatsApp number, and whether you want news and offers on WhatsApp (see section 2).",
+            "WhatsApp numaran ve WhatsApp'tan haber ve fırsat almak isteyip istemediğin (bkz. 2. bölüm).",
+            "شمارهٔ واتس‌اپت، و اینکه اخبار و پیشنهادها را در واتس‌اپ می‌خواهی یا نه (بخش ۲ را ببین).",
+            "Tu número de WhatsApp, y si quieres recibir novedades y ofertas por WhatsApp (mira la sección 2)."),
           L("Your progress: the lessons, stories and practice rounds you've finished, your streak and your badges.",
             "İlerlemen: bitirdiğin dersler, hikâyeler ve alıştırma turları, serin ve rozetlerin.",
             "پیشرفتت: درس‌ها، داستان‌ها و دورهای تمرینی که تمام کرده‌ای، روزهای متوالی‌ات و نشان‌هایت.",
@@ -14867,10 +14868,14 @@ function renderPrivacyPolicy(){
             B("Ne istiyoruz.")+" Kaydı tamamlamak için numaranı ülke koduyla birlikte girmen gerekir. 13 Kasım 2026'dan önce katıldıysan uygulama bunu bir kez «Kulübümüze katıl» penceresiyle sorar; «Şimdi değil» diyebilirsin. Numaranı Ayarlar'dan da ekleyebilir veya değiştirebilirsin.",
             B("چه می‌خواهیم.")+" برای تمام کردن ثبت‌نام باید شماره‌ات را با کد کشور وارد کنی. اگر قبل از ۱۳ نوامبر ۲۰۲۶ عضو شده‌ای، اپ یک بار در پنجرهٔ «به باشگاه ما بپیوند» آن را می‌پرسد و می‌توانی «الان نه» را بزنی. از تنظیمات هم می‌توانی شماره را اضافه کنی یا عوضش کنی.",
             B("Qué pedimos.")+" Lo necesitas, con el código de país, para terminar el registro. Si te uniste antes del 13 de noviembre de 2026, la app te lo pide una vez en la ventana «Únete a nuestro club», y puedes tocar «Ahora no». También puedes añadirlo o cambiarlo en Configuración."),
-          L(B("Why.")+" So Farin, the teacher who runs FE School, can message you on WhatsApp with news, discounts, help and course information. He writes these messages himself; the app does not send WhatsApp messages automatically.",
-            B("Neden.")+" FE School'u yöneten öğretmen Farin sana WhatsApp'tan haberler, indirimler, yardım ve kurslarla ilgili bilgiler gönderebilsin diye. Bu mesajları Farin kendisi yazar; uygulama otomatik WhatsApp mesajı göndermez.",
-            B("چرا.")+" تا فرین، معلمی که FE School را اداره می‌کند، بتواند در واتس‌اپ برایت خبرها، تخفیف‌ها، کمک و اطلاعات دوره‌ها را بفرستد. این پیام‌ها را خود فرین می‌نویسد؛ اپ به‌طور خودکار پیام واتس‌اپ نمی‌فرستد.",
-            B("Por qué.")+" Para que Farin, el profesor que dirige FE School, pueda escribirte por WhatsApp con novedades, descuentos, ayuda e información sobre los cursos. Él mismo escribe estos mensajes; la app no envía mensajes de WhatsApp automáticamente."),
+          L(B("Why.")+" So Farin, the teacher who runs FE School, can help you on WhatsApp with your account, your courses and your questions. For example, if you join a course's waiting list, he sends you the course link and how to pay. He writes these messages himself; the app does not send WhatsApp messages automatically.",
+            B("Neden.")+" FE School'u yöneten öğretmen Farin; hesabın, kursların ve soruların konusunda sana WhatsApp'tan yardım edebilsin diye. Örneğin bir kursun bekleme listesine katılırsan sana kursun bağlantısını ve nasıl ödeme yapacağını yazar. Bu mesajları Farin kendisi yazar; uygulama otomatik WhatsApp mesajı göndermez.",
+            B("چرا.")+" تا فرین، معلمی که FE School را اداره می‌کند، بتواند در واتس‌اپ دربارهٔ حسابت، دوره‌هایت و سؤال‌هایت کمکت کند. مثلاً اگر در فهرست انتظار یک دوره ثبت‌نام کنی، لینک دوره و روش پرداخت را برایت می‌فرستد. این پیام‌ها را خود فرین می‌نویسد؛ اپ به‌طور خودکار پیام واتس‌اپ نمی‌فرستد.",
+            B("Por qué.")+" Para que Farin, el profesor que dirige FE School, pueda ayudarte por WhatsApp con tu cuenta, tus cursos y tus preguntas. Por ejemplo, si te apuntas a la lista de espera de un curso, te envía el enlace del curso y cómo pagar. Él mismo escribe estos mensajes; la app no envía mensajes de WhatsApp automáticamente."),
+          L(B("News and offers, only if you say yes.")+" Farin sends you news, discounts and offers on WhatsApp only if you tick “Send me news and offers on WhatsApp”. This box is separate from your number, optional and unticked by default, at signup and in the “Join our club” pop-up. The app saves your choice and its date with your account, and Farin sees it in the admin page. If you haven't ticked it (this includes everyone who joined before 14 November 2026), you don't get news and offers. You can turn it on or off any time in Settings › “Stay in touch”.",
+            B("Haberler ve fırsatlar, yalnızca istersen.")+" Farin sana WhatsApp'tan haber, indirim ve fırsat mesajlarını yalnızca «Bana WhatsApp'tan haberler ve fırsatlar gönder» kutusunu işaretlersen gönderir. Bu kutu numarandan ayrıdır, isteğe bağlıdır ve hem kayıtta hem «Kulübümüze katıl» penceresinde işaretsiz gelir. Uygulama seçimini ve tarihini hesabınla birlikte saklar; Farin bunu yönetim sayfasında görür. Kutuyu işaretlemediysen (14 Kasım 2026'dan önce katılan herkes dahil) haber ve fırsat mesajı almazsın. Bunu istediğin zaman Ayarlar › «İletişimde kal» bölümünden açıp kapatabilirsin.",
+            B("اخبار و پیشنهادها، فقط اگر خودت بخواهی.")+" فرین فقط وقتی اخبار، تخفیف‌ها و پیشنهادها را در واتس‌اپ برایت می‌فرستد که تیک «اخبار و پیشنهادها را در واتس‌اپ برایم بفرست» را زده باشی. این جعبه از شماره‌ات جداست، اختیاری است و هم موقع ثبت‌نام و هم در پنجرهٔ «به باشگاه ما بپیوند» بدون تیک است. اپ انتخابت و تاریخش را همراه حسابت ذخیره می‌کند و فرین آن را در صفحهٔ مدیریت می‌بیند. اگر تیکش را نزده باشی (از جمله همهٔ کسانی که قبل از ۱۴ نوامبر ۲۰۲۶ عضو شده‌اند)، اخبار و پیشنهاد نمی‌گیری. هر وقت بخواهی می‌توانی از تنظیمات › «در ارتباط باش» روشن یا خاموشش کنی.",
+            B("Novedades y ofertas, solo si dices que sí.")+" Farin te envía novedades, descuentos y ofertas por WhatsApp solo si marcas «Envíame novedades y ofertas por WhatsApp». Esta casilla es aparte de tu número, es opcional y aparece sin marcar en el registro y en la ventana «Únete a nuestro club». La app guarda tu elección y su fecha con tu cuenta, y Farin la ve en la página de administración. Si no la has marcado (incluido todo el que se unió antes del 14 de noviembre de 2026), no recibes novedades ni ofertas. Puedes activarla o desactivarla cuando quieras en Configuración › «Mantente en contacto»."),
           L(B("Where.")+" On your device, in your account's backup in Google Firebase (Firestore) and in a contact list in the same database, with your name, level, goal, recovery code, the app's language and the date. It is also attached to your chats and course requests in Messages"+(ielts ? ", to IELTS writing you send for review" : "")+" and to the record of any course password you get, so Farin knows who he is talking to.",
             B("Nerede.")+" Cihazında, hesabının Google Firebase (Firestore) yedeğinde ve aynı veritabanındaki bir iletişim listesinde; adın, seviyen, hedefin, kurtarma kodun, uygulama dili ve tarihle birlikte. Farin kiminle konuştuğunu bilsin diye Mesajlar'daki sohbetlerine ve kurs taleplerine"+(ielts ? ", incelemeye gönderdiğin IELTS yazılarına" : "")+" ve aldığın kurs şifresinin kaydına da eklenir.",
             B("کجا.")+" روی دستگاهت، در پشتیبان حسابت در Google Firebase (Firestore) و در یک فهرست تماس در همان پایگاه داده، همراه با اسم، سطح، هدف، کد بازیابی، زبان اپ و تاریخ. به گفتگوها و درخواست‌های دوره‌ات در پیام‌ها"+(ielts ? "، به نوشته‌های آیلتسی که برای بررسی می‌فرستی" : "")+" و به سابقهٔ هر رمز دوره‌ای که می‌گیری هم اضافه می‌شود تا فرین بداند با چه کسی حرف می‌زند.",
@@ -14887,10 +14892,10 @@ function renderPrivacyPolicy(){
             B("Ne kadar süre saklanır.")+" Hesabın durduğu sürece. Otomatik olarak silinmez; silinmesini istediğinde sileriz.",
             B("تا کِی.")+" تا وقتی حسابت وجود دارد. خودکار پاک نمی‌شود؛ هر وقت بخواهی پاکش می‌کنیم.",
             B("Cuánto tiempo.")+" Mientras exista tu cuenta. No lo borramos automáticamente; lo borramos cuando nos lo pidas."),
-          L(B("Change or delete it.")+" In Settings › “Stay in touch”, type a new number and tap Save, or untick the box to tell us you don't want news and offers (your number stays saved until you change it or ask us to delete it). To have it deleted completely, email "+MAIL+" or write to Farin in Messages, with the name you use in the app.",
-            B("Değiştirmek ya da silmek için.")+" Ayarlar › «İletişimde kal» bölümünde yeni numaranı yazıp «Kaydet»e dokun ya da haber ve fırsat mesajı istemediğini bildirmek için kutunun işaretini kaldır (numaran, değiştirene ya da silinmesini isteyene kadar kayıtlı kalır). Tamamen silinmesi için uygulamada kullandığın adla "+MAIL+" adresine ya da Mesajlar'dan Farin'e yaz.",
-            B("عوض کردن یا پاک کردن.")+" در تنظیمات › «در ارتباط باش» شمارهٔ جدید را بنویس و «ذخیره» را بزن، یا اگر خبر و پیشنهاد نمی‌خواهی تیک جعبه را بردار (شماره‌ات تا وقتی عوضش کنی یا بخواهی پاکش کنیم ذخیره می‌ماند). برای پاک شدن کامل شماره، با اسمی که در اپ داری به "+MAIL+" ایمیل بزن یا در پیام‌ها به فرین بنویس.",
-            B("Cambiarlo o borrarlo.")+" En Configuración › «Mantente en contacto», escribe el número nuevo y toca «Guardar», o desmarca la casilla para decirnos que no quieres novedades ni ofertas (tu número sigue guardado hasta que lo cambies o nos pidas borrarlo). Para borrarlo del todo, escribe a "+MAIL+" o a Farin en Mensajes, con el nombre que usas en la app.")
+          L(B("Change or delete it.")+" In Settings › “Stay in touch”, type a new number and tap "+(LOGIN_APP === 'es' ? "“Save & send on WhatsApp”" : "Save")+". To have it deleted completely, email "+MAIL+" or write to Farin in Messages, with the name you use in the app.",
+            B("Değiştirmek ya da silmek için.")+" Ayarlar › «İletişimde kal» bölümünde yeni numaranı yazıp "+(LOGIN_APP === 'es' ? "«Kaydet ve WhatsApp'tan gönder»" : "«Kaydet»")+"e dokun. Tamamen silinmesi için uygulamada kullandığın adla "+MAIL+" adresine ya da Mesajlar'dan Farin'e yaz.",
+            B("عوض کردن یا پاک کردن.")+" در تنظیمات › «در ارتباط باش» شمارهٔ جدید را بنویس و "+(LOGIN_APP === 'es' ? "«ذخیره و ارسال در واتس‌اپ»" : "«ذخیره»")+" را بزن. برای پاک شدن کامل شماره، با اسمی که در اپ داری به "+MAIL+" ایمیل بزن یا در پیام‌ها به فرین بنویس.",
+            B("Cambiarlo o borrarlo.")+" En Configuración › «Mantente en contacto», escribe el número nuevo y toca "+(LOGIN_APP === 'es' ? "«Guardar y enviar por WhatsApp»" : "«Guardar»")+". Para borrarlo del todo, escribe a "+MAIL+" o a Farin en Mensajes, con el nombre que usas en la app.")
         ])}
 
         ${H(L('3. Messages, course requests and receipts','3. Mesajlar, kurs talepleri ve dekontlar','۳. پیام‌ها، درخواست دوره و رسید پرداخت','3. Mensajes, solicitudes de cursos y comprobantes'))}
@@ -14961,10 +14966,10 @@ function renderPrivacyPolicy(){
               "La app no tiene anuncios ni SDK de publicidad, y no usa Google Analytics. No vendemos tus datos."))}
 
         ${H(L('8. Your choices','8. Seçimlerin','۸. انتخاب‌های تو','8. Tus opciones'))}
-        ${P(L("You can reset your progress at any time in Settings, and “Log out” in Settings removes your account from that device. To have your cloud data deleted, including your WhatsApp number and your chats, email "+MAIL+" or write to Farin in Messages, with the name you use in the app (and your recovery code, if you have it).",
-              "İlerlemeni istediğin zaman Ayarlar'dan sıfırlayabilirsin; Ayarlar'daki «Çıkış yap» hesabını o cihazdan kaldırır. WhatsApp numaran ve sohbetlerin dahil buluttaki verilerinin silinmesi için uygulamada kullandığın adla (ve varsa kurtarma kodunla) "+MAIL+" adresine ya da Mesajlar'dan Farin'e yaz.",
-              "هر وقت بخواهی می‌توانی پیشرفتت را از تنظیمات صفر کنی، و «خروج» در تنظیمات حسابت را از آن دستگاه برمی‌دارد. برای پاک شدن داده‌هایت در فضای ابری، از جمله شمارهٔ واتس‌اپ و گفتگوهایت، با اسمی که در اپ داری (و کد بازیابی‌ات، اگر داری) به "+MAIL+" ایمیل بزن یا در پیام‌ها به فرین بنویس.",
-              "Puedes reiniciar tu progreso cuando quieras en Configuración, y «Cerrar sesión» en Configuración quita tu cuenta de ese dispositivo. Para que borremos tus datos en la nube, incluidos tu número de WhatsApp y tus chats, escribe a "+MAIL+" o a Farin en Mensajes, con el nombre que usas en la app (y tu código de recuperación, si lo tienes)."))}
+        ${P(L("You can reset your progress at any time in Settings, and “Log out” in Settings removes your account from that device. You can turn news and offers on WhatsApp on or off any time in Settings › “Stay in touch”. To have your cloud data deleted, including your WhatsApp number and your chats, email "+MAIL+" or write to Farin in Messages, with the name you use in the app (and your recovery code, if you have it).",
+              "İlerlemeni istediğin zaman Ayarlar'dan sıfırlayabilirsin; Ayarlar'daki «Çıkış yap» hesabını o cihazdan kaldırır. WhatsApp'tan haber ve fırsat mesajlarını istediğin zaman Ayarlar › «İletişimde kal» bölümünden açıp kapatabilirsin. WhatsApp numaran ve sohbetlerin dahil buluttaki verilerinin silinmesi için uygulamada kullandığın adla (ve varsa kurtarma kodunla) "+MAIL+" adresine ya da Mesajlar'dan Farin'e yaz.",
+              "هر وقت بخواهی می‌توانی پیشرفتت را از تنظیمات صفر کنی، و «خروج» در تنظیمات حسابت را از آن دستگاه برمی‌دارد. اخبار و پیشنهادهای واتس‌اپ را هر وقت بخواهی از تنظیمات › «در ارتباط باش» روشن یا خاموش کن. برای پاک شدن داده‌هایت در فضای ابری، از جمله شمارهٔ واتس‌اپ و گفتگوهایت، با اسمی که در اپ داری (و کد بازیابی‌ات، اگر داری) به "+MAIL+" ایمیل بزن یا در پیام‌ها به فرین بنویس.",
+              "Puedes reiniciar tu progreso cuando quieras en Configuración, y «Cerrar sesión» en Configuración quita tu cuenta de ese dispositivo. Puedes activar o desactivar las novedades y ofertas por WhatsApp cuando quieras en Configuración › «Mantente en contacto». Para que borremos tus datos en la nube, incluidos tu número de WhatsApp y tus chats, escribe a "+MAIL+" o a Farin en Mensajes, con el nombre que usas en la app (y tu código de recuperación, si lo tienes)."))}
 
         ${H(L('9. Private lessons','9. Özel dersler','۹. کلاس‌های خصوصی','9. Clases particulares'))}
         ${P(L("If you take private lessons with Farin, your lesson files (lesson notes and progress records) are kept only on his own computer and are not published online. They are deleted 12 months after your last lesson, or earlier if you ask.",
@@ -16486,17 +16491,18 @@ function renderPasswordSettings(){
     </div>
   </div>`;
 }
+// Settings › Stay in touch: the news-and-offers opt-in (promoOk, see promoSet) + the WhatsApp number, which is always shown now:
+// it is the account's number (account, courses, help) whether or not the box is ticked (2026-11-14, same as the English app 39a9a98b;
+// this app keeps its own "Save & send on WhatsApp" button).
 function renderContactOptIn(){
   const p = state.profile;
-  const optedIn = !!p.wantsContact;
   return `<div class="card-flat" style="margin-top:14px;">
     <div class="eyebrow">${L('Stay in touch','İletişimde kal','در ارتباط باش','Mantente en contacto')}</div>
-    <label class="row" style="gap:10px; margin-top:8px; align-items:flex-start; cursor:pointer;">
-      <input type="checkbox" id="contact-optin-checkbox" data-action="toggle-contact-optin" ${optedIn?'checked':''} style="margin-top:3px;">
-      <span style="font-size:13px;">${L("I'd like the teacher to message me directly with tips and offers.",'Öğretmenin bana doğrudan ipuçları ve fırsatlarla ilgili mesaj atmasını isterim.','دوست دارم معلم مستقیماً برایم نکات و پیشنهادها را پیام بدهد.','Me gustaría que el profesor me escribiera directamente con consejos y ofertas.')}</span>
-    </label>
-    <div id="contact-optin-phone-wrap" style="${optedIn?'':'display:none;'} margin-top:10px;">
-      <input id="contact-optin-phone" type="tel" placeholder="${L('Your WhatsApp number','WhatsApp numaran','شماره واتس‌اپت','Tu número de WhatsApp')}" value="${esc(p.contactPhone||'')}" style="width:100%; box-sizing:border-box; padding:12px 14px; border-radius:12px; border:1.5px solid var(--border); font-size:15px; background:var(--bg-elevated); color:var(--ink);">
+    ${promoBoxHtml('contact-optin-checkbox', promoOn(p), 'toggle-contact-optin')}
+    <p class="field-hint" style="margin-top:4px;">${promoOn(p) && p.promoAt ? (d=>esc(CL('On since ' + d + '. ', 'Açıldığı tarih: ' + d + '. ', 'روشن از ' + d + '. ', 'Activado desde el ' + d + '. ')))(new Date(Number(p.promoAt)).toLocaleDateString(LANG === 'fa' ? 'fa-IR' : LANG === 'tr' ? 'tr-TR' : LANG === 'es' ? 'es-ES' : 'en-GB', {day:'numeric', month:'long', year:'numeric'})) : ''}${CL('You can turn this off any time. Your number is still used for your account, your courses and help.','Bunu istediğin zaman kapatabilirsin. Numaran yine hesabın, kursların ve yardım için kullanılır.','هر وقت بخواهی می‌توانی این را خاموش کنی. شماره‌ات همچنان برای حسابت، دوره‌هایت و کمک به کار می‌رود.','Puedes desactivarlo cuando quieras. Tu número se sigue usando para tu cuenta, tus cursos y la ayuda.')}</p>
+    <div id="contact-optin-phone-wrap" style="margin-top:12px;">
+      <label class="field-label" for="contact-optin-phone">${L('Your WhatsApp number','WhatsApp numaran','شماره واتس‌اپت','Tu número de WhatsApp')}</label>
+      <input id="contact-optin-phone" type="tel" dir="ltr" placeholder="${esc(contactPhoneExample())}" value="${esc(p.contactPhone||'')}" style="width:100%; box-sizing:border-box; padding:12px 14px; border-radius:12px; border:1.5px solid var(--border); font-size:15px; background:var(--bg-elevated); color:var(--ink);">
       <button class="btn btn-primary" style="margin-top:8px; width:100%;" data-action="save-contact-optin">${L('Save & send on WhatsApp','Kaydet ve WhatsApp\'tan gönder','ذخیره و ارسال در واتس‌اپ','Guardar y enviar por WhatsApp')}</button>
       <p id="contact-optin-status" style="font-size:12px; color:var(--success); margin-top:6px; display:none;">${L('Sent!','Gönderildi!','ارسال شد!','¡Enviado!')}</p>
     </div>
@@ -16509,7 +16515,20 @@ function renderContactOptIn(){
    Home: only when no number is saved, once per account (profile.clubAskAt), not in the first 2 days after joining, never on top
    of another pop-up (char tip, celebration, splash, any dialog) and with no motion. A number saved here = profile.contactPhone +
    wantsContact (admin › Users "Want contact") + one contacts doc (admin › Contacts), the same as the Settings opt-in.
-   Phone checks reuse the waiting-list ones (Persian digits allowed, country code needed). */
+   Phone checks reuse the waiting-list ones (Persian digits allowed, country code needed).
+   News and offers = a SEPARATE opt-in (Farin 2026-11-14, Turkish law 6563 / İYS: promotional messages need their own explicit yes):
+   one optional box, unticked by default, at signup, in the Join our club pop-up and in Settings › Stay in touch ("Send me news and
+   offers on WhatsApp"). The number itself is for the account, courses and help only. The choice is kept in the profile (backed up
+   with the account, admin › learner profile + Contacts show it): promoOk, promoAt (when it was chosen), promoSource (signup /
+   club-popup / settings). No recorded choice (every account from before 2026-11-14) = NOT opted in; wantsContact is not consent. */
+function promoOn(p){ return !!(p && p.promoOk === true); }
+function promoSet(ok, source){ const p = state.profile; p.promoOk = !!ok; p.promoAt = Date.now(); p.promoSource = source; }
+function promoBoxHtml(id, checked, action){
+  return `<label class="row" style="gap:10px; margin-top:8px; align-items:flex-start; cursor:pointer; text-align:start;">
+      <input type="checkbox" id="${id}"${action ? ` data-action="${action}"` : ''} ${checked ? 'checked' : ''} style="margin-top:3px; flex:0 0 auto; width:18px; height:18px; accent-color:var(--accent);">
+      <span style="font-size:13.5px; font-weight:700; color:var(--ink);">${CL('Send me news and offers on WhatsApp','Bana WhatsApp\'tan haberler ve fırsatlar gönder','اخبار و پیشنهادها را در واتس‌اپ برایم بفرست','Envíame novedades y ofertas por WhatsApp')}</span>
+    </label>`;
+}
 function contactPhoneExample(){ return LANG === 'fa' ? '+98 912 345 6789' : LANG === 'es' ? '+34 612 345 678' : '+90 532 123 45 67'; }
 function contactPhoneErrText(){
   const ex = '⁦' + contactPhoneExample() + '⁩';
@@ -16530,8 +16549,10 @@ function signupPhoneFieldHtml(){
   return `<div>
           <label class="field-label" for="unlock-phone">${CL('Your WhatsApp number','WhatsApp numaran','شماره‌ی واتس‌اپت','Tu número de WhatsApp')}</label>
           <input class="name-input${err ? ' wl-bad' : ''}" id="unlock-phone" type="tel" inputmode="tel" autocomplete="tel" dir="ltr" maxlength="24" placeholder="${esc(contactPhoneExample())}" value="${esc(signupPhoneDraft)}" />
-          <p class="field-hint">${CL('So Farin can send you news, discounts and help on WhatsApp. Only Farin sees it.','Farin sana WhatsApp\'tan haberler, indirimler ve yardım gönderebilsin diye. Bunu sadece Farin görür.','تا فرین بتواند اخبار، تخفیف‌ها و کمک را در واتس‌اپ برایت بفرستد. فقط فرین آن را می‌بیند.','Para que Farin te envíe novedades, descuentos y ayuda por WhatsApp. Solo Farin lo ve.')}</p>
+          <p class="field-hint">${CL('For your account, your courses and help from Farin on WhatsApp. Only Farin sees it.','Hesabın, kursların ve Farin\'in WhatsApp\'tan yardımı için. Bunu sadece Farin görür.','برای حسابت، دوره‌هایت و کمک فرین در واتس‌اپ. فقط فرین آن را می‌بیند.','Para tu cuenta, tus cursos y la ayuda de Farin por WhatsApp. Solo Farin lo ve.')}</p>
           ${err ? `<div class="unlock-error" role="alert" style="margin-top:8px;">${esc(err === 'empty' ? CL('We need your WhatsApp number to continue.','Devam etmek için WhatsApp numarana ihtiyacımız var.','برای ادامه به شماره‌ی واتس‌اپت نیاز داریم.','Necesitamos tu número de WhatsApp para continuar.') : contactPhoneErrText())}</div>` : ''}
+          ${promoBoxHtml('unlock-promo', signupPromoDraft)}
+          <p class="field-hint" style="margin-top:4px;">${CL('Optional. You can turn it off any time in Settings.','İsteğe bağlı. İstediğin zaman Ayarlar\'dan kapatabilirsin.','اختیاری است. هر وقت بخواهی می‌توانی از تنظیمات خاموشش کنی.','Opcional. Puedes desactivarlo cuando quieras en Configuración.')}</p>
         </div>`;
 }
 let clubAskTimer = null, clubAskTries = 0;
@@ -16557,15 +16578,16 @@ function clubAskSchedule(delay){
 function clubAskHtml(done){
   if(done) return `<div class="club-ask-card"><img class="club-ask-dog" src="${farinSrc('dog')}" alt="">
       <h2 class="display club-ask-title" id="club-ask-title">${CL("You're in!",'Kulüptesin!','عضو شدی!','¡Ya estás dentro!')}</h2>
-      <p class="club-ask-text">${CL('Farin will message you soon on WhatsApp.','Farin yakında sana WhatsApp\'tan yazacak.','فرین به‌زودی در واتس‌اپ به تو پیام می‌دهد.','Farin te escribirá pronto por WhatsApp.')}</p>
+      <p class="club-ask-text">${promoOn(state.profile) ? CL('Farin will message you soon on WhatsApp.','Farin yakında sana WhatsApp\'tan yazacak.','فرین به‌زودی در واتس‌اپ به تو پیام می‌دهد.','Farin te escribirá pronto por WhatsApp.') : CL('Your number is saved. You can turn on news and offers any time in Settings.','Numaran kaydedildi. Haberleri ve fırsatları istediğin zaman Ayarlar\'dan açabilirsin.','شماره‌ات ذخیره شد. هر وقت بخواهی می‌توانی اخبار و پیشنهادها را از تنظیمات روشن کنی.','Tu número está guardado. Puedes activar las novedades y ofertas cuando quieras en Configuración.')}</p>
       <button class="cu-btn cu-orange" data-club="close">${CL('Great','Harika','عالی','Genial')}</button></div>`;
   return `<div class="club-ask-card"><img class="club-ask-dog" src="${farinSrc('dog')}" alt="">
       <div class="eyebrow club-ask-eyebrow">FEschool Club</div>
       <h2 class="display club-ask-title" id="club-ask-title">${CL('Join our club','Kulübümüze katıl','به باشگاه ما بپیوند','Únete a nuestro club')}<span class="club-ask-dot">.</span></h2>
-      <p class="club-ask-text">${CL('News, discounts and lots of interesting things, before everyone else. Leave your WhatsApp number and Farin will add you.','Haberler, indirimler ve bir sürü ilginç şey, herkesten önce. WhatsApp numaranı bırak, Farin seni eklesin.','اخبار، تخفیف‌ها و کلی چیز جالب، زودتر از همه. شماره‌ی واتس‌اپت را بگذار تا فرین اضافه‌ات کند.','Novedades, descuentos y muchas cosas interesantes, antes que nadie. Deja tu número de WhatsApp y Farin te añadirá.')}</p>
+      <p class="club-ask-text">${CL('Leave your WhatsApp number so Farin can help you with your account and your courses. Would you also like news, discounts and interesting things before everyone else? Tick the box.','Hesabın ve kursların konusunda Farin sana yardım edebilsin diye WhatsApp numaranı bırak. Haberleri, indirimleri ve ilginç şeyleri herkesten önce almak ister misin? Kutuyu işaretle.','شماره‌ی واتس‌اپت را بگذار تا فرین بتواند درباره‌ی حساب و دوره‌هایت کمکت کند. اخبار، تخفیف‌ها و چیزهای جالب را هم زودتر از همه می‌خواهی؟ تیک جعبه را بزن.','Deja tu número de WhatsApp para que Farin pueda ayudarte con tu cuenta y tus cursos. ¿Quieres también novedades, descuentos y cosas interesantes antes que nadie? Marca la casilla.')}</p>
       <div><label class="field-label" for="club-ask-phone">${CL('Your WhatsApp number','WhatsApp numaran','شماره‌ی واتس‌اپت','Tu número de WhatsApp')}</label>
       <input class="name-input" id="club-ask-phone" type="tel" inputmode="tel" autocomplete="tel" dir="ltr" maxlength="24" placeholder="${esc(contactPhoneExample())}" />
-      <div class="unlock-error" id="club-ask-err" role="alert" style="margin-top:8px;" hidden></div></div>
+      <div class="unlock-error" id="club-ask-err" role="alert" style="margin-top:8px;" hidden></div>
+      ${promoBoxHtml('club-ask-promo', false)}</div>
       <button class="cu-btn cu-orange" data-club="join">${CL('Join the club','Kulübe katıl','عضو باشگاه شو','Unirme al club')}</button>
       <button class="msg-link" style="margin-top:0;" data-club="later">${CL('Not now','Şimdi değil','الان نه','Ahora no')}</button>
       <p class="club-ask-note">${CL('Only Farin sees your number.','Numaranı sadece Farin görür.','شماره‌ات را فقط فرین می‌بیند.','Solo Farin ve tu número.')}</p></div>`;
@@ -16585,6 +16607,8 @@ function clubAskShow(){
       const inp = document.getElementById('club-ask-phone'), err = document.getElementById('club-ask-err');
       const phone = courseWaitlistPhone(inp ? inp.value : '');
       if(!courseWaitlistPhoneOk(phone)){ if(err){ err.textContent = contactPhoneErrText(); err.hidden = false; } if(inp){ inp.classList.add('wl-bad'); inp.focus(); } return; }
+      const promo = document.getElementById('club-ask-promo');
+      promoSet(!!(promo && promo.checked), 'club-popup');   // saved by contactSavePhone
       contactSavePhone(phone, 'club-popup');
       el.innerHTML = clubAskHtml(true);
     }
@@ -29314,6 +29338,8 @@ const HANDLERS = {
     farinPwDraft = password;
     const phoneEl = document.getElementById('unlock-phone');
     if(phoneEl) signupPhoneDraft = phoneEl.value;
+    const promoEl = document.getElementById('unlock-promo');
+    if(promoEl) signupPromoDraft = promoEl.checked;
     const phone = courseWaitlistPhone(signupPhoneDraft);
     if(name.length < 2){
       state.viewParams = {showError:true, name};
@@ -29347,6 +29373,8 @@ const HANDLERS = {
         passwordPending: !keepLogin && !login,
         contactPhone: phone || prev.contactPhone || '', wantsContact: phone ? true : !!prev.wantsContact, contactAt: phone ? Date.now() : (prev.contactAt || null),
         contactSource: phone ? 'signup' : (prev.contactSource || null),
+        // news-and-offers opt-in: chosen with the number (box unticked by default); redoing the diagnostic keeps the earlier choice
+        promoOk: promoEl ? signupPromoDraft : (prev.promoOk === true), promoAt: promoEl ? Date.now() : (prev.promoAt || null), promoSource: promoEl ? 'signup' : (prev.promoSource || null),
         clubAskAt: prev.clubAskAt || null
       };
       // Generate-once-then-mutate: this is the moment the roadmap is born, so it's
@@ -29356,6 +29384,7 @@ const HANDLERS = {
       regenerateRoadmap();
       save();
       if(phone){ contactSavePhone(phone, 'signup'); signupPhoneDraft = ''; }
+      signupPromoDraft = false;
       if(!courseLinkLand()) go('dashboard');
       showSplash();
     };
@@ -30857,15 +30886,17 @@ const HANDLERS = {
     }catch(e){}
   },
   'toggle-contact-optin'(el){
-    state.profile.wantsContact = el.checked;
+    promoSet(el.checked, 'settings');   // Stay in touch = the news-and-offers opt-in (2026-11-14); the number is not touched
     save();
+    const typed = (document.getElementById('contact-optin-phone') || {}).value;
     render();
+    const inp = document.getElementById('contact-optin-phone'); if(inp && typed != null) inp.value = typed;   // a number typed but not saved yet stays
   },
   'save-contact-optin'(){
     const phoneEl = document.getElementById('contact-optin-phone');
     const phone = (phoneEl && phoneEl.value || '').trim();
     state.profile.contactPhone = phone;
-    if(phone){ state.profile.contactSource = 'settings'; state.profile.contactAt = Date.now(); }   // admin shows where the number came from
+    if(phone){ state.profile.contactSource = 'settings'; state.profile.contactAt = Date.now(); state.profile.wantsContact = true; }   // admin shows where the number came from
     save();
     if(phone){
       const p = state.profile;
@@ -38600,7 +38631,7 @@ function renderAdminContactsTab(){
       ${adminAvatarHtml(c.name, person ? adminGoalKey(person.profile.goals) : '', null)}
       <span class="ap-p-main">
         <span class="ap-p-name"><b dir="auto">${esc(c.name||'—')}</b>${fresh ? '<span class="ap-tag new">New</span>' : ''}${(k=>`<span class="ap-tag${k === 'signup' ? '' : ' purple'}">${esc(adminContactSourceLabel(k))}</span>`)(adminContactDocSource(c))}</span>
-        <span class="ap-p-meta">${esc([c.level, c.goal].filter(Boolean).join(' · ') || '—')}${c.createdAt ? ' · ' + esc(adminAgo(Number(c.createdAt))) : ''}</span>
+        <span class="ap-p-meta">${esc([c.level, c.goal].filter(Boolean).join(' · ') || '—')}${c.createdAt ? ' · ' + esc(adminAgo(Number(c.createdAt))) : ''}${person ? ' · ' + adminPromoTag(adminPromoOf(person.accounts)) : ''}</span>
         <span class="ap-p-meta" dir="ltr" style="text-align:start;">${esc(c.phone||'')}</span>
       </span>
       <span class="ap-acts">
@@ -39909,6 +39940,11 @@ function adminAccountWantsContact(u){ return !!(u.profile.wantsContact && u.prof
    Club pop-up = Club pop-up, within 30 min of joining = sign-up, else Settings). */
 const ADMIN_CONTACT_FROM = {signup:'Sign-up', 'club-popup':'Club pop-up', 'student-club':'Student Club page', settings:'Stay in touch (Settings)'};
 function adminContactSourceLabel(k){ return ADMIN_CONTACT_FROM[k] || ADMIN_CONTACT_FROM.settings; }
+// News-and-offers opt-in (2026-11-14, see promoSet): the newest recorded choice on any of the learner's records. None = NOT opted in.
+function adminPromoOf(accounts){ return (accounts || []).map(u=>u.profile || {}).filter(pf=>Number(pf.promoAt) > 0).sort((a, b)=>Number(b.promoAt) - Number(a.promoAt))[0] || null; }
+function adminPromoTag(pf){ const yes = !!(pf && pf.promoOk === true);   // Contacts row: "✓ Promo 14 Nov 2026" / "✗ Promo" in the meta line
+  return `<span title="News and offers on WhatsApp" style="font-weight:800; color:${yes ? 'var(--success)' : 'var(--ink-faint)'};">${yes ? '✓' : '✗'} Promo${pf ? ' ' + esc(adminDate(Number(pf.promoAt))) : ''}</span>`; }
+function adminPromoText(pf){ return !pf ? '✗ No · no choice recorded' : (pf.promoOk === true ? '✓ Yes · since ' : '✗ No · chosen ') + adminDate(Number(pf.promoAt)) + ' · ' + adminContactSourceLabel(pf.promoSource); }
 function adminContactDocSource(c){ const k = c && c.source; return ADMIN_CONTACT_FROM[k] ? k : 'settings'; }
 let adminContactsByCodeFor = null, adminContactsByCode = {};
 function adminContactsOfCode(code){
@@ -40104,6 +40140,7 @@ function renderAdminUserProfile(p){
   const contact = L.phone ? sec(asked && !contacted ? 'To do' : 'Contact', 'Get in touch', `<div class="ap-card">
       ${kv('Phone', `<bdi dir="ltr">${esc(L.phone)}</bdi>`)}
       ${p.contact ? kv('Number from', esc(adminContactSourceLabel(adminPersonFrom(p)))) : ''}
+      ${kv('News & offers', esc(adminPromoText(adminPromoOf(p.accounts))))}
       ${asked ? kv('Asked to be contacted', contacted ? 'Yes · you marked it done' : 'Yes · not contacted yet') : ''}
       <div class="ap-btns">
         <a class="ap-cta" target="_blank" rel="noopener" href="${esc(waLinkTo(L.phone, 'Hi ' + (pf.name || '') + '! This is your Farin English teacher.'))}">Message on WhatsApp</a>

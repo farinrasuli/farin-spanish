@@ -1610,6 +1610,10 @@
   .ap-todo-t{flex:1; min-width:0; display:flex; flex-direction:column; gap:2px;}
   .ap-todo-t b{font-size:15px; font-weight:800;}
   .ap-todo-t small{font-size:12.5px; color:var(--ink-soft); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .ap-from{display:flex; flex-wrap:wrap; gap:4px; margin:3px 0 1px;}
+  .ap-from i{font-style:normal; display:inline-flex; align-items:center; gap:5px; max-width:100%; box-sizing:border-box; font-size:11.5px; font-weight:800; padding:2px 4px 2px 9px; border-radius:999px; background:var(--fs-purple-soft); color:var(--fs-purple-ink); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+  .ap-from i:last-child:not(:has(b)){padding-right:9px;}
+  .ap-from i b{font-size:11px; font-weight:900; min-width:18px; height:18px; padding:0 5px; box-sizing:border-box; border-radius:999px; display:inline-grid; place-items:center; background:var(--bg-elevated); color:var(--ink);}
   .ap-chev{flex:none; width:26px; height:26px; border-radius:50%; display:grid; place-items:center; background:var(--bg-sunken); color:var(--ink-soft);}
   .ap-chev svg{width:14px; height:14px;}
   .ap-clear{display:flex; align-items:center; gap:12px; padding:16px 18px; border-radius:20px; background:color-mix(in srgb, var(--fs-green) 18%, var(--bg-elevated)); font-weight:800; font-size:14.5px;}
@@ -16384,7 +16388,7 @@ function contactPhoneErrText(){
 }
 function contactSavePhone(phone, source){
   const p = state.profile;
-  p.contactPhone = phone; p.wantsContact = true; p.contactAt = Date.now();
+  p.contactPhone = phone; p.wantsContact = true; p.contactAt = Date.now(); p.contactSource = source;   // admin shows where the number came from
   save();
   try{
     if(typeof firebase !== 'undefined') firebase.firestore().collection('contacts').add({
@@ -29213,6 +29217,7 @@ const HANDLERS = {
         // true when the password couldn't be saved (offline); Settings asks for it again
         passwordPending: !keepLogin && !login,
         contactPhone: phone || prev.contactPhone || '', wantsContact: phone ? true : !!prev.wantsContact, contactAt: phone ? Date.now() : (prev.contactAt || null),
+        contactSource: phone ? 'signup' : (prev.contactSource || null),
         clubAskAt: prev.clubAskAt || null
       };
       // Generate-once-then-mutate: this is the moment the roadmap is born, so it's
@@ -30731,6 +30736,7 @@ const HANDLERS = {
     const phoneEl = document.getElementById('contact-optin-phone');
     const phone = (phoneEl && phoneEl.value || '').trim();
     state.profile.contactPhone = phone;
+    if(phone){ state.profile.contactSource = 'settings'; state.profile.contactAt = Date.now(); }   // admin shows where the number came from
     save();
     if(phone){
       const p = state.profile;
@@ -38011,8 +38017,10 @@ function adminWaitlistRows(){
   const groups = {}, order = [];
   (adminWaitlist || []).slice().sort((a,b)=>(Number(b.createdAt) || 0) - (Number(a.createdAt) || 0)).forEach(d=>{
     const course = String(d.course || '?'), app = String(d.app || '?'), key = app + '|' + course + '|' + adminWaitlistDigits(d.phone);
-    if(!groups[key]){ groups[key] = {key, app, course, filter:app + '|' + course, title:String(d.courseTitle || course), name:String(d.name || ''), phone:String(d.phone || ''), lang:String(d.lang || ''), createdAt:Number(d.createdAt) || 0, ids:[], messaged:true}; order.push(key); }
+    if(!groups[key]){ groups[key] = {key, app, course, filter:app + '|' + course, title:String(d.courseTitle || course), name:String(d.name || ''), phone:String(d.phone || ''), lang:String(d.lang || ''), createdAt:Number(d.createdAt) || 0, ids:[], where:[], messaged:true}; order.push(key); }
     groups[key].ids.push(d.id);
+    const where = d.source === 'site' ? 'Website' : adminAppName(app);   // the site's waiting-list page writes source:'site'
+    if(groups[key].where.indexOf(where) === -1) groups[key].where.push(where);
     if(d.status !== 'messaged') groups[key].messaged = false;
   });
   return order.map(k=>groups[k]);
@@ -38118,7 +38126,7 @@ function renderAdminWaitlistTab(){
     const noCode = adminWaitlistNoCode(r.phone), wa = adminWaitlistWaNumber(r);
     return `<div class="item-row" style="align-items:flex-start; flex-wrap:wrap; cursor:default; ${r.messaged ? 'opacity:.72;' : ''}">
       <div class="item-body" style="min-width:0;">
-        <div class="item-title"><span dir="auto">${esc(r.name || '—')}</span> <span class="pill" style="background:var(--bg-sunken); color:var(--ink-soft);">${esc(r.title)} · ${esc(r.app.toUpperCase())}</span>${r.messaged ? ' <span class="pill" style="background:var(--success-soft); color:var(--success);">Messaged</span>' : ''}${r.ids.length > 1 ? ` <span class="pill" style="background:var(--bg-sunken); color:var(--ink-faint);">signed up ${r.ids.length}×</span>` : ''}</div>
+        <div class="item-title"><span dir="auto">${esc(r.name || '—')}</span> <span class="pill" style="background:var(--bg-sunken); color:var(--ink-soft);">${esc(r.title)} · ${esc(r.where.join(' + '))}</span>${r.messaged ? ' <span class="pill" style="background:var(--success-soft); color:var(--success);">Messaged</span>' : ''}${r.ids.length > 1 ? ` <span class="pill" style="background:var(--bg-sunken); color:var(--ink-faint);">signed up ${r.ids.length}×</span>` : ''}</div>
         <div class="item-sub" dir="ltr">${esc(r.phone)} · ${adminDate(r.createdAt)} (${esc(adminAgo(r.createdAt))}) · app language ${esc(r.lang || '?')}</div>
         ${noCode ? `<div class="item-sub" style="color:var(--error);">No country code. Check the number on WhatsApp${wa !== adminWaitlistDigits(r.phone) ? ': the button guessed +' + esc(wa.slice(0, 2)) + ' from the app language' : ''}.</div>` : ''}
       </div>
@@ -38198,8 +38206,14 @@ function studentSectionClose(){
    renderAdminWaitlistBanner are kept, unused). Numbers:
      Inbox = to answer (adminChatTodoList) · Users = new learners since you last opened Users + "contact me" learners not marked contacted
      · Waiting list = still waiting · Writing reviews = not reviewed yet (tests left out; red after 3 days) · Course access = active
-     passwords on 4+ devices (red) or ending within 14 days · 1-to-1 students = homework links not sent yet · Contacts = new since you
-     last opened Contacts.
+     passwords on 4+ devices (red) or ending within 14 days · Contacts = new since you last opened Contacts. 1-to-1 students have no
+     number (Farin 2026-11-14: "no need to consider homeworks of the students as a notif", the student sees it on the student panel).
+   Where each number comes from (Farin 2026-11-14: "when you put numbers I know where they have put, if they requested something, like
+   it was from club or something else"): every To check row stands alone (no joined rows) and carries "from" chips, biggest first:
+   Inbox = Student Club request / course request / question + topic · Users = the app, and for "contact me" where the number was left
+   (adminContactSource: Club pop-up, Student Club page, Stay in touch in Settings) · Waiting list = course + website or app · reviews
+   and passwords = the course · Contacts = where the number was left. A number given at sign-up (required since 2026-11-13) is not
+   "asked you to contact them": that learner is counted once, as a new learner.
    "Last opened" and "contacted" live in progress/admin-seen ({kind:'admin', seen:{users, contacts}, contacted:[…]}; no profile, so it is
    never listed as a learner). contacted = SHA-256 of the learner's recovery code, like admin-hidden-users: the doc never shows a code.
    Before the first visit, "new" means the last 7 days. */
@@ -38208,11 +38222,11 @@ const ADMIN_SEEN_DOC = 'admin-seen';
 const ADMIN_SECTIONS = [
   {key:'inbox', title:'Inbox', eb:'Messages', icon:'chat', c:'#7C5CFC', sub:'Questions and course requests learners send in the app.'},
   {key:'users', title:'Users', eb:'Learners', icon:'users', c:'#7C93FF', sub:'Everyone who uses the app, one row per learner. Tap a name to open the profile.'},
-  {key:'waitlist', title:'Waiting list', eb:'Course sign-ups', icon:'star', c:'#FFA53D', sub:'People who tapped “I want this course” and left their number, from both apps. Newest first.'},
+  {key:'waitlist', title:'Waiting list', eb:'Course sign-ups', icon:'star', c:'#FFA53D', sub:'People who tapped “I want this course” and left their number, in both apps and on the website. Newest first.'},
   {key:'reviews', title:'Writing reviews', eb:'Feedback', icon:'pen', c:'#FF8FB3', sub:'Course writing sent to you for review. The learner was promised feedback within 2–3 days.'},
   {key:'access', title:'Course access', eb:'Passwords', icon:'book', c:'#5FC9B8', sub:'Course passwords: create one after the money is in; revoke or re-issue it here.'},
   {key:'students', title:'1-to-1 students', eb:'Student panels', icon:'compass', c:'#8FAE85', sub:'Your private students: roadmap, sessions, lessons and homework.'},
-  {key:'contacts', title:'Contacts', eb:'Leads', icon:'whatsapp', c:'#4FC3E8', sub:'Numbers learners left in the app (Student Club and “contact me”).'}
+  {key:'contacts', title:'Contacts', eb:'Leads', icon:'whatsapp', c:'#4FC3E8', sub:'Numbers learners left in the app. Each tag says where: sign-up, Club pop-up, Student Club page or Stay in touch.'}
 ];
 function adminSection(key){ return ADMIN_SECTIONS.find(s=>s.key === key) || null; }
 // Everything loads once after sign-in, so Home can count every section at the same time.
@@ -38251,46 +38265,54 @@ function adminToggleContacted(key){
   adminSeenSave();
   renderAdminPage();
 }
-// Everything waiting for Farin, grouped by section: [{sec, n, title, sub, filter, hot}].
+// Where a number came from: the same labels counted, biggest first ([{label, n}]).
+function adminTodoFrom(labels){
+  const m = {}, order = [];
+  labels.forEach(l=>{ l = String(l || 'Other'); if(!m[l]){ m[l] = 0; order.push(l); } m[l]++; });
+  return order.map((label, i)=>({label, n:m[label], i})).sort((a, b)=>b.n - a.n || a.i - b.i).map(x=>({label:x.label, n:x.n}));
+}
+function adminAppName(app){ return app === 'es' ? 'Spanish app' : 'English app'; }
+// An Inbox chat in a few words: what was asked and about what.
+function adminChatFrom(d){
+  const tp = d.topic || {}, es = d.app === 'es' ? ' · Spanish app' : '';
+  if(d.type === 'request') return (tp.t === 'club' ? 'Student Club request' : tp.t === 'course' ? 'Course request: ' + msgCourseName(tp.c, 'admin') : msgKindLabel('request', d.req, 'admin')) + es;
+  return 'Question: ' + msgTopicName(tp, 'admin') + es;
+}
+// Everything waiting for Farin, grouped by section: [{sec, n, title, sub, filter, hot, from:[{label, n}]}].
 function adminTodo(){
   const now = Date.now(), out = {};
-  const add = (sec, n, one, many, sub, filter, hot)=>{ if(n > 0) (out[sec] = out[sec] || []).push({sec, n, title:n === 1 ? one : many, sub:sub || '', filter:filter || '', hot:!!hot}); };
+  const add = (sec, n, one, many, sub, filter, hot, from)=>{ if(n > 0) (out[sec] = out[sec] || []).push({sec, n, title:n === 1 ? one : many, sub:sub || '', filter:filter || '', hot:!!hot, from:from || []}); };
   const names = list=>list.slice(0, 3).join(', ') + (list.length > 3 ? ' +' + (list.length - 3) : '');
   if(adminChats){
     const t = adminChatTodoList(), o = t[0];
-    add('inbox', t.length, 'Message to answer', 'Messages to answer', o ? 'Oldest: ' + adminChatName(o) + ' · ' + msgTopicName(o.topic, 'admin') + ' · ' + adminAgo(Number(o.lAt) || Number(o.createdAt) || 0) : '', 'todo', !!o && adminChatAgeCls(o.lAt || o.createdAt) === 'red');
+    add('inbox', t.length, 'Message to answer', 'Messages to answer', o ? 'Oldest: ' + adminChatName(o) + ' · ' + msgTopicName(o.topic, 'admin') + ' · ' + adminAgo(Number(o.lAt) || Number(o.createdAt) || 0) : '', 'todo', !!o && adminChatAgeCls(o.lAt || o.createdAt) === 'red', adminTodoFrom(t.map(adminChatFrom)));
   }
   if(adminPeople){
     const live = adminPeople.filter(p=>!p.hidden);
     const fresh = adminSeen ? live.filter(p=>p.joined && p.joined > adminSeenAt('users')).sort((a,b)=>b.joined - a.joined) : [];
-    add('users', fresh.length, 'New learner', 'New learners', 'Since you last opened Users · ' + names(fresh.map(p=>p.profile.name || '(no name)')), 'new');
-    const want = live.filter(p=>p.contact && !adminPersonContacted(p));
-    add('users', want.length, 'Learner asked you to contact them', 'Learners asked you to contact them', names(want.map(p=>p.profile.name || '(no name)')), 'contact');
+    add('users', fresh.length, 'New learner', 'New learners', 'Since you last opened Users · ' + names(fresh.map(p=>p.profile.name || '(no name)')), 'new', false, adminTodoFrom(fresh.map(p=>adminAppName(p.app))));
+    const want = live.filter(p=>adminPersonAsked(p) && !adminPersonContacted(p));
+    add('users', want.length, 'Learner asked you to contact them', 'Learners asked you to contact them', names(want.map(p=>p.profile.name || '(no name)')), 'contact', false, adminTodoFrom(want.map(p=>adminContactSourceLabel(adminPersonFrom(p)))));
   }
   if(adminWaitlist){
     const w = adminWaitlistWaiting();
-    add('waitlist', w.length, 'Person waiting for a course', 'People waiting for a course', w[0] ? 'Newest: ' + w[0].name + ' · ' + w[0].title : '', 'all');
+    add('waitlist', w.length, 'Person waiting for a course', 'People waiting for a course', w[0] ? 'Newest: ' + w[0].name + ' · ' + w[0].title : '', 'all', false, adminTodoFrom(w.map(r=>r.title + ' · ' + r.where.join(' + '))));
   }
   if(adminReviews){
     const r = adminReviews.filter(d=>adminReviewState(d) !== 'reviewed' && !d.test);
     const late = r.filter(d=>now - (Number(d.submittedAt) || 0) >= 72*3600000).length;
-    add('reviews', r.length, 'Writing to review', 'Writings to review', late ? late + ' waiting more than 3 days' : 'Within the 2–3 day promise', 'open', late > 0);
+    add('reviews', r.length, 'Writing to review', 'Writings to review', late ? late + ' waiting more than 3 days' : 'Within the 2–3 day promise', 'open', late > 0, adminTodoFrom(r.map(d=>adminAccessCourse(d.course).title)));
   }
   if(adminAccessList){
     const act = adminAccessList.filter(d=>adminAccessStatus(d) === 'active');
     const shared = act.filter(d=>adminAccessDevices(d) > 3), ending = act.filter(d=>d.expiresAt && d.expiresAt - now < 14*DAY_MS);
-    add('access', shared.length, 'Password used on 4+ devices', 'Passwords used on 4+ devices', names(shared.map(d=>d.name || '—')), '', true);
-    add('access', ending.length, 'Course access ends within 14 days', 'Course accesses end within 14 days', names(ending.map(d=>(d.name || '—') + ' (' + adminDate(d.expiresAt) + ')')), '');
+    add('access', shared.length, 'Password used on 4+ devices', 'Passwords used on 4+ devices', names(shared.map(d=>d.name || '—')), '', true, adminTodoFrom(shared.map(d=>adminAccessCourse(d.course).title)));
+    add('access', ending.length, 'Course access ends within 14 days', 'Course accesses end within 14 days', names(ending.map(d=>(d.name || '—') + ' (' + adminDate(d.expiresAt) + ')')), '', false, adminTodoFrom(ending.map(d=>adminAccessCourse(d.course).title)));
   }
-  if(adminStudents){
-    const who = [];
-    let hw = 0;
-    adminStudents.forEach(s=>{ const n = adminStudentHomeworkToSend(s); if(n){ hw += n; who.push(s.name || s.code); } });
-    add('students', hw, 'Homework ready to send', 'Homework links ready to send', names(who), '');
-  }
+  // 1-to-1 students: no number. Homework sits on the student's own panel (Farin 2026-11-14).
   if(adminContacts && adminSeen){
     const c = adminContacts.filter(x=>Number(x.createdAt) > adminSeenAt('contacts'));
-    add('contacts', c.length, 'New contact', 'New contacts', 'Since you last opened Contacts · ' + names(c.map(x=>x.name || '—')), '');
+    add('contacts', c.length, 'New contact', 'New contacts', 'Since you last opened Contacts · ' + names(c.map(x=>x.name || '—')), '', false, adminTodoFrom(c.map(x=>adminContactSourceLabel(adminContactDocSource(x)))));
   }
   return out;
 }
@@ -38362,15 +38384,15 @@ function adminBoxSub(key){
   if(key === 'contacts'){ if(!adminContacts) return adminError ? 'Could not load' : wait(null); return adminContacts.length + ' contact' + (adminContacts.length === 1 ? '' : 's'); }
   return '';
 }
+// The "from" chips under a To check title: "Student Club request 2 · Question: HR 1" (5 at most, then "+N more").
+function adminFromHtml(from){
+  if(!from || !from.length) return '';
+  const top = from.slice(0, 5), rest = from.slice(5).reduce((n, f)=>n + f.n, 0);
+  return `<span class="ap-from" aria-label="From">${top.map(f=>`<i dir="auto">${esc(f.label)} <b>${f.n}</b></i>`).join('')}${rest ? `<i>+${rest} more</i>` : ''}</span>`;
+}
 function renderAdminHome(todo){
-  // One To check row per section (a section with two kinds of things, e.g. new learners + "contact me", joins them in one row).
-  const lc = s=>s.charAt(0).toLowerCase() + s.slice(1);
-  const rows = ADMIN_SECTIONS.filter(s=>todo[s.key]).map(s=>{
-    const it = todo[s.key];
-    if(it.length === 1) return it[0];
-    const title = it.map(t=>t.n + ' ' + lc(t.title)).join(' · ');
-    return {sec:s.key, n:it.reduce((a, t)=>a + t.n, 0), title:title.charAt(0).toUpperCase() + title.slice(1), sub:(it.find(t=>t.sub) || {}).sub || '', filter:'', hot:it.some(t=>t.hot)};
-  });
+  // One To check row per kind of thing (new learners and "contact me" are two rows), each saying where its number came from.
+  const rows = [].concat(...ADMIN_SECTIONS.filter(s=>todo[s.key]).map(s=>todo[s.key]));
   const total = rows.reduce((n, t)=>n + t.n, 0);
   const loading = [adminChats, adminPeople, adminWaitlist, adminReviews, adminAccessList, adminStudents, adminContacts].some(v=>v === null);
   const live = (adminPeople || []).filter(p=>!p.hidden), now = Date.now(), h = new Date().getHours();
@@ -38380,7 +38402,7 @@ function renderAdminHome(todo){
   const num = v=>adminPeople ? v : '…';
   const todoRow = t=>`<button class="ap-todo-row" data-admin-action="ap-go" data-section="${t.sec}" data-filter="${esc(t.filter)}">
       <span class="ap-num${t.hot ? ' hot' : ''}">${t.n}</span>
-      <span class="ap-todo-t"><b>${esc(t.title)}</b>${t.sub ? `<small dir="auto">${esc(t.sub)}</small>` : ''}</span>
+      <span class="ap-todo-t"><b>${esc(t.title)}</b>${adminFromHtml(t.from)}${t.sub ? `<small dir="auto">${esc(t.sub)}</small>` : ''}</span>
       <span class="ap-chev">${ICONS.chev}</span>
     </button>`;
   const box = s=>{ const n = adminTodoCount(todo, s.key);
@@ -38448,7 +38470,7 @@ function renderAdminContactsTab(){
     return `<div class="ap-person static">
       ${adminAvatarHtml(c.name, person ? adminGoalKey(person.profile.goals) : '', null)}
       <span class="ap-p-main">
-        <span class="ap-p-name"><b dir="auto">${esc(c.name||'—')}</b>${fresh ? '<span class="ap-tag new">New</span>' : ''}${c.source==='student-club' ? '<span class="ap-tag purple">Club</span>' : ''}</span>
+        <span class="ap-p-name"><b dir="auto">${esc(c.name||'—')}</b>${fresh ? '<span class="ap-tag new">New</span>' : ''}${(k=>`<span class="ap-tag${k === 'signup' ? '' : ' purple'}">${esc(adminContactSourceLabel(k))}</span>`)(adminContactDocSource(c))}</span>
         <span class="ap-p-meta">${esc([c.level, c.goal].filter(Boolean).join(' · ') || '—')}${c.createdAt ? ' · ' + esc(adminAgo(Number(c.createdAt))) : ''}</span>
         <span class="ap-p-meta" dir="ltr" style="text-align:start;">${esc(c.phone||'')}</span>
       </span>
@@ -39019,12 +39041,11 @@ function renderAdminStudentsTab(){
     const activeCourse = courses.find(c=>c.id===adminActiveCourseId) || null;
     const visibleRoadmap = activeCourse ? (activeCourse.sessionIds||[]).map(id=>roadmap.find(r=>r.id===id)).filter(Boolean) : roadmap;
     const courseDone = activeCourse ? (activeCourse.sessionIds||[]).filter(id=>{ const r = roadmap.find(x=>x.id===id); return r && r.done; }).length : 0;
-    const hwToSend = adminStudentHomeworkToSend(s);
     return `<button class="back" data-admin-action="cancel-edit-student">${ICONS.back} All students</button>
     <header class="fs-hero ap-mini" style="margin:12px 0 18px;">
       <span class="fs-pill">1-to-1 · ${esc(adminCourseLabel(s.course))}</span>
       <h1 class="display"><bdi>${esc(s.name||s.code||'New student')}</bdi><span class="dot">.</span></h1>
-      <p class="fs-sub">${s.isNew ? 'Fill in the basics, then tap Save.' : 'Pass ' + esc(s.code||'—') + ' · ' + esc(s.level||'no level yet') + ' · ' + (Number(s.package)||8) + ' sessions a month' + (hwToSend ? ' · ' + hwToSend + ' homework to send' : '')}</p>
+      <p class="fs-sub">${s.isNew ? 'Fill in the basics, then tap Save.' : 'Pass ' + esc(s.code||'—') + ' · ' + esc(s.level||'no level yet') + ' · ' + (Number(s.package)||8) + ' sessions a month'}</p>
     </header>
     <div class="card-flat">
       <div class="row" style="gap:8px; margin-bottom:12px;">
@@ -39185,14 +39206,14 @@ function renderAdminStudentsTab(){
         <button class="btn btn-sm btn-ghost" data-admin-action="retry-load-students">↻ Retry</button>
       </div>`
     : '';
-  // Homework waiting to be sent first, then by name.
-  const list = (adminStudents||[]).slice().sort((a,b)=>(adminStudentHomeworkToSend(b) ? 1 : 0) - (adminStudentHomeworkToSend(a) ? 1 : 0) || String(a.name||a.code).localeCompare(String(b.name||b.code)));
+  // By name. Homework is no alert here: the student sees it on the student panel (Farin 2026-11-14).
+  const list = (adminStudents||[]).slice().sort((a,b)=>String(a.name||a.code).localeCompare(String(b.name||b.code)));
   const rows = list.map(s=>{
-    const rm = Array.isArray(s.roadmap) ? s.roadmap : [], done = rm.filter(r=>r && r.done).length, hw = adminStudentHomeworkToSend(s);
+    const rm = Array.isArray(s.roadmap) ? s.roadmap : [], done = rm.filter(r=>r && r.done).length;
     return `<button class="ap-person" data-admin-action="edit-student" data-code="${esc(s.code)}" data-course="${esc(s.course||'en')}">
       ${adminAvatarHtml(s.name||s.code, adminGoalKey(studentGoalKeys(s)), null)}
       <span class="ap-p-main">
-        <span class="ap-p-name"><b dir="auto">${esc(s.name||s.code)}</b>${hw ? `<span class="ap-tag new">${hw} homework to send</span>` : ''}${s.freezeUntil ? '<span class="ap-tag">❄️ paused</span>' : ''}</span>
+        <span class="ap-p-name"><b dir="auto">${esc(s.name||s.code)}</b>${s.freezeUntil ? '<span class="ap-tag">❄️ paused</span>' : ''}</span>
         <span class="ap-p-meta">${s.course==='es'?'Spanish':'English'} · ${esc(s.level||'no level')} · ${Number(s.package)||8} a month · pass ${esc(s.code)}</span>
       </span>
       ${rm.length ? adminRingHtml(done, rm.length) : ''}
@@ -39753,6 +39774,36 @@ function adminDate(ms){
 }
 function adminUserCount(u, key){ const v = u.progress[key]; return Array.isArray(v) ? v.length : (Number(v) || 0); }
 function adminAccountWantsContact(u){ return !!(u.profile.wantsContact && u.profile.contactPhone); }
+/* Where a number was left (Farin 2026-11-14). contacts docs carry source: signup / club-popup (contactSavePhone), student-club (the Join
+   form on the Student Club page; it never touches the profile), settings (Stay in touch; older docs have no source). Since 2026-11-14 the
+   profile keeps it too (profile.contactSource). Older accounts: the account's own contacts doc, else the times (contactAt after the
+   Club pop-up = Club pop-up, within 30 min of joining = sign-up, else Settings). */
+const ADMIN_CONTACT_FROM = {signup:'Sign-up', 'club-popup':'Club pop-up', 'student-club':'Student Club page', settings:'Stay in touch (Settings)'};
+function adminContactSourceLabel(k){ return ADMIN_CONTACT_FROM[k] || ADMIN_CONTACT_FROM.settings; }
+function adminContactDocSource(c){ const k = c && c.source; return ADMIN_CONTACT_FROM[k] ? k : 'settings'; }
+let adminContactsByCodeFor = null, adminContactsByCode = {};
+function adminContactsOfCode(code){
+  if(adminContactsByCodeFor !== adminContacts){
+    adminContactsByCodeFor = adminContacts; adminContactsByCode = {};
+    (adminContacts || []).forEach(c=>{ if(c.recoveryCode) (adminContactsByCode[c.recoveryCode] = adminContactsByCode[c.recoveryCode] || []).push(c); });
+  }
+  return adminContactsByCode[code] || [];
+}
+function adminContactSource(u){
+  const pf = u.profile || {};
+  if(ADMIN_CONTACT_FROM[pf.contactSource]) return pf.contactSource;
+  const docs = adminContactsOfCode(u.id).filter(c=>c.source !== 'student-club').sort((a, b)=>(Number(b.createdAt) || 0) - (Number(a.createdAt) || 0));
+  const d = docs.find(c=>String(c.phone || '') === String(pf.contactPhone || '')) || docs[0];
+  if(d) return adminContactDocSource(d);
+  const at = Number(pf.contactAt) || 0, club = Number(pf.clubAskAt) || 0, joined = Number(pf.joinedAt) || 0;
+  if(at && club && at >= club) return 'club-popup';
+  if(at && joined && Math.abs(at - joined) < 30*60000) return 'signup';
+  return 'settings';
+}
+// "Asked you to contact them" = a number left on purpose (Club pop-up, Settings), on any of the learner's records; a sign-up number is not.
+function adminPersonAskedAccount(p){ return (p && p.accounts || []).find(u=>adminAccountWantsContact(u) && adminContactSource(u) !== 'signup') || null; }
+function adminPersonAsked(p){ return !!adminPersonAskedAccount(p); }
+function adminPersonFrom(p){ const u = adminPersonAskedAccount(p) || (p && p.contact); return u ? adminContactSource(u) : ''; }
 // A person's key: same app + same login name (or, without a login, the same name).
 function adminPersonKey(u){
   return u.app + '|' + (normalizeLoginName(u.profile.loginName || u.profile.name) || u.id);
@@ -39793,7 +39844,7 @@ function adminBuildPeople(users){
   });
   return order.map(k=>adminMergePerson(k, groups[k]));
 }
-function adminUserWantsContact(p){ return !!p.contact; }
+function adminUserWantsContact(p){ return adminPersonAsked(p); }
 // The learners in view: one entry each, minus hidden ones (or only the hidden ones).
 function adminUsersBase(){
   return (adminPeople||[]).filter(p=>p.hidden === adminUsersShowHidden);
@@ -39843,7 +39894,7 @@ function renderAdminUsersTab(){
   const hiddenCount = (adminPeople||[]).filter(p=>p.hidden).length;
   const within = ms=>all.filter(p=>now - p.lastSeen < ms).length;
   const nNew = adminSeen ? all.filter(p=>p.joined && p.joined > before).length : 0;
-  const nWant = all.filter(p=>p.contact && !adminPersonContacted(p)).length;
+  const nWant = all.filter(p=>adminPersonAsked(p) && !adminPersonContacted(p)).length;
   const tile = (n, label)=>`<div class="ap-tile"><span>${label}</span><b>${n}</b></div>`;
   const chip = (key, label, n)=>`<button class="ap-chip${adminUsersFilter===key ? ' on' : ''}" data-admin-action="users-filter" data-filter="${key}">${label}${n ? `<i>${n}</i>` : ''}</button>`;
   const sorts = [['recent','Last seen'],['new','Newest'],['xp','Most XP'],['name','Name']];
@@ -39871,7 +39922,7 @@ function renderAdminUsersList(){
   return `<p class="ap-count-line">${list.length} shown</p>` + list.map(p=>{
     const pf = p.profile, rs = p.roadmapStats;
     const tags = (adminSeen && p.joined && p.joined > before ? '<span class="ap-tag new">New</span>' : '')
-      + (p.contact ? (adminPersonContacted(p) ? '<span class="ap-tag ok">Contacted</span>' : '<span class="ap-tag new">Contact me</span>') : '')
+      + (adminPersonContacted(p) ? '<span class="ap-tag ok">Contacted</span>' : adminPersonAsked(p) ? '<span class="ap-tag new">Contact me · ' + esc(adminContactSourceLabel(adminPersonFrom(p))) + '</span>' : '')
       + (p.hasLogin ? '<span class="ap-tag" title="name + password login">🔑</span>' : '');
     return `<button class="ap-person" data-admin-action="toggle-user" data-id="${esc(p.key)}">
       ${adminAvatarHtml(pf.name, adminGoalKey(pf.goals && pf.goals.length ? pf.goals : pf.motivationTag), now - p.lastSeen)}
@@ -39916,14 +39967,15 @@ function renderAdminUserProfile(p){
   const count = (n, label)=>`<div class="ap-count"><b>${n}</b><span>${label}</span></div>`;
   const sec = (eb, title, body)=>`<section class="ap-sec"><div class="ap-sh"><span class="ap-eb">${eb}</span><h2 class="display">${title}<span class="dot">.</span></h2></div>${body}</section>`;
   const chev = `<span class="ap-chev">${ICONS.chev}</span>`;
-  const contacted = adminPersonContacted(p);
+  const contacted = adminPersonContacted(p), asked = adminPersonAsked(p);
   const tags = (p.hasLogin ? '<span class="ap-tag">🔑 Password login</span>' : '')
-    + (p.contact ? (contacted ? '<span class="ap-tag ok">Contacted</span>' : '<span class="ap-tag new">Asked you to contact them</span>') : '')
+    + (contacted ? '<span class="ap-tag ok">Contacted</span>' : asked ? '<span class="ap-tag new">Asked you to contact them</span>' : '')
     + (many ? `<span class="ap-tag">${p.accounts.length} records</span>` : '')
     + (p.hidden ? '<span class="ap-tag">🙈 Hidden</span>' : '');
-  const contact = L.phone ? sec(p.contact && !contacted ? 'To do' : 'Contact', 'Get in touch', `<div class="ap-card">
+  const contact = L.phone ? sec(asked && !contacted ? 'To do' : 'Contact', 'Get in touch', `<div class="ap-card">
       ${kv('Phone', `<bdi dir="ltr">${esc(L.phone)}</bdi>`)}
-      ${p.contact ? kv('Asked to be contacted', contacted ? 'Yes · you marked it done' : 'Yes · not contacted yet') : ''}
+      ${p.contact ? kv('Number from', esc(adminContactSourceLabel(adminPersonFrom(p)))) : ''}
+      ${asked ? kv('Asked to be contacted', contacted ? 'Yes · you marked it done' : 'Yes · not contacted yet') : ''}
       <div class="ap-btns">
         <a class="ap-cta" target="_blank" rel="noopener" href="${esc(waLinkTo(L.phone, 'Hi ' + (pf.name || '') + '! This is your Farin English teacher.'))}">Message on WhatsApp</a>
         ${p.contact ? `<button class="btn btn-ghost" data-admin-action="ap-contacted" data-id="${esc(p.key)}"${adminSeen ? '' : ' disabled'}>${contacted ? 'Undo “contacted”' : '✓ Mark as contacted'}</button>` : ''}
@@ -39998,13 +40050,13 @@ function refreshAdminUsersList(){
   bindAdminActions(el);
 }
 function downloadAdminUsersCsv(){
-  const cols = ['name','app','level','goals','recovery_code','records','all_recovery_codes','password_login','joined','last_seen','last_active_day','days_active','app_opens','streak','xp','roadmap_done','roadmap_total','activities','stories','word_sets','games','reviews','device','app_language','wants_contact','phone','club_pass'];
+  const cols = ['name','app','level','goals','recovery_code','records','all_recovery_codes','password_login','joined','last_seen','last_active_day','days_active','app_opens','streak','xp','roadmap_done','roadmap_total','activities','stories','word_sets','games','reviews','device','app_language','wants_contact','phone','number_from','club_pass'];
   const iso = ms=>ms ? new Date(Number(ms)).toISOString() : '';
   const rows = adminUsersFiltered().map(p=>{
     const pf = p.profile, a = pf.activity || {}, rs = p.roadmapStats || {}, t = p.totals;
     return [pf.name, p.app, pf.level, (pf.goals||[]).join(' / '), p.id, p.accounts.length, p.accounts.map(o=>o.id).join(' '), p.loginNames.join(' / ') || (p.hasLogin ? 'yes' : ''), iso(p.joined), iso(p.lastSeen), p.progress.lastActiveDate, p.activity.days, p.activity.opens,
       p.progress.streak, t.xp, rs.done, rs.total, t.sessionsExplored, t.completedStories, t.completedVocabSets,
-      t.completedGames, t.reviewsCompleted, a.os ? a.os + ' ' + (a.mode||'') : '', a.ui, p.contact ? 'yes' : '', p.contact ? p.contact.profile.contactPhone : '', pf.clubCode];
+      t.completedGames, t.reviewsCompleted, a.os ? a.os + ' ' + (a.mode||'') : '', a.ui, adminPersonAsked(p) ? 'yes' : '', p.contact ? p.contact.profile.contactPhone : '', p.contact ? adminContactSourceLabel(adminPersonFrom(p)) : '', pf.clubCode];
   });
   const cell = v=>{ const s = v === undefined || v === null ? '' : String(v); return /[",\n]/.test(s) ? '"' + s.replace(/"/g,'""') + '"' : s; };
   const csv = '﻿' + [cols].concat(rows).map(r=>r.map(cell).join(',')).join('\n');

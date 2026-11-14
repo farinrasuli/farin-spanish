@@ -36203,6 +36203,8 @@ function courseRGp(it){ const ex = it.explain, g = it.grammar, pts = (ex && ex.p
 function courseRSplit(ex){ const n = (ex.points || []).length, ok = r=>Array.isArray(r) && r.length === 2 && r[0].length > 0 && [].concat(r[0], r[1]).sort((a, b)=>a - b).join() === Array.from({length:n}, (_, i)=>i + 1).join();
   if(ok(ex.rounds)) return ex.rounds; const a = n <= 3 ? 1 : Math.ceil(n / 2); return [Array.from({length:a}, (_, i)=>i + 1), Array.from({length:n - a}, (_, i)=>a + i + 1)]; }
 // The worked example: facts and draft, in both orders (SPEC 18a, the lxd reference exSplit).
+// SPEC 18f: an example with `text` (HR: "Facts: ...") and a cut list keeps its facts in `text` and its draft in `item`; the rest split `item`.
+function courseRExParts(e){ return e.text && (e.cut || []).length ? {facts:String(e.text).replace(/^Facts:\s*/, ''), draft:e.item || ''} : courseRExSplit(e.item); }
 function courseRExSplit(item){
   const s = String(item || ''); let m = s.match(/^([\s\S]*?)\s*(?:Your )?[Dd]raft[^:]{0,30}:\s*([\s\S]+)$/);
   let r = m ? {facts:m[1].trim(), draft:m[2].trim()} : null;
@@ -36510,10 +36512,10 @@ function courseRTryHtml(cid, uid){
 function courseRExampleHtml(cid, uid, r){
   const ex = courseUnitItems(uid).explain, e = ex.example, rd = courseUi.rd; if(!e) return '';
   const eye = courseREyebrow([trs('rn', {n:r + 1}), e.eyebrow ? cl(e.eyebrow) : CL('Worked example', 'Çözümlü örnek', 'مثال حل‌شده', 'Ejemplo resuelto')]);
-  if((e.lines || []).length || e.instruction || e.text) return `<div class="tr-wex">${eye}${courseRH(cl(e.head))}<div class="lx-card cx-card">
+  if((e.lines || []).length || e.instruction || (e.text && !(e.cut || []).length)) return `<div class="tr-wex">${eye}${courseRH(cl(e.head))}<div class="lx-card cx-card">
       ${e.instruction ? `<p class="cx-instr" dir="ltr" translate="no">${esc(e.instruction)}</p>` : ''}${(e.lines || []).length ? `<div class="cx-dlg" dir="ltr" translate="no">${e.lines.map(l=>`<div><b>${esc(l[0])}:</b> ${esc(l[1])}</div>`).join('')}</div>` : ''}${e.text ? `<p class="cx-text" dir="ltr" translate="no">${esc(e.text)}</p>` : ''}
       ${e.answer ? `<div class="cx-answer"><span>${CL('Answer', 'Cevap', 'پاسخ', 'Respuesta')}</span><b dir="ltr" translate="no">${esc(e.answer)}</b></div>` : ''}</div></div>${courseRBtn('course-r-next', courseRNextLabel())}`;
-  const sp = courseRExSplit(e.item), walk = e.walk || [], cut = (e.cut || []).filter(x=>sp.draft.indexOf(x) >= 0);
+  const sp = courseRExParts(e), walk = e.walk || [], cut = (e.cut || []).filter(x=>sp.draft.indexOf(x) >= 0);
   const st = rd.ex || (rd.ex = {found:[], ws:0, fixed:false});
   const facts = sp.facts ? `<button type="button" class="link-btn tr-link" data-action="course-r-facts">${esc(trs('facts.link'))}</button>` : '';
   if(!cut.length){   // no cut list: the First draft | Fixed toggle
@@ -36962,7 +36964,7 @@ Object.assign(HANDLERS, {
     rd.beforeDraft = null; courseRNext(); },
   'course-r-sample'(){ const rd = courseUi.rd; if(!rd) return; const w = courseUnitItems(rd.uid).writing; if(!w) return; rd.sampleSeen = true; courseRStash();
     courseSheetShow(`<div class="cs-grab"></div><div class="tr-sheet"><div class="cs-eyebrow">${esc(trs('sample.h'))}</div><p class="tr-body" dir="${courseTD()}">${isoHtml(cl(w.prompt))}</p>${courseRFactsHtml(w)}${courseRSheetCloseBtn()}</div>`); },
-  'course-r-facts'(){ const rd = courseUi.rd; if(!rd) return; const e = (courseUnitItems(rd.uid).explain || {}).example; if(!e) return; const sp = courseRExSplit(e.item);
+  'course-r-facts'(){ const rd = courseUi.rd; if(!rd) return; const e = (courseUnitItems(rd.uid).explain || {}).example; if(!e) return; const sp = courseRExParts(e);
     courseSheetShow(`<div class="cs-grab"></div><div class="tr-sheet"><div class="cs-eyebrow">${esc(trs('facts.link'))}</div><p class="tr-body" dir="ltr" translate="no">${esc(sp.facts)}</p>${courseRSheetCloseBtn()}</div>`); },
   'course-r-sheet-close'(el){ courseSheetRemove(); if(el && el.dataset.re){ courseUi.rwl = null; render(); } },
   'course-r-row'(el){ const rd = courseUi.rd; if(!rd) return; const i = Number(el.dataset.i); rd.open = rd.open === i ? -1 : i; render(); },

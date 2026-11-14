@@ -139,18 +139,33 @@ const MANIFEST_RE = /\/audio\/[a-z]{2}\/(alt\/)?manifest\.json$/;
 // them offline after that and picks up a new ?v= on the next visit. Poster WebPs (games/posters/) fall under IMG_RE.
 const GAMES_RE = /\/games\/[^?#]+\.(js|css|json|woff2)$/;
 const IMG_RE = /\.(png|webp|jpg|jpeg|svg)$/;
+// Firebase SDK, served from this site since 2026-11-14 (vendor/firebase-<version>/): a new version gets a new folder, so a file never
+// changes under one name -> cache-first, and precached at install so the app's login works offline-first.
+const VENDOR_PRECACHE = ['vendor/firebase-10.7.1/firebase-app-compat.js', 'vendor/firebase-10.7.1/firebase-auth-compat.js'];
+const VENDOR_RE = /\/vendor\/[^?#]+\.js$/;
 const STATIC_HOSTS = ['fonts.gstatic.com'];
 const FIREBASE_SDK = 'https://www.gstatic.com/firebasejs/';
 const FONT_CSS_HOST = 'fonts.googleapis.com';
 // On a slow connection, open the saved copy instead of waiting; the fresh page still lands in the cache.
 const PAGE_TIMEOUT_MS = 4000;
 
+// Install on a slow connection (2026-11-14): the page is taken from the browser's own cache when it is there (the learner just
+// downloaded it; GitHub Pages lets it be reused for 10 min), instead of downloading the 7 MB page a second time. The next open
+// fetches it fresh anyway (pageWithTimeout). Art that is already saved is not downloaded again when the worker updates.
+// Files repainted under the same name still need a CACHE bump.
+function addMissing(c, list) {
+  return Promise.all(list.map((u) => {
+    const href = new URL(u, PAGE_URL).href;
+    return c.match(href).then((hit) => hit || c.add(href)).catch(() => {});
+  }));
+}
 self.addEventListener('install', (e) => {
   e.waitUntil(caches.open(CACHE).then((c) => Promise.all([
-    c.add(new Request(PAGE_URL, { cache: 'reload' })),
-    c.addAll(ART_PRECACHE.map((u) => new URL(u, PAGE_URL).href)).catch(() => {}),
-    Promise.all(APP_ART_PRECACHE.map((u) => c.add(new URL(u, PAGE_URL).href).catch(() => {}))),
-    Promise.all(PATH_PRECACHE.map((u) => c.add(new URL(u, PAGE_URL).href).catch(() => {})))
+    c.add(new Request(PAGE_URL)),
+    addMissing(c, VENDOR_PRECACHE),
+    addMissing(c, ART_PRECACHE),
+    addMissing(c, APP_ART_PRECACHE),
+    addMissing(c, PATH_PRECACHE)
   ])).catch(() => {}));
   self.skipWaiting();
 });
@@ -207,6 +222,23 @@ function tellPageUpdated() {
   }));
 }
 
+// No saved page yet (first open after the worker installed, or the cache was cleared): hand the page to the browser as it streams
+// in, so the loading screen at the top of the file shows at once, and save a copy in the background. Before, the browser got
+// nothing until the whole 7 MB had arrived and been saved (2026-11-14).
+function pageStreamAndSave(e) {
+  const net = fetch(e.request, { cache: 'no-store' });
+  e.waitUntil(net.then((res) => {
+    if (!res.ok) return null;
+    const copy = res.clone();   // now, before the browser starts reading the body
+    return caches.open(CACHE).then((c) => c.put(PAGE_URL, copy));
+  }).catch(() => {}));
+  return net.catch(() => Response.error());
+}
+
+function pageOpen(e) {
+  return caches.match(PAGE_URL).then((hit) => (hit ? pageWithTimeout(e) : pageStreamAndSave(e)), () => pageStreamAndSave(e));
+}
+
 function pageWithTimeout(e) {
   let servedSaved = false;
   const net = fetch(e.request, { cache: 'no-store' }).then((res) => {
@@ -229,7 +261,7 @@ function pageWithTimeout(e) {
 
 self.addEventListener('fetch', (e) => {
   if (e.request.mode === 'navigate') {
-    e.respondWith(pageWithTimeout(e));
+    e.respondWith(pageOpen(e));
     return;
   }
   if (e.request.method !== 'GET') return;
@@ -239,6 +271,7 @@ self.addEventListener('fetch', (e) => {
     if (AUDIO_RE.test(url.pathname)) { e.respondWith(audioCacheFirst(e.request)); return; }
     if (MANIFEST_RE.test(url.pathname)) { e.respondWith(networkFirst(e.request)); return; }
     if (GAMES_RE.test(url.pathname)) { e.respondWith(staleWhileRevalidate(e)); return; }
+    if (VENDOR_RE.test(url.pathname)) { e.respondWith(cacheFirst(e.request)); return; }
     if (ART_RE.test(url.pathname) || PATH_RE.test(url.pathname) || IMG_RE.test(url.pathname)) e.respondWith(cacheFirst(e.request));
     return;
   }

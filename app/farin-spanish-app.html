@@ -13,7 +13,10 @@
 <meta name="apple-mobile-web-app-title" content="Farin Spanish">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<!-- Fonts load without holding the first screen (2026-11-14, learners stuck on the first page): a slow or filtered
+     fonts.googleapis.com used to keep the whole page blank; now the text shows in the system font and swaps in. -->
+<link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" onload="this.onload=null;this.rel='stylesheet'">
+<noscript><link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet"></noscript>
 <style>
   :root{
     --bg:#fdf1e2; --bg-elevated:#fffaf2; --bg-sunken:#f6e3c6;
@@ -3159,11 +3162,73 @@
   /* LESSONS-PLAY-CSS-END */
 </style>
 
-<div id="app"></div>
+<!-- Loading screen (2026-11-14, Farin: "some users say the app is stuck on the first page and won't open"). The app is one big
+     file, and on a slow connection it used to show an empty page until all of it had arrived. This screen is plain HTML, so it
+     shows at once. render() replaces it (#app's innerHTML) the moment the real first screen is ready. After 7 s it says the
+     internet is slow and the app is still loading. Offline, or if the app fails to start, it says so and shows "Try again".
+     It looks the same as the logo splash (showSplash), so a fast open still feels like one moment. -->
+<style>
+  .fe-boot{position:fixed; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:14px; padding:24px; text-align:center; background:var(--diorama-bg), var(--bg); color:var(--ink-soft); font-family:'Nunito',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Tahoma,sans-serif;}
+  .fe-boot img{width:150px; height:150px; object-fit:contain; filter:drop-shadow(0 12px 18px rgba(124,104,214,.22));}
+  .fe-boot-bar{width:132px; height:5px; border-radius:999px; background:var(--border-soft); overflow:hidden; position:relative;}
+  .fe-boot-bar span{position:absolute; top:0; bottom:0; width:40%; border-radius:999px; background:var(--accent); animation:fe-boot-slide 1.4s ease-in-out infinite;}
+  @keyframes fe-boot-slide{0%{left:-40%;} 100%{left:100%;}}
+  @media (prefers-reduced-motion: reduce){ .fe-boot-bar span{animation:none; left:30%;} }
+  .fe-boot p{margin:0; max-width:300px; font-size:15px; font-weight:700; line-height:1.45;}
+  .fe-boot .fe-boot-note{font-size:13.5px; font-weight:600; color:var(--ink-faint);}
+  .fe-boot-retry{margin-top:6px; border:0; border-radius:999px; padding:12px 26px; background:var(--accent); color:var(--accent-ink); font:inherit; font-size:15px; font-weight:800; cursor:pointer;}
+  .fe-boot [hidden]{display:none !important;}
+</style>
+<div id="app"><div id="fe-boot" class="fe-boot" role="status" aria-live="polite">
+  <img src="logo-fe-cutout.png" alt="Farin Spanish" width="150" height="150">
+  <div class="fe-boot-bar" id="fe-boot-bar"><span></span></div>
+  <p id="fe-boot-msg" style="min-height:22px;"></p>
+  <p class="fe-boot-note" id="fe-boot-note" hidden></p>
+  <button type="button" class="fe-boot-retry" id="fe-boot-retry" hidden onclick="location.reload()"></button>
+</div></div>
+<script>
+(function(){
+  // [loading, slow, offline, failed, try again] in the learner's app language (tr/en/fa/es) (saved > ?lang=). A new learner gets the phone's
+  // language when it is one of the four (the app itself starts in Turkish and asks), so this one message is always understood.
+  var T = {
+    tr:['Yükleniyor…', 'İnternetin yavaş. Uygulama hâlâ yükleniyor; bir dahaki sefere çok daha hızlı açılacak.', 'İnternete bağlı değilsin. Bağlanınca tekrar dene.', 'Uygulama açılırken bir sorun oldu.', 'Tekrar dene'],
+    en:['Loading…', 'Your internet is slow. The app is still loading, and next time it will open much faster.', 'You are offline. Connect to the internet and try again.', 'Something went wrong while the app was opening.', 'Try again'],
+    fa:['در حال بارگذاری…', 'اینترنتت کنده. برنامه هنوز داره بارگذاری می‌شه؛ دفعه‌ی بعد خیلی سریع‌تر باز می‌شه.', 'به اینترنت وصل نیستی. وصل که شدی، دوباره امتحان کن.', 'موقع باز شدن برنامه یه مشکلی پیش اومد.', 'دوباره امتحان کن'],
+    es:['Cargando…', 'Tu internet va lento. La app sigue cargando y la próxima vez se abrirá mucho más rápido.', 'No tienes conexión a internet. Conéctate y vuelve a intentarlo.', 'Algo salió mal al abrir la app.', 'Reintentar']
+  };
+  var lang = '';
+  try{ var saved = JSON.parse(localStorage.getItem('farinSpanishApp.v1') || 'null'); if(saved && T[saved.lang]) lang = saved.lang; }catch(e){}
+  if(!lang){ var q = /[?&]lang=(tr|en|fa|es)\b/.exec(location.search); if(q) lang = q[1]; }
+  if(!lang){ var nav = String(navigator.language || '').slice(0, 2).toLowerCase(); lang = T[nav] ? nav : 'tr'; }
+  var t = T[lang], $ = function(id){ return document.getElementById(id); };
+  if(lang === 'fa'){ $('fe-boot').dir = 'rtl'; }
+  $('fe-boot-msg').textContent = t[0];
+  $('fe-boot-retry').textContent = t[4];
+  window.__feBootStart = Date.now();
+  // the screen is gone once render() ran; every step below checks that first
+  var show = function(note, retry, stopBar){
+    if(!$('fe-boot')) return;
+    if(note){ $('fe-boot-note').textContent = note; $('fe-boot-note').hidden = false; }
+    if(retry) $('fe-boot-retry').hidden = false;
+    if(stopBar) $('fe-boot-bar').hidden = true;
+  };
+  setTimeout(function(){ show(navigator.onLine === false ? t[2] : t[1], navigator.onLine === false); }, 7000);
+  setTimeout(function(){ show(null, true); }, 45000);
+  window.addEventListener('offline', function(){ show(t[2], true); });
+  // every script has run (DOMContentLoaded) and the first screen still isn't there: the app could not start, so say so and offer a
+  // reload. (#admin renders after its sign-in check, up to 4 s later, so it is left out.)
+  document.addEventListener('DOMContentLoaded', function(){
+    setTimeout(function(){ if(location.hash !== '#admin') show(t[3], true, true); }, 5000);
+  });
+})();
+</script>
 
-<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+<!-- Firebase, served from this app's own site (2026-11-14) instead of www.gstatic.com: these were blocking scripts on a third
+     host, so a slow or filtered gstatic held the page at the first screen, and without them login said "network" at once.
+     Same files as https://www.gstatic.com/firebasejs/10.7.1/ (Apache-2.0). The Firestore SDK (340 KB) is no longer loaded:
+     every firebase.firestore() call goes through the REST client below, which replaces it. -->
+<script src="vendor/firebase-10.7.1/firebase-app-compat.js"></script>
+<script src="vendor/firebase-10.7.1/firebase-auth-compat.js"></script>
 <script>
 // Some countries block Google's googleapis.com domains, which breaks Firebase Auth/Firestore
 // even though the rest of the internet works fine. This routes those specific calls through a
@@ -3260,8 +3325,17 @@
     err.code = code;
     return err;
   }
+  // A read that gets no answer at all gives up after 30 s (2026-11-14): on a network that silently drops the call, the login on the
+  // first screen used to wait forever (its busy flag stayed on, so tapping again did nothing); now it shows its "network" message.
+  // Writes keep no limit, so a slow save is never cut off.
+  var READ_TIMEOUT_MS = 30000;
   function req(method, url, headers, body){
-    return fetch(url, {method: method, headers: headers, body: body !== undefined ? JSON.stringify(body) : undefined})
+    var ctl = (method === 'GET' && typeof AbortController !== 'undefined') ? new AbortController() : null;
+    var timer = ctl ? setTimeout(function(){ ctl.abort(); }, READ_TIMEOUT_MS) : null;
+    var init = {method: method, headers: headers, body: body !== undefined ? JSON.stringify(body) : undefined};
+    if(ctl) init.signal = ctl.signal;
+    return fetch(url, init)
+      .then(function(resp){ clearTimeout(timer); return resp; }, function(err){ clearTimeout(timer); throw (ctl && ctl.signal.aborted) ? new Error('Network timeout') : err; })
       .then(function(resp){
         return resp.text().then(function(text){
           var json = null;
@@ -40130,8 +40204,10 @@ if(location.hash === '#admin'){
   try{ window.addEventListener('hashchange', songHashOpen); }catch(e){}
   // Splash/logo breathing moment (Trello NpMrU2Mw) — fires once per cold app
   // open, right after the real first screen has already rendered underneath
-  // it (see showSplash()'s comment above miniSparkles()).
-  showSplash();
+  // it (see showSplash()'s comment above miniSparkles()). After a slow open the
+  // learner has already looked at the same logo on the loading screen (#fe-boot)
+  // for a while, so the app opens straight away instead (2026-11-14).
+  if(!(window.__feBootStart && Date.now() - window.__feBootStart > 4000)) showSplash();
   scheduleCharTips(6000);
   clubRefresh();
 }
@@ -40142,7 +40218,16 @@ if(location.hash === '#admin'){
    registration just fails silently and the app works exactly as before, without offline caching. */
 try{
   if('serviceWorker' in navigator){
-    navigator.serviceWorker.register('farin-sw.js', { scope: 'farin-spanish-app.html' }).catch(function(){});
+    // Registered once the first screen and its pictures have loaded (2026-11-14): on a first open the worker saves the game art,
+    // which used to compete with the first screen on a slow connection.
+    // (a picture or font that never arrives holds the load event, so it also registers after 20 s at the latest)
+    var swRegistered = false;
+    var swRegister = function(){
+      if(swRegistered) return;
+      swRegistered = true;
+      navigator.serviceWorker.register('farin-sw.js', { scope: 'farin-spanish-app.html' }).catch(function(){});
+    };
+    if(document.readyState === 'complete') swRegister(); else { window.addEventListener('load', swRegister); setTimeout(swRegister, 20000); }
     // farin-sw.js answers a slow open with the saved copy and says so when a newer page has landed in the cache since (2026-11-11):
     // reload the next time the learner comes back to the app on Home, so a change reaches them this session, not one open later.
     var pageUpdateReady = false, pageBootAt = Date.now(), pageStamp = null, pageStampAt = 0;

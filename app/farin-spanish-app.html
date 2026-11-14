@@ -3164,6 +3164,22 @@
   .rl-stinput{min-height:72px;}
   .rl-studio > .card-flat:first-child{margin-top:0;}
   /* LESSONS-PLAY-CSS-END */
+  /* WAIT-BUDDY-CSS (2026-11-14, Farin: "if the user is gonna wait anywhere, make a character we have from the clay ones coming on screen
+     and say something so they know it's coming"). The learner's own clay companion (char-<learnerCharKey()>.png) with a speech bubble,
+     wherever something is on its way (a lesson or exam chapter, a game, a song, messages, the login check, the restore at start).
+     Companion rule (2026-10-08): no movement, no hop, no loop. It only fades in, after a short pause so a fast load never flashes it,
+     and it is gone when the content arrives. After 8 s the bubble adds that the internet is slow. */
+  .wb{display:flex; flex-direction:column; align-items:center; gap:12px; padding:28px 16px; text-align:center; opacity:0; animation:wb-fade .25s ease .35s both;}
+  .wb .cute-bubble{max-width:290px; text-align:center;}
+  .wb .cute-bubble::after{content:''; position:absolute; bottom:-8px; left:50%; width:18px; height:18px; margin-left:-9px; background:#fff; transform:rotate(45deg); border-radius:0 0 5px 0;}
+  .wb-char{width:124px; height:124px; object-fit:contain; filter:drop-shadow(0 12px 16px rgba(0,0,0,.18));}
+  .wb-slow{display:block; max-width:280px; margin-top:-2px; font-size:13px; font-weight:700; color:var(--ink-soft); opacity:0; animation:wb-fade .25s ease 8s both;}
+  .wb.wb-now{animation:none; opacity:1;}
+  @keyframes wb-fade{from{opacity:0;} to{opacity:1;}}
+  @media (prefers-reduced-motion: reduce){ .wb, .wb-slow{animation-duration:.01s;} }
+  /* over a game cover or a screen while files load: centred, above the Theatre's cover (z 85) */
+  .wb-layer{position:fixed; inset:0; z-index:90; display:flex; align-items:center; justify-content:center; pointer-events:none;}
+  #g2-box .wb{position:absolute; inset:0; justify-content:center;}
 </style>
 
 <!-- Loading screen (2026-11-14, Farin: "some users say the app is stuck on the first page and won't open"). The app is one big
@@ -3173,35 +3189,41 @@
      It looks the same as the logo splash (showSplash), so a fast open still feels like one moment. -->
 <style>
   .fe-boot{position:fixed; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:14px; padding:24px; text-align:center; background:var(--diorama-bg), var(--bg); color:var(--ink-soft); font-family:'Nunito',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Tahoma,sans-serif;}
-  .fe-boot img{width:150px; height:150px; object-fit:contain; filter:drop-shadow(0 12px 18px rgba(124,104,214,.22));}
+  .fe-boot-logo{width:120px; height:120px; object-fit:contain; filter:drop-shadow(0 12px 18px rgba(124,104,214,.22));}
+  /* the clay companion (2026-11-14, Farin: a character coming on screen, saying it's coming): the .wb pieces from WAIT-BUDDY-CSS, here
+     only after 1 s, so a fast open shows just the logo; the note and the failure line go into its bubble */
+  .fe-boot .wb{padding:6px 16px 0; animation-delay:1s;}
+  .fe-boot .wb-char{width:116px; height:116px;}
+  .fe-boot .fe-boot-note{display:block; margin-top:6px; font-size:13px; font-weight:600; color:#7a6fa0;}
   .fe-boot-bar{width:132px; height:5px; border-radius:999px; background:var(--border-soft); overflow:hidden; position:relative;}
   .fe-boot-bar span{position:absolute; top:0; bottom:0; width:40%; border-radius:999px; background:var(--accent); animation:fe-boot-slide 1.4s ease-in-out infinite;}
   @keyframes fe-boot-slide{0%{left:-40%;} 100%{left:100%;}}
   @media (prefers-reduced-motion: reduce){ .fe-boot-bar span{animation:none; left:30%;} }
-  .fe-boot p{margin:0; max-width:300px; font-size:15px; font-weight:700; line-height:1.45;}
-  .fe-boot .fe-boot-note{font-size:13.5px; font-weight:600; color:var(--ink-faint);}
   .fe-boot-retry{margin-top:6px; border:0; border-radius:999px; padding:12px 26px; background:var(--accent); color:var(--accent-ink); font:inherit; font-size:15px; font-weight:800; cursor:pointer;}
   .fe-boot [hidden]{display:none !important;}
 </style>
 <div id="app"><div id="fe-boot" class="fe-boot" role="status" aria-live="polite">
-  <img src="logo-fe-cutout.png" alt="Farin Spanish" width="150" height="150">
+  <img class="fe-boot-logo" src="logo-fe-cutout.png" alt="Farin Spanish" width="120" height="120">
   <div class="fe-boot-bar" id="fe-boot-bar"><span></span></div>
-  <p id="fe-boot-msg" style="min-height:22px;"></p>
-  <p class="fe-boot-note" id="fe-boot-note" hidden></p>
+  <div class="wb"><div class="cute-bubble" dir="auto"><span id="fe-boot-msg"></span><span class="fe-boot-note" id="fe-boot-note" hidden></span></div><img class="wb-char" id="fe-boot-char" alt="" width="116" height="116"></div>
   <button type="button" class="fe-boot-retry" id="fe-boot-retry" hidden onclick="location.reload()"></button>
 </div></div>
 <script>
 (function(){
-  // [loading, slow, offline, failed, try again] in the learner's app language (tr/en/fa/es) (saved > ?lang=). A new learner gets the phone's
+  // [companion line, slow, offline, failed, try again] in the learner's app language (tr/en/fa/es) (saved > ?lang=). A new learner gets the phone's
   // language when it is one of the four (the app itself starts in Turkish and asks), so this one message is always understood.
   var T = {
-    tr:['Yükleniyor…', 'İnternetin yavaş. Uygulama hâlâ yükleniyor; bir dahaki sefere çok daha hızlı açılacak.', 'İnternete bağlı değilsin. Bağlanınca tekrar dene.', 'Uygulama açılırken bir sorun oldu.', 'Tekrar dene'],
-    en:['Loading…', 'Your internet is slow. The app is still loading, and next time it will open much faster.', 'You are offline. Connect to the internet and try again.', 'Something went wrong while the app was opening.', 'Try again'],
-    fa:['در حال بارگذاری…', 'اینترنتت کنده. برنامه هنوز داره بارگذاری می‌شه؛ دفعه‌ی بعد خیلی سریع‌تر باز می‌شه.', 'به اینترنت وصل نیستی. وصل که شدی، دوباره امتحان کن.', 'موقع باز شدن برنامه یه مشکلی پیش اومد.', 'دوباره امتحان کن'],
-    es:['Cargando…', 'Tu internet va lento. La app sigue cargando y la próxima vez se abrirá mucho más rápido.', 'No tienes conexión a internet. Conéctate y vuelve a intentarlo.', 'Algo salió mal al abrir la app.', 'Reintentar']
+    tr:['Her şeyi senin için hazırlıyorum!','İnternetin yavaş. Uygulama hâlâ yükleniyor; bir dahaki sefere çok daha hızlı açılacak.', 'İnternete bağlı değilsin. Bağlanınca tekrar dene.', 'Uygulama açılırken bir sorun oldu.', 'Tekrar dene'],
+    en:["I'm getting everything ready for you!",'Your internet is slow. The app is still loading, and next time it will open much faster.', 'You are offline. Connect to the internet and try again.', 'Something went wrong while the app was opening.', 'Try again'],
+    fa:['دارم همه‌چیز رو برات آماده می‌کنم!','اینترنتت کنده. برنامه هنوز داره بارگذاری می‌شه؛ دفعه‌ی بعد خیلی سریع‌تر باز می‌شه.', 'به اینترنت وصل نیستی. وصل که شدی، دوباره امتحان کن.', 'موقع باز شدن برنامه یه مشکلی پیش اومد.', 'دوباره امتحان کن'],
+    es:['¡Estoy preparando todo para ti!','Tu internet va lento. La app sigue cargando y la próxima vez se abrirá mucho más rápido.', 'No tienes conexión a internet. Conéctate y vuelve a intentarlo.', 'Algo salió mal al abrir la app.', 'Reintentar']
   };
   var lang = '';
-  try{ var saved = JSON.parse(localStorage.getItem('farinSpanishApp.v1') || 'null'); if(saved && T[saved.lang]) lang = saved.lang; }catch(e){}
+  var saved = null;
+  try{ saved = JSON.parse(localStorage.getItem('farinSpanishApp.v1') || 'null'); if(saved && T[saved.lang]) lang = saved.lang; }catch(e){}
+  // the learner's own clay companion, as learnerCharKey() picks it: the goal's character, else 'everyday'
+  var ch = saved && saved.profile && saved.profile.motivationTag;
+  document.getElementById('fe-boot-char').src = 'char-' + (/^(career|everyday|exam|immigration|travel)$/.test(ch || '') ? ch : 'everyday') + '.png';
   if(!lang){ var q = /[?&]lang=(tr|en|fa|es)\b/.exec(location.search); if(q) lang = q[1]; }
   if(!lang){ var nav = String(navigator.language || '').slice(0, 2).toLowerCase(); lang = T[nav] ? nav : 'tr'; }
   var t = T[lang], $ = function(id){ return document.getElementById(id); };
@@ -11230,7 +11252,7 @@ function renderSongSession(id){
     lyrics = `<p class="game-hint" style="text-align:center; margin:24px 0;">${L('The song needs an internet connection. Try again in a moment.','Şarkı için internet bağlantısı gerekiyor. Birazdan tekrar dene.','آهنگ به اینترنت نیاز دارد. چند لحظه بعد دوباره امتحان کن.','La canción necesita conexión a internet. Inténtalo de nuevo en un momento.')}</p>
       <button class="btn btn-ghost" data-action="song-retry" data-id="${esc(id)}">${L('Try again','Tekrar dene','دوباره امتحان کن','Reintentar')}</button>`;
   } else {
-    lyrics = `<p class="game-hint" style="text-align:center; margin:24px 0;">${L('Loading the song…','Şarkı yükleniyor…','آهنگ در حال بارگذاری است…','Cargando la canción…')}</p>`;
+    lyrics = waitBuddyHtml('song');   // the clay companion brings the song (2026-11-14)
   }
   const playIc = `<svg width="30" height="30" viewBox="0 0 24 24" style="margin-inline-start:3px;"><path d="M7 4.5v15l13-7.5z" fill="#fff"/></svg>`;
   const pauseIc = `<svg width="28" height="28" viewBox="0 0 24 24"><rect x="6" y="4.5" width="4" height="15" rx="1.2" fill="#fff"/><rect x="14" y="4.5" width="4" height="15" rx="1.2" fill="#fff"/></svg>`;
@@ -14460,13 +14482,8 @@ function sectionHeadNoBack(title, sub){
 const DIAG_TOTAL_STEPS = 6;
 function renderDiagIntro(){
   if(state.viewParams && state.viewParams.recovering){
-    return `<div class="fade-in">
-      <div class="diag-hero">
-        <div class="compass-mark">${ICONS.compass}</div>
-        <h1 class="display">${L('One sec…','Bir saniye…','یک لحظه…','Un momento…')}</h1>
-        <p style="color:var(--ink-soft); margin-top:10px; font-size:14.5px;">${L('Looking for your saved progress.','Kayıtlı ilerlemeni arıyoruz.','در حال جست‌وجوی پیشرفت ذخیره‌شده‌ات هستیم.','Buscando tu progreso guardado.')}</p>
-      </div>
-    </div>`;
+    // looking for the saved progress (a recovery cookie survived a wiped phone): the clay companion says so (2026-11-14)
+    return `<div class="fade-in"><div class="screen" style="min-height:70vh; display:flex; align-items:center; justify-content:center;">${waitBuddyHtml('restore')}</div></div>`;
   }
   return renderLangPick();
 }
@@ -14554,7 +14571,8 @@ function renderRestoreCode(){
         </div>
         ${vp.pwError ? `<div class="unlock-error">${pwErrorText(vp.pwError)}</div>` : ''}
         <button class="btn btn-primary" data-action="login-submit" ${farinPwBusy?'disabled':''}>${farinPwBusy ? L('Checking…', 'Kontrol ediliyor…', 'در حال بررسی…', 'Comprobando…') : L('Log in', 'Giriş yap', 'ورود', 'Iniciar sesión')}</button>
-        <p class="field-hint" style="text-align:center;">${L('Forgot your password? Log in with your recovery code, then pick a new password in Settings.', 'Şifreni mi unuttun? Kurtarma kodunla giriş yap, sonra Ayarlar\'dan yeni bir şifre seç.', 'رمزت را فراموش کردی؟ با کد بازیابی وارد شو و بعد در تنظیمات رمز جدید بگذار.', '¿Olvidaste tu contraseña? Entra con tu código de recuperación y luego elige una nueva en Ajustes.')}</p>
+        ${farinPwBusy ? waitBuddyHtml('login') : ''}
+        <p class="field-hint" style="text-align:center;">${L('Forgot your password? Log in with your recovery code, then pick a new password in Settings.','Şifreni mi unuttun? Kurtarma kodunla giriş yap, sonra Ayarlar\'dan yeni bir şifre seç.', 'رمزت را فراموش کردی؟ با کد بازیابی وارد شو و بعد در تنظیمات رمز جدید بگذار.', '¿Olvidaste tu contraseña? Entra con tu código de recuperación y luego elige una nueva en Ajustes.')}</p>
       </div>
     </div>
   </div>`;
@@ -15268,6 +15286,34 @@ function showSplash(){
     setTimeout(()=>{ wrap.remove(); }, 2850);
   }catch(e){}
 }
+/* Wait buddy (2026-11-14, see WAIT-BUDDY-CSS): the learner's clay companion says what is on its way. waitBuddyHtml() goes inside a
+   screen that is waiting; waitBuddyShow() / waitBuddyHide() put it over everything (game covers, a load with no screen of its own). */
+const WAIT_BUDDY_LINES = {
+  lesson:  ["I'm getting your lesson ready!", 'Dersini hazırlıyorum!', 'دارم درس رو برات آماده می‌کنم!', '¡Estoy preparando tu lección!'],
+  exam:    ["I'm getting your exam ready!", 'Sınavını hazırlıyorum!', 'دارم آزمون رو برات آماده می‌کنم!', '¡Estoy preparando tu examen!'],
+  game:    ["I'm getting your game ready!", 'Oyununu hazırlıyorum!', 'دارم بازی رو برات آماده می‌کنم!', '¡Estoy preparando tu juego!'],
+  song:    ["I'm bringing your song!", 'Şarkını getiriyorum!', 'دارم آهنگ رو برات میارم!', '¡Te traigo tu canción!'],
+  messages:["I'm bringing your messages!", 'Mesajlarını getiriyorum!', 'دارم پیام‌هات رو میارم!', '¡Te traigo tus mensajes!'],
+  login:   ["I'm looking for your account…", 'Hesabını arıyorum…', 'دارم حسابت رو پیدا می‌کنم…', 'Estoy buscando tu cuenta…'],
+  restore: ["I'm bringing back your progress…", 'İlerlemeni geri getiriyorum…', 'دارم پیشرفتت رو برمی‌گردونم…', 'Estoy recuperando tu progreso…']
+};
+const WAIT_BUDDY_SLOW = ['Your internet is a bit slow. Almost there!', 'İnternetin biraz yavaş. Az kaldı!', 'اینترنتت یه کم کنده. چیزی نمونده!', 'Tu internet va un poco lento. ¡Ya casi está!'];
+// One wait = calls less than 2 s apart: a screen re-drawn during the wait shows the companion at once (no new fade, so no flicker), and
+// the "internet is slow" line keeps its 8 s from the start of the wait.
+let waitBuddyT0 = 0, waitBuddyLast = 0;
+function waitBuddyHtml(kind){
+  const t = WAIT_BUDDY_LINES[kind] || WAIT_BUDDY_LINES.lesson, now = Date.now();
+  if(now - waitBuddyLast > 2000) waitBuddyT0 = now;
+  waitBuddyLast = now;
+  const el = (now - waitBuddyT0) / 1000;
+  return `<div class="wb${el > 0.6 ? ' wb-now' : ''}" role="status" aria-live="polite"><div class="cute-bubble" dir="auto">${esc(L(t[0], t[1], t[2], t[3]))}</div><img class="wb-char" src="char-${learnerCharKey()}.png" alt="">`
+    + `<span class="wb-slow" dir="auto" style="animation-delay:${Math.max(0, 8 - el).toFixed(2)}s">${esc(L(WAIT_BUDDY_SLOW[0], WAIT_BUDDY_SLOW[1], WAIT_BUDDY_SLOW[2], WAIT_BUDDY_SLOW[3]))}</span></div>`;
+}
+let waitBuddyEl = null;
+function waitBuddyShow(kind){
+  try{ waitBuddyHide(); const d = document.createElement('div'); d.className = 'wb-layer'; d.innerHTML = waitBuddyHtml(kind); document.body.appendChild(d); waitBuddyEl = d; }catch(e){}
+}
+function waitBuddyHide(){ try{ if(waitBuddyEl) waitBuddyEl.remove(); }catch(e){} waitBuddyEl = null; }
 function storyBannerMedia(genre){
   const gl = GENRE_LABEL[genre] || GENRE_LABEL.Fiction;
   return `<img class="clay-banner-illustration" style="width:208px; height:208px;" src="${gl.poster}" alt="" loading="lazy">`;
@@ -26664,7 +26710,10 @@ function stageStoryPick(plan, pool, profile){
 }
 function renderStoryDetail(id){
   const s = STORY_LIBRARY.find(x=>x.id===id);
-  if(!s) return renderNotFound();
+  if(!s){   // a course story (c-...) whose chapter is not here yet, e.g. the app reopened on it: fetch it now, the companion says so meanwhile
+    if(/^c-/.test(String(id || ''))) courseLazyWarm();
+    return courseLazyBusy() ? `<div class="fade-in"><div class="screen" style="min-height:70vh; display:flex; align-items:center; justify-content:center;">${waitBuddyHtml('lesson')}</div></div>` : renderNotFound();
+  }
   const gl = GENRE_LABEL[s.genre], exam = s.genre==='Exam focus';   // IELTS exam briefing: no music, "Check your understanding"
   const R = storyReader(s);   // pages + turning point (uVzMAAGg)
   return `<div class="fade-in">
@@ -28624,14 +28673,15 @@ function theatreOpen(el, kind, play, handler){
   const seen = state.progress.theatreSeen || (state.progress.theatreSeen = {});
   // quick games (worlds SPEC 4.1-4.2): the app's column, Play on every round (each is a new one), a poster already seen rests 1.2 s and
   // goes in by itself, the companion stays, "Leave the game?" mid-round
+  waitBuddyShow('game');   // while the game's files load, the clay companion on the cover says it is on its way; gone when the Theatre opens (2026-11-14)
   const qx = quick ? {stage:'app', label:'play', brief:true, companion:true, confirmExit:theatreQuickLive, world:worldsOn(kind) ? {level:(state.profile && state.profile.level) || ''} : null} : {};
-  theatreLoad().then(T=>(quick ? Promise.resolve({}) : (kind === 'chores' ? cozyExtra(ds, handler) : ycExtra(ds, handler))).then(yx=>T.open(Object.assign({kind, cover, from, views:THEATRE_VIEWS, seen:!!seen[kind]}, qx, {
+  theatreLoad().then(T=>(quick ? Promise.resolve({}) : (kind === 'chores' ? cozyExtra(ds, handler) : ycExtra(ds, handler))).then(yx=>(waitBuddyHide(), T.open(Object.assign({kind, cover, from, views:THEATRE_VIEWS, seen:!!seen[kind]}, qx, {
     // no LEVEL stamp on the Cozy Chores poster (GDD 3.2, gamification gap 2 on bD0fWJAk): its title is one string, so level only drew the stamp
     app:{lang:LANG, name:(state.profile && state.profile.name) || '', level:(kind === 'chores' || quick) ? '' : ((yx && yx.level) || (state.profile && state.profile.level) || ''), gameName:gameDisplayName(kind),   // yx.level: the Your Call album's own level on the shelf
       view:()=>state.view, muted:()=>sfxMuted, setMuted:m=>{ sfxMuted = !!m; localStorage.setItem('farinSfxMuted', m ? '1' : '0'); }},
     onPlay:(info)=>{ if(!info || info.poster) seen[kind] = 1; play(); },   // no art yet = no poster shown, not "seen"
-    onExit:theatreGameExit}, yx))))
-  .catch(()=>{ cover.remove(); play(); });
+    onExit:theatreGameExit}, yx)))))
+  .catch(()=>{ waitBuddyHide(); cover.remove(); play(); });
   return true;
 }
 // The scenario games (quick games: theatreQuickKind): the same builders start-game uses (all read-only, seeded by refId);
@@ -28795,7 +28845,7 @@ function radioEpisodeFor(refId, free, level){
   for(const st of shuffle(ctx.stories.filter(s=>read.includes(s.id)))){ const ep = RadioEpisode.fromStory(st, ctx); if(!ep.fail && radioVoiced(ep)) return ep; }
   return null;
 }
-function renderGameV2(){ return (window.Theatre && Theatre.isOpen()) ? '<div></div>' : '<div id="g2-box" style="position:fixed;inset:0;z-index:45;background:#fbf4e8"></div>'; }   // the box only when the Theatre could not open
+function renderGameV2(){ return (window.Theatre && Theatre.isOpen()) ? '<div></div>' : '<div id="g2-box" style="position:fixed;inset:0;z-index:45;background:#fbf4e8">' + waitBuddyHtml('game') + '</div>'; }   // the box only when the Theatre could not open
 // start-game / shelf-play for a games-v2 kind (the Theatre is already open: theatreGate ran first). Any load failure: the old game.
 function g2Start(ds){
   const kind = ds.kind, free = !!ds.free;
@@ -28839,6 +28889,7 @@ function g2Start(ds){
   prep.then(run=>{
     if(state.view !== 'game-v2') return;   // left while the engine was loading
     const box = (window.Theatre && Theatre.isOpen()) ? Theatre.stageEl() : document.getElementById('g2-box');
+    if(box && box.id === 'g2-box') box.innerHTML = '';   // the waiting companion leaves as the game arrives
     g2Game = run(box);
   }).catch(fallback);
 }
@@ -30051,7 +30102,8 @@ const HANDLERS = {
       if(ycShelf(ds)) return;
       if(!el.dataset.ycTry){
         const v = state.view;
-        ycLoad().then(()=>true, ()=>false).then(ok=>{ if(state.view !== v) return; if(!(ok && ycShelf(ds))) HANDLERS['shelf-play']({dataset:Object.assign({}, el.dataset, {ycTry:'1', theatre:'1'})}); });
+        waitBuddyShow('game');   // the comic's files are on their way: the companion says so (2026-11-14)
+        ycLoad().then(()=>true, ()=>false).then(ok=>{ waitBuddyHide(); if(state.view !== v) return; if(!(ok && ycShelf(ds))) HANDLERS['shelf-play']({dataset:Object.assign({}, el.dataset, {ycTry:'1', theatre:'1'})}); });
         return;
       }
       const pr = pathShelfRound();
@@ -31834,7 +31886,7 @@ function msgThreadHead(id){
 }
 function msgThreadInner(id){
   const d = msgCache[id];
-  if(!d) return `<p class="msg-sys">${CL('Loading…','Yükleniyor…','در حال بارگذاری…','Cargando…')}</p>`;
+  if(!d) return waitBuddyHtml('messages');   // the clay companion brings the messages (2026-11-14)
   return msgAll(d).map(m=>msgBubbleHtml(m, 'learner', d, msgPaintThread)).join('');
 }
 function msgComposerHtml(){
@@ -35543,8 +35595,9 @@ function courseLazyScript(src){
   return new Promise((res, rej)=>{ const s = document.createElement('script'); s.src = src; s.onload = ()=>res(); s.onerror = ()=>{ try{ s.remove(); }catch(e){} rej(new Error('load ' + src)); }; document.head.appendChild(s); });
 }
 // Puts one loaded module's items where the engine looks for them (once): COURSE_EXTRA, or GRAMMAR_ITEMS / VOCAB_SETS for a course's grammar and word items.
-const COURSE_LAZY_KEYS = ['branch','listening','storySample','explain','drill','writing','sets','exit','judge','speaking','grammar','b2','vocab'];
-function courseLazyTarget(k){ if(k === 'grammar' || k === 'b2') return GRAMMAR_ITEMS; if(k === 'vocab') return VOCAB_SETS; return COURSE_EXTRA[k] || (COURSE_EXTRA[k] = []); }
+// story + perspective: HR & Business English keeps its story (Leyla) and its Empathy tasks; its lessons are lazy since 2026-11-14 (sync-hr.js).
+const COURSE_LAZY_KEYS = ['branch','listening','storySample','explain','drill','writing','sets','exit','judge','speaking','grammar','b2','vocab','story','perspective'];
+function courseLazyTarget(k){ if(k === 'grammar' || k === 'b2') return GRAMMAR_ITEMS; if(k === 'vocab') return VOCAB_SETS; if(k === 'story') return STORY_LIBRARY; return COURSE_EXTRA[k] || (COURSE_EXTRA[k] = []); }
 function courseLazyRegister(c, m){
   const lz = m.lazy, all = (typeof window !== 'undefined' && window[lz.global || 'IELTS_EXAMS']) || {}, data = all[lz.key] || {}, units = data.units || {};
   courseLazyUnits(m).forEach(u=>{
@@ -35565,7 +35618,10 @@ function courseLazyLoad(c, m){
     .then(ok=>{ COURSE_LAZY.wait[k] = null;
       // re-render only a screen that shows this exam (its course page, or a lesson / card / done screen of one of its lessons)
       const vp = state.viewParams || {}, mine = vp.uid ? courseLazyUnits(m).some(u=>u.id === vp.uid) : vp.cid === c.id;
-      if(mine && ['course-detail','course-lesson','course-step','course-done'].includes(state.view)) render(); return ok; }));
+      if(mine && ['course-detail','course-lesson','course-step','course-done'].includes(state.view)) render();
+      // a course story (HR keeps its story) that was waiting for exactly this chapter: show it now
+      else if(ok && state.view === 'story-detail'){ const s = STORY_LIBRARY.find(x=>x.id === vp.id); if(s && s.course === c.id && courseLazyUnits(m).some(u=>u.id === s.unit)) render(); }
+      return ok; }));
 }
 // Starts loading the exam of a lesson (not again after a failure; Retry does that).
 function courseLazyEnsure(c, uid){ const m = courseLazyUnitMod(uid); if(m && !courseLazyReady(m) && COURSE_LAZY.state[m.lazy.key] !== 'error' && !COURSE_LAZY.wait[m.lazy.key]) courseLazyLoad(c, m); courseLazyEarlier(c, m); return m; }
@@ -35577,6 +35633,21 @@ function courseLazyEarlier(c, m){
 }
 // The course page loads the exam of the next step in the background, so its lessons open at once (and offline later).
 function courseLazyPrefetch(c, nx){ if(nx && nx.uid) courseLazyEnsure(c, nx.uid); }
+// Is any chapter loading right now? (a screen that needs course data shows the waiting companion meanwhile)
+function courseLazyBusy(){ return Object.keys(COURSE_LAZY.state).some(k=>COURSE_LAZY.state[k] === 'loading'); }
+// HR's lessons left the app page (2026-11-14, sync-hr.js): learners who already use HR (access, or progress in it) and the admin get all
+// of its chapters in the background a few seconds after the app opens, so their stories, journal, Your work and review find the items
+// as before; everyone else downloads HR only when they open it. One chapter at a time, the first screen is never held.
+function courseLazyWarm(){
+  try{
+    const c = courseGet('hr'); if(!c) return;
+    const pr = state.progress || {}, uses = location.hash === '#admin' || courseUnlocked('hr') || !!(pr.courses && pr.courses.hr);
+    if(!uses) return;
+    const mods = (c.modules || []).filter(m=>m.lazy && !courseLazyReady(m));
+    const next = ()=>{ const m = mods.shift(); if(!m) return; (COURSE_LAZY.wait[m.lazy.key] || courseLazyLoad(c, m)).then(next, next); };
+    next();
+  }catch(e){}
+}
 function courseLazyOpening(cid){ return courseIsExam(courseGet(cid)) ? CL('Opening the exam…','Sınav açılıyor…','آزمون باز می‌شود…','Abriendo el examen…') : CL('Opening the lesson…','Ders açılıyor…','درس باز می‌شود…','Abriendo la lección…'); }
 function courseLazyFailHtml(cid, uid){
   const msg = courseIsExam(courseGet(cid)) ? CL('This exam could not be loaded. Check your connection and try again.','Bu sınav yüklenemedi. Bağlantını kontrol edip tekrar dene.','این آزمون باز نشد. اتصالت را بررسی کن و دوباره امتحان کن.','No se pudo cargar este examen. Revisa tu conexión e inténtalo de nuevo.') : CL('This lesson could not be loaded. Check your connection and try again.','Bu ders yüklenemedi. Bağlantını kontrol edip tekrar dene.','این درس باز نشد. اتصالت را بررسی کن و دوباره امتحان کن.','No se pudo cargar esta lección. Revisa tu conexión e inténtalo de nuevo.');
@@ -35586,12 +35657,12 @@ function courseLazyFailHtml(cid, uid){
 function courseLazyWaitHtml(cid, uid, m){
   const c = courseGet(cid); if(c) courseLazyEnsure(c, uid);
   if(COURSE_LAZY.state[m.lazy.key] === 'error') return courseLazyFailHtml(cid, uid);
-  return `<div class="card-flat ie-wait"><span class="ie-spin" aria-hidden="true"></span><p>${courseLazyOpening(cid)}</p></div>`;
+  return waitBuddyHtml(courseIsExam(courseGet(cid)) ? 'exam' : 'lesson');   // the clay companion says the lesson / exam is on its way (2026-11-14)
 }
 // Lesson page: loads the exam; shows a line only while it loads or when it failed.
 function courseLazyLessonNote(c, uid){
   const m = courseLazyEnsure(c, uid); if(!m || courseLazyReady(m)) return '';
-  return COURSE_LAZY.state[m.lazy.key] === 'error' ? courseLazyFailHtml(c.id, uid) : `<p class="ie-wait-line"><span class="ie-spin" aria-hidden="true"></span>${courseLazyOpening(c.id)}</p>`;
+  return COURSE_LAZY.state[m.lazy.key] === 'error' ? courseLazyFailHtml(c.id, uid) : waitBuddyHtml(courseIsExam(c) ? 'exam' : 'lesson');   // clay companion (2026-11-14)
 }
 
 /* ---------- Academic / General Training switch ("Your version"; course page and the lesson page of R1-R3 and W1) ---------- */
@@ -40371,6 +40442,7 @@ if(location.hash === '#admin'){
     else renderAdminPage();
   });
   setTimeout(()=>{ if(!adminAuthResolved) renderAdminPage(); }, 4000);
+  setTimeout(courseLazyWarm, 3000);   // HR lessons for the admin's views (they left the page 2026-11-14)
 } else {
   if(state.profile.completedDiagnostic && state.view === 'diagnostic-intro'){ state.view = 'dashboard'; }
   const roadmapMediaAdded = ensureRoadmap();
@@ -40428,6 +40500,7 @@ if(location.hash === '#admin'){
   if(!(window.__feBootStart && Date.now() - window.__feBootStart > 4000)) showSplash();
   scheduleCharTips(6000);
   clubRefresh();
+  setTimeout(courseLazyWarm, 3000);   // HR learners get HR's lessons in the background (they left the page 2026-11-14)
 }
 
 /* Best-effort offline caching for "Add to Home Screen" use. A browser-security rule means a service

@@ -80,7 +80,7 @@ window.THEATRE_SKINS = {
     backdrop:{src:null, position:'68% 50%', blur:30, veil:.56}, props:[],
     gw:{bg:'#f7d3d6', surface:'#f3e9e2', paper:'#fffaf0', ink:'#14332e', hue:'var(--cat-lis)', accent:'#e8402f', cta:'#14332e', ctaInk:'#ffffff'},
     world:{stage:'clamp(170px, 34dvh, 340px)', plate:{src:'games/worlds/echo/art/echo-studio.webp', top:'-4%', ready:true}, layers:[
-      {src:'games/worlds/echo/art/echo-mic.webp', cls:'gw-mic', box:[64, 52, 15], ready:true}], text:[], sfx:{}, css:null}},
+      {src:'games/worlds/echo/art/echo-mic.webp', cls:'gw-mic', id:'gw-mic', box:[64, 52, 15], ready:true}], text:[], sfx:{}, css:null}},
   // Listen & Type: headphones at the window over the harbour, soft grey-rose, orange headphones
   dictation:{card:'art/posters/card-dictation.webp', focus:'76%',
     palette:{sky:'#f8f3f1', sky2:'#e5dad5', glow:'#fffaf7', ground:'#b79984', ink:'#2f2a28', accent:'#cc6428', accentInk:'#ffffff'},

@@ -303,3 +303,38 @@ body.gw-on.gw-bingo .game-tile.stamp{background:#ffe0dc; border-color:var(--gw-a
 body.gw-on.gw-bingo .game-tiles{padding:12px; border-radius:18px; background:var(--gw-paper); box-shadow:inset 0 6px 0 var(--gw-ed, #FFD166), 0 0 0 2px color-mix(in srgb, var(--gw-line) 14%, transparent);}
 /* Mini Cross: the newspaper */
 body.gw-on.gw-cross .game-card{background:var(--gw-paper);}
+
+/* ---- World Kit full design (2026-11-15): progress you can see, end beats, Sam. Motion stays calm and functional (Farin's rule) ---- */
+/* Order Up!: the ticket rail. Each customer is a paper ticket on the rail; a served one is spiked with a pin in the level colour */
+body.gw-on.gw-order .gp-pips{gap:8px; padding:6px 10px 0; border-top:4px solid #b98a3c; border-radius:2px;}
+body.gw-on.gw-order .gp-pip{width:20px; height:26px; margin-top:-2px; border-radius:2px 2px 4px 4px; background:transparent; border:2px dashed color-mix(in srgb, var(--gw-line) 30%, transparent); box-shadow:none;}
+body.gw-on.gw-order .gp-pip.cur{border-style:solid; border-color:color-mix(in srgb, var(--gw-line) 55%, transparent); background:rgba(255,255,255,.5);}
+body.gw-on.gw-order .gp-pip.on{position:relative; border:2px solid var(--gw-line); background:var(--gw-paper) repeating-linear-gradient(180deg, transparent 0 7px, color-mix(in srgb, var(--gw-line) 18%, transparent) 7px 8px);}
+body.gw-on.gw-order .gp-pip.on::before{content:''; position:absolute; top:-7px; left:50%; width:8px; height:8px; margin-left:-4px; border-radius:50%; background:var(--gw-ed, #FFD166); border:2px solid var(--gw-line);}
+/* Word Bingo: the card is the progress (counters on the words); Mini Cross: the croissant is */
+body.gw-on.gw-bingo .gp-pips, body.gw-on.gw-cross .gp-pips{display:none;}
+.th-world .gw-croissant{transition:opacity .4s ease;}
+.th-world[data-third="1"] .gw-croissant{-webkit-mask-image:radial-gradient(circle at 100% 22%, transparent 0 20%, #000 21%); mask-image:radial-gradient(circle at 100% 22%, transparent 0 20%, #000 21%);}
+.th-world[data-third="2"] .gw-croissant{-webkit-mask-image:radial-gradient(circle at 100% 22%, transparent 0 20%, #000 21%), radial-gradient(circle at 0% 30%, transparent 0 22%, #000 23%); -webkit-mask-composite:source-in; mask-image:radial-gradient(circle at 100% 22%, transparent 0 20%, #000 21%), radial-gradient(circle at 0% 30%, transparent 0 22%, #000 23%); mask-composite:intersect;}
+.th-world[data-third="3"] .gw-croissant{opacity:.18;}
+/* Build It: each sentence is a wooden block in the poster's colours, the row fills up block by block */
+body.gw-on.gw-build .gp-pip{width:24px; height:18px; border-radius:4px; background:transparent; border:2px dashed color-mix(in srgb, var(--gw-line) 28%, transparent);}
+body.gw-on.gw-build .gp-pip.cur{border-style:solid; border-color:color-mix(in srgb, var(--gw-line) 50%, transparent);}
+body.gw-on.gw-build .gp-pip.on{border:2px solid var(--gw-line); background:#f2c14e; box-shadow:inset 0 -3px 0 rgba(0,0,0,.12);}
+body.gw-on.gw-build .gp-pip.on:nth-child(4n+2){background:#5fc9b8;} body.gw-on.gw-build .gp-pip.on:nth-child(4n+3){background:#ff8a5c;} body.gw-on.gw-build .gp-pip.on:nth-child(4n){background:#fbeed2;}
+/* Say It Back: one tape reel per line; a done line's reel is in colour */
+body.gw-on.gw-echo .gp-pip{width:28px; height:28px; border-radius:50%; background:url("../worlds/echo/art/echo-reel.webp") center/contain no-repeat; filter:grayscale(1) opacity(.4); box-shadow:none;}
+body.gw-on.gw-echo .gp-pip.cur{filter:grayscale(.6) opacity(.75);}
+body.gw-on.gw-echo .gp-pip.on{filter:none;}
+/* Sam (Order Up!) steps in at the door side of the counter */
+.th-world .gw-sam{left:56%; bottom:0; top:auto; width:auto; height:88%; filter:none;}
+/* end beats (2.4 s at most, a tap skips): one flat light sweep over the place, plus each world's own small move */
+.th-world.th-beat .th-world-art::after{content:''; position:absolute; inset:0; pointer-events:none;
+  background:linear-gradient(105deg, transparent 0 35%, rgba(255,250,230,.55) 48%, transparent 62%) no-repeat; background-size:300% 100%; animation:gw-sweep 1.6s ease-out both;}
+.th-world.th-beat .gw-bell{transform-origin:50% 8%; animation:gw-swing .5s ease-in-out 2;}
+.th-world.th-beat .gw-radio{animation:gw-pulse .6s ease-in-out 2;}
+.th-world.th-beat .gw-mic{animation:gw-pulse .6s ease-in-out 2;}
+@keyframes gw-sweep{from{background-position:100% 0} to{background-position:0 0}}
+@keyframes gw-swing{0%,100%{transform:rotate(0)} 30%{transform:rotate(8deg)} 70%{transform:rotate(-8deg)}}
+@keyframes gw-pulse{0%,100%{transform:scale(1)} 50%{transform:scale(1.04)}}
+@media (prefers-reduced-motion: reduce){ .th-world.th-beat .th-world-art::after, .th-world.th-beat .gw-bell, .th-world.th-beat .gw-radio, .th-world.th-beat .gw-mic{animation:none !important;} .th-world .gw-croissant{transition:none;} }

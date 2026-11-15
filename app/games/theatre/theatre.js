@@ -358,6 +358,14 @@ function say(text, o){
   s.sayTimer = setTimeout(function(){ if(s.sayEl && s.sayEl.firstChild === box){ var a = reduced() ? null : anim(box, [{opacity:1}, {opacity:0}], {duration:180, fill:'forwards'}); var rm = function(){ if(box.parentNode) box.remove(); }; if(a) a.onfinish = rm; else rm(); } }, ms);
   return true;
 }
+// Theatre.progress(done, total): the world's own progress object (SPEC 4.8) reads data-done / data-total / data-third (0-3) and
+// --gw-frac on .th-world: tickets on the rail, the croissant's bites, the reels. The count is never shown as a number.
+function progress(done, total){
+  var s = cur; if(!s || !s.world || !total) return;
+  var w = s.world.el; done = Math.max(0, Math.min(total, Math.round(done) || 0));
+  w.setAttribute('data-done', done); w.setAttribute('data-total', total); w.setAttribute('data-third', Math.min(3, Math.floor(done / total * 3)));
+  w.style.setProperty('--gw-frac', (done / total).toFixed(3));
+}
 // Theatre.finale({beat, ms}) -> Promise: the world's own end moment (a class on .th-world for the CSS beat and/or a function),
 // 2.4 s at most, one tap skips. The souvenir and the one button stay the app's own end card (SPEC 4.9).
 function finale(o){
@@ -672,7 +680,7 @@ var api = {
   version:'1.1.0',
   open:open, close:close, sync:sync, exit:exit, play:start, skip:skip,
   titleCard:titleCard, transition:transition, setStrip:setStrip, setControls:setControls, stageEl:stageEl, setSkin:setSkin,
-  say:say, finale:finale, sfx:sfx, world:function(){ return cur && cur.world ? cur.world.kind : null; },
+  say:say, finale:finale, sfx:sfx, progress:progress, world:function(){ return cur && cur.world ? cur.world.kind : null; },
   skin:function(){ return cur && cur.skin ? cur.skinKind : null; },
   isOpen:function(){ return !!cur; },
   phase:function(){ return cur ? cur.phase : null; },

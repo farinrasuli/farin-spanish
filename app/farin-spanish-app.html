@@ -13953,6 +13953,10 @@ function gameRoundStats(kind, round){
   return {pct, perfect:pct===100};
 }
 function gameRecordText(kind, st){
+  if(QUICK_NO_SCORES.includes(kind)) return gameDisplayName(kind);   // Farin's no-scores rule (2026-11-15): a quick game's souvenir names the game, no count
+  return gameRecordTextAll(kind, st);
+}
+function gameRecordTextAll(kind, st){
   const name = gameDisplayName(kind);
   if(kind === 'path') return name+' · '+L('Chapter','Bölüm','فصل','Capítulo')+' '+st.chapter;
   if(kind === 'build') return name+' · '+st.firstTry+'/'+st.total+' '+L('first try','ilk denemede','در اولین تلاش','a la primera');
@@ -13969,7 +13973,13 @@ function gameRecordText(kind, st){
   if(kind === 'trap') return name+' · '+st.correct+'/'+st.total+(st.time ? ' · '+st.time+'s' : '');
   return name+' · '+st.pct+'%';
 }
+// Farin's no-scores rule (2026-11-15): a quick game's celebration keeps only its stickers without a number ("Full card", "Sharp ears")
+const QUICK_NO_SCORES = ['match','build','cross','order','desk','spell','bingo','hunt','echo','dictation','trap'];
 function gameStatStickers(kind, st){
+  const all = gameStatStickersAll(kind, st);
+  return QUICK_NO_SCORES.includes(kind) ? all.filter(x=>!/[0-9۰-۹]/.test(String(x))) : all;
+}
+function gameStatStickersAll(kind, st){
   if(kind === 'path') return [L(`Chapter ${st.chapter} of ${st.total}`, `Bölüm ${st.chapter}/${st.total}`, `فصل ${st.chapter} از ${st.total}`, `Capítulo ${st.chapter} de ${st.total}`)];
   if(kind === 'cross') return [st.clean+'/'+st.total+' '+L('clean','temiz','بی‌خطا','limpias')].concat(st.reveals ? [] : [L('No reveals','Harf açmadan','بدون فاش‌کردن حرف','Sin letras reveladas')]);
   if(kind === 'order') return [L(`${st.right}/${st.total} perfect orders`, `${st.right}/${st.total} kusursuz sipariş`, `${st.right}/${st.total} سفارش بی‌نقص`, `${st.right}/${st.total} pedidos perfectos`)].concat(st.tickets ? [] : [L('No tickets','Fişsiz','بدون رسید','Sin mirar el pedido')]);
@@ -14508,7 +14518,7 @@ function render(){
   if(state.view !== 'game-spell'){ try{ spellStopRec(); }catch(e){} }
   bindEvents(root);
   if(state.view !== 'dashboard') hideCharTip(true);
-  if(window.Theatre){ try{ Theatre.sync(state.view); if(Theatre.setSkin && THEATRE_QUICK_VIEWS.includes(state.view)) Theatre.setSkin(viewGameKind(state.view)); }catch(e){} }   // Game Theatre: leaving a game's views closes the full-screen stage; a quick round that became another game (Play again on the shelf) takes that game's world
+  if(window.Theatre){ try{ Theatre.sync(state.view); if(Theatre.setSkin && THEATRE_QUICK_VIEWS.includes(state.view)) Theatre.setSkin(viewGameKind(state.view)); worldTick(); }catch(e){} }   // Game Theatre: leaving a game's views closes the full-screen stage; a quick round that became another game (Play again on the shelf) takes that game's world
   runPendingFx();
   maybeCelebrate();
   try{ maybeShowPageKept(); }catch(e){}
@@ -20366,10 +20376,12 @@ function orderArrive(round){
     {transform:'translateX(0) scale(1.06, .94)', offset:.9}, {transform:'translateX(0) scale(1)'}
   ], {duration:400, easing:SPRING});
   sfx('hop');
-  if(round.index === 0 && !round.greeted){ round.greeted = true; companionSay(orderLang() === 'es' ? '¿Qué le pongo?' : 'What would you like?', 2200); }
+  const samOpens = round.index === 0 && !round.greeted && worldKind() === 'order';
+  if(round.index === 0 && !round.greeted){ round.greeted = true; if(!samOpens) companionSay(orderLang() === 'es' ? '¿Qué le pongo?' : 'What would you like?', 2200); }
   if(round.noVoice && !round.noVoiceSaid){ round.noVoiceSaid = true; setTimeout(()=>{ if(state.view === 'game-order') companionSay(orderNoVoiceText(), 3400); }, 2300); }
   const idx = round.index;
-  setTimeout(()=>{ if(state.viewParams && state.viewParams.round === round && round.index === idx && !round.finished) speakTarget(cust.text, orderRate(round)); }, 420);
+  const say = ()=>{ if(state.viewParams && state.viewParams.round === round && round.index === idx && !round.finished) speakTarget(cust.text, orderRate(round)); };
+  if(samOpens) orderSam('open', ()=>setTimeout(say, 250)); else setTimeout(say, 420);
 }
 function orderShake(el){
   anim(el, [{transform:'translateX(0)'}, {transform:'translateX(-5px)'}, {transform:'translateX(5px)'}, {transform:'translateX(-5px)'}, {transform:'translateX(0)'}], {duration:260, easing:'linear'});
@@ -20381,6 +20393,7 @@ function fxOrderDrop(i){
   sfx('hop');
 }
 function fxOrderRight(round, cust){
+  orderThanks(round);
   if(orderWorldOn()){ const f = document.getElementById('order-cust'); if(f) f.src = orderFaceSrc(round, cust); }   // the world: the warm face
   const tray = document.getElementById('order-tray'), who = document.getElementById('order-cust');
   const rtl = document.documentElement.dir === 'rtl';
@@ -29216,6 +29229,8 @@ function sfxNoiseTick(ctx, t, peak){
 }
 function sfx(name){
   if(sfxMuted) return;
+  const wk = window.Theatre && Theatre.world && Theatre.world(), ws = wk && WORLD_SFX[wk] && WORLD_SFX[wk][name];
+  if(ws && Theatre.sfx && Theatre.sfx(ws)) return;   // World Kit foley (SPEC 4.10)
   try{
     const ctx = sfxCtx(), t = ctx.currentTime + 0.01;
     switch(name){
@@ -29284,7 +29299,7 @@ const THEATRE_QUICK = ['match','build','cross','order','desk','spell','bingo','h
 const THEATRE_QUICK_VIEWS = THEATRE_QUICK.map(k=>'game-' + k);
 const THEATRE_KINDS = ['path','chores','mystery','radio'].concat(THEATRE_QUICK);
 const THEATRE_VIEWS = ['game-path','game-yc','game-chores-building','game-chores-room','game-mystery','game-v2'].concat(THEATRE_QUICK_VIEWS);
-const THEATRE_VER = '7';
+const THEATRE_VER = '8';
 // World Kit switch (worlds SPEC 4.14): one flag per quick game, on once its art and checks pass (Farin 11-10: switch on what is done).
 // ?worlds=1 previews every world in this browser (?worlds=0 switches the preview off). Off = the game plays over its poster's soft backdrop.
 // 2026-11-15 World Kit v1 live: Order Up!, Word Bingo, Mini Cross, Build It, Say It Back (their plates and props passed art QC). Passport Desk waits
@@ -29301,6 +29316,65 @@ function worldsOn(kind){
     }catch(e){ worldsFlag = false; }
   }
   return THEATRE_QUICK.includes(kind) && (!!WORLDS_LIVE[kind] || worldsFlag);
+}
+/* World Kit, full design (worlds SPEC 4.8-4.10, 5-9; 2026-11-15). The kind whose world is on, or null. */
+function worldKind(){ return (window.Theatre && Theatre.world && Theatre.world()) || null; }
+// A world line in a natural voice only, never the device voice (Farin 11-07): who 0 = Bella / Daniela, 1 = George / Dave.
+// Every world line has both clips (Claude/specs/games-own-worlds-2026-11-14/render/tools/voice-gw.mjs). done runs once, at the end
+// of the line or after a backstop.
+function worldSpeak(text, who, done){
+  let fin = false, t = null;
+  const end = ()=>{ if(fin) return; fin = true; clearTimeout(t); if(done) done(); };
+  t = setTimeout(end, 1400 + 420 * String(text || '').split(/\s+/).length);
+  try{ ttsSpeak(text, 0.92, {end, error:end}, {natural:true, voice:TTS_ACCENTS[who ? 1 : 0]}); }catch(e){ end(); }
+}
+// Progress you can see in the world (SPEC 4.8): the ticket rail, the croissant, the blocks, the reels read data-done / data-third.
+function worldProgress(view, r){
+  if(view === 'game-order') return {done:r.finished ? ORDER_CUSTOMERS : r.index, total:ORDER_CUSTOMERS};
+  if(view === 'game-bingo') return {done:r.finished ? 9 : Math.min(r.call, 9), total:9};
+  if(view === 'game-cross') return {done:r.words.filter(w=>w.solved).length, total:r.words.length};
+  if(view === 'game-build') return {done:r.finished ? r.items.length : r.index, total:r.items.length};
+  if(view === 'game-echo') return {done:r.finished ? r.lines.length : r.index, total:r.lines.length};
+  return null;
+}
+// After every render in a world: the progress object, and once per round the end beat (SPEC 4.9) + Sam closing the cafe.
+function worldTick(){
+  const k = worldKind(), r = state.viewParams && state.viewParams.round;
+  if(!k || !r || !THEATRE_QUICK_VIEWS.includes(state.view)) return;
+  const p = worldProgress(state.view, r); if(p && Theatre.progress) Theatre.progress(p.done, p.total);
+  if(r.finished && !r.beat){
+    r.beat = 1;
+    if(Theatre.finale) Theatre.finale({});
+    if(state.view === 'game-order') orderSam('close');
+  }
+}
+// The world's own sounds (SPEC 4.10): the app's sound names played as the world's foley (the Open House CC0 kit); anything not
+// listed keeps the app's own sound. Say It Back keeps its quiet UI sounds (accuracy matters there).
+const WORLD_SFX = {order:{hop:'land-food', correct:'bell', flip:'paper', stamp:'tick'}, bingo:{correct:'card-clack', combo:'combo', reveal:'reveal'},
+  cross:{tick:'pencil', flip:'paper', correct:'correct'}, build:{flip:'land-light', wrong:'knock', correct:'correct'}};
+// Order Up! (SPEC 5): Sam hands the counter over on the first customer and closes the cafe at the end (Harbour Files' Sam; ES: Nacho)
+function orderSam(which, then){
+  if(worldKind() !== 'order'){ if(then) then(); return; }
+  const es = orderLang() === 'es';
+  const line = which === 'open' ? (es ? '¡Hora punta! ¿Te encargas de la barra?' : 'Rush hour! Can you take the counter?') : (es ? '¡Buen turno! ¡Gracias!' : 'Great shift. Thank you!');
+  const st = document.querySelector('.th-world-art .th-world-stage');
+  const old = document.getElementById('gw-sam'); if(old) old.remove();
+  let img = null;
+  if(st){ img = document.createElement('img'); img.id = 'gw-sam'; img.className = 'th-world-cut gw-sam'; img.alt = ''; img.src = 'games/case-closed/art/pt-sam-' + (which === 'open' ? 'open' : 'calm') + '.webp'; st.appendChild(img); }
+  setTimeout(()=>{ if(window.Theatre && Theatre.say) Theatre.say(line, {who:'gw-sam', kind:'balloon', ms:3400}); }, 80);
+  const t0 = Date.now();
+  worldSpeak(line, 1, ()=>setTimeout(()=>{   // Sam stays at least 2 s, even if the clip ends early or cannot play
+    if(which === 'open' && img){ const a = reducedMotion() ? null : anim(img, [{opacity:1}, {opacity:0}], {duration:300, fill:'forwards'}); const rm = ()=>img.remove(); if(a) a.onfinish = rm; else rm(); }
+    if(then) then();
+  }, Math.max(0, 2000 - (Date.now() - t0))));
+}
+// a served customer says thanks (SPEC 5): one of four lines, in the voice that speaks the orders
+const ORDER_THANKS = {en:['Thanks a lot!', 'Lovely, thank you!', 'Perfect, thanks!', 'That\'s just right!'], es:['¡Muchas gracias!', '¡Qué bien, gracias!', '¡Perfecto, gracias!', '¡Justo lo que quería!']};
+function orderThanks(round){
+  if(worldKind() !== 'order') return;
+  const list = ORDER_THANKS[orderLang() === 'es' ? 'es' : 'en'], line = list[round.index % list.length];
+  if(window.Theatre && Theatre.say) Theatre.say(line, {who:'order-cust', kind:'balloon', ms:1500});
+  worldSpeak(line, TTS_ACCENTS.indexOf(ttsAccent()) === 1 ? 1 : 0);
 }
 let theatreLoading = null;
 function theatreLoad(){
@@ -29608,6 +29682,7 @@ function g2Done(kind, ds, res){
 function gameProgressHtml(done, total, label){
   let pips = '';
   for(let i = 0; i < total; i++) pips += '<i class="gp-pip' + (i < done ? ' on' : (i === done ? ' cur' : '')) + '"></i>';
+  if(window.Theatre && Theatre.progress && Theatre.world && Theatre.world()) try{ Theatre.progress(done, total); }catch(e){}
   return '<span class="gp-pips" aria-hidden="true">' + pips + '</span><span class="visually-hidden" aria-live="polite">' + esc(label) + '</span>';
 }
 function gameTopHtml(title, noFace){
@@ -30956,7 +31031,9 @@ const HANDLERS = {
       if(echoRound){
         if(!echoShadowSupported()) echoRound.shadow = true;
         go('game-echo', Object.assign({round: echoRound}, params));
-        setTimeout(()=>{ if(state.viewParams && state.viewParams.round === echoRound) echoSpeak(echoRound, 0.92); }, 400);
+        const first = ()=>{ if(state.viewParams && state.viewParams.round === echoRound) echoSpeak(echoRound, 0.92); };
+        if(worldKind() === 'echo') setTimeout(()=>{ const line = TTS_LANG.slice(0, 2) === 'es' ? '¡Estás en antena!' : 'You\'re on air!'; if(window.Theatre && Theatre.say) Theatre.say(line, {who:'gw-mic', kind:'balloon', ms:2200}); worldSpeak(line, 1, ()=>setTimeout(first, 300)); }, 400);
+        else setTimeout(first, 400);
         return;
       }
       // the set has fewer than 3 sentences: Word Rush instead

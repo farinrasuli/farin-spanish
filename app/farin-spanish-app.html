@@ -1677,6 +1677,32 @@
   .ap-ring b{position:absolute; inset:0; display:grid; place-items:center; font-weight:900; font-size:10.5px; font-variant-numeric:tabular-nums; color:var(--ink);}
   .ap-ring.lg{width:68px; height:68px;} .ap-ring.lg b{font-size:14px;}
   .ap-acts{display:flex; align-items:center; gap:6px; flex:none;}
+  /* Users list card (2026-11-15): the learner row, then password / recovery code / number, then the Insights box */
+  .ap-ucard{background:var(--bg-elevated); border:1px solid var(--border-soft); border-radius:20px; box-shadow:0 1px 2px rgba(26,20,16,.04); overflow:hidden;}
+  .ap-ucard > .ap-person{border:0; border-radius:0; box-shadow:none; background:transparent; padding-bottom:10px;}
+  .ap-ufacts{display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); gap:8px; padding:0 14px 10px;}
+  .ap-ufacts > div{background:var(--bg-sunken); border-radius:14px; padding:8px 11px; min-width:0; display:flex; flex-direction:column; gap:3px;}
+  .ap-ufacts span{font-size:10.5px; font-weight:900; letter-spacing:.05em; text-transform:uppercase; color:var(--ink-faint);}
+  .ap-ufacts b{font-size:14px; font-weight:800; min-width:0; overflow-wrap:anywhere; display:flex; flex-wrap:wrap; align-items:baseline; gap:2px 8px;}
+  .ap-copyv{all:unset; cursor:pointer; color:var(--ink); overflow-wrap:anywhere; border-radius:6px; -webkit-tap-highlight-color:transparent;}
+  .ap-copyv code{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; font-size:13.5px; font-weight:700; letter-spacing:.03em;}
+  .ap-copyv.done{color:var(--success);}
+  .ap-copyv:focus-visible{outline:2px solid var(--fs-purple); outline-offset:2px;}
+  .ap-ufaint{font-style:normal; font-size:12px; font-weight:600; color:var(--ink-faint);}
+  .ap-wa{font-size:11.5px; font-weight:800; color:var(--fs-purple-ink); text-decoration:none;}
+  .ap-insbox{all:unset; box-sizing:border-box; cursor:pointer; display:flex; align-items:center; gap:12px; width:calc(100% - 28px); margin:0 14px 14px; padding:10px 12px; border-radius:16px; background:var(--fs-purple-soft); color:var(--ink); -webkit-tap-highlight-color:transparent;}
+  .ap-insbox:focus-visible{outline:2px solid var(--fs-purple); outline-offset:2px;}
+  .ap-insbox .t{flex:1; min-width:0; display:flex; flex-direction:column; gap:1px;}
+  .ap-insbox b{font-weight:800; font-size:14px;}
+  .ap-insbox small{font-size:12px; color:var(--ink-soft); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+  .ap-insbox-ic{width:30px; height:30px; border-radius:10px; background:var(--bg-elevated); display:grid; place-items:center; font-size:15px; flex:none;}
+  .ap-insbox.on{border-radius:16px 16px 0 0; margin-bottom:0;}
+  .ap-insbox.on .ap-chev{transform:rotate(90deg);}
+  .ap-insp{margin:0 14px 14px; padding:4px 14px 14px; background:var(--fs-purple-soft); border-radius:0 0 16px 16px;}
+  .ap-insp .ap-kv{border-color:color-mix(in srgb, var(--fs-purple) 16%, transparent);}
+  .ap-insp .ap-kv:first-child{padding-top:10px;}
+  .ap-insp-more{margin-top:10px;}
+  @media (max-width:560px){ .ap-ufacts{grid-template-columns:1fr; gap:6px;} .ap-ufacts > div{flex-direction:row; justify-content:space-between; align-items:baseline; gap:12px;} .ap-ufacts span{flex:none;} .ap-ufacts b{justify-content:flex-end; text-align:end;} }
   @media (max-width:420px){ .ap-person > .ap-chev{display:none;} }
   @media (max-width:520px){ .ap-person.static{flex-wrap:wrap;} .ap-person.static .ap-acts{width:100%; padding-inline-start:58px;} }
   /* a learner's profile */
@@ -9431,7 +9457,9 @@ function claimLogin(name, password, code){
     return ref.get().then(doc=>{
       const d = doc.exists ? (doc.data() || {}) : {};
       if(d.loginFor && d.loginFor !== code && !d.revoked) return {status:'taken'};
-      return ref.set({kind:'login', app:LOGIN_APP, loginFor:code, revoked:false, savedAt:Date.now()}).then(()=>({status:'ok', id}));
+      // Since 2026-11-15 the login doc keeps the password too, so the admin can show it (Farin: "their password that they chose").
+      // A get needs this doc's id, which is made from this very name + password; only the admin's LIST of progress sees every login.
+      return ref.set({kind:'login', app:LOGIN_APP, loginFor:code, revoked:false, savedAt:Date.now(), loginName:String(name || '').trim(), pass:String(password)}).then(()=>({status:'ok', id}));
     });
   });
 }
@@ -9575,6 +9603,7 @@ function trackAppOpen(){
 function markActivity(){
   markDailyVisit();
   recordActiveDay();
+  state.progress.lastPlayedAt = Date.now();   // admin Users › Insights: when they last played (2026-11-15)
   state.progress.sessionsExplored += 1;
   checkBadges();
 }
@@ -14841,7 +14870,7 @@ function renderPrivacyPolicy(){
   const MAIL = `<a href="mailto:farinrasuli@gmail.com" dir="ltr" style="color:inherit;">farinrasuli@gmail.com</a>`;
   const ielts = LOGIN_APP === 'en';
   return `<div class="fade-in">
-    ${sectionHead(L('Privacy Policy','Gizlilik Politikası','حریم خصوصی','Política de Privacidad'), CL('Last updated: November 14, 2026','Son güncelleme: 14 Kasım 2026','آخرین به‌روزرسانی: ۱۴ نوامبر ۲۰۲۶','Última actualización: 14 de noviembre de 2026'))}
+    ${sectionHead(L('Privacy Policy','Gizlilik Politikası','حریم خصوصی','Política de Privacidad'), CL('Last updated: November 15, 2026','Son güncelleme: 15 Kasım 2026','آخرین به‌روزرسانی: ۱۵ نوامبر ۲۰۲۶','Última actualización: 15 de noviembre de 2026'))}
     <div class="screen" style="padding-top:0;">
       <div class="card-flat" style="line-height:1.7; font-size:14px;">
         ${P(L("A short summary of what Farin English and Farin Spanish keep about you, and why. The full policy is on our website.",
@@ -14858,10 +14887,10 @@ function renderPrivacyPolicy(){
             "Adın, seviyen, hedefin ve «en iyi nasıl öğrenirsin» sorusuna verdiğin cevaplar.",
             "اسمت، سطحت، هدفت و جواب‌هایت به سؤال کوتاه «چطور بهتر یاد می‌گیری».",
             "Tu nombre, tu nivel, tu objetivo y tus respuestas a la pregunta corta «¿cómo aprendes mejor?»."),
-          L("Your password, only as a one-way scrambled key made from your name and password, used to find your account. The password itself is never stored.",
-            "Şifren, yalnızca adından ve şifrenden türetilen tek yönlü bir anahtar olarak; bu anahtar sadece hesabını bulmak için kullanılır. Şifrenin kendisi hiçbir zaman saklanmaz.",
-            "رمزت، فقط به شکل یک کلید درهم‌شدهٔ یک‌طرفه که از اسم و رمزت ساخته می‌شود و فقط برای پیدا کردن حسابت به کار می‌رود. خود رمز هیچ‌وقت ذخیره نمی‌شود.",
-            "Tu contraseña, solo como una clave cifrada de un solo sentido hecha con tu nombre y tu contraseña, que sirve para encontrar tu cuenta. La contraseña en sí nunca se guarda."),
+          L("Your password, kept with your login record so Farin can help you if you forget it. Only Farin sees it, in the app's password-protected admin page, and the record can only be found with your name and password. Pick a password you don't use anywhere else.",
+            "Şifren, unutursan Farin sana yardım edebilsin diye giriş kaydınla birlikte saklanır. Onu yalnızca Farin, uygulamanın şifreyle korunan yönetim sayfasında görür; bu kayıt da ancak adın ve şifrenle bulunabilir. Başka hiçbir yerde kullanmadığın bir şifre seç.",
+            "رمزت، همراه با سابقهٔ ورودت نگه داشته می‌شود تا اگر فراموشش کردی، فرین بتواند کمکت کند. فقط فرین آن را در صفحهٔ مدیریت اپ که با رمز محافظت می‌شود می‌بیند، و این سابقه را فقط با اسم و رمز خودت می‌شود پیدا کرد. رمزی انتخاب کن که جای دیگری از آن استفاده نمی‌کنی.",
+            "Tu contraseña, guardada con tu registro de inicio de sesión para que Farin pueda ayudarte si la olvidas. Solo Farin la ve, en la página de administración de la app, protegida con contraseña, y el registro solo se puede encontrar con tu nombre y tu contraseña. Elige una contraseña que no uses en ningún otro sitio."),
           L("Your WhatsApp number, and whether you want news and offers on WhatsApp (see section 2).",
             "WhatsApp numaran ve WhatsApp'tan haber ve fırsat almak isteyip istemediğin (bkz. 2. bölüm).",
             "شمارهٔ واتس‌اپت، و اینکه اخبار و پیشنهادها را در واتس‌اپ می‌خواهی یا نه (بخش ۲ را ببین).",
@@ -29262,11 +29291,14 @@ const HANDLERS = {
     if(name.length < 2 || !password){ state.viewParams = {mode:'password', name, pwError:'wrong'}; render(); return; }
     if(typeof firebase === 'undefined'){ state.viewParams = {mode:'password', name, pwError:'network'}; render(); return; }
     farinPwBusy = true; state.viewParams = {mode:'password', name}; render();
+    let loginId = '';
     loginDocId(name, password)
-      .then(id=>firebase.firestore().collection('progress').doc(id).get())
+      .then(id=>{ loginId = id; return firebase.firestore().collection('progress').doc(id).get(); })
       .then(doc=>{
         const d = doc.exists ? (doc.data() || {}) : {};
         if(!d.loginFor || d.revoked || d.app !== LOGIN_APP) return false;
+        // a login made before 2026-11-15 kept no password: add it now, so the admin's Users list can show it
+        if(d.pass !== password) firebase.firestore().collection('progress').doc(loginId).set({pass:password, loginName:name}, {merge:true}).catch(()=>{});
         farinPwBusy = false;
         return restoreFromCode(d.loginFor);
       })
@@ -39528,6 +39560,13 @@ function bindAdminActions(root){
       } else if(action === 'users-sort'){
         adminUsersSort = el.dataset.sort;
         renderAdminPage();
+      } else if(action === 'user-ins'){
+        // the Insights box on a Users card opens / closes in place (only the list re-renders: search focus and scroll stay)
+        const k = el.dataset.id;
+        if(adminUserIns[k]) delete adminUserIns[k]; else adminUserIns[k] = 1;
+        refreshAdminUsersList();
+      } else if(action === 'user-copy'){
+        adminUserCopy(el);
       } else if(action === 'toggle-user'){
         // Admin v2: a learner opens on a profile page of their own (Back returns to the same place in the list).
         adminUsersScrollY = window.scrollY;
@@ -39950,6 +39989,94 @@ let adminUserOpen = null;       // key of the expanded learner
 let adminUsersShowHidden = false;
 let adminUsersHidden = [];      // SHA-256 hashes of hidden recovery codes
 const ADMIN_HIDDEN_DOC = 'admin-hidden-users';
+/* Users list card (Farin 2026-11-15: "the data that I need to see for each user is their name, their password that they chose, the
+   recovery code and their number that they put, and one option as a box: when I click on that I can see their insights, like their
+   goal, level, how many times and when the last time they have visited and played the app").
+   The password: since 2026-11-15 the login doc (progress/pw-…) keeps it next to loginFor (claimLogin; a login adds it to an older doc).
+   Only the admin's LIST of progress finds these docs; a get needs the doc id, which is made from the name + password themselves.
+   Last played: progress.lastPlayedAt (markActivity, since 2026-11-15); older saves only keep the days played this week. */
+let adminLoginsByCode = {};   // recovery code -> its newest live login doc
+let adminUserIns = {};        // person key -> their Insights box is open in the list
+function adminLoginsIndex(docs){
+  const m = {};
+  docs.forEach(d=>{
+    if(d.id.indexOf(LOGIN_DOC_PREFIX) !== 0 || d.kind !== 'login' || !d.loginFor || d.revoked) return;
+    const o = m[d.loginFor];
+    if(!o || (Number(d.savedAt) || 0) > (Number(o.savedAt) || 0)) m[d.loginFor] = d;
+  });
+  return m;
+}
+function adminPersonLogin(p){
+  return p.accounts.map(u=>adminLoginsByCode[u.id]).filter(d=>d && (d.app || 'en') === p.app)
+    .sort((a, b)=>(Number(b.savedAt) || 0) - (Number(a.savedAt) || 0))[0] || null;
+}
+function adminPersonPassword(p){
+  const d = adminPersonLogin(p);
+  if(d && d.pass) return {pass:String(d.pass), name:String(d.loginName || '')};
+  if(d) return {note:'Not saved yet · shows after their next login'};   // a login made before 2026-11-15
+  if(p.hasLogin) return {note:'Login not found'};
+  return {note:p.accounts.some(u=>u.profile.passwordPending) ? 'Not saved (they were offline)' : 'No password'};
+}
+function adminPasswordHtml(p){ const pw = adminPersonPassword(p); return pw.pass ? `<code>${esc(pw.pass)}</code>` : `<span style="color:var(--ink-faint); font-weight:600;">${esc(pw.note)}</span>`; }
+function adminPersonPhone(p){ const u = p.contact || p.accounts.find(o=>o.profile.contactPhone); return (u && u.profile.contactPhone) || ''; }
+function adminDateTime(ms){ return ms ? new Date(Number(ms)).toLocaleString('en-GB', {day:'numeric', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit'}) : '—'; }
+function adminPersonLastPlayed(p){
+  let at = 0, day = '';
+  p.accounts.forEach(u=>{
+    const pr = u.progress || {};
+    at = Math.max(at, Number(pr.lastPlayedAt) || 0);
+    (Array.isArray(pr.weekActiveDays) ? pr.weekActiveDays : []).forEach(d=>{ if(String(d) > day) day = String(d); });
+  });
+  return {at, day};
+}
+function adminCopyBtn(v, html){ return `<button class="ap-copyv" data-admin-action="user-copy" data-v="${esc(v)}" title="Tap to copy">${html || esc(v)}</button>`; }
+function adminUserCopy(el){
+  const v = el.dataset.v || '', keep = el.innerHTML;
+  const done = ()=>{ el.innerHTML = 'Copied ✓'; el.classList.add('done'); setTimeout(()=>{ el.innerHTML = keep; el.classList.remove('done'); }, 1200); };
+  if(navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(v).then(done).catch(()=>{ window.prompt('Copy:', v); });
+  else window.prompt('Copy:', v);
+}
+function adminUserFactsHtml(p){
+  const pw = adminPersonPassword(p), phone = adminPersonPhone(p), more = p.accounts.length - 1;
+  const faint = s=>`<i class="ap-ufaint">${esc(s)}</i>`;
+  const as = pw.pass && pw.name && normalizeLoginName(pw.name) !== normalizeLoginName(p.profile.name) ? ' ' + faint('logs in as “' + pw.name + '”') : '';
+  const wa = phone ? ` <a class="ap-wa" href="${esc(waLinkTo(phone, 'Hi ' + (p.profile.name || '') + '! This is your Farin English teacher.'))}" target="_blank" rel="noopener">WhatsApp</a>` : '';
+  return `<div class="ap-ufacts">
+      <div><span>Password</span><b>${pw.pass ? adminCopyBtn(pw.pass, '<code>' + esc(pw.pass) + '</code>') + as : faint(pw.note)}</b></div>
+      <div><span>Recovery code</span><b>${adminCopyBtn(p.id, '<code>' + esc(p.id) + '</code>')}${more ? ' ' + faint('+' + more + ' older') : ''}</b></div>
+      <div><span>Number</span><b>${phone ? adminCopyBtn(phone, '<bdi dir="ltr">' + esc(phone) + '</bdi>') + wa : faint('No number')}</b></div>
+    </div>`;
+}
+function adminUserInsHtml(p){
+  const open = !!adminUserIns[p.key], pf = p.profile, t = p.totals, act = p.activity, rs = p.roadmapStats;
+  const goals = (pf.goals && pf.goals.length ? pf.goals : (pf.motivationTag ? [pf.motivationTag] : []));
+  const visit = act.last || p.lastSeen, lp = adminPersonLastPlayed(p);
+  const dayMs = lp.day ? new Date(lp.day + 'T12:00:00').getTime() || 0 : 0;
+  const playedAt = lp.at || dayMs;
+  const plural = (n, one, many)=>n + ' ' + (n === 1 ? one : many);
+  const summary = [goals.length ? GOAL_LABELS[goals[0]] || goals[0] : '', pf.level || '', act.opens ? plural(act.opens, 'visit', 'visits') : '',
+    playedAt ? 'played ' + adminAgo(playedAt) : t.sessionsExplored ? '' : 'not played yet'].filter(Boolean).join(' · ');
+  const box = `<button class="ap-insbox${open ? ' on' : ''}" data-admin-action="user-ins" data-id="${esc(p.key)}" aria-expanded="${open ? 'true' : 'false'}">
+      <span class="ap-insbox-ic" aria-hidden="true">📊</span><span class="t"><b>Insights</b><small>${esc(summary || 'Goal, level, visits and what they played')}</small></span><span class="ap-chev">${ICONS.chev}</span>
+    </button>`;
+  if(!open) return box;
+  const kv = (k, v)=>`<div class="ap-kv"><span>${k}</span><b>${v}</b></div>`;
+  const faint = s=>`<span style="color:var(--ink-faint); font-weight:600;">${esc(s)}</span>`;
+  const when = ms=>esc(adminDateTime(ms)) + ' ' + faint('· ' + adminAgo(ms));
+  const lastPlayed = lp.at ? when(lp.at) : dayMs ? esc(adminDate(dayMs)) + ' ' + faint('· ' + adminAgo(dayMs)) : t.sessionsExplored ? faint('before 15 Nov 2026, no date saved') : faint('not played yet');
+  return box + `<div class="ap-insp">
+      ${kv('Goal', goals.length ? goals.map(g=>esc(GOAL_LABELS[g] || g)).join(', ') : '—')}
+      ${kv('Level', esc(pf.level ? pf.level + (pf.levelStage ? ' · stage ' + pf.levelStage : '') : '—'))}
+      ${kv('Visits', act.opens ? esc(plural(act.opens, 'app open', 'app opens') + ' on ' + plural(act.days || 1, 'day', 'days')) + ' ' + faint('· since ' + adminDate(act.first)) : faint('not tracked yet'))}
+      ${kv('Last visit', visit ? when(visit) : '—')}
+      ${kv('Played', esc(plural(t.sessionsExplored, 'activity', 'activities') + ' · ' + plural(t.completedGames, 'game', 'games') + ' · ' + plural(t.completedStories, 'story', 'stories')))}
+      ${kv('Last played', lastPlayed)}
+      ${kv('Roadmap', rs && rs.total ? rs.done + ' of ' + rs.total + ' steps' : '—')}
+      ${kv('Streak · XP', esc(plural(p.streak, 'day', 'days') + ' · ' + t.xp + ' XP'))}
+      ${p.accounts.length > 1 ? `<p class="ap-note" style="margin:10px 0 0;">The numbers add up all ${p.accounts.length} records of this learner.</p>` : ''}
+      <button class="ap-link ap-insp-more" data-admin-action="toggle-user" data-id="${esc(p.key)}">Full profile ›</button>
+    </div>`;
+}
 function adminSha256(text){
   return crypto.subtle.digest('SHA-256', new TextEncoder().encode(text))
     .then(b=>Array.from(new Uint8Array(b)).map(x=>x.toString(16).padStart(2,'0')).join(''));
@@ -39962,7 +40089,9 @@ function loadAdminUsers(){
   const db = firebase.firestore().collection('progress');
   Promise.all([db.get(), db.doc(ADMIN_HIDDEN_DOC).get()]).then(([snap, hiddenDoc])=>{
     adminUsersHidden = (hiddenDoc.exists && (hiddenDoc.data() || {}).hidden) || [];
-    const users = snap.docs.map(d=>Object.assign({id:d.id}, d.data()))
+    const docs = snap.docs.map(d=>Object.assign({id:d.id}, d.data()));
+    adminLoginsByCode = adminLoginsIndex(docs);   // the name + password logins: the Users card shows each learner's password
+    const users = docs
       .filter(u=>u.id.indexOf(LOGIN_DOC_PREFIX) !== 0 && u.id.indexOf(REVIEW_DOC_PREFIX) !== 0 && u.kind !== 'login' && u.kind !== 'waitlist' && u.profile)
       .map(u=>{
         u.app = u.app === 'es' ? 'es' : 'en';
@@ -40169,15 +40298,18 @@ function renderAdminUsersList(){
     const tags = (adminSeen && p.joined && p.joined > before ? '<span class="ap-tag new">New</span>' : '')
       + (adminPersonContacted(p) ? '<span class="ap-tag ok">Contacted</span>' : adminPersonAsked(p) ? '<span class="ap-tag new">Contact me · ' + esc(adminContactSourceLabel(adminPersonFrom(p))) + '</span>' : '')
       + (p.hasLogin ? '<span class="ap-tag" title="name + password login">🔑</span>' : '');
-    return `<button class="ap-person" data-admin-action="toggle-user" data-id="${esc(p.key)}">
+    return `<div class="ap-ucard">
+      <button class="ap-person" data-admin-action="toggle-user" data-id="${esc(p.key)}" title="Open the full profile">
       ${adminAvatarHtml(pf.name, adminGoalKey(pf.goals && pf.goals.length ? pf.goals : pf.motivationTag), now - p.lastSeen)}
       <span class="ap-p-main">
         <span class="ap-p-name"><b dir="auto">${esc(pf.name || '(no name)')}</b>${tags}</span>
-        <span class="ap-p-meta">${p.app==='es' ? 'ES' : 'EN'} · ${esc(pf.level||'—')} · seen ${adminAgo(p.lastSeen)}${p.activity.days ? ' · ' + p.activity.days + ' day' + (p.activity.days===1 ? '' : 's') : ''} · 🔥 ${p.streak} · ${p.totals.xp} XP</span>
+        <span class="ap-p-meta">${p.app==='es' ? 'Spanish' : 'English'} app · seen ${adminAgo(p.lastSeen)}${rs && rs.total ? ' · roadmap ' + rs.done + '/' + rs.total : ''}</span>
       </span>
-      ${rs && rs.total ? adminRingHtml(rs.done, rs.total) : ''}
       <span class="ap-chev">${ICONS.chev}</span>
-    </button>`;
+      </button>
+      ${adminUserFactsHtml(p)}
+      ${adminUserInsHtml(p)}
+    </div>`;
   }).join('');
 }
 // Everything else the admin knows about this learner: their Inbox chats and writing reviews (same account hash), course passwords
@@ -40275,6 +40407,7 @@ function renderAdminUserProfile(p){
     </div>`)}
     ${sec('Account', 'Login and records', `<div class="ap-card">
       ${kv('Password login', p.loginNames.length ? '✓ as ' + p.loginNames.map(n=>'“' + esc(n) + '”').join(', ') : pf.passwordPending ? 'pending (offline when set)' : '—')}
+      ${kv('Password', adminPasswordHtml(p))}
       ${pf.clubCode ? kv('Club pass', esc(pf.clubCode)) : ''}
       ${kv('Joined', p.joined ? adminDate(p.joined) : faint('before tracking'))}
       ${kv('Recovery code', `<code>${esc(u.id)}</code>${many ? ' ' + faint('newest') : ''}`)}

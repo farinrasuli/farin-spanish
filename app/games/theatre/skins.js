@@ -31,19 +31,23 @@ window.THEATRE_SKINS = {
     palette:{sky:'#fcf2dc', sky2:'#f1daa8', glow:'#fff8ea', ground:'#e1b77d', ink:'#3b2a14', accent:'#cc5428', accentInk:'#ffffff'},
     backdrop:{src:null, position:'66% 50%', blur:30, veil:.56}, props:[],
     gw:{bg:'#fbe7c2', surface:'#e2b77c', paper:'#fffaf0', ink:'#14332e', hue:'var(--cat-gram)', accent:'#FF6F5E', cta:'#1f7a6d', ctaInk:'#ffffff'},
-    world:{plate:{src:'games/worlds/build/art/build-workshop.webp', pos:'50% 50%', ready:false}, layers:[], text:[], sfx:{}, css:null}},
+    world:{plate:{src:'games/worlds/build/art/build-workshop.webp', top:'-6%', ready:true}, layers:[], text:[], sfx:{}, css:null}},
   // Mini Cross: the cafe table crossword by the window, mint table, cream wall
   cross:{card:'art/posters/card-cross.webp', focus:'64%',
     palette:{sky:'#f7f2e6', sky2:'#dfead2', glow:'#fffaf1', ground:'#92cfa6', ink:'#1f3a2e', accent:'#1d8f76', accentInk:'#ffffff'},
     backdrop:{src:null, position:'64% 50%', blur:30, veil:.56}, props:[],
     gw:{bg:'#f9dcc0', surface:'#5FC9B8', paper:'#fbf8f0', ink:'#14332e', hue:'var(--cat-voc)', accent:'#c8352e', cta:'#14332e', ctaInk:'#ffffff'},
-    world:{stage:'clamp(110px, 22dvh, 220px)', plate:{src:'games/worlds/cross/art/cross-table.webp', pos:'50% 50%', ready:false}, layers:[], text:[], sfx:{}, css:null}},
+    world:{stage:'clamp(110px, 22dvh, 220px)', plate:{src:'games/worlds/cross/art/cross-table.webp', top:'-10%', ready:true}, layers:[
+      {src:'games/worlds/cross/art/cross-croissant.webp', cls:'gw-croissant', box:[6, 58, 22], ready:true},
+      {src:'games/worlds/cross/art/cross-cup.webp', cls:'gw-cup', box:[76, 46, 17], ready:true}], text:[], sfx:{}, css:null}},
   // Order Up!: Sam's harbour cafe, sea blue, the red-and-orange awning
   order:{card:'art/posters/card-order.webp', focus:'80%',
     palette:{sky:'#ecf6f7', sky2:'#c9e3e6', glow:'#fff8ec', ground:'#7dcce5', ink:'#1d2f36', accent:'#c43428', accentInk:'#ffffff'},
     backdrop:{src:null, position:'78% 50%', blur:30, veil:.54}, props:[],
     gw:{bg:'#fdf3e4', surface:'#e9c48f', paper:'#fffaf0', ink:'#14332e', hue:'var(--cat-gram)', accent:'#d8343f', cta:'#d8343f', ctaInk:'#ffffff'},
-    world:{plate:{src:'games/worlds/order/art/order-counter.webp', pos:'50% 50%', ready:false}, layers:[], text:[], sfx:{}, css:null}},
+    world:{plate:{src:'games/worlds/order/art/order-counter.webp', top:'-4%', ready:true}, layers:[
+      {src:'games/worlds/order/art/order-bell.webp', cls:'gw-bell', box:[5, 46, 9], ready:true},
+      {src:'games/worlds/order/art/order-tipjar.webp', cls:'gw-tipjar', box:[86, 50, 9], ready:true}], text:[], sfx:{}, css:null}},
   // Passport Desk: the booth at the end of the pier, sky, sea teal, the red-striped booth
   desk:{card:'art/posters/card-desk.webp', focus:'64%',
     palette:{sky:'#e9f8fc', sky2:'#b9e6f2', glow:'#ffffff', ground:'#5fc3cc', ink:'#163450', accent:'#c23a32', accentInk:'#ffffff'},
@@ -61,7 +65,9 @@ window.THEATRE_SKINS = {
     palette:{sky:'#fbf7e6', sky2:'#ece4c6', glow:'#fffdf4', ground:'#d1a77d', ink:'#3a2c1c', accent:'#d9463a', accentInk:'#ffffff'},
     backdrop:{src:null, position:'66% 50%', blur:30, veil:.56}, props:[],
     gw:{bg:'#f3f6d9', surface:'#e8c99a', paper:'#ffffff', ink:'#14332e', hue:'var(--cat-voc)', accent:'#FF6F5E', cta:'#14332e', ctaInk:'#ffffff'},
-    world:{stage:'clamp(150px, 26dvh, 260px)', plate:{src:'games/worlds/bingo/art/bingo-window.webp', pos:'50% 50%', ready:false}, layers:[], text:[], sfx:{}, css:null}},
+    world:{stage:'clamp(150px, 26dvh, 260px)', plate:{src:'games/worlds/bingo/art/bingo-window.webp', top:'-8%', ready:true}, layers:[
+      {src:'games/worlds/bingo/art/bingo-radio.webp', cls:'gw-radio', box:[5, 50, 26], ready:true},
+      {src:'games/worlds/bingo/art/bingo-dish.webp', cls:'gw-dish', box:[74, 76, 20], ready:true}], text:[], sfx:{}, css:null}},
   // Story Hunt: the open storybook and the magnifier in the library, sage and paper
   hunt:{card:'art/posters/card-hunt.webp', focus:'56%',
     palette:{sky:'#f0f4f0', sky2:'#d5ded7', glow:'#fffaef', ground:'#bfab86', ink:'#26332c', accent:'#bf513e', accentInk:'#ffffff'},
@@ -73,7 +79,8 @@ window.THEATRE_SKINS = {
     palette:{sky:'#fdf1ee', sky2:'#f2d0c9', glow:'#fff7f2', ground:'#5fb3a8', ink:'#2f2422', accent:'#0d8f87', accentInk:'#ffffff'},
     backdrop:{src:null, position:'68% 50%', blur:30, veil:.56}, props:[],
     gw:{bg:'#f7d3d6', surface:'#f3e9e2', paper:'#fffaf0', ink:'#14332e', hue:'var(--cat-lis)', accent:'#e8402f', cta:'#14332e', ctaInk:'#ffffff'},
-    world:{stage:'clamp(170px, 34dvh, 340px)', plate:{src:'games/worlds/echo/art/echo-studio.webp', pos:'50% 50%', ready:false}, layers:[], text:[], sfx:{}, css:null}},
+    world:{stage:'clamp(170px, 34dvh, 340px)', plate:{src:'games/worlds/echo/art/echo-studio.webp', top:'-4%', ready:true}, layers:[
+      {src:'games/worlds/echo/art/echo-mic.webp', cls:'gw-mic', box:[64, 52, 15], ready:true}], text:[], sfx:{}, css:null}},
   // Listen & Type: headphones at the window over the harbour, soft grey-rose, orange headphones
   dictation:{card:'art/posters/card-dictation.webp', focus:'76%',
     palette:{sky:'#f8f3f1', sky2:'#e5dad5', glow:'#fffaf7', ground:'#b79984', ink:'#2f2a28', accent:'#cc6428', accentInk:'#ffffff'},

@@ -296,14 +296,16 @@ function paintWorld(s){
   if(w.stage) body.style.setProperty('--gw-stage', String(w.stage).replace(/[^0-9a-z.,%()+\- ]/gi, ''));
   var ed = GW_ED[String(s.app.level || s.world.level || '').toUpperCase()];
   if(ed) body.style.setProperty('--gw-ed', ed); else body.style.removeProperty('--gw-ed');
-  var plate = w.plate && w.plate.ready && w.plate.src ? '<img class="th-world-plate" src="' + esc(w.plate.src) + '" alt="" style="object-position:' + cssPos(w.plate.pos) + ';">' : '';
+  // the plate fills the column width from the top (its busy part shows in the stage; the panel covers its quiet zone); top shifts it
+  var plate = w.plate && w.plate.ready && w.plate.src ? '<img class="th-world-plate" src="' + esc(w.plate.src) + '" alt="" style="top:' + cssPos(w.plate.top || '0') + ';">' : '';
   var cut = (w.layers || []).filter(function(l){ return l && l.ready && l.src; }).map(function(l){
     return '<img class="th-world-cut ' + esc(l.cls || '') + '"' + (l.id ? ' id="' + esc(l.id) + '"' : '') + ' src="' + esc(l.src) + '" alt="" style="' + boxStyle(l.box) + '">';
   }).join('');
   var txt = (w.text || []).filter(function(t){ return t && t.ready; }).map(function(t){
     return '<div class="th-world-live ' + esc(t.cls || '') + '"' + (t.id ? ' id="' + esc(t.id) + '"' : '') + ' style="' + boxStyle(t.box) + '">' + esc(t.text || '') + '</div>';
   }).join('');
-  s.world.el.innerHTML = '<div class="th-world-art' + (plate ? ' th-has-plate' : '') + '">' + plate + cut + '</div><div class="th-world-text">' + txt + '</div>';
+  // cut-outs and live text sit in the stage band (83 px + safe area, --gw-stage tall): their boxes are % of that band
+  s.world.el.innerHTML = '<div class="th-world-art' + (plate ? ' th-has-plate' : '') + '">' + plate + '<div class="th-world-stage">' + cut + '</div></div><div class="th-world-text"><div class="th-world-stage">' + txt + '</div></div>';
   if(w.css) loadWorldCss(s.world.kind, w.css);
   warmSfx(w.sfx);
 }

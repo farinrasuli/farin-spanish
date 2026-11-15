@@ -19616,11 +19616,22 @@ function orderTrayHtml(round){
   }).join('');
   return `<div class="order-tray" id="order-tray">${lines || `<div class="order-tray-empty">${L('Tap the shelf to build the order','Siparişi hazırlamak için rafa dokun','برای چیدن سفارش روی قفسه بزن','Toca la estantería para preparar el pedido')}</div>`}</div>`;
 }
+// World Kit (worlds SPEC 5, C6): in Order Up!'s world the customers are the town regulars (the Open House portraits, faces calm / warm /
+// oh), never the clay figures. A woman or a man to match the voice that speaks the orders (state.profile.accent); the round's first
+// line seeds who comes in. Out of the world: the clay figure, as before.
+const ORDER_TOWN = {f:['bell','okafor','ada','leyla','rosa','hana','gran'], m:['tom','ben','ollie','pike']};
+function orderWorldOn(){ return !!(window.Theatre && Theatre.world && Theatre.world() === 'order'); }
+function orderFaceSrc(round, cust){
+  if(!orderWorldOn()) return 'char-' + cust.ch + '.png';
+  const list = ORDER_TOWN[TTS_ACCENTS.indexOf(ttsAccent()) === 1 ? 'm' : 'f'], i = Math.max(0, round.customers.indexOf(cust));
+  const seed = String((round.customers[0] && round.customers[0].text) || '').length;
+  return 'games/cozy-chores/art/pt-' + list[(seed + i) % list.length] + '-' + (cust.done ? 'warm' : (cust.fb ? 'oh' : 'calm')) + '.webp';
+}
 function orderCardHtml(round, cust){
   const shown = cust.ticket || cust.full || round.noVoice;
   return `<div class="game-card tight order-card" id="order-card">
     <div class="order-counter">
-      <span class="order-cust-wrap"><img class="order-cust" id="order-cust" src="char-${cust.ch}.png" alt=""><span class="order-star" id="order-star" aria-hidden="true"></span></span>
+      <span class="order-cust-wrap"><img class="order-cust" id="order-cust" src="${orderFaceSrc(round, cust)}" alt=""><span class="order-star" id="order-star" aria-hidden="true"></span></span>
       ${orderBubbleHtml(round, cust)}
     </div>
     <div class="order-tools">
@@ -19719,6 +19730,7 @@ function fxOrderDrop(i){
   sfx('hop');
 }
 function fxOrderRight(round, cust){
+  if(orderWorldOn()){ const f = document.getElementById('order-cust'); if(f) f.src = orderFaceSrc(round, cust); }   // the world: the warm face
   const tray = document.getElementById('order-tray'), who = document.getElementById('order-cust');
   const rtl = document.documentElement.dir === 'rtl';
   anim(tray, [{transform:'translateX(0)'}, {transform:`translateX(${rtl ? 36 : -36}px)`, opacity:.85}], {duration:250, easing:'ease-in', fill:'forwards'});
@@ -28621,10 +28633,12 @@ const THEATRE_QUICK = ['match','build','cross','order','desk','spell','bingo','h
 const THEATRE_QUICK_VIEWS = THEATRE_QUICK.map(k=>'game-' + k);
 const THEATRE_KINDS = ['path','chores','mystery','radio'].concat(THEATRE_QUICK);
 const THEATRE_VIEWS = ['game-path','game-yc','game-chores-building','game-chores-room','game-mystery','game-v2'].concat(THEATRE_QUICK_VIEWS);
-const THEATRE_VER = '6';
+const THEATRE_VER = '7';
 // World Kit switch (worlds SPEC 4.14): one flag per quick game, on once its art and checks pass (Farin 11-10: switch on what is done).
 // ?worlds=1 previews every world in this browser (?worlds=0 switches the preview off). Off = the game plays over its poster's soft backdrop.
-var WORLDS_LIVE = {order:false, bingo:false, cross:false, build:false, echo:false, desk:false, spell:false, hunt:false, dictation:false, match:false, trap:false};
+// 2026-11-15 World Kit v1 live: Order Up!, Word Bingo, Mini Cross, Build It, Say It Back (their plates and props passed art QC). Passport Desk waits
+// for its travellers' faces to be redrawn; Magic Words, Story Hunt, Listen & Type, Word Rush and Trap Dash wait for their art (batches 4-5).
+var WORLDS_LIVE = {order:true, bingo:true, cross:true, build:true, echo:true, desk:false, spell:false, hunt:false, dictation:false, match:false, trap:false};
 let worldsFlag = null;
 function worldsOn(kind){
   if(worldsFlag == null){

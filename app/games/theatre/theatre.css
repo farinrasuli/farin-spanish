@@ -259,7 +259,8 @@ body.gw-on{--gw-line:#14332e; --gw-stage:clamp(170px, 32dvh, 330px); --gw-top:ca
 body.gw-on .th-backdrop{background:var(--gw-bg, #f6f1e7);}
 body.gw-on .th-bd-world img{opacity:.55;}
 .th-world-art{position:absolute; inset:0;}
-.th-world-plate{position:absolute; inset:0; width:100%; height:100%; object-fit:cover; display:block;}
+.th-world-plate{position:absolute; top:0; left:0; width:100%; height:auto; display:block;}
+.th-world-stage{position:absolute; left:0; right:0; top:var(--gw-top, 83px); height:var(--gw-stage, 270px);}
 .th-world-cut{position:absolute; height:auto; display:block;}
 .th-world-text{position:absolute; inset:0;}
 .th-world-live{position:absolute; color:var(--gw-ink, #14332e); font-family:'Fredoka', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; font-weight:700; text-align:center;}
@@ -272,9 +273,9 @@ body.gw-on .game-screen > :not(.game-top){position:relative;}
 body.gw-on .game-screen::before{content:''; position:absolute; left:0; right:0; top:calc(var(--gw-top) + var(--gw-stage) - 24px); bottom:0; z-index:0;
   background:var(--gw-surface, #f3e9e2); border-top:2.5px solid var(--gw-line); border-radius:24px 24px 0 0;}
 body.gw-on .game-top{position:absolute; top:0; left:0; right:0; padding-top:calc(18px + var(--th-safe-t, 0px));}
-body.gw-on .game-companion{display:none !important;}   /* in a world the companion speaks in the caption box (Theatre.say) */
+body.gw-on.th-companion .game-companion, body.gw-on .game-companion{display:none !important;}   /* in a world the companion speaks in the caption box (Theatre.say) */
 body.gw-on .game-card, body.gw-on .game-tile, body.gw-on .game-opt{background:var(--gw-paper, #fffaf0); color:var(--gw-ink, #14332e);}
-body.gw-on .game-cta{position:sticky; bottom:calc(16px + var(--th-safe-b, 0px)); z-index:3; min-height:56px; background:var(--gw-cta, #14332e); color:var(--gw-cta-ink, #fff);}
+body.gw-on .game-screen > .game-cta, body.gw-on .game-cta{position:sticky; bottom:calc(16px + var(--th-safe-b, 0px)); z-index:3; min-height:56px; background:var(--gw-cta, #14332e); color:var(--gw-cta-ink, #fff);}
 body.gw-on .gp-pip.on{background:var(--gw-ed, var(--gw-accent, #14332e));}
 /* caption box (narrator, companion lines) and speech balloon (a character) */
 .th-say{position:fixed; top:0; bottom:0; left:50%; width:var(--th-col, 100vw); max-width:100vw; transform:translateX(-50%); z-index:52; pointer-events:none;}
@@ -287,3 +288,18 @@ body.gw-on .gp-pip.on{background:var(--gw-ed, var(--gw-accent, #14332e));}
   font:600 16px/1.35 'Fredoka', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; text-align:center;}
 .th-balloon::after{content:''; position:absolute; left:50%; bottom:-11px; width:16px; height:16px; background:#fff; border-right:2.5px solid #14332e; border-bottom:2.5px solid #14332e; transform:translateX(-50%) rotate(45deg);}
 @media (prefers-reduced-motion: reduce){ .th-world *{animation:none !important; transition:opacity .15s linear !important;} }
+
+/* ---- World Kit v1 skins (2026-11-15): the plates and props that passed art QC; each game keeps its own screen in the panel ---- */
+.th-world-cut{filter:drop-shadow(0 6px 8px rgba(20,51,46,.18));}
+body.gw-on .game-card{box-shadow:0 0 0 2px color-mix(in srgb, var(--gw-line) 14%, transparent), 0 6px 0 rgba(20,51,46,.08);}
+body.gw-on .game-hint{color:color-mix(in srgb, var(--gw-ink, #14332e) 78%, transparent);}
+/* Order Up!: the customer is a town regular (a portrait, no drop shadow box), the counter is the panel */
+body.gw-on.gw-order .order-cust{object-fit:contain; object-position:50% 100%; filter:none;}
+body.gw-on.gw-order .order-card{background:var(--gw-paper);}
+/* Word Bingo: a compact clue so the whole card fits under the window */
+body.gw-on.gw-bingo .game-card.tight{padding:14px 16px;}
+body.gw-on.gw-bingo .game-tile{min-height:76px; border-color:color-mix(in srgb, var(--gw-line) 22%, transparent);}
+body.gw-on.gw-bingo .game-tile.stamp{background:#ffe0dc; border-color:var(--gw-accent, #FF6F5E); box-shadow:inset 0 0 0 3px var(--gw-accent, #FF6F5E);}
+body.gw-on.gw-bingo .game-tiles{padding:12px; border-radius:18px; background:var(--gw-paper); box-shadow:inset 0 6px 0 var(--gw-ed, #FFD166), 0 0 0 2px color-mix(in srgb, var(--gw-line) 14%, transparent);}
+/* Mini Cross: the newspaper */
+body.gw-on.gw-cross .game-card{background:var(--gw-paper);}

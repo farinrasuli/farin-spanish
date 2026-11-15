@@ -9003,12 +9003,17 @@ let state = load();
 LANG = state.lang || 'tr';
 try{
   const incomingLang = new URLSearchParams(location.search).get('lang');
-  if(incomingLang && ['tr','fa','en','es'].includes(incomingLang)){
-    LANG = incomingLang;
-    save();
+  if(incomingLang !== null){
+    // ?lang= from a link sets the language once, then leaves the address: a reload keeps the language the learner picks later
+    // (h6g92jOi, 2026-11-15). save() can't run this early (syncToCloud's timer is declared further down, so it threw before the
+    // address was cleaned): the language is stored here and the next save() backs it up. A value this app doesn't speak is dropped too.
+    if(['tr','fa','en','es'].includes(incomingLang)){
+      LANG = incomingLang; state.lang = LANG;
+      try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }catch(e){}
+    }
     const url = new URL(location.href);
     url.searchParams.delete('lang');
-    history.replaceState(null, '', url);
+    history.replaceState(history.state, '', url);
   }
 }catch(e){}
 /* Per-course links (?course=<id>, Farin 2026-11-01): a link to send to people that opens one premium course. The id is checked against

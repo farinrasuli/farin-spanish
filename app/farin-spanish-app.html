@@ -29792,7 +29792,7 @@ const THEATRE_QUICK = ['match','build','cross','order','desk','spell','bingo','h
 const THEATRE_QUICK_VIEWS = THEATRE_QUICK.map(k=>'game-' + k);
 const THEATRE_KINDS = ['path','chores','mystery','radio'].concat(THEATRE_QUICK);
 const THEATRE_VIEWS = ['game-path','game-yc','game-chores-building','game-chores-room','game-mystery','game-v2'].concat(THEATRE_QUICK_VIEWS);
-const THEATRE_VER = '13';
+const THEATRE_VER = '14';   // 14: the world art wiring + Sam's balloon waits for his picture (2026-11-16)
 // World Kit switch (worlds SPEC 4.14): one flag per quick game, on once its art and checks pass (Farin 11-10: switch on what is done).
 // ?worlds=1 previews every world in this browser (?worlds=0 switches the preview off). Off = the game plays over its poster's soft backdrop.
 // 2026-11-15 World Kit v1 live: Order Up!, Word Bingo, Mini Cross, Build It, Say It Back (their plates and props passed art QC). Passport Desk waits
@@ -29929,11 +29929,18 @@ function orderSam(which, then){
   let img = null;
   if(st){ img = document.createElement('img'); img.id = 'gw-sam'; img.className = 'th-world-cut gw-sam'; img.alt = ''; img.src = 'games/case-closed/art/pt-sam-' + (which === 'open' ? 'open' : 'calm') + '.webp'; st.appendChild(img); }
   const t0 = Date.now();
-  setTimeout(()=>worldLine(line, 1, {who:'gw-sam', ms:5000, wait:1500, done:fin}), 80);
-  function fin(){ setTimeout(()=>{   // Sam stays at least 2 s, even if the clip ends early or cannot play
-    if(which === 'open' && img){ const a = reducedMotion() ? null : anim(img, [{opacity:1}, {opacity:0}], {duration:300, fill:'forwards'}); const rm = ()=>img.remove(); if(a) a.onfinish = rm; else rm(); }
-    if(then) then();
-  }, Math.max(0, 2000 - (Date.now() - t0))); }
+  // the balloon points at Sam, so it waits for his picture to load (at most 900 ms; a fresh phone has not cached it yet)
+  let said = false;
+  const speak = ()=>{ if(said) return; said = true; setTimeout(()=>worldLine(line, 1, {who:'gw-sam', ms:5000, wait:1500, done:fin}), 80); };
+  if(img && img.decode) img.decode().then(speak, speak); else speak();
+  setTimeout(speak, 900);
+  // the first order follows after 2 s at least, even if the clip ends early or cannot play; Sam himself stays while his balloon
+  // shows (5 s), so the learner sees who handed the counter over even when the line is not read aloud (Games 2.0 SPEC 5.2)
+  function fin(){
+    const el = Date.now() - t0;
+    setTimeout(()=>{ if(then) then(); }, Math.max(0, 2000 - el));
+    if(which === 'open' && img) setTimeout(()=>{ if(!img.isConnected) return; const a = reducedMotion() ? null : anim(img, [{opacity:1}, {opacity:0}], {duration:300, fill:'forwards'}); const rm = ()=>img.remove(); if(a) a.onfinish = rm; else rm(); }, Math.max(0, 4800 - el));
+  }
 }
 // a served customer says thanks (SPEC 5): one of four lines, in the voice that speaks the orders
 const ORDER_THANKS = {en:['Thanks a lot!', 'Lovely, thank you!', 'Perfect, thanks!', 'That\'s just right!'], es:['¡Muchas gracias!', '¡Qué bien, gracias!', '¡Perfecto, gracias!', '¡Justo lo que quería!']};

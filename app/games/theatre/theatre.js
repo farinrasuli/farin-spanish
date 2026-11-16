@@ -388,7 +388,7 @@ function say(text, o){
       box.style.left = left + 'px'; box.style.top = top + 'px';
       box.style.setProperty('--tail-x', Math.max(14, Math.min(bw - 14, ax - left)) + 'px');
       if(below) box.classList.add('th-balloon-below');
-    } else box.className = 'th-caption';
+    } else { box.classList.remove('th-balloon'); box.classList.add('th-caption'); }   // no speaker on screen: a caption, still tap to hear
   }
   if(!reduced()) anim(box, [{opacity:0, transform:'translateY(6px)'}, {opacity:1, transform:'none'}], {duration:200, easing:'cubic-bezier(.2,.7,.2,1)'});
   clearTimeout(s.sayTimer);

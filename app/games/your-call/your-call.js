@@ -39,7 +39,7 @@
 'use strict';
 if(window.YourCall) return;
 var D = document, W = window;
-var VERSION = '0.5.1';
+var VERSION = '0.5.2';
 
 /* ---------- chrome strings (the UI language; Persian informal) ---------- */
 var UI = {
@@ -65,6 +65,9 @@ var UI = {
   saidIt:{en:'I said it', tr:'Söyledim', fa:'گفتمش', es:'Ya lo he dicho'},
   sayLine:{en:'Read it aloud.', tr:'Yüksek sesle oku.', fa:'بلند بخوانش.', es:'Léelo en voz alta.'},
   theEnd:{en:'The end', tr:'Son', fa:'پایان', es:'Fin'},
+  willRemember:{en:'{name} will remember that.', tr:'{name} bunu unutmayacak.', fa:'{name} این را یادش می‌ماند.', es:'{name} lo recordará.'},
+  theyRemember:{en:'They will remember that.', tr:'Bunu unutmayacaklar.', fa:'این یادشان می‌ماند.', es:'Lo recordarán.'},
+  frames:{en:'Film frames left', tr:'Kalan film kareleri', fa:'فریم‌های فیلم باقی‌مانده', es:'Fotogramas que quedan'},
   remember:{en:'How they remember me', tr:'Beni nasıl hatırlıyorlar', fa:'آن‌ها مرا چطور به یاد می‌آورند', es:'Cómo me recuerdan'},
   today:{en:'Today', tr:'Bugün', fa:'امروز', es:'Hoy'},
   y1970:{en:'1970', tr:'1970', fa:'۱۹۷۰', es:'1970'},
@@ -295,6 +298,9 @@ function Sound(muted, sopt){
     // a red-pencil circle: two graphite strokes
     pencil:function(c, t){ hiss(c, t, .22, .2, ['bandpass', 3800, 2.5, 4700], 0, .03); hiss(c, t + .23, .2, .16, ['bandpass', 4500, 2.5, 3500], 0, .03); },
     rustle:function(c, t){ hiss(c, t, .16, .06, ['lowpass', 1800]); hiss(c, t + .05, .1, .035, ['bandpass', 3000, 1]); },
+    thunder:function(c, t){ hiss(c, t, .08, .16, ['lowpass', 1400]); hiss(c, t + .05, 2.6, .14, ['lowpass', 180], 0, 1.4); hiss(c, t + .5, 1.8, .07, ['lowpass', 320], 0, .9); },
+    rainfall:function(c, t){ hiss(c, t, 7, .05, ['highpass', 2400], 0, 1.6); hiss(c, t, 7, .05, ['lowpass', 900], 0, 1.8); },
+    drip:function(c, t){ for(var k = 0; k < 3; k++){ var f = 1700 + k * 260; osc(c, 'sine', f, f * .55, t + k * 1.1, .07, .05, null); } },
     page:function(c, t){ hiss(c, t, .32, .075, ['bandpass', 700, .7, 2600], 0, .06); hiss(c, t + .18, .15, .035, ['highpass', 3000]); },
     // peeling the negative off the print: sticky crackle over a soft tear
     peel:function(c, t){ hiss(c, t, .5, .06, ['highpass', 2500], 0, .05); for(var k = 0; k < 10; k++) hiss(c, t + k * .048 + Math.random() * .02, .03, .09 + Math.random() * .09, ['bandpass', 2800 + Math.random() * 1200, 2]); },
@@ -722,7 +728,8 @@ function start(o){
   shell.setAttribute('dir', 'ltr'); shell.setAttribute('lang', target);
   shell.innerHTML = '<div class="yc-page" role="main" aria-live="polite"></div><div class="yc-glossbar" hidden></div><div class="yc-layer"></div>';
   if(C.trMode === 'tap') shell.classList.add('yc-trtap');   // 0.5.0: "Aa" shows the translations (scaffold fading from A2 on)
-  if(C.thenLook) shell.classList.add('yc-look-' + C.thenLook);   // 0.5.0: 'silver' (B1 1918) instead of the sepia print look
+  if(C.thenLook) shell.classList.add('yc-look-' + C.thenLook);
+  var moodName = C.mood || String(C.town || '').toLowerCase().normalize('NFD').replace(/[^a-z]/g, ''); if(moodName) shell.classList.add('yc-mood-' + moodName);   // 0.5.2 album moods   // 0.5.0: 'silver' (B1 1918) instead of the sepia print look
   root.appendChild(shell);
   var page = shell.querySelector('.yc-page'), glossbar = shell.querySelector('.yc-glossbar'), layer = shell.querySelector('.yc-layer');
   if(C.trMode === 'tap' && ui !== target){
@@ -812,8 +819,26 @@ function start(o){
   }
 
   /* ---------- panels ---------- */
+  // 0.5.2 lighting (Games 2.0 §6c): p.light, else from the brief and tone, like bedOf()
+  function lightOf(p){
+    if(p.light) return String(p.light).split(/\s+/)[0];
+    var b = String(p.brief || '').toLowerCase(), t = p.tone || '';
+    if(/storm|thunder|lightning/.test(b)) return 'storm';
+    if(/\brain/.test(b)) return 'rain';
+    if(/darkroom|safe-?light/.test(b)) return 'darkroom';
+    if(/\btrain\b/.test(b) && /night/.test(b)) return 'train';
+    if(/lamp|lantern|candle|torch/.test(b)) return 'lamp';
+    if(/night|\b(9|10|11|12) ?(p\.?m|pm)|midnight/.test(b) || t === 'night') return 'night';
+    if(/\b(snow|ice)\b/.test(b)) return 'snow';
+    if(/\bdark\b|shadow|alley/.test(b)) return 'noir';
+    if(t === 'evening' || /dusk|sunset/.test(b)) return 'dusk';
+    return '';
+  }
+  function flashOk(){ var n = Date.now(); if(reduced() || (G.lastFlash && n - G.lastFlash < 5000)) return false; G.lastFlash = n; return true; }
+  function lightning(fig){ if(!flashOk()) return; var f = el('div', 'yc-bolt'); fig.appendChild(f); later(function(){ snd.play('thunder'); }, 380); later(function(){ f.remove(); }, 1300); }
   function panelEl(p, ch, instant){
-    var fig = el('figure', 'yc-panel yc-' + (p.size || 'wide') + (p.art ? '' : ' yc-capanel') + (p.tone ? ' yc-tone-' + p.tone : '') + (instant ? ' yc-instant' : ''));
+    var lt = p.art ? lightOf(p) : '';
+    var fig = el('figure', 'yc-panel yc-' + (p.size || 'wide') + (p.art ? '' : ' yc-capanel') + (p.tone ? ' yc-tone-' + p.tone : '') + (lt ? ' yc-light-' + lt : '') + (p._warm ? ' yc-light-warm' : '') + (instant ? ' yc-instant' : ''));
     fig.setAttribute('data-id', p.id || '');
     var html = '';
     if(p.artAlt){ var alt = p.artAlt.filter(function(x){ return whenOk(x.when, arcChoices()); })[0]; if(alt) p = Object.assign({}, p, {art:alt.art}); }
@@ -839,7 +864,7 @@ function start(o){
         if(e.when && !whenOk(e.when, chs)) return;
         says.push(tg(e.text));
         var cls = e.type === 'cap' ? 'yc-cap' : 'yc-bal' + (e.type === 'whisper' ? ' yc-whisperb' : '');
-        var box = '<div class="' + cls + (e.overlay && p.art ? ' yc-cap-top' : ' yc-inl') + '" data-who="' + esc(e.who || '') + '" data-say="' + esc(tg(e.text)) + '">' + lineHtml(e.text, ch) + '</div>';
+        var box = '<div class="' + cls + (e.overlay && p.art ? ' yc-cap-top' : ' yc-inl') + '" data-who="' + esc(e.who || '') + '" data-say="' + esc(tg(e.text)) + '">' + lineHtml(e.text, ch) + '<button type="button" class="th-say-btn yc-saybtn" tabindex="-1" aria-label="' + esc(us('listen')) + '">' + ICON.say + '</button></div>';
         if(e.overlay && p.art) over += box; else tray += box;
       });
       if(p.noteSign){
@@ -865,13 +890,13 @@ function start(o){
       return fig;
     }
     var tops = (p.caps || []).filter(function(c){ return c.pos !== 'bottom'; }), bots = (p.caps || []).filter(function(c){ return c.pos === 'bottom'; });
-    var capHtml = function(c){ says.push(tg(c.text)); return '<div class="yc-cap yc-cap-' + (c.pos || 'top') + '" data-say="' + esc(tg(c.text)) + '">' + lineHtml(c.text, ch) + '</div>'; };
+    var capHtml = function(c){ says.push(tg(c.text)); return '<div class="yc-cap yc-cap-' + (c.pos || 'top') + '" data-say="' + esc(tg(c.text)) + '">' + lineHtml(c.text, ch) + '<button type="button" class="th-say-btn yc-saybtn" tabindex="-1" aria-label="' + esc(us('listen')) + '">' + ICON.say + '</button>' + '</div>'; };
     html += tops.map(capHtml).join('');
     html += (p.bals || []).map(function(b){
       says.push(tg(b.text));
       var at = b.at && b.at.length ? b.at : [8, 8];
       var st = p.art ? 'left:' + at[0] + '%;top:' + at[1] + '%;' : '';
-      return '<div class="yc-bal" data-who="' + esc(b.who || '') + '" data-say="' + esc(tg(b.text)) + '" style="' + st + '--tx:' + (b.tail != null ? b.tail : 30) + 'px">' + lineHtml(b.text, ch) + '</div>';
+      return '<div class="yc-bal" data-who="' + esc(b.who || '') + '" data-say="' + esc(tg(b.text)) + '" style="' + st + '--tx:' + (b.tail != null ? b.tail : 30) + 'px">' + lineHtml(b.text, ch) + '<button type="button" class="th-say-btn yc-saybtn" tabindex="-1" aria-label="' + esc(us('listen')) + '">' + ICON.say + '</button>' + '</div>';
     }).join('');
     html += bots.map(capHtml).join('');
     html += (p.sfx || []).map(function(s){ return '<div class="yc-sfx" lang="' + target + '" aria-hidden="true" style="left:' + s.x + '%;top:' + s.y + '%;' + (s.size ? 'font-size:' + s.size + 'px;' : '') + '">' + esc(s.word) + '</div>'; }).join('');
@@ -893,9 +918,12 @@ function start(o){
       cues.forEach(function(c, k){ later(function(){ snd.play(c); }, k * 550 * pace); });
       if((p.motion || []).indexOf('pushin') >= 0 && !reduced()) fig.classList.add('yc-pushin');
       if((p.motion || []).indexOf('gulls') >= 0) snd.play('gull');
-      var fl = fig.querySelector('.yc-flashl'); if(fl && !reduced()) fl.classList.add('go');
+      var fl = fig.querySelector('.yc-flashl'); if(fl && flashOk()) fl.classList.add('go');   // 0.5.2: the camera flashes share the 5 s limit
+      if(fig.classList.contains('yc-light-storm')) lightning(fig);
+      if(fig.classList.contains('yc-light-rain')) snd.play('rainfall');   // 0.5.2: code-made rain on rain panels
       if((p.motion || []).indexOf('shake') >= 0 && !reduced()) anim(fig, [{transform:'translateX(0)'}, {transform:'translateX(-5px)'}, {transform:'translateX(5px)'}, {transform:'translateX(0)'}], {duration:300});
     }, 140 * pace);
+    if(!G.sayPulsed && !reduced()){ var sb = fig.querySelector('.yc-saybtn'); if(sb){ G.sayPulsed = true; sb.classList.add('yc-ring1'); } }
     var tok = G.speakTok = (G.speakTok || 0) + 1;
     later(function(){ if(G.speakTok === tok) narrateAll(fig._says); }, 260 * pace);
     await waitNext(null, 'next');
@@ -903,11 +931,20 @@ function start(o){
   }
 
   /* ---------- decisions ---------- */
+  // 0.5.2: the when keys any beat of the album reads ('3.2' = chapter 3, decision 2), and the person a decision is about
+  var WHEN = null;
+  function laterReads(n, k){
+    if(!WHEN){ WHEN = {}; var walk = function(x){ if(!x || typeof x !== 'object') return; if(Array.isArray(x)){ x.forEach(walk); return; } Object.keys(x).forEach(function(key){ if(key === 'when' && x[key] && typeof x[key] === 'object') Object.keys(x[key]).forEach(function(w){ WHEN[w] = 1; }); else walk(x[key]); }); }; walk(C.chapters); }
+    var key = n + '.' + k; if(!WHEN[key]) return false;
+    return true;
+  }
+  function trackPerson(d){ var p = String((d.prompt && (d.prompt.en || '')) || ''), m = /^([A-Z][\w\u00C0-\u017F]+):/.exec(p) || /^([A-Z][\w\u00C0-\u017F]+) (wants|wishes|asks|says|is|has|needs)\b/.exec(p);
+    return m && (C.names || []).indexOf(m[1]) >= 0 ? m[1] : ''; }
   function optText(opt){ return opt.alt && opt.alt.when && whenOk(opt.alt.when, arcChoices()) ? opt.alt.text : opt.text; }
   async function playDecision(b, ch, instant){
     var d = ch.decisions[b.d], di = b.d === 'd1' ? 0 : 1;
     if(!d) return;
-    var wrap = el('div', 'yc-decide');
+    var wrap = el('div', 'yc-decide' + (b.d === 'd2' ? ' yc-boss' : ''));   // 0.5.2: the second decision under a lamp
     wrap.innerHTML = '<div class="yc-cap yc-cap-static yc-prompt" data-say="' + esc(tg(d.prompt)) + '">' + lineHtml(d.prompt, ch) + '</div>' +
       '<div class="yc-choices">' + ['a', 'b'].map(function(o){
         var t = optText(d[o]);
@@ -943,16 +980,22 @@ function start(o){
     for(var i = 0; i < (opt.panels || []).length; i++){
       var p = opt.panels[i];
       if(!whenOk(p.when, arcChoices())) continue;
+      if(b.d === 'd2') p = Object.assign({}, p, {_warm:true});
       var fig = panelEl(p, ch, instant); page.appendChild(fig);
       if(!instant) scene(p);
       if(!instant){ var t2 = G.speakTok = (G.speakTok || 0) + 1; (function(f, tk){ later(function(){ if(G.speakTok === tk) narrateAll(f._says); }, 1500 * pace); })(fig, t2); }
+    }
+    var honest = laterReads(ch.n, di + 1);
+    if(honest && !d.toast){   // 0.5.2: only when a later beat really uses this choice (the album's own toast says it when it has one)
+      var who = trackPerson(d), rm = UI[who ? 'willRemember' : 'theyRemember'] || {};
+      page.appendChild(el('div', 'yc-remember', '<span lang="' + ui + '" dir="' + uiDir() + '">' + esc(String(rm[ui] || rm.en || '').replace('{name}', who)) + '</span>'));
     }
     if(opt.feel){
       var feel = el('div', 'yc-feel', '<span class="yc-feel-ic" aria-hidden="true">♡</span><span>' + lineHtml(opt.feel, ch, opt.feelgloss) + '</span>');
       if(opt.feelgloss && ch.glosses[opt.feelgloss] && !feel.querySelector('.yc-feelw')) feel.lastChild.insertAdjacentHTML('beforeend', ' <button type="button" class="yc-gl yc-feelw yc-feelchip" data-g="' + opt.feelgloss + '">' + esc(ch.glosses[opt.feelgloss].word) + '</button>');
       page.appendChild(feel);
     }
-    if(d.toast){
+    if(d.toast && honest){   // 0.5.2: "X remembers this." only when a later scene really uses the choice
       var to = el('div', 'yc-toast', '<span lang="' + target + '">' + esc(tg(d.toast)) + '</span>' + (trn(d.toast) ? ' · <span dir="auto" lang="' + ui + '">' + esc(trn(d.toast)) + '</span>' : ''));
       to.setAttribute('role', 'status');
       page.appendChild(to);
@@ -1003,10 +1046,10 @@ function start(o){
     if(instant || found.indexOf(doneKey) >= 0){ printPanel(ch, steps[steps.length - 1], found); return Promise.resolve(); }
     return new Promise(function(ok){ thenNow(ch, ph, steps, found, ok, doneKey, part); });
   }
-  function printPanel(ch, st, found){
+  function printPanel(ch, st, found, gold){
     var src = st.then ? artSrc(st.then, {era:'then', finds:st.finds}) : artSrc(st.now, {era:'now', finds:st.finds});
     var fig = el('figure', 'yc-panel yc-wide yc-printpanel');
-    fig.innerHTML = '<div class="yc-print"><img src="' + esc(src) + '" alt=""><svg viewBox="0 0 100 125" preserveAspectRatio="none" aria-hidden="true">' +
+    fig.innerHTML = '<div class="yc-print' + (gold ? ' yc-gold' : '') + '"><img src="' + esc(src) + '" alt=""><svg viewBox="0 0 100 125" preserveAspectRatio="none" aria-hidden="true">' +
       (st.finds || []).filter(function(f){ return found.indexOf(f.id) >= 0; }).map(function(f){ return boxesOf(f).map(function(b){ return ellipse(b, 'yc-pencil yc-drawn', -6); }).join(''); }).join('') + '</svg><i>' + esc(st.then ? yearLabel(C, ui) : us('today')) + '</i></div>';
     page.appendChild(fig);
   }
@@ -1034,6 +1077,7 @@ function start(o){
     var stage = scr.querySelector('.yc-tn-stage'), ov = scr.querySelector('.yc-tn-ov'), ins = scr.querySelector('.yc-ins'), ctl = scr.querySelector('.yc-ctl');
     var imgThen = scr.querySelector('.yc-tn-then'), imgNow = scr.querySelector('.yc-tn-now');
     var hintT = null, autoT = null, misses = [], current = null;
+    var FR = C.brave || o.brave ? 2 : (C.level === 'A1' ? 4 : 3);   // 0.5.2 film frames per photo
     var tnEra = function(){ if(!imgThen || !imgNow) return st.then ? 1 : 0; return scr.classList.contains('yc-is70') ? 1 : (scr.classList.contains('yc-split') ? .5 : 0); };
     var pb = photoBed(ch, ph, st); if(pb) snd.bed(pb, {});
     function setIns(t, extra){ ins.innerHTML = (t ? '<div class="yc-insl" data-say="' + esc(tg(t)) + '">' + lineHtml(t, ch) + '</div>' : '') + (extra || ''); }
@@ -1081,11 +1125,16 @@ function start(o){
     }
     function ringSvg(r, cls, rot){ return '<ellipse class="' + cls + '" cx="' + r.cx + '" cy="' + r.cy + '" rx="' + r.rx + '" ry="' + r.ry + '"' + (rot ? ' transform="rotate(' + rot + ' ' + r.cx + ' ' + r.cy + ')"' : '') + '/>'; }
     function clearHints(){ ov.querySelectorAll('.yc-hint').forEach(function(x){ x.remove(); }); }
+    // 0.5.2 film frames on the paper under the photo (never on the art), top inline-end
+    var FRAME = '<svg viewBox="0 0 18 18" aria-hidden="true"><rect x="1.5" y="2" width="15" height="14" rx="2" fill="#2a2622" stroke="#1B1A17" stroke-width="1.2"/><rect x="5" y="5" width="8" height="8" rx="1" fill="#E8D9B5"/><g fill="#E8D9B5"><rect x="2.6" y="3.2" width="1.2" height="1.6"/><rect x="2.6" y="7.2" width="1.2" height="1.6"/><rect x="2.6" y="11.2" width="1.2" height="1.6"/><rect x="14.2" y="3.2" width="1.2" height="1.6"/><rect x="14.2" y="7.2" width="1.2" height="1.6"/><rect x="14.2" y="11.2" width="1.2" height="1.6"/></g></svg>';
+    function drawFrames(){ var u = scr.querySelector('.yc-tn-ui'), fr = u.querySelector('.yc-frames'); if(!fr){ fr = el('div', 'yc-frames'); fr.setAttribute('role', 'img'); u.appendChild(fr); }
+      fr.setAttribute('aria-label', tg(UI.frames) || 'Film frames'); var n = tn.frames || 0, h = ''; for(var k = 0; k < n; k++) h += '<i class="yc-frame">' + FRAME + '</i>'; fr.innerHTML = h; }
+    function tearFrame(){ var fr = scr.querySelector('.yc-frames'), last = fr && fr.lastElementChild; if(!last) return; if(reduced()){ last.remove(); return; } last.classList.add('yc-torn'); later(function(){ last.remove(); }, 520); }
     function arm(){
       clear(hintT); clear(autoT);
       if(!current) return;
-      hintT = later(function(){ hint(); }, 6000 * pace);   // 0.3.0: a gentle hint after ~6 s with no tap (was 15 s)
-      autoT = later(function(){ if(current) hit(current, true); }, 45000 * pace);
+      hintT = later(function(){ hint(); }, 25000 * pace);   // 0.5.2 (Games 2.0): a hint after 25 s, the pencil at 75 s (was 6 / 45)
+      autoT = later(function(){ if(current) hit(current, true); }, 75000 * pace);
     }
     function hint(){ if(!current) return; clearHints(); circle(current, 'yc-hint'); G.hinted = (G.hinted || 0) + 1; }
     // 0.3.0 (Farin 2026-11-12: "the user doesn't know what to do"): one short line on the photo itself, soft rings on what to tap,
@@ -1143,7 +1192,8 @@ function start(o){
     }
     function pull(){
       tn.phase = 'develop'; save(); snd.play('pull');
-      scr.classList.add('yc-pulled');
+      scr.classList.add('yc-pulled', 'yc-darkroom'); later(function(){ snd.play('drip'); }, 300);   // 0.5.2: the safelight while it develops (up to 4 s)
+      later(function(){ scr.classList.remove('yc-darkroom'); }, Math.min(4000, 2600 * Math.max(pace, .2)));
       setIns(null, '<div class="yc-dev-wait" aria-hidden="true"></div>');
       ctl.innerHTML = '';
       G.wait = 'tn-develop';
@@ -1179,6 +1229,8 @@ function start(o){
         if(ph.mode === 'split') scr.classList.add('yc-split');
       }
       snd.era(tnEra());
+      if(tn.framesStep !== tn.step){ tn.frames = FR; tn.framesStep = tn.step; tn.autoStep = 0; save(); }   // a full set for each photo
+      drawFrames();
       showTip(); drawDots(); softRings();
       nextTarget();
     }
@@ -1200,14 +1252,15 @@ function start(o){
       remaining().forEach(function(f){ var dd = distTo(f, x, y, ratioHW) - (f === current ? .5 : 0); if(dd < bd){ bd = dd; best = f; } });
       if(best && bd <= tol){ hit(best, false); return; }
       snd.play('rustle'); G.misses = (G.misses || 0) + 1;
-      var now = Date.now(); misses = misses.filter(function(t){ return now - t < 5000; }); misses.push(now);
-      if(misses.length >= 3){ misses = []; hint(); }
+      if((tn.frames || 0) > 0){ tn.frames--; save(); tearFrame(); }   // 0.5.2: a miss uses a film frame
+      else hit(current, true);   // none left: the pencil circles the change you are on, and you keep playing
+      void misses;
     });
     function hit(f, auto){
       if(tn.found.indexOf(f.id) >= 0) return;
       tn.found.push(f.id); save();
       clear(hintT); clear(autoT); clearHints();
-      if(auto) G.autoSolved = (G.autoSolved || 0) + 1;
+      if(auto){ G.autoSolved = (G.autoSolved || 0) + 1; tn.autoStep = (tn.autoStep || 0) + 1; }
       circle(f, 'yc-pencil'); snd.play('pencil');
       ov.querySelectorAll('.yc-soft[data-f="' + f.id + '"]').forEach(function(x){ x.remove(); });
       drawDots(); placeTip();
@@ -1246,6 +1299,7 @@ function start(o){
       }, {once:true});
     }
     function finishStep(){
+      tn.gold = (tn.frames || 0) > 0 && !tn.autoStep; save();   // 0.5.2: every change found with a frame left, no pencil help
       if(tn.step < steps.length - 1){
         // trail: the next photo of the trail
         tn.step++; tn.phase = 'find'; save();
@@ -1272,7 +1326,7 @@ function start(o){
         clear(hintT); clear(autoT); G.speakTok++; stopSpeech(); snd.era(0);
         tn.found.push(doneKey); save();
         scr.remove(); G.tn = null; G.wait = null;
-        printPanel(ch, st, tn.found);
+        printPanel(ch, st, tn.found, tn.gold);
         if(host.keepPrint) try{ host.keepPrint({ch:ch.n, found:tn.found.filter(function(x){ return x[0] !== '#'; })}); }catch(e){}
         done();
       };
@@ -1394,8 +1448,8 @@ function start(o){
     };
     var t15 = null, t45 = null, arm = function(){
       clear(t15); clear(t45); var k = open(); if(k < 0) return;
-      t15 = later(function(){ var row = logEl.querySelector('.yc-rrow[data-r="' + k + '"] .yc-rwhy'); if(row){ row.hidden = false; row.innerHTML = keyHtml(rep[log[k].line], log[k].key); } G.hinted = (G.hinted || 0) + 1; sayRow(k, true); }, 15000);
-      t45 = later(function(){ if(!st.rows[k]){ solve(k, true); if(open() < 0 && G.radioDone) G.radioDone(); else arm(); } }, 45000);
+      t15 = later(function(){ var row = logEl.querySelector('.yc-rrow[data-r="' + k + '"] .yc-rwhy'); if(row){ row.hidden = false; row.innerHTML = keyHtml(rep[log[k].line], log[k].key); } G.hinted = (G.hinted || 0) + 1; sayRow(k, true); }, 25000);
+      t45 = later(function(){ if(!st.rows[k]){ solve(k, true); if(open() < 0 && G.radioDone) G.radioDone(); else arm(); } }, 75000);
     };
     if(open() >= 0){
       narrate(tg(log[open()].q));   // the first open question (0.5.1: read aloud only with Read lines aloud on; the report itself always plays)
@@ -1500,7 +1554,7 @@ function start(o){
       G.wait = 'rewind-ask'; G.rewind = {card:card, A:A};
       var pulse = function(){ if(evF) { evF.classList.remove('yc-wpulse'); void evF.offsetWidth; evF.classList.add('yc-wpulse'); } };
       var glow = function(){ var r = card.querySelector('.yc-rchip[data-c="' + A.ok + '"]'); if(r) r.classList.add('yc-rglow'); };
-      var h15 = later(function(){ pulse(); G.hinted = (G.hinted || 0) + 1; }, 15000), h45 = later(function(){ glow(); G.autoSolved = (G.autoSolved || 0) + 1; }, 45000);
+      var h15 = later(function(){ pulse(); G.hinted = (G.hinted || 0) + 1; }, 25000), h45 = later(function(){ glow(); G.autoSolved = (G.autoSolved || 0) + 1; }, 75000);
       await new Promise(function(done){
         on(card, 'click', function(e){
           var b = e.target.closest('.yc-rchip'); if(!b || b.disabled) return; var c = +b.getAttribute('data-c');
@@ -1814,7 +1868,7 @@ function start(o){
     if(G.radio && G.radio.log){ var RL = G.radio.R.log || [], LG = G.radio.log; r.radio = {id:G.radio.id, rows:RL.map(function(x, k){ var b = LG.querySelector('.yc-rchip[data-r="' + k + '"][data-c="' + x.ok + '"]'), rc = b && b.getBoundingClientRect(); return {done:!!G.radio.st.rows[k], ok:rc ? {x:rc.left + rc.width / 2, y:rc.top + rc.height / 2} : null}; })}; var rb = LG.querySelector('.yc-rrelay .yc-rchip[data-c="' + ((G.radio.R.relay || {}).ok) + '"]'); if(rb){ var rr = rb.getBoundingClientRect(); r.radio.relay = {x:rr.left + rr.width / 2, y:rr.top + rr.height / 2}; } }
     if(G.tn){
       var ov = G.tn.scr.querySelector('.yc-tn-ov'), rc = ov.getBoundingClientRect(), tn = G.run && G.run.tn;
-      r.tn = {phase:tn && tn.phase, step:tn && tn.step, found:tn ? tn.found.slice() : [], rect:{x:rc.left, y:rc.top, w:rc.width, h:rc.height},
+      r.tn = {phase:tn && tn.phase, step:tn && tn.step, found:tn ? tn.found.slice() : [], frames:tn ? tn.frames : null, gold:tn ? !!tn.gold : false, rect:{x:rc.left, y:rc.top, w:rc.width, h:rc.height},
         targets:G.tn.st.finds.filter(function(f){ return !tn || tn.found.indexOf(f.id) < 0; }).map(function(f){ var b = boxesOf(f)[0]; return {id:f.id, x:rc.left + (b.x + b.w / 2) / 100 * rc.width, y:rc.top + (b.y + b.h / 2) / 100 * rc.height}; }),
         is70:G.tn.scr.classList.contains('yc-is70')};
     }

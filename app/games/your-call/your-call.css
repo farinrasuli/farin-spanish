@@ -398,3 +398,51 @@
 .yc-prevsay{position:absolute; right:6px; top:50%; transform:translateY(-50%); width:34px; height:34px; border:2px solid var(--ink); border-radius:50%; background:#fff; display:flex; align-items:center; justify-content:center; cursor:pointer; padding:0;}
 .yc-prevsay svg{width:18px; height:18px;}
 .yc-prevcap[data-say]{background-image:none;}
+
+/* ---- 0.5.2 Games 2.0 Phase 1 (Claude/specs/games-2-0-2026-11-16/SPEC.md §6) ---- */
+/* a speaker button on every caption / balloon (replaces the 0.5.1 background icon) */
+.yc-cap.yc-cap:has(> .yc-saybtn), .yc-bal.yc-bal:has(> .yc-saybtn){background-image:none; padding-right:40px;}
+.yc-cap-static:has(> .yc-saybtn), .yc-inl:has(> .yc-saybtn){position:relative;}
+.yc-saybtn{position:absolute; right:6px; top:50%; transform:translateY(-50%); width:26px; height:26px; border:2px solid var(--ink); border-radius:50%; background:#fff; padding:0; display:flex; align-items:center; justify-content:center; cursor:pointer; color:var(--ink);}
+.yc-saybtn svg{width:15px; height:15px;}
+.yc-cap-static .yc-saybtn, .yc-inl .yc-saybtn{top:50%;}
+.yc-ring1{animation:yc-ring1 1.4s ease-out 2;}
+@keyframes yc-ring1{0%{box-shadow:0 0 0 0 rgba(229,72,58,.55)} 100%{box-shadow:0 0 0 12px rgba(229,72,58,0)}}
+/* lighting per panel: light, never dark (luminance rule) */
+.yc-panel[class*="yc-light-"]::before{content:""; position:absolute; inset:0; pointer-events:none; z-index:1;}
+.yc-light-night::before{background:radial-gradient(ellipse at 50% 35%, rgba(255,226,170,.12) 0%, rgba(40,52,110,.16) 70%, rgba(20,26,70,.26) 100%); mix-blend-mode:multiply;}
+.yc-light-rain::before{background:linear-gradient(180deg, rgba(90,110,140,.12), rgba(90,110,140,.18)), repeating-linear-gradient(105deg, rgba(255,255,255,0) 0 11px, rgba(255,255,255,.22) 11px 12px); mix-blend-mode:multiply;}
+.yc-light-storm::before{background:radial-gradient(ellipse at 50% 30%, rgba(255,240,200,.08) 0%, rgba(30,36,70,.22) 100%); mix-blend-mode:multiply;}
+.yc-light-lamp::before{background:radial-gradient(circle at 50% 42%, rgba(255,214,130,.30) 0%, rgba(255,214,130,0) 42%, rgba(60,36,20,.18) 100%); mix-blend-mode:soft-light;}
+.yc-light-snow::before{background:linear-gradient(180deg, rgba(220,236,255,.18), rgba(255,255,255,0) 60%); mix-blend-mode:screen;}
+.yc-light-train::before{background:radial-gradient(ellipse at 50% 40%, rgba(255,226,170,.10), rgba(30,40,90,.22) 100%); mix-blend-mode:multiply;}
+.yc-light-noir::before{background:radial-gradient(ellipse at 50% 45%, rgba(0,0,0,0) 40%, rgba(0,0,0,.26) 100%);}
+.yc-light-dusk::before{background:linear-gradient(180deg, rgba(255,170,90,.18), rgba(255,120,80,.10) 60%, rgba(80,40,30,.12)); mix-blend-mode:multiply;}
+.yc-light-darkroom::before{background:radial-gradient(ellipse at 50% 30%, rgba(255,80,40,.10), rgba(160,20,10,.20) 100%); mix-blend-mode:multiply;}
+.yc-light-warm::before{background:radial-gradient(ellipse at 50% 40%, rgba(255,214,140,.22) 0%, rgba(255,214,140,0) 60%); mix-blend-mode:soft-light;}
+.yc-bolt{position:absolute; inset:0; z-index:3; pointer-events:none; background:#fff; opacity:0; animation:yc-bolt 1.1s ease-out;}
+@keyframes yc-bolt{0%{opacity:0} 6%{opacity:.85} 12%{opacity:.1} 20%{opacity:.7} 100%{opacity:0}}
+/* the boss decision under a lamp (vignette .26) */
+.yc-decide.yc-boss{position:relative; padding:10px; border-radius:6px; background:radial-gradient(ellipse at 50% 30%, rgba(255,214,130,.30), rgba(255,214,130,0) 55%), radial-gradient(ellipse at 50% 50%, rgba(0,0,0,0) 55%, rgba(0,0,0,.26) 100%);}
+/* the darkroom: the safelight while the print develops */
+.yc-darkroom .yc-tn-stage::after{content:""; position:absolute; inset:0; z-index:5; pointer-events:none; background:radial-gradient(ellipse at 50% 40%, rgba(255,60,30,.35), rgba(150,10,0,.55)); mix-blend-mode:multiply; transition:opacity .8s;}
+/* film frames on the paper, top inline-end */
+.yc-tn-ui{position:relative;}
+.yc-frames{position:absolute; top:8px; inset-inline-end:12px; display:flex; gap:4px;}
+.yc-frame svg{width:18px; height:18px; display:block;}
+.yc-torn{animation:yc-torn .5s ease-in forwards;}
+@keyframes yc-torn{to{transform:translate(14px, -18px) rotate(28deg); opacity:0}}
+.yc-tn-ui .yc-ins{padding-inline-end:76px;}
+/* the gold edge on a print found clean */
+.yc-print.yc-gold{border:3px solid #FFD166; box-shadow:0 0 0 1px var(--ink), 5px 5px 0 rgba(0,0,0,.18);}
+/* "{name} will remember that." in pencil under the outcome */
+.yc-remember{grid-column:1 / -1; font-family:var(--f-sub); font-size:15px; color:#4a4038; padding:2px 6px 0; border-bottom:1.5px solid rgba(74,64,56,.45); justify-self:start;}
+.yc-rm .yc-bolt, .yc-rm .yc-ring1{animation:none;}
+
+/* 0.5.2: the Aa button sits in the top bar, left of the Theatre buttons; at the foot it covered the last note tile (B2 ch3) */
+.yc-aa{top:calc(env(safe-area-inset-top, 0px) + 32px); bottom:auto; right:112px; width:40px; height:40px; font-size:15px;}
+/* 0.5.2 album moods: Iceland firelight on lamp panels; Tsugaru night train with passing lights */
+.yc-mood-vik .yc-light-lamp::before{background:radial-gradient(circle at 50% 45%, rgba(255,176,112,.34) 0%, rgba(255,176,112,0) 45%, rgba(60,30,15,.18) 100%); mix-blend-mode:soft-light;}
+.yc-light-train::after{content:""; position:absolute; top:0; bottom:0; width:30%; left:-35%; z-index:1; pointer-events:none; background:linear-gradient(90deg, rgba(255,236,170,0), rgba(255,236,170,.30), rgba(255,236,170,0)); mix-blend-mode:screen; animation:yc-pass 4.5s linear 1.2s infinite;}
+@keyframes yc-pass{to{left:110%}}
+.yc-rm .yc-light-train::after, .yc-instant.yc-light-train::after{animation:none; display:none;}

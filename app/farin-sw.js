@@ -282,7 +282,8 @@ self.addEventListener('fetch', (e) => {
   }
 });
 
-/* ---------- Phone notifications (2026-11-15): fe-notify sends {title, body, go, k, id, tag}, encrypted for this phone ----------
+/* ---------- Phone notifications (2026-11-15): fe-notify sends {title, body, go, k, id, tag, icon, image}, encrypted for this phone ----------
+   icon / image = the clay character (notif/<name>-icon.png, notif/<name>-wide.jpg, next to this file; 2026-11-16).
    The tap opens the app on the right screen: an open app gets a 'notif-go' message, otherwise the page opens with #n=<go>. */
 const NOTIF_OPENED_URL = 'https://fe-notify.farinrasuli.workers.dev/opened';
 self.addEventListener('push', (e) => {
@@ -290,7 +291,7 @@ self.addEventListener('push', (e) => {
   try { d = e.data ? e.data.json() : {}; } catch (err) { d = {body: e.data ? e.data.text() : ''}; }
   const rtl = /[؀-ۿ]/.test((d.title || '') + (d.body || ''));
   e.waitUntil(self.registration.showNotification(d.title || 'Farin Spanish', {
-    body: d.body || '', icon: 'icon-180.png', tag: d.tag || undefined, renotify: !!d.tag, dir: rtl ? 'rtl' : 'auto',
+    body: d.body || '', icon: d.icon || 'icon-180.png', image: d.image || undefined, tag: d.tag || undefined, renotify: !!d.tag, dir: rtl ? 'rtl' : 'auto',
     data: {go: d.go || '', k: d.k || '', id: d.id || ''}
   }));
 });

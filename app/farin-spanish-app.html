@@ -1603,7 +1603,10 @@
   .nt-faint{font-size:12.5px; color:var(--ink-faint);}
   .nt-pv{border-radius:22px; padding:14px 10px; background:radial-gradient(120% 70% at 20% 0%, #9d84ff 0%, transparent 60%), radial-gradient(90% 60% at 100% 100%, #ffb066 0%, transparent 65%), linear-gradient(160deg, #5A3FD6 0%, #7C5CFC 45%, #e8790a 120%);}
   .nt-card{display:grid; grid-template-columns:20px minmax(0,1fr); gap:4px 10px; background:rgba(255,255,255,.95); color:#1b1b1f; border-radius:20px; padding:12px 14px; font-family:Roboto, system-ui, sans-serif; text-align:start;}
+  .nt-card{position:relative; padding-inline-end:66px;}
   .nt-card img{width:20px; height:20px; border-radius:6px;}
+  .nt-card img.nt-lic{position:absolute; top:12px; inset-inline-end:12px; width:44px; height:44px; border-radius:50%;}
+  .nt-big{display:block; width:100%; height:auto; aspect-ratio:2 / 1; object-fit:cover; border-radius:16px; margin-top:8px;}
   .nt-card .nt-h{font-size:12px; color:#5b5d66;}
   .nt-card .nt-b{grid-column:2; display:grid; gap:1px; min-width:0;}
   .nt-card .nt-b b{font-size:14.5px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
@@ -16858,9 +16861,10 @@ clubAskSchedule(8000);
      card in a later session ("when your next card is ready"). At most 2 asks, 14+ days apart. An unticked box under it = "course news and
      offers" by notification (profile.notif.promo/promoAt/promoSource): a separate consent per channel, like the WhatsApp one (law 6563).
    - Settings › Notifications: on/off, Reminders on/off, Course news on/off; an iPhone note (Home Screen first) and a "blocked" note.
-   - On each open and after each finished card the app re-registers its subscription with a fresh plan: the next card (+1 day), a game
-     (+2), the streak saver on the last day a streak can be saved (+3, streak 3+) or The Red Suitcase, a Harbour Files case (+5),
-     another game (+8, unless a course spotlight is planned), "we kept your place" (+14) and a last one (+30), at the learner's usual hour.
+   - On each open and after each finished card the app re-registers its subscription with a fresh plan (playbook v3, 2026-11-16): day 2 /
+     three in a row in the first week, else the next card (+1 day), a game (+2), the streak saver or The Red Suitcase (+3), the mystery (+5),
+     a game (+8, unless a spotlight), "I'm still here" (+14), "my last message" (+21); plus dated ones: the week closes tonight, level up,
+     course access ending. 30 minutes before the learner's usual hour. Each kind has its clay character (the Worker sends it).
      Opening the app replaces the plan, so active learners get none of these. The Worker adds quiet hours (10:00-21:59 local), one per
      ~day and the spotlight's own 10-day rhythm; the copy (EN/TR/FA) lives in the Worker (src/copy.js), so nothing here is free text.
    - Farin's answers and passwords notify the learner's phones (admin › Inbox, by account hash); tapping opens the chat.
@@ -16931,12 +16935,23 @@ function notifDisable(){
 }
 
 /* ---------- the plan the Worker sends from (see the header) ---------- */
+const NOTIF_LEVELS = ['A1', 'A2', 'B1', 'B2', 'C1'];
 function notifHour(){ const hs = (notifState().hours || []).map(Number).filter(h=>h >= 0 && h < 24).sort((a, b)=>a - b); const h = hs.length ? hs[Math.floor(hs.length / 2)] : 19; return Math.max(10, Math.min(21, h)); }
-function notifAt(days, H){ const d = new Date(); d.setDate(d.getDate() + days); d.setHours(H, 5 + Math.floor(Math.random() * 40), 0, 0); return d.getTime(); }
+// 30 minutes before the hour they usually open the app (Duolingo's timing), never before 10:00
+function notifAt(days, H){
+  const d = new Date(); d.setDate(d.getDate() + days);
+  if(H <= 10) d.setHours(10, 2 + Math.floor(Math.random() * 20), 0, 0); else d.setHours(H - 1, 30 + Math.floor(Math.random() * 25), 0, 0);
+  return d.getTime();
+}
 function notifGameKind(n){ try{ return n.gameKind || gameKindOfRef(n.refId) || ''; }catch(e){ return n.gameKind || ''; } }
 function notifGameName(k){ try{ return gameDisplayName(k) || ''; }catch(e){ return ''; } }
+function notifWords(){ try{ return (state.progress.completedVocabSets || []).reduce((n, id)=>{ const s = VOCAB_SETS.find(x=>x.id === id); return n + (s && Array.isArray(s.cards) ? s.cards.length : 0); }, 0); }catch(e){ return 0; } }
+function notifDayName(t){ try{ const s = new Date(t).toLocaleDateString(LANG === 'fa' ? 'fa-IR' : LANG === 'tr' ? 'tr-TR' : 'en-GB', {weekday:'long'}); return LANG === 'tr' ? s.toLocaleLowerCase('tr') : s; }catch(e){ return ''; } }
+/* The plan, re-sent at every open (playbook v3, Farin 2026-11-16). Ladder items (+1 … +21 days) only ever fire for learners who stop
+   opening the app, because the next open replaces them. Dated items fire for everyone: B1 the week closes tonight, B4 level up (kept in
+   notif.fixed until sent), D3 course access ending. */
 function notifPlanItems(){
-  const H = notifHour(), out = [], pr = state.progress || {};
+  const H = notifHour(), out = [], pr = state.progress || {}, p = state.profile || {}, nst = notifState(), now = Date.now();
   let rm = []; try{ rm = currentRoadmap() || []; }catch(e){}
   const open = rm.filter(n=>{ try{ return !isRoadmapNodeDone(n); }catch(e){ return false; } });
   const go = n=>'node:' + roadmapNodeId(n);
@@ -16944,34 +16959,75 @@ function notifPlanItems(){
   const plain = games.filter(n=>['mystery', 'path'].indexOf(notifGameKind(n)) === -1);
   const path = games.find(n=>notifGameKind(n) === 'path'), mys = games.find(n=>notifGameKind(n) === 'mystery');
   const used = [], add = (d, n, it)=>{ if(!it) return false; out.push({at:notifAt(d, H), k:it.k, v:it.v}); if(n) used.push(n); return true; };
-  // A node's own nudge: The Red Suitcase and Harbour Files have their own lines, other games the game lines, everything else "your next card".
+  // A node's own nudge: The Red Suitcase (with its chapter) and the mystery have their own lines, other games the game lines, the rest "your next card".
   const nudge = n=>{
     if(!n) return null;
     if(n.type === 'game'){ const k = notifGameKind(n), nm = notifGameName(k); if(!nm) return null;
-      return {k:k === 'path' ? 'path' : k === 'mystery' ? 'mystery' : 'game', v:{game:nm, go:go(n)}}; }
+      const v = {game:nm, go:go(n)};
+      if(k === 'path'){ const ch = (Array.isArray(n.pathEps) && n.pathEps[0]) || (String(n.refId || '').match(/-e(\d+)/) || [])[1]; if(ch) v.ch = Number(ch); }
+      return {k:k === 'path' ? 'path' : k === 'mystery' ? 'mystery' : 'game', v}; }
     let t = ''; try{ t = nodeTitle(n); }catch(e){}
     return t ? {k:'card', v:{card:t, go:go(n)}} : null;
   };
   const free = list=>list.find(n=>used.indexOf(n) === -1);
-  const first = open[0];
-  add(1, first, nudge(first));                                                               // +1 day: whatever is next
+  const first = open[0], act = p.activity || {}, days = Number(act.days) || 0;
+  const firstWeek = !p.joinedAt || now - Number(p.joinedAt) < 7 * 86400000;
+  // +1 day: A1 after their first day, A2 after two days in a row in the first week, else whatever is next
+  if(days <= 1) add(1, null, {k:'day2', v:{go:first ? go(first) : 'home'}});
+  else if(days === 2 && firstWeek) add(1, null, {k:'three', v:{go:first ? go(first) : 'home'}});
+  else add(1, first, nudge(first));
   add(2, null, null) || (first && first.type === 'game'
-    ? add(2, free(open.filter(n=>n.type !== 'game')), nudge(free(open.filter(n=>n.type !== 'game'))))   // next was a game: a card on day 2
-    : add(2, free(plain), nudge(free(plain))));                                                // next was a card: a game on day 2
+    ? add(2, free(open.filter(n=>n.type !== 'game')), nudge(free(open.filter(n=>n.type !== 'game'))))
+    : add(2, free(plain), nudge(free(plain))));
   if((Number(pr.streak) || 0) >= 3 && pr.lastActiveDate === todayISO()) add(3, null, {k:'streak', v:{streak:Number(pr.streak), go:'home'}});
   else if(path && used.indexOf(path) === -1) add(3, path, nudge(path));
   if(mys && used.indexOf(mys) === -1) add(5, mys, nudge(mys));
   else if(path && used.indexOf(path) === -1) add(5, path, nudge(path));
-  if(!notifState().promo){ const g2 = free(plain); if(g2) add(8, g2, nudge(g2)); }
+  if(!nst.promo){ const g2 = free(plain); if(g2) add(8, g2, nudge(g2)); }
   add(14, null, {k:'back', v:{go:'home'}});
-  add(30, null, {k:'last', v:{go:'home'}});
-  return out;
+  add(21, null, {k:'stop', v:{go:'home', words:notifWords()}});
+  // B1: their week closes tonight (Sunday) and one more day reaches the weekly goal
+  try{
+    const goal = weekGoal(), done = weekDaysDone(), sun = isoToDate(weekStartISO()); sun.setDate(sun.getDate() + 6);
+    const countedToday = Array.isArray(pr.weekActiveDays) && pr.weekActiveDays.indexOf(todayISO()) !== -1;
+    const isSunday = localDateStr(new Date()) === localDateStr(sun);
+    if(goal - done === 1 && !(isSunday && countedToday)){
+      const h = Math.max(10, Math.min(20, H - 2)); sun.setHours(h, 5 + Math.floor(Math.random() * 20), 0, 0);
+      let at = sun.getTime(); if(isSunday && at < now + 30 * 60000 && new Date().getHours() < 20) at = now + 60 * 60000;
+      if(at > now) out.push({at, k:'week', v:{wk:goal, go:'home'}});
+    }
+  }catch(e){}
+  // B4: they moved up a level since the last plan: tomorrow "I'm proud of you"; course-news learners at B1+ hear about the courses 3 days later
+  const lvl = p.level;
+  if(NOTIF_LEVELS.indexOf(lvl) !== -1){
+    if(!nst.lastLevel) nst.lastLevel = lvl;
+    else if(NOTIF_LEVELS.indexOf(lvl) > NOTIF_LEVELS.indexOf(nst.lastLevel)){
+      nst.fixed = (nst.fixed || []).concat([{at:notifAt(1, H), k:'level', v:{level:lvl, go:'home'}}]);
+      if(nst.promo && NOTIF_LEVELS.indexOf(lvl) >= 2) nst.fixed.push({at:notifAt(4, H), k:'levelc', v:{level:lvl, go:'courses'}});
+      nst.lastLevel = lvl; save();
+    }
+  }
+  nst.fixed = (nst.fixed || []).filter(it=>it && it.at > now - 3600000).slice(-4);
+  nst.fixed.forEach(it=>out.push(it));
+  // D3: a course password with an end date: 14 days before, 3 days before, and its last day
+  try{
+    notifOwned().forEach(cid=>{
+      const a = courseAccessInfo(cid), exp = a && Number(a.expiresAt); if(!exp || exp < now) return;
+      const c = COURSES.find(x=>x.id === cid), course = (c && c.title && (c.title[LANG] || c.title.en)) || cid;
+      [[14, 'access14'], [3, 'access3'], [0, 'access0']].forEach(([d, k])=>{
+        const t = new Date(exp); t.setDate(t.getDate() - d); t.setHours(Math.max(10, Math.min(20, H - 1)), 30, 0, 0);
+        if(d === 0 && t.getTime() > exp) t.setTime(exp - 3 * 3600000);
+        if(t.getTime() > now) out.push({at:t.getTime(), k, v:{course, day:notifDayName(exp), go:'course:' + cid}});
+      });
+    });
+  }catch(e){}
+  return out.sort((a, b)=>a.at - b.at).slice(0, 16);
 }
 function notifOwned(){ try{ return COURSES.filter(c=>courseUnlocked(c.id)).map(c=>c.id); }catch(e){ return []; } }
 function notifGoals(){ const p = state.profile; return (Array.isArray(p.goals) && p.goals.length ? p.goals : [p.motivationTag]).filter(Boolean).map(String); }
-// One course spotlight, matched to the learner's goals, never a course they have; the pick rotates every 10 days.
+// One course spotlight, B1+ only (every course starts at B1), matched to the learner's goals, never a course they have; rotates every 10 days.
 function notifPromoItem(){
-  if(!notifState().promo) return null;
+  if(!notifState().promo || NOTIF_LEVELS.indexOf(state.profile.level) < 2) return null;
   const owned = notifOwned();
   let visible = []; try{ visible = COURSES.filter(c=>!c.hidden && ['later', 'soon', 'hidden'].indexOf(c.status) === -1 && owned.indexOf(c.id) === -1); }catch(e){}
   const ids = []; notifGoals().forEach(g=>(NOTIF_PROMO_BY_GOAL[g] || []).forEach(id=>{ if(ids.indexOf(id) === -1) ids.push(id); }));
@@ -17102,6 +17158,7 @@ function notifGo(g){
     if(kind === 'bc' && arg){ go('dashboard'); notifNewsOpen(arg); return; }
     if(kind === 'course' && arg && COURSES.some(c=>c.id === arg)){ go('course-detail', {cid:arg}); return; }
     if(kind === 'club'){ go('student-club'); return; }
+    if(kind === 'courses'){ go(screens['courses-home'] ? 'courses-home' : 'dashboard'); return; }
     if(kind === 'node' && arg){
       const n = currentRoadmap().find(x=>roadmapNodeId(x) === arg && !isRoadmapNodeDone(x)) || currentRoadmapNode();
       go('dashboard'); if(n) setTimeout(()=>openRoadmapNode(n), 60); return;
@@ -17154,7 +17211,8 @@ function notifNewsShow(b, fromPush){
   const fa = /[؀-ۿ]/.test(b.title + b.body), btn = notifNewsBtn(b);
   const el = document.createElement('div');
   el.className = 'club-ask notif-ask'; el.setAttribute('role', 'dialog'); el.setAttribute('aria-modal', 'true'); el.setAttribute('aria-labelledby', 'notif-news-title');
-  el.innerHTML = `<div class="club-ask-card" dir="${fa ? 'rtl' : 'auto'}"><img class="club-ask-dog" src="${farinSrc('dog')}" alt="">
+  const pic = b.ch && /^(climber|explorer|graduate|traveller|friends)$/.test(b.ch) ? 'notif/' + b.ch + '-icon.png' : farinSrc('dog');   // the announcement's clay character (2026-11-16)
+  el.innerHTML = `<div class="club-ask-card" dir="${fa ? 'rtl' : 'auto'}"><img class="club-ask-dog" src="${pic}" alt="">
       <div class="eyebrow club-ask-eyebrow">${CL('From Farin','Farin\'den','از طرف فرین','De Farin')}</div>
       <h2 class="display club-ask-title" id="notif-news-title" dir="auto">${esc(b.title)}<span class="club-ask-dot">.</span></h2>
       <p class="club-ask-text" dir="auto">${esc(b.body)}</p>
@@ -17219,7 +17277,8 @@ function notifBoot(){
    reminders: one switch for all, one per kind, every line of copy in EN/TR/FA, sent/opened over 30 days. */
 let adminNotifLast = {};        // chat id -> 'phone' | 'none' | 'err' (the last answer's notification)
 let adminNt = {stats:null, copy:null, err:'', loading:false, phones:null, countFor:'', confirm:false, sending:null, note:'', open:'',
-  d:{lang:'tr', title:'', body:'', btn:'none', ck:'', app:'all', levels:[], course:'all', offer:false}};
+  d:{lang:'tr', title:'', body:'', btn:'none', ck:'', ch:'explorer', app:'all', levels:[], course:'all', offer:false}};
+const NT_CHARS = {explorer:'The Explorer (curiosity)', climber:'The Climber (effort, wins)', graduate:'The Graduate (exams)', traveller:'The Traveller (moving abroad)', friends:'The Friends (warmth, groups)', none:'No character'};
 function adminNtToken(){ const u = firebase.auth && firebase.auth().currentUser; return u ? u.getIdToken() : Promise.reject(new Error('Sign in again.')); }
 function adminNtFetch(path, body){
   return adminNtToken().then(tok=>fetch(NOTIF_URL + path, body ? {method:'POST', headers:{'Authorization':'Bearer ' + tok, 'Content-Type':'application/json'}, body:JSON.stringify(body)}
@@ -17312,7 +17371,7 @@ function adminNtReady(){ const d = adminNt.d; return !!(NOTIF_LIVE && d.title.tr
 function adminNtPreviewHtml(){
   const d = adminNt.d, fa = d.lang === 'fa';
   return `<div class="nt-pv"><div class="nt-card${fa ? ' fa' : ''}" dir="${fa ? 'rtl' : 'ltr'}"><img src="icon-180.png" alt=""><span class="nt-h">Farin English · now</span>
-      <span class="nt-b"><b>${esc(d.title || 'Title')}</b><span>${esc(d.body || 'Your message')}</span></span></div></div>`;
+      <span class="nt-b"><b>${esc(d.title || 'Title')}</b><span>${esc(d.body || 'Your message')}</span></span>${d.ch !== 'none' ? `<img class="nt-lic" src="notif/${d.ch}-icon.png" alt="">` : ''}</div>${d.ch !== 'none' ? `<img class="nt-big" src="notif/${d.ch}-wide.jpg" alt="">` : ''}</div>`;
 }
 function renderAdminNotifyTab(){
   const d = adminNt.d, s = adminNt.stats, c = adminNt.copy;
@@ -17328,6 +17387,8 @@ function renderAdminNotifyTab(){
       <input class="nt-in${d.lang === 'fa' ? ' fa' : ''}" id="nt-title" maxlength="50" dir="auto" value="${esc(d.title)}" placeholder="${esc(NT_EXAMPLE[d.lang].title)}">
       <label class="nt-lbl" for="nt-body">Message <small id="nt-bc">phones show about 2 lines, keep it under 120 characters (${d.body.length})</small></label>
       <textarea class="nt-in${d.lang === 'fa' ? ' fa' : ''}" id="nt-body" maxlength="170" rows="3" dir="auto" placeholder="${esc(NT_EXAMPLE[d.lang].body)}">${esc(d.body)}</textarea>
+      <label class="nt-lbl" for="nt-ch">Character <small>shows on the notification, and in the pop-up</small></label>
+      <select class="nt-in" id="nt-ch">${Object.keys(NT_CHARS).map(k=>`<option value="${k}"${d.ch === k ? ' selected' : ''}>${NT_CHARS[k]}</option>`).join('')}</select>
       <label class="nt-lbl" for="nt-btn">Button in the app</label>
       <select class="nt-in" id="nt-btn">${Object.keys(NT_BTNS).map(k=>`<option value="${k}"${d.btn === k ? ' selected' : ''}>${NT_BTNS[k]}</option>`).join('')}</select>
       ${d.btn === 'course' ? `<select class="nt-in" id="nt-ck"><option value="">Pick the course…</option>${courses.map(x=>`<option value="${x.id}"${d.ck === x.id ? ' selected' : ''}>${esc(x.title.en || x.id)}</option>`).join('')}</select>` : ''}
@@ -17374,7 +17435,7 @@ function adminNtSend(){
   const d = adminNt.d;
   adminNt.confirm = false; adminNt.note = ''; adminNt.sending = {sent:0};
   renderAdminPage();
-  adminNtFetch('/bc/start', {title:d.title.trim(), body:d.body.trim(), lang:d.lang, filter:adminNtFilter(), btn:d.btn, ck:d.btn === 'course' ? d.ck : ''}).then(j=>{
+  adminNtFetch('/bc/start', {title:d.title.trim(), body:d.body.trim(), lang:d.lang, filter:adminNtFilter(), btn:d.btn, ck:d.btn === 'course' ? d.ck : '', ch:d.ch}).then(j=>{
     const step = ()=>adminNtFetch('/bc/step', {id:j.id}).then(r=>{ adminNt.sending.sent += r.sent; renderAdminPage(); return r.done ? null : step(); });
     return step();
   }).then(()=>{
@@ -17408,6 +17469,7 @@ function adminNotifyBind(root){
   if(t) t.oninput = ()=>{ d.title = t.value; upd(); };
   if(b) b.oninput = ()=>{ d.body = b.value; upd(); };
   const btn = root.querySelector('#nt-btn'); if(btn) btn.onchange = ()=>{ d.btn = btn.value; renderAdminPage(); };
+  const chs = root.querySelector('#nt-ch'); if(chs) chs.onchange = ()=>{ d.ch = chs.value; const pv = document.getElementById('nt-preview'); if(pv) pv.innerHTML = adminNtPreviewHtml(); };
   const ck = root.querySelector('#nt-ck'); if(ck) ck.onchange = ()=>{ d.ck = ck.value; adminNtPaintReach(); };
   const of = root.querySelector('#nt-offer'); if(of) of.onchange = ()=>{ d.offer = of.checked; adminNt.phones = null; adminNtCount(); adminNtPaintReach(); };
   const pa = root.querySelector('#nt-paused'); if(pa) pa.onchange = ()=>{ adminNtFetch('/settings', {paused:!pa.checked}).then(j=>{ if(adminNt.stats) adminNt.stats.settings = j.settings; renderAdminPage(); }).catch(e=>{ adminNt.err = e.message; renderAdminPage(); }); };

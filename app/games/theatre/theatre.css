@@ -424,3 +424,133 @@ body.gw-on.gw-echo .th-world-art::after{background:radial-gradient(60% 45% at 30
 body.gw-on.gw-bingo .gw-radio-btn{top:calc(var(--gw-plate-h) * .70); width:calc(var(--gw-colw) * .27); height:calc(var(--gw-colw) * .25); min-width:96px; min-height:88px;}
 /* Sam stands behind the counter on the whole plate (about a third of its height) */
 body.gw-on .th-world .gw-sam{left:26%; top:auto; bottom:28%; height:36%; width:auto;}
+
+/* ======================================================================================================================
+   Theatre 1.2 Fit Kit (Games 2.0 SPEC 5.1, 2026-11-16): the whole picture, always. Replaces the worlds layout above.
+   ====================================================================================================================== */
+/* posters: title, the WHOLE picture (contain, its own shape), Play; the same image blurred behind; the picture shrinks into the room left
+   on a short screen and never crops */
+.th-wide .th-plate{flex:1 1 auto; min-height:120px; max-height:calc(var(--th-col) * var(--th-ratio, .5)); -webkit-mask-image:none; mask-image:none; overflow:visible;}
+.th-wide .th-plate-img{object-fit:contain; object-position:50% 50%;}
+/* the world: a stage band under the HUD; the plate contained in it (its own 4:5 box), the same image blurred at the sides; a band under
+   240 px (Mini Cross, Word Bingo, Story Hunt, Word Rush) shows the world's colour with whole cut-outs, and the whole plate in the
+   establishing shot */
+body.gw-on{--gw-stage:clamp(190px, 36dvh, 360px); --gw-band:var(--gw-stage); --gw-btop:var(--gw-top);}
+body.gw-on .th-world{position:absolute; top:0; bottom:auto; height:calc(var(--gw-btop) + var(--gw-band));}
+.th-world-blur{position:absolute; left:0; right:0; top:var(--gw-btop); height:var(--gw-band); background-size:cover; background-position:center;
+  filter:blur(24px) saturate(.9); opacity:.55; transform:scale(1.15); pointer-events:none;}
+body.gw-on .th-world-stage{position:absolute; top:var(--gw-btop); height:var(--gw-band); left:50%; transform:translateX(-50%); width:calc(var(--gw-band) * .8); max-width:100%;}
+body.gw-on .th-world-text .th-world-stage{z-index:1;}
+body.gw-on .th-world-plate{position:absolute; inset:0; width:100%; height:100%; object-fit:contain; top:0;}
+body.gw-on.gw-small .th-world-stage{left:0; width:100%; transform:none;}
+body.gw-on.gw-small .th-world-plate, body.gw-on.gw-small .th-world-blur, body.gw-on.gw-small .th-world-stage .th-world-cut:not(.th-in-band){display:none;}
+body.gw-on .game-screen{padding-top:calc(var(--gw-btop) + var(--gw-band) + 10px);}
+body.gw-on .game-screen::before{top:calc(var(--gw-btop) + var(--gw-band));}
+body.gw-on.gw-bingo .gw-radio-btn{top:calc(var(--gw-btop) + var(--gw-band) - 92px); width:96px; height:88px; min-width:0; min-height:0;}
+/* the establishing shot: the whole plate at full column width, the panel slid down out of view (transform only); a tap skips */
+body.gw-on.gw-establish{--gw-btop:0px; --gw-band:calc(var(--gw-colw) * 1.25);}
+body.gw-on.gw-establish .th-world-stage{left:0; width:100%; transform:none;}
+body.gw-on.gw-establish.gw-small .th-world-plate, body.gw-on.gw-establish.gw-small .th-world-blur{display:block;}
+body.gw-on.gw-establish.gw-small .th-world-stage .th-world-cut:not(.th-in-band){display:block;}
+body.gw-on.gw-establish.gw-small .th-world-stage .th-in-band{display:none;}
+body.gw-on .game-screen{transition:transform .45s cubic-bezier(.2,.7,.2,1);}
+body.gw-on.gw-establish .game-screen{transform:translateY(100vh);}
+@media (prefers-reduced-motion: reduce){ body.gw-on .game-screen{transition:none;} }
+body.gw-on.gw-small{--gw-sit:0px;}
+
+/* ---- pass 3 (mCqPUhyl re-review + Games 2.0 step 1) ---- */
+/* people stand behind the counter: the front layer (the same picture below the counter's back line) covers their lower edge */
+.th-world-front{position:absolute; inset:0; width:100%; height:100%; z-index:3; pointer-events:none;}
+.th-world-stage .th-world-cut{z-index:4;}
+.th-world-stage .gw-cust, .th-world-stage .gw-sam{z-index:2;}
+/* the voice pill never covers a world: the line's own mini pill shows the accent (SPEC 5.2) */
+body.gw-on #tts-badge{display:none !important;}
+.th-say .th-say-hear{padding-inline-end:46px; min-height:44px; box-sizing:border-box;}
+.th-say-ear{position:absolute; top:6px; inset-inline-end:6px; width:30px; height:30px; margin:0; background:#fff3d2; color:#14332e; border:1.5px solid rgba(20,51,46,.35);}
+.th-say-ear svg{width:16px; height:16px;}
+.th-say-hear[aria-busy="true"] .th-say-ear{background:#ffd166;}
+.th-say-pill{display:inline-flex; align-items:center; gap:4px; height:28px; margin-inline-start:8px; padding:0 8px; vertical-align:middle; border-radius:999px; border:1.5px solid rgba(20,51,46,.35); background:#fff; color:#14332e; font:700 12px/1 'Plus Jakarta Sans', sans-serif; cursor:pointer;}
+.th-say-pill svg{border-radius:2px;}
+/* Build It's solved sentence: a small speaker */
+.gw-hear{display:inline-flex; align-items:center; justify-content:center; width:30px; height:30px; margin-inline-start:8px; vertical-align:middle; border-radius:50%; border:1.5px solid rgba(20,51,46,.35); background:#fff3d2; color:#14332e; cursor:pointer; padding:0;}
+.gw-hear svg{width:16px; height:16px;}
+/* the end card's button is not sticky (it covered "Perfect service!"); only the play action is */
+body.gw-on .game-card .game-cta{position:static;}
+/* the bell bobs (a rotation read as a change of shape) */
+.th-world.th-beat .gw-bell{animation:gw-bob .5s ease-in-out 2; transform-origin:50% 100%;}
+@keyframes gw-bob{0%,100%{transform:none} 50%{transform:translateY(-4px)}}
+/* the whole game under the picture without scrolling at 390x844 / 412x915 (fix 1): compact panels in a world */
+body.gw-on .game-screen{gap:10px; padding-left:16px; padding-right:16px;}
+body.gw-on .game-status{min-height:28px;}
+body.gw-on .game-hint{margin-top:-4px;}
+body.gw-on.gw-order .order-card{padding:10px 12px;}
+body.gw-on.gw-order .order-tools{margin-top:6px;}
+body.gw-on.gw-order .order-tray{margin-top:8px; min-height:64px; padding:6px 8px;}
+body.gw-on.gw-order .order-shelf{grid-template-columns:repeat(4, minmax(0, 1fr)); gap:6px;}
+body.gw-on.gw-order .order-shelf .game-tile{min-height:60px; padding:4px 2px; border-radius:14px;}
+body.gw-on.gw-order .order-shelf .order-tile-art{font-size:26px;}
+body.gw-on.gw-order .order-shelf .order-tile-name{font-size:11px;}
+body.gw-on.gw-order .order-bubble{padding:8px 12px; font-size:15px;}
+body.gw-on.gw-cross .gw-masthead{padding:5px 12px;}
+body.gw-on.gw-cross .gw-masthead b{font-size:16px;}
+body.gw-on.gw-cross .cross-card{padding:10px 8px;}
+body.gw-on.gw-cross .cross-key{height:40px;}
+body.gw-on.gw-cross .cross-kb{padding:4px 2px 2px;}
+body.gw-on.gw-cross .cross-kb-row + .cross-kb-row{margin-top:4px;}
+body.gw-on.gw-cross .cross-clue{padding:8px 12px;}
+body.gw-on.gw-echo .game-card{padding:14px 14px;}
+body.gw-on.gw-echo .game-card .game-play{width:60px; height:60px;}
+body.gw-on.gw-echo .echo-micwrap, body.gw-on.gw-echo .echo-shadow{padding:6px 8px 4px;}
+body.gw-on.gw-echo .echo-mic{width:60px; height:60px;}
+body.gw-on.gw-build .game-card.tight{padding:14px 12px;}
+body.gw-on.gw-bingo .game-tiles{padding:8px; gap:8px;}
+/* the poster's picture fades in whole (a push-in zoom cut its edges) */
+.th-intro.th-wide .th-plate-img{animation:th-plate-in 1.1s .2s cubic-bezier(.2,.7,.2,1) both;}
+@keyframes th-plate-in{from{opacity:0; transform:scale(.97)} to{opacity:1; transform:none}}
+/* fit at 390x844 / 412x915 (pass test): Order Up!'s buttons beside the order, smaller shelf tiles; Mini Cross's clue sticks just above
+   its keyboard (never under it); Say It Back's line card tighter */
+body.gw-on.gw-order .order-card{display:grid; grid-template-columns:minmax(0, 1fr) auto; column-gap:8px; align-items:start;}
+body.gw-on.gw-order .order-card > .order-counter{grid-column:1; grid-row:1;}
+body.gw-on.gw-order .order-card > .order-tools{grid-column:2; grid-row:1; flex-direction:column; align-items:stretch; gap:6px; margin:0;}
+body.gw-on.gw-order .order-card > .order-tools .btn-sm{padding:6px 10px; font-size:13px; white-space:normal; max-width:116px;}
+body.gw-on.gw-order .order-card > .order-tray{grid-column:1 / -1; min-height:48px; margin-top:6px;}
+body.gw-on.gw-order .order-shelf .game-tile{min-height:52px;}
+body.gw-on.gw-order .order-shelf .order-tile-art{font-size:22px;}
+body.gw-on.gw-cross{--gw-kb-h:136px;}
+body.gw-on.gw-cross #cross-clue{position:sticky; bottom:calc(var(--gw-kb-h) + 14px + var(--th-safe-b, 0px)); z-index:3;}
+body.gw-on.gw-cross .gw-masthead{padding:3px 12px;}
+body.gw-on.gw-echo .game-card{padding:10px 12px;}
+body.gw-on.gw-echo .game-card .game-play{width:52px; height:52px;}
+body.gw-on.gw-echo .echo-mic{width:56px; height:56px;}
+body.gw-on.gw-echo .game-hint{font-size:13px;}
+body.gw-on.gw-order .order-card > .order-tools .game-play{width:44px; height:44px; align-self:center;}
+body.gw-on.gw-order .order-card > .order-tools .game-play svg{width:20px; height:20px;}
+body.gw-on.gw-order .order-card > .order-tools .btn-sm{max-width:140px; font-size:12.5px; padding:5px 10px; white-space:nowrap;}
+body.gw-on.gw-order .order-shelf .game-tile{min-height:48px;}
+/* the first speaker in each game pulses twice over 1.2 s (reduced motion: a static ring for 3 s) */
+.th-say-hear.th-ring .th-say-ear{animation:th-ear-ring .6s ease-out 2;}
+@keyframes th-ear-ring{from{box-shadow:0 0 0 0 rgba(255,209,102,.9)} to{box-shadow:0 0 0 10px rgba(255,209,102,0)}}
+@media (prefers-reduced-motion: reduce){ .th-say-hear.th-ring .th-say-ear{animation:th-ear-still 3s step-end 1;} @keyframes th-ear-still{0%{box-shadow:0 0 0 2px #ffd166} 100%{box-shadow:none}} }
+
+/* ---- Mood Kit (Games 2.0 SPEC 5.3): the light of each place, over the art and cut-outs, under the balloons; always light ---- */
+body.gw-on .th-world-art::after{display:none;}
+.th-mood{position:absolute; inset:0; pointer-events:none; z-index:5; overflow:hidden;
+  --m-tint:transparent; --m-ta:0; --m-glow:transparent; --m-ga:0; --m-gx:20%; --m-gy:15%; --m-gr:70%; --m-vig:0;}
+.th-mood > i{position:absolute; inset:0; display:block;}
+.th-m-tint{background:var(--m-tint); opacity:var(--m-ta); mix-blend-mode:multiply;}
+.th-m-glow{background:radial-gradient(var(--m-gr) var(--m-gr) at var(--m-x, var(--m-gx)) var(--m-y, var(--m-gy)), var(--m-glow), transparent 70%); opacity:var(--m-ga); mix-blend-mode:screen;}
+.th-m-vig{background:radial-gradient(120% 90% at 50% 45%, transparent 55%, rgba(20,51,46,var(--m-vig)) 100%); mix-blend-mode:multiply;}
+.th-m-rain, .th-m-blinds, .th-m-sweep{display:none !important;}
+.th-m-flash{background:#fff; opacity:0; mix-blend-mode:screen;}
+.th-mood[data-mood~="warm"]{--m-tint:#FFE7C2; --m-ta:.10; --m-glow:#FFF1D0; --m-ga:.35; --m-gx:20%; --m-gy:15%; --m-gr:70%; --m-vig:.10;}
+.th-mood[data-mood~="lamp"]{--m-tint:#3A4A66; --m-ta:.10; --m-glow:#FFE2A8; --m-ga:.50; --m-gx:62%; --m-gy:38%; --m-gr:42%; --m-vig:.20;}
+.th-mood[data-mood~="lamp"] .th-m-glow{animation:th-m-flicker 7.3s steps(1) infinite;}
+@keyframes th-m-flicker{0%{opacity:var(--m-ga)} 20%{opacity:calc(var(--m-ga) * .9)} 28%{opacity:var(--m-ga)} 61%{opacity:calc(var(--m-ga) * .94)} 66%{opacity:var(--m-ga)}}
+.th-mood[data-mood~="dusk"]{--m-tint:#F0A866; --m-ta:.18; --m-glow:#FFD29A; --m-ga:.30; --m-gx:80%; --m-gy:12%; --m-gr:60%; --m-vig:.16;}
+.th-mood[data-mood~="rain"]{--m-tint:#7D97AE; --m-ta:.14; --m-vig:.14;}
+.th-mood[data-mood~="rain"] .th-m-rain{display:block !important; opacity:.22; background:repeating-linear-gradient(100deg, transparent 0 6px, rgba(255,255,255,.35) 6px 7px, transparent 7px 22px); background-size:120px 180px; animation:th-m-rain .9s linear infinite;}
+@keyframes th-m-rain{to{background-position:0 180px}}
+.th-mood[data-mood~="onair"]{--m-glow:#FF5A4A; --m-ga:.30; --m-vig:.12;}
+/* Say It Back: the studio lamp glows red while the mic listens */
+body.gw-live .th-mood{--m-glow:#FF5A4A; --m-ga:.30; --m-gx:30%; --m-gy:75%; --m-gr:55%;}
+@media (prefers-reduced-motion: reduce){ .th-mood *{animation:none !important;} .th-mood[data-mood~="rain"] .th-m-rain{opacity:.14;} }

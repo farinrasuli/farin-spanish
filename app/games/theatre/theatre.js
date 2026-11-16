@@ -134,12 +134,15 @@ function buildPoster(s){
   var art = artHtml(p, s.kind, title);
   var placeholder = !(p.art && p.artReady);
   var C = content(), q = C.quotes || ['“', '”'], tl = C.target ? ' lang="' + esc(C.target) + '" dir="ltr"' : '';
-  var wide = p.shape === 'wide' && !placeholder;
+  // Fit Kit (Games 2.0 SPEC 5.1): every poster with real art shows the WHOLE picture (contain) between the title and Play, the same
+  // image blurred behind it; never a cover crop (the 2:1 card plates and the 4:5 portrait posters alike)
+  var wide = !placeholder;
   var frame = el('div', 'th-frame' + (first ? ' th-intro' : ' th-rest') + (placeholder ? ' th-is-ph' : '') + (wide ? ' th-wide' : ''));
   frame.setAttribute('role', 'dialog');
   frame.setAttribute('aria-modal', 'true');
   frame.setAttribute('aria-label', title);
-  frame.style.cssText = paletteStyle(p.palette) + (wide && p.focus ? '--th-focus:' + String(p.focus).replace(/[^0-9.%a-z ]/gi, '') + ';' : '');
+  // --th-ratio = the art's own height / width (2:1 card plates .5, 4:5 posters 1.25): the picture is never taller than the column allows
+  frame.style.cssText = paletteStyle(p.palette) + (wide ? '--th-ratio:' + (p.shape === 'wide' ? '.5' : '1.25') + ';' : '');
   var lockup =
     '<div class="th-lockup">' +
       '<p class="th-kicker"><span>' + esc(p.sub || app.gameName || '') + '</span></p>' +
@@ -297,16 +300,26 @@ function paintWorld(s){
   if(w.stage) body.style.setProperty('--gw-stage', String(w.stage).replace(/[^0-9a-z.,%()+\- ]/gi, ''));
   var ed = GW_ED[String(s.app.level || s.world.level || '').toUpperCase()];
   if(ed) body.style.setProperty('--gw-ed', ed); else body.style.removeProperty('--gw-ed');
-  // the plate fills the column width from the top (its busy part shows in the stage; the panel covers its quiet zone); top shifts it
-  var plate = w.plate && w.plate.ready && w.plate.src ? '<img class="th-world-plate" src="' + esc(w.plate.src) + '" alt="">' : '';
+  // Fit Kit (SPEC 5.1): the whole plate, contained in the stage band (a band under 240 px shows the world's colour + whole cut-outs; the
+  // whole plate then shows in the establishing shot); the same image blurred fills the band's sides
+  var src = w.plate && w.plate.ready && w.plate.src ? w.plate.src : '';
+  body.classList.toggle('gw-small', w.band === 'small');
+  var plate = src ? '<div class="th-world-blur" style="background-image:url(\'' + esc(src) + '\')"></div>' : '';
+  var plateImg = src ? '<img class="th-world-plate" src="' + esc(src) + '" alt="">' : '';
   var cut = (w.layers || []).filter(function(l){ return l && l.ready && l.src; }).map(function(l){
-    return '<img class="th-world-cut ' + esc(l.cls || '') + '"' + (l.id ? ' id="' + esc(l.id) + '"' : '') + ' src="' + esc(l.src) + '" alt="" style="' + boxStyle(l.box, l.sit) + '">';
+    var small = w.band === 'small' && l.band;   // a small band places its whole cut-outs in band %
+    return '<img class="th-world-cut ' + esc(l.cls || '') + (small ? ' th-in-band' : '') + '"' + (l.id ? ' id="' + esc(l.id) + '"' : '') + ' src="' + esc(l.src) + '" alt="" style="' + boxStyle(small ? l.band : l.box, small ? !!l.sit : false) + '">';
   }).join('');
   var txt = (w.text || []).filter(function(t){ return t && t.ready; }).map(function(t){
     return '<div class="th-world-live ' + esc(t.cls || '') + '"' + (t.id ? ' id="' + esc(t.id) + '"' : '') + ' style="' + boxStyle(t.box, t.sit) + '">' + esc(t.key ? ((content().worldText || {})[t.key] || '') : (t.text || '')) + '</div>';
   }).join('');
-  // cut-outs and live text sit in the stage band (83 px + safe area, --gw-stage tall): their boxes are % of that band
-  s.world.el.innerHTML = '<div class="th-world-art' + (plate ? ' th-has-plate' : '') + '">' + plate + '<div class="th-world-stage">' + cut + '</div></div><div class="th-world-text"><div class="th-world-stage">' + txt + '</div></div>';
+  // .th-world-stage is the plate's own box (4:5, contained in the band): cut-outs, actors and live text are in % of the plate
+  // a front layer: the same picture again, only below its line (front.top %), over the people, so they stand behind the counter
+  var front = src && w.front && w.front.top ? '<img class="th-world-front" src="' + esc(src) + '" alt="" style="clip-path:inset(' + cssNum(parseFloat(w.front.top), 70, 0, 100) + '% 0 0 0)">' : '';
+  s.world.el.innerHTML = '<div class="th-world-art' + (src ? ' th-has-plate' : '') + '">' + plate + '<div class="th-world-stage">' + plateImg + front + cut + '</div></div><div class="th-world-text"><div class="th-world-stage">' + txt + '</div></div>';
+  // the world's light: one mood element, the last child of the plate's box (over the art and cut-outs, under the balloons)
+  var stageBox = s.world.el.querySelector('.th-world-art .th-world-stage');
+  if(stageBox && src) stageBox.appendChild(moodEl(w.mood || 'warm', w.moodVars));
   if(w.css) loadWorldCss(s.world.kind, w.css);
   warmSfx(w.sfx);
   bedStart();
@@ -358,9 +371,10 @@ function say(text, o){
   var lang = o.lang || (kind === 'balloon' ? (content().target || 'en') : s.app.lang) || 'en';
   var rtl = lang === 'fa';
   var hear = typeof o.hear === 'function';
-  s.sayEl.innerHTML = '<div class="th-' + kind + (hear ? ' th-say-hear' : '') + '" lang="' + esc(lang) + '" dir="' + (rtl ? 'rtl' : 'ltr') + '"' + (hear ? ' role="button" tabindex="0"' : '') + '>' + esc(text) +
+  s.sayEl.innerHTML = '<div class="th-' + kind + (hear ? ' th-say-hear' : '') + '" lang="' + esc(lang) + '" dir="' + (rtl ? 'rtl' : 'ltr') + '"' + (hear ? ' role="button" tabindex="0" aria-label="' + esc(text + ' · ' + S('hear')) + '"' : '') + '>' + esc(text) +
     (hear ? '<span class="th-say-ear" aria-hidden="true">' + ICON.soundOn + '</span>' : '') + '</div>';
   var box = s.sayEl.firstChild;
+  if(hear && o.ring) box.classList.add('th-ring');   // the first speaker a learner meets in a game pulses twice (SPEC 5.2)
   if(hear){ var go = function(e){ if(e) e.stopPropagation(); try{ o.hear(); }catch(err){} }; box.addEventListener('click', go); box.addEventListener('keydown', function(e){ if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); go(); } }); }
   if(kind === 'balloon'){
     var who = D.getElementById(o.who), r = who && who.getBoundingClientRect();
@@ -412,9 +426,44 @@ function bedStart(){
 function bedTick(){
   if(!bed) return;
   var badge = D.getElementById('tts-badge');
-  var talking = (badge && badge.classList.contains('on')) || (W.speechSynthesis && W.speechSynthesis.speaking) || D.body.classList.contains('gw-live');
+  var talking = D.body.hasAttribute('data-speaking') || (W.speechSynthesis && W.speechSynthesis.speaking) || D.body.classList.contains('gw-live');   // the app's speaking flag
   var target = (!cur || muted() || talking || D.hidden) ? 0 : bed.vol;
   try{ bed.out.gain.setTargetAtTime(target, bed.ctx.currentTime, .3); }catch(e){}
+}
+// Mood Kit (Games 2.0 SPEC 5.3): Theatre.moodEl(preset, vars) -> the lighting overlay (last child of an art box, never over text);
+// presets day warm lamp noir dusk night rain storm dawn darkroom snow train onair (space-separated mixes allowed)
+function moodEl(preset, vars){
+  var m = el('div', 'th-mood', '<i class="th-m-tint"></i><i class="th-m-glow"></i><i class="th-m-rain"></i><i class="th-m-blinds"></i><i class="th-m-sweep"></i><i class="th-m-vig"></i><i class="th-m-flash"></i>');
+  m.setAttribute('aria-hidden', 'true');
+  m.setAttribute('data-mood', String(preset || 'day').replace(/[^a-z ]/g, ''));
+  for(var k in (vars || {})) if(/^--m-[a-z0-9]+$/.test(k)) m.style.setProperty(k, String(vars[k]).replace(/[^0-9.%a-z -]/gi, ''));
+  return m;
+}
+// Theatre.flash(moodEl, {thunder}): two flashes in 420 ms, at most one lightning event every 5 s app-wide, never red, never over text;
+// reduced motion: no flash, the tint brightens a little and back; thunder (a sound name) 700-1600 ms later unless muted
+var lastFlash = 0;
+function flash(m, o){
+  o = o || {}; if(!m) return false;
+  var now = Date.now(); if(now - lastFlash < 5000) return false; lastFlash = now;
+  var f = m.querySelector('.th-m-flash'), t = m.querySelector('.th-m-tint');
+  if(reduced()){ if(t) anim(t, [{filter:'brightness(1)'}, {filter:'brightness(1.06)'}, {filter:'brightness(1)'}], {duration:1200}); }
+  else if(f) anim(f, [{opacity:0, offset:0}, {opacity:.55, offset:.08}, {opacity:.08, offset:.16}, {opacity:.42, offset:.26}, {opacity:0, offset:.4}, {opacity:0, offset:1}], {duration:420, easing:'linear'});
+  if(o.thunder) setTimeout(function(){ sfx(o.thunder); }, 700 + Math.random() * 900);
+  return true;
+}
+// Theatre.establish(ms) -> Promise: the establishing shot (SPEC 5.1): the whole plate at full column width, the panel slid down out of
+// view (transform only); a tap skips; reduced motion = a straight cut. Runs when a round opens and during the finale.
+function establish(ms){
+  var s = cur;
+  return new Promise(function(resolve){
+    if(!s || !s.world || !worldData(s).w.plate || !worldData(s).w.plate.ready){ resolve(); return; }
+    var body = D.body, done = false, t;
+    var end = function(){ if(done) return; done = true; clearTimeout(t); body.classList.remove('gw-establish'); D.removeEventListener('pointerdown', end, true); resolve(); };
+    body.classList.add('gw-establish');
+    try{ W.scrollTo(0, 0); }catch(e){}
+    D.addEventListener('pointerdown', end, true);
+    t = setTimeout(end, Math.min(cssNum(ms, 1600, 0, 2400), 2400));
+  });
 }
 // Theatre.finale({beat, ms}) -> Promise: the world's own end moment (a class on .th-world for the CSS beat and/or a function),
 // 2.4 s at most, one tap skips. The souvenir and the one button stay the app's own end card (SPEC 4.9).
@@ -423,8 +472,8 @@ function finale(o){
   return new Promise(function(resolve){
     if(!s || !s.world || reduced()){ resolve(); return; }
     var w = s.world.el, done = false, t;
-    var end = function(){ if(done) return; done = true; clearTimeout(t); w.classList.remove('th-beat'); D.body.classList.remove('gw-beat'); D.removeEventListener('pointerdown', end, true); resolve(); };
-    w.classList.add('th-beat'); D.body.classList.add('gw-beat');
+    var end = function(){ if(done) return; done = true; clearTimeout(t); w.classList.remove('th-beat'); D.body.classList.remove('gw-beat', 'gw-establish'); D.removeEventListener('pointerdown', end, true); resolve(); };
+    w.classList.add('th-beat'); D.body.classList.add('gw-beat', 'gw-establish');
     try{ if(typeof o.beat === 'function') o.beat(w); }catch(e){}
     D.addEventListener('pointerdown', end, true);
     t = setTimeout(end, Math.min(cssNum(o.ms, 2400, 0, 2400), 2400));
@@ -595,6 +644,7 @@ function start(){
   s.phase = 'running';
   clearTimeout(s.introTimer); clearTimeout(s.briefTimer);
   if(!s.noPoster) swell(s.kind);
+  if(s.world) setTimeout(function(){ if(cur === s && s.phase === 'running') establish(1600); }, 60);   // the round opens on the whole place (SPEC 5.1)
   var frame = s.frame;
   var update = function(keepCover){
     D.body.classList.add('th-running');
@@ -730,7 +780,7 @@ var api = {
   version:'1.1.0',
   open:open, close:close, sync:sync, exit:exit, play:start, skip:skip,
   titleCard:titleCard, transition:transition, setStrip:setStrip, setControls:setControls, stageEl:stageEl, setSkin:setSkin,
-  say:say, finale:finale, sfx:sfx, progress:progress, actor:actor, world:function(){ return cur && cur.world ? cur.world.kind : null; },
+  say:say, finale:finale, sfx:sfx, progress:progress, actor:actor, establish:establish, moodEl:moodEl, flash:flash, world:function(){ return cur && cur.world ? cur.world.kind : null; },
   skin:function(){ return cur && cur.skin ? cur.skinKind : null; },
   isOpen:function(){ return !!cur; },
   phase:function(){ return cur ? cur.phase : null; },

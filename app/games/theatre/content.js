@@ -77,6 +77,7 @@ window.THEATRE_CONTENT = {
     // the leave sheet while a quick game's round is in progress (the card stays open on the roadmap, so this is true)
     leaveQ:{en:'Leave the game? You can play it again any time.', tr:'Oyundan çıkıyor musun? İstediğin zaman yeniden oynayabilirsin.', fa:'از بازی می‌ری؟ هر وقت بخوای می‌تونی دوباره بازیش کنی.', es:'¿Sales del juego? Puedes volver a jugarlo cuando quieras.'},
     stay:{en:'Keep playing', tr:'Oynamaya devam et', fa:'بازی رو ادامه بده', es:'Seguir jugando'},
-    leave:{en:'Leave', tr:'Çık', fa:'خروج', es:'Salir'}
+    leave:{en:'Leave', tr:'Çık', fa:'خروج', es:'Salir'},
+    hear:{en:'Hear this line', tr:'Bu satırı dinle', fa:'این جمله رو گوش کن', es:'Escucha esta frase'}
   }
 };

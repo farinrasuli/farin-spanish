@@ -21,7 +21,7 @@
 (function(){
 'use strict';
 if(window.MiniRadio) return;
-var W = window, D = document, VERSION = '0.5.0', ABORT = {abort:true}, G = null;
+var W = window, D = document, VERSION = '0.6.0', ABORT = {abort:true}, G = null;
 var MARK = 0.68;   // where the station sits on the dial (0..1)
 
 function esc(s){ return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
@@ -40,6 +40,8 @@ var UI = {
   predict:{en:'Three shows tonight. Which one is on? Listen and find out.', tr:'Bu gece üç program var. Hangisi yayında? Dinle ve bul.', fa:'امشب سه برنامه داریم. کدام پخش می‌شود؟ گوش کن و بفهم.', es:'Esta noche hay tres programas. ¿Cuál está en antena? Escucha y descúbrelo.'},
   which:{en:'Which word did you hear?', tr:'Hangi kelimeyi duydun?', fa:'کدام کلمه را شنیدی؟', es:'¿Qué palabra has oído?'},
   againPart:{en:'Play that part again', tr:'O kısmı tekrar çal', fa:'آن قسمت را دوباره پخش کن', es:'Escuchar esa parte otra vez'},
+  catchIt:{en:'Catch the word when you hear it.', tr:'Kelimeyi duyduğun anda yakala.', fa:'کلمه رو همون لحظه که شنیدی بگیر.', es:'Atrapa la palabra cuando la oigas.'},   // Games 2.0 SPEC 9, 23
+  waitIt:{en:'Not yet: wait for it.', tr:'Henüz değil: bekle.', fa:'هنوز نه: صبر کن.', es:'Todavía no: espera.'},
   notHere:{en:'Hm, not in this one.', tr:'Hmm, bunda yok.', fa:'هوم، این یکی را نگفت.', es:'Mmm, esa no sale.'},
   gist:{en:'Which show was it?', tr:'Hangi programdı?', fa:'کدام برنامه بود؟', es:'¿Qué programa era?'},
   againAll:{en:'Play it all again', tr:'Hepsini tekrar çal', fa:'همه‌اش را دوباره پخش کن', es:'Escucharlo todo otra vez'},
@@ -78,19 +80,62 @@ function sfx(name){
   else if(name === 'flip'){ var n = c.createBufferSource(), b = c.createBuffer(1, Math.floor(c.sampleRate * .04), c.sampleRate), d = b.getChannelData(0); for(var i = 0; i < d.length; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / d.length); n.buffer = b; var g = c.createGain(); g.gain.value = .05; n.connect(g); g.connect(c.destination); n.start(t); }
 }
 function sting(){ if(!G || muted()) return; var c = ac(); if(!c) return; var t = c.currentTime + 0.02; [523.25, 659.25, 783.99].forEach(function(f, i){ tone(c, f, t + i * .11, .14, .2); }); }
+// Tuning (mood pass 2026-11-16, Farin: "work on the mood of each game better"): the static now crackles, and a heterodyne whistle slides
+// down to silence as the needle nears the station (classic short-wave tuning), all made here in WebAudio, no files.
 function staticOn(){
   if(!G || G.st || muted()) return;
   var c = ac(); if(!c) return;
   var len = c.sampleRate * 2, buf = c.createBuffer(1, len, c.sampleRate), d = buf.getChannelData(0);
-  for(var i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
+  for(var i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * (Math.random() < .002 ? 3 : 1);   // a crackle now and then in the hiss
   var src = c.createBufferSource(); src.buffer = buf; src.loop = true;
   var bp = c.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 1200; bp.Q.value = .8;
   var g = c.createGain(); g.gain.value = 0;
   src.connect(bp); bp.connect(g); g.connect(c.destination); src.start();
-  G.st = {src:src, g:g, c:c};
+  var wo = c.createOscillator(), wg = c.createGain(), wf = c.createBiquadFilter(); wo.type = 'sine'; wo.frequency.value = 1800; wf.type = 'bandpass'; wf.frequency.value = 1500; wf.Q.value = .6; wg.gain.value = 0;
+  wo.connect(wf); wf.connect(wg); wg.connect(c.destination); wo.start();
+  G.st = {src:src, g:g, c:c, wo:wo, wg:wg};
 }
-function staticLevel(dist){ if(G && G.st) G.st.g.gain.setTargetAtTime(.25 * clamp(dist / .5, 0, 1), G.st.c.currentTime, .03); }
-function staticOff(){ if(G && G.st){ try{ G.st.src.stop(); }catch(e){} G.st = null; } }
+function staticLevel(dist){
+  if(!(G && G.st)) return;
+  var t = G.st.c.currentTime, k = clamp(dist / .5, 0, 1);
+  G.st.g.gain.setTargetAtTime(.25 * k, t, .03);
+  // the whistle: high and thin far off, sliding down and fading as the station comes in (silent on the station itself)
+  G.st.wo.frequency.setTargetAtTime(180 + 2600 * k, t, .04);
+  G.st.wg.gain.setTargetAtTime(dist < .03 ? .0001 : .035 * Math.min(1, k * 2.2), t, .05);
+}
+function staticOff(){ if(G && G.st){ try{ G.st.src.stop(); G.st.wo.stop(); }catch(e){} G.st = null; } }
+// Between parts only (SPEC 9c: no background sound while anyone speaks, listening is the task): a quiet room and a clock for at most 3 s
+function roomGap(ms){
+  if(!G || muted()) return;
+  var c = ac(); if(!c) return;
+  try{
+    var t = c.currentTime + .02, dur = Math.min(3, (ms || 2500) / 1000), n = Math.floor(c.sampleRate * dur), b = c.createBuffer(1, n, c.sampleRate), d = b.getChannelData(0), last = 0;
+    for(var i = 0; i < n; i++){ last = (last + .02 * (Math.random() * 2 - 1)) / 1.02; d[i] = last * 3; }
+    var src = c.createBufferSource(); src.buffer = b; var lp = c.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 260; var gn = c.createGain();
+    gn.gain.setValueAtTime(.0001, t); gn.gain.exponentialRampToValueAtTime(.05, t + .4); gn.gain.setValueAtTime(.05, t + dur - .6); gn.gain.exponentialRampToValueAtTime(.0001, t + dur);
+    src.connect(lp); lp.connect(gn); gn.connect(c.destination); src.start(t); src.stop(t + dur);
+    for(var k = 0; k < Math.floor(dur); k++){ var tk = c.createBufferSource(), tn = Math.floor(c.sampleRate * .025), tb = c.createBuffer(1, tn, c.sampleRate), td = tb.getChannelData(0); for(var j = 0; j < tn; j++) td[j] = (Math.random() * 2 - 1) * Math.pow(1 - j / tn, 6); tk.buffer = tb; var bp = c.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = k % 2 ? 2400 : 2900; bp.Q.value = 4; var tg = c.createGain(); tg.gain.value = .03; tk.connect(bp); bp.connect(tg); tg.connect(c.destination); tk.start(t + .3 + k); }
+  }catch(e){}
+}
+// (2026-11-16 first pass, retired by SPEC 9c the same day: a valve hiss under the show)
+function airOn(){
+  if(!G || G.air) return;
+  var c = ac(); if(!c) return;
+  var len = c.sampleRate * 3, buf = c.createBuffer(1, len, c.sampleRate), d = buf.getChannelData(0), b0 = 0, b1 = 0;
+  for(var i = 0; i < len; i++){ var w = Math.random() * 2 - 1; b0 = .997 * b0 + w * .05; b1 = .96 * b1 + w * .3; d[i] = (b0 + b1 + w * .2) * .35; }
+  var x = Math.floor(c.sampleRate * .08); for(var j = 0; j < x; j++){ var q = j / x; d[j] = d[j] * q + d[len - x + j] * (1 - q); }
+  var src = c.createBufferSource(); src.buffer = buf; src.loop = true;
+  var hp = c.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 2400;
+  var out = c.createGain(); out.gain.value = .0001; src.connect(hp); hp.connect(out); out.connect(c.destination); src.start();
+  var hum = c.createOscillator(), hg = c.createGain(); hum.frequency.value = 100; hg.gain.value = .003; hum.connect(hg); hg.connect(out); hum.start();
+  var g = G, A = {src:src, hum:hum, out:out, c:c};
+  A.level = function(){ return muted() || D.hidden ? .0001 : .05; };
+  out.gain.setTargetAtTime(A.level(), c.currentTime, .6);
+  A.watch = setInterval(function(){ if(G !== g) return; try{ out.gain.setTargetAtTime(A.level(), c.currentTime, .2); }catch(e){} }, 400);
+  A.crackle = setInterval(function(){ if(G !== g || muted() || Math.random() < .5) return; try{ var t = c.currentTime + .01, n = Math.floor(c.sampleRate * .02), cb = c.createBuffer(1, n, c.sampleRate), cd = cb.getChannelData(0); for(var i = 0; i < n; i++) cd[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / n, 4); var s2 = c.createBufferSource(); s2.buffer = cb; var cg = c.createGain(); cg.gain.value = .05; s2.connect(cg); cg.connect(c.destination); s2.start(t); }catch(e){} }, 2300);
+  G.air = A;
+}
+function airOff(){ var A = G && G.air; if(!A) return; G.air = null; clearInterval(A.watch); clearInterval(A.crackle); try{ A.out.gain.setTargetAtTime(.0001, A.c.currentTime, .3); }catch(e){} setTimeout(function(){ try{ A.src.stop(); A.hum.stop(); }catch(e){} }, 1200); }
 
 /* ---------- speech ---------- */
 function speak(text, who, rate){
@@ -121,14 +166,20 @@ function setHtml(){
     '<div class="mr-knob" style="' + box(A.layout.knob) + '"><img src="' + esc(A.knob) + '" alt="" draggable="false"></div></div>';
   return '<div class="mr-set mr-plain">' + lampEl + dial + '<button type="button" class="mr-knob" aria-label="' + esc(U('tune')) + '"><i class="mr-notch"></i></button></div>';
 }
-// The sill scene (2026-11-07): the sill render cropped to the window + sill band (image rows 28%-84%), the radio standing on the sill between
-// the mug and the plant, a flat contact shadow under it, and calm ambient layers. Positions are % of the scene (measured on radio-sill.webp).
+// The sill scene (2026-11-07): the radio standing on the sill between the mug and the plant, a flat contact shadow under it, calm ambient
+// layers. Since 2026-11-16 the scene is the WHOLE sill render at its own 4:5 (Farin: "make sure the full scene and the full art is viewable";
+// it was cropped to rows 28%-84%), narrower on a short screen; positions are % of the scene (measured on radio-sill.webp, remapped).
 function sceneHtml(){
   if(!(G.art && G.art.sill)) return setHtml();
   var amb = '<i class="mr-cloud mr-c1"></i><i class="mr-cloud mr-c2"></i><i class="mr-gull mr-g1"></i><i class="mr-gull mr-g2"></i>' +
     '<i class="mr-shine mr-s1"></i><i class="mr-shine mr-s2"></i><i class="mr-shine mr-s3"></i><i class="mr-steam mr-w1"></i><i class="mr-steam mr-w2"></i>';
-  return '<div class="mr-scene"><div class="mr-view"><img class="mr-sill" src="' + esc(new URL(G.art.sill, D.baseURI).href) + '" alt="" draggable="false">' + amb + '</div>' +
-    '<i class="mr-shadow"></i>' + setHtml() + '</div>';
+  return '<div class="mr-scene"><div class="mr-view"><img class="mr-sill" src="' + esc(new URL(G.art.sill, D.baseURI).href) + '" alt="" draggable="false">' + amb + moodHtml() + '</div>' +
+    '<i class="mr-glow"></i><i class="mr-shadow"></i>' + setHtml() + '</div>';
+}
+// the mood overlay goes in the art box (.mr-view), over the sill render and under every control (SPEC 5.3)
+function moodHtml(){
+  var lv = (G.ep && G.ep.level) || 'A1', preset = /^A/.test(lv) ? 'warm' : lv === 'B1' ? 'dusk' : 'night';
+  return '<div class="mr-mood" data-mood="' + preset + '" aria-hidden="true"><i class="mr-m-tint"></i><i class="mr-m-glow"></i><i class="mr-m-dial"></i><i class="mr-m-air"></i><i class="mr-m-vig"></i></div>';
 }
 // Opening (Farin 2026-11-07 "it needs a beginning motion"): the scene pushes in, the radio settles onto the sill, the dial lamp glows, a short
 // burst of static, then the tune step. About 1.6 s; a tap anywhere skips it. Nothing at all with reduced motion.
@@ -153,7 +204,7 @@ function setNeedle(n){
   if(G.needle.parentNode.classList.contains('mr-round')) G.needle.style.transform = 'rotate(' + (-135 + G.n * 270) + 'deg)'; else G.needle.style.left = (4 + G.n * 92) + '%';
   G.knob.style.transform = 'rotate(' + (G.n * 300 - 150) + 'deg)';
 }
-function lamp(on){ G.set.classList.toggle('mr-on', !!on); }
+function lamp(on){ G.set.classList.toggle('mr-on', !!on); if(G.root) G.root.classList.toggle('mr-onair', !!on); }   // mr-onair: the warm dial glow and its light on the sill
 // the speaker pulse: the radio body scales 1 -> 1.03 -> 1 at each line start (the plain controls panel when there is no art)
 function pulse(){ var n = G.set.querySelector('.mr-body') || G.set; if(RM() || !n.animate) return; n.animate([{transform:'scale(1)'}, {transform:'scale(1.03)'}, {transform:'scale(1)'}], {duration:220}); }
 function sparks(node, n){
@@ -174,7 +225,9 @@ function playLines(a, b, prefix){
         if(tok !== g.tok || g.dead) return false;
         g.cursor = i; pulse(); markRead(i);
         var l = g.ep.lines[i];
+        if(g.onLine) try{ g.onLine(i, 'start'); }catch(e){}
         await speak(l.text, l.who);
+        if(g.onLine) try{ g.onLine(i, 'end'); }catch(e){}
       }
       if(tok !== g.tok || g.dead) return false;
       g.resumeAt = null; g.heardTo = Math.max(g.heardTo, b);
@@ -183,7 +236,7 @@ function playLines(a, b, prefix){
   })();
 }
 function pause(){ G.tok++; G.resumeAt = G.cursor; stopSpeech(); G.playing = false; paintPlay(); }
-function paintPlay(){ if(!G.playBtn) return; G.playBtn.innerHTML = G.playing ? PAUSE : PLAY; G.playBtn.setAttribute('aria-label', U(G.playing ? 'pause' : 'play')); }
+function paintPlay(){ if(G.root) G.root.classList.toggle('mr-playing', !!G.playing); if(!G.playBtn) return; G.playBtn.innerHTML = G.playing ? PAUSE : PLAY; G.playBtn.setAttribute('aria-label', U(G.playing ? 'pause' : 'play')); }
 function markRead(i){ if(!G.readEl) return; G.readEl.querySelectorAll('p').forEach(function(p, k){ p.classList.toggle('mr-now', k === i); }); }
 // plays a range to its end; resolves when the last line of the range has been heard (a pause just waits for Play)
 function hearRange(a, b, prefix){
@@ -207,6 +260,12 @@ function build(){
   if(RM()) root.classList.add('mr-rm');   // the app's reduce-motion setting as well as the system one: no ambient motion, no opening
   G.root = root; G.set = root.querySelector('.mr-set'); G.needle = root.querySelector('.mr-needle'); G.knob = root.querySelector('.mr-knob');
   G.lineEl = root.querySelector('.mr-line'); G.ctl = root.querySelector('.mr-controls'); G.area = root.querySelector('.mr-area'); G.dots = root.querySelectorAll('.mr-dots i');
+  var view = root.querySelector('.mr-view'), dialEl = root.querySelector('.mr-dial'), lampEl = root.querySelector('.mr-lamp');
+  var placeLamps = function(){ if(!view || !dialEl) return; var v = view.getBoundingClientRect(); if(!v.width) return; var d = dialEl.getBoundingClientRect(), l = lampEl ? lampEl.getBoundingClientRect() : d;
+    view.style.setProperty('--d-x', ((d.left + d.width / 2 - v.left) / v.width * 100).toFixed(1) + '%'); view.style.setProperty('--d-y', ((d.top + d.height / 2 - v.top) / v.height * 100).toFixed(1) + '%');
+    view.style.setProperty('--l-x', ((l.left + l.width / 2 - v.left) / v.width * 100).toFixed(1) + '%'); view.style.setProperty('--l-y', ((l.top + l.height / 2 - v.top) / v.height * 100).toFixed(1) + '%'); };
+  placeLamps(); setTimeout(placeLamps, 400); setTimeout(placeLamps, 1800);
+  if(W.ResizeObserver && view){ G.ro = new ResizeObserver(placeLamps); G.ro.observe(view); }
 }
 function say(k, sub){ G.lineEl.innerHTML = '<span dir="' + dir() + '">' + esc(typeof k === 'string' && UI[k] ? U(k) : k) + '</span>' + (sub ? '<small dir="' + dir() + '">' + esc(sub) + '</small>' : ''); }
 function dotsPaint(cur){ G.dots.forEach(function(d, i){ d.classList.toggle('mr-full', i < cur); d.classList.toggle('mr-cur', i === cur); }); }
@@ -223,10 +282,10 @@ async function tuneIn(){
   G.status = {kind:'tune', knob:'.mr-knob', dial:'.mr-dial', button:'.mr-tunebtn', art:!!G.art};
   await new Promise(function(res, rej){
     var g = G, done = false, stop = function(){ rej(ABORT); }; g.waits.add(stop);
-    function lock(){ if(done) return; done = true; g.waits.delete(stop); staticOff(); setNeedle(MARK); sfx('flip'); lamp(true); sting(); res(); }
+    function lock(){ if(done) return; done = true; g.tuning = false; g.waits.delete(stop); staticOff(); setNeedle(MARK); sfx('flip'); lamp(true); sting(); res(); }
     function drag(e){
       if(done) return; e.preventDefault();
-      staticOn();
+      G.tuning = true; staticOn();
       var scn = G.root.querySelector('.mr-scene'), dw = Math.max(G.set.querySelector('.mr-dial').getBoundingClientRect().width * 0.92, scn ? scn.getBoundingClientRect().width * 0.6 : 0), sx = e.clientX, n0 = G.n, pid = e.pointerId;
       var mv = function(ev){ if(ev.pointerId !== pid || done) return; var nn = n0 + (ev.clientX - sx) / dw; setNeedle(nn); var dist = Math.abs(G.n - MARK); staticLevel(dist); if(dist < 0.06){ off(); lock(); } };
       var up = function(ev){ if(ev.pointerId !== pid) return; off(); if(!done) staticLevel(.5); };
@@ -258,35 +317,91 @@ function wirePlayer(){
   paintPlay();
   G.playBtn.addEventListener('click', function(){ if(G.playing) pause(); else if(G.resumeRange) G.resumeRange(); });
 }
+// Catch it live (SPEC 9b, Farin "i want GAMES games"): before each part its three word cards (the word you will hear and two decoys) slide
+// onto the sill; tap the right card WHILE its word is on air: the window opens when the line with the word starts and closes 1.5 s after
+// that line ends (2.5 s at A1-A2). Caught = an ON AIR stamp on the card and the needle twitches; a decoy = a crackle of static and the card
+// goes grey; the right card at the wrong moment = a wiggle and "Not yet: wait for it." (no cost). Tapping never pauses the show. Missed it?
+// Today's "Which word did you hear?" comes after the part, so nothing is lost. Every word caught live = the sharp sign-off, the dial glows gold.
+function wordRe(w){ return new RegExp('(^|[^\\p{L}])' + String(w).replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\p{L}{0,3}(?![\\p{L}])', 'iu'); }
 async function parts(){
   var ep = G.ep;
   say('predict');
   G.area.innerHTML = titlesHtml(false);
+  G.caught = 0;
   for(var p = 0; p < ep.parts.length; p++){
     var a = ep.parts[p][0], b = ep.parts[p][1];
     dotsPaint(p);
     controls(playerHtml());
     wirePlayer();
-    G.status = {kind:'listen', part:p, play:'.mr-play'};
+    var card = liveCards(p);
+    G.status = {kind:'listen', part:p, play:'.mr-play', cards:card.sel, live:card.isLive};
     await hearRange(a, b, p === 0 ? IDENT[G.lang] : null);
     live();
-    await checkin(p);
+    card.end();
+    if(card.caught()){ G.caught++; if(card.clean()) G.clean++; await wait(700); }
+    else await checkin(p, card.out());
     dotsPaint(p + 1);
-    if(p < ep.parts.length - 1){ sting(); await wait(700); }
+    if(p < ep.parts.length - 1){ sting(); roomGap(2600); await wait(700); }
   }
 }
-async function checkin(p){
+function liveCards(p){
+  var g = G, ep = g.ep, ci = ep.checkins[p], a = ep.parts[p][0], b = ep.parts[p][1];
+  var re = wordRe(ci.word), lines = [];
+  for(var i = a; i <= b; i++) if(re.test(String(ep.lines[i].text || ''))) lines.push(i);
+  var tiles = shuffle([ci.word].concat(ci.decoys)), open = false, shut = null, caught = false, clean = true, out = [];
+  var slow = ep.level === 'A1' || ep.level === 'A2';
+  var row = el('div', 'mr-cards', '<p class="mr-cardcue" dir="' + dir() + '">' + esc(U('catchIt')) + '</p><div class="mr-cardrow">' + tiles.map(function(w){ return '<button type="button" class="mr-tile mr-card-live" data-w="' + esc(w) + '" lang="' + G.lang + '">' + esc(w) + '</button>'; }).join('') + '</div>');
+  G.area.insertBefore(row, G.area.firstChild);
+  if(!RM()) row.querySelectorAll('.mr-card-live').forEach(function(t, k){ t.animate && t.animate([{transform:'translateY(18px) rotate(' + (k - 1) * 4 + 'deg)', opacity:0}, {transform:'none', opacity:1}], {duration:320, delay:k * 70, easing:'cubic-bezier(.34,1.56,.64,1)', fill:'backwards'}); });
+  g.onLine = function(i, ev){
+    if(lines.indexOf(i) < 0) return;
+    if(ev === 'start'){ clearTimeout(shut); open = true; }
+    else { clearTimeout(shut); shut = setTimeout(function(){ open = false; }, (slow ? 2500 : 1500) * Math.max(g.pace, .2)); }
+  };
+  var cue = row.querySelector('.mr-cardcue'), cueT = null;
+  row.addEventListener('click', function(e){
+    var t = e.target.closest('.mr-card-live'); if(!t || t.disabled || caught || G !== g) return;
+    if(t.dataset.w === ci.word){
+      if(open){
+        caught = true;
+        t.classList.add('mr-caught'); t.insertAdjacentHTML('beforeend', '<i class="mr-castamp" lang="' + g.lang + '">' + esc(U('onAir')) + '</i>');
+        stampSfx(); sparks(t, 6); needleTwitch();
+        var gl = ep.gloss && ep.gloss[ci.word]; if(gl && g.ui !== g.lang) t.insertAdjacentHTML('beforeend', '<small dir="' + dir() + '">' + esc(gl) + '</small>');
+        row.querySelectorAll('.mr-card-live').forEach(function(x){ x.disabled = true; });
+      } else {
+        sfx('flip'); shake(t);
+        cue.textContent = U('waitIt'); clearTimeout(cueT); cueT = setTimeout(function(){ if(cue.isConnected) cue.textContent = U('catchIt'); }, 5000);   // a caption lasts at most 5 s
+      }
+      return;
+    }
+    clean = false; out.push(t.dataset.w);
+    crackle(300); t.classList.add('mr-off'); t.disabled = true;
+    if(!RM() && t.animate) t.animate([{transform:'none'}, {transform:'translateY(10px) rotate(-3deg)'}], {duration:300, fill:'forwards', easing:'ease-in'});
+  });
+  return {
+    sel:{right:'.mr-card-live[data-w="' + ci.word + '"]', wrong:ci.decoys.map(function(d){ return '.mr-card-live[data-w="' + d + '"]'; })},
+    isLive:function(){ return open; }, caught:function(){ return caught; }, clean:function(){ return clean; }, out:function(){ return out.slice(); },
+    end:function(){ clearTimeout(shut); clearTimeout(cueT); g.onLine = null; open = false; if(!caught && row.isConnected) row.remove(); else if(row.isConnected){ var c = row.querySelector('.mr-cardcue'); if(c) c.remove(); } }
+  };
+}
+// the catch: a soft rubber stamp + a twitch of the needle; a decoy: 300 ms of static
+function stampSfx(){ if(!G || muted()) return; var c = ac(); if(!c) return; try{ var t = c.currentTime + .01, n = Math.floor(c.sampleRate * .08), b = c.createBuffer(1, n, c.sampleRate), d = b.getChannelData(0); for(var i = 0; i < n; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / n, 3); var s0 = c.createBufferSource(); s0.buffer = b; var lp = c.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 900; var gn = c.createGain(); gn.gain.value = .35; s0.connect(lp); lp.connect(gn); gn.connect(c.destination); s0.start(t); tone(c, 140, t, .12, .2); tone(c, 784, t + .07, .14, .06); }catch(e){} }
+function crackle(ms){ if(!G || muted()) return; staticOn(); staticLevel(.45); var g = G; setTimeout(function(){ if(G === g && !g.tuning) staticOff(); }, ms || 300); }
+function needleTwitch(){ if(!G || RM() || !G.needle) return; var n = G.needle, base = n.style.transform || ''; if(n.animate) n.animate([{transform:base}, {transform:base + ' rotate(6deg)'}, {transform:base + ' rotate(-4deg)'}, {transform:base}], {duration:360}); }
+async function checkin(p, gone){
   var ep = G.ep, ci = ep.checkins[p], a = ep.parts[p][0], b = ep.parts[p][1];
   var tiles = shuffle([ci.word].concat(ci.decoys));
   say('which');
-  controls(playerHtml('<button type="button" class="mr-btn mr-ghost mr-again">' + SPK + esc(U('againPart')) + '</button>'));
-  wirePlayer(); G.playing = false; paintPlay();
+  var brave = false; try{ brave = !!(G.host.brave && G.host.brave()); }catch(e){}
+  controls(brave ? '' : playerHtml('<button type="button" class="mr-btn mr-ghost mr-again">' + SPK + esc(U('againPart')) + '</button>'));   // Brave: no replay before the order step (SPEC 9b)
+  if(!brave){ wirePlayer(); G.playing = false; paintPlay(); }
   G.resumeRange = function(){ G.replays++; replayed = true; G.onEnd = hint; playLines(a, b); };
-  var area = el('div', 'mr-tiles', tiles.map(function(w){ return '<button type="button" class="mr-tile" data-w="' + esc(w) + '" lang="' + G.lang + '">' + esc(w) + '</button>'; }).join(''));
+  gone = gone || [];
+  var area = el('div', 'mr-tiles', tiles.map(function(w){ var off = gone.indexOf(w) >= 0; return '<button type="button" class="mr-tile' + (off ? ' mr-off' : '') + '" data-w="' + esc(w) + '" lang="' + G.lang + '"' + (off ? ' disabled' : '') + '>' + esc(w) + '</button>'; }).join(''));
   G.area.innerHTML = ''; G.area.appendChild(area);
   var clean = true, replayed = false, hinted = false;
   function hint(){ if(!replayed || hinted || !area.isConnected) return; var t = area.querySelector('[data-w="' + CSS.escape(ci.word) + '"]'); if(t && !t.classList.contains('mr-lit')){ t.insertAdjacentHTML('beforeend', '<i class="mr-hintdot"></i>'); hinted = true; clean = false; } }
-  G.ctl.querySelector('.mr-again').addEventListener('click', function(){ if(G.playing) pause(); G.resumeAt = null; G.resumeRange(); });
+  var ag = G.ctl.querySelector('.mr-again'); if(ag) ag.addEventListener('click', function(){ if(G.playing) pause(); G.resumeAt = null; G.resumeRange(); });
   G.status = {kind:'checkin', part:p, right:'.mr-tile[data-w="' + ci.word + '"]', wrong:ci.decoys.map(function(d){ return '.mr-tile[data-w="' + d + '"]'; }), again:'.mr-again'};
   while(true){
     var t = await untilTap(area, '.mr-tile');
@@ -312,10 +427,11 @@ async function gist(){
   var ep = G.ep, n = ep.lines.length;
   say('gist');
   G.area.innerHTML = titlesHtml(true);
-  controls(playerHtml('<button type="button" class="mr-btn mr-ghost mr-again">' + SPK + esc(U('againAll')) + '</button>'));
-  wirePlayer(); G.playing = false; paintPlay();
+  var braveG = false; try{ braveG = !!(G.host.brave && G.host.brave()); }catch(e){}
+  controls(braveG ? '' : playerHtml('<button type="button" class="mr-btn mr-ghost mr-again">' + SPK + esc(U('againAll')) + '</button>'));   // Brave: no replay before the order step (SPEC 9b)
+  if(!braveG){ wirePlayer(); G.playing = false; paintPlay(); }
   G.resumeRange = function(){ playLines(G.resumeAt != null ? G.resumeAt : 0, n - 1); };
-  G.ctl.querySelector('.mr-again').addEventListener('click', function(){ if(G.playing) pause(); G.resumeAt = null; G.replays++; playLines(0, n - 1); });
+  var agG = G.ctl.querySelector('.mr-again'); if(agG) agG.addEventListener('click', function(){ if(G.playing) pause(); G.resumeAt = null; G.replays++; playLines(0, n - 1); });
   G.status = {kind:'gist', right:'.mr-opt[data-i="' + ep.answer + '"]', wrong:'.mr-opt:not([data-i="' + ep.answer + '"])'};
   var clean = true, box = G.area.firstChild;
   while(true){
@@ -363,8 +479,9 @@ function cardHtml(i){ return '<button type="button" class="mr-card" data-l="' + 
 
 /* ---------- 6 · off air ---------- */
 async function offAir(){
-  var ep = G.ep, total = ep.parts.length + 2, perfect = G.clean === total;
-  sfx('flip'); lamp(false);
+  var ep = G.ep, total = ep.parts.length + 2, allLive = G.caught === ep.parts.length, perfect = G.clean === total || allLive;   // SPEC 9b: every word caught live = sharp
+  if(allLive && G.set) G.set.classList.add('mr-gold');
+  sfx('flip'); lamp(false); airOff();
   var words = ep.checkins.map(function(c){ return c.word; });
   var bold = function(text){ var h = esc(text); words.forEach(function(w){ h = h.replace(new RegExp('(^|[^\\p{L}])(' + w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\p{L}{0,3})(?![\\p{L}])', 'giu'), '$1<b>$2</b>'); }); return h; };
   var panel = el('div', 'mr-off-air');
@@ -420,7 +537,8 @@ function start(o){
 function destroy(o){
   var g = G; if(!g) return;
   g.dead = true; g.tok++;
-  stopSpeech(); staticOff();
+  stopSpeech(); staticOff(); airOff();
+  if(g.ro) g.ro.disconnect();
   g.waits.forEach(function(f){ try{ f(); }catch(e){} });
   if(g.mo) g.mo.disconnect();
   W.removeEventListener('keydown', g.onKey);

@@ -68,6 +68,7 @@
   var key = function(k){ return 'hxCase.' + opt.lang + '.' + k; };
   if(Q.get('fresh') === '1'){ localStorage.removeItem(key('round')); localStorage.removeItem(key('cases')); localStorage.removeItem(key('seen')); }
   var host = {
+    autoRead:function(){ return Q.get('read') === '1'; },   // ?read=1 = the learner's "Read game lines aloud" setting on (tap to hear, 2026-11-16)
     muted:function(){ return localStorage.getItem('farinSfxMuted') === '1'; },
     reduced:function(){ return opt.rm; },
     loadRound:function(){ try{ return JSON.parse(localStorage.getItem(key('round')) || 'null'); }catch(e){ return null; } },

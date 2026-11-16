@@ -406,3 +406,116 @@
 .cc-chip{position:relative; display:inline-flex; flex-direction:column; align-items:center; justify-content:center; padding:5px 14px;}
 .cc-chip .cc-cg{display:block; margin-top:2px; font:500 11px/1.15 var(--cc-text); color:var(--cc-ink-soft); max-width:150px; white-space:normal;}
 .cc-chip[dir="rtl"] .cc-cg, .cc-chip .cc-cg[dir="rtl"]{font-family:'Vazirmatn', Tahoma, var(--cc-text);}
+
+/* ---------- full art (2026-11-16, Farin: "make sure the full scene and the full art is viewable"): evidence art is drawn whole on its paper ---------- */
+.cc-ev .cc-evart img{object-fit:contain; padding:2px;}
+
+/* ---------- tap to hear (2026-11-16; SPEC 5.2): lines are not read aloud on their own; a speaker on each line plays it ---------- */
+.cc-hear{flex:0 0 auto; width:30px; height:30px; border-radius:50%; border:0; padding:0; background:#fff3d2; box-shadow:0 0 0 1.5px rgba(20,51,46,.35);
+  display:inline-flex; align-items:center; justify-content:center; vertical-align:middle; position:relative; touch-action:manipulation;}
+.cc-hear::before{content:''; position:absolute; inset:-7px;}   /* a 44 px touch target round a small speaker */
+.cc-hear svg{width:16px; height:16px; fill:none; stroke:var(--cc-ink); stroke-width:2;}
+.cc-hear:active{background:var(--cc-gold);}
+/* discoverable once: the first speaker rings twice (1.2 s); reduced motion: a still ring for 3 s */
+.cc-hear-first{animation:cc-hearring .6s ease-out 2;}
+@keyframes cc-hearring{from{box-shadow:0 0 0 1.5px rgba(20,51,46,.35), 0 0 0 0 rgba(255,209,102,.9);} to{box-shadow:0 0 0 1.5px rgba(20,51,46,.35), 0 0 0 10px rgba(255,209,102,0);}}
+.cc-rm .cc-hear-first{animation:cc-hearstill 3s steps(1) 1;}
+@media (prefers-reduced-motion: reduce){ .cc-hear-first{animation:cc-hearstill 3s steps(1) 1;} }
+@keyframes cc-hearstill{0%{box-shadow:0 0 0 1.5px rgba(20,51,46,.35), 0 0 0 3.5px #FFD166;} 100%{box-shadow:0 0 0 1.5px rgba(20,51,46,.35);}}
+.cc-st .cc-say.cc-hear-first{animation:cc-hearring .6s ease-out 2;}
+.cc-bubble.cc-speakable{padding-right:50px;}
+.cc-hearbox{position:absolute; right:9px; top:50%; transform:translateY(-50%); display:flex; align-items:center;}
+.cc-bubble .cc-tr{right:40px;}
+.cc-panelcap .cc-hear{width:24px; height:24px; margin-left:1.6cqw; vertical-align:-6px;}
+.cc-panelcap .cc-hear svg{width:12px; height:12px;}
+.cc-bal{position:relative; padding-right:46px;}
+.cc-bal .cc-hear{position:absolute; right:8px; top:8px;}
+.cc-bal.cc-narr{padding-right:46px;}
+.cc-factpop{padding-right:48px;}
+.cc-factpop .cc-hear{position:absolute; right:10px; top:10px;}
+.cc-sheetfact .cc-st{padding-right:40px;}
+.cc-sheetfact .cc-hear{position:absolute; right:0; top:0;}
+.cc-clause.cc-set .cc-sentence .cc-hear{margin-left:6px; width:26px; height:26px;}
+.cc-clause.cc-set .cc-sentence .cc-hear svg{width:13px; height:13px;}
+
+/* ---------- Moss's pins + Ask Moss (SPEC 7b): on the folder strip, left of the title ---------- */
+.cc-mossbar{position:absolute; top:calc(78px + var(--cc-safe-t)); left:12px; display:flex; align-items:center; gap:6px; direction:ltr; z-index:2;}
+.cc-askmoss{width:40px; height:40px; padding:0; border:0; border-radius:50%; background:none; position:relative;}
+.cc-askmoss .cc-face{width:40px; height:40px; border-radius:50%; box-shadow:0 0 0 2px var(--cc-ink), var(--cc-shadow);}
+.cc-askmoss::after{content:'?'; position:absolute; right:-3px; bottom:-3px; width:17px; height:17px; border-radius:50%; background:var(--cc-gold); box-shadow:0 0 0 1.5px var(--cc-ink);
+  font:400 11px/17px var(--cc-caps); color:var(--cc-ink); text-align:center;}
+.cc-pins{display:flex; gap:1px; align-items:flex-end; height:24px;}
+.cc-mpin{display:block; width:20px; height:22px;}
+.cc-mpin svg{width:20px; height:20px; display:block; transform:rotate(-8deg);}
+.cc-mpin-out{opacity:.18; filter:grayscale(1);}
+.cc-title{left:118px;}
+/* the gold wax seal */
+.cc-seal{position:absolute; z-index:12; left:50%; top:34%; width:118px; height:118px; border-radius:50%; display:flex; align-items:center; justify-content:center; pointer-events:none;
+  transform:translate(-50%,-50%) rotate(-8deg); background:radial-gradient(circle at 40% 35%, #ffe08a, #FFD166 55%, #e9b548 100%);
+  box-shadow:0 0 0 3px var(--cc-ink), 0 0 0 7px #FFD166, 0 0 0 9px var(--cc-ink), 0 6px 0 6px rgba(20,51,46,.18);
+  clip-path:polygon(50% 0, 61% 6%, 74% 3%, 80% 15%, 93% 19%, 92% 32%, 100% 42%, 95% 54%, 100% 66%, 90% 75%, 88% 88%, 75% 90%, 66% 100%, 54% 95%, 42% 100%, 32% 92%, 19% 93%, 15% 80%, 3% 74%, 6% 61%, 0 50%, 6% 39%, 3% 26%, 15% 20%, 19% 7%, 32% 8%, 42% 0);}
+.cc-seal span{font:400 19px/1 var(--cc-caps); letter-spacing:.12em; color:var(--cc-ink); text-transform:uppercase;}
+.cc-goldpin{position:absolute; right:10px; top:-10px; width:26px; height:26px;}
+.cc-goldpin svg{width:26px; height:26px;}
+.cc-folder .cc-secretstamp{position:static; display:inline-block; margin-left:6px; color:var(--cc-gold-deep, #b8860b); transform:rotate(6deg);}
+.cc-folder.cc-sealed{box-shadow:0 0 0 2px var(--cc-ink), 0 0 0 5px #FFD166;}
+.cc-allslot{min-height:0;}
+.cc-allact{justify-content:center; padding-top:6px;}
+.cc-ribbon.cc-ok{background:var(--cc-sage-soft);}
+
+/* ---------- mood (2026-11-16; SPEC 5.3 presets): one overlay on the comic frame, over the plate, under people, lens and captions ----------
+   Never over text (rule 9): the root's backdrop layer (.cc-back) lights the page round the paper panels. Motion is transform / opacity only. */
+.cc-mood{position:absolute; inset:0; z-index:3; pointer-events:none; overflow:hidden; border-radius:inherit;}
+.cc-mood > i{position:absolute; inset:0; display:block; opacity:0; transition:opacity .9s ease;}
+.cc-m-tint{mix-blend-mode:multiply;}
+.cc-m-glow{mix-blend-mode:screen;}
+.cc-m-vig{mix-blend-mode:multiply; background:radial-gradient(120% 90% at 50% 45%, transparent 55%, rgba(20,51,46,var(--m-vig, 0)) 100%); opacity:1;}
+.cc-m-flash{background:#fff; mix-blend-mode:screen; transition:none;}
+.cc-m-torch{background:radial-gradient(circle at var(--lx, 50%) var(--ly, 46%), rgba(255,226,168,.55) 0, rgba(255,226,168,.18) calc(var(--lr, 60px) * 1.4), rgba(255,226,168,0) calc(var(--lr, 60px) * 2.4)); mix-blend-mode:screen;}
+.cc-m-blinds{background:repeating-linear-gradient(168deg, rgba(255,247,226,.22) 0 14px, transparent 14px 30px); mix-blend-mode:soft-light;
+  -webkit-mask-image:radial-gradient(80% 70% at 55% 40%, #000 30%, transparent 90%); mask-image:radial-gradient(80% 70% at 55% 40%, #000 30%, transparent 90%);}
+.cc-m-fog{top:65%; background:linear-gradient(180deg, rgba(255,255,255,0), rgba(255,255,255,.25) 40%, rgba(255,255,255,.25)); inset:65% -30% 0; animation:cc-fog 26s ease-in-out infinite alternate;}
+@keyframes cc-fog{from{transform:translateX(-8%);} to{transform:translateX(8%);}}
+/* rain: two sheets of short streaks on seamless tiles, each falling one tile per loop (0.9 s and 1.3 s), opacity .22; reduced motion: still at .14 */
+.cc-m-rain, .cc-m-rain2{inset:-180px 0 0;}
+.cc-m-rain{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='180'%3E%3Cg stroke='%23fff' stroke-width='1.3' stroke-linecap='round'%3E%3Cpath d='M18 10l-4 22'/%3E%3Cpath d='M78 40l-4 22'/%3E%3Cpath d='M48 96l-4 22'/%3E%3Cpath d='M104 130l-4 22'/%3E%3C/g%3E%3C/svg%3E"); background-size:120px 180px; animation:cc-rain .9s linear infinite;}
+.cc-m-rain2{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='180'%3E%3Cg stroke='%23fff' stroke-width='1' stroke-linecap='round'%3E%3Cpath d='M36 20l-3 15'/%3E%3Cpath d='M96 70l-3 15'/%3E%3Cpath d='M64 140l-3 15'/%3E%3C/g%3E%3C/svg%3E"); background-size:120px 180px; animation:cc-rain 1.3s linear infinite;}
+@keyframes cc-rain{from{transform:translate3d(0,0,0);} to{transform:translate3d(0,180px,0);}}
+/* the presets (SPEC 5.3 table) */
+.cc-mood[data-mood="lamp"], .cc-mood[data-mood="boss"]{--m-vig:.20;}
+.cc-mood[data-mood="lamp"] .cc-m-tint, .cc-mood[data-mood="noir"] .cc-m-tint, .cc-mood[data-mood="boss"] .cc-m-tint{opacity:1; background:rgba(58,74,102,.10);}
+.cc-mood[data-mood="lamp"] .cc-m-glow, .cc-mood[data-mood="noir"] .cc-m-glow, .cc-mood[data-mood="boss"] .cc-m-glow{opacity:1; background:radial-gradient(42% 42% at var(--m-x, 50%) var(--m-y, 30%), rgba(255,226,168,.50), rgba(255,226,168,0) 100%); animation:cc-flicker 7.3s steps(1) infinite;}
+@keyframes cc-flicker{0%{opacity:1;} 30%{opacity:.9;} 34%{opacity:1;} 62%{opacity:.94;} 66%{opacity:1;}}
+.cc-mood[data-mood="noir"]{--m-vig:.26;}
+.cc-mood[data-mood="noir"] .cc-m-blinds{opacity:1;}
+.cc-mood[data-mood="boss"]{--m-vig:.30;}
+.cc-mood[data-mood="night"]{--m-vig:.24;}
+.cc-mood[data-mood="night"] .cc-m-tint{opacity:1; background:rgba(61,84,128,.24);}
+.cc-mood[data-mood="night"] .cc-m-glow{opacity:1; background:radial-gradient(22% 18% at var(--m-x, 50%) var(--m-y, 30%), rgba(255,226,168,.45), rgba(255,226,168,0) 100%), radial-gradient(16% 13% at 18% 44%, rgba(255,226,168,.40), rgba(255,226,168,0) 100%), radial-gradient(16% 13% at 84% 40%, rgba(255,226,168,.40), rgba(255,226,168,0) 100%);}
+.cc-mood[data-mood="night"] .cc-m-torch{opacity:1;}
+.cc-mood[data-mood="dawn"]{--m-vig:.12;}
+.cc-mood[data-mood="dawn"] .cc-m-tint{opacity:1; background:rgba(246,200,176,.16);}
+.cc-mood[data-mood="dawn"] .cc-m-glow{opacity:1; background:radial-gradient(70% 55% at 15% 60%, rgba(255,233,214,.35), rgba(255,233,214,0) 100%);}
+.cc-mood[data-mood="dawn"] .cc-m-fog{opacity:1;}
+.cc-mood[data-mood="rain"]{--m-vig:.14;}
+.cc-mood[data-mood="rain"] .cc-m-tint{opacity:1; background:rgba(125,151,174,.14);}
+.cc-mood[data-mood="rain"] .cc-m-rain, .cc-mood[data-mood="rain"] .cc-m-rain2, .cc-mood[data-mood="storm"] .cc-m-rain, .cc-mood[data-mood="storm"] .cc-m-rain2{opacity:.22;}
+.cc-mood[data-mood="storm"]{--m-vig:.26;}
+.cc-mood[data-mood="storm"] .cc-m-tint{opacity:1; background:rgba(61,84,128,.24);}
+.cc-rm .cc-m-rain, .cc-rm .cc-m-rain2, .cc-rm .cc-m-fog, .cc-rm .cc-m-glow, .cc-rm .cc-hear{animation:none;}
+.cc-rm .cc-mood[data-mood="rain"] .cc-m-rain, .cc-rm .cc-mood[data-mood="rain"] .cc-m-rain2, .cc-rm .cc-mood[data-mood="storm"] .cc-m-rain, .cc-rm .cc-mood[data-mood="storm"] .cc-m-rain2{opacity:.14;}
+@media (prefers-reduced-motion: reduce){
+  .cc-m-rain, .cc-m-rain2, .cc-m-fog, .cc-m-glow{animation:none !important;}
+  .cc-mood[data-mood="rain"] .cc-m-rain, .cc-mood[data-mood="rain"] .cc-m-rain2, .cc-mood[data-mood="storm"] .cc-m-rain, .cc-mood[data-mood="storm"] .cc-m-rain2{opacity:.14;}
+}
+/* noir on an interview: the art gets a little less colour and a little more contrast (SPEC 5.3), the backdrop the blinds */
+.cc-back{position:absolute; inset:0; z-index:0; border-radius:0;}
+.cc-root > .cc-head, .cc-root > .cc-main, .cc-root > .cc-dock{position:relative; z-index:1;}
+.cc-back .cc-m-flash{mix-blend-mode:normal;}
+/* the interview in noir (SPEC 7c): the sheet behind the portrait and the paper gets the blinds and a desk-lamp pool; the transcript paper stays calm */
+.cc-ivsheet{background:radial-gradient(70% 34% at 50% 8%, rgba(255,226,168,.55), rgba(255,226,168,0) 75%),
+  repeating-linear-gradient(168deg, rgba(255,247,226,.5) 0 14px, rgba(255,247,226,0) 14px 30px),
+  radial-gradient(130% 100% at 50% 40%, rgba(244,232,210,.97) 50%, rgba(214,200,178,.98) 100%);}
+/* short screens scroll (SPEC 5.1 F4): the truth page never cuts its lines or its Next button */
+.cc-truth{overflow-y:auto; overflow-x:hidden; padding-bottom:6px;}
+.cc-truth > .cc-balloons, .cc-truth > .cc-actions{flex-shrink:0;}   /* the lines and Next keep their height; the frame cell gives way (and refits) */

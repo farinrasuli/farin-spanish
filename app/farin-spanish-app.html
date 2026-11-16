@@ -29982,7 +29982,7 @@ function theatreExit(){
    their nodes, Cozy Chores and Case Closed play the old way. Set GAMES_V2_LIVE.radio / .mystery / .chores to true (both apps) to put that game live; bump GAMES_VER
    whenever a games/ engine changes. (var, not const: SHELF_GAMES reads the flag earlier in the file.) */
 // (GAMES_V2_LIVE, the per-game switch, is declared above SHELF_GAMES)
-var GAMES_VER = '10';
+var GAMES_VER = '11';   // 11: Games 2.0 phase 1 for Harbour Files / Open House / Mini Radio (2026-11-16)
 var g2Flag = null, g2Game = null, g2KeepNow = null, g2Pending = null;
 var G2_KINDS = ['chores', 'mystery', 'radio'];
 var G2_COZY = {A1:'movein', A2:'cake', B1:'bouquet', B2:'laundry', C1:'party'};   // the anchor project per level (Cozy GDD 0)
@@ -30091,7 +30091,15 @@ function g2Host(key){
     loadCases:()=>P.cases || {}, saveCases:c=>{ P.cases = c; save(); },
     loadTaught:()=>!!P.caseTaught, saveTaught:()=>{ P.caseTaught = true; save(); },
     keep:s=>{ g2KeepNow = s; },
-    openStory:id=>{ g2Game = null; go('story-detail', {id}); }
+    openStory:id=>{ g2Game = null; go('story-detail', {id}); },
+    // tap to hear (Farin 2026-11-16: "no need to read all the sentences it kills the mood make it optional"; Games 2.0 SPEC 5.2): story and
+    // dialogue lines are not read aloud on their own; a tap on a line's speaker plays it. readAloud = THE app-wide "Read story lines aloud in
+    // games" setting (state.profile.readAloud, off by default), owned by the World Kit / Theatre: its readAloud() helper, else the global
+    // window.farinReadAloud(), else false. No second setting here. hearHint = the one-time ring on the first speaker of each game
+    // (progress.tapHear[kind], SPEC 5.2).
+    readAloud:()=>{ try{ if(typeof readAloud === 'function') return !!readAloud(); if(state.profile && state.profile.readAloud) return true; }catch(e){} try{ return !!(window.farinReadAloud && window.farinReadAloud()); }catch(e){ return false; } },
+    hearHint:()=>!((state.progress && state.progress.tapHear) || {})[key],
+    hearHintDone:()=>{ const pr = state.progress; if(!pr) return; const h = pr.tapHear || (pr.tapHear = {}); if(!h[key]){ h[key] = 1; save(); } }
   };
 }
 // Mini Radio episodes (spec mini-radio-2026-10-21.md v2 sections 2 and 9)

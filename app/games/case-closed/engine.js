@@ -29,7 +29,7 @@
 if(window.CaseClosed) return;
 
 var W = window, D = document;
-var VERSION = '0.2.0';
+var VERSION = '0.3.0';   // 2026-11-16 Games 2.0 phase 1: tap to hear, Moss's pins + Ask Moss + the wax seal, the all-at-once check (B1+), noir-light, beds
 var ABORT = {abort:true};
 var G = null;
 var SPRING = 'cubic-bezier(.34,1.56,.64,1)';
@@ -104,6 +104,16 @@ var UI = {
   flip:{en:'Tap the card to turn it over', tr:'Çevirmek için karta dokun', fa:'برای برگردوندن کارت روش بزن', es:'Toca la tarjeta para darle la vuelta'},
   kept:{en:'Saved to your review cards', tr:'Tekrar kartlarına kaydedildi', fa:'توی کارت‌های مرورت ذخیره شد', es:'Guardada en tus tarjetas de repaso'},
   hear:{en:'Listen', tr:'Dinle', fa:'گوش کن', es:'Escuchar'},
+  // Games 2.0 (SPEC 7, 23): tap to hear, Moss's pins, Ask Moss, the all-at-once check, the wax seal
+  hearLine:{en:'Hear this line', tr:'Bu cümleyi dinle', fa:'این جمله رو گوش کن', es:'Escuchar esta frase'},
+  askMoss:{en:'Ask Moss', tr:'Moss\'a sor', fa:'از ماس بپرس', es:'Preguntar a Moss'},
+  pins:{en:'Moss\'s pins', tr:'Moss\'un raptiyeleri', fa:'پونزهای ماس', es:'Las chinchetas de Moss'},
+  closeAll:{en:'Close: one or two words are off.', tr:'Yaklaştın: bir iki kelime yanlış.', fa:'نزدیکی: یکی دو تا کلمه درست نیست.', es:'Casi: una o dos palabras no encajan.'},
+  solvedAll:{en:'Solved!', tr:'Çözüldü!', fa:'حل شد!', es:'¡Resuelto!'},
+  sealed:{en:'CLOSED', tr:'KAPANDI', fa:'بسته شد', es:'CERRADO'},
+  secretStamp:{en:'SECRET', tr:'SIR', fa:'راز', es:'SECRETO'},
+  readA1:{en:'Read what they say.', tr:'Söylediklerini oku.', fa:'ببین چی می‌گن.', es:'Lee lo que dicen.'},
+  readTr:{en:'Tap a line to translate it. Tap the speaker to hear it.', tr:'Çevirmek için bir satıra, dinlemek için hoparlöre dokun.', fa:'برای ترجمه روی یه خط بزن، برای شنیدن روی بلندگو.', es:'Toca una frase para traducirla y el altavoz para escucharla.'},
   album:{en:'A photo for your album', tr:'Albümün için bir fotoğraf', fa:'یه عکس برای آلبومت', es:'Una foto para tu álbum'},
   artSoon:{en:'art in production', tr:'çizim hazırlanıyor', fa:'نقاشی در حال آماده شدن', es:'arte en producción'},
   tr:{en:'EN', tr:'TR', fa:'FA', es:'ES'},
@@ -282,13 +292,27 @@ function sfx(name, o){
   var c = actxGet(); if(!c) return;
   var t = c.currentTime + 0.01, k = (o && o.rate) || 1;
   if(name === 'pluck'){ try{ tone(c,'triangle',392 * k,0,t,.25,.12); tone(c,'sine',784 * k,0,t,.18,.05); }catch(e){} return; }
+  // mood set (2026-11-16): CC0 foley first (sfx/), else made here
+  if(FILE_SFX[name] && sfxFile(name, c, name === 'thud' ? .7 : .9)) return;
+  try{
+    switch(name){
+      case 'thunder': thunder(c, c.destination, t + .7 + Math.random() * .9, o && o.big ? .55 : .38); return;   // 0.7-1.6 s after the flash (SPEC 5.3)
+      case 'sting': tone(c,'triangle',146.8,0,t,.5,.09); tone(c,'triangle',155.6,0,t + .02,.5,.05); if(o && o.big) tone(c,'sine',110,0,t + .3,1.1,.07); noise(c,t,.05,.07,5200); return;   // a dry camera flash + a low minor second
+      case 'wrong': tone(c,'triangle',220,207.7,t,.22,.08); tone(c,'triangle',164.8,155.6,t + .16,.38,.08); return;   // a soft "not that one": two low notes down, never a buzzer
+      case 'closed': [261.6,329.6,392,523.3].forEach(function(f, i){ tone(c,'triangle',f,0,t + i * .09,.9 - i * .1,.07); tone(c,'sine',f * 2,0,t + i * .09,.5,.025); }); return;   // CASE CLOSED: a warm major chord
+      case 'shutter': noise(c,t,.03,.14,3800, 3); noise(c,t + .06,.04,.1,2600, 3); return;
+      case 'pin': tone(c,'triangle',900,500,t,.06,.07); noise(c,t,.03,.08,2800); return;
+      case 'pencil': noise(c,t,.12,.04,4200, 2); noise(c,t + .14,.1,.035,3900, 2); return;
+      case 'thud': tone(c,'sine',110,55,t,.22,.16); noise(c,t,.08,.1,500); return;
+    }
+  }catch(e){}
   try{
     switch(name){
       case 'correct': tone(c,'sine',523.25,0,t,.11,.14); tone(c,'sine',659.25,0,t+.07,.11,.14); break;
       case 'combo': [523.25,659.25,784].forEach(function(f,i){ tone(c,'sine',f,0,t+i*.06,.11,.14); }); break;
       case 'reveal': [523.25,659.25,784,1046.5].forEach(function(f,i){ tone(c,'sine',f,0,t+i*.07,.14,.12); }); break;
       case 'tick': case 'paper': noise(c,t,.04,.05,2400); break;
-      case 'type': noise(c,t,.012,.05,3200 + Math.random() * 400, 2); break;
+      case 'type': noise(c,t,.012,.026,3200 + Math.random() * 400, 2); break;   // about -36 dBFS (SPEC 7c)
       case 'bell': tone(c,'sine',1568,0,t,.4,.05); break;
       case 'stamp': tone(c,'triangle',140,70,t,.12,.3); noise(c,t,.08,.2,800); break;
       case 'softstamp': tone(c,'triangle',180,110,t,.09,.16); noise(c,t,.05,.09,900); tone(c,'sine',880,0,t+.08,.12,.05); break;
@@ -354,11 +378,213 @@ function speak(text, o){
   o = o || {};
   if(!G || !text) return Promise.resolve();
   var rate = o.rate || (G.band === 'A1' ? 0.88 : 0.92);
-  var p;
+  var p, g = G;
   try{ p = G.host.speak ? G.host.speak(text, {lang:G.lang, who:o.who, rate:rate, interrupt:o.interrupt !== false}) : defaultSpeak(text, {lang:G.lang, rate:rate, interrupt:o.interrupt !== false}); }catch(e){ p = null; }
-  return Promise.resolve(p).catch(function(){});
+  bedDuck(true);   // the harbour bed steps back while a voice speaks
+  return Promise.resolve(p).catch(function(){}).then(function(){ if(G === g) bedDuck(false); });
 }
-function stopSpeech(){ try{ if(G && G.host.stopSpeech) G.host.stopSpeech(); else if(W.speechSynthesis) W.speechSynthesis.cancel(); }catch(e){} }
+function stopSpeech(){ try{ if(G && G.host.stopSpeech) G.host.stopSpeech(); else if(W.speechSynthesis) W.speechSynthesis.cancel(); }catch(e){} bedDuck(false); }
+
+/* ============================== tap to hear (Farin 2026-11-16) ============================== */
+// "no need to read all the sentences it kills the mood make it optional for the user if they click on it they can hear the sound too":
+// Moss's, the suspects', the narrator's and the evidence lines are NOT read aloud on their own any more. Each line shows a speaker; a tap on
+// it plays the line's natural clip through host.speak (the same clip lookup as before). host.autoRead() = the learner's "Read game lines
+// aloud" setting (off by default) brings the old auto-reading back. Nothing in Harbour Files is a listening task (the testimony is typed on
+// paper), so no line keeps its automatic voice.
+// host.readAloud() = THE app-wide "Read story lines aloud in games" setting (state.profile.readAloud, SPEC 5.2, owned by the World Kit /
+// Theatre; off by default); else the global window.farinReadAloud(); missing = false. (autoRead = the dev harness's ?read=1.)
+function autoRead(){
+  try{ var h = G && G.host; if(h && h.readAloud) return !!h.readAloud(); if(h && h.autoRead) return !!h.autoRead(); }catch(e){}
+  try{ return !!(W.farinReadAloud && W.farinReadAloud()); }catch(e){ return false; }
+}
+function readMs(text){ var w = words(text), slow = !!G && (G.band === 'A1' || G.band === 'A2'); return Math.max(2600, (slow ? 1300 : 1000) + w * (slow ? 360 : 290)); }
+// a line that used to be spoken: spoken only with the setting on, else held on screen for its reading time
+function voiced(text, o){ return autoRead() ? speak(text, o) : wait(readMs(text), true); }
+// Discoverable once (SPEC 5.2): the first speaker a learner meets in this game rings twice (1.2 s; reduced motion: a still ring for 3 s),
+// saved at once as progress.tapHear.mystery (host.hearHint / hearHintDone, else localStorage). No pop-up text.
+function hearFirst(){
+  if(!G || G.hearSeen) return false;
+  G.hearSeen = true;
+  var fresh = false; try{ fresh = G.host.hearHint ? !!G.host.hearHint() : localStorage.getItem('farinCaseHearHint') !== '1'; }catch(e){}
+  if(fresh) hearHintDone();
+  return fresh;
+}
+function hearHintDone(){ try{ if(G.host.hearHintDone) G.host.hearHintDone(); else localStorage.setItem('farinCaseHearHint', '1'); }catch(e){} }
+// a speaker button; data-say = the line it plays (the dock's own speaker has none: it plays the line on screen)
+function hearBtn(text, who){
+  return '<button type="button" class="cc-hear' + (hearFirst() ? ' cc-hear-first' : '') + '"' + (text != null ? ' data-say="' + esc(text) + '" data-who="' + esc(who || '') + '"' : '') + ' aria-label="' + esc(U('hearLine')) + '">' + SPEAKER_SVG + '</button>';
+}
+// a tap on any [data-say] speaker (capture, so the tap never also skips, flips or advances what it sits on)
+function hearTap(e){
+  var b = e.target.closest && e.target.closest('.cc-hear[data-say]'); if(!b || !G) return;
+  e.stopPropagation(); e.preventDefault();
+  var g = G, p = speak(b.dataset.say, {who:b.dataset.who || 'narr'});
+  g.hearing = p; p.then(function(){ if(g.hearing === p) g.hearing = null; });
+}
+
+/* ============================== mood: light + the harbour bed (Farin 2026-11-16) ============================== */
+// "work on the mood of each game better, give it some lightening in mystery games or some sound effects". No new art: CSS overlays on each
+// comic frame (a tint for the place and the hour, a vignette, a lamp pool, the torch that follows the lens on a dark scene, harbour fog and
+// rain) and a lightning flash on the reveals (a lie breaks, the accusation, CASE CLOSED). The bed is made here with WebAudio (no files, no
+// third-party audio): harbour waves, gulls, creaking wood and a far foghorn; rain and wind on the stormy night; a cafe murmur with cups; a
+// clock in the archive or office; a quiet room at home. Mute silences it at once; reduced motion keeps a still tint (no flicker, lightning,
+// rain or fog drift); it stops when the case closes or the learner leaves. A stage may set `mood` ('day', 'evening', 'night', 'dawn',
+// 'storm'); else EP_WEATHER, read from each episode's own script (the oar goes missing in a storm, the boats at dawn, the lamp at night).
+// SPEC 7c: B1 The Lamp at the End of the Pier = night, B2 Boats at Dawn = dawn, the episodes whose script has rain = rain on outdoor views
+var EP_WEATHER = {'b1-lamp-pier':'night', 'b2-boats-at-dawn':'dawn', 'a1-wrong-coat':'rain', 'b1-missing-oar':'rain', 'b2-fake-review':'rain'};
+function weather(){ return (G && (G.S.mood || EP_WEATHER[G.S.id])) || 'day'; }
+function placeOf(v){
+  var room = v && v.room;
+  if(room) return /harbour|pier/.test(room) ? 'harbour' : /archive|office|gallery/.test(room) ? 'study' : /cafe|bakery/.test(room) ? 'cafe' : 'home';
+  var k = String((v && v.id) || '') + ' ' + String((v && v.plate) || '');
+  if(/harbour|pier|stall|shed|boat|quay/.test(k)) return 'harbour';
+  if(/archive|office|copy|tide|desk|gallery|painting|logbook/.test(k)) return 'study';
+  if(/cafe|bakery|counter|flower|shop/.test(k)) return 'cafe';
+  return 'home';
+}
+// v = a view (hub), else the episode's first view sets the place of the opening, cold open and truth panels
+function moodFor(v, where){
+  var w = weather(), place = placeOf(v && (v.room || where === 'hub') ? v : (G.S.views || [])[0]), preset = 'day';
+  if(where === 'hub'){ preset = w === 'night' ? 'night' : w === 'dawn' ? 'dawn' : (w === 'rain' && place === 'harbour') ? 'rain' : 'lamp'; }
+  var at = (v && v.lampAt) || [50, 30];
+  return {place:place, weather:w, preset:preset, at:at, torch:preset === 'night'};
+}
+// one overlay on the comic frame (art box), over the plate, under people, lens and captions: data-mood = the preset (SPEC 5.3 numbers)
+function moodEl(preset, at){
+  var d = el('div', 'cc-mood', '<i class="cc-m-tint"></i><i class="cc-m-glow"></i><i class="cc-m-torch"></i><i class="cc-m-blinds"></i><i class="cc-m-fog"></i><i class="cc-m-rain"></i><i class="cc-m-rain2"></i><i class="cc-m-vig"></i><i class="cc-m-flash"></i>');
+  d.dataset.mood = preset; d.setAttribute('aria-hidden', 'true');
+  if(at){ d.style.setProperty('--m-x', at[0] + '%'); d.style.setProperty('--m-y', at[1] + '%'); }
+  return d;
+}
+function moodOn(fr, m){
+  if(!fr || !G || !m) return;
+  var old = fr.querySelector('.cc-mood'); if(old) old.remove();
+  var d = moodEl(m.preset, m.at);
+  var plate = fr.querySelector('.cc-plate');
+  if(plate && plate.parentNode === fr) fr.insertBefore(d, plate.nextSibling); else fr.insertBefore(d, fr.firstChild);
+  G.mood = m; G.moodNode = d;
+  bedStart(m.place, m.preset === 'rain' ? 'rain' : m.preset === 'night' ? 'night' : m.weather);
+}
+// the page around the panels (SPEC rule 9: light goes on the art and the backdrop, never over text): lamp on the deduction board,
+// noir round the interview, storm for 2 s at the objection
+function backMood(preset){ if(!G || !G.backEl) return; G.backEl.dataset.mood = preset || 'day'; }
+// the torch pool follows the lens (hub, dark scenes): px of the lens centre + radius in the frame
+function moodTorch(fr, x, y, r){ if(!fr) return; fr.style.setProperty('--lx', x + 'px'); fr.style.setProperty('--ly', y + 'px'); fr.style.setProperty('--lr', r + 'px'); }
+// lightning on a reveal: a double flash + thunder on dark / stormy cases, a dry camera flash + a low sting on the bright ones; reduced motion = sound only
+var lastBolt = 0;
+function lightning(kind){
+  if(!G) return;
+  var big = kind === 'closed' || kind === 'accuse', now = Date.now();
+  if(now - lastBolt < 5000){ sfx('sting', {big:big}); return; }   // at most one lightning event every 5 s (WCAG 2.3.1)
+  lastBolt = now;
+  sfx('thunder', {big:big});
+  var g = G, prev = G.backEl ? G.backEl.dataset.mood : 'day';
+  backMood('storm'); setTimeout(function(){ if(G === g && G.backEl && G.backEl.dataset.mood === 'storm') backMood(prev); }, 2000);   // the objection: storm for 2 s
+  var targets = [G.backEl, G.root.querySelector('.cc-frame .cc-mood')].filter(Boolean);
+  targets.forEach(function(t){
+    var fl = t.querySelector('.cc-m-flash'); if(!fl) return;
+    if(RM()){ run(fl, [{opacity:0}, {opacity:.06}, {opacity:0}], {duration:600}); fl.animate && fl.animate([{opacity:0}, {opacity:.06}, {opacity:0}], {duration:600}); return; }
+    run(fl, [{opacity:0}, {opacity:.55, offset:.08}, {opacity:.08, offset:.16}, {opacity:.42, offset:.26}, {opacity:0, offset:.4}, {opacity:0}], {duration:420, easing:'linear'});
+  });
+}
+// --- the bed (WebAudio, made in code) ---
+function noiseBuf(c, kind, secs){
+  var n = Math.floor(c.sampleRate * secs), b = c.createBuffer(1, n, c.sampleRate), d = b.getChannelData(0), last = 0, b0 = 0, b1 = 0, b2 = 0;
+  for(var i = 0; i < n; i++){
+    var w = Math.random() * 2 - 1;
+    if(kind === 'brown'){ last = (last + .02 * w) / 1.02; d[i] = last * 3.2; }
+    else if(kind === 'pink'){ b0 = .99765 * b0 + w * .099046; b1 = .963 * b1 + w * .2965164; b2 = .57 * b2 + w * 1.0526913; d[i] = (b0 + b1 + b2 + w * .1848) * .18; }
+    else d[i] = w * .5;
+  }
+  var x = Math.floor(c.sampleRate * .08);   // the loop seam crossfades so it never clicks
+  for(var j = 0; j < x; j++){ var k = j / x; d[j] = d[j] * k + d[n - x + j] * (1 - k); }
+  return b;
+}
+function bedStart(place, wx){
+  if(!G) return;
+  var key = place + '|' + wx;
+  if(G.bed && G.bed.key === key) return;
+  bedStop();
+  if(G.tts === false && !G.bedForce) return;   // the dev harness with the voice off (QA) stays quiet
+  var c = actxGet(); if(!c) return;
+  var g = G, B = {key:key, nodes:[], timers:[], duck:1, vol:place === 'harbour' ? 1 : .8};
+  var out = c.createGain(); out.gain.value = 0.0001; out.connect(c.destination); B.out = out;
+  var loop = function(kind, secs, filt, f, q, gain){
+    var s = c.createBufferSource(); s.buffer = noiseBuf(c, kind, secs); s.loop = true;
+    var fl = c.createBiquadFilter(); fl.type = filt; fl.frequency.value = f; fl.Q.value = q || .7;
+    var gn = c.createGain(); gn.gain.value = gain; s.connect(fl); fl.connect(gn); gn.connect(out); s.start();
+    B.nodes.push(s, fl, gn); return gn;
+  };
+  var every = function(min, max, fn){ var t = {id:0}; var go = function(){ t.id = setTimeout(function(){ if(G !== g || g.bed !== B) return; if(B.live()) try{ fn(c.currentTime + .02); }catch(e){} go(); }, (min + Math.random() * (max - min)) * 1000); }; go(); B.timers.push(t); };
+  var env = function(node, t, a, peak, d){ node.gain.setValueAtTime(.0001, t); node.gain.exponentialRampToValueAtTime(peak, t + a); node.gain.exponentialRampToValueAtTime(.0001, t + a + d); };
+  var osc = function(type, f, t, dur, peak, to, filt){
+    var o = c.createOscillator(), gn = c.createGain(); o.type = type; o.frequency.setValueAtTime(f, t); if(to) o.frequency.exponentialRampToValueAtTime(to, t + dur);
+    var last = o; if(filt){ var fl = c.createBiquadFilter(); fl.type = 'lowpass'; fl.frequency.value = filt; o.connect(fl); last = fl; }
+    last.connect(gn); gn.connect(out); env(gn, t, Math.min(.4, dur / 3), peak, dur); o.start(t); o.stop(t + dur + .5); return o;
+  };
+  var gull = function(t){ for(var i = 0, n = 2 + Math.floor(Math.random() * 3); i < n; i++){ var o = osc('sine', 1350 + Math.random() * 300, t + i * .24, .2, .012, 900 + Math.random() * 120); var v = c.createOscillator(), vg = c.createGain(); v.frequency.value = 28; vg.gain.value = 40; v.connect(vg); vg.connect(o.frequency); v.start(t + i * .24); v.stop(t + i * .24 + .3); } };
+  var creak = function(t){ var o = c.createOscillator(), fl = c.createBiquadFilter(), gn = c.createGain(), lfo = c.createOscillator(), lg = c.createGain(); o.type = 'sawtooth'; o.frequency.setValueAtTime(70 + Math.random() * 40, t); o.frequency.linearRampToValueAtTime(110 + Math.random() * 50, t + .7);
+    fl.type = 'bandpass'; fl.frequency.value = 650; fl.Q.value = 6; lfo.frequency.value = 22 + Math.random() * 14; lg.gain.value = .006; lfo.connect(lg); lg.connect(gn.gain); o.connect(fl); fl.connect(gn); gn.connect(out); env(gn, t, .15, .009, .6); o.start(t); o.stop(t + 1); lfo.start(t); lfo.stop(t + 1); };
+  var horn = function(t){ [97, 97.7].forEach(function(f){ osc('sawtooth', f, t, 2.6, .010, null, 360); }); };
+  var tick = function(t, f){ var s = c.createBufferSource(), n = Math.floor(c.sampleRate * .03), b = c.createBuffer(1, n, c.sampleRate), d = b.getChannelData(0); for(var i = 0; i < n; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / n, 6); s.buffer = b; var fl = c.createBiquadFilter(); fl.type = 'bandpass'; fl.frequency.value = f; fl.Q.value = 4; var gn = c.createGain(); gn.gain.value = .05; s.connect(fl); fl.connect(gn); gn.connect(out); s.start(t); };
+  var clink = function(t){ osc('sine', 2500 + Math.random() * 900, t, .25, .006); osc('sine', 3700 + Math.random() * 500, t + .01, .18, .003); };
+  if(place === 'harbour'){
+    var sea = loop('brown', 5, 'lowpass', 520, .6, .55), wash = loop('pink', 4, 'bandpass', 1300, .5, .0001);
+    // the swell: the sea rises and falls, the wash hisses on the crest
+    every(3.5, 6.5, function(t){ var p = .35 + Math.random() * .45; sea.gain.setTargetAtTime(p, t, 1.2); sea.gain.setTargetAtTime(p * .55, t + 2.2, 1.4); wash.gain.setTargetAtTime(.05 + Math.random() * .05, t + .9, .5); wash.gain.setTargetAtTime(.0001, t + 2.4, .9); });
+    every(7, 16, gull); every(9, 20, creak);
+    if(wx !== 'storm') every(38, 70, horn);
+  } else if(place === 'cafe'){
+    var hush = loop('brown', 4, 'bandpass', 420, .8, .30);
+    every(2, 5, function(t){ hush.gain.setTargetAtTime(.2 + Math.random() * .2, t, .8); });
+    every(5, 12, clink);
+  } else if(place === 'study'){
+    loop('pink', 3, 'lowpass', 900, .5, .05);
+    var tk = 0; every(.95, 1.05, function(t){ tick(t, tk++ % 2 ? 2600 : 3200); });
+  } else {
+    loop('brown', 4, 'lowpass', 260, .5, .18);
+    var tk2 = 0; every(.98, 1.02, function(t){ if(Math.random() < .9) tick(t, tk2++ % 2 ? 2200 : 2700); });
+  }
+  if((wx === 'storm' || wx === 'rain') && place === 'harbour'){ loop('pink', 3, 'highpass', 1600, .5, .07); var wind = loop('pink', 6, 'bandpass', 500, 1.4, .05); every(3, 7, function(t){ wind.gain.setTargetAtTime(.02 + Math.random() * .1, t, 1.5); }); if(wx === 'storm') every(14, 30, function(t){ thunder(c, out, t + .2, .5); }); }
+  if(wx === 'night' && place === 'harbour'){ var lap = loop('brown', 6, 'lowpass', 300, .5, .2); every(2.5, 4.5, function(t){ lap.gain.setTargetAtTime(.1 + Math.random() * .25, t, .9); }); }
+  B.live = function(){ return !muted() && !D.hidden; };
+  B.level = function(){ return B.live() ? .5 * B.vol * B.duck : .0001; };
+  out.gain.setTargetAtTime(B.level(), c.currentTime + .05, .8);   // fades in
+  B.watch = setInterval(function(){ if(G !== g || g.bed !== B) return; try{ out.gain.setTargetAtTime(B.level(), c.currentTime, .25); }catch(e){} }, 400);   // mute / hidden tab
+  g.bed = B;
+}
+function bedDuck(on){ var B = G && G.bed; if(!B || !B.out) return; B.duck = on ? .35 : 1; try{ B.out.gain.setTargetAtTime(B.level(), B.out.context.currentTime, on ? .08 : .6); }catch(e){} }
+function bedStop(fade){
+  var B = G && G.bed; if(!B) return;
+  G.bed = null;
+  clearInterval(B.watch); B.timers.forEach(function(t){ clearTimeout(t.id); });
+  try{ var c = B.out.context; B.out.gain.setTargetAtTime(.0001, c.currentTime, fade ? .6 : .08); }catch(e){}
+  setTimeout(function(){ B.nodes.forEach(function(n){ try{ if(n.stop) n.stop(); }catch(e){} try{ n.disconnect(); }catch(e){} }); try{ B.out.disconnect(); }catch(e){} }, fade ? 2600 : 400);
+}
+// thunder: a lowpassed noise roll with a crack at the front
+function thunder(c, dest, t, peak){
+  var n = Math.floor(c.sampleRate * 3.2), b = c.createBuffer(1, n, c.sampleRate), d = b.getChannelData(0), last = 0;
+  for(var i = 0; i < n; i++){ last = (last + .03 * (Math.random() * 2 - 1)) / 1.03; var k = i / n; d[i] = last * 5 * Math.pow(1 - k, 1.6) * (1 + .6 * Math.sin(k * 23) * Math.sin(k * 7)); }
+  var s = c.createBufferSource(); s.buffer = b; var fl = c.createBiquadFilter(); fl.type = 'lowpass'; fl.frequency.setValueAtTime(900, t); fl.frequency.exponentialRampToValueAtTime(180, t + 2.5);
+  var gn = c.createGain(); gn.gain.setValueAtTime(.0001, t); gn.gain.exponentialRampToValueAtTime(peak, t + .05); gn.gain.exponentialRampToValueAtTime(.0001, t + 3.1);
+  s.connect(fl); fl.connect(gn); gn.connect(dest); s.start(t); s.stop(t + 3.3);
+}
+// a few CC0 foley files (sfx/LICENSES.md); each one falls back to a synth stand-in until it has loaded
+var FILE_SFX = {shutter:['shutter-1', 'shutter-2'], pin:['card-clack-1', 'card-clack-2'], pencil:['pencil-1', 'pencil-2'], thud:['land-heavy-1', 'land-heavy-3']};
+var sfxBuf = {};
+function loadSfx(n, c){
+  sfxBuf[n] = 'pending';
+  try{ fetch((G ? G.appRoot || '' : '') + 'games/case-closed/sfx/' + n + '.mp3').then(function(r){ if(!r.ok) throw new Error(r.status); return r.arrayBuffer(); })
+    .then(function(ab){ return new Promise(function(ok, no){ c.decodeAudioData(ab, ok, no); }); }).then(function(b){ sfxBuf[n] = b; }, function(){ sfxBuf[n] = 'fail'; }); }catch(e){ sfxBuf[n] = 'fail'; }
+}
+function preloadSfx(){ var c = actxGet(); if(!c) return; Object.keys(FILE_SFX).forEach(function(k){ FILE_SFX[k].forEach(function(n){ if(sfxBuf[n] === undefined) loadSfx(n, c); }); }); }
+function sfxFile(name, c, peak){
+  var list = FILE_SFX[name]; if(!list) return false;
+  var n = list[Math.floor(Math.random() * list.length)], b = sfxBuf[n];
+  if(!b || typeof b === 'string'){ if(b === undefined) loadSfx(n, c); return false; }
+  var s = c.createBufferSource(); s.buffer = b; s.playbackRate.value = .96 + Math.random() * .08;
+  var gn = c.createGain(); gn.gain.value = peak || .9; s.connect(gn); gn.connect(c.destination); s.start(); return true;
+}
 
 /* ============================== time ============================== */
 function wait(ms, keep){
@@ -412,6 +638,15 @@ async function stampOn(host, text, kind, big){
   await run(host, [{transform:'translateX(0)'}, {transform:'translateX(-2px)'}, {transform:'translateX(2px)'}, {transform:'translateX(-2px)'}, {transform:'translateX(0)'}], {duration:240});
   return s;
 }
+// the gold wax seal (SPEC 7b): "CLOSED" in Archivo Black on a #FFD166 seal, pressed onto the file
+async function sealOn(host){
+  var s = el('div', 'cc-seal', '<span lang="' + G.lang + '">' + esc(U('sealed')) + '</span>');
+  host.appendChild(s);
+  sfx('stamp'); buzz([14]);
+  await run(s, [{transform:'translate(-50%,-50%) scale(1.5) rotate(-18deg)', opacity:0}, {transform:'translate(-50%,-50%) scale(1) rotate(-8deg)', opacity:1}], {duration:280, easing:'cubic-bezier(.3,1.5,.6,1)'});
+  var c = center(rect(s)); sparks(c.x, c.y, '#FFD166', 14);
+  return s;
+}
 function folderGlow(){ sfx('combo'); if(RM()) return; G.flashEl.style.opacity = 0; run(G.flashEl, [{opacity:0}, {opacity:.75}, {opacity:0}], {duration:520}); run(G.head, [{transform:'none'}, {transform:'translateY(-3px)'}, {transform:'none'}], {duration:420, easing:SPRING}); }
 async function flashFx(){ if(RM()) return; G.flashEl.style.opacity = 1; sfx('whirr'); await run(G.flashEl, [{opacity:1}, {opacity:0}], {duration:420}); G.flashEl.style.opacity = 0; }
 async function folderFlip(){
@@ -441,8 +676,12 @@ function bubble(who, text, gloss, o){
   var name = o.name != null ? o.name : (hasFace ? castShort(who) : '');
   var b = G.bubble;
   G.dock.classList.add('cc-has-b');
+  var speakable = who !== 'ui' && !!text;
+  G.bubbleSay = speakable ? {text:text, who:o.voice || who} : null;
   b.innerHTML = (name ? '<span class="cc-n">' + esc(name) + '</span>' : '') + '<span class="cc-t" lang="' + G.lang + '" dir="ltr">' + wordify(text) + '</span>' +
-    (gloss ? '<span class="cc-gl" dir="' + uiDir() + '"' + (showGloss() || G.glossOn ? '' : ' hidden') + '>' + esc(gloss) + '</span>' + (showGloss() ? '' : '<button type="button" class="cc-tr" aria-label="' + esc(U('tr')) + '">' + esc(U('tr')) + '</button>') : '');
+    (gloss ? '<span class="cc-gl" dir="' + uiDir() + '"' + (showGloss() || G.glossOn ? '' : ' hidden') + '>' + esc(gloss) + '</span>' + (showGloss() ? '' : '<button type="button" class="cc-tr" aria-label="' + esc(U('tr')) + '">' + esc(U('tr')) + '</button>') : '') +
+    (speakable ? '<span class="cc-hearbox">' + hearBtn() + '</span>' : '');
+  b.classList.toggle('cc-speakable', speakable);
   if(!RM()) run(b, [{transform:'translateY(6px) scale(.97)', opacity:.4}, {transform:'none', opacity:1}], {duration:220, easing:SPRING});
 }
 function sayLine(line, o){
@@ -456,12 +695,15 @@ function sayLine(line, o){
     bubble(who, text, o.gloss != null ? o.gloss : GL(line), o);
     g.dock.classList.add('cc-talking');
     var prev = g.status; g.status = {kind:'line', step:SPINE[g.round.step], skip:'.cc-dock'};
-    var done = false;
-    var fin = function(){ if(done) return; done = true; g.lineSkip = null; g.dock.classList.remove('cc-talking'); if(g.status && g.status.kind === 'line') g.status = prev; g.waits.delete(abort); setTimeout(function(){ g.dead ? rej(ABORT) : res(); }, 0); };
+    var done = false, heard = null;
+    var fin = function(){ if(done) return; done = true; g.lineSkip = null; g.lineHear = null; g.dock.classList.remove('cc-talking'); if(g.status && g.status.kind === 'line') g.status = prev; g.waits.delete(abort); setTimeout(function(){ g.dead ? rej(ABORT) : res(); }, 0); };
     var abort = function(){ done = true; rej(ABORT); };
     g.waits.add(abort);
     g.lineSkip = function(){ stopSpeech(); fin(); };
-    speak(text, {who:o.voice || who}).then(function(){ if(!done) setTimeout(fin, 260 * g.pace); });
+    // the dock's speaker while the line is up: the clip plays and the line waits for it to end (tap to hear, 2026-11-16)
+    g.lineHear = function(){ heard = speak(text, {who:o.voice || who}); return heard; };
+    // spoken only with "Read game lines aloud" on; else the line stays up for its reading time (a tap on the bubble still moves on)
+    voiced(text, {who:o.voice || who}).then(function(){ return heard; }).then(function(){ if(!done) setTimeout(fin, 260 * g.pace); }, function(){});
   });
 }
 // content faces: calm / rattled / open (worried reads as rattled)
@@ -470,16 +712,20 @@ function cue(text){ G.cueEl.innerHTML = text ? '<span dir="' + uiDir() + '">' + 
 function clearDock(){ G.bubble.innerHTML = ''; G.dock.classList.remove('cc-has-b'); var f = G.dock.querySelector('.cc-dockface'); f.innerHTML = ''; f.style.display = 'none'; }
 
 /* ============================== hints: 15 s soft hint, 45 s guide (GDD 5.5) ============================== */
+function brave(){ try{ return !!(G && G.host.brave && G.host.brave()); }catch(e){ return false; } }
 function hints(o, mult){
-  var g = G, h = {t15:null, t45:null, off:false, w:[], guide:false};
-  var ms = (g.hintMs || 15000) * (mult || 1);
+  var g = G, h = {t15:null, t45:null, off:false, w:[], guide:false, asked:0};
+  var fast = !!g.hintMs, ms = fast ? g.hintMs * (mult || 1) : (g.band === 'A1' || g.band === 'A2' ? 40000 : 60000), ms45 = fast ? ms * 3 : 90000;
   function clear(){ clearTimeout(h.t15); clearTimeout(h.t45); }
   function f15(){ if(g.dead || h.off || h.did15) return; h.did15 = true; try{ o.h15 && o.h15(); }catch(e){} }
   function f45(){ if(g.dead || h.off) return; h.guide = true; try{ o.h45 && o.h45(); }catch(e){} }
-  h.start = function(){ clear(); if(h.off) return; h.t15 = setTimeout(f15, ms); h.t45 = setTimeout(f45, ms * 3); };
+  h.start = function(){ clear(); if(h.off || (brave() && !fast)) return; h.t15 = setTimeout(f15, ms); h.t45 = setTimeout(f45, ms45); };
+  // Ask Moss (SPEC 7b): the first ask gives the hint, the next one the guided move (Brave: the guided move only after asking twice)
+  h.ask = function(){ if(h.off) return false; h.asked++; if(h.asked >= (brave() ? 3 : 2)){ h.did15 = true; f45(); } else { h.did15 = false; f15(); } return true; };
   h.reset = function(){ h.did15 = false; h.guide = false; h.w = []; clearFx(); h.start(); };
   h.wrong = function(){ var now = Date.now(); h.w = h.w.filter(function(t){ return now - t < 20000; }); h.w.push(now); if(h.w.length >= 3 && !h.did15){ h.w = []; f15(); } };
   h.force = function(level){ if(level >= 45){ f15(); f45(); } else f15(); };
+  h.guideNow = function(){ f45(); };
   h.stop = function(){ h.off = true; clear(); clearFx(); };
   if(g.hint) g.hint.stop();
   g.hint = h;
@@ -502,11 +748,12 @@ function arrowBetween(a, b){
 function build(box){
   box.innerHTML = '';
   var root = el('div', 'cc-root');
-  if(G.forceReduced) root.classList.add('cc-rm');
+  if(G.forceReduced || RM()) root.classList.add('cc-rm');   // the app's own reduce-motion setting too (the mood keeps a still tint)
   root.setAttribute('data-ui', G.ui);
   box.appendChild(root);
   var head = el('div', 'cc-head',
     '<div class="cc-tabs" role="list">' + SPINE.map(function(s, i){ return '<span class="cc-tab" role="listitem" data-i="' + i + '" aria-label="' + esc(U('steps')[i]) + '">' + svg(TAB[i]) + '</span>'; }).join('') + '</div>' +
+    '<div class="cc-mossbar"><button type="button" class="cc-askmoss" aria-label="' + esc(U('askMoss')) + '">' + faceHtml('moss') + '</button><span class="cc-pins" role="img" aria-label="' + esc(U('pins')) + '"></span></div>' +
     '<div class="cc-title" lang="' + G.lang + '" title="' + esc(T(C().series)) + '">' + esc(T(C().title)) + '</div>' +
     '<div class="cc-tools"><button type="button" class="cc-tool cc-boardbtn" aria-label="' + esc(U('board')) + '">' + svg('<rect x="3" y="4" width="18" height="15" rx="1.5"/><circle cx="8" cy="9" r="1.3"/><circle cx="16" cy="13" r="1.3"/><path d="M8 9l8 4"/>') + '</button>' +
     '<button type="button" class="cc-tool cc-bagbtn" aria-label="' + esc(U('evidence')) + '">' + svg('<path d="M4 9h16l-1.5 11h-13z"/><path d="M8 9V7a4 4 0 018 0v2M4 13h16"/>') + '<i class="cc-count-dot"></i></button></div>');
@@ -514,26 +761,59 @@ function build(box){
   var dock = el('div', 'cc-dock', '<div class="cc-cue"></div><span class="cc-dockface" style="display:none"></span><div class="cc-bubble" aria-live="polite"></div>');
   var sheet = el('div', 'cc-bagsheet', '<div class="cc-tray"><div class="cc-tray-h"><span>' + esc(U('evidence')) + '</span><button type="button" class="cc-btn cc-x" style="min-height:32px;padding:0 12px;font-size:13px">' + esc(U('close')) + '</button></div><div class="cc-tray-row"></div><div class="cc-sheetfact"></div></div>');
   var modal = el('div', 'cc-modal'), flash = el('div', 'cc-flash');
+  var back = moodEl('day'); back.className = 'cc-mood cc-back'; root.appendChild(back); G.backEl = back;
   root.appendChild(head); root.appendChild(main); root.appendChild(dock); root.appendChild(sheet); root.appendChild(modal); root.appendChild(flash);
   G.root = root; G.head = head; G.main = main; G.dock = dock; G.bubble = dock.querySelector('.cc-bubble'); G.cueEl = dock.querySelector('.cc-cue');
   G.sheet = sheet; G.modal = modal; G.flashEl = flash; G.bagBtn = head.querySelector('.cc-bagbtn'); G.boardBtn = head.querySelector('.cc-boardbtn');
   G.bagBtn.addEventListener('click', function(e){ e.stopPropagation(); openBag(); });
+  G.pinsEl = head.querySelector('.cc-pins');
+  head.querySelector('.cc-askmoss').addEventListener('click', function(e){ e.stopPropagation(); askMoss(); });
   G.boardBtn.addEventListener('click', function(e){ e.stopPropagation(); openBoardPeek(); });
   sheet.querySelector('.cc-x').addEventListener('click', function(){ sheet.classList.remove('cc-open'); });
   sheet.addEventListener('click', function(e){
     var c = e.target.closest('.cc-ev'); if(!c) return;
     var d = evDef(c.dataset.ev); if(!d) return;
     var f = sheet.querySelector('.cc-sheetfact');
-    f.innerHTML = '<p class="cc-st" style="margin:10px 4px 0;padding:0"><span lang="' + G.lang + '" dir="ltr">' + esc(T(d.fact)) + '</span>' + (GL(d.fact) ? '<span class="cc-gl" dir="' + uiDir() + '">' + esc(GL(d.fact)) + '</span>' : '') + '</p>';
-    speak(T(d.fact), {who:'fact'});
+    f.innerHTML = '<p class="cc-st" style="margin:10px 4px 0;padding:0"><span lang="' + G.lang + '" dir="ltr">' + esc(T(d.fact)) + '</span>' + (GL(d.fact) ? '<span class="cc-gl" dir="' + uiDir() + '">' + esc(GL(d.fact)) + '</span>' : '') + hearBtn(T(d.fact), 'fact') + '</p>';
+    if(autoRead()) speak(T(d.fact), {who:'fact'});
   });
   root.addEventListener('click', function(e){ var w = e.target.closest && e.target.closest('.cc-w'); if(w && G){ e.stopPropagation(); collectWord(w); } }, true);
+  root.addEventListener('click', hearTap, true);
   dock.addEventListener('click', function(e){
     if(e.target.closest('.cc-tr')){ var gl = G.bubble.querySelector('.cc-gl'); if(gl){ gl.hidden = !gl.hidden; G.glossOn = !gl.hidden; } return; }
+    if(e.target.closest('.cc-hear')){
+      // tap to hear: the line on screen plays (and, while it is up, the game waits for the clip); never a skip
+      if(G.lineHear) G.lineHear(); else if(G.bubbleSay) speak(G.bubbleSay.text, {who:G.bubbleSay.who});
+      return;
+    }
     if(G.lineSkip){ var f = G.lineSkip; G.lineSkip = null; f(); }
   });
   G.ro = W.ResizeObserver ? new ResizeObserver(function(){ fitFrames(); redrawThreads(); }) : null;
   if(G.ro) G.ro.observe(main);
+}
+// Moss's pins (SPEC 7b): three red map pins next to Moss (Brave: two). A wrong drop or a wrong thread costs one (it tips, falls and fades);
+// with none left Moss steps in with the guided move, and the pins come back at the next step. A case closed without ever running out gets
+// the gold wax seal. No number anywhere: the pins are the count. Old saves have no pins: they start full.
+function pinMax(){ return brave() ? 2 : 3; }
+function pinsFor(step){ var r = G.round; if(r.pinStep !== step || r.pins == null){ r.pinStep = step; r.pins = pinMax(); } paintPins(); }
+function paintPins(){ if(!G || !G.pinsEl) return; var r = G.round, n = r.pins == null ? pinMax() : r.pins, h = ''; for(var i = 0; i < pinMax(); i++) h += '<i class="cc-mpin' + (i < n ? '' : ' cc-mpin-out') + '">' + PIN_SVG + '</i>'; G.pinsEl.innerHTML = h; G.pinsEl.classList.toggle('cc-pins-none', n <= 0); }
+var PIN_SVG = '<svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="7" r="5" fill="#E44736" stroke="#14332e" stroke-width="1.6"/><circle cx="8.3" cy="5.4" r="1.4" fill="#fff" opacity=".8"/><path d="M10 12v6.5" stroke="#14332e" stroke-width="1.8" stroke-linecap="round"/></svg>';
+function losePin(){
+  if(!G) return;
+  var r = G.round; if(r.pins == null) r.pins = pinMax();
+  if(r.pins <= 0) return;
+  r.pins--; save();
+  var live = G.pinsEl ? G.pinsEl.querySelectorAll('.cc-mpin:not(.cc-mpin-out)') : [], last = live[live.length - 1];
+  sfx('tick');
+  if(last && !RM()) run(last, [{transform:'none', opacity:1}, {transform:'translateY(24px) rotate(25deg)', opacity:0}], {duration:360, easing:'cubic-bezier(.5,0,.8,.6)'}).then(paintPins); else paintPins();
+  if(r.pins <= 0){ r.pinsOut = true; save(); if(G.hint && !G.hint.off){ var h = G.hint; setTimeout(function(){ if(G && G.hint === h && !h.off) h.guideNow(); }, 500); } }
+}
+function askMoss(){
+  if(!G || G.busy) return;
+  sfx('pop');
+  if(G.hint && !G.hint.off && G.hint.ask()) return;
+  // nothing to help with right now (a line, a scene change): Moss just nods
+  var f = G.head.querySelector('.cc-askmoss'); if(f && !RM()) run(f, [{transform:'none'}, {transform:'translateY(-3px) rotate(-4deg)'}, {transform:'none'}], {duration:320, easing:SPRING});
 }
 function renderTabs(){
   // inside the hub (steps 2-4) the three tabs ink in spine order of what is established (GDD 15 CC1)
@@ -549,6 +829,7 @@ function frameIn(p){
   var cell = el('div', 'cc-framecell'), fr = el('div', 'cc-frame');
   fr.setAttribute('dir', 'ltr');
   cell.appendChild(fr); p.appendChild(cell);
+  if(G.ro) G.ro.observe(cell);   // the frame refits when lines or buttons arrive under it (the truth panels), never pushing them off screen
   fitFrames();
   return fr;
 }
@@ -557,7 +838,11 @@ function fitFrames(){
   G.main.querySelectorAll('.cc-framecell').forEach(function(cell){
     var fr = cell.querySelector('.cc-frame'); if(!fr) return;
     var cw = cell.clientWidth, ch = cell.clientHeight; if(!cw || !ch) return;
-    var w = Math.min(cw - 4, ch * 0.8); fr.style.width = Math.round(w) + 'px'; fr.style.height = Math.round(w * 1.25) + 'px';
+    // the whole 4:5 plate, as big as the cell allows; never under 280 px wide (SPEC 5.1): below that the page scrolls instead of shrinking
+    var w = Math.min(cw - 4, ch * 0.8), floor = Math.min(cw - 4, 280);
+    if(w < floor) w = floor;
+    fr.style.width = Math.round(w) + 'px'; fr.style.height = Math.round(w * 1.25) + 'px';
+    cell.style.minHeight = w * 1.25 > ch + 1 ? Math.round(w * 1.25) + 'px' : '';
   });
 }
 function actions(p, html){ var a = el('div', 'cc-actions', html); p.appendChild(a); return a; }
@@ -726,12 +1011,15 @@ async function stepQuestion(){
   if(G.S.coldOpen && !G.round.coldSeen){
     // CC5: one wordless panel from the crime, 3 s, a tap skips it
     fr.innerHTML = '<div class="cc-plate">' + plateHtml(G.S.coldOpen.plate) + '</div>';
+    moodOn(fr, moodFor(null, 'cold'));
+    if(weather() === 'storm') setTimeout(function(){ if(G && !G.dead) lightning('cold'); }, 600);
     G.status = {kind:'cold', step:'question', skip:'.cc-frame'};
     await Promise.race([wait(3000, true), untilClick(fr).catch(function(){})]);
     G.round.coldSeen = true; save();
     sfx('flip');
   }
   fr.innerHTML = '<div class="cc-plate">' + plateHtml(G.S.open.plate) + '</div>';
+  moodOn(fr, moodFor(null, 'open'));
   if(!RM()) run(fr.firstChild, [{opacity:0}, {opacity:1}], {duration:500});
   var card = q.filter(function(l){ return l.who === 'card'; })[0];
   var take = q.filter(function(l){ return l.who === 'ui' || l.id === 'q.take'; })[0];
@@ -761,7 +1049,7 @@ function typeInto(node, text, msPer){
     var t = setInterval(function(){
       if(!G || G !== g || g.dead){ clearInterval(t); return res(); }
       i += 1; node.textContent = text.slice(0, i); node.appendChild(caret);
-      if(i % 2 === 0 && text.charAt(i - 1) !== ' ') sfx('type');
+      if(i % 3 === 0 && text.charAt(i - 1) !== ' ') sfx('type');
       if(i >= text.length){ clearInterval(t); caret.remove(); g.typeSkip = null; sfx('bell'); res(); }
     }, ms);
     g.typeSkip = function(){ clearInterval(t); node.textContent = text; g.typeSkip = null; res(); };
@@ -814,6 +1102,7 @@ async function stepHub(){
       '<div class="cc-people">' + peopleHtml(v) + '</div>' +
       '<div class="cc-viewdots">' + views.map(function(w, i){ return '<span class="' + (i === vi ? 'cc-on' : '') + (viewClear(w.id) ? ' cc-clear' : '') + '" lang="' + G.lang + '">' + esc(T(w.label)) + '</span>'; }).join('') + '</div>' + (views.length > 1 ? nav : '');
     lensEl = fr.querySelector('.cc-lens'); lensIn = fr.querySelector('.cc-lens-in'); handle = fr.querySelector('.cc-lens-handle'); warmEl = fr.querySelector('.cc-warm');
+    moodOn(fr, moodFor(v, 'hub'));
     spotEl = null; spotted = null;
     place();
   }
@@ -827,6 +1116,7 @@ async function stepHub(){
     lensIn.style.width = s.w + 'px'; lensIn.style.height = s.h + 'px';
     lensIn.style.transform = 'translate(' + (R - cx * mag) + 'px,' + (R - cy * mag) + 'px) scale(' + mag + ')';
     handle.style.left = (cx + R * .62) + 'px'; handle.style.top = (cy + R * .62) + 'px'; handle.style.transform = 'rotate(-45deg)';
+    if(G.mood && G.mood.torch) moodTorch(fr, cx, cy, R);
     var hit = null, tol = Rpct * 0.45, warm = null, warmD = 1e9;
     findsIn(views[vi].id).forEach(function(f){
       var got = f.secret ? r.secret : r.found.indexOf(f.id) >= 0; if(got) return;
@@ -954,7 +1244,7 @@ async function stepHub(){
       var fEl = fr.querySelector('.cc-lens [data-find="' + f.id + '"]');
       if(f.secret) r.secret = true; else r.found.push(f.id);
       save();
-      sfx('ting'); sfx('paper');
+      sfx('ting'); sfx('shutter');
       var src = fEl ? rect(fEl) : rect(lensEl), bb = rect(G.bagBtn), f0 = rect(G.root);
       var fly = el('div', '', evCardHtml(f.id)).firstChild; fly.style.cssText = 'position:absolute;z-index:60;left:' + (src.left - f0.left) + 'px;top:' + (src.top - f0.top) + 'px;margin:0';
       G.root.appendChild(fly);
@@ -992,10 +1282,12 @@ async function stepHub(){
   if(C().findsDone) await sayLine(C().findsDone);
 }
 function roomOf(who){ var v = (G.S.views || []).filter(function(x){ return (x.people || []).some(function(pp){ return pp.who === who; }); })[0]; return (v && v.room) || G.S.room || null; }
+function sayBtn(s){ return '<button type="button" class="cc-say' + (hearFirst() ? ' cc-hear-first' : '') + '" data-stmt="' + esc(s.id) + '" aria-label="' + esc(U('hearLine')) + '">' + SPEAKER_SVG + '</button>'; }
 function fileTag(s){ return isFile(s) ? '<span class="cc-filetag" lang="' + G.lang + '">' + esc(stampText('file')) + '</span>' : ''; }
 async function interview(who, p){
   var r = G.round;
   var sh = el('div', 'cc-ivsheet');
+  backMood('noir');
   sh.innerHTML = '<div class="cc-iv"><div class="cc-iv-face">' + faceHtml(who) + '</div><p class="cc-iv-name" lang="' + G.lang + '">' + esc(castName(who)) + '</p>' +
     (G.ui !== G.lang || G.band === 'A1' ? '<p class="cc-iv-role" dir="' + uiDir() + '">' + esc(castRole(who)) + '</p>' : '') + '<div class="cc-transcript" dir="ltr"></div></div>';
   p.appendChild(sh);
@@ -1003,18 +1295,19 @@ async function interview(who, p){
   sfx('paper');
   var tr = sh.querySelector('.cc-transcript'), face = sh.querySelector('.cc-face');
   var gl = function(o){ return GL(o) ? '<span class="cc-gl" dir="' + uiDir() + '"' + (G.band === 'A1' ? '' : ' hidden') + '>' + esc(GL(o)) + '</span>' : ''; };
-  cue(G.band === 'A1' ? U('listenA1') : U('listen'));
+  // tap to hear (2026-11-16): the testimony types onto the paper in silence; each line's speaker plays it ("Read game lines aloud" = the old voice)
+  cue(autoRead() ? (G.band === 'A1' ? U('listenA1') : U('listen')) : (G.band === 'A1' ? U('readA1') : U('readTr')));
   tr.addEventListener('click', function(e){
+    var sb = e.target.closest('.cc-say'); if(sb){ var s0 = stmt(sb.dataset.stmt); if(s0) speak(T(s0), {who:voiceOf(s0)}); return; }
     if(G.typeSkip){ G.typeSkip(); return; }
     if(e.target.closest('.cc-w')) return;
-    var sb = e.target.closest('.cc-say'); if(sb){ var s0 = stmt(sb.dataset.stmt); if(s0) speak(T(s0), {who:s0.by}); return; }
     var ln = e.target.closest('.cc-st'); if(ln){ var g0 = ln.querySelector('.cc-gl'); if(g0) g0.hidden = !g0.hidden; }
   });
   var list = stmts().filter(function(s){ return s.by === who && stmtVisible(s); });
   var room = roomTone(roomOf(who));
   // what was already said reads straight away; the new lines type in
   list.filter(function(s){ return r.heard.indexOf(s.id) >= 0; }).forEach(function(s){
-    tr.insertAdjacentHTML('beforeend', '<p class="cc-st">' + fileTag(s) + '<span class="cc-tt" lang="' + G.lang + '">' + wordify(T(s)) + '</span>' + gl(s) + '<button type="button" class="cc-say" data-stmt="' + esc(s.id) + '" aria-label="' + esc(U('hear')) + '">' + SPEAKER_SVG + '</button></p>');
+    tr.insertAdjacentHTML('beforeend', '<p class="cc-st">' + fileTag(s) + '<span class="cc-tt" lang="' + G.lang + '">' + wordify(T(s)) + '</span>' + gl(s) + sayBtn(s) + '</p>');
   });
   var fresh = list.filter(function(s){ return r.heard.indexOf(s.id) < 0; });
   if(fresh.length) await wait(420);   // the room breathes before the first line
@@ -1026,19 +1319,22 @@ async function interview(who, p){
     G.status = {kind:'typing', step:'investigation', skip:'.cc-transcript'};
     var talk = RM() ? null : face.animate([{transform:'translateY(0)'}, {transform:'translateY(-3px)'}, {transform:'translateY(0)'}], {duration:420, iterations:Infinity});
     var tt = ln.querySelector('.cc-tt');
-    await Promise.all([typeInto(tt, T(s)), speak(T(s), {who:voiceOf(s)})]);
+    await Promise.all([typeInto(tt, T(s)), autoRead() ? speak(T(s), {who:voiceOf(s)}) : null]);
     if(talk) talk.cancel();
     live();
     tt.innerHTML = wordify(T(s));
-    ln.insertAdjacentHTML('beforeend', gl(s) + '<button type="button" class="cc-say" data-stmt="' + esc(s.id) + '" aria-label="' + esc(U('hear')) + '">' + SPEAKER_SVG + '</button>');
+    ln.insertAdjacentHTML('beforeend', gl(s) + sayBtn(s));
+    if(!autoRead()) await wait(450 + 150 * words(T(s)), true);   // a beat to read before the next line types in
     r.heard.push(s.id); save(); renderTabs();
     await wait(380);
     if(s.gives && r.given.indexOf(s.gives) < 0){
       if(s.handover){
         var hl = el('p', 'cc-st', '<em class="cc-tt" lang="' + G.lang + '"></em>'); tr.appendChild(hl); scrollInto(hl);
-        await Promise.all([typeInto(hl.firstChild, T(s.handover)), speak(T(s.handover), {who:s.handover.who && s.handover.who !== 'owner' ? s.handover.who : voiceOf(s)})]);
+        var hw = s.handover.who && s.handover.who !== 'owner' ? s.handover.who : voiceOf(s);
+        await Promise.all([typeInto(hl.firstChild, T(s.handover)), autoRead() ? speak(T(s.handover), {who:hw}) : null]);
         live();
-        hl.insertAdjacentHTML('beforeend', gl(s.handover));
+        hl.insertAdjacentHTML('beforeend', gl(s.handover) + hearBtn(T(s.handover), hw));
+        if(!autoRead()) await wait(450 + 150 * words(T(s.handover)), true);
       }
       var ho = el('div', 'cc-handover', evCardHtml(s.gives)); tr.appendChild(ho); scrollInto(ho);
       var evc = ho.firstChild;
@@ -1057,6 +1353,7 @@ async function interview(who, p){
   await untilClick(a2, '.cc-ivnext');
   sfx('paper');
   sh.remove();
+  backMood('day');
 }
 function scrollInto(n){
   // scroll only the nearest scrolling box inside the game (scrollIntoView would also scroll the Theatre stage)
@@ -1094,7 +1391,7 @@ function collectWord(span){
   if(r.words.indexOf(k) >= 0) return;
   r.words.push(k); save();
   G.root.querySelectorAll('.cc-w[data-w="' + k + '"]').forEach(function(n){ n.classList.add('cc-got'); });
-  sfx('tick');
+  sfx('pencil');
   if(RM()) return;
   var a = rect(span), b = rect(G.boardBtn), f = rect(G.root);
   var c = el('span', 'cc-wfly', esc(span.textContent)); c.style.left = (a.left - f.left) + 'px'; c.style.top = (a.top - f.top) + 'px';
@@ -1196,13 +1493,13 @@ async function dropStep(mode){
     try{
       if(s.breaks && s.breaks.indexOf(ev) >= 0 && breakOpen(s)){ hn.stop(); await doBreak(s, ev, list, paint); guide = null; under = null; paint(); if(need().length) hn.reset(); return true; }
       if(s.confirms && s.confirms.indexOf(ev) >= 0){ hn.stop(); await doConfirm(s, ev, list, paint); guide = null; under = null; paint(); if(need().length) hn.reset(); return true; }
-      // a wrong drop is never marked wrong: the card goes home, its fact line shows once, the owner shrugs
-      hn.wrong();
+      // a wrong drop is never marked wrong: the card goes home, its fact line shows once, the owner shrugs; it costs one of Moss's pins
+      hn.wrong(); losePin();
       var d = evDef(ev);
-      var fp = el('div', 'cc-factpop', '<small dir="' + uiDir() + '">' + esc(U('thisToldYou')) + '</small><p lang="' + G.lang + '" dir="ltr">' + esc(T(d && d.fact)) + '</p>' + (GL(d && d.fact) ? '<p class="cc-gl" dir="' + uiDir() + '">' + esc(GL(d.fact)) + '</p>' : ''));
+      var fp = el('div', 'cc-factpop', '<small dir="' + uiDir() + '">' + esc(U('thisToldYou')) + '</small><p lang="' + G.lang + '" dir="ltr">' + esc(T(d && d.fact)) + '</p>' + (GL(d && d.fact) ? '<p class="cc-gl" dir="' + uiDir() + '">' + esc(GL(d.fact)) + '</p>' : '') + hearBtn(T(d && d.fact), 'fact'));
       tray.appendChild(fp);
       if(!RM()) run(fp, [{opacity:0, transform:'translateY(8px)'}, {opacity:1, transform:'none'}], {duration:220});
-      await speak(T(d && d.fact), {who:'fact'});
+      await voiced(T(d && d.fact), {who:'fact'});
       // an authored near miss (s.near[cardId]) answers first; lines from the 1970 file get Moss's filePool; else the owner's band pool
       var near = s.near && s.near[ev];
       if(near){ var nw = near.who && near.who !== 'owner' ? near.who : voiceOf(s); await sayLine(near, nw === 'moss' ? {who:'moss'} : {who:s.by, voice:nw, y70:isFile(s)}); }
@@ -1259,6 +1556,7 @@ async function doBreak(s, ev, list, paint){
     sfx('crack');
     if(!RM() && path){ path.style.strokeDasharray = '100'; await run(path, [{strokeDashoffset:100}, {strokeDashoffset:0}], {duration:300}); }
     lnEl.classList.add('cc-broken');
+    lightning('break');
     await stampOn(lnEl, stampText('contradiction'));
   }
   clearFx();
@@ -1363,7 +1661,7 @@ async function stepConnection(){
       if(!a || !c || a === c || busy) return;
       var l = need().filter(function(x){ return key(x.a, x.b) === key(a, c); })[0];
       if(!l){
-        hn.wrong(); sfx('flutter');
+        hn.wrong(); sfx('flutter'); losePin();
         var pa = b.querySelector('[data-pin="' + a + '"]'), pc = b.querySelector('[data-pin="' + c + '"]');
         if(pa && pc && !RM()){
           var A = pinCenter(b, pa), B = pinCenter(b, pc);
@@ -1376,7 +1674,7 @@ async function stepConnection(){
       busy = true; hn.stop(); guide = null; clearFx();
       r.links.push([l.a, l.b]); save();
       // CC11: each required link plucks two semitones higher than the last; the last one also flashes the folder
-      redrawThreads(); sfx('pluck', {rate:Math.pow(2, 2 * (r.links.length - 1) / 12), n:r.links.length}); buzz([8]);
+      redrawThreads(); sfx('pin'); sfx('pluck', {rate:Math.pow(2, 2 * (r.links.length - 1) / 12), n:r.links.length}); buzz([8]);
       if(!need().length){ folderGlow(); }
       var last = svgEl.querySelector('.cc-made:last-child line');
       if(last && !RM()){ last.style.strokeDasharray = '600'; run(last, [{strokeDashoffset:600}, {strokeDashoffset:0}], {duration:260}); }
@@ -1440,9 +1738,12 @@ function chipGloss(c){
 function clauseGaps(ci){ var o = []; G.gapClause.forEach(function(c, gi){ if(c === ci) o.push(gi); }); return o; }
 async function stepDeduction(){
   var r = G.round, D8 = C().deduction || {}, gaps = G.gaps, clauses = G.clauses, lad = D8.ladder || {};
+  backMood('boss');
   if(!r.dedSet) r.dedSet = [];
   var pick = r.deduction || {}; r.deduction = pick;
   var multi = clauses.length > 1;
+  // B1+: every gap filled, one Check for the whole deduction; nothing says which gap is wrong (A1-A2 keep the clause-by-clause check)
+  var once = multi && !/^A/.test(G.band);
   var p = page();
   var box = el('div', 'cc-ded' + (multi ? ' cc-multi' : ''));
   function chipText(gi, id){ var c = gaps[gi].pool.filter(function(x){ return x.id === id; })[0]; return c ? (chipT(c)) : ''; }
@@ -1468,9 +1769,10 @@ async function stepDeduction(){
       }).join('') + '</div>';
     }).join('') + '</div>';
     return '<section class="cc-clause' + (done ? ' cc-set' : '') + '" data-ci="' + ci + '">' + (multi ? '<span class="cc-clausen" aria-hidden="true">' + (ci + 1) + '</span>' : '') + sent + '<div class="cc-ribbonslot"></div>' + pools +
-      (done ? '' : '<div class="cc-clauseact"><button type="button" class="cc-btn cc-primary cc-check" data-ci="' + ci + '" disabled>' + esc(U('check')) + '</button></div>') + '</section>';
+      (done || once ? '' : '<div class="cc-clauseact"><button type="button" class="cc-btn cc-primary cc-check" data-ci="' + ci + '" disabled>' + esc(U('check')) + '</button></div>') + '</section>';
   }
-  box.innerHTML = clauses.map(function(c, ci){ return clauseHtml(ci); }).join('');
+  box.innerHTML = clauses.map(function(c, ci){ return clauseHtml(ci); }).join('') +
+    (once && r.dedSet.length < clauses.length ? '<div class="cc-ribbonslot cc-allslot"></div><div class="cc-clauseact cc-allact"><button type="button" class="cc-btn cc-primary cc-check" data-ci="all" disabled>' + esc(U('check')) + '</button></div>' : '');
   p.appendChild(box);
   var acts = actions(p, '');
   cue(U('ded'));
@@ -1482,13 +1784,13 @@ async function stepDeduction(){
       gEl.classList.toggle('cc-filled', !!pick[gi]);
       box.querySelectorAll('.cc-chip[data-g="' + gi + '"]').forEach(function(c){ c.classList.toggle('cc-used', pick[gi] === c.dataset.c); });
     });
-    box.querySelectorAll('.cc-check').forEach(function(b){ var ci = +b.dataset.ci; b.disabled = clauseGaps(ci).some(function(gi){ return !pick[gi]; }); });
+    box.querySelectorAll('.cc-check').forEach(function(b){ if(b.dataset.ci === 'all'){ b.disabled = gaps.some(function(gp, gi){ return r.dedSet.indexOf(G.gapClause[gi]) < 0 && !pick[gi]; }); return; } var ci = +b.dataset.ci; b.disabled = clauseGaps(ci).some(function(gi){ return !pick[gi]; }); });
   }
   paint();
-  var rung = clauses.map(function(){ return 0; });
+  var rung = clauses.map(function(){ return 0; }), rungAll = r.dedRung || 0;
   var sel = function(gi, id){ return '.cc-chip[data-g="' + gi + '"][data-c="' + id + '"]'; };
-  G.status = {kind:'ded', step:'deduction', clauses:clauses.length, set:function(){ return r.dedSet.slice(); },
-    check:function(ci){ return '.cc-check[data-ci="' + (ci || 0) + '"]'; },
+  G.status = {kind:'ded', step:'deduction', clauses:clauses.length, once:once, set:function(){ return r.dedSet.slice(); },
+    check:function(ci){ return once ? '.cc-check[data-ci="all"]' : '.cc-check[data-ci="' + (ci || 0) + '"]'; },
     answers:function(ci){ return gaps.map(function(gp, gi){ return gi; }).filter(function(gi){ return ci == null || G.gapClause[gi] === ci; }).map(function(gi){ return sel(gi, gaps[gi].answer); }); },
     // a wrong chip still on the board: after rung 3 only the answer and the strong distractor stay (GPrT3pSj, 2026-11-13)
     wrong:function(ci){ return gaps.map(function(gp, gi){ return gi; }).filter(function(gi){ return ci == null || G.gapClause[gi] === ci; }).map(function(gi){ var all = gaps[gi].pool.filter(function(c){ return c.id !== gaps[gi].answer; }); var w = all.filter(function(c){ var el = box.querySelector(sel(gi, c.id)); return !el || !el.classList.contains("cc-out"); })[0] || all[0]; return sel(gi, w.id); }); }};
@@ -1506,10 +1808,10 @@ async function stepDeduction(){
       var se = sec.querySelector('.cc-sentence');
       se.textContent = '';
       await typeInto(se, setText(ci), 30);
-      se.innerHTML = setHtml(ci);
+      se.innerHTML = setHtml(ci) + hearBtn(setText(ci), 'narr');
       sfx('softstamp');
       var c = clauses[ci];
-      if(c.set && cond(c.set) && r.dedSet.length < clauses.length) await sayLine(c.set, {who:c.set.who || 'moss'});
+      if(c.set && cond(c.set) && r.dedSet.length < clauses.length && !once) await sayLine(c.set, {who:c.set.who || 'moss'});
       var nx = box.querySelector('.cc-clause:not(.cc-set)'); if(nx) scrollInto(nx);
     } else {
       if(pools) pools.querySelectorAll('.cc-chip').forEach(function(ch){ ch.disabled = true; });
@@ -1534,10 +1836,36 @@ async function stepDeduction(){
       G.status = {kind:'button', step:'deduction', sel:'.cc-said.cc-primary'};
       await untilClick(acts, '.cc-said');
       acts.innerHTML = '';
-      var stp = await stampOn(G.page, stampText('closed'), null, true);
-      stp.style.left = '50%'; stp.style.top = '34%'; stp.style.transform = 'translate(-50%,-50%) rotate(-12deg)';
-      sfx('reveal');
+      lightning('accuse');
+      if(!r.pinsOut){ await sealOn(G.page); }
+      else { var stp = await stampOn(G.page, stampText('closed'), null, true); stp.style.left = '50%'; stp.style.top = '34%'; stp.style.transform = 'translate(-50%,-50%) rotate(-12deg)'; }
+      sfx('closed');
       await wait(1200);
+    }
+    // the all-at-once check (B1+): right = every clause sets, in order; one or two gaps off = "Close"; more = "Not yet". From the 3rd check one
+    // wrong gap gets a pencil dot; the 2nd check brings Moss's nudge at the evidence; at the 5th check the gaps left fill in. Always solvable.
+    async function checkAll(){
+      var open = gaps.map(function(gp, gi){ return gi; }).filter(function(gi){ return r.dedSet.indexOf(G.gapClause[gi]) < 0; });
+      var wrong = open.filter(function(gi){ return pick[gi] !== gaps[gi].answer; });
+      var slot = box.querySelector('.cc-allslot');
+      box.querySelectorAll('.cc-gap').forEach(function(x){ x.classList.remove('cc-mark'); });
+      if(wrong.length){
+        rungAll++; r.dedRung = rungAll; save();
+        sfx('wrong');
+        if(rungAll >= 5){ wrong.forEach(function(gi){ pick[gi] = gaps[gi].answer; }); save(); paint(); sfx('flip'); await wait(500); wrong = []; }
+        else {
+          var msg = wrong.length <= 2 ? U('closeAll') : (lad.notYet && G.ui === G.lang ? T(lad.notYet) : U('notYet'));
+          if(slot){ slot.innerHTML = '<div class="cc-ribbon" dir="' + uiDir() + '">' + esc(msg) + '</div>'; if(!RM()) run(slot.firstChild, [{transform:'scale(.9)', opacity:0}, {transform:'none', opacity:1}], {duration:240, easing:SPRING}); scrollInto(slot); }
+          if(rungAll === 2){ var ev = gaps[wrong[0]].ev, nudge = lad.nudge && lad.nudge[ev]; if(nudge) await sayLine(nudge, {who:nudge.who || 'moss'}); G.bagShim = ev; shim(G.bagBtn); }
+          if(rungAll >= 3){ var gm = box.querySelector('.cc-gap[data-g="' + wrong[0] + '"]'); if(gm){ gm.classList.add('cc-mark'); scrollInto(gm); } sfx('pencil'); }
+          return false;
+        }
+      }
+      if(slot) slot.innerHTML = '<div class="cc-ribbon cc-ok" dir="' + uiDir() + '">' + esc(U('solvedAll')) + '</div>';
+      var act = box.querySelector('.cc-allact'); if(act) act.remove();
+      for(var ci = 0; ci < clauses.length; ci++) if(r.dedSet.indexOf(ci) < 0) await setClause(ci);
+      if(slot) slot.remove();
+      return true;
     }
     if(r.dedSet.length >= clauses.length){ busy = true; finale().then(function(){ g.waits.delete(abort); resolve(); }, reject); return; }
     box.addEventListener('click', async function(e){
@@ -1546,12 +1874,13 @@ async function stepDeduction(){
       if(ch){
         if(ch.disabled || ch.classList.contains('cc-out')) return;
         var i = +ch.dataset.g; if(r.dedSet.indexOf(G.gapClause[i]) >= 0) return;
-        if(pick[i] === ch.dataset.c){ delete pick[i]; } else { pick[i] = ch.dataset.c; flyChip(ch, box.querySelector('.cc-gap[data-g="' + i + '"]')); speak(ch.querySelector('.cc-ct').textContent, {who:'ui'}); }
+        if(pick[i] === ch.dataset.c){ delete pick[i]; } else { pick[i] = ch.dataset.c; flyChip(ch, box.querySelector('.cc-gap[data-g="' + i + '"]')); if(autoRead()) speak(ch.querySelector('.cc-ct').textContent, {who:'ui'}); }
         sfx('tick'); save(); paint(); return;
       }
       var gp = e.target.closest('.cc-gap');
       if(gp && pick[+gp.dataset.g] != null){ delete pick[+gp.dataset.g]; gp.classList.remove('cc-mark'); sfx('tick'); save(); paint(); return; }
       var cb = e.target.closest('.cc-check'); if(!cb || cb.disabled) return;
+      if(cb.dataset.ci === 'all'){ busy = true; try{ if(await checkAll()){ await finale(); g.waits.delete(abort); resolve(); return; } }catch(err){ if(err === ABORT) return reject(err); console.error('[case-closed] deduction', err); } busy = false; return; }
       var ci = +cb.dataset.ci, ids = clauseGaps(ci), sec = box.querySelector('.cc-clause[data-ci="' + ci + '"]');
       busy = true;
       try{
@@ -1563,6 +1892,7 @@ async function stepDeduction(){
           busy = false; return;
         }
         rung[ci]++;
+        sfx('wrong');
         var slot = sec.querySelector('.cc-ribbonslot');
         if(rung[ci] === 1){
           // a clause of 2-3 gaps only says "Not yet." (a count would give the answer away)
@@ -1605,6 +1935,7 @@ function flyChip(chip, gap){
 /* ============================== 9 · TRUTH ============================== */
 async function stepTruth(){
   var r = G.round, panels = C().truth || [];
+  backMood('day');
   clearDock(); G.dock.classList.add('cc-hidden');
   for(var i = r.panel || 0; i < panels.length; i++){
     var P9 = panels[i];
@@ -1612,21 +1943,26 @@ async function stepTruth(){
     var t = el('div', 'cc-truth'); p.appendChild(t);
     var fr = frameIn(t);
     var ps = (G.S.truth || {})[P9.panel] || {};
-    fr.innerHTML = '<div class="cc-plate">' + plateHtml(ps.plate || ('panel-' + P9.panel)) + '</div>' + (P9.caption ? '<div class="cc-panelcap" lang="' + G.lang + '">' + esc(T(P9.caption)) + '</div>' : '');
+    fr.innerHTML = '<div class="cc-plate">' + plateHtml(ps.plate || ('panel-' + P9.panel)) + '</div>' + (P9.caption ? '<div class="cc-panelcap" lang="' + G.lang + '">' + esc(T(P9.caption)) + hearBtn(T(P9.caption), 'narr') + '</div>' : '');
+    moodOn(fr, moodFor({id:ps.plate || ('panel-' + P9.panel)}, 'truth'));
     var bals = el('div', 'cc-balloons'); t.appendChild(bals);
     if(!RM()){ sfx('flip'); run(fr, [{transform:'translateX(12%)', opacity:0}, {transform:'none', opacity:1}], {duration:420, easing:EASE}); }
-    if(P9.caption) speak(T(P9.caption), {who:'narr'});
+    if(P9.caption && autoRead()) speak(T(P9.caption), {who:'narr'});
     G.status = {kind:'truth', step:'truth', panel:i, skip:'.cc-truth'};
     var plines = (P9.lines || []).filter(cond);
     for(var k = 0; k < plines.length; k++){
       var l = plines[k], narr = l.who === 'narr';
       var bl = el('div', 'cc-bal' + (narr ? ' cc-narr' : ''), (narr ? '' : '<span class="cc-n">' + esc(castShort(l.who)) + '</span>') + '<span lang="' + G.lang + '" dir="ltr">' + esc(T(l)) + '</span>' +
-        (GL(l) ? '<span class="cc-gl" dir="' + uiDir() + '"' + (G.band === 'A1' ? '' : ' hidden') + '>' + esc(GL(l)) + '</span>' : ''));
+        (GL(l) ? '<span class="cc-gl" dir="' + uiDir() + '"' + (G.band === 'A1' ? '' : ' hidden') + '>' + esc(GL(l)) + '</span>' : '') + hearBtn(T(l), l.who));
       bals.appendChild(bl);
       if(!RM()) run(bl, [{transform:'translateY(8px) scale(.96)', opacity:0}, {transform:'none', opacity:1}], {duration:240, easing:SPRING});
       bl.addEventListener('click', function(e){ e.stopPropagation(); var gl = this.querySelector('.cc-gl'); if(gl) gl.hidden = !gl.hidden; });
-      await Promise.race([speak(T(l), {who:l.who}), untilClick(t).catch(function(){})]);
-      stopSpeech(); live();
+      // spoken only with the setting on; else the balloon stays up for its reading time or until a tap. A clip the learner asked for
+      // (the balloon's speaker) plays to its end unless they tap on.
+      var tapped = false;
+      await Promise.race([voiced(T(l), {who:l.who}), untilClick(t).then(function(){ tapped = true; }, function(){})]);
+      if(!tapped && G.hearing) await G.hearing;
+      if(autoRead() || tapped) stopSpeech(); live();
       await wait(300);
     }
     if(i === panels.length - 1 && Object.keys(townKeys()).length){
@@ -1645,7 +1981,7 @@ async function stepTruth(){
   }
   // CASE CLOSED comes down on the folder
   await wait(400);
-  sfx('reveal');
+  lightning('closed'); sfx('closed'); bedStop(true);
   if(!RM()) run(G.page, [{filter:'brightness(1.25)'}, {filter:'none'}], {duration:500});
   await wait(1400);
   G.dock.classList.remove('cc-hidden');
@@ -1663,7 +1999,7 @@ async function souvenir(){
   var o = el('div', 'cc-souv');
   o.innerHTML = '<div class="cc-souv-card"><div class="cc-souv-face cc-souv-front"><small lang="' + G.lang + '">' + esc(castShort(s.by)) + (isFile(s) ? ' · ' + esc(stampText('file')) : '') + '</small><p lang="' + G.lang + '" dir="ltr">“' + esc(T(s)) + '”</p>' +
     (GL(s) ? '<p class="cc-gl" dir="' + uiDir() + '">' + esc(GL(s)) + '</p>' : '') + '<div class="cc-stamp" lang="' + G.lang + '">' + esc(stampText('contradiction')) + '</div>' +
-    '<button type="button" class="cc-souv-say" aria-label="' + esc(U('hear')) + '">' + SPEAKER_SVG + '</button></div>' +
+    '<button type="button" class="cc-souv-say" aria-label="' + esc(U('hearLine')) + '">' + SPEAKER_SVG + '</button>' + (r.secret ? '<i class="cc-goldpin" aria-hidden="true">' + PIN_SVG.replace('#E44736', '#FFD166') + '</i>' : '') + '</div>' +
     '<div class="cc-souv-face cc-souv-back">' + evCardHtml(evid) + '<p lang="' + G.lang + '" dir="ltr">' + esc(backText) + '</p>' + (backGl ? '<p class="cc-gl" dir="' + uiDir() + '">' + esc(backGl) + '</p>' : '') +
     '<p class="cc-gl" dir="' + uiDir() + '">' + esc(U('kept')) + '</p></div></div><p class="cc-souv-hint" dir="' + uiDir() + '">' + esc(U('flip')) + '</p>' +
     (G.moreLater ? '<div class="cc-townnote cc-tbc"><span dir="' + uiDir() + '">' + esc(U('tbcCase')) + '</span></div>' : '') +
@@ -1738,6 +2074,7 @@ function start(o){
   g.house = houseMem();
   g.cases = loadCases(host);
   build(g.box);
+  preloadSfx();
   g.unguard = guardExit(g);
   g.mo = new MutationObserver(function(){ if(G === g && !g.box.isConnected) destroy(); });
   g.mo.observe(D.body, {childList:true});
@@ -1748,7 +2085,7 @@ async function main(g){
   try{
     for(var i = g.round.step; i < SPINE.length; i++){
       if(i === 2 || i === 3) i = 1;   // the hub runs steps 2-4 together
-      g.round.step = i; renderTabs(); save();
+      g.round.step = i; renderTabs(); pinsFor(i); save();
       if(i > 0) await folderFlip();
       await STEPS[i]();
       if(i === 1) i = 3;
@@ -1758,6 +2095,8 @@ async function main(g){
       sfx('correct');
     }
     var cases = loadCases(g.host); cases[g.S.id] = {date:new Date().toISOString().slice(0, 10)};
+    if(!g.round.pinsOut) cases[g.S.id].seal = true;   // the gold wax seal: never ran out of pins
+    if(g.round.secret) cases[g.S.id].secret = true;
     // CC10 the town remembers: lasting keys other games read (progress.cases.town; Cozy Chores / Your Call plates swap their cut-outs)
     var tk = townKeys(); if(Object.keys(tk).length) cases.town = Object.assign({}, cases.town || {}, tk);
     saveCases(cases); g.cases = cases;
@@ -1775,6 +2114,7 @@ function destroy(o){
   var g = G; if(!g) return;
   g.dead = true;
   stopSpeech();
+  bedStop();
   g.waits.forEach(function(f){ try{ f(); }catch(e){} });
   if(g.hint) g.hint.stop();
   if(g.unguard) g.unguard();
@@ -1798,7 +2138,9 @@ function openArchive(o){
   var ids = Object.keys(o.episodes || {}).filter(function(id){ return cases[id]; });
   inner.innerHTML = '<h2 dir="' + uiDir() + '">' + esc(U('archive')) + '</h2>' + (ids.length ? '<div class="cc-drawer">' + ids.map(function(id){
     var c = o.episodes[id].content[lang];
-    return '<button type="button" class="cc-folder" data-ep="' + esc(id) + '" lang="' + lang + '">' + esc(T.call(null, c.title) || id) + '<br><span class="cc-stamp">' + esc(c.stamps ? (c.stamps.closed[lang] || c.stamps.closed.en) : STAMPS[lang].closed) + '</span></button>';
+    var rec = cases[id] || {};
+    return '<button type="button" class="cc-folder' + (rec.seal ? ' cc-sealed' : '') + '" data-ep="' + esc(id) + '" lang="' + lang + '">' + esc(T.call(null, c.title) || id) + '<br><span class="cc-stamp">' + esc(c.stamps ? (c.stamps.closed[lang] || c.stamps.closed.en) : STAMPS[lang].closed) + '</span>' +
+      (rec.secret ? '<span class="cc-stamp cc-secretstamp">' + esc((UI.secretStamp || {})[ui] || 'SECRET') + '</span>' : '') + '</button>';
   }).join('') + '</div>' : '<p dir="' + uiDir() + '">' + esc(U('empty')) + '</p>') + '<div class="cc-actions"><button type="button" class="cc-btn cc-arch-x">' + esc(U('close')) + '</button></div>';
   ov.appendChild(inner); (o.root || D.body).appendChild(ov);
   G = prevG;

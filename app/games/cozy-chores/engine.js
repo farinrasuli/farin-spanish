@@ -36,7 +36,7 @@
 'use strict';
 if(window.CozyChores) return;
 var W = window, D = document;
-var VERSION = '0.5.2';
+var VERSION = '0.6.0';   // 2026-11-16 Games 2.0 phase 1: tap to hear, Jot it down, the folded note + gold corners, 25 / 60 s hints, precision sparkle, light + room beds
 var ABORT = {abort:true};
 var G = null;                       // the running game (one at a time, like chStage in the app)
 var SPRING = 'cubic-bezier(.34,1.56,.64,1)';
@@ -69,6 +69,8 @@ var UI = {
   leave:{en:'Leave', tr:'Çık', fa:'می‌رم', es:'Salir'},
   note:{en:'Order note', tr:'Sipariş notu', fa:'یادداشت سفارش', es:'Nota del pedido'},
   hear:{en:'Hear it again', tr:'Tekrar dinle', fa:'دوباره گوش کن', es:'Escuchar otra vez'},
+  hearLine:{en:'Hear this line', tr:'Bu cümleyi dinle', fa:'این جمله رو گوش کن', es:'Escuchar esta frase'},   // Games 2.0 SPEC 23
+  jotPick:{en:'Pick what you heard.', tr:'Duyduğunu seç.', fa:'چیزی رو که شنیدی انتخاب کن.', es:'Elige lo que has oído.'},
   gloss:{en:'Translation', tr:'Çeviri', fa:'ترجمه', es:'Traducción'},
   cue_tap:{en:'Tap it', tr:'Dokun', fa:'بزن روش', es:'Tócalo'},
   cue_drag:{en:'Drag it over', tr:'Sürükle', fa:'بکشش ببر', es:'Arrástralo'},
@@ -467,10 +469,119 @@ function speak(text, o){
   if(!G || !text) return Promise.resolve();
   var p;
   try{ p = G.host.speak ? G.host.speak(text, {lang:G.lang, who:o.who, rate:o.rate || (G.band === 'A1' ? 0.9 : 1), interrupt:!!o.interrupt}) : defaultSpeak(text, {lang:G.lang, rate:o.rate || (G.band === 'A1' ? 0.9 : 1), interrupt:!!o.interrupt}); }catch(e){ p = null; }
-  return Promise.resolve(p).catch(function(){});
+  var g = G; roomDuck(true);   // the room steps back while a voice speaks
+  return Promise.resolve(p).catch(function(){}).then(function(){ if(G === g) roomDuck(false); });
 }
 function stopSpeech(){
   try{ if(G && G.host.stopSpeech) G.host.stopSpeech(); else if(W.speechSynthesis) W.speechSynthesis.cancel(); }catch(e){}
+  roomDuck(false);
+}
+
+/* ============================== tap to hear (Farin 2026-11-16) ============================== */
+// "no need to read all the sentences it kills the mood make it optional for the user if they click on it they can hear the sound too":
+// the neighbours', Mrs Bell's and the learner's own lines are NOT read aloud on their own any more. Every balloon keeps its speaker (Hear it
+// again), which plays the line's natural clip through host.speak; while a line is up and its clip plays, the game waits for the clip.
+// host.readAloud() = THE app-wide "Read story lines aloud in games" setting (state.profile.readAloud, SPEC 5.2, owned by the World Kit /
+// Theatre; off by default; else window.farinReadAloud(); missing = false) brings the old auto-reading back. Kept as they were: the
+// picture-word labels you tap to hear (labelTap / labelOn), the counting words, dial numbers and letters spoken on the learner's own tap
+// (one word of feedback, not a line), the Listen buttons (recap, model) and the souvenir's speaker. Played by themselves because listening
+// is the task (SPEC 8d, 21): the lines that write the order note (line.note), an ask reply that carries an order detail, and the part a
+// neighbour repeats after a wrong "Jot it down" chip.
+function autoRead(){
+  try{ var h = G && G.host; if(h && h.readAloud) return !!h.readAloud(); if(h && h.autoRead) return !!h.autoRead(); }catch(e){}
+  try{ return !!(W.farinReadAloud && W.farinReadAloud()); }catch(e){ return false; }
+}
+// how long a line stays up when it is not read aloud (slower for A1 / A2 readers); a tap on the balloon still moves on
+function holdMs(text){ var w = words(text), slow = !!G && (G.band === 'A1' || G.band === 'A2'); return (slow ? 1300 : 1000) + w * (slow ? 360 : 290); }
+// Discoverable once (SPEC 5.2): the first speaker a learner meets in Open House rings twice (1.2 s; reduced motion: a still ring for 3 s),
+// saved at once as progress.tapHear.chores (host.hearHint / hearHintDone, else localStorage). No pop-up text.
+function hearFirst(){
+  if(!G || G.hearSeen) return false;
+  G.hearSeen = true;
+  var fresh = false; try{ fresh = G.host.hearHint ? !!G.host.hearHint() : localStorage.getItem('farinCozyHearHint') !== '1'; }catch(e){}
+  if(fresh){ try{ if(G.host.hearHintDone) G.host.hearHintDone(); else localStorage.setItem('farinCozyHearHint', '1'); }catch(e){} }
+  return fresh;
+}
+function hearIt(text, who){ var g = G, p = speak(text, {who:who, interrupt:true}); g.hearing = p; p.then(function(){ if(g.hearing === p) g.hearing = null; }); return p; }
+function brave(){ try{ return !!(G && G.host.brave && G.host.brave()); }catch(e){ return false; } }
+
+/* ============================== mood: light + the room (Farin 2026-11-16) ============================== */
+// "work on the mood of each game better". The light: over the CZ8 daylight wash, a tint for the hour (fresh morning, clear noon, warm
+// afternoon, amber golden hour), a warm lamp pool indoors, a soft warm vignette and, in the afternoon and golden light indoors, a sunbeam
+// with dust drifting in it (CSS only, no new art; never darker than the plate, Q9). The room: a quiet bed made here in WebAudio (no files):
+// the fridge and the clock in the flats, the oven hum in the bakery, a hush and the odd bird in the flower shop, distant traffic, birds and
+// gulls in the street; and now and then one of the game's own CC0 foley files far off in the room (a cup, a page, a cloth, the shop bell,
+// the scissors, a zip, a door), well under the voice. Mute silences it at once, reduced motion keeps the light still (no dust, no beam
+// drift), and the room stops when the project is delivered or the learner leaves.
+function placeOfPlate(p){
+  p = String(p || '');
+  if(/bakery/.test(p)) return 'bakery';
+  if(/flower/.test(p)) return 'shop';
+  if(/flat1|flat2|laundry|yard-in/.test(p)) return 'flat';
+  if(/street|party|building|yard|harbour/.test(p)) return 'street';
+  return null;   // a close-up (sprinkles): keeps the place it is in
+}
+// SPEC 8c: the bed follows the project (cake = the kitchen and its clock, move-in = the hallway, bouquet = the shop and its bell, laundry =
+// a room and the machine, the party = the street), and a station with rain adds rain
+var PROJECT_BED = {cake:'kitchen', movein:'room', bouquet:'shop', laundry:'laundry', party:'party'};
+function moodPlace(plate, sdef){
+  var pl = placeOfPlate(plate); if(!G || !G.frame) return;
+  if(pl) G.frame.dataset.place = pl;
+  var rain = !!(sdef && (sdef.atmos || []).some(function(a){ return a.t === 'rain'; }));
+  roomStart((PROJECT_BED[G.P.id] || pl || 'room') + (rain ? '|rain' : ''));
+}
+var AMB = {kitchen:['clink', 'paper-rustle', 'ding'], room:['cloth', 'paper-rustle', 'door'], shop:['bell', 'snip', 'paper-rustle'], laundry:['machine', 'cloth-flap', 'zip'], party:['clink', 'door', 'knock']};
+function roomNoise(c, kind, secs){
+  var n = Math.floor(c.sampleRate * secs), b = c.createBuffer(1, n, c.sampleRate), d = b.getChannelData(0), last = 0, b0 = 0, b1 = 0, b2 = 0;
+  for(var i = 0; i < n; i++){
+    var w = Math.random() * 2 - 1;
+    if(kind === 'brown'){ last = (last + .02 * w) / 1.02; d[i] = last * 3.2; }
+    else { b0 = .99765 * b0 + w * .099046; b1 = .963 * b1 + w * .2965164; b2 = .57 * b2 + w * 1.0526913; d[i] = (b0 + b1 + b2 + w * .1848) * .18; }
+  }
+  var x = Math.floor(c.sampleRate * .08); for(var j = 0; j < x; j++){ var k = j / x; d[j] = d[j] * k + d[n - x + j] * (1 - k); }
+  return b;
+}
+function roomStart(key){
+  if(!G || (G.room && G.room.place === key)) return;
+  var place = String(key).split('|')[0], wet = /\|rain$/.test(key);
+  roomStop();
+  if(G.tts === false && !G.roomForce) return;   // the dev harness with the voice off (QA) stays quiet
+  var c = ctx(); if(!c) return;
+  var g = G, R = {place:key, nodes:[], timers:[], duck:1};
+  var out = c.createGain(); out.gain.value = .0001; out.connect(c.destination); R.out = out;
+  var loop = function(kind, secs, type, f, q, gain){ var sN = c.createBufferSource(); sN.buffer = roomNoise(c, kind, secs); sN.loop = true; var fl = c.createBiquadFilter(); fl.type = type; fl.frequency.value = f; fl.Q.value = q || .7; var gn = c.createGain(); gn.gain.value = gain; sN.connect(fl); fl.connect(gn); gn.connect(out); sN.start(); R.nodes.push(sN, fl, gn); return gn; };
+  var hum = function(f, gain){ var o = c.createOscillator(), gn = c.createGain(); o.frequency.value = f; gn.gain.value = gain; o.connect(gn); gn.connect(out); o.start(); R.nodes.push(o, gn); };
+  var every = function(min, max, fn){ var t = {id:0}; var go = function(){ t.id = setTimeout(function(){ if(G !== g || g.room !== R) return; if(R.live()) try{ fn(c.currentTime + .02); }catch(e){} go(); }, (min + Math.random() * (max - min)) * 1000); }; go(); R.timers.push(t); };
+  var tick = function(t, f){ var sN = c.createBufferSource(), n = Math.floor(c.sampleRate * .025), b = c.createBuffer(1, n, c.sampleRate), d = b.getChannelData(0); for(var i = 0; i < n; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / n, 6); sN.buffer = b; var fl = c.createBiquadFilter(); fl.type = 'bandpass'; fl.frequency.value = f; fl.Q.value = 4; var gn = c.createGain(); gn.gain.value = .035; sN.connect(fl); fl.connect(gn); gn.connect(out); sN.start(t); };
+  var bird = function(t){ for(var i = 0, n = 2 + Math.floor(Math.random() * 3); i < n; i++){ var o = c.createOscillator(), gn = c.createGain(), at = t + i * (.09 + Math.random() * .06), f = 3000 + Math.random() * 1400; o.frequency.setValueAtTime(f, at); o.frequency.exponentialRampToValueAtTime(f * (Math.random() < .5 ? 1.3 : .75), at + .07); gn.gain.setValueAtTime(.0001, at); gn.gain.exponentialRampToValueAtTime(.006, at + .01); gn.gain.exponentialRampToValueAtTime(.0001, at + .08); o.connect(gn); gn.connect(out); o.start(at); o.stop(at + .1); } };
+  var gull = function(t){ for(var i = 0; i < 2; i++){ var o = c.createOscillator(), gn = c.createGain(), at = t + i * .26; o.frequency.setValueAtTime(1400, at); o.frequency.exponentialRampToValueAtTime(950, at + .2); gn.gain.setValueAtTime(.0001, at); gn.gain.exponentialRampToValueAtTime(.006, at + .03); gn.gain.exponentialRampToValueAtTime(.0001, at + .22); o.connect(gn); gn.connect(out); o.start(at); o.stop(at + .25); } };
+  var tk = 0;
+  if(place === 'kitchen'){ loop('brown', 4, 'lowpass', 300, .5, .2); hum(60, .004); hum(120, .0015); every(.98, 1.02, function(t){ tick(t, tk++ % 2 ? 2100 : 2600); }); }
+  else if(place === 'room' || place === 'laundry'){ loop('brown', 4, 'lowpass', 240, .5, .16); hum(50, .0025); every(1.9, 2.1, function(t){ tick(t, tk++ % 2 ? 2300 : 2800); }); every(9, 20, bird); }
+  else if(place === 'shop'){ loop('pink', 3, 'lowpass', 700, .5, .05); every(10, 22, bird); }
+  else { var mur = loop('brown', 5, 'bandpass', 420, .8, .22); every(2, 5, function(t){ mur.gain.setTargetAtTime(.14 + Math.random() * .16, t, .8); }); every(4, 10, bird); every(14, 30, gull); }
+  if(wet){ loop('pink', 3, 'highpass', 1500, .5, .07); }
+  // now and then one of the game's own CC0 foley files, far off in the room
+  every(16, 34, function(){ var list = AMB[place] || []; if(list.length) sfxAmb(list[Math.floor(Math.random() * list.length)], R); });
+  R.live = function(){ return !muted() && !D.hidden; };
+  R.level = function(){ return R.live() ? .45 * R.duck : .0001; };
+  out.gain.setTargetAtTime(R.level(), c.currentTime + .05, .9);
+  R.watch = setInterval(function(){ if(G !== g || g.room !== R) return; try{ out.gain.setTargetAtTime(R.level(), c.currentTime, .25); }catch(e){} }, 400);
+  g.room = R;
+}
+function roomDuck(on){ var R = G && G.room; if(!R || !R.out) return; R.duck = on ? .4 : 1; try{ R.out.gain.setTargetAtTime(R.level(), R.out.context.currentTime, on ? .08 : .6); }catch(e){} }
+function roomStop(fade){
+  var R = G && G.room; if(!R) return;
+  G.room = null; clearInterval(R.watch); R.timers.forEach(function(t){ clearTimeout(t.id); });
+  try{ R.out.gain.setTargetAtTime(.0001, R.out.context.currentTime, fade ? .7 : .08); }catch(e){}
+  setTimeout(function(){ R.nodes.forEach(function(n){ try{ if(n.stop) n.stop(); }catch(e){} try{ n.disconnect(); }catch(e){} }); try{ R.out.disconnect(); }catch(e){} }, fade ? 2800 : 400);
+}
+// a foley file from shared.sfx, quiet and a little dull (far off in the room), only once it is decoded
+function sfxAmb(name, R){
+  var map = (G && G.data.shared && G.data.shared.sfx) || {}, list = map[name]; if(!list || !list.length || !R || !R.out) return;
+  var buf = sfxBufs[(G.appRoot || '') + list[Math.floor(Math.random() * list.length)]], c = R.out.context;
+  if(!buf || typeof buf !== 'object') return;
+  try{ var sN = c.createBufferSource(); sN.buffer = buf; sN.playbackRate.value = .92 + Math.random() * .1; var lp = c.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 2400; var gn = c.createGain(); gn.gain.value = .55; sN.connect(lp); lp.connect(gn); gn.connect(R.out); sN.start(); sfxLog(name, 'amb'); }catch(e){}
 }
 
 /* ============================== time: waits, animations, skip (ported chRun / chSkip) ============================== */
@@ -828,6 +939,7 @@ var VERB = {
     return run(n, [{opacity:.55}, {opacity:1}], {duration:200});
   },
   cam:function(scale, x, y, ms){
+    scale = Math.min(+scale || 1, 1.6);   // SPEC F6: a close-up never goes past 1.6x
     var cam = G.shot.cam;
     cam.style.transformOrigin = x + '% ' + y + '%';
     return run(cam, [{transform:getComputedStyle(cam).transform === 'none' ? 'scale(1)' : getComputedStyle(cam).transform}, {transform:'scale(' + scale + ')'}], {duration:ms || 600, easing:EASE, fill:'forwards'})
@@ -961,14 +1073,14 @@ function balloon(o){
       (o.gloss ? '<p class="oh-gloss' + (glossShown ? '' : ' oh-hide') + '" lang="' + G.ui + '" dir="' + uiDir() + '">' + esc(o.gloss) + '</p>' : '') +
       '<span class="oh-tools">' +
         (o.gloss && G.band !== 'A1' ? '<button type="button" class="oh-tool oh-gl-btn" aria-pressed="' + (G.glossOn ? 'true' : 'false') + '" aria-label="' + esc(U('gloss')) + '"><svg viewBox="0 0 24 24"><path d="M4 6h9M8.5 4v2c0 4-2 7-4.5 8.5M6 10c1.2 2 3 3.4 5 4" /><path d="M13 20l4-9 4 9M14.4 17h5.2"/></svg></button>' : '') +
-        '<button type="button" class="oh-tool oh-re-btn" aria-label="' + esc(U('hear')) + '"><svg viewBox="0 0 24 24"><path d="M4 9.5h3.2L12 5.5v13l-4.8-4H4z" fill="currentColor" stroke="none"/><path d="M15.5 9a4 4 0 010 6"/></svg></button>' +
+        '<button type="button" class="oh-tool oh-re-btn' + (hearFirst() ? ' oh-hear-first' : '') + '" aria-label="' + esc(U('hearLine')) + '"><svg viewBox="0 0 24 24"><path d="M4 9.5h3.2L12 5.5v13l-4.8-4H4z" fill="currentColor" stroke="none"/><path d="M15.5 9a4 4 0 010 6"/></svg></button>' +
       '</span></div>' + chip + '</div>';
   }
   say.innerHTML = html;
   var node = say.firstChild;
   node.dataset.text = o.text;
   var re = node.querySelector('.oh-re-btn');
-  if(re) re.addEventListener('click', function(e){ e.stopPropagation(); speak(o.text, {who:o.who, interrupt:true}); });
+  if(re) re.addEventListener('click', function(e){ e.stopPropagation(); hearIt(o.text, o.who); });
   var gb = node.querySelector('.oh-gl-btn');
   if(gb) gb.addEventListener('click', function(e){
     e.stopPropagation(); G.glossOn = !G.glossOn; gb.setAttribute('aria-pressed', G.glossOn ? 'true' : 'false');
@@ -1006,11 +1118,12 @@ async function lineSay(line, vars, opts){
   if(line.face && kind === 'line') VERB.face(who, line.face);
   if(kind === 'line') talkPulse(who);
   var skipped = new Promise(function(res){ if(!opts.hint) G.lineSkip = res; });
-  var sp = speak(text, {who:who});
-  await Promise.race([Promise.all([sp, wait(readMs(text), true)]), skipped]);
+  var auto = autoRead() || !!line.note || !!opts.auto;
+  var sp = auto ? speak(text, {who:who}) : null;
+  await Promise.race([Promise.all([sp, wait(auto ? readMs(text) : holdMs(text), true)]).then(function(){ return G && G.hearing; }), skipped]);
   live();
   if(!opts.hint) G.lineSkip = null;
-  if(line.note) await noteAdd(line.note);
+  if(line.note) await jotOrNote(line.note, line);
   await wait(160);
 }
 async function sayRole(role){
@@ -1053,8 +1166,46 @@ async function noteAdd(key, o){
   renderNote(key);
   sfx('pencil');
   if(!RM()) fx(G.noteBtn, [{transform:'rotate(0)'}, {transform:'rotate(-9deg) scale(1.1)'}, {transform:'rotate(6deg)'}, {transform:'none'}], {duration:480, easing:SPRING});
-  // a quick peek: the note opens for the new entry, then tucks itself away again
-  if(!o.quiet){ openNote(key); await wait(1500); if(!o.keepOpen) closeNote(); }
+  // a quick peek: the note opens for the new entry, then tucks itself away again; once the hands-on stations begin it stays folded (SPEC 8b)
+  if(!o.quiet && !G.handsOn){ openNote(key); await wait(1500); if(!o.keepOpen) closeNote(); }
+}
+// Jot it down (SPEC 8b): from A2 the order note is no longer written for the learner. Three chips: what the neighbour said, plus two others
+// from the same list (the project's colours for a colour, else the order's other details). Right = written in pencil; wrong = the chip
+// wobbles and the neighbour says the line again (by itself: listening is the task). A1, and a list with fewer than 3 items: written as today.
+function jotDecoys(key, right){
+  var low = function(t){ return String(t || '').toLowerCase(); }, pool = [];
+  if(/colou?r/.test(key)){ var set = G.V.colours || G.P.colours || {}; Object.keys(set).forEach(function(k){ if(k.charAt(0) !== '_') pool.push(T(set[k])); }); }
+  if(pool.filter(function(t){ return t && low(t) !== low(right); }).length < 2){ pool = []; Object.keys(G.V.note || G.P.notes || {}).forEach(function(k){ if(k !== key && k.charAt(0) !== '_') pool.push(T(noteEntry(k))); }); }
+  return shuffle(pool.filter(function(t, i, a){ return t && low(t) !== low(right) && a.indexOf(t) === i; })).slice(0, 2);
+}
+async function jotOrNote(key, line){
+  var e = noteEntry(key);
+  if(!e || G.band === 'A1' || G.round.note.some(function(x){ return x.k === key; })) return noteAdd(key);
+  var right = T(e), dec = jotDecoys(key, right);
+  if(dec.length < 2) return noteAdd(key);
+  var chips = shuffle([right].concat(dec));
+  var prevStatus = G.status;
+  G.root.classList.add('oh-compact', 'oh-jotting');
+  controls('<div class="oh-jot"><p class="oh-jot-h" dir="' + uiDir() + '" lang="' + G.ui + '"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20l1-4L16 5l3 3L8 19z"/><path d="M14 7l3 3"/></svg>' + esc(U('jotPick')) + '</p>' +
+    '<div class="oh-jot-chips">' + chips.map(function(t, i){ return '<button type="button" class="oh-chip oh-jotchip" data-i="' + i + '" lang="' + G.lang + '" dir="ltr">' + esc(t) + '</button>'; }).join('') + '</div></div>');
+  if(!RM()) fx(G.noteBtn, [{transform:'none'}, {transform:'rotate(-8deg) scale(1.1)'}, {transform:'none'}], {duration:420, easing:SPRING});
+  var ri = chips.indexOf(right);
+  G.status = {kind:'jot', station:G.sid, chips:chips.map(function(t, i){ return '.oh-jotchip[data-i="' + i + '"]'; }), right:'.oh-jotchip[data-i="' + ri + '"]'};
+  await new Promise(function(res, rej){
+    var g = G, stop = function(){ rej(ABORT); }; g.waits.add(stop);
+    G.ctl.querySelectorAll('.oh-jotchip').forEach(function(b){
+      b.addEventListener('click', function(){
+        if(b.disabled) return;
+        if(+b.dataset.i === ri){ g.waits.delete(stop); b.classList.add('oh-sel'); sfx('pencil'); res(); return; }
+        b.disabled = true; b.classList.add('oh-off'); sfx('tick');
+        if(!RM()) fx(b, [{transform:'translateX(0)'}, {transform:'translateX(-5px) rotate(-2deg)'}, {transform:'translateX(5px) rotate(2deg)'}, {transform:'translateX(0)'}], {duration:320});
+        if(line){ var t = fill(T(line), line); balloon({who:line.who, text:t, gloss:fillGloss(GL(line), line)}); speak(t, {who:line.who, interrupt:true}); }
+      });
+    });
+  });
+  controls(''); G.root.classList.remove('oh-compact', 'oh-jotting');
+  if(G.status && G.status.kind === 'jot') G.status = prevStatus;
+  await noteAdd(key);
 }
 function noteStrike(key){
   var x = G.round.note.filter(function(e){ return e.k === key; })[0];
@@ -1070,6 +1221,8 @@ function renderNote(fresh){
   }).join('');
 }
 function openNote(pulse){
+  // the gold corner (SPEC 8b): a hands-on station whose note was opened, by a tap or a hint, keeps a plain polaroid
+  if(G.handsOn && G.sid && G.round.hands && G.round.hands[G.sid]){ (G.round.peek || (G.round.peek = {}))[G.sid] = 1; }
   renderNote(pulse);
   G.noteCard.classList.add('oh-open');
   G.noteCard.setAttribute('aria-hidden', 'false');
@@ -1087,7 +1240,7 @@ function closeNote(){ G.noteCard.classList.remove('oh-open'); G.noteCard.setAttr
 /* ============================== station strip + polaroids (GDD 3.4) ============================== */
 function renderStrip(){
   G.strip.innerHTML = G.list.map(function(sid, i){
-    return '<span class="oh-pol' + (i === G.round.stationIdx ? ' oh-cur' : '') + (G.round.photos.indexOf(sid) >= 0 ? ' oh-dev' : '') + '" data-s="' + sid + '"><span class="oh-pol-img">' +
+    return '<span class="oh-pol' + (i === G.round.stationIdx ? ' oh-cur' : '') + (G.round.photos.indexOf(sid) >= 0 ? ' oh-dev' : '') + ((G.round.gold || {})[sid] ? ' oh-gold' : '') + '" data-s="' + sid + '"><span class="oh-pol-img">' +
       (G.round.photos.indexOf(sid) >= 0 ? thumbHtml(sid) : '') + '</span></span>';
   }).join('');
 }
@@ -1098,7 +1251,7 @@ function thumbHtml(sid){
   var sdef = st.shots[key]; if(!sdef) return '';
   var shot = mountShot(sdef, key, {snap:snap || {l:{}}});   // a polaroid always shows the cake as it was made
   shot.el.classList.add('oh-thumbshot');
-  var crop = (st.photo && st.photo.crop) || [0, 0, 100, 100];
+  var crop = [0, 0, 100, 100];   // the whole plate (Games 2.0 SPEC 5.1; the authored photo.crop is no longer applied)
   // crop = [x, y, w, h] in % of the stage: the full 4:5 shot is laid out larger than the window and offset so the crop fills it
   shot.el.style.left = (-crop[0] / crop[2] * 100) + '%';
   shot.el.style.top = (-crop[1] / crop[3] * 100) + '%';
@@ -1115,6 +1268,7 @@ async function developPolaroid(sid){
   var p = G.strip.querySelector('[data-s="' + sid + '"]'); if(!p) return;
   p.querySelector('.oh-pol-img').innerHTML = thumbHtml(sid);
   p.classList.add('oh-dev');
+  if((G.round.gold || {})[sid]) p.classList.add('oh-gold');
   if(RM()) return;
   fx(p, [{transform:'scale(1)'}, {transform:'scale(1.35) rotate(-4deg)', offset:.25}, {transform:'translateX(-1.5px) scale(1.12)', offset:.45}, {transform:'translateX(1.5px)', offset:.6}, {transform:'translateX(-1.5px)', offset:.75}, {transform:'none'}], {duration:1680, easing:'ease-out'});
   var veil = el('span', 'oh-pol-veil'); p.querySelector('.oh-pol-img').appendChild(veil);
@@ -1132,7 +1286,7 @@ function hints(o){
   // o.h15(), o.h45(on) visuals; the spoken hint is the station's hint line (or o.line)
   // both clocks count from the last correct progress; the hint line is spoken once per gesture, the visuals come back
   var g = G, fired15 = false, guide = false, wrongs = [], t15, t45;
-  var ms15 = (g.hintMs && g.hintMs[0]) || 15000, ms45 = (g.hintMs && g.hintMs[1]) || 45000;
+  var ms15 = (g.hintMs && g.hintMs[0]) || (brave() ? 40000 : 25000), ms45 = (g.hintMs && g.hintMs[1]) || (brave() ? 3600000 : 60000);
   function arm(){
     clearTimeout(t15); clearTimeout(t45);
     if(g.dead || h.off) return;
@@ -1525,7 +1679,7 @@ GESTURE['pour-until'] = function(g){
         var n = Math.round(v);
         var rl = lineFor(g.readout);
         if(rl) speak(fill(T(rl), rl, {n:n}), {interrupt:true}); else speak(n + ' ' + unit, {interrupt:true});
-        if(Math.abs(v - g.target) <= g.tol){ hn.stop(); v = Math.round(v); paint(); sfx('correct'); fx(read, [{transform:'scale(1)'}, {transform:'scale(1.25)'}, {transform:'scale(1)'}], {duration:420, easing:SPRING}); await wait(700); return finish(); }
+        if(Math.abs(v - g.target) <= g.tol){ hn.stop(); if(Math.abs(v - g.target) <= g.tol / 2){ sfx('ding'); VERB.burst(50, 42, 12, '#FFD166', .09); } v = Math.round(v); paint(); sfx('correct'); fx(read, [{transform:'scale(1)'}, {transform:'scale(1.25)'}, {transform:'scale(1)'}], {duration:420, easing:SPRING}); await wait(700); return finish(); }
         if(v > g.target + g.tol){
           hn.wrong();
           var ol = lineFor(g.over); if(ol) await lineSay(ol);
@@ -1854,7 +2008,7 @@ GESTURE.place = function(g){
         if(gd.mem) Object.keys(gd.mem).forEach(function(k){ memSet(k, gd.mem[k]); });
         var lines = (gd.say || []).map(function(r){ return lineFor(r); }).filter(Boolean);
         for(var i = 0; i < lines.length; i++) await lineSay(lines[i]);
-        if(gd.note){ G.pulseNote = gd.note; openNote(gd.note); await wait(1800); closeNote(); G.pulseNote = null; }
+        if(gd.note && !brave()){ G.pulseNote = gd.note; openNote(gd.note); await wait(1800); closeNote(); G.pulseNote = null; }   // Brave: hints never open the note
         if(piece){ await run(piece, [{transform:piece.style.transform || 'none', opacity:1}, {transform:'translate(0,0) scale(.6)', opacity:0}], {duration:320, easing:SPRING}); piece.remove(); }
         if(hand){ await run(hand, [{transform:'none', opacity:1}, {transform:'translateX(40%)', opacity:0}], {duration:260}); hand.classList.add('oh-gone'); hand.style.left = '104%'; hand.dataset.x = 104; }
         src.blocked = true; if(src.node) src.node.classList.add('oh-blocked');
@@ -1985,7 +2139,7 @@ async function evAsk(){
           var ab = G.ctl.querySelector('.oh-askbtn'); ab.disabled = false;
           if(!RM()) fx(ab, [{transform:'scale(.9)'}, {transform:'scale(1.06)'}, {transform:'none'}], {duration:300, easing:SPRING});
           hn.progress(); sfx('paper');
-          speak(T(picked.q), {who:'you', interrupt:true});
+          if(autoRead()) speak(T(picked.q), {who:'you', interrupt:true});   // the question shows (with its speaker) once it is asked
         });
       });
       G.ctl.querySelector('.oh-askbtn').addEventListener('click', function(){ if(picked){ hn.stop(); G.status = {kind:'scripted', station:G.sid}; G.root.classList.remove('oh-asking'); res(picked); } });
@@ -2001,8 +2155,8 @@ async function evAsk(){
     Object.keys(sets).forEach(function(k){ memSet(k, sets[k]); });
     save(true);
     await lineSay(Object.assign({}, chosen.q, {who:'you'}));
-    await lineSay(chosen.a);
-    if(chosen.note) await noteAdd(chosen.note);
+    await lineSay(chosen.a, null, {auto:!!chosen.note});   // a reply that carries an order detail plays by itself (SPEC 8d)
+    if(chosen.note) await jotOrNote(chosen.note, chosen.a);
   }
   controls(''); cue(null);
 }
@@ -2074,7 +2228,7 @@ async function evProduce(){
         var bl = G.ctl.querySelector('.oh-blank'); bl.textContent = w; bl.classList.add('oh-filled');
         if(!RM()) fx(bl, [{transform:'scale(.7)'}, {transform:'scale(1.08)'}, {transform:'none'}], {duration:280, easing:SPRING});
         G.ctl.querySelector('.oh-say-btn').disabled = false; hn.progress();
-        speak(pre[0] + w + (pre[1] || ''), {who:'you', interrupt:true});
+        if(autoRead()) speak(pre[0] + w + (pre[1] || ''), {who:'you', interrupt:true});
       });
     });
     G.ctl.querySelector('.oh-say-btn').addEventListener('click', function(){ if(w){ hn.stop(); G.status = {kind:'scripted', station:G.sid}; G.root.classList.remove('oh-compact'); res(w); } });
@@ -2335,7 +2489,7 @@ async function curioTap(c, b){
       // a curio never interrupts a gesture or the script: its line shows and speaks, and play goes on
       var t = fill(T(line), line);
       balloon({who:line.who, text:t, gloss:fillGloss(GL(line), line)});
-      speak(t, {who:line.who, interrupt:true});
+      if(autoRead()) speak(t, {who:line.who, interrupt:true});
       G.lastLine = t;
     }
     if(c.once && b) b.remove();
@@ -2398,7 +2552,7 @@ async function captainBeat(c){
     if(prop) VERB.shake(c.prop);
     if(c.sit) VERB.pose(lid, c.sit);
     sfx('purr');
-    if(settled && label){ var lt = T(label); balloon({who:label.who, text:lt, gloss:GL(label)}); G.lastLine = lt; await Promise.race([speak(lt, {interrupt:true}), wait(readMs(lt), true)]); }
+    if(settled && label){ var lt = T(label); balloon({who:label.who, text:lt, gloss:GL(label)}); G.lastLine = lt; await (autoRead() ? Promise.race([speak(lt, {interrupt:true}), wait(readMs(lt), true)]) : wait(holdMs(lt), true)); }
     labelOn(cat, label);
   }catch(err){ if(err !== ABORT) throw err; }
   finally{ if(G){ G.busyLine = false; G.hold = false; G.status = prevStatus; } }
@@ -2482,7 +2636,7 @@ async function modelCard(m){
     G.status = {kind:'model', station:G.sid, next:'.oh-mnext', play:'.oh-mplay'};
     G.ctl.querySelector('.oh-mplay').addEventListener('click', function(){ speak(t, {who:'you', interrupt:true}); });
     G.ctl.querySelector('.oh-mnext').addEventListener('click', function(){ stopSpeech(); G.status = {kind:'scripted', station:G.sid}; res(); });
-    speak(t, {who:'you'});
+    if(autoRead()) speak(t, {who:'you'});   // else the model waits for its Listen button
   });
   G.root.classList.remove('oh-compact');
   controls('');
@@ -2512,7 +2666,7 @@ async function evChips(o){
         var bl = G.ctl.querySelectorAll('.oh-buildline .oh-blank'), bi = gk === 'a' ? 0 : 1;
         bl[bi].textContent = pick[gk] + (gk === 'b' ? '.' : ''); bl[bi].classList.add('oh-filled');
         hn.progress(); sfx('paper');
-        speak(pick[gk], {who:'you', interrupt:true});
+        if(autoRead()) speak(pick[gk], {who:'you', interrupt:true});
         G.ctl.querySelector('.oh-say-btn').disabled = !(pick.a && pick.b);
       });
     });
@@ -2576,7 +2730,9 @@ async function windowShot(){
   var prev = G.shot;
   var shot = mountShot(sdef, 'building'); shot.el.classList.add('oh-live');
   G.shot = shot; G.uiLayer.innerHTML = '';
-  G.frame.dataset.light = 'morning';
+  var hk = Object.keys(G.round.hands || {}), allGold = hk.length > 0 && hk.every(function(k){ return (G.round.gold || {})[k]; });
+  G.frame.dataset.light = allGold ? 'golden' : 'morning';   // SPEC 8b: every polaroid gold = the window lights up gold
+  G.frame.dataset.place = 'street'; roomStop(true);
   G.status = {kind:'end', station:'end'};
   if(G.moreLater) G.say.innerHTML = '<span class="oh-tbc" dir="' + uiDir() + '" lang="' + G.ui + '">' + esc(U('tbcWindows')) + '</span>';
   await camEnter(shot, prev);
@@ -2656,10 +2812,11 @@ async function runBeats(beats){
         continue;
       }
       camStill();
+      G.handsOn = true; (G.round.hands || (G.round.hands = {}))[G.sid] = 1;
       G.gestureNo = (G.gestureNo || 0) + 1;
       G.root.classList.add('oh-gesturing');
       G.house.taught = G.house.taught || {};
-      if(!G.house.taught[gd.type]){ G.house.taught[gd.type] = true; if(['tap', 'drag-to', 'stir-circles', 'turn-dial', 'pipe-letters'].indexOf(gd.type) >= 0) G.demo = true; }   // pour and place guides change the gesture itself, so they get no ghost run
+      if(!G.house.taught[gd.type]){ G.house.taught[gd.type] = true; if(['tap', 'drag-to', 'stir-circles', 'turn-dial', 'pipe-letters'].indexOf(gd.type) >= 0 && !brave()) G.demo = true; }   // pour and place guides change the gesture itself, so they get no ghost run
       await GESTURE[gd.type](gd);
       sti.gdone = gi; save(true);
       G.root.classList.remove('oh-gesturing');
@@ -2676,6 +2833,7 @@ async function enterShot(key){
   var shot = mountShot(sdef, key);
   shot.el.classList.add('oh-live');
   G.shot = shot;
+  moodPlace(sdef.plate, sdef);
   G.uiLayer.innerHTML = '';
   G.recipe = null;
   await camEnter(shot, prev);
@@ -2729,9 +2887,11 @@ async function runStation(idx){
   live();
   G.round.snaps[sid] = G.round.snaps[sid] || snapShot(G.shot);
   if(st.type !== 'recap' && !(G.round.albumed || {})[sid]) G.round.snaps[sid] = snapShot(G.shot);
+  // the gold corner: a hands-on station played with the note folded the whole time
+  if((G.round.hands || {})[sid] && !(G.round.peek || {})[sid]) (G.round.gold || (G.round.gold = {}))[sid] = 1;
   await flash();
   developPolaroid(sid);
-  sfx('correct');
+  sfx((G.round.gold || {})[sid] ? 'reveal' : 'correct');
   G.round.stationIdx = idx + 1;
   G.round.items[sid] = G.round.items[sid] || {};
   save(true);
@@ -2871,7 +3031,8 @@ function build(box){
   var frame = el('div', 'oh-frame');
   frame.setAttribute('dir', 'ltr');
   var uiL = el('div', 'oh-ui'), flashEl = el('div', 'oh-flash'), over = el('div', 'oh-over');
-  frame.appendChild(uiL); frame.appendChild(over); frame.appendChild(flashEl);
+  var mood = el('div', 'oh-mood', '<i class="oh-mt"></i><i class="oh-ml"></i><i class="oh-mbeam"></i><i class="oh-mdust"></i><i class="oh-mv"></i>'); mood.setAttribute('aria-hidden', 'true');
+  frame.appendChild(mood); frame.appendChild(uiL); frame.appendChild(over); frame.appendChild(flashEl);
   cell.appendChild(frame);
   var dock = el('div', 'oh-dock', '<div class="oh-say" aria-live="polite"></div><div class="oh-cue"></div><div class="oh-ctl"></div>');
   var noteBtn = el('button', 'oh-notebtn', '<i class="oh-tape"></i><span class="oh-nb-lines"></span>');
@@ -2985,6 +3146,7 @@ function destroy(o){
   var g = G; if(!g) return;
   g.dead = true;
   stopSpeech();
+  roomStop();
   g.waits.forEach(function(f){ try{ f(); }catch(e){} });
   if(g.hint) g.hint.stop();
   if(g.unguard) g.unguard();

@@ -17,26 +17,28 @@
 /* The sill scene (2026-11-07): the radio stands on the sill, smaller, with a contact shadow; calm ambient motion; an opening push-in. */
 .mr-root.mr-has-scene{background:#f6eee4;}
 .mr-root.mr-has-scene::before{display:none;}
-.mr-scene{position:relative; flex:0 0 auto; width:100%; max-width:440px; aspect-ratio:864 / 605; touch-action:none;}
+/* the whole render at its own 4:5 (2026-11-16); on a short screen the scene gets narrower so the controls stay in view (the page scrolls past that) */
+.mr-scene{position:relative; flex:0 0 auto; width:100%; max-width:440px; aspect-ratio:864 / 1080; touch-action:none;}
+.mr-has-scene .mr-scene{width:min(100%, 440px, max(250px, calc((100vh - 340px) * .8))); width:min(100%, 440px, max(250px, calc((100dvh - 340px) * .8)));}
 .mr-view{position:absolute; inset:0; overflow:hidden; border-radius:22px; box-shadow:0 0 0 2px var(--mr-ink); background:#cfe7f3;}
-.mr-sill{position:absolute; left:0; top:-50%; width:100%; height:178.6%; display:block; pointer-events:none; user-select:none;}
-.mr-scene .mr-set{position:absolute; left:43.5%; bottom:12.4%; width:34%; max-width:none; transform:translateX(-50%); z-index:2;}
+.mr-sill{position:absolute; left:0; top:0; width:100%; height:100%; display:block; pointer-events:none; user-select:none;}
+.mr-scene .mr-set{position:absolute; left:43.5%; bottom:22.95%; width:34%; max-width:none; transform:translateX(-50%); z-index:2;}
 .mr-scene .mr-set.mr-art .mr-body{transform-origin:50% 100%;}
-.mr-shadow{position:absolute; left:43.5%; bottom:11.2%; width:31%; height:3.6%; margin-left:-15.5%; border-radius:50%; background:rgba(20,51,46,.24); z-index:1; pointer-events:none;}
+.mr-shadow{position:absolute; left:43.5%; bottom:22.28%; width:31%; height:2.02%; margin-left:-15.5%; border-radius:50%; background:rgba(20,51,46,.24); z-index:1; pointer-events:none;}
 /* ambient layers, inside the window: clouds and gulls in the sky, light on the water, steam from the mug */
-.mr-cloud{position:absolute; top:4%; left:-26%; width:18%; height:5%; border-radius:40px; background:#fff; opacity:.95; animation:mr-cloud 70s linear infinite;}
+.mr-cloud{position:absolute; top:30.24%; left:-26%; width:18%; height:2.8%; border-radius:40px; background:#fff; opacity:.95; animation:mr-cloud 70s linear infinite;}
 .mr-cloud::before{content:''; position:absolute; left:20%; bottom:30%; width:46%; height:150%; border-radius:50%; background:#fff;}
-.mr-c2{top:9%; width:13%; height:4%; animation-duration:95s; animation-delay:-48s;}
+.mr-c2{top:33.04%; width:13%; height:2.24%; animation-duration:95s; animation-delay:-48s;}
 @keyframes mr-cloud{from{transform:translateX(0);} to{transform:translateX(640%);}}
-.mr-gull{position:absolute; top:20%; left:-8%; width:4.2%; height:2%; animation:mr-gull 34s linear infinite;}
+.mr-gull{position:absolute; top:39.2%; left:-8%; width:4.2%; height:1.12%; animation:mr-gull 34s linear infinite;}
 .mr-gull::before, .mr-gull::after{content:''; position:absolute; top:0; width:50%; height:100%; border-top:2px solid var(--mr-ink); border-radius:50% 50% 0 0;}
 .mr-gull::before{left:0;} .mr-gull::after{right:0;}
-.mr-g2{top:27%; width:3.2%; animation-duration:46s; animation-delay:-20s;}
+.mr-g2{top:43.12%; width:3.2%; animation-duration:46s; animation-delay:-20s;}
 @keyframes mr-gull{0%{transform:translate(0,0);} 25%{transform:translate(560%,-60%);} 50%{transform:translate(1120%,30%);} 75%{transform:translate(1680%,-40%);} 100%{transform:translate(2300%,0);}}
-.mr-shine{position:absolute; height:.7%; border-radius:4px; background:#fff; opacity:0; animation:mr-shine 5.5s ease-in-out infinite;}
-.mr-s1{left:30%; top:57%; width:7%;} .mr-s2{left:52%; top:60.5%; width:5%; animation-delay:-2s;} .mr-s3{left:41%; top:63.5%; width:6%; animation-delay:-3.6s;}
+.mr-shine{position:absolute; height:.39%; border-radius:4px; background:#fff; opacity:0; animation:mr-shine 5.5s ease-in-out infinite;}
+.mr-s1{left:30%; top:59.92%; width:7%;} .mr-s2{left:52%; top:61.88%; width:5%; animation-delay:-2s;} .mr-s3{left:41%; top:63.56%; width:6%; animation-delay:-3.6s;}
 @keyframes mr-shine{0%,100%{opacity:0; transform:translateX(-12%);} 50%{opacity:.75; transform:translateX(12%);}}
-.mr-steam{position:absolute; left:16.5%; top:66%; width:1.4%; height:8%; border-left:2px solid rgba(255,255,255,.95); border-radius:50%; opacity:0; animation:mr-steam 3.4s ease-out infinite;}
+.mr-steam{position:absolute; left:16.5%; top:64.96%; width:1.4%; height:4.48%; border-left:2px solid rgba(255,255,255,.95); border-radius:50%; opacity:0; animation:mr-steam 3.4s ease-out infinite;}
 .mr-w2{left:19%; animation-delay:-1.7s;}
 @keyframes mr-steam{0%{opacity:0; transform:translateY(20%) scaleY(.6);} 30%{opacity:.85;} 100%{opacity:0; transform:translateY(-60%) scaleY(1.1) skewX(-8deg);}}
 /* reduced motion: the ambient layers are not drawn at all (a still cloud half out of the window looked like a mistake) */
@@ -54,7 +56,7 @@
 .mr-roundset .mr-knob{background:none;}
 /* one picture: daylight from the left - the sill a little warmer on the left, the radio's contact shadow falls to the right */
 .mr-view::after{content:''; position:absolute; inset:0; pointer-events:none; background:linear-gradient(90deg, rgba(255,214,150,.16), rgba(255,214,150,0) 55%);}
-.mr-scene .mr-shadow{left:46%; bottom:10.9%; width:33%; height:3.2%; margin-left:-16.5%; background:rgba(40,28,15,.22); box-shadow:6px 1px 0 2px rgba(40,28,15,.1);}
+.mr-scene .mr-shadow{left:46%; bottom:22.11%; width:33%; height:1.79%; margin-left:-16.5%; background:rgba(40,28,15,.22); box-shadow:6px 1px 0 2px rgba(40,28,15,.1);}
 /* the opening: push in, the radio settles on the sill (one small bounce), its shadow grows */
 .mr-intro .mr-view{animation:mr-pushin .75s cubic-bezier(.2,.7,.2,1) both;}
 .mr-intro .mr-set{animation:mr-settle .62s cubic-bezier(.34,1.56,.64,1) .32s both;}
@@ -150,3 +152,40 @@
 .mr-spark{position:fixed; z-index:200; width:7px; height:7px; border-radius:50%; background:var(--mr-gold); box-shadow:0 0 0 1.5px var(--mr-ink); pointer-events:none;}
 .mr-rm *, .mr-rm *::before, .mr-rm *::after{animation:none !important; transition:none !important;}
 @media (prefers-reduced-motion: reduce){ .mr-root *, .mr-root *::before, .mr-root *::after{animation:none !important; transition:none !important;} }
+
+/* ---------- mood (2026-11-16): the warm dial glow. On air, the valve light glows round the radio and spills warm light on the sill; a slow
+   valve flicker (opacity only); reduced motion keeps the glow still ---------- */
+.mr-glow{position:absolute; z-index:1; left:43.5%; bottom:20%; width:60%; height:34%; transform:translateX(-50%); border-radius:50%; pointer-events:none; opacity:0;
+  background:radial-gradient(closest-side, rgba(255,186,92,.55), rgba(255,186,92,.22) 55%, rgba(255,186,92,0)); mix-blend-mode:soft-light; transition:opacity .9s ease;}
+.mr-onair .mr-glow{opacity:1; animation:mr-valve 3.8s ease-in-out infinite;}
+@keyframes mr-valve{0%,100%{opacity:1;} 46%{opacity:.82;} 50%{opacity:.95;} 53%{opacity:.86;}}
+.mr-onair .mr-view::after{background:linear-gradient(90deg, rgba(255,214,150,.18), rgba(255,214,150,0) 55%), radial-gradient(40% 18% at 44% 74%, rgba(255,190,100,.32), rgba(255,190,100,0) 70%);}
+.mr-set.mr-on .mr-round .mr-face{box-shadow:0 0 14px 5px rgba(255,190,90,.6), 0 0 2px 1px rgba(255,220,150,.9);}
+.mr-roundset.mr-on .mr-lamp{box-shadow:0 0 12px 4px rgba(255,180,80,.75);}
+
+/* ---------- Games 2.0 (SPEC 9): catch-it-live word cards on the sill, the light by level, the gold dial ---------- */
+.mr-cards{width:100%; display:flex; flex-direction:column; align-items:center; gap:8px; margin-bottom:6px;}
+.mr-cardcue{margin:0; font:600 14px/1.3 var(--mr-chip); color:var(--mr-ink-soft); text-align:center; min-height:18px;}
+.mr-cardrow{width:100%; display:grid; grid-template-columns:repeat(3, 1fr); gap:8px;}
+.mr-card-live{background:#fffdf7; box-shadow:0 0 0 2px var(--mr-ink), 0 4px 0 2px rgba(20,51,46,.18); transform-origin:50% 100%;}
+.mr-card-live:nth-child(1){transform:rotate(-2deg);} .mr-card-live:nth-child(3){transform:rotate(2deg);}
+.mr-card-live.mr-caught{background:var(--mr-gold-soft); box-shadow:0 0 0 2px var(--mr-ink), 0 0 0 5px var(--mr-gold);}
+.mr-castamp{position:absolute; right:6px; top:-9px; padding:2px 6px; border:2px solid var(--mr-coral-deep); border-radius:5px; color:var(--mr-coral-deep); background:#fff;
+  font:400 10px/1 var(--mr-label); letter-spacing:.08em; text-transform:uppercase; font-style:normal; transform:rotate(-8deg);}
+.mr-set.mr-gold .mr-round .mr-face{box-shadow:0 0 16px 6px rgba(255,209,102,.85), 0 0 2px 1px #FFD166;}
+/* light by level: one overlay in the art box (.mr-view), over the sill render, under the radio and its controls; presets as SPEC 5.3 */
+.mr-mood{position:absolute; inset:0; z-index:0; pointer-events:none;}
+.mr-mood > i{position:absolute; inset:0; display:block; opacity:0; transition:opacity .8s ease;}
+.mr-m-tint{mix-blend-mode:multiply;}
+.mr-m-glow, .mr-m-dial, .mr-m-air{mix-blend-mode:screen;}
+.mr-m-vig{opacity:1; mix-blend-mode:multiply; background:radial-gradient(120% 90% at 50% 45%, transparent 55%, rgba(20,51,46,var(--m-vig, 0)) 100%);}
+.mr-mood[data-mood="warm"]{--m-vig:.10;}
+.mr-mood[data-mood="warm"] .mr-m-tint{opacity:1; background:rgba(255,231,194,.10);}
+.mr-mood[data-mood="warm"] .mr-m-glow{opacity:1; background:radial-gradient(70% 70% at 20% 15%, rgba(255,241,208,.35), rgba(255,241,208,0) 100%);}
+.mr-mood[data-mood="dusk"]{--m-vig:.16;}
+.mr-mood[data-mood="dusk"] .mr-m-tint{opacity:1; background:rgba(240,168,102,.18);}
+.mr-mood[data-mood="dusk"] .mr-m-glow{opacity:1; background:radial-gradient(60% 60% at 80% 12%, rgba(255,210,154,.30), rgba(255,210,154,0) 100%);}
+.mr-mood[data-mood="night"]{--m-vig:.24;}
+.mr-mood[data-mood="night"] .mr-m-tint{opacity:1; background:rgba(61,84,128,.24);}
+.mr-mood[data-mood="night"] .mr-m-dial{opacity:1; background:radial-gradient(18% 14% at var(--d-x, 62%) var(--d-y, 62%), rgba(255,196,107,.45), rgba(255,196,107,0) 100%);}
+.mr-playing .mr-mood[data-mood="night"] .mr-m-air{opacity:1; background:radial-gradient(10% 7% at var(--l-x, 62%) var(--l-y, 70%), rgba(255,90,74,.30), rgba(255,90,74,0) 100%);}

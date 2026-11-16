@@ -520,3 +520,59 @@
 .oh-qpic{display:flex; flex-direction:column; align-items:center; gap:2px; min-width:0;}
 .oh-qpic > :first-child{position:relative; width:40px; height:40px; flex:0 0 auto;}
 .oh-glw{text-decoration:underline; text-decoration-thickness:2px; text-underline-offset:3px; text-decoration-color:#e8603c;}
+
+/* ---------- tap to hear (2026-11-16; SPEC 5.2): the first speaker rings twice (1.2 s); reduced motion: a still ring for 3 s ---------- */
+.oh-hear-first{animation:oh-hearring .6s ease-out 2;}
+@keyframes oh-hearring{from{box-shadow:0 0 0 0 rgba(255,209,102,.9);} to{box-shadow:0 0 0 10px rgba(255,209,102,0);}}
+.oh-rm .oh-hear-first{animation:oh-hearstill 3s steps(1) 1;}
+@media (prefers-reduced-motion: reduce){ .oh-hear-first{animation:oh-hearstill 3s steps(1) 1;} }
+@keyframes oh-hearstill{0%{box-shadow:0 0 0 3px #FFD166;} 100%{box-shadow:none;}}
+/* Jot it down (SPEC 8b): three chips on a pencil pad */
+.oh-jot{width:100%; padding:10px 12px 12px; border-radius:14px; background:var(--oh-paper); box-shadow:0 0 0 2px var(--oh-ink), 0 3px 0 2px rgba(20,51,46,.16);
+  background-image:repeating-linear-gradient(transparent 0 25px, var(--oh-line) 25px 26px); background-position:0 34px;}
+.oh-jot-h{margin:0 0 8px; display:flex; align-items:center; gap:6px; font:600 14px/1.3 var(--oh-display); color:var(--oh-ink-soft);}
+.oh-jot-h svg{width:18px; height:18px; fill:none; stroke:var(--oh-ink); stroke-width:2; stroke-linecap:round; stroke-linejoin:round;}
+.oh-jot-h[dir="rtl"]{font-family:'Vazirmatn', Tahoma, var(--oh-text);}
+.oh-jot-chips{display:flex; flex-wrap:wrap; gap:8px;}
+.oh-jotchip{font-family:var(--oh-hand); font-size:17px; padding:6px 12px; min-height:40px;}
+.oh-jotting .oh-jot{padding:8px 10px 10px;}
+.oh-jotting .oh-linepics{display:none;}
+.oh-jotchip.oh-off{opacity:.4;}
+/* the gold corner (SPEC 8b): a station played with the note folded */
+.oh-pol.oh-gold::after{content:''; position:absolute; right:-2px; top:-2px; width:12px; height:12px; background:#FFD166; clip-path:polygon(0 0, 100% 0, 100% 100%);
+  box-shadow:inset 0 0 0 1px var(--oh-ink); border-top-right-radius:3px; z-index:2;}
+.oh-pol{position:relative;}
+
+/* ---------- mood (2026-11-16): the hour, a lamp indoors, a sunbeam with dust, a soft warm vignette. Over the plate and its cut-outs, under the
+   CZ8 wash (z 55) and the UI (z 60); never darker than the plate (Q9): soft-light / screen light and a very light multiply tint ---------- */
+.oh-mood{position:absolute; inset:0; z-index:54; pointer-events:none; overflow:hidden; border-radius:inherit;}
+.oh-mood > i{position:absolute; inset:0; display:block; transition:opacity 1.2s ease, background 1.2s ease;}
+.oh-mt{mix-blend-mode:multiply; opacity:0;}
+.oh-ml{mix-blend-mode:soft-light; opacity:0;}
+.oh-mv{background:radial-gradient(125% 100% at 50% 45%, rgba(120,70,30,0) 58%, rgba(120,70,30,.10) 100%);}
+.oh-mbeam{mix-blend-mode:screen; opacity:0; inset:-20% -40%;}
+.oh-mdust{opacity:0;}
+/* the hour */
+.oh-frame[data-light="morning"] .oh-mt{opacity:1; background:rgba(214,232,255,.10);}
+.oh-frame[data-light="afternoon"] .oh-mt{opacity:1; background:rgba(255,222,170,.12);}
+.oh-frame[data-light="golden"] .oh-mt{opacity:1; background:rgba(255,190,110,.16);}
+.oh-frame[data-light="golden"] .oh-mv{background:radial-gradient(125% 100% at 50% 45%, rgba(130,70,20,0) 54%, rgba(130,70,20,.2) 100%);}
+/* a lamp indoors: a warm pool from above, stronger as the day goes on */
+.oh-frame[data-light="golden"][data-place="flat"] .oh-ml, .oh-frame[data-light="golden"][data-place="bakery"] .oh-ml, .oh-frame[data-light="golden"][data-place="shop"] .oh-ml{opacity:.55; background:radial-gradient(55% 40% at 50% 6%, rgba(255,210,140,.95), rgba(255,210,140,0) 75%);}
+.oh-frame[data-light="golden"][data-place="bakery"] .oh-ml{opacity:.7; background:radial-gradient(60% 45% at 35% 8%, rgba(255,196,110,.95), rgba(255,196,110,0) 75%);}
+.oh-frame[data-light="golden"][data-place="flat"] .oh-ml, .oh-frame[data-light="golden"][data-place="bakery"] .oh-ml, .oh-frame[data-light="golden"][data-place="shop"] .oh-ml,
+.oh-frame[data-light="afternoon"][data-place="flat"] .oh-ml{opacity:.9;}
+.oh-frame[data-place="street"] .oh-ml{opacity:.5; background:radial-gradient(90% 60% at 80% 0%, rgba(255,244,214,.9), rgba(255,244,214,0) 70%);}
+/* a sunbeam through the window (afternoon and golden, indoors) with dust drifting in it */
+.oh-frame[data-light="afternoon"]:not([data-place="street"]) .oh-mbeam, .oh-frame[data-light="golden"]:not([data-place="street"]) .oh-mbeam{opacity:.5;
+  background:linear-gradient(118deg, rgba(255,226,170,0) 34%, rgba(255,226,170,.55) 42%, rgba(255,226,170,0) 52%, rgba(255,226,170,0) 58%, rgba(255,226,170,.35) 63%, rgba(255,226,170,0) 70%);
+  animation:oh-beam 14s ease-in-out infinite alternate;}
+@keyframes oh-beam{from{transform:translateX(-3%);} to{transform:translateX(3%);}}
+.oh-frame[data-light="afternoon"]:not([data-place="street"]) .oh-mdust, .oh-frame[data-light="golden"]:not([data-place="street"]) .oh-mdust{opacity:.85; inset:-240px -120px 0 0;
+  background-image:radial-gradient(circle, rgba(255,250,235,.95) 0 1.2px, transparent 2px), radial-gradient(circle, rgba(255,250,235,.8) 0 1px, transparent 1.6px);
+  background-size:60px 60px, 40px 48px; background-position:0 0, 19px 23px; animation:oh-dust 24s linear infinite;
+  -webkit-mask-image:linear-gradient(118deg, transparent 30%, #000 42%, #000 62%, transparent 72%); mask-image:linear-gradient(118deg, transparent 30%, #000 42%, #000 62%, transparent 72%);}
+@keyframes oh-dust{from{transform:translate3d(0,0,0);} to{transform:translate3d(-120px,240px,0);}}
+.oh-rm .oh-mdust, .oh-rm .oh-mbeam{animation:none;}
+.oh-rm .oh-mdust{display:none;}
+@media (prefers-reduced-motion: reduce){ .oh-mdust{display:none;} .oh-mbeam{animation:none;} }

@@ -29,7 +29,8 @@
      YourCall.debug.status()                   for tests: the beat, what the game waits for, Then & Now targets in client px, sound
      YourCall.hush()                           stop every sound bed now (the app calls it when the Theatre closes)
      YourCall.bedOf(panel)                     the set / night / fest / 1970 a panel's ambience comes from (pure; for tests)
-   host (all optional): speak(text,{lang,rate,quiet}) -> Promise, stopSpeech(), muted(), reduced(), path() -> {choices,
+   host (all optional): speak(text,{lang,rate,quiet}) -> Promise, stopSpeech(), muted(), reduced(), readAloud() (0.5.1: lines are
+   read aloud by themselves only when it returns true; otherwise a tap on a balloon / caption plays it), path() -> {choices,
      prints, notes}, saveRun(run|null), commit(result), base (art URL prefix, default '').
    Sound (GDD 12): all generated in code (no files); host.muted() silences sound effects, ambience, radio and piano alike.
    choices = ['', 'ab', 'ba', ...] indexed by chapter (the v1 progress.path.choices shape).
@@ -38,7 +39,7 @@
 'use strict';
 if(window.YourCall) return;
 var D = document, W = window;
-var VERSION = '0.5.0';
+var VERSION = '0.5.1';
 
 /* ---------- chrome strings (the UI language; Persian informal) ---------- */
 var UI = {
@@ -332,9 +333,22 @@ function Sound(muted, sopt){
     flap:function(c, t, o, v){ for(var k = 0; k < 6; k++) hiss(c, t + k * rnd(.05, .08), .04, .018 * v, ['bandpass', rnd(600, 900), 1.2], o); },
     steam:function(c, t, o, v){ hiss(c, t, 1.4, .02 * v, ['highpass', 2200], o, .2); },
     cheer:function(c, t, o, v){ hiss(c, t, 1.6, .03 * v, ['bandpass', 1200, .7], o, .5); },
-    crackle:function(c, t, o, v){ hiss(c, t, .006, rnd(.02, .08) * v, ['highpass', 1500], o, .001); }
+    crackle:function(c, t, o, v){ hiss(c, t, .006, rnd(.02, .08) * v, ['highpass', 1500], o, .001); },
+    // 0.5.1 moods: a low ferry horn far off; a burst of radio static; a gust of wind; a crossing bell; a far two-tone train horn
+    horn:function(c, t, o, v){ osc(c, 'sawtooth', 110, 0, t, 1.6, .012 * v, ['lowpass', 420, 1], o); osc(c, 'sawtooth', 165, 0, t + .02, 1.5, .007 * v, ['lowpass', 520, 1], o); },
+    static:function(c, t, o, v){ hiss(c, t, rnd(.3, .7), .03 * v, ['bandpass', rnd(1500, 2400), 1.4], o, .05); for(var k = 0; k < 5; k++) hiss(c, t + rnd(0, .5), .006, rnd(.03, .07) * v, ['highpass', 1800], o, .001); },
+    gust:function(c, t, o, v){ hiss(c, t, rnd(1.6, 2.6), .035 * v, ['bandpass', rnd(380, 620), .8], o, .9); },
+    bell:function(c, t, o, v){ for(var k = 0; k < 8; k++) osc(c, 'sine', k % 2 ? 760 : 900, 0, t + k * .42, .3, .01 * v, null, o); },
+    thorn:function(c, t, o, v){ osc(c, 'square', 330, 0, t, .7, .004 * v, ['lowpass', 900, 1], o); osc(c, 'square', 415, 0, t + .75, .9, .004 * v, ['lowpass', 900, 1], o); }
   };
 
+  // 0.5.1 album moods (Farin 2026-11-16 "work on the mood of each game"): extra layers / events on every bed of the album
+  var MOODS = {
+    istanbul:{fn:function(L, f, key){ L.babble(key === 'S5' ? .35 : .75); L.ev('horn', [38, 75], .55); L.ev('cup', [9, 20], .5); }},
+    vik:{noGull:true, fn:function(L, f){ L.wind(.9); L.ev('static', [9, 20], .7); L.ev('gust', [14, 30], .8); }},
+    tsugaru:{noGull:true, fn:function(L, f){ L.breeze(.8); L.ev('gust', [12, 26], .6); L.ev('bell', [50, 95], .45); L.ev('thorn', [70, 130], .4); }}
+  };
+  var moodKey = '';
   /* ---- per-set beds (GDD 10). f = {night, fest}: night = fewer gulls, crickets in the yard, rain at the hospital;
      fest = Regatta / L'Amuravela crowd. ---- */
   var SETS = {
@@ -366,11 +380,12 @@ function Sound(muted, sopt){
       rain:function(v){ loop('white', 'highpass', 2600, .4, .08 * v, [[.09, .2]]); loop('pink', 'lowpass', 900, .5, .12 * v); },
       babble:function(v){ [[320, .14], [720, .11], [1400, .06]].forEach(function(b, k){ loop('pink', 'bandpass', b[0], 1.6, b[1] * v, [[.7 + k * .37, .55], [1.9 + k * .5, .3]]); }); },
       hum:function(fq, v){ [fq, fq * 2].forEach(function(x, k){ var o = c.createOscillator(), g = c.createGain(); o.frequency.value = x; g.gain.value = (k ? .0025 : .004) * v; o.connect(g); g.connect(grp); o.start(t); nodes.push(o); }); },
-      ev:function(name, every, vol){ evs.push({name:name, min:every[0], max:every[1], vol:vol, next:t + (every[0] === every[1] ? .2 : rnd(every[0] * .3, every[1] * .8)), out:grp}); }
+      ev:function(name, every, vol){ if(name === 'gull' && MOODS[moodKey] && MOODS[moodKey].noGull) return; evs.push({name:name, min:every[0], max:every[1], vol:vol, next:t + (every[0] === every[1] ? .2 : rnd(every[0] * .3, every[1] * .8)), out:grp}); }
     };
     SETS[key](L, f);
+    if(MOODS[moodKey]) try{ MOODS[moodKey].fn(L, f, key); }catch(e){}
     grp.gain.setTargetAtTime(1, t, .45);
-    return {key:key, f:f, sig:key + (f.night ? 'n' : '') + (f.fest ? 'f' : ''), grp:grp, nodes:nodes, evs:evs};
+    return {key:key, f:f, sig:key + (f.night ? 'n' : '') + (f.fest ? 'f' : '') + moodKey, grp:grp, nodes:nodes, evs:evs};
   }
   function retire(b){
     if(!b) return;
@@ -388,7 +403,7 @@ function Sound(muted, sopt){
   }
   function apply(){
     if(!want || !ac() || !N) return;
-    var sig = want.key + (want.f.night ? 'n' : '') + (want.f.fest ? 'f' : '');
+    var sig = want.key + (want.f.night ? 'n' : '') + (want.f.fest ? 'f' : '') + moodKey;
     if(cur && cur.sig === sig) return;
     retire(cur); cur = null;
     try{ cur = build(want.key, want.f); }catch(e){ cur = null; }
@@ -557,6 +572,8 @@ function Sound(muted, sopt){
   }
   var api = {
     play:function(name){ var c = ac(); if(!c || !S[name]) return; run(); try{ S[name](c, c.currentTime + .01); }catch(e){} },
+    // 0.5.1: the album's mood ('' / 'istanbul' / 'vik' / 'tsugaru'): layers on every bed until changed
+    mood:function(k){ k = MOODS[k] ? k : ''; if(k === moodKey) return; moodKey = k; if(want) apply(); },
     // the ambience of a set ('S1'..'S7'); flags {night, fest}; an unknown key keeps the bed that is playing
     bed:function(key, f){ if(!SETS[key]) return; want = {key:key, f:{night:!!(f && f.night), fest:!!(f && f.fest)}}; apply(); run(); },
     // 0 = today, 1 = 1970 (muffled + radio), .5 = the live split
@@ -640,6 +657,7 @@ function start(o){
   var reduced = function(){ try{ return (host.reduced && host.reduced()) || prefersReduced(); }catch(e){ return prefersReduced(); } };
   var muted = function(){ try{ return !!(host.muted && host.muted()); }catch(e){ return false; } };
   var snd = SHARED && SHARED.alive() ? SHARED : Sound(muted);   // the poster's sea bed carries on into the game
+  try{ snd.mood && snd.mood(C.mood || String(C.town || '').toLowerCase().normalize('NFD').replace(/[^a-z]/g, '')); }catch(e){}
   SHARED = null;
   var G = {alive:true, wait:null, run:null, ch:null, timers:[], listeners:[], tn:null, ended:false};
   var cards = (o.chapters && o.chapters.length ? o.chapters : [o.start || 1]).slice();
@@ -689,6 +707,14 @@ function start(o){
   }
   function stopSpeech(){ try{ host.stopSpeech && host.stopSpeech(); }catch(e){} snd.duck('*'); }
   async function speakAll(list){ var my = G.speakTok; for(var i = 0; i < list.length && G.alive; i++){ if(my !== G.speakTok) return; await speak(list[i]); } }
+  // 0.5.1 (Farin 2026-11-16: "no need to read all the sentences it kills the mood"): story lines play by themselves only with the
+  // app's "Read game lines aloud" on (host.readAloud, off by default); a tap on a balloon / caption / speaker always plays the line.
+  // Listening tasks (the Radio Watch report) still play by themselves. voiceOff() paces a step as if the sound were off.
+  // the app's one setting (Games 2.0 §5.2): host.readAloud(), else the global window.farinReadAloud(), else off
+  function autoVoice(){ try{ if(host.readAloud) return !!host.readAloud(); return !!(W.farinReadAloud && W.farinReadAloud()); }catch(e){ return false; } }
+  function voiceOff(){ return muted() || !autoVoice() || !host.speak; }
+  function narrate(text, opt){ return autoVoice() ? speak(text, opt) : Promise.resolve(); }
+  function narrateAll(list){ return autoVoice() ? speakAll(list) : Promise.resolve(); }
 
   /* ---- shell ---- */
   root.innerHTML = '';
@@ -740,7 +766,8 @@ function start(o){
     var g = e.target.closest && e.target.closest('.yc-gl');
     if(g){ e.stopPropagation(); showGloss(g); return; }
     var say = e.target.closest && e.target.closest('[data-say]');
-    if(say){ stopSpeech(); speak(say.getAttribute('data-say')); }
+    if(say){ stopSpeech(); shell.querySelectorAll('.yc-saying').forEach(function(x){ x.classList.remove('yc-saying'); }); say.classList.add('yc-saying');
+      speak(say.getAttribute('data-say')).then(function(){ say.classList.remove('yc-saying'); }); }
   });
   function showGloss(btn){
     var ch = G.ch, gl = ch && ch.glosses[btn.getAttribute('data-g')];
@@ -870,7 +897,7 @@ function start(o){
       if((p.motion || []).indexOf('shake') >= 0 && !reduced()) anim(fig, [{transform:'translateX(0)'}, {transform:'translateX(-5px)'}, {transform:'translateX(5px)'}, {transform:'translateX(0)'}], {duration:300});
     }, 140 * pace);
     var tok = G.speakTok = (G.speakTok || 0) + 1;
-    later(function(){ if(G.speakTok === tok) speakAll(fig._says); }, 260 * pace);
+    later(function(){ if(G.speakTok === tok) narrateAll(fig._says); }, 260 * pace);
     await waitNext(null, 'next');
     return true;
   }
@@ -894,7 +921,7 @@ function start(o){
       if(instant) return;
       scrollEnd();
       var tok = G.speakTok = (G.speakTok || 0) + 1;
-      later(function(){ if(G.speakTok === tok) speak(tg(d.prompt)); }, 200 * pace);
+      later(function(){ if(G.speakTok === tok) narrate(tg(d.prompt)); }, 200 * pace);
       pick = await new Promise(function(ok){
         G.wait = 'choice';
         wrap.querySelector('.yc-choices').addEventListener('click', function h(e){
@@ -906,7 +933,7 @@ function start(o){
       G.run.picks[di] = pick; G.run.sub = null; save();
       G.speakTok++; stopSpeech();
       snd.play('pop');
-      speak(tg(optText(d[pick])));   // the chosen line, spoken aloud
+      narrate(tg(optText(d[pick])));   // the chosen line, spoken aloud (0.5.1: with Read lines aloud on)
     }
     wrap.querySelectorAll('.yc-ch').forEach(function(x){ x.disabled = true; x.classList.add(x.getAttribute('data-o') === pick ? 'picked' : 'gone'); });
     if(!instant) await wait(650 * pace);
@@ -918,7 +945,7 @@ function start(o){
       if(!whenOk(p.when, arcChoices())) continue;
       var fig = panelEl(p, ch, instant); page.appendChild(fig);
       if(!instant) scene(p);
-      if(!instant){ var t2 = G.speakTok = (G.speakTok || 0) + 1; (function(f, tk){ later(function(){ if(G.speakTok === tk) speakAll(f._says); }, 1500 * pace); })(fig, t2); }
+      if(!instant){ var t2 = G.speakTok = (G.speakTok || 0) + 1; (function(f, tk){ later(function(){ if(G.speakTok === tk) narrateAll(f._says); }, 1500 * pace); })(fig, t2); }
     }
     if(opt.feel){
       var feel = el('div', 'yc-feel', '<span class="yc-feel-ic" aria-hidden="true">♡</span><span>' + lineHtml(opt.feel, ch, opt.feelgloss) + '</span>');
@@ -1090,7 +1117,7 @@ function start(o){
       ctl.innerHTML = '<button type="button" class="yc-shutter" aria-label="' + esc(tg(cu('shoot')) || 'Take a photo') + '"></button>';
       G.wait = 'tn-shoot';
       ctl.querySelector('.yc-shutter').addEventListener('click', shoot, {once:true});
-      later(function(){ speak(tg(ph.instr || cu('shoot'))); }, 200 * pace);
+      later(function(){ narrate(tg(ph.instr || cu('shoot'))); }, 200 * pace);
     }
     function shoot(){
       stopSpeech(); snd.play('click');
@@ -1163,7 +1190,7 @@ function start(o){
       setIns(current.line);
       var tok = G.speakTok = (G.speakTok || 0) + 1;
       clear(hintT); clear(autoT);
-      speak(tg(current.line)).then(function(){ if(G.speakTok === tok || current) arm(); });   // the 15 s clock starts after the line ends
+      narrate(tg(current.line)).then(function(){ if(G.speakTok === tok || current) arm(); });   // the 15 s clock starts after the line ends
     }
     on(ov, 'click', function(e){
       if(tn.phase !== 'find' || !current) return;
@@ -1189,7 +1216,7 @@ function start(o){
       setIns(f.line);
       var tok = G.speakTok = (G.speakTok || 0) + 1; stopSpeech();
       var after = function(){ later(function(){ if(G.tn && G.tn.scr === scr) nextTarget(); }, 900 * pace); };
-      speak(tg(f.line)).then(function(){
+      narrate(tg(f.line)).then(function(){
         if(G.speakTok !== tok) return;
         if(st.chips && !tn.quiz && st.chips.on === f.id) chips(after); else after();
       });
@@ -1203,7 +1230,7 @@ function start(o){
         var said = (tg(todayT) || us('today')) + ': ' + c.right + '.';
         ins.insertAdjacentHTML('beforeend', '<div class="yc-chips yc-chips-done" dir="ltr"><span lang="' + target + '">' + esc(said) + '</span></div>');
         snd.play('chime'); G.speakTok++;
-        speak(said).then(function(){ later(after, muted() ? 900 * pace : 0); });
+        narrate(said).then(function(){ later(after, voiceOff() ? 900 * pace : 0); });
         return;
       }
       G.wait = 'tn-chips';
@@ -1215,7 +1242,7 @@ function start(o){
         var line = (tg(todayT) || us('today')) + ': ' + c.right + '.';
         box.innerHTML = '<span lang="' + target + '">' + esc(line) + '</span>';
         box.classList.add('yc-chips-done'); snd.play('chime');
-        G.speakTok++; speak(line).then(after);
+        G.speakTok++; narrate(line).then(function(){ if(voiceOff()) later(after, 1200 * pace); else after(); });   // 0.5.1: reading time with the voice off
       }, {once:true});
     }
     function finishStep(){
@@ -1238,7 +1265,7 @@ function start(o){
         if(!reduced()) stage.classList.add('yc-zoom'); else ov.insertAdjacentHTML('beforeend', '<circle class="yc-hint" cx="' + at.x + '" cy="' + at.y * 1.25 + '" r="9"/>');
         snd.play('creak');
         setIns(st.clue, ph.set && ph.mode === 'split' ? '<div class="yc-insintro">' + lineHtml(ph.set, ch) + '</div>' : '');
-        if(!(o.tnReveal !== false)) speakAll([ph.mode === 'split' ? tg(ph.set) : '', tg(st.clue)].filter(Boolean));
+        if(!(o.tnReveal !== false)) narrateAll([ph.mode === 'split' ? tg(ph.set) : '', tg(st.clue)].filter(Boolean));
       }
       var finished = false, finish = function(){
         if(finished || !scr.isConnected) return; finished = true;
@@ -1255,8 +1282,8 @@ function start(o){
         ctl.innerHTML = '';
         if(tip) tip.hidden = true;
         var words = st.clue ? tg(st.clue).split(/\s+/).length + (ph.set && ph.mode === 'split' ? tg(ph.set).split(/\s+/).length : 0) : 0;
-        var lineDone = st.clue ? speakAll([ph.mode === 'split' ? tg(ph.set) : '', tg(st.clue)].filter(Boolean)) : Promise.resolve();
-        Promise.resolve(lineDone).then(function(){ later(finish, 1500 * pace + (muted() ? Math.min(words * 300, 1500) * pace : 0)); });   // 0.3.1: about 3 s at most with the sound off
+        var lineDone = st.clue ? narrateAll([ph.mode === 'split' ? tg(ph.set) : '', tg(st.clue)].filter(Boolean)) : Promise.resolve();
+        Promise.resolve(lineDone).then(function(){ later(finish, 1500 * pace + (voiceOff() ? Math.min(words * 300, 1500) * pace : 0)); });   // 0.3.1: about 3 s at most with the sound off
         stage.addEventListener('click', finish);
         return;
       }
@@ -1280,7 +1307,7 @@ function start(o){
     G.wait = 'turn';
     await new Promise(function(ok){ fig.querySelector('.yc-card3').addEventListener('click', ok, {once:true}); });
     G.wait = null; snd.play('page'); fig.classList.add('yc-turned');
-    if(ph.set) await speak(tg(ph.set));
+    if(ph.set) await narrate(tg(ph.set));
     await waitNext(null, 'next');
   }
   // ch6: the last photo, composed by the choices (left half by the ch4 note, right half by ch6 d2 and the person)
@@ -1299,10 +1326,10 @@ function start(o){
     var fx = ph.fx != null ? ph.fx : (C.lastFx != null ? C.lastFx : 'firework');
     scrollEnd(); if(fx && fx !== 'none'){ snd.play(fx); if(fx === 'firework') later(function(){ snd.play('firework'); }, 500 * pace); }
     snd.era(0); snd.dim(.35);
-    var audible = !muted();
+    var audible = !voiceOff();
     later(function(){ snd.motif(); }, 700 * pace);   // GDD 12: a short piano motif for the last photo
     if(audible) await wait(2600 * pace);
-    await speakAll([tg(left), tg(right)].filter(Boolean));
+    await narrateAll([tg(left), tg(right)].filter(Boolean));
     await waitNext(null, 'next');
   }
 
@@ -1371,7 +1398,7 @@ function start(o){
       t45 = later(function(){ if(!st.rows[k]){ solve(k, true); if(open() < 0 && G.radioDone) G.radioDone(); else arm(); } }, 45000);
     };
     if(open() >= 0){
-      speak(tg(log[open()].q));   // the first open question is read aloud once
+      narrate(tg(log[open()].q));   // the first open question (0.5.1: read aloud only with Read lines aloud on; the report itself always plays)
       arm();
       await new Promise(function(done){
         G.radioDone = function(){ clear(t15); clear(t45); G.radioDone = null; done(); };
@@ -1380,7 +1407,7 @@ function start(o){
           var b = e.target.closest('.yc-rchip'); if(!b || b.disabled || !b.hasAttribute('data-r')) return;
           var k = +b.getAttribute('data-r'), c = +b.getAttribute('data-c'), r = log[k];
           if(st.rows[k]) return;
-          if(c === r.ok){ solve(k, false); if(open() < 0){ if(G.radioDone) G.radioDone(); } else { arm(); speak(tg(log[open()].q)); } return; }
+          if(c === r.ok){ solve(k, false); if(open() < 0){ if(G.radioDone) G.radioDone(); } else { arm(); narrate(tg(log[open()].q)); } return; }
           // wrong: the chip fades, the carrying sentence replays slower with its key words underlined, the row's why shows
           G.misses = (G.misses || 0) + 1; wrong[k]++; b.disabled = true; b.classList.add('yc-rno'); snd.play('rustle');
           var why = logEl.querySelector('.yc-rrow[data-r="' + k + '"] .yc-rwhy'); if(why){ why.hidden = false; why.innerHTML = keyHtml(rep[r.line], r.key) + (r.why ? '<small dir="auto">' + esc(tg(r.why)) + '</small>' : ''); }
@@ -1395,7 +1422,7 @@ function start(o){
       G.wait = 'radio-relay';
       var Rl = R.relay, ro = shuffled(Rl.chips.length), rw = 0;
       var rel = el('div', 'yc-rrow yc-rrelay', '<span class="yc-rq">' + esc(tg(Rl.q)) + trSpan(Rl.q) + '</span><div class="yc-rchips">' + ro.map(function(c){ return '<button type="button" class="yc-rchip" data-c="' + c + '">' + esc(tg(Rl.chips[c])) + '</button>'; }).join('') + '</div><div class="yc-rwhy" hidden></div>');
-      logEl.appendChild(rel); scrollEnd(); speak(tg(Rl.q));
+      logEl.appendChild(rel); scrollEnd(); narrate(tg(Rl.q));
       await new Promise(function(done){
         on(rel, 'click', function(e){
           var b = e.target.closest('.yc-rchip'); if(!b || b.disabled) return; var c = +b.getAttribute('data-c');
@@ -1419,7 +1446,7 @@ function start(o){
     }
     if(!G.alive) return;
     st.done = true; save(); G.wait = null; G.radio = null;
-    if(R.done && tg(R.done)){ var dn = el('div', 'yc-cap yc-cap-static', lineHtml(R.done, ch)); box.appendChild(dn); scrollEnd(); await speak(tg(R.done)); }
+    if(R.done && tg(R.done)){ var dn = el('div', 'yc-cap yc-cap-static', lineHtml(R.done, ch)); box.appendChild(dn); scrollEnd(); await narrate(tg(R.done)); }
     await waitNext(null, 'next');
   }
 
@@ -1469,7 +1496,7 @@ function start(o){
       box.appendChild(card);
       var evF = card.querySelector('.yc-wev');
       if(evF && ev.box){ var bx = el('div', 'yc-wbox'); bx.style.left = ev.box.x + '%'; bx.style.top = ev.box.y + '%'; bx.style.width = ev.box.w + '%'; bx.style.height = ev.box.h + '%'; evF.appendChild(bx); }
-      scrollEnd(); speak(tg(A.q));
+      scrollEnd(); narrate(tg(A.q));
       G.wait = 'rewind-ask'; G.rewind = {card:card, A:A};
       var pulse = function(){ if(evF) { evF.classList.remove('yc-wpulse'); void evF.offsetWidth; evF.classList.add('yc-wpulse'); } };
       var glow = function(){ var r = card.querySelector('.yc-rchip[data-c="' + A.ok + '"]'); if(r) r.classList.add('yc-rglow'); };
@@ -1490,12 +1517,12 @@ function start(o){
       });
       if(!G.alive) return;
       st.asks[q] = true; save(); scrollEnd();
-      await speak(tg(A.chips[A.ok]));   // the supported deduction, then the what-if line
-      if(A.whatif) await speak(tg(A.whatif));
+      await narrate(tg(A.chips[A.ok]));   // the supported deduction, then the what-if line
+      if(A.whatif) await narrate(tg(A.whatif));
       if(q < asks.length - 1) await waitNext(null, 'next');
     }
     st.done = true; save(); G.wait = null; G.rewind = null;
-    if(R.done && tg(R.done)){ box.appendChild(el('div', 'yc-cap yc-cap-static', lineHtml(R.done, ch))); scrollEnd(); await speak(tg(R.done)); }
+    if(R.done && tg(R.done)){ box.appendChild(el('div', 'yc-cap yc-cap-static', lineHtml(R.done, ch))); scrollEnd(); await narrate(tg(R.done)); }
     await waitNext(null, 'next');
   }
 
@@ -1545,7 +1572,7 @@ function start(o){
       // photograph the note: it prints in 1970 (R1)
       G.wait = 'note-shoot';
       box.insertAdjacentHTML('beforeend', '<button type="button" class="yc-shutter yc-shutter-note" aria-label="' + esc(tg(cu('shoot')) || 'Take a photo') + '"></button>');
-      speak(sentence);
+      narrate(sentence);
       await new Promise(function(ok){ box.querySelector('.yc-shutter-note').addEventListener('click', ok, {once:true}); });
       snd.play('click'); later(function(){ snd.play('whirr'); }, 300 * pace);
       G.run.note = {done:true, text:sentence, pick:pick || null}; save();
@@ -1556,7 +1583,7 @@ function start(o){
       var rep = el('figure', 'yc-panel yc-wide yc-printpanel yc-reply');
       rep.innerHTML = '<div class="yc-print yc-sign"><div class="yc-signtext" lang="' + target + '">' + esc(tg(N.reply)) + '</div><i>' + esc(yearLabel(C, ui)) + '</i></div>' + (trn(N.reply) ? '<div class="yc-tr yc-reply-tr" dir="auto" lang="' + ui + '">' + esc(trn(N.reply)) + '</div>' : '');
       page.appendChild(rep);
-      if(!instant){ scrollEnd(); await speak(tg(N.reply)); await waitNext(null, 'next'); }
+      if(!instant){ scrollEnd(); await narrate(tg(N.reply)); await waitNext(null, 'next'); }
     }
   }
   async function playNoteBeat(ch, instant){ await playNote(ch, null, null, instant); }
@@ -1582,7 +1609,7 @@ function start(o){
         snd.play('pencil');
       } else {
         G.wait = 'letter-listen';
-        await speak(tg(lines[i]), {rate:.8, quiet:true});
+        await narrate(tg(lines[i]), {rate:.8, quiet:true});
         await wait(350 * pace);
       }
     }
@@ -1598,14 +1625,14 @@ function start(o){
     page.appendChild(fig);
     if(instant) return;
     scrollEnd(); snd.play('whirr');
-    await speak(tg(t));
+    await narrate(tg(t));
     await waitNext(null, 'next');
   }
   async function playFlipFeel(ch, instant){
     if(!ch.flip || !ch.flip.feel) return;
     page.appendChild(el('div', 'yc-feel', '<span class="yc-feel-ic" aria-hidden="true">♡</span><span>' + lineHtml(ch.flip.feel, ch) + '</span>'));
     if(instant) return;
-    scrollEnd(); speak(tg(ch.flip.feel));
+    scrollEnd(); narrate(tg(ch.flip.feel));
     await waitNext(null, 'next');
   }
   async function playTin(ch, instant){
@@ -1622,7 +1649,7 @@ function start(o){
     if(instant) return;
     snd.dim(.55);
     scrollEnd(); snd.play('chime');
-    await speakAll(['neighbour', 'friend', 'person'].map(function(k){ return tg(E[k][e[k]]); }));
+    await narrateAll(['neighbour', 'friend', 'person'].map(function(k){ return tg(E[k][e[k]]); }));
     await waitNext(null, 'next');
   }
   async function playCredits(ch, instant){
@@ -1631,7 +1658,7 @@ function start(o){
     page.appendChild(fig);
     if(instant) return;
     scrollEnd(); snd.play('whirr');
-    await speak(tg(ch.credits));
+    await narrate(tg(ch.credits));
     await waitNext(us('theEnd'), 'next');
   }
 
@@ -1641,11 +1668,12 @@ function start(o){
     if(!t) return Promise.resolve();
     var chs = arcChoices(), prevChs = [n - 2, n - 1].filter(function(k){ return k >= 1 && C.chapters[k - 1]; });   // the two chapters before
     var thumbs = prevChs.map(function(n){ var c = C.chapters[n - 1]; var id = c && postcardArt(c, chs); return '<div class="yc-thumb"><img src="' + esc(id ? artSrc(id, {era:'then'}) : devSvg('ch' + n, .8, 'then')) + '" alt=""></div>'; }).join('');
-    var ov = overlay('yc-prev', '<div class="yc-prev-in"><div class="yc-kicker" lang="' + ui + '" dir="' + uiDir() + '">' + esc(us('previously')) + '</div><div class="yc-thumbs">' + thumbs + '</div><div class="yc-cap yc-cap-static">' + lineHtml(t, G.ch) + '</div><small lang="' + ui + '" dir="' + uiDir() + '">' + esc(us('tapGo')) + '</small></div>');
+    var ov = overlay('yc-prev', '<div class="yc-prev-in"><div class="yc-kicker" lang="' + ui + '" dir="' + uiDir() + '">' + esc(us('previously')) + '</div><div class="yc-thumbs">' + thumbs + '</div><div class="yc-cap yc-cap-static yc-prevcap">' + lineHtml(t, G.ch) + '<button type="button" class="yc-prevsay" data-say="' + esc(tg(t)) + '" aria-label="' + esc(us('listen')) + '">' + ICON.say + '</button></div><small lang="' + ui + '" dir="' + uiDir() + '">' + esc(us('tapGo')) + '</small></div>');
     void chs;
     G.wait = 'previously';
-    speak(tg(t));
-    return new Promise(function(ok){ ov.addEventListener('click', function(){ G.speakTok++; stopSpeech(); ov.remove(); G.wait = null; ok(); }, {once:true}); });
+    narrate(tg(t));
+    return new Promise(function(ok){ var go = function(e){ if(e && e.target && e.target.closest && e.target.closest('.yc-prevsay')) return;   // 0.5.1: the speaker plays, it does not go on
+      ov.removeEventListener('click', go); G.speakTok++; stopSpeech(); ov.remove(); G.wait = null; ok(); }; ov.addEventListener('click', go); });
   }
   function postcard(ch, last){
     var sv = ch.glosses[ch.souvenir], pic = postcardArt(ch, arcChoices());

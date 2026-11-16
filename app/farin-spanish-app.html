@@ -23829,7 +23829,7 @@ function pathSayBtn(text){ return text ? `<button class="tts-btn sp-say" data-ac
    The comic-album Your Call. Engine lazy-loaded from games/your-call/ (your-call.js + .css byte-identical EN/ES;
    content-<side>.js generated from the farin-lxd scripts). A card plays v2 only when YourCall.ready() says every
    panel of its chapters has final art; otherwise the v1 round below runs unchanged. */
-const YC_VER = '13';   // 3: GDD 12 sound (sets, 1970 radio, piano, ducking; 7VO9j7xZ). 4: Cudillero art ch1-6 + engine trail parts / per-choice art 5: chapter flow (UI0ejg05) 6: Cudillero cover from the redo render 7: engine 0.2.1, postcard art for ch3 / ch6 (was a DEV placeholder) 8: engine 0.3.0 (phones: scrolling / fit, one chapter per card + automatic return, clearer Then & Now) 9: engine 0.3.1 (postcard photo without the print frame, the word under the photo, one ring per Then & Now object) 10: engine 0.4.0 (content-driven for album A2: thenYear, tone 1890, credits sign, last-photo effect, named beds, Previously per chapter) 11: album A2 wired (content-en-A2.js + art/istanbul) 12: The Red Suitcase covers (cover-3 / thumb-3, Farin 2026-11-15 qnHV76GG) 13: engine 0.5.0 (Radio Watch, wrong-note tiles, translation on tap, 1918 silver tone, Rewind)
+const YC_VER = '14';   // 3: GDD 12 sound (sets, 1970 radio, piano, ducking; 7VO9j7xZ). 4: Cudillero art ch1-6 + engine trail parts / per-choice art 5: chapter flow (UI0ejg05) 6: Cudillero cover from the redo render 7: engine 0.2.1, postcard art for ch3 / ch6 (was a DEV placeholder) 8: engine 0.3.0 (phones: scrolling / fit, one chapter per card + automatic return, clearer Then & Now) 9: engine 0.3.1 (postcard photo without the print frame, the word under the photo, one ring per Then & Now object) 10: engine 0.4.0 (content-driven for album A2: thenYear, tone 1890, credits sign, last-photo effect, named beds, Previously per chapter) 11: album A2 wired (content-en-A2.js + art/istanbul) 12: The Red Suitcase covers (cover-3 / thumb-3, Farin 2026-11-15 qnHV76GG) 13: engine 0.5.0 (Radio Watch, wrong-note tiles, translation on tap, 1918 silver tone, Rewind) 14: engine 0.5.1 (lines tap to hear; Read game lines aloud setting; album moods; last photo whole)
 // 2026-11-13: the levels with an album of their own. English: A1 (Whitby) + A2 "The Bazaar Key" (Istanbul); Spanish: A1 (Cudillero)
 // YC_A2_LIVE: A2 opens on its cards together with its natural voices (Bella + George clips for all its lines, Farin 2026-11-07);
 // until then an A2 card borrows the A1 album as before. The QA checks serve a copy with it on.
@@ -23837,6 +23837,9 @@ const YC_A2_LIVE = false;
 const YC_LEVELS = TTS_LANG.slice(0, 2) === 'en' && YC_A2_LIVE ? ['A1', 'A2'] : ['A1'];
 const YC_ALBUM_FILES = TTS_LANG.slice(0, 2) === 'en' ? {A2:'content-en-A2.js'} : {};
 let ycLoading = null, ycGame = null, ycPending = null;
+// "Read story lines aloud in games" (Farin 2026-11-16; Games 2.0 §5.2, owned by the World Kit): the helper readAloud() once it ships,
+// the provisional profile.readLinesAloud until then, else off. The engine falls back to window.farinReadAloud() itself.
+function ycReadAloud(){ try{ if(typeof readAloud === 'function') return !!readAloud(); return !!(state.profile && (state.profile.readAloud || state.profile.readLinesAloud)); }catch(e){ return false; } }
 function ycSide(){ return TTS_LANG.slice(0, 2); }
 function ycLoad(){
   if(window.YourCall && window.YC_CONTENT) return Promise.resolve(window.YourCall);
@@ -24205,7 +24208,7 @@ function ycMount(){
     autoReturn:{ms:3500, to:vp.shelf ? 'games' : 'map'},
     host:{
       speak:(t, o)=>new Promise(ok=>{ try{ ttsSpeak(t, o && o.rate ? o.rate * 0.92 : 0.92, {end:ok, error:ok}); }catch(e){ ok(); } }),
-      stopSpeech:stopAllSpeech, muted:()=>sfxMuted, reduced:reducedMotion, path:shelf ? ycShelfView : (borrow ? ()=>ycShelfView(alb) : ycPathView),
+      stopSpeech:stopAllSpeech, muted:()=>sfxMuted, readAloud:ycReadAloud, reduced:reducedMotion, path:shelf ? ycShelfView : (borrow ? ()=>ycShelfView(alb) : ycPathView),
       saveRun:shelf ? null : (borrow ? r=>{ ycFreeRec(alb).run = r; save(); } : r=>{ pathState().ycRun = r; save(); }),
       commit:shelf ? null : (borrow ? res=>ycBorrowCommit(vp.refId, res) : (bc && bc.replay ? res=>{ ycCardNote(vp.refId, res.ch); save(); } : res=>{ ycCommit(res); ycCardNote(vp.refId, res.ch); save(); }))},
     onChapterDone:shelf ? ycShelfSave : null,

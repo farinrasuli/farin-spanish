@@ -39,7 +39,7 @@
 'use strict';
 if(window.YourCall) return;
 var D = document, W = window;
-var VERSION = '0.5.2';
+var VERSION = '0.5.3';
 
 /* ---------- chrome strings (the UI language; Persian informal) ---------- */
 var UI = {
@@ -1316,7 +1316,8 @@ function start(o){
       if(st.clue){
         var at = ph.clueAt || {x:50, y:60};
         stage.style.setProperty('--ox', at.x + '%'); stage.style.setProperty('--oy', at.y + '%');
-        if(!reduced()) stage.classList.add('yc-zoom'); else ov.insertAdjacentHTML('beforeend', '<circle class="yc-hint" cx="' + at.x + '" cy="' + at.y * 1.25 + '" r="9"/>');
+        // 0.5.3 (art-fit audit): no 2.1x zoom any more (it cut 77% of the photo); a ring on the clue, pulsing unless reduced motion
+        ov.insertAdjacentHTML('beforeend', '<circle class="yc-hint yc-cluering' + (reduced() ? '' : ' yc-pulse') + '" cx="' + at.x + '" cy="' + at.y * 1.25 + '" r="9"/>');
         snd.play('creak');
         setIns(st.clue, ph.set && ph.mode === 'split' ? '<div class="yc-insintro">' + lineHtml(ph.set, ch) + '</div>' : '');
         if(!(o.tnReveal !== false)) narrateAll([ph.mode === 'split' ? tg(ph.set) : '', tg(st.clue)].filter(Boolean));

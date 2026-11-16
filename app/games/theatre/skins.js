@@ -56,7 +56,7 @@ window.THEATRE_SKINS = {
     palette:{sky:'#e9f8fc', sky2:'#b9e6f2', glow:'#ffffff', ground:'#5fc3cc', ink:'#163450', accent:'#c23a32', accentInk:'#ffffff'},
     backdrop:{src:null, position:'64% 50%', blur:30, veil:.54}, props:[],
     gw:{bg:'#e8f6fd', surface:'#e3c595', paper:'#fffdf7', ink:'#13304d', hue:'var(--clay-sky)', accent:'#c8352e', cta:'#13304d', ctaInk:'#ffffff'},
-    world:{stage:'clamp(180px, 34dvh, 340px)', plate:{src:'games/worlds/desk/art/desk-booth.webp', pos:'50% 50%', ready:false}, layers:[], text:[], sfx:{}, css:null}},
+    world:{stage:'clamp(180px, 34dvh, 340px)', plate:{src:'games/worlds/desk/art/desk-booth.webp', pos:'50% 50%', ready:true}, layers:[], text:[], sfx:{}, css:null}},
   // Magic Words: the golden door in the rose room
   spell:{card:'art/posters/card-spell.webp', focus:'84%',
     palette:{sky:'#fcf2f8', sky2:'#efd5e5', glow:'#fff4d6', ground:'#eca560', ink:'#3a2342', accent:'#f0b232', accentInk:'#3a2342'},
@@ -83,7 +83,7 @@ window.THEATRE_SKINS = {
     palette:{sky:'#fdf1ee', sky2:'#f2d0c9', glow:'#fff7f2', ground:'#5fb3a8', ink:'#2f2422', accent:'#0d8f87', accentInk:'#ffffff'},
     backdrop:{src:null, position:'68% 50%', blur:30, veil:.56}, props:[],
     gw:{bg:'#f7d3d6', surface:'#f3e9e2', paper:'#fffaf0', ink:'#14332e', hue:'var(--cat-lis)', accent:'#e8402f', cta:'#14332e', ctaInk:'#ffffff'},
-    world:{mood:'warm', plate:{src:'games/worlds/echo/art/echo-studio.webp', ready:true}, layers:[], text:[
+    world:{mood:'warm', plate:{src:'games/worlds/echo/art/echo-studio.webp', ready:true}, front:{top:'74%'}, layers:[], text:[
       {key:'onair', cls:'gw-onair', id:'gw-onair', box:[56, 30, 36], ready:true}], sfx:{}, css:null}},
   // Listen & Type: headphones at the window over the harbour, soft grey-rose, orange headphones
   dictation:{card:'art/posters/card-dictation.webp', focus:'76%',

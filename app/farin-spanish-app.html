@@ -20440,9 +20440,9 @@ function orderTrayHtml(round){
   const lines = round.tray.map((l, i)=>{
     const it = orderItem(l.id);
     const sizes = (round.level !== 'A1' && it.sized) ? `<span class="order-sizes">${ORDER_SIZES.map(s=>`<button type="button" class="order-size${(l.size || 'M') === s ? ' on' : ''}" data-action="order-size" data-quiet="1" data-i="${i}" data-s="${s}" aria-label="${esc(orderSizeWord(s, lang, it, 1))}">${s}</button>`).join('')}</span>` : '';
-    const extras = (l.extras || []).map(e=>{ const x = orderExtra(e); return x ? `<button type="button" class="order-chip" data-action="order-extra-off" data-quiet="1" data-i="${i}" data-e="${e}" aria-label="${esc(L('Remove','Kaldır','حذف','Quitar') + ' ' + x[lang])}">+ ${x.art} ${esc(x[lang])}</button>` : ''; }).join('');
+    const extras = (l.extras || []).map(e=>{ const x = orderExtra(e); return x ? `<button type="button" class="order-chip" data-action="order-extra-off" data-quiet="1" data-i="${i}" data-e="${e}" aria-label="${esc(L('Remove','Kaldır','حذف','Quitar') + ' ' + x[lang])}">+ ${orderArtHtml(x)} ${esc(x[lang])}</button>` : ''; }).join('');
     return `<div class="order-line${i === round.sel ? ' sel' : ''}" data-action="order-line" data-quiet="1" data-i="${i}" role="button" tabindex="0" dir="ltr">
-      <span class="order-line-art" aria-hidden="true">${it.art}</span>
+      <span class="order-line-art" aria-hidden="true">${orderArtHtml(it)}</span>
       <span class="order-line-name"><span>${esc(orderName(it, l.n, lang))}</span>${l.n > 1 ? `<span class="order-count">×${l.n}</span>` : ''}${sizes}${extras}</span>
       <button type="button" class="order-x" data-action="order-x" data-quiet="1" data-i="${i}" aria-label="${esc(L('Remove one','Birini kaldır','یکی را بردار','Quitar uno'))}">✕</button>
     </div>`;
@@ -20454,6 +20454,14 @@ function orderTrayHtml(round){
 // line seeds who comes in. Out of the world: the clay figure, as before.
 const ORDER_TOWN = {f:['bell','okafor','ada','leyla','rosa','hana','gran'], m:['tom','ben','ollie','pike']};
 function orderWorldOn(){ return !!(window.Theatre && Theatre.world && Theatre.world() === 'order'); }
+// In the world each menu item and extra is its own clear-line render (games/worlds/order/art/item-<id>.webp, extra-<id>.webp; one render
+// each, 2026-11-15). Hot chocolate, cookie, pizza slice and milk have no render yet: they keep their emoji until it lands.
+const ORDER_ART = new Set(['coffee','tea','juice','water','sandwich','croissant','cake','apple','soup','salad','icecream','sugar','ice','lemon','cheese']);
+function orderArtHtml(o){
+  if(!o) return '';
+  if(!orderWorldOn() || !ORDER_ART.has(o.id)) return o.art;
+  return '<img class="order-art-img" src="games/worlds/order/art/' + (ORDER_EXTRAS.includes(o) ? 'extra' : 'item') + '-' + o.id + '.webp" alt="" decoding="async" draggable="false">';
+}
 function orderFaceSrc(round, cust){
   if(!orderWorldOn()) return 'char-' + cust.ch + '.png';
   const list = ORDER_TOWN[TTS_ACCENTS.indexOf(ttsAccent()) === 1 ? 'm' : 'f'], i = Math.max(0, round.customers.indexOf(cust));
@@ -20483,7 +20491,7 @@ function orderCardHtml(round, cust){
 function orderBoardHtml(round, cust){
   if(!cust.board) return '';
   const lang = orderLang(), so = L('sold out','bitti','تمام شده','agotado');
-  return `<div class="order-board" id="order-board" dir="ltr" role="list" aria-label="${esc(L('Menu board','Menü tahtası','تابلوی منو','Pizarra del menú'))}">${cust.board.map(id=>{ const it = orderItem(id), out = id === cust.soldOut; return `<span role="listitem" class="game-chip${out ? ' out' : ''}" title="${out ? esc(so) : ''}" aria-label="${esc(orderName(it, 1, lang) + (out ? ' – ' + so : ''))}">${it.art} ${esc(orderName(it, 1, lang))}</span>`; }).join('')}</div>`;
+  return `<div class="order-board" id="order-board" dir="ltr" role="list" aria-label="${esc(L('Menu board','Menü tahtası','تابلوی منو','Pizarra del menú'))}">${cust.board.map(id=>{ const it = orderItem(id), out = id === cust.soldOut; return `<span role="listitem" class="game-chip${out ? ' out' : ''}" title="${out ? esc(so) : ''}" aria-label="${esc(orderName(it, 1, lang) + (out ? ' – ' + so : ''))}">${orderArtHtml(it)} ${esc(orderName(it, 1, lang))}</span>`; }).join('')}</div>`;
 }
 function orderShelfHtml(round, cust){
   const lang = orderLang(), hide = round.level !== 'A1' && round.level !== 'A2';
@@ -20492,7 +20500,7 @@ function orderShelfHtml(round, cust){
     if(!o) return '';
     const name = isX ? o[lang] : orderName(o, 1, lang);
     const cls = isX ? 'order-t-extra' : (o.type === 'drink' ? 'order-t-drink' : 'order-t-food');
-    return `<button type="button" class="game-tile ${cls}${hide ? ' nolabel' : ''}" data-action="order-tile" data-quiet="1" data-k="${t.k}" data-id="${t.id}" aria-label="${esc(name)}" dir="ltr"><span class="order-tile-art" aria-hidden="true">${o.art}</span><span class="order-tile-name">${esc(name)}</span></button>`;
+    return `<button type="button" class="game-tile ${cls}${hide ? ' nolabel' : ''}" data-action="order-tile" data-quiet="1" data-k="${t.k}" data-id="${t.id}" aria-label="${esc(name)}" dir="ltr"><span class="order-tile-art" aria-hidden="true">${orderArtHtml(o)}</span><span class="order-tile-name">${esc(name)}</span></button>`;
   }).join('')}</div>`;
 }
 function orderStatusHtml(round){
@@ -20549,7 +20557,7 @@ function orderSpeak(round, text){
 function orderArrive(round){
   const cust = orderCust(round); if(!cust || round.finished) return;
   const rtl = document.documentElement.dir === 'rtl';
-  anim(document.getElementById('order-cust'), orderWorldOn() ? [{transform:`translateX(${rtl ? -40 : 40}px)`, opacity:0}, {transform:'none', opacity:1}] : [
+  anim(document.getElementById('order-cust'), orderWorldOn() ? [{transform:`translateX(${rtl ? -16 : 16}px)`, opacity:0}, {transform:'none', opacity:1}] : [
     {transform:`translateX(${rtl ? -80 : 80}px)`, opacity:0}, {transform:'translateX(0) scale(1)', opacity:1, offset:.75},
     {transform:'translateX(0) scale(1.06, .94)', offset:.9}, {transform:'translateX(0) scale(1)'}
   ], {duration:400, easing:orderWorldOn() ? 'ease-out' : SPRING});
@@ -21303,10 +21311,18 @@ function deskFixHtml(round, t){
   // reduced path left; the old free-text input/desk-fix-go flow is retired.
   return `<div class="desk-fix fade-in" id="desk-fix"><div class="desk-chips">${t.chipVals.map((v, i)=>`<button class="game-opt desk-chip" data-action="desk-chip" data-quiet="1" data-i="${i}">${deskChipLabel(round, f, v)}</button>`).join('')}</div></div>`;
 }
+const DESK_TOWN = {f:[1, 3, 5, 7], m:[2, 4, 6, 8]};
+function deskFaceSrc(round, t){
+  if(worldKind() !== 'desk') return 'char-' + t.ch + '.png';
+  const g = t.g || 'f', list = DESK_TOWN[g === 'm' ? 'm' : 'f'];
+  const i = Math.max(0, round.travellers.indexOf(t)), seed = String((round.travellers[0] && round.travellers[0].ch) || '').length;
+  const face = t.done ? 'warm' : (t.tries ? 'oh' : 'calm');
+  return 'games/worlds/desk/art/traveller-' + list[(seed + i) % list.length] + '-' + face + '.webp';
+}
 function deskBodyHtml(round, t){
   const shown = t.said || round.noVoice;
   return `<div class="desk-trav" id="desk-trav">
-      <span class="desk-who-wrap"><img class="desk-who" id="desk-who" src="char-${t.ch}.png" alt=""></span>
+      <span class="desk-who-wrap"><img class="desk-who" id="desk-who" src="${deskFaceSrc(round, t)}" alt=""></span>
       ${deskBubbleHtml(round, t)}
     </div>
     <div class="order-tools desk-tools">
@@ -29797,11 +29813,11 @@ function worldsOn(kind){
   }
   return THEATRE_QUICK.includes(kind) && (!!WORLDS_LIVE[kind] || worldsFlag);
 }
-// the end line of a world (SPEC 16; Build It's "All built!" until the lighthouse exists), in the interface language
+// the end line of a world (SPEC 16), in the interface language
 function worldEndLine(){
   const k = worldKind(); if(!k || !THEATRE_QUICK_VIEWS.includes(state.view)) return null;
   const E = {order:L('Closed for today.','Bugünlük kapandı.','امروز تعطیل شد.','Cerrado por hoy.'), bingo:L('Full card!','Tam kart!','کارت کامل!','¡Cartón lleno!'),
-    cross:L('Today\'s puzzle, done.','Bugünün bulmacası tamam.','جدول امروز تموم شد.','El crucigrama de hoy, listo.'), build:L('All built!','Hepsi kuruldu!','همه ساخته شد!','¡Todo construido!'),
+    cross:L('Today\'s puzzle, done.','Bugünün bulmacası tamam.','جدول امروز تموم شد.','El crucigrama de hoy, listo.'), build:L('The lighthouse is lit.','Deniz feneri yandı.','فانوس دریایی روشن شد.','El faro está encendido.'),
     echo:L('That\'s a wrap.','Kayıt bitti.','ضبط تموم شد.','Grabación terminada.')};
   return E[k] || null;
 }
@@ -29865,13 +29881,38 @@ function worldTick(){
   const k = worldKind(), r = state.viewParams && state.viewParams.round;
   if(!k || !r || !THEATRE_QUICK_VIEWS.includes(state.view)) return;
   const p = worldProgress(state.view, r); if(p && Theatre.progress) Theatre.progress(p.done, p.total);
-  document.body.classList.toggle('gw-live', state.view === 'game-echo' && !!r.listening);   // the ON AIR plate lights while the mic listens
+  document.body.classList.toggle('gw-live', state.view === 'game-echo' && !!r.listening);
+  try{ if(k === 'build' && p) worldLighthouse(p.done, p.total, !!r.finished); if(k === 'echo') worldEchoHost(r); }catch(e){}   // the ON AIR plate lights while the mic listens
   const over = state.view === 'game-match' ? !!(r.matchedKeys && r.matchedKeys.length === r.pairCount) : !!r.finished;
   if(over && !r.beat){
     r.beat = 1;
     if(Theatre.finale) Theatre.finale({});
     if(state.view === 'game-order') orderSam('close');
   }
+}
+// Build It (worlds SPEC 7): the model lighthouse on the bench grows one tier per sentence and lights at the end. Tiers shown =
+// round(6 x solved / total), so a short round still ends whole. One render, cut at its own red / white band edges (manifest-lighthouse.json).
+const LIGHTHOUSE_TIERS = [1, .8167, .6764, .5444, .4028, .1833, 0];   // the top edge of what shows, for 0..6 tiers
+function worldLighthouse(done, total, lit){
+  const tiers = total ? Math.round(6 * done / total) : 0, top = LIGHTHOUSE_TIERS[Math.max(0, Math.min(6, tiers))];
+  // on the bench between the window and the red toolbox (plate %); the whole model shows faintly from the start, so the goal is in sight
+  const src = 'games/worlds/build/art/build-lighthouse.webp', box = [58.5, 43.9, 14];
+  Theatre.actor('gw-lighthouse-ghost', src, box, 'gw-lighthouse-ghost');
+  const n = Theatre.actor('gw-lighthouse', src, box, 'gw-lighthouse');
+  if(!n) return;
+  const was = n.getAttribute('data-tiers');
+  n.setAttribute('data-tiers', tiers);
+  n.style.clipPath = 'inset(' + (top * 100).toFixed(2) + '% -10% 0 -10%)';
+  if(was != null && +was < tiers && !reducedMotion()) anim(n, [{transform:'translateY(-4%)', opacity:.6}, {transform:'translateY(.6%)', opacity:1, offset:.7}, {transform:'none', opacity:1}], {duration:380, easing:'ease-out'});
+  const g = Theatre.actor('gw-lamp-glow', lit ? 'games/worlds/build/art/build-lamp-glow.webp' : null, [56.1, 39.7, 19], 'gw-lamp-glow');
+  if(g && !g.getAttribute('data-on')){ g.setAttribute('data-on', '1'); if(!reducedMotion()) anim(g, [{opacity:0}, {opacity:1}], {duration:700, easing:'ease-out'}); }
+}
+// Say It Back (worlds SPEC 9): the host and his echo (one picture, the echo at 40 %) in the inline-start third. He listens while the line
+// plays, speaks while the mic is on, and looks pleased on a clear line and at the end.
+function worldEchoHost(r){
+  const line = r.lines && r.lines[r.index];
+  const face = r.listening ? 'speak' : ((r.finished || (line && line.state === 'result' && line.clear)) ? 'pleased' : 'listen');
+  Theatre.actor('gw-host', 'games/worlds/echo/art/echo-duo-' + face + '.webp', [22, 40.6, 40], 'gw-host');   // behind the desk (the front layer), right of the lamp
 }
 // The world's own sounds (SPEC 4.10): the app's sound names played as the world's foley (the Open House CC0 kit); anything not
 // listed keeps the app's own sound. Say It Back keeps its quiet UI sounds (accuracy matters there).

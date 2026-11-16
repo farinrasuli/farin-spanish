@@ -31,7 +31,7 @@ window.THEATRE_CONTENT = {
     order:{
       title:'Hora punta en el bar de Nacho',   // worlds SPEC 16: Harbour Files ES canon (el bar de Nacho)
       tagline:'Cinco clientes. Una bandeja. Escucha bien.',
-      art:'games/posters/order.webp', artReady:false   // until this portrait key art lands: the card poster + the palette from skins.js
+      art:'games/posters/order.webp', artReady:true   // the 4:5 key art (2026-11-16; Games 2.0 SPEC 5.1: shown whole), with the palette from skins.js
     },
     desk:{
       title:'Llegadas',
@@ -50,14 +50,15 @@ window.THEATRE_CONTENT = {
       tagline:'Dila bien y la puerta se abre.',
       art:'games/posters/spell.webp', artReady:false   // until this portrait key art lands: the card poster + the palette from skins.js
     },
-    // quick games (2026-11-14): the poster is the live roadmap card art and its palette (skins.js); titles + taglines from the
+    // quick games (2026-11-14): the poster is the live roadmap card art and its palette (skins.js), or the game's own 4:5 key art once it
+    // passes (2026-11-16: Order Up!, Word Bingo, Say It Back; Mini Cross and Build It wait for fixed posters); titles + taglines from the
     // worlds SPEC section 16 (farin-gamification)
     match:{title:'La mesa de cartas', tagline:'Gira dos. Encuentra la pareja. El ferri ya casi llega.'},
     build:{title:'El taller de palabras', tagline:'Bloque a bloque, la frase se levanta.'},
     cross:{title:'El crucigrama de la mañana', tagline:'Un café, un lápiz y las palabras que ya sabes.'},
-    bingo:{title:'Bingo en la ventana', tagline:'Nueve palabras. Un cartón al sol. Escucha la tuya.'},
+    bingo:{title:'Bingo en la ventana', tagline:'Nueve palabras. Un cartón al sol. Escucha la tuya.', art:'games/posters/bingo.webp', artReady:true},
     hunt:{title:'La caza de palabras', tagline:'En algún lugar de tu historia se esconden las palabras.'},
-    echo:{title:'En antena', tagline:'Escucha. Repite. Oye tu eco.'},
+    echo:{title:'En antena', tagline:'Escucha. Repite. Oye tu eco.', art:'games/posters/echo.webp', artReady:true},
     dictation:{title:'Junto a la ventana', tagline:'Escucha bien. Escribe lo que oyes.'},
     trap:{title:'Carrera en el muelle', tagline:'Elige rápido. Salta limpio.'}
   },

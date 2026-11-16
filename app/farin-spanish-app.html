@@ -9674,6 +9674,13 @@ function go(view, params){
   state.view = view; state.viewParams = params || {}; save(); render(); window.scrollTo(0,0);
   pushHistoryEntry();
 }
+/* The app opens on the screen the learner left, but a fresh start has no browser history for that screen: the in-app Back then did
+   nothing (history.back() had nowhere to go, or went to the old launch page, which opened the same screen again) and the phone's Back
+   left the app. Farin 2026-11-16: "when a user is in the chat message section they cant go back the back and home buttons wont work".
+   Now the in-app Back with no in-app history goes straight to goBack(), and a cold start on a deeper screen adds one history entry,
+   so the phone's Back lands in the app too. */
+function backTap(){ if(!navHistory.length){ goBack(); return; } try{ history.back(); }catch(e){ goBack(); } }
+function bootBackEntry(){ if(!navHistory.length && ['dashboard','goals-list','student-club','messages','diagnostic-intro'].indexOf(state.view) === -1) pushHistoryEntry(); }
 function goBack(){
   resetConfirmPending = false;
   stopAllSpeech();
@@ -9686,7 +9693,7 @@ function goBack(){
   if(state.courseReturn && state.view !== 'course-waitlist' && courseBackLeavesStep() && courseReturnGo()) return;
   const prev = navHistory.pop();
   if(prev){ state.view = prev.view; state.viewParams = prev.params; }
-  else { state.view = state.profile.completedDiagnostic ? 'dashboard' : 'diagnostic-intro'; state.viewParams = {}; }
+  else { state.view = !state.profile.completedDiagnostic ? 'diagnostic-intro' : /^msg-/.test(state.view || '') ? 'messages' : 'dashboard'; state.viewParams = {}; }   // a chat opened cold goes back to Messages
   save(); render(); window.scrollTo(0,0);
 }
 
@@ -15179,10 +15186,10 @@ function renderPrivacyPolicy(){
               "Uygulama kayıt olurken bildirimleri sorar (sonradan Ayarlar › «Bildirimler» bölümünden de açabilirsin); telefonun uygulamanın bildirimlerine zaten izin veriyorsa, uygulama bildirimleri sormadan açar ve Ayarlar'dan istediğin zaman kapatabilirsin. Açık olduklarında telefonun ya da tarayıcın uygulamaya bir bildirim adresi verir; Cloudflare üzerindeki küçük bildirim sunucumuz bu adresi seçimlerinle birlikte saklar: hesap kodundan türetilen tek yönlü bir kimlik, uygulama ve dili, seviyen ve hedefin, sahip olduğun kurslar, ilk adın, saat dilimin, uygulamayı genelde kullandığın saat ve uygulamanın senin için planladığı hatırlatmalar (örneğin sıradaki kartın ya da bir oyun). Bildirimler cihazına kendi bildirim hizmeti üzerinden (Google, Apple, Mozilla ya da Microsoft), yolda şifrelenmiş olarak ulaşır.",
               "اپ موقع ثبت‌نام درباره‌ی اعلان‌ها از تو می‌پرسد (بعداً هم از تنظیمات › «اعلان‌ها» می‌توانی روشنشان کنی)؛ اگر گوشی‌ات از قبل به اعلان‌های اپ اجازه داده باشد، اپ بدون پرسیدن روشنشان می‌کند و هر وقت بخواهی از تنظیمات خاموششان می‌کنی. وقتی روشن باشند، گوشی یا مرورگرت یک نشانی اعلان به اپ می‌دهد و سرور کوچک اعلان ما روی Cloudflare آن را با انتخاب‌هایت نگه می‌دارد: نسخهٔ درهم‌شدهٔ کد حسابت، اپ و زبانش، سطح و هدفت، دوره‌هایی که داری، اسم کوچکت، منطقهٔ زمانی‌ات، ساعتی که معمولاً از اپ استفاده می‌کنی و یادآوری‌هایی که اپ برایت برنامه‌ریزی می‌کند (مثل کارت بعدی‌ات یا یک بازی). اعلان‌ها از طریق سرویس اعلان خود دستگاهت (گوگل، اپل، موزیلا یا مایکروسافت) و رمزگذاری‌شده به دستت می‌رسند.",
               "La app te pregunta por las notificaciones al registrarte (o más tarde en Configuración › «Notificaciones»); si tu teléfono ya permite las notificaciones de la app, las activa sin preguntar, y puedes desactivarlas cuando quieras en Configuración. Cuando están activadas, tu teléfono o navegador da a la app una dirección de notificaciones, que nuestro pequeño servidor de notificaciones en Cloudflare guarda con tus preferencias: una versión cifrada del código de tu cuenta, la app y su idioma, tu nivel y tu objetivo, los cursos que tienes, tu nombre de pila, tu zona horaria, la hora a la que sueles usar la app y los recordatorios que la app planea para ti (como tu próxima tarjeta o un juego). Las notificaciones llegan a tu dispositivo por su propio servicio de notificaciones (Google, Apple, Mozilla o Microsoft), cifradas por el camino."))}
-        ${P(L("You get Farin's answers and course passwords from Messages, the announcements Farin sends, and, if reminders are on, a short reminder when you haven't opened the app for a while: at most one a day, never between 22:00 and 10:00. Course news and offers come only if you tick “Course news and offers”, a separate box that starts unticked; your choice and its date are saved with your account. Farin's announcements also show in the app, once as a pop-up and in Messages; the app downloads the recent list without sending anything about you. Turning notifications off deletes your push address from the server. The server counts notifications sent and opened, not who opened them.",
-              "Mesajlar'daki Farin'in cevapları ve kurs şifreleri, Farin'in gönderdiği duyurular ve hatırlatmalar açıksa, bir süredir uygulamayı açmadığında kısa bir hatırlatma gelir: günde en fazla bir tane, 22:00 ile 10:00 arasında asla. Kurs haberleri ve fırsatlar yalnızca, işaretsiz gelen ayrı «Kurs haberleri ve fırsatlar» kutusunu işaretlersen gelir; seçimin ve tarihi hesabınla birlikte kaydedilir. Farin'in duyuruları uygulamada da görünür: bir kez açılan bir pencerede ve Mesajlar'da; uygulama son duyuruların listesini senin hakkında bir şey göndermeden indirir. Bildirimleri kapatınca bildirim adresin sunucudan silinir. Sunucu gönderilen ve açılan bildirimleri sayar, kimin açtığını kaydetmez.",
-              "جواب‌های فرین و رمز دوره‌ها از پیام‌ها، اطلاعیه‌هایی که فرین می‌فرستد و اگر یادآوری‌ها روشن باشد، وقتی مدتی اپ را باز نکرده‌ای یک یادآوری کوتاه به دستت می‌رسد: روزی حداکثر یکی و هیچ‌وقت بین ساعت ۲۲ تا ۱۰. خبر دوره‌ها و پیشنهادها فقط وقتی می‌آید که جعبهٔ جداگانهٔ «خبر دوره‌ها و پیشنهادها» را تیک بزنی؛ این جعبه از اول تیک‌نخورده است و انتخابت با تاریخش همراه حسابت ذخیره می‌شود. اطلاعیه‌های فرین در خود اپ هم دیده می‌شوند: یک بار به شکل پنجره و در پیام‌ها؛ اپ فهرست اطلاعیه‌های اخیر را بدون فرستادن چیزی دربارهٔ تو می‌گیرد. وقتی اعلان‌ها را خاموش کنی، نشانی اعلانت از سرور پاک می‌شود. سرور تعداد اعلان‌های فرستاده و بازشده را می‌شمارد، نه اینکه چه کسی بازشان کرده.",
-              "Recibes las respuestas de Farin y las contraseñas de cursos de Mensajes, los avisos que envía Farin y, si los recordatorios están activados, un aviso corto cuando llevas un tiempo sin abrir la app: como máximo uno al día, nunca entre las 22:00 y las 10:00. Las novedades de cursos y ofertas solo llegan si marcas «Novedades de cursos y ofertas», una casilla aparte que empieza sin marcar; tu elección y su fecha se guardan con tu cuenta. Los avisos de Farin también se ven en la app, una vez como ventana y en Mensajes; la app descarga la lista reciente sin enviar nada sobre ti. Al desactivar las notificaciones, tu dirección se borra del servidor. El servidor cuenta las notificaciones enviadas y abiertas, no quién las abre."))}
+        ${P(L("You get Farin's answers and course passwords from Messages, the announcements Farin sends, and, if reminders are on, a short reminder when you haven't opened the app for a while: at most one a day, never between 22:00 and 10:00. With notifications on, you also get occasional news about our courses and offers; you can turn these off any time in Settings › “Notifications” › “Course news and offers”, and that choice and its date are saved with your account. Farin's announcements also show in the app, once as a pop-up and in Messages; the app downloads the recent list without sending anything about you. Turning notifications off deletes your push address from the server. The server counts notifications sent and opened, not who opened them.",
+              "Mesajlar'daki Farin'in cevapları ve kurs şifreleri, Farin'in gönderdiği duyurular ve hatırlatmalar açıksa, bir süredir uygulamayı açmadığında kısa bir hatırlatma gelir: günde en fazla bir tane, 22:00 ile 10:00 arasında asla. Bildirimler açıkken kurslarımızla ilgili ara sıra haberler ve fırsatlar da gelir; bunları Ayarlar › «Bildirimler» › «Kurs haberleri ve fırsatlar» bölümünden istediğin zaman kapatabilirsin, seçimin ve tarihi hesabınla birlikte kaydedilir. Farin'in duyuruları uygulamada da görünür: bir kez açılan bir pencerede ve Mesajlar'da; uygulama son duyuruların listesini senin hakkında bir şey göndermeden indirir. Bildirimleri kapatınca bildirim adresin sunucudan silinir. Sunucu gönderilen ve açılan bildirimleri sayar, kimin açtığını kaydetmez.",
+              "جواب‌های فرین و رمز دوره‌ها از پیام‌ها، اطلاعیه‌هایی که فرین می‌فرستد و اگر یادآوری‌ها روشن باشد، وقتی مدتی اپ را باز نکرده‌ای یک یادآوری کوتاه به دستت می‌رسد: روزی حداکثر یکی و هیچ‌وقت بین ساعت ۲۲ تا ۱۰. وقتی اعلان‌ها روشن‌اند، گاهی خبر دوره‌ها و پیشنهادهای ما هم برایت می‌آید؛ هر وقت بخواهی از تنظیمات › «اعلان‌ها» › «خبر دوره‌ها و پیشنهادها» خاموشش می‌کنی و این انتخاب با تاریخش همراه حسابت ذخیره می‌شود. اطلاعیه‌های فرین در خود اپ هم دیده می‌شوند: یک بار به شکل پنجره و در پیام‌ها؛ اپ فهرست اطلاعیه‌های اخیر را بدون فرستادن چیزی دربارهٔ تو می‌گیرد. وقتی اعلان‌ها را خاموش کنی، نشانی اعلانت از سرور پاک می‌شود. سرور تعداد اعلان‌های فرستاده و بازشده را می‌شمارد، نه اینکه چه کسی بازشان کرده.",
+              "Recibes las respuestas de Farin y las contraseñas de cursos de Mensajes, los avisos que envía Farin y, si los recordatorios están activados, un aviso corto cuando llevas un tiempo sin abrir la app: como máximo uno al día, nunca entre las 22:00 y las 10:00. Con las notificaciones activadas, también recibes de vez en cuando novedades de nuestros cursos y ofertas; puedes desactivarlas cuando quieras en Configuración › «Notificaciones» › «Novedades de cursos y ofertas», y tu elección y su fecha se guardan con tu cuenta. Los avisos de Farin también se ven en la app, una vez como ventana y en Mensajes; la app descarga la lista reciente sin enviar nada sobre ti. Al desactivar las notificaciones, tu dirección se borra del servidor. El servidor cuenta las notificaciones enviadas y abiertas, no quién las abre."))}
 
         ${H(L('10. Private lessons','10. Özel dersler','۱۰. کلاس‌های خصوصی','10. Clases particulares'))}
         ${P(L("If you take private lessons with Farin, your lesson files (lesson notes and progress records) are kept only on his own computer and are not published online. They are deleted 12 months after your last lesson, or earlier if you ask.",
@@ -16867,8 +16874,8 @@ clubAskSchedule(8000);
    Server: the fe-notify Worker (Claude/tools/fe-notify: Cloudflare Worker + D1 + 10-minute cron; the VAPID private key is its secret).
    Learner side:
    - Asked once, in context, never on open: after the first message or course request ("when Farin answers"), or after finishing a roadmap
-     card in a later session ("when your next card is ready"). At most 2 asks, 14+ days apart. An unticked box under it = "course news and
-     offers" by notification (profile.notif.promo/promoAt/promoSource): a separate consent per channel, like the WhatsApp one (law 6563).
+     card in a later session ("when your next card is ready"). At most 2 asks, 14+ days apart. Course news and offers come to
+     everyone with notifications on (Farin 2026-11-16 "offer those to everyone", no tick); Settings › Course news turns them off (notif.promoOff).
    - Settings › Notifications: on/off, Reminders on/off, Course news on/off; an iPhone note (Home Screen first) and a "blocked" note.
    - On each open and after each finished card the app re-registers its subscription with a fresh plan (playbook v3, 2026-11-16): day 2 /
      three in a row in the first week, else the next card (+1 day), a game (+2), the streak saver or The Red Suitcase (+3), the mystery (+5),
@@ -16918,8 +16925,15 @@ function notifSubscription(create){
 function notifPost(path, body){
   return fetch(NOTIF_URL + path, {method:'POST', headers:{'Content-Type':'text/plain'}, body:JSON.stringify(body), keepalive:true}).then(r=>r.json()).catch(()=>null);
 }
-function notifPromoSet(on, source){ const n = notifState(); n.promo = !!on; n.promoAt = Date.now(); n.promoSource = source; }
-// Asks the phone, subscribes, registers. Resolves 'granted' | 'denied' | 'default' | 'unsupported' | 'error'.
+// Course news and offers: on for everyone with notifications (Farin 2026-11-16: "offer those to everyone", chose "no question"). Off only
+// when the learner turns it off in Settings (promoOff; before 2026-11-16 a Settings untick saved promo:false, source 'settings').
+function notifPromoOn(){ const n = notifState(); return !(n.promoOff || (n.promo === false && n.promoSource === 'settings')); }
+function notifPromoSet(on, source){ const n = notifState(); n.promo = !!on; n.promoOff = !on; n.promoAt = Date.now(); n.promoSource = source; }
+// Asks the phone, subscribes, registers. Resolves 'granted' | 'denied' | 'default' | 'unsupported' | 'busy' | 'error'.
+// Once the phone says yes, notifications are on, even when the push address can't be made yet (the service worker is still starting,
+// the push service is slow or blocked): the address is made in the background (in 4 s, 20 s and 60 s, then at every open and after
+// every card) and the learner sees "You're all set". Before 2026-11-16 a failed address said "Notifications are off" right after
+// the learner tapped Allow (Farin: "when they click on yes on the notif it says it didnt open").
 function notifEnable(source, promo){
   if(!notifSupported()) return Promise.resolve('unsupported');
   if(notifBusy) return Promise.resolve('busy');
@@ -16927,16 +16941,17 @@ function notifEnable(source, promo){
   const n = notifState();
   const ask = new Promise(res=>{ try{ const r = Notification.requestPermission(res); if(r && r.then) r.then(res, ()=>res('default')); }catch(e){ res('default'); } });
   return ask.then(perm=>{
-    n.perm = perm;
+    n.perm = perm; n.tryAt = Date.now();
     if(perm !== 'granted'){ n.on = false; save(); return perm; }
-    return notifSubscription(true).then(()=>{
-      n.on = true; n.onAt = Date.now(); n.src = source; if(n.remind == null) n.remind = true;
-      if(promo != null) notifPromoSet(promo, source);
-      if(!n.hours) n.hours = [new Date().getHours()];
-      save(); notifRegister(true);
-      return 'granted';
-    });
-  }).catch(()=>{ n.on = false; save(); return 'error'; }).then(r=>{ notifBusy = false; return r; });
+    n.on = true; n.onAt = Date.now(); n.src = source; if(n.remind == null) n.remind = true;
+    if(promo != null) notifPromoSet(promo, source);
+    if(!n.hours) n.hours = [new Date().getHours()];
+    save();
+    return notifSubscription(true).then(()=>{ if(n.subErr){ delete n.subErr; save(); } notifRegister(true); }, e=>{
+      n.subErr = String((e && (e.name || e.message)) || 'error').slice(0, 60); save();   // kept for support: why the address failed
+      [4000, 20000, 60000].forEach(t=>setTimeout(()=>{ if(notifOn()) notifRegister(true); }, t));
+    }).then(()=>'granted');
+  }).catch(()=>'error').then(r=>{ notifBusy = false; return r; });
 }
 function notifDisable(){
   const n = notifState(); n.on = false; n.offAt = Date.now(); save();
@@ -16992,7 +17007,7 @@ function notifPlanItems(){
   else if(path && used.indexOf(path) === -1) add(3, path, nudge(path));
   if(mys && used.indexOf(mys) === -1) add(5, mys, nudge(mys));
   else if(path && used.indexOf(path) === -1) add(5, path, nudge(path));
-  if(!nst.promo){ const g2 = free(plain); if(g2) add(8, g2, nudge(g2)); }
+  if(!notifPromoOn()){ const g2 = free(plain); if(g2) add(8, g2, nudge(g2)); }
   add(14, null, {k:'back', v:{go:'home'}});
   add(21, null, {k:'stop', v:{go:'home', words:notifWords()}});
   // B1: their week closes tonight (Sunday) and one more day reaches the weekly goal
@@ -17012,7 +17027,7 @@ function notifPlanItems(){
     if(!nst.lastLevel) nst.lastLevel = lvl;
     else if(NOTIF_LEVELS.indexOf(lvl) > NOTIF_LEVELS.indexOf(nst.lastLevel)){
       nst.fixed = (nst.fixed || []).concat([{at:notifAt(1, H), k:'level', v:{level:lvl, go:'home'}}]);
-      if(nst.promo && NOTIF_LEVELS.indexOf(lvl) >= 2) nst.fixed.push({at:notifAt(4, H), k:'levelc', v:{level:lvl, go:'courses'}});
+      if(notifPromoOn() && NOTIF_LEVELS.indexOf(lvl) >= 2) nst.fixed.push({at:notifAt(4, H), k:'levelc', v:{level:lvl, go:'courses'}});
       nst.lastLevel = lvl; save();
     }
   }
@@ -17036,7 +17051,7 @@ function notifOwned(){ try{ return COURSES.filter(c=>courseUnlocked(c.id)).map(c
 function notifGoals(){ const p = state.profile; return (Array.isArray(p.goals) && p.goals.length ? p.goals : [p.motivationTag]).filter(Boolean).map(String); }
 // One course spotlight, B1+ only (every course starts at B1), matched to the learner's goals, never a course they have; rotates every 10 days.
 function notifPromoItem(){
-  if(!notifState().promo || NOTIF_LEVELS.indexOf(state.profile.level) < 2) return null;
+  if(!notifPromoOn() || NOTIF_LEVELS.indexOf(state.profile.level) < 2) return null;
   const owned = notifOwned();
   let visible = []; try{ visible = COURSES.filter(c=>!c.hidden && ['later', 'soon', 'hidden'].indexOf(c.status) === -1 && owned.indexOf(c.id) === -1); }catch(e){}
   const ids = []; notifGoals().forEach(g=>(NOTIF_PROMO_BY_GOAL[g] || []).forEach(id=>{ if(ids.indexOf(id) === -1) ids.push(id); }));
@@ -17049,9 +17064,9 @@ function notifTz(){ try{ return Intl.DateTimeFormat().resolvedOptions().timeZone
 function notifRegister(force){
   if(!notifOn() || location.hash === '#admin') return Promise.resolve(null);
   const p = state.profile, n = notifState();
-  return notifSubscription(true).then(sub=>(p.recoveryCode ? courseSha256Hex(p.recoveryCode).catch(()=>null) : Promise.resolve(null)).then(acct=>{
+  return notifSubscription(true).then(sub=>{ if(n.subErr){ delete n.subErr; save(); } return sub; }).then(sub=>(p.recoveryCode ? courseSha256Hex(p.recoveryCode).catch(()=>null) : Promise.resolve(null)).then(acct=>{
     const plan = notifPlanItems(), promoItem = notifPromoItem();
-    const body = {sub:sub.toJSON(), acct, app:LOGIN_APP, lang:LANG, level:p.level || '', goal:notifGoals()[0] || '', courses:notifOwned(), promo:!!n.promo,
+    const body = {sub:sub.toJSON(), acct, app:LOGIN_APP, lang:LANG, level:p.level || '', goal:notifGoals()[0] || '', courses:notifOwned(), promo:notifPromoOn(),
       remind:n.remind !== false, tz:notifTz(), hour:notifHour(), name:String(p.name || '').trim().split(/\s+/)[0].slice(0, 30), plan, promoItem};
     const sig = JSON.stringify([plan.map(i=>i.k + (i.v.go || '')), body.lang, body.level, body.promo, body.remind, body.courses, sub.endpoint, promoItem && promoItem.v.ck]);
     if(!force && sig === notifRegSig && Date.now() - notifRegAt < 3 * 3600000) return null;
@@ -17087,34 +17102,34 @@ function notifAskHtml(reason, phase){
   const dog = `<img class="club-ask-dog" src="${farinSrc('dog')}" alt="">`;
   const first = String((state.profile && state.profile.name) || '').trim().split(/\s+/)[0];
   // 'start' = right after signup, and once for learners who were already in (Farin 2026-11-16)
-  if(reason === 'start' && phase !== 'granted' && phase !== 'blocked') return `<div class="club-ask-card">${dog}
+  if(reason === 'start' && phase === 'ask') return `<div class="club-ask-card">${dog}
       <div class="eyebrow club-ask-eyebrow">${CL('Notifications','Bildirimler','اعلان‌ها','Notificaciones')}</div>
       <h2 class="display club-ask-title" id="notif-ask-title" dir="auto">${esc(first ? CL('Can I remind you, ' + first + '?', first + ', sana hatırlatayım mı?', first + '، یادت بندازم؟', '¿Te lo recuerdo, ' + first + '?') : CL('Can I remind you?', 'Sana hatırlatayım mı?', 'یادت بندازم؟', '¿Te lo recuerdo?'))}</h2>
       <p class="club-ask-text">${CL('One short note when your next card is ready, never at night, and my answers when you write to me. You can turn it off in Settings.', "Sıradaki kartın hazır olunca kısa bir not, gece asla; bana yazdığında da cevaplarım. Ayarlar'dan istediğin zaman kapatabilirsin.", 'وقتی کارت بعدیت آماده بود یه پیام کوتاه برات می‌فرستم، شب‌ها هیچ‌وقت؛ جواب‌هام به پیام‌هات هم همین‌طوری می‌رسه. هر وقت خواستی از تنظیمات خاموشش کن.', 'Un aviso corto cuando tu próxima tarjeta esté lista, nunca de noche, y mis respuestas cuando me escribas. Puedes desactivarlo en Configuración.')}</p>
-      ${notifPromoBoxHtml('notif-ask-promo', false)}
       <button class="cu-btn cu-orange" data-notif="on">${CL('Turn on notifications','Bildirimleri aç','روشن کردن اعلان‌ها','Activar notificaciones')}</button>
       <button class="msg-link" style="margin-top:0;" data-notif="later">${CL('Not now','Şimdi değil','الان نه','Ahora no')}</button></div>`;
   if(phase === 'granted') return `<div class="club-ask-card">${dog}
       <h2 class="display club-ask-title" id="notif-ask-title">${CL("You're all set",'Hazırsın','همه‌چیز آماده است','Todo listo')}<span class="club-ask-dot">.</span></h2>
       <p class="club-ask-text">${reason === 'msg' ? CL("When Farin answers, you'll see it on your phone.",'Farin cevap verince telefonunda göreceksin.','وقتی فرین جواب بدهد، روی گوشی‌ات می‌بینی.','Cuando Farin responda, lo verás en tu teléfono.') : CL("We'll let you know when something new is waiting. One a day at most.",'Yeni bir şey seni beklediğinde haber vereceğiz. Günde en fazla bir tane.','وقتی چیز تازه‌ای منتظرت باشد خبرت می‌کنیم. روزی حداکثر یکی.','Te avisaremos cuando te espere algo nuevo. Uno al día como máximo.')}</p>
       <button class="cu-btn cu-orange" data-notif="close">${CL('Great','Harika','عالی','Genial')}</button></div>`;
+  // The phone said no (blocked): how to allow it, and Try again for after they did. Never "it's off, no problem" (Farin 2026-11-16).
   if(phase === 'blocked') return `<div class="club-ask-card">${dog}
-      <h2 class="display club-ask-title" id="notif-ask-title">${CL('Notifications are off','Bildirimler kapalı','اعلان‌ها خاموش است','Las notificaciones están desactivadas')}<span class="club-ask-dot">.</span></h2>
-      <p class="club-ask-text">${CL("No problem. Farin's answers will be here in Messages. You can turn notifications on later in Settings.",'Sorun değil. Farin\'in cevapları burada, Mesajlar\'da olacak. Bildirimleri daha sonra Ayarlar\'dan açabilirsin.','اشکالی ندارد. جواب‌های فرین همین‌جا در پیام‌ها می‌آید. بعداً می‌توانی از تنظیمات اعلان‌ها را روشن کنی.','No pasa nada. Las respuestas de Farin estarán aquí, en Mensajes. Puedes activar las notificaciones luego en Configuración.')}</p>
-      <button class="cu-btn cu-orange" data-notif="close">${CL('OK','Tamam','باشه','Vale')}</button></div>`;
+      <h2 class="display club-ask-title" id="notif-ask-title">${CL('Your phone blocked notifications','Telefonun bildirimleri engelledi','گوشیت اعلان‌ها رو بسته','Tu teléfono bloqueó las notificaciones')}<span class="club-ask-dot">.</span></h2>
+      <p class="club-ask-text">${CL("To turn them on, allow notifications for this app in your phone's settings, then tap Try again. Farin's answers are always here in Messages too.",'Açmak için telefonunun ayarlarında bu uygulamanın bildirimlerine izin ver, sonra Tekrar dene\'ye dokun. Farin\'in cevapları her zaman burada, Mesajlar\'da da var.','برای روشن کردنش، تو تنظیمات گوشیت به اعلان‌های این اپ اجازه بده، بعد «دوباره امتحان کن» رو بزن. جواب‌های فرین همیشه همین‌جا تو پیام‌ها هم هست.','Para activarlas, permite las notificaciones de esta app en los ajustes de tu teléfono y luego toca Volver a intentar. Las respuestas de Farin también están siempre aquí, en Mensajes.')}</p>
+      <button class="cu-btn cu-orange" data-notif="on">${CL('Try again','Tekrar dene','دوباره امتحان کن','Volver a intentar')}</button>
+      <button class="msg-link" style="margin-top:0;" data-notif="close">${CL('Not now','Şimdi değil','الان نه','Ahora no')}</button></div>`;
+  // The phone's question was closed without an answer, or never showed.
+  if(phase === 'retry') return `<div class="club-ask-card">${dog}
+      <h2 class="display club-ask-title" id="notif-ask-title">${CL('Almost there','Az kaldı','یه قدم مونده','Ya casi')}<span class="club-ask-dot">.</span></h2>
+      <p class="club-ask-text">${CL("Tap Try again and choose Allow when your phone asks. If nothing shows, allow notifications for this app in your phone's settings.",'Tekrar dene\'ye dokun ve telefonun sorunca İzin ver\'i seç. Hiçbir şey çıkmazsa telefonunun ayarlarından bu uygulamanın bildirimlerine izin ver.','«دوباره امتحان کن» رو بزن و وقتی گوشیت پرسید، اجازه بده. اگه چیزی نیومد، از تنظیمات گوشیت به اعلان‌های این اپ اجازه بده.','Toca Volver a intentar y elige Permitir cuando tu teléfono pregunte. Si no aparece nada, permite las notificaciones de esta app en los ajustes de tu teléfono.')}</p>
+      <button class="cu-btn cu-orange" data-notif="on">${CL('Try again','Tekrar dene','دوباره امتحان کن','Volver a intentar')}</button>
+      <button class="msg-link" style="margin-top:0;" data-notif="close">${CL('Not now','Şimdi değil','الان نه','Ahora no')}</button></div>`;
   return `<div class="club-ask-card">${dog}
       <div class="eyebrow club-ask-eyebrow">${CL('Notifications','Bildirimler','اعلان‌ها','Notificaciones')}</div>
       <h2 class="display club-ask-title" id="notif-ask-title">${reason === 'msg' ? CL('Get a notification when Farin answers?','Farin cevap verince haber verelim mi?','وقتی فرین جواب داد، خبرت کنیم؟','¿Te avisamos cuando Farin responda?') : CL('Want a nudge when your next card is ready?','Sıradaki kartın hazır olunca haber verelim mi?','وقتی کارت بعدی‌ات آماده شد، خبرت کنیم؟','¿Te avisamos cuando tu próxima tarjeta esté lista?')}</h2>
       <p class="club-ask-text">${reason === 'msg' ? CL("Your phone shows Farin's answer, even when the app is closed. You can turn it off in Settings.",'Uygulama kapalıyken bile Farin\'in cevabı telefonunda görünür. Ayarlar\'dan kapatabilirsin.','حتی وقتی اپ بسته است، جواب فرین روی گوشی‌ات نشان داده می‌شود. از تنظیمات می‌توانی خاموشش کنی.','Tu teléfono te muestra la respuesta de Farin, incluso con la app cerrada. Puedes desactivarlo en Configuración.') : CL('A short note when a new card, game or mystery is waiting. One a day at most, never at night. You can turn it off in Settings.','Yeni bir kart, oyun ya da gizem seni beklediğinde kısa bir not. Günde en fazla bir tane, gece asla. Ayarlar\'dan kapatabilirsin.','وقتی یک کارت، بازی یا معمای تازه منتظرت باشد، یک پیام کوتاه. روزی حداکثر یکی، هیچ‌وقت شب. از تنظیمات می‌توانی خاموشش کنی.','Un aviso corto cuando te espere una tarjeta, un juego o un misterio nuevo. Uno al día como máximo, nunca de noche. Puedes desactivarlo en Configuración.')}</p>
-      ${notifPromoBoxHtml('notif-ask-promo', false)}
       <button class="cu-btn cu-orange" data-notif="on">${CL('Turn on notifications','Bildirimleri aç','روشن کردن اعلان‌ها','Activar notificaciones')}</button>
       <button class="msg-link" style="margin-top:0;" data-notif="later">${CL('Not now','Şimdi değil','الان نه','Ahora no')}</button></div>`;
-}
-function notifPromoBoxHtml(id, checked, action){
-  return `<label class="row" style="gap:10px; margin-top:2px; align-items:flex-start; cursor:pointer; text-align:start;">
-      <input type="checkbox" id="${id}"${action ? ` data-action="${action}"` : ''} ${checked ? 'checked' : ''} style="margin-top:3px; flex:0 0 auto; width:18px; height:18px; accent-color:var(--accent);">
-      <span style="font-size:13.5px; font-weight:700; color:var(--ink);">${CL('Also tell me about new courses and offers','Yeni kurslardan ve fırsatlardan da haberim olsun','از دوره‌های جدید و پیشنهادها هم خبرم کن','Avísame también de cursos nuevos y ofertas')}</span>
-    </label>`;
 }
 function notifAskClose(){ const el = document.querySelector('.notif-ask'); if(el) el.remove(); }
 function notifAskShow(reason){
@@ -17122,17 +17137,18 @@ function notifAskShow(reason){
   const el = document.createElement('div');
   el.className = 'club-ask notif-ask'; el.setAttribute('role', 'dialog'); el.setAttribute('aria-modal', 'true'); el.setAttribute('aria-labelledby', 'notif-ask-title');
   el.innerHTML = notifAskHtml(reason, 'ask');
+  const promo = null;   // no tick: course news is on for everyone with notifications (Farin 2026-11-16)
   el.addEventListener('click', e=>{
     if(e.target === el){ notifAskClose(); return; }
     const b = e.target.closest('[data-notif]'); if(!b) return;
     const k = b.dataset.notif;
     if(k === 'later' || k === 'close'){ notifAskClose(); return; }
     if(k === 'on'){
-      const box = document.getElementById('notif-ask-promo'), promo = !!(box && box.checked);
       b.disabled = true;
       notifEnable(reason === 'msg' ? 'ask-messages' : reason === 'start' ? 'ask-start' : 'ask-card', promo).then(r=>{
         if(!document.body.contains(el)) return;
-        el.innerHTML = notifAskHtml(reason, r === 'granted' ? 'granted' : 'blocked');
+        if(r === 'busy'){ b.disabled = false; return; }   // a question is already open on the phone
+        el.innerHTML = notifAskHtml(reason, r === 'granted' ? 'granted' : r === 'denied' ? 'blocked' : 'retry');
       });
     }
   });
@@ -17152,7 +17168,7 @@ function renderNotifSettings(){
   else body = `
     ${notifBoxHtml('notif-main', on, 'notif-toggle', CL("Farin's answers and reminders",'Farin\'in cevapları ve hatırlatmalar','جواب‌های فرین و یادآوری‌ها','Respuestas de Farin y recordatorios'))}
     ${on ? notifBoxHtml('notif-remind', n.remind !== false, 'notif-remind', CL('Reminders: cards, games and mysteries','Hatırlatmalar: kartlar, oyunlar ve gizemler','یادآوری‌ها: کارت‌ها، بازی‌ها و معماها','Recordatorios: tarjetas, juegos y misterios')) : ''}
-    ${on ? notifBoxHtml('notif-promo', !!n.promo, 'notif-promo', CL('Course news and offers','Kurs haberleri ve fırsatlar','خبر دوره‌ها و پیشنهادها','Novedades de cursos y ofertas')) : ''}
+    ${on ? notifBoxHtml('notif-promo', notifPromoOn(), 'notif-promo', CL('Course news and offers','Kurs haberleri ve fırsatlar','خبر دوره‌ها و پیشنهادها','Novedades de cursos y ofertas')) : ''}
     ${hint(on ? CL('One reminder a day at most, never at night.','Günde en fazla bir hatırlatma, gece asla.','روزی حداکثر یک یادآوری، هیچ‌وقت شب.','Como máximo un recordatorio al día, nunca de noche.') : CL("Get Farin's answers and a short nudge when a new card, game or mystery is waiting.",'Farin\'in cevaplarını ve yeni bir kart, oyun ya da gizem seni beklediğinde kısa bir not al.','جواب‌های فرین و یک یادآوری کوتاه وقتی کارت، بازی یا معمای تازه‌ای منتظرت است.','Recibe las respuestas de Farin y un aviso corto cuando te espere una tarjeta, un juego o un misterio nuevo.'))}`;
   return `<div class="card-flat" style="margin-top:14px;"><div class="eyebrow">${CL('Notifications','Bildirimler','اعلان‌ها','Notificaciones')}</div>${body}</div>`;
 }
@@ -17204,7 +17220,7 @@ function notifNewsFits(b){
   const owns = notifOwned().length > 0;
   if(f.course === 'has' && !owns) return false;
   if(f.course === 'none' && owns) return false;
-  if(f.offer && !(p.promoOk === true || (p.notif && p.notif.promo))) return false;
+  if(f.offer && !notifPromoOn() && p.promoOk !== true) return false;   // offers reach everyone unless turned off (2026-11-16)
   return true;
 }
 function notifNewsLoad(force){
@@ -17305,7 +17321,7 @@ function notifBoot(){
 
 /* ============================= ADMIN: NOTIFICATIONS (Farin 2026-11-15) =============================
    Inbox: each answer / password also goes to the learner's phones (fe-notify /send, by the chat's account hash); the chat says whether
-   a phone got it. Section "Notifications": Send to learners (language, app, level, course, offer → only "course news" learners;
+   a phone got it. Section "Notifications": Send to learners (language, app, level, course, offer → everyone except learners who turned course news off;
    the phone count comes from the Worker, the pop-up count from the learners list), the sent list with opens, and the automatic
    reminders: one switch for all, one per kind, every line of copy in EN/TR/FA, sent/opened over 30 days. */
 let adminNotifLast = {};        // chat id -> 'phone' | 'none' | 'err' (the last answer's notification)
@@ -17384,7 +17400,7 @@ function adminNtPeopleCount(){
     if(ui !== f.lang) return false;
     if(f.app !== 'all' && (p.app || 'en') !== f.app) return false;
     if(f.levels.length && f.levels.indexOf(pf.level) === -1) return false;
-    if(f.offer && !(pf.promoOk === true || (pf.notif && pf.notif.promo))) return false;
+    if(f.offer && pf.notif && (pf.notif.promoOff || (pf.notif.promo === false && pf.notif.promoSource === 'settings')) && pf.promoOk !== true) return false;   // offers reach everyone unless turned off (2026-11-16)
     return true;
   }).length;
 }
@@ -17429,7 +17445,7 @@ function renderAdminNotifyTab(){
       <div class="nt-grp"><span>App</span><div class="ap-chips">${chip('nt-app', 'all', 'Both apps', d.app === 'all')}${chip('nt-app', 'en', 'English app', d.app === 'en')}${chip('nt-app', 'es', 'Spanish app', d.app === 'es')}</div></div>
       <div class="nt-grp"><span>Level</span><div class="ap-chips">${chip('nt-lv', 'all', 'All levels', !d.levels.length)}${['A1', 'A2', 'B1', 'B2', 'C1'].map(l=>chip('nt-lv', l, l, d.levels.indexOf(l) !== -1)).join('')}</div></div>
       <div class="nt-grp"><span>Courses</span><div class="ap-chips">${chip('nt-course', 'all', 'Everyone', d.course === 'all')}${chip('nt-course', 'has', 'Bought a course', d.course === 'has')}${chip('nt-course', 'none', 'No course yet', d.course === 'none')}</div></div>
-      <label class="nt-offer"><input type="checkbox" id="nt-offer" ${d.offer ? 'checked' : ''}><span><b>This is an offer or a discount</b><small>Then only learners who said yes to course news and offers get it (Turkish law 6563).</small></span></label>
+      <label class="nt-offer"><input type="checkbox" id="nt-offer" ${d.offer ? 'checked' : ''}><span><b>This is an offer or a discount</b><small>Goes to everyone except learners who turned "Course news and offers" off in Settings (Farin 2026-11-16).</small></span></label>
     </div>
     <div id="nt-reach">${adminNtReachHtml()}</div>
     <div class="nt-lbl" style="margin:14px 0 6px;">How it looks on a phone</div>
@@ -32427,7 +32443,7 @@ const HANDLERS = {
     }
     render();
   },
-  'back'(){ try{ history.back(); }catch(e){ goBack(); } }
+  'back'(){ backTap(); }
 };
 Object.assign(HANDLERS, RL_HANDLERS);   // Lessons that play (LESSONS-PLAY block)
 Object.assign(HANDLERS, NOTIF_HANDLERS);   // phone notifications (Settings switches, News from Farin rows)
@@ -33258,7 +33274,8 @@ function msgBubbleHtml(m, side, d, repaint){
 }
 
 /* ---------- learner screens ---------- */
-function msgTop(label){ return `<div class="cs-top"><button class="back" data-action="back">${ICONS.back} ${label || CL('Back','Geri','برگشت','Atrás')}</button><span style="flex:1;"></span></div>`; }
+// home: the chat screens have no floating Home button (it would sit on the send button), so their top bar carries one (2026-11-16)
+function msgTop(label, home){ return `<div class="cs-top"><button class="back" data-action="back">${ICONS.back} ${label || CL('Back','Geri','برگشت','Atrás')}</button><span style="flex:1;"></span>${home ? `<button class="icon-btn msg-home" data-action="nav" data-view="dashboard" aria-label="${esc(CL('Home','Ana Sayfa','خانه','Inicio'))}">${ICONS.home}</button>` : ''}</div>`; }
 function msgRowHtml(id){
   const d = msgCache[id], tp = msgTopic(id), un = msgUnread(id), last = msgAll(d).filter(m=>!m.sys).pop();
   const st = d && d.type === 'request' ? (d.status === 'done' ? ' done' : ' waiting') : '';
@@ -33349,7 +33366,7 @@ function renderMsgThread(){
   else setTimeout(()=>msgFetch(id).then(ch=>{ if(ch){ msgCacheSave(); msgAutoUnlock(); msgPaintThread(); } }), 0);
   msgMarkSeen(id);
   queueFx(msgAfterChatRender);
-  return `<div class="fade-in msg-page msg-chat">${msgTop(CL('Messages','Mesajlar','پیام‌ها','Mensajes'))}
+  return `<div class="fade-in msg-page msg-chat">${msgTop(CL('Messages','Mesajlar','پیام‌ها','Mensajes'), true)}
     <div class="screen msg-screen">
       <div class="msg-thread-head" id="msg-head">${msgThreadHead(id)}</div>
       <div class="msg-thread-list" id="msg-list">${msgThreadInner(id)}</div>
@@ -33446,7 +33463,7 @@ function renderMsgCompose(){
     : [CL('Ask anything.','Ne istersen sor.','هر سؤالی داری بپرس.','Pregunta lo que quieras.'), CL('Farin answers here, usually within a day.','Farin burada cevap verir, genelde bir gün içinde.','فرین همین‌جا جواب می‌دهد، معمولاً تا یک روز.','Farin responde aquí, normalmente en un día.')];
   let dev = ''; if(tp.t === 'app'){ try{ const d = deviceInfo(); dev = d.os + ' · ' + d.mode + ' · ' + LOGIN_APP.toUpperCase(); }catch(e){} }
   queueFx(msgAfterChatRender);
-  return `<div class="fade-in msg-page msg-chat">${msgTop()}
+  return `<div class="fade-in msg-page msg-chat">${msgTop('', true)}
     <div class="screen msg-screen">
       <div class="msg-thread-head"><div class="row" style="gap:8px; flex-wrap:wrap;">${msgChip(tp, 'learner')}<span class="msg-kind">${esc(msgKindLabel(type, vp.req, 'learner'))}</span></div></div>
       <div class="card-flat msg-step" style="margin-top:16px;"><b>${hint[0]}</b><p class="msg-hint" style="color:var(--ink-soft);">${hint[1]}</p>
@@ -42015,6 +42032,7 @@ if(location.hash === '#admin'){
   } else {
     if(!courseLinkLand()) render();
     songHashOpen();
+    bootBackEntry();   // the phone's Back from the screen it opened on stays in the app
   }
   try{ window.addEventListener('hashchange', songHashOpen); }catch(e){}
   // Splash/logo breathing moment (Trello NpMrU2Mw) — fires once per cold app

@@ -279,9 +279,10 @@ function setSkin(kind){
    (Farin: nothing low designed), fully playable. body.gw-on.gw-<kind> switches the skin tokens on and lets #app sit over the world. */
 var GW_VARS = {bg:'--gw-bg', surface:'--gw-surface', paper:'--gw-paper', ink:'--gw-ink', hue:'--gw-hue', accent:'--gw-accent', cta:'--gw-cta', ctaInk:'--gw-cta-ink', line:'--gw-line', stage:'--gw-stage'};
 var GW_ED = {A1:'#FFD166', A2:'#5FC9B8', B1:'#4FC3E8', B2:'#A99BEA', C1:'#FF6F5E'};   // the level edition colour (SPEC 4.6)
-function boxStyle(b){
+// [x%, y%, w%] of the plate (the whole picture, shown at its natural aspect: Farin 2026-11-16 "the full art is viewable")
+function boxStyle(b, sit){
   b = b || []; var x = cssNum(b[0], 0, -50, 150), y = cssNum(b[1], 0, -50, 150), w = cssNum(b[2], 20, 0, 200);
-  return 'left:' + x + '%;top:' + y + '%;width:' + w + '%;';
+  return 'left:' + x + '%;' + (sit ? 'top:auto;bottom:var(--gw-sit, 18px);' : 'top:' + y + '%;') + 'width:' + w + '%;';
 }
 function worldData(s){
   var sk = skinData(s.world.kind, null) || {};
@@ -297,17 +298,18 @@ function paintWorld(s){
   var ed = GW_ED[String(s.app.level || s.world.level || '').toUpperCase()];
   if(ed) body.style.setProperty('--gw-ed', ed); else body.style.removeProperty('--gw-ed');
   // the plate fills the column width from the top (its busy part shows in the stage; the panel covers its quiet zone); top shifts it
-  var plate = w.plate && w.plate.ready && w.plate.src ? '<img class="th-world-plate" src="' + esc(w.plate.src) + '" alt="" style="top:' + cssPos(w.plate.top || '0') + ';">' : '';
+  var plate = w.plate && w.plate.ready && w.plate.src ? '<img class="th-world-plate" src="' + esc(w.plate.src) + '" alt="">' : '';
   var cut = (w.layers || []).filter(function(l){ return l && l.ready && l.src; }).map(function(l){
-    return '<img class="th-world-cut ' + esc(l.cls || '') + '"' + (l.id ? ' id="' + esc(l.id) + '"' : '') + ' src="' + esc(l.src) + '" alt="" style="' + boxStyle(l.box) + '">';
+    return '<img class="th-world-cut ' + esc(l.cls || '') + '"' + (l.id ? ' id="' + esc(l.id) + '"' : '') + ' src="' + esc(l.src) + '" alt="" style="' + boxStyle(l.box, l.sit) + '">';
   }).join('');
   var txt = (w.text || []).filter(function(t){ return t && t.ready; }).map(function(t){
-    return '<div class="th-world-live ' + esc(t.cls || '') + '"' + (t.id ? ' id="' + esc(t.id) + '"' : '') + ' style="' + boxStyle(t.box) + '">' + esc(t.text || '') + '</div>';
+    return '<div class="th-world-live ' + esc(t.cls || '') + '"' + (t.id ? ' id="' + esc(t.id) + '"' : '') + ' style="' + boxStyle(t.box, t.sit) + '">' + esc(t.key ? ((content().worldText || {})[t.key] || '') : (t.text || '')) + '</div>';
   }).join('');
   // cut-outs and live text sit in the stage band (83 px + safe area, --gw-stage tall): their boxes are % of that band
   s.world.el.innerHTML = '<div class="th-world-art' + (plate ? ' th-has-plate' : '') + '">' + plate + '<div class="th-world-stage">' + cut + '</div></div><div class="th-world-text"><div class="th-world-stage">' + txt + '</div></div>';
   if(w.css) loadWorldCss(s.world.kind, w.css);
   warmSfx(w.sfx);
+  bedStart();
 }
 var worldCss = {};
 function loadWorldCss(kind, href){
@@ -325,6 +327,7 @@ function openWorld(s){
 }
 function closeWorld(s){
   var body = D.body;
+  bedStop();
   if(s.world && s.world.el && s.world.el.parentNode) s.world.el.remove();
   if(s.sayEl && s.sayEl.parentNode) s.sayEl.remove();
   clearTimeout(s.sayTimer);
@@ -332,6 +335,17 @@ function closeWorld(s){
   for(var k in GW_VARS) body.style.removeProperty(GW_VARS[k]);
   body.style.removeProperty('--gw-ed');
   s.world = null;
+}
+// Theatre.actor(id, src, box, cls): put / replace / remove (src null) an image on the plate, in plate coordinates [x%, y%, w%]
+function actor(id, src, box, cls){
+  var s = cur; if(!s || !s.world) return null;
+  var art = s.world.el.querySelector('.th-world-art .th-world-stage') || s.world.el.querySelector('.th-world-art'); if(!art) return null;
+  var n = D.getElementById(id);
+  if(!src){ if(n) n.remove(); return null; }
+  if(!n || n.parentNode !== art){ if(n) n.remove(); n = el('img', 'th-world-cut ' + (cls || '')); n.id = id; n.alt = ''; art.appendChild(n); }
+  if(n.getAttribute('src') !== src) n.setAttribute('src', src);
+  n.style.cssText = boxStyle(box);
+  return n;
 }
 // Theatre.say(text, {who, kind:'caption'|'balloon', ms, lang}): the narrator / companion caption box at the stage's top inline-start,
 // or a character's balloon over the element `who`. 5 s at most; a new line replaces the old one; nothing on a timer (the app calls it
@@ -343,17 +357,26 @@ function say(text, o){
   if(!s.sayEl){ s.sayEl = el('div', 'th-say'); s.sayEl.setAttribute('role', 'status'); s.sayEl.setAttribute('aria-live', 'polite'); D.body.appendChild(s.sayEl); }
   var lang = o.lang || (kind === 'balloon' ? (content().target || 'en') : s.app.lang) || 'en';
   var rtl = lang === 'fa';
-  s.sayEl.innerHTML = '<div class="th-' + kind + '" lang="' + esc(lang) + '" dir="' + (rtl ? 'rtl' : 'ltr') + '">' + esc(text) + '</div>';
+  var hear = typeof o.hear === 'function';
+  s.sayEl.innerHTML = '<div class="th-' + kind + (hear ? ' th-say-hear' : '') + '" lang="' + esc(lang) + '" dir="' + (rtl ? 'rtl' : 'ltr') + '"' + (hear ? ' role="button" tabindex="0"' : '') + '>' + esc(text) +
+    (hear ? '<span class="th-say-ear" aria-hidden="true">' + ICON.soundOn + '</span>' : '') + '</div>';
   var box = s.sayEl.firstChild;
+  if(hear){ var go = function(e){ if(e) e.stopPropagation(); try{ o.hear(); }catch(err){} }; box.addEventListener('click', go); box.addEventListener('keydown', function(e){ if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); go(); } }); }
   if(kind === 'balloon'){
     var who = D.getElementById(o.who), r = who && who.getBoundingClientRect();
     if(r && r.width){
-      var col = s.sayEl.getBoundingClientRect();
-      box.style.left = Math.max(8, Math.min(col.width - 8, r.left - col.left + r.width / 2)) + 'px';
-      box.style.top = Math.max(84, r.top) + 'px';
+      // the whole balloon stays in the column (8 px margins) and below the voice pill; the tail points at the speaker; no room above
+      // the speaker = the balloon goes under it, tail up
+      var col = s.sayEl.getBoundingClientRect(), bw = box.offsetWidth, bh = box.offsetHeight, ax = r.left - col.left + r.width / 2;
+      var minTop = 124 + (parseFloat(getComputedStyle(D.body).getPropertyValue('--th-safe-t')) || 0);
+      var left = Math.max(8, Math.min(col.width - 8 - bw, ax - bw / 2)), top = r.top - 14 - bh, below = false;
+      if(top < minTop){ top = Math.max(minTop, r.bottom + 14); below = true; }
+      box.style.left = left + 'px'; box.style.top = top + 'px';
+      box.style.setProperty('--tail-x', Math.max(14, Math.min(bw - 14, ax - left)) + 'px');
+      if(below) box.classList.add('th-balloon-below');
     } else box.className = 'th-caption';
   }
-  if(!reduced()) anim(box, [{opacity:0, transform:(kind === 'balloon' ? 'translate(-50%, calc(-100% + 8px))' : 'translateY(6px)')}, {opacity:1, transform:(kind === 'balloon' ? 'translate(-50%, -100%)' : 'none')}], {duration:200, easing:'cubic-bezier(.2,.7,.2,1)'});
+  if(!reduced()) anim(box, [{opacity:0, transform:'translateY(6px)'}, {opacity:1, transform:'none'}], {duration:200, easing:'cubic-bezier(.2,.7,.2,1)'});
   clearTimeout(s.sayTimer);
   s.sayTimer = setTimeout(function(){ if(s.sayEl && s.sayEl.firstChild === box){ var a = reduced() ? null : anim(box, [{opacity:1}, {opacity:0}], {duration:180, fill:'forwards'}); var rm = function(){ if(box.parentNode) box.remove(); }; if(a) a.onfinish = rm; else rm(); } }, ms);
   return true;
@@ -366,6 +389,33 @@ function progress(done, total){
   w.setAttribute('data-done', done); w.setAttribute('data-total', total); w.setAttribute('data-third', Math.min(3, Math.floor(done / total * 3)));
   w.style.setProperty('--gw-frac', (done / total).toFixed(3));
 }
+var bed = null;
+function bedStop(){ if(!bed) return; try{ clearInterval(bed.timer); bed.src.stop(); bed.lfo.stop(); bed.out.disconnect(); }catch(e){} bed = null; }
+function bedStart(){
+  bedStop();
+  var s = cur; if(!s || !s.world) return;
+  var b = worldData(s).w.bed; if(!b) return;
+  var c = actxGet(); if(!c) return;
+  try{
+    var len = Math.floor(c.sampleRate * 4), buf = c.createBuffer(1, len, c.sampleRate), d = buf.getChannelData(0), last = 0;
+    for(var i = 0; i < len; i++){ var wn = Math.random() * 2 - 1; last = (last + 0.02 * wn) / 1.02; d[i] = last * 3.5; }   // brown noise: a soft room
+    var src = c.createBufferSource(); src.buffer = buf; src.loop = true;
+    var bp = c.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = cssNum(b.freq, 500, 60, 4000); bp.Q.value = cssNum(b.q, .7, .1, 4);
+    var sway = c.createGain(); sway.gain.value = 1;
+    var lfo = c.createOscillator(), depth = c.createGain(); lfo.frequency.value = cssNum(b.lfo, .12, .02, 2); depth.gain.value = .3; lfo.connect(depth); depth.connect(sway.gain);
+    var out = c.createGain(); out.gain.value = 0;
+    src.connect(bp); bp.connect(sway); sway.connect(out); out.connect(c.destination); src.start(); lfo.start();
+    bed = {src:src, lfo:lfo, out:out, ctx:c, vol:cssNum(b.vol, .03, 0, .08)};
+    bed.timer = setInterval(bedTick, 250); bedTick();
+  }catch(e){ bed = null; }
+}
+function bedTick(){
+  if(!bed) return;
+  var badge = D.getElementById('tts-badge');
+  var talking = (badge && badge.classList.contains('on')) || (W.speechSynthesis && W.speechSynthesis.speaking) || D.body.classList.contains('gw-live');
+  var target = (!cur || muted() || talking || D.hidden) ? 0 : bed.vol;
+  try{ bed.out.gain.setTargetAtTime(target, bed.ctx.currentTime, .3); }catch(e){}
+}
 // Theatre.finale({beat, ms}) -> Promise: the world's own end moment (a class on .th-world for the CSS beat and/or a function),
 // 2.4 s at most, one tap skips. The souvenir and the one button stay the app's own end card (SPEC 4.9).
 function finale(o){
@@ -373,8 +423,8 @@ function finale(o){
   return new Promise(function(resolve){
     if(!s || !s.world || reduced()){ resolve(); return; }
     var w = s.world.el, done = false, t;
-    var end = function(){ if(done) return; done = true; clearTimeout(t); w.classList.remove('th-beat'); D.removeEventListener('pointerdown', end, true); resolve(); };
-    w.classList.add('th-beat');
+    var end = function(){ if(done) return; done = true; clearTimeout(t); w.classList.remove('th-beat'); D.body.classList.remove('gw-beat'); D.removeEventListener('pointerdown', end, true); resolve(); };
+    w.classList.add('th-beat'); D.body.classList.add('gw-beat');
     try{ if(typeof o.beat === 'function') o.beat(w); }catch(e){}
     D.addEventListener('pointerdown', end, true);
     t = setTimeout(end, Math.min(cssNum(o.ms, 2400, 0, 2400), 2400));
@@ -680,7 +730,7 @@ var api = {
   version:'1.1.0',
   open:open, close:close, sync:sync, exit:exit, play:start, skip:skip,
   titleCard:titleCard, transition:transition, setStrip:setStrip, setControls:setControls, stageEl:stageEl, setSkin:setSkin,
-  say:say, finale:finale, sfx:sfx, progress:progress, world:function(){ return cur && cur.world ? cur.world.kind : null; },
+  say:say, finale:finale, sfx:sfx, progress:progress, actor:actor, world:function(){ return cur && cur.world ? cur.world.kind : null; },
   skin:function(){ return cur && cur.skin ? cur.skinKind : null; },
   isOpen:function(){ return !!cur; },
   phase:function(){ return cur ? cur.phase : null; },

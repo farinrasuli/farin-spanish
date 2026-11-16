@@ -61,6 +61,8 @@ window.THEATRE_CONTENT = {
     dictation:{title:'Junto a la ventana', tagline:'Escucha bien. Escribe lo que oyes.'},
     trap:{title:'Carrera en el muelle', tagline:'Elige rápido. Salta limpio.'}
   },
+  // live text on the world art, in the language being learned (World Kit text layers with a key; never mirrored)
+  worldText:{onair:'EN ANTENA'},
   strings:{
     play:{en:'Play', tr:'Oyna', fa:'بازی کن', es:'Jugar'},
     'continue':{en:'Continue', tr:'Devam et', fa:'ادامه بده', es:'Continuar'},

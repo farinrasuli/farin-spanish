@@ -338,3 +338,89 @@ body.gw-on.gw-echo .gp-pip.on{filter:none;}
 @keyframes gw-swing{0%,100%{transform:rotate(0)} 30%{transform:rotate(8deg)} 70%{transform:rotate(-8deg)}}
 @keyframes gw-pulse{0%,100%{transform:scale(1)} 50%{transform:scale(1.04)}}
 @media (prefers-reduced-motion: reduce){ .th-world.th-beat .th-world-art::after, .th-world.th-beat .gw-bell, .th-world.th-beat .gw-radio, .th-world.th-beat .gw-mic{animation:none !important;} .th-world .gw-croissant{transition:none;} }
+
+/* ---- batch 5 worlds (2026-11-16): Story Hunt index cards, Listen & Type sticky notes, Word Rush card pile, Trap Dash barriers ---- */
+body.gw-on.gw-hunt .gp-pip{width:22px; height:16px; border-radius:2px; background:transparent; border:2px dashed color-mix(in srgb, var(--gw-line) 28%, transparent);}
+body.gw-on.gw-hunt .gp-pip.cur{border-style:solid; border-color:color-mix(in srgb, var(--gw-line) 50%, transparent); background:rgba(255,255,255,.6);}
+body.gw-on.gw-hunt .gp-pip.on{border:2px solid var(--gw-line); background:linear-gradient(180deg, var(--gw-ed, #FFD166) 0 5px, var(--gw-paper) 5px);}
+body.gw-on.gw-dictation .gp-pip{width:22px; height:22px; border-radius:2px; background:transparent; border:2px dashed color-mix(in srgb, var(--gw-line) 26%, transparent); transform:rotate(-3deg);}
+body.gw-on.gw-dictation .gp-pip.cur{border-style:solid; border-color:color-mix(in srgb, var(--gw-line) 45%, transparent);}
+body.gw-on.gw-dictation .gp-pip.on{border:2px solid var(--gw-line); background:#fff3a8; box-shadow:inset 0 4px 0 var(--gw-ed, #FFD166);}
+body.gw-on.gw-dictation .gp-pip:nth-child(even){transform:rotate(3deg);}
+body.gw-on.gw-match .gp-pip{width:18px; height:24px; border-radius:4px; background:transparent; border:2px dashed color-mix(in srgb, var(--gw-line) 26%, transparent);}
+body.gw-on.gw-match .gp-pip.cur{border-style:solid; border-color:color-mix(in srgb, var(--gw-line) 45%, transparent);}
+body.gw-on.gw-match .gp-pip.on{border:2px solid var(--gw-line); background:#FF6F5E; box-shadow:inset 0 0 0 2px #fff, inset 0 0 0 3px var(--gw-ed, #FFD166);}
+body.gw-on.gw-match .game-tile.hidden-face{background:#FF6F5E; color:#fff; border-color:var(--gw-line); box-shadow:inset 0 0 0 4px #fff, inset 0 0 0 6px var(--gw-ed, #FFD166);}
+body.gw-on.gw-trap .gp-pip{width:24px; height:10px; border-radius:2px; background:transparent; border:2px dashed color-mix(in srgb, var(--gw-line) 26%, transparent);}
+body.gw-on.gw-trap .gp-pip.on{border:2px solid var(--gw-line); background:repeating-linear-gradient(135deg, #f2c230 0 5px, #14332e 5px 9px);}
+body.gw-on.gw-trap .gp-pip.cur{border-style:solid; border-color:color-mix(in srgb, var(--gw-line) 45%, transparent);}
+.th-world.th-beat .gw-lens, .th-world.th-beat .gw-phones, .th-world.th-beat .gw-deck{animation:gw-pulse .6s ease-in-out 2;}
+@media (prefers-reduced-motion: reduce){ .th-world.th-beat .gw-lens, .th-world.th-beat .gw-phones, .th-world.th-beat .gw-deck{animation:none !important;} body.gw-on.gw-dictation .gp-pip{transform:none;} }
+
+/* ---- review fixes (farin-gamification, mCqPUhyl, 2026-11-16) ---- */
+/* speech below the voice pill (#tts-badge sits at 84 px); a balloon keeps its tail on the speaker */
+body.gw-on .th-caption{top:calc(124px + var(--th-safe-t, 0px));}
+.th-balloon{transform:none; margin-top:0;}
+.th-balloon::after{left:var(--tail-x, 50%);}
+.th-balloon.th-balloon-below::after{bottom:auto; top:-11px; transform:translateX(-50%) rotate(225deg);}
+/* Order Up!: the customer stands behind the counter (the panel's top edge), up to 230 px tall; the bell and tip jar stand on it */
+/* fixed like the world, and under the panel (z -1 in #app) so a scrolled panel covers the customer as it covers the plate */
+body.gw-on.gw-order .gw-order-stage{position:fixed; top:var(--gw-top); height:var(--gw-stage); left:50%; width:var(--th-col, 100vw); max-width:100vw; transform:translateX(-50%); pointer-events:none; z-index:-1;}
+body.gw-on.gw-order .gw-order-stage .order-cust-wrap{position:absolute; inset-inline-end:7%; bottom:18px; width:auto; height:min(230px, calc(100% - 26px)); aspect-ratio:291/420;}
+body.gw-on.gw-order .gw-order-stage .order-cust{width:100%; height:100%; object-fit:contain; object-position:50% 100%;}
+body.gw-on.gw-order .order-counter{min-height:0;}
+body.gw-on.gw-order .order-counter .order-bubble{max-width:none; flex:1 1 auto;}
+.th-world .gw-sam{left:34%; bottom:var(--gw-sit, 18px); top:auto; height:60%; width:auto;}
+/* Word Bingo: the radio is the replay button (96 px), standing on the table; the clue is a paper strip */
+body.gw-on.gw-bingo .gw-radio-btn{position:absolute; inset-inline-start:5%; top:calc(var(--gw-top) + var(--gw-stage) - 24px - 88px); width:96px; height:96px; z-index:3;
+  padding:0; border:0; background:none; cursor:pointer; -webkit-tap-highlight-color:transparent;}
+body.gw-on.gw-bingo .gw-radio-btn img{width:100%; height:100%; object-fit:contain; object-position:50% 100%; filter:drop-shadow(0 6px 8px rgba(20,51,46,.18));}
+body.gw-on.gw-bingo .gw-radio-btn:focus-visible{outline:3px solid var(--gw-line); outline-offset:2px; border-radius:14px;}
+body.gw-on.gw-bingo .gw-radio-btn:active img{transform:scale(.96);}
+body.gw-on.gw-bingo.gw-beat .gw-radio-btn img{animation:gw-pulse .6s ease-in-out 2;}
+body.gw-on.gw-bingo .gw-clue-strip{display:flex; justify-content:center; min-height:44px; align-items:center;}
+body.gw-on.gw-bingo .gw-clue-strip .bingo-clue{margin:0; width:100%; box-sizing:border-box; padding:10px 14px; background:var(--gw-paper); color:var(--gw-ink); border:2px solid var(--gw-line); border-radius:6px;
+  font-family:'Fredoka', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; font-weight:600; font-size:17px; line-height:1.35; text-align:center;}
+body.gw-on.gw-bingo .game-tile{min-height:68px;}
+/* Mini Cross: the keyboard is the sticky action bar; the newspaper masthead; pencil-grey letters */
+body.gw-on.gw-cross .cross-kb{position:sticky; bottom:calc(8px + var(--th-safe-b, 0px)); z-index:3; background:var(--gw-surface); padding:8px 4px 6px; margin:0 -6px; border-radius:16px; box-shadow:0 -6px 14px -10px rgba(20,51,46,.4);}
+body.gw-on.gw-cross .gw-masthead{display:flex; align-items:baseline; justify-content:space-between; gap:10px; margin-bottom:-8px; padding:8px 14px; background:var(--gw-paper); color:var(--gw-ink);
+  border:2px solid var(--gw-line); border-bottom-width:4px; border-radius:6px 6px 0 0;}
+body.gw-on.gw-cross .gw-masthead b{font-family:Georgia, 'Times New Roman', serif; font-size:19px; font-weight:700; letter-spacing:.01em;}
+body.gw-on.gw-cross .gw-masthead span{font-size:13px; font-weight:800; color:color-mix(in srgb, var(--gw-ink) 75%, transparent); border-bottom:3px solid var(--gw-ed, #FFD166);}
+body.gw-on.gw-cross .cross-card{border-radius:0 0 18px 18px;}
+body.gw-on.gw-cross .cross-ch{color:#3d3a36;}
+/* Build It: the word tiles are wooden blocks in the poster's colours, ink outline, a hard bottom step */
+body.gw-on.gw-build .build-tile{background:#fbeed2; color:#14332e; border:2.5px solid #14332e; border-radius:8px; box-shadow:0 4px 0 #14332e;}
+body.gw-on.gw-build .build-tile:nth-child(4n+2){background:#5fc9b8;} body.gw-on.gw-build .build-tile:nth-child(4n+3){background:#ff8a5c;} body.gw-on.gw-build .build-tile:nth-child(4n+4){background:#f2c14e;}
+body.gw-on.gw-build .build-tile:active{transform:translateY(3px); box-shadow:0 1px 0 #14332e;}
+body.gw-on.gw-build .build-tile.used{opacity:.25; box-shadow:none;}
+/* Say It Back: the mic is the sticky action bar; the ON AIR plate on the wall lights while the mic listens */
+body.gw-on.gw-echo .echo-micwrap, body.gw-on.gw-echo .echo-shadow{position:sticky; bottom:calc(8px + var(--th-safe-b, 0px)); z-index:3; background:var(--gw-surface); padding:10px 8px 8px; margin:0 -6px; border-radius:18px; box-shadow:0 -6px 14px -10px rgba(20,51,46,.4);}
+.th-world-live.gw-onair{padding:6px 0; border:3px solid #14332e; border-radius:10px; background:#5a2a2a; color:#f3d6d0; font-size:clamp(16px, 5vw, 22px); letter-spacing:.14em; text-transform:uppercase; opacity:.9;}
+body.gw-live .th-world-live.gw-onair{background:#e8402f; color:#fff; box-shadow:0 0 0 4px rgba(232,64,47,.25), 0 0 24px rgba(232,64,47,.55);}
+@media (prefers-reduced-motion: reduce){ body.gw-on.gw-bingo.gw-beat .gw-radio-btn img{animation:none !important;} }
+
+/* ======================================================================================================================
+   Full art (Farin 2026-11-16: "make sure the full scene and the full art is viewable"): the plate shows WHOLE, at its natural
+   aspect, at the top of the page; the game panel starts under it and the page scrolls. The world scrolls with the page.
+   ====================================================================================================================== */
+body.gw-on{--gw-colw:min(100vw, var(--th-col, 480px)); --gw-plate-h:calc(var(--gw-colw) * 1.25);}
+body.gw-on .th-world{position:absolute; top:0; bottom:auto; height:var(--gw-plate-h);}
+body.gw-on .th-world-plate{top:0; height:auto;}
+body.gw-on .th-world-stage{top:0; height:100%;}
+body.gw-on .game-screen{padding-top:calc(var(--gw-plate-h) + 12px);}
+body.gw-on .game-screen::before{top:var(--gw-plate-h);}
+/* the warm light of the place (static, light, never dark) */
+body.gw-on .th-world-art::after{content:''; position:absolute; inset:0; pointer-events:none;
+  background:radial-gradient(75% 55% at 22% 12%, rgba(255,228,170,.30), transparent 70%), linear-gradient(180deg, rgba(255,240,210,.12), transparent 45%);}
+body.gw-on.gw-echo .th-world-art::after{background:radial-gradient(60% 45% at 30% 75%, rgba(255,200,150,.28), transparent 70%), radial-gradient(50% 40% at 72% 38%, rgba(255,120,100,.10), transparent 70%);}
+/* tap to hear: a line with a small speaker; the line is not read aloud by itself */
+.th-say .th-say-hear{pointer-events:auto; cursor:pointer;}
+.th-say-ear{display:inline-flex; vertical-align:-4px; margin-inline-start:8px; width:22px; height:22px; border-radius:50%; align-items:center; justify-content:center; background:#14332e; color:#fff;}
+.th-say-ear svg{width:14px; height:14px;}
+.th-say-hear:focus-visible{outline:3px solid #14332e; outline-offset:3px;}
+/* Word Bingo: the radio stands on the table at the bottom of the picture */
+body.gw-on.gw-bingo .gw-radio-btn{top:calc(var(--gw-plate-h) * .70); width:calc(var(--gw-colw) * .27); height:calc(var(--gw-colw) * .25); min-width:96px; min-height:88px;}
+/* Sam stands behind the counter on the whole plate (about a third of its height) */
+body.gw-on .th-world .gw-sam{left:26%; top:auto; bottom:28%; height:36%; width:auto;}

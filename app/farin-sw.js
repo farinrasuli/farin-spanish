@@ -281,3 +281,28 @@ self.addEventListener('fetch', (e) => {
     e.respondWith(staleWhileRevalidate(e));
   }
 });
+
+/* ---------- Phone notifications (2026-11-15): fe-notify sends {title, body, go, k, id, tag}, encrypted for this phone ----------
+   The tap opens the app on the right screen: an open app gets a 'notif-go' message, otherwise the page opens with #n=<go>. */
+const NOTIF_OPENED_URL = 'https://fe-notify.farinrasuli.workers.dev/opened';
+self.addEventListener('push', (e) => {
+  let d = {};
+  try { d = e.data ? e.data.json() : {}; } catch (err) { d = {body: e.data ? e.data.text() : ''}; }
+  const rtl = /[؀-ۿ]/.test((d.title || '') + (d.body || ''));
+  e.waitUntil(self.registration.showNotification(d.title || 'Farin Spanish', {
+    body: d.body || '', icon: 'icon-180.png', tag: d.tag || undefined, renotify: !!d.tag, dir: rtl ? 'rtl' : 'auto',
+    data: {go: d.go || '', k: d.k || '', id: d.id || ''}
+  }));
+});
+self.addEventListener('notificationclick', (e) => {
+  e.notification.close();
+  const d = e.notification.data || {};
+  const page = self.registration.scope;   // this worker's scope is the app page itself
+  e.waitUntil((async () => {
+    fetch(NOTIF_OPENED_URL, {method: 'POST', headers: {'Content-Type': 'text/plain'}, body: JSON.stringify({k: d.k, id: d.id})}).catch(() => {});
+    const wins = await self.clients.matchAll({type: 'window', includeUncontrolled: true});
+    const open = wins.find((c) => c.url.split('#')[0].split('?')[0] === page.split('?')[0]);
+    if (open) { open.postMessage({type: 'notif-go', go: d.go}); return open.focus(); }
+    return self.clients.openWindow(page + (d.go ? '#n=' + encodeURIComponent(d.go) : ''));
+  })());
+});

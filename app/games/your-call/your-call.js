@@ -38,7 +38,7 @@
 'use strict';
 if(window.YourCall) return;
 var D = document, W = window;
-var VERSION = '0.4.0';
+var VERSION = '0.5.0';
 
 /* ---------- chrome strings (the UI language; Persian informal) ---------- */
 var UI = {
@@ -59,6 +59,8 @@ var UI = {
   leave:{en:'Leave', tr:'Çık', fa:'خروج', es:'Salir'},
   stay:{en:'Stay', tr:'Kal', fa:'بمان', es:'Quedarme'},
   listen:{en:'Listen', tr:'Dinle', fa:'گوش کن', es:'Escuchar'},
+  again:{en:'Again', tr:'Tekrar', fa:'دوباره', es:'Otra vez'},
+  trTap:{en:'Translation', tr:'Çeviri', fa:'ترجمه', es:'Traducción'},
   saidIt:{en:'I said it', tr:'Söyledim', fa:'گفتمش', es:'Ya lo he dicho'},
   sayLine:{en:'Read it aloud.', tr:'Yüksek sesle oku.', fa:'بلند بخوانش.', es:'Léelo en voz alta.'},
   theEnd:{en:'The end', tr:'Son', fa:'پایان', es:'Fin'},
@@ -693,8 +695,15 @@ function start(o){
   var shell = el('div', 'yc' + (reduced() ? ' yc-rm' : ''));
   shell.setAttribute('dir', 'ltr'); shell.setAttribute('lang', target);
   shell.innerHTML = '<div class="yc-page" role="main" aria-live="polite"></div><div class="yc-glossbar" hidden></div><div class="yc-layer"></div>';
+  if(C.trMode === 'tap') shell.classList.add('yc-trtap');   // 0.5.0: "Aa" shows the translations (scaffold fading from A2 on)
+  if(C.thenLook) shell.classList.add('yc-look-' + C.thenLook);   // 0.5.0: 'silver' (B1 1918) instead of the sepia print look
   root.appendChild(shell);
   var page = shell.querySelector('.yc-page'), glossbar = shell.querySelector('.yc-glossbar'), layer = shell.querySelector('.yc-layer');
+  if(C.trMode === 'tap' && ui !== target){
+    var aa = el('button', 'yc-aa', '<b>Aa</b>'); aa.type = 'button'; aa.setAttribute('aria-pressed', 'false'); aa.setAttribute('aria-label', us('trTap')); aa.title = us('trTap');
+    shell.appendChild(aa);
+    aa.addEventListener('click', function(){ var onNow = !shell.classList.contains('yc-tron'); shell.classList.toggle('yc-tron', onNow); aa.setAttribute('aria-pressed', onNow ? 'true' : 'false'); });
+  }
   snd.rebind({muted:muted, alive:function(){ return G.alive && shell.isConnected; }});   // never outlives the game
   on(shell, 'pointerdown', function(){ snd.unlock(); });   // iOS: the first touch lets a context made outside a tap play
 
@@ -1297,7 +1306,200 @@ function start(o){
     await waitNext(null, 'next');
   }
 
-  /* ---------- notes across time (Build It style, no decoys at A1) ---------- */
+  /* ---------- 0.5.0 B1 Radio Watch (B1 GDD §5): heard before read (the first listen has no text), then a 3-row field log whose
+     every row can replay the one sentence that carries its answer; a wrong chip is answered by that replay (0.85, key words
+     underlined) and the row's "why", never an X; a second wrong tap lights the right chip; 15 s idle replays the open row's
+     sentence, 45 s solves it. B1.2 adds the relay row (reported speech) and "Say it" (never scored). Resume keeps solved rows. ---------- */
+  var RICON = {
+    wind:'<svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M3 8h11a3 3 0 1 0-3-3M3 12h15a3 3 0 1 1-3 3M3 16h8" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>',
+    clock:'<svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2.2"/><path d="M12 7v5l3 2" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>',
+    advice:'<svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M12 3l10 18H2z" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/><path d="M12 10v5M12 18v.5" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>',
+    pin:'<svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M12 22s7-7.2 7-12a7 7 0 1 0-14 0c0 4.8 7 12 7 12z" fill="none" stroke="currentColor" stroke-width="2.2"/><circle cx="12" cy="10" r="2.6" fill="currentColor"/></svg>'
+  };
+  RICON.sign = RICON.advice; RICON.warning = RICON.advice; RICON.place = RICON.pin; RICON.time = RICON.clock;
+  function keyHtml(sentence, key){
+    var s = String(sentence || ''), k = String(key || ''), i = k ? s.toLowerCase().indexOf(k.toLowerCase()) : -1;
+    return i < 0 ? esc(s) : esc(s.slice(0, i)) + '<u>' + esc(s.slice(i, i + k.length)) + '</u>' + esc(s.slice(i + k.length));
+  }
+  function shuffled(n){ var o = []; for(var i = 0; i < n; i++) o.push(i); for(var s = n - 1; s > 0; s--){ var j = Math.floor(Math.random() * (s + 1)); var t = o[s]; o[s] = o[j]; o[j] = t; } return o; }
+  async function playRadio(ch, instant, id){
+    var R = ch.radios && ch.radios[id]; if(!R) return;
+    if(!G.run.radio) G.run.radio = {};
+    var st = G.run.radio[id] || (G.run.radio[id] = {heard:false, rows:[], relay:false, done:false});
+    var rep = (R.report || []).map(tg), log = R.log || [], rate = (R.pace && (R.pace[C.level] || R.pace.B1)) || .95;
+    var box = el('div', 'yc-radio yc-radio-' + (R.kind || 'base'));
+    page.appendChild(box);
+    var fin = function(){
+      box.innerHTML = '<div class="yc-radiolog yc-radiolog-done" lang="' + target + '">' + log.map(function(r){ return '<div class="yc-rrow yc-rok"><span class="yc-ricon">' + (RICON[r.icon] || '') + '</span><span class="yc-rq">' + esc(tg(r.q)) + '</span><b class="yc-rans">' + esc(tg(r.chips[r.ok])) + '</b></div>'; }).join('') +
+        (R.relay ? '<div class="yc-rrow yc-rok yc-rrelay"><span class="yc-rq">' + esc(tg(R.relay.q)) + '</span><b class="yc-rans">' + esc(tg(R.relay.chips[R.relay.ok])) + '</b></div>' : '') + '</div>';
+    };
+    if(instant || st.done){ fin(); return; }
+    box.innerHTML = '<figure class="yc-radiostage">' + (R.art ? '<img class="yc-pic" alt="" src="' + artSrc(R.art) + '">' : '') +
+      '<div class="yc-meter" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div></figure>' +
+      '<div class="yc-cap yc-cap-static">' + lineHtml(R.intro || {en:'Listen to the radio.'}, ch) + '</div>' +
+      '<div class="yc-radiobar"><button type="button" class="yc-btn yc-ghost yc-ragain">' + ICON.say + ' ' + esc(us('again')) + '</button></div><div class="yc-radiolog" lang="' + target + '"></div>';
+    var meter = box.querySelector('.yc-meter'), logEl = box.querySelector('.yc-radiolog'), again = box.querySelector('.yc-ragain');
+    var playing = false;
+    var playReport = async function(){ if(playing) return; playing = true; meter.classList.add('on'); snd.play('beep'); await wait(350 * pace); for(var i = 0; i < rep.length && G.alive; i++) await speak(rep[i], {rate:rate}); meter.classList.remove('on'); playing = false; };
+    on(again, 'click', function(){ G.speakTok = (G.speakTok || 0) + 1; stopSpeech(); playReport(); });
+    scrollEnd();
+    if(!st.heard){ G.wait = 'radio-listen'; await playReport(); if(!G.alive) return; st.heard = true; save(); }
+    // the field log: every row at once, chips shuffled at play time ("ok" points into the authored order)
+    G.wait = 'radio-log';
+    var orders = log.map(function(r){ return shuffled(r.chips.length); }), wrong = log.map(function(){ return 0; });
+    G.radio = {id:id, log:logEl, st:st, R:R};
+    var rowHtml = function(r, k){
+      var ok = !!st.rows[k];
+      return '<div class="yc-rrow' + (ok ? ' yc-rok' : '') + '" data-r="' + k + '"><span class="yc-ricon">' + (RICON[r.icon] || '') + '</span>' +
+        '<span class="yc-rq">' + esc(tg(r.q)) + trSpan(r.q) + '</span><button type="button" class="yc-rsay" data-say="' + k + '" aria-label="' + esc(us('listen')) + '">' + ICON.say + '</button>' +
+        (ok ? '<b class="yc-rans">' + esc(tg(r.chips[r.ok])) + '</b><div class="yc-rline">' + keyHtml(rep[r.line], r.key) + '</div>'
+            : '<div class="yc-rchips">' + orders[k].map(function(c){ return '<button type="button" class="yc-rchip" data-r="' + k + '" data-c="' + c + '">' + esc(tg(r.chips[c])) + '</button>'; }).join('') + '</div><div class="yc-rwhy" hidden></div>') + '</div>';
+    };
+    log.forEach(function(r, k){ var d = el('div', null, rowHtml(r, k)); logEl.appendChild(d.firstChild); });
+    scrollEnd();
+    var open = function(){ for(var k = 0; k < log.length; k++) if(!st.rows[k]) return k; return -1; };
+    var sayRow = function(k, slow){ var r = log[k]; G.speakTok = (G.speakTok || 0) + 1; stopSpeech(); return speak(rep[r.line], {rate:rate * (slow ? .85 : 1)}); };
+    var solve = function(k, auto){
+      st.rows[k] = true; save(); snd.play('pencil');
+      var old = logEl.querySelector('.yc-rrow[data-r="' + k + '"]'), d = el('div', null, rowHtml(log[k], k)); old.replaceWith(d.firstChild);
+      if(auto) G.autoSolved = (G.autoSolved || 0) + 1;
+      sayRow(k);
+    };
+    var t15 = null, t45 = null, arm = function(){
+      clear(t15); clear(t45); var k = open(); if(k < 0) return;
+      t15 = later(function(){ var row = logEl.querySelector('.yc-rrow[data-r="' + k + '"] .yc-rwhy'); if(row){ row.hidden = false; row.innerHTML = keyHtml(rep[log[k].line], log[k].key); } G.hinted = (G.hinted || 0) + 1; sayRow(k, true); }, 15000);
+      t45 = later(function(){ if(!st.rows[k]){ solve(k, true); if(open() < 0 && G.radioDone) G.radioDone(); else arm(); } }, 45000);
+    };
+    if(open() >= 0){
+      speak(tg(log[open()].q));   // the first open question is read aloud once
+      arm();
+      await new Promise(function(done){
+        G.radioDone = function(){ clear(t15); clear(t45); G.radioDone = null; done(); };
+        on(logEl, 'click', function(e){
+          var sy = e.target.closest('.yc-rsay'); if(sy){ sayRow(+sy.getAttribute('data-say')); return; }
+          var b = e.target.closest('.yc-rchip'); if(!b || b.disabled || !b.hasAttribute('data-r')) return;
+          var k = +b.getAttribute('data-r'), c = +b.getAttribute('data-c'), r = log[k];
+          if(st.rows[k]) return;
+          if(c === r.ok){ solve(k, false); if(open() < 0){ if(G.radioDone) G.radioDone(); } else { arm(); speak(tg(log[open()].q)); } return; }
+          // wrong: the chip fades, the carrying sentence replays slower with its key words underlined, the row's why shows
+          G.misses = (G.misses || 0) + 1; wrong[k]++; b.disabled = true; b.classList.add('yc-rno'); snd.play('rustle');
+          var why = logEl.querySelector('.yc-rrow[data-r="' + k + '"] .yc-rwhy'); if(why){ why.hidden = false; why.innerHTML = keyHtml(rep[r.line], r.key) + (r.why ? '<small dir="auto">' + esc(tg(r.why)) + '</small>' : ''); }
+          sayRow(k, true);
+          if(wrong[k] >= 2){ var right = logEl.querySelector('.yc-rchip[data-r="' + k + '"][data-c="' + r.ok + '"]'); if(right) right.classList.add('yc-rglow'); }
+        });
+      });
+    }
+    if(!G.alive) return;
+    // B1.2: relay what the radio said (reported speech), then say it out loud (the A1 letter row; never scored)
+    if(R.relay && !st.relay){
+      G.wait = 'radio-relay';
+      var Rl = R.relay, ro = shuffled(Rl.chips.length), rw = 0;
+      var rel = el('div', 'yc-rrow yc-rrelay', '<span class="yc-rq">' + esc(tg(Rl.q)) + trSpan(Rl.q) + '</span><div class="yc-rchips">' + ro.map(function(c){ return '<button type="button" class="yc-rchip" data-c="' + c + '">' + esc(tg(Rl.chips[c])) + '</button>'; }).join('') + '</div><div class="yc-rwhy" hidden></div>');
+      logEl.appendChild(rel); scrollEnd(); speak(tg(Rl.q));
+      await new Promise(function(done){
+        on(rel, 'click', function(e){
+          var b = e.target.closest('.yc-rchip'); if(!b || b.disabled) return; var c = +b.getAttribute('data-c');
+          if(c === Rl.ok){ snd.play('pencil'); rel.classList.add('yc-rok'); rel.querySelector('.yc-rchips').innerHTML = '<b class="yc-rans">' + esc(tg(Rl.chips[Rl.ok])) + '</b>'; done(); return; }
+          G.misses = (G.misses || 0) + 1; rw++; b.disabled = true; b.classList.add('yc-rno'); snd.play('rustle');
+          var why = rel.querySelector('.yc-rwhy'); why.hidden = false; why.innerHTML = Rl.why ? esc(tg(Rl.why)) : '';
+          var right = rel.querySelector('.yc-rchip[data-c="' + Rl.ok + '"]'); if(right) right.classList.add('yc-rglow');
+        });
+      });
+      if(!G.alive) return;
+      st.relay = true; save();
+      if(Rl.say){
+        G.wait = 'radio-say';
+        var sayBox = el('div', 'yc-rsayit', '<div class="yc-cap yc-cap-static">' + esc(us('sayLine')) + '</div><div class="yc-rsayline" lang="' + target + '">' + esc(tg(Rl.say)) + trSpan(Rl.say) + '</div>' +
+          '<div class="yc-rbtns"><button type="button" class="yc-btn yc-ghost yc-rlisten">' + ICON.say + ' ' + esc(us('listen')) + '</button><button type="button" class="yc-btn yc-rsaid">' + esc(us('saidIt')) + '</button></div>');
+        logEl.appendChild(sayBox); scrollEnd();
+        on(sayBox.querySelector('.yc-rlisten'), 'click', function(){ G.speakTok = (G.speakTok || 0) + 1; stopSpeech(); speak(tg(Rl.say)); });
+        await new Promise(function(done){ on(sayBox.querySelector('.yc-rsaid'), 'click', done, {once:true}); });
+        snd.play('page');
+      }
+    }
+    if(!G.alive) return;
+    st.done = true; save(); G.wait = null; G.radio = null;
+    if(R.done && tg(R.done)){ var dn = el('div', 'yc-cap yc-cap-static', lineHtml(R.done, ch)); box.appendChild(dn); scrollEnd(); await speak(tg(R.done)); }
+    await waitNext(null, 'next');
+  }
+
+  /* ---------- 0.5.0 B2 Rewind (B2 GDD §5): a strip of 1988 prints the learner drags back and forth (a caption on the frame that
+     stops in the middle), then, at each ask, the strip locks on two frames side by side: "What happened between these two
+     photos?" + 3 deductions, one supported by the frames. Right: the evidence box lights up and the what-if line is spoken.
+     Wrong: the evidence pulses and the why names the detail; a second wrong lights the right chip. 15 s: the evidence pulses,
+     45 s: the right chip glows. Frames and asks honour `when`. Resume keeps answered asks. ---------- */
+  async function playRewind(ch, instant, id){
+    var R = ch.rewinds && ch.rewinds[id]; if(!R) return;
+    if(!G.run.rewind) G.run.rewind = {};
+    var st = G.run.rewind[id] || (G.run.rewind[id] = {seen:false, asks:[], done:false});
+    var choices = arcChoices();
+    var frames = (R.frames || []).filter(function(f){ return whenOk(f.when, choices); });
+    var all = R.frames || [], idxOf = function(i){ return frames.indexOf(all[i]); };
+    var asks = (R.asks || []).filter(function(a){ return whenOk(a.when, choices); });
+    var box = el('div', 'yc-rewind');
+    page.appendChild(box);
+    var frameImg = function(f, cls){ return '<div class="yc-wframe ' + (cls || '') + '"><img class="yc-pic" alt="" src="' + artSrc(f.art) + '"><i>' + esc(yearLabel(C, ui)) + '</i></div>'; };
+    var fin = function(){
+      box.innerHTML = '<div class="yc-wdone">' + asks.map(function(a){ return '<div class="yc-rrow yc-rok"><span class="yc-rq">' + esc(tg(a.q)) + '</span><b class="yc-rans">' + esc(tg(a.chips[a.ok])) + '</b>' + (a.whatif ? '<div class="yc-rline">' + esc(tg(a.whatif)) + '</div>' : '') + '</div>'; }).join('') + '</div>';
+    };
+    if(instant || st.done){ fin(); return; }
+    // 1. the strip (native horizontal scroll = drag; snap per frame), a caption for the frame in the middle
+    box.innerHTML = '<div class="yc-cap yc-cap-static">' + lineHtml(R.intro || {en:''}, ch) + '</div>' +
+      '<div class="yc-wstage"' + (R.art ? ' style="background-image:url(&quot;' + esc(artSrc(R.art)) + '&quot;)"' : '') + '><div class="yc-wstrip" tabindex="0">' + frames.map(function(f, k){ return '<div class="yc-wcell" data-k="' + k + '">' + frameImg(f) + '</div>'; }).join('') + '</div></div>' +
+      '<div class="yc-wcap" lang="' + target + '"></div>';
+    var strip = box.querySelector('.yc-wstrip'), cap = box.querySelector('.yc-wcap');
+    var lastK = -1, mid = function(){ var r = strip.getBoundingClientRect(), cx = r.left + r.width / 2, best = 0, bd = 1e9; strip.querySelectorAll('.yc-wcell').forEach(function(c){ var b = c.getBoundingClientRect(), d = Math.abs(b.left + b.width / 2 - cx); if(d < bd){ bd = d; best = +c.getAttribute('data-k'); } }); return best; };
+    var showCap = function(){ var k = mid(); if(k === lastK) return; lastK = k; var f = frames[k]; if(!f) return; cap.innerHTML = '<span class="yc-t">' + esc(tg(f.line)) + '</span>' + trSpan(f.line); snd.play('page'); };
+    var capT = null;
+    on(strip, 'scroll', function(){ clear(capT); capT = later(showCap, 120); }, {passive:true});
+    showCap(); scrollEnd();
+    if(!st.seen){
+      G.wait = 'rewind-scrub';
+      await new Promise(function(ok){ var b = el('button', 'yc-btn yc-wnext', esc(us('next'))); b.type = 'button'; box.appendChild(b); scrollEnd(); b.addEventListener('click', function(){ b.remove(); ok(); }, {once:true}); });
+      if(!G.alive) return;
+      st.seen = true; save();
+    }
+    // 2. the asks: the strip locks on two frames side by side
+    for(var q = 0; q < asks.length; q++){
+      if(st.asks[q]) continue;
+      var A = asks[q], fa = frames[idxOf(A.between[0])], fb = frames[idxOf(A.between[1])], ev = A.evidence || {}, evSide = ev.frame === A.between[1] ? 1 : 0;
+      var order = shuffled(A.chips.length), nw = 0;
+      var card = el('div', 'yc-wask', '<div class="yc-wpair">' + frameImg(fa || {}, evSide === 0 ? 'yc-wev' : '') + frameImg(fb || {}, evSide === 1 ? 'yc-wev' : '') + '</div>' +
+        '<div class="yc-rq">' + esc(tg(A.q)) + trSpan(A.q) + '</div><div class="yc-rchips">' + order.map(function(c){ return '<button type="button" class="yc-rchip" data-c="' + c + '">' + esc(tg(A.chips[c])) + '</button>'; }).join('') + '</div><div class="yc-rwhy" hidden></div>');
+      box.appendChild(card);
+      var evF = card.querySelector('.yc-wev');
+      if(evF && ev.box){ var bx = el('div', 'yc-wbox'); bx.style.left = ev.box.x + '%'; bx.style.top = ev.box.y + '%'; bx.style.width = ev.box.w + '%'; bx.style.height = ev.box.h + '%'; evF.appendChild(bx); }
+      scrollEnd(); speak(tg(A.q));
+      G.wait = 'rewind-ask'; G.rewind = {card:card, A:A};
+      var pulse = function(){ if(evF) { evF.classList.remove('yc-wpulse'); void evF.offsetWidth; evF.classList.add('yc-wpulse'); } };
+      var glow = function(){ var r = card.querySelector('.yc-rchip[data-c="' + A.ok + '"]'); if(r) r.classList.add('yc-rglow'); };
+      var h15 = later(function(){ pulse(); G.hinted = (G.hinted || 0) + 1; }, 15000), h45 = later(function(){ glow(); G.autoSolved = (G.autoSolved || 0) + 1; }, 45000);
+      await new Promise(function(done){
+        on(card, 'click', function(e){
+          var b = e.target.closest('.yc-rchip'); if(!b || b.disabled) return; var c = +b.getAttribute('data-c');
+          if(c === A.ok){
+            clear(h15); clear(h45); snd.play('chime'); card.classList.add('yc-rok'); if(evF) evF.classList.add('yc-wlit');
+            card.querySelector('.yc-rchips').innerHTML = '<b class="yc-rans">' + esc(tg(A.chips[A.ok])) + '</b>';
+            if(A.whatif){ var wi = el('div', 'yc-rline yc-whatif', '<span lang="' + target + '">' + esc(tg(A.whatif)) + '</span>' + trSpan(A.whatif)); card.appendChild(wi); }
+            done(); return;
+          }
+          G.misses = (G.misses || 0) + 1; nw++; b.disabled = true; b.classList.add('yc-rno'); snd.play('rustle'); pulse();
+          var why = card.querySelector('.yc-rwhy'); why.hidden = false; why.innerHTML = A.why ? '<span lang="' + target + '">' + esc(tg(A.why)) + '</span>' + trSpan(A.why) : '';
+          if(nw >= 2) glow();
+        });
+      });
+      if(!G.alive) return;
+      st.asks[q] = true; save(); scrollEnd();
+      await speak(tg(A.chips[A.ok]));   // the supported deduction, then the what-if line
+      if(A.whatif) await speak(tg(A.whatif));
+      if(q < asks.length - 1) await waitNext(null, 'next');
+    }
+    st.done = true; save(); G.wait = null; G.rewind = null;
+    if(R.done && tg(R.done)){ box.appendChild(el('div', 'yc-cap yc-cap-static', lineHtml(R.done, ch))); scrollEnd(); await speak(tg(R.done)); }
+    await waitNext(null, 'next');
+  }
+
+  /* ---------- notes across time (Build It style, no decoys at A1; 0.5.0: decoy tiles that bounce back with a rule, B1) ---------- */
   async function playNote(ch, opt, pick, instant){
     var N = ch.note; if(!N) return;
     var spec = pick ? N[pick] : N.tiles; if(!spec) return;
@@ -1309,11 +1511,13 @@ function start(o){
       var order = spec.tiles.map(function(t, i){ return i; });
       for(var s = order.length - 1; s > 0; s--){ var j = Math.floor(Math.random() * (s + 1)); var tmp = order[s]; order[s] = order[j]; order[j] = tmp; }
       if(order.every(function(v, i){ return v === i; }) && order.length > 1) order.reverse();
+      var decoys = (spec.decoys || (spec.decoy ? [spec.decoy] : [])).filter(Boolean), nT = spec.tiles.length;   // 0.5.0
+      decoys.forEach(function(d, k){ var at = Math.floor(Math.random() * (order.length + 1)); order.splice(at, 0, nT + k); });
       var placed = [];
       var draw = function(){
         box.innerHTML = '<div class="yc-cap yc-cap-static">' + uiBtnLabel(N.instr || cu('build')) + '</div>' +
           '<div class="yc-notecard" lang="' + target + '">' + spec.tiles.map(function(t, i){ return placed[i] != null ? '<button type="button" class="yc-tile yc-in" data-s="' + i + '">' + esc(spec.tiles[placed[i]]) + '</button>' : '<span class="yc-slot"></span>'; }).join('') + '</div>' +
-          '<div class="yc-tiles" lang="' + target + '">' + order.map(function(ti){ return placed.indexOf(ti) >= 0 ? '' : '<button type="button" class="yc-tile" data-t="' + ti + '">' + esc(spec.tiles[ti]) + '</button>'; }).join('') + '</div>' +
+          '<div class="yc-tiles" lang="' + target + '">' + order.map(function(ti){ if(ti >= nT) return '<button type="button" class="yc-tile yc-decoy" data-d="' + (ti - nT) + '">' + esc(decoys[ti - nT]) + '</button>'; return placed.indexOf(ti) >= 0 ? '' : '<button type="button" class="yc-tile" data-t="' + ti + '">' + esc(spec.tiles[ti]) + '</button>'; }).join('') + '</div><div class="yc-note-rule" hidden></div>' +
           (spec.tr && trn(spec.tr) ? '<div class="yc-tr yc-note-tr" dir="auto" lang="' + ui + '">' + esc(trn(spec.tr)) + '</div>' : '');
       };
       draw(); scrollEnd();
@@ -1321,6 +1525,11 @@ function start(o){
       await new Promise(function(ok){
         box.addEventListener('click', function h(e){
           var t = e.target.closest('.yc-tile'); if(!t) return;
+          if(t.hasAttribute('data-d')){   // 0.5.0: a decoy bounces back, the rule shows (B1: "If + present, then will + verb.")
+            G.misses = (G.misses || 0) + 1; snd.play('rustle'); anim(t, [{transform:'translateY(0)'}, {transform:'translateY(-10px)'}, {transform:'translateY(0)'}], {duration:320});
+            var rl = box.querySelector('.yc-note-rule'); if(rl && spec.rule){ rl.hidden = false; rl.innerHTML = '<span lang="' + target + '">' + esc(tg(spec.rule)) + '</span>' + trSpan(spec.rule); }
+            return;
+          }
           if(t.hasAttribute('data-t')){ var free = placed.findIndex ? placed.findIndex(function(x){ return x == null; }) : -1; if(free < 0) free = placed.length; placed[free] = +t.getAttribute('data-t'); snd.play('pop'); }
           else { placed[+t.getAttribute('data-s')] = null; snd.play('rustle'); }
           var full = spec.tiles.every(function(x, i){ return placed[i] != null; });
@@ -1499,6 +1708,8 @@ function start(o){
     if(b.type === 'credits') return playCredits(ch, instant);
     if(b.type === 'letter') return playLetter(ch, 'a', instant);
     if(b.type === 'flipfeel') return playFlipFeel(ch, instant);
+    if(b.type === 'radio') return playRadio(ch, instant, b.id);   // 0.5.0 (B1 Radio Watch)
+    if(b.type === 'rewind') return playRewind(ch, instant, b.id);   // 0.5.0 (B2 Rewind)
     return Promise.resolve();
   }
   async function runChapter(n, resume){
@@ -1524,6 +1735,9 @@ function start(o){
     var startI = G.run.i;
     for(var i = 0; i < ch.seq.length; i++){
       if(!G.alive) return;
+      // 0.5.0: the panels that stood in for a Radio Watch beat (radioFallback) are skipped now that the beat plays
+      if(ch.seq[i].type === 'panel' && ch.seq[i].radioFallback && (ch.radios || {})[ch.seq[i].radioFallback]) continue;
+      if(ch.seq[i].type === 'panel' && ch.seq[i].rewindFallback && (ch.rewinds || {})[ch.seq[i].rewindFallback]) continue;   // B2
       var instant = i < startI;
       if(!instant){ G.run.i = i; save(); }
       await playBeat(ch.seq[i], ch, instant);
@@ -1568,6 +1782,8 @@ function start(o){
     var r = {sound:snd.status(), ch:G.ch && G.ch.n, i:G.run && G.run.i, beat:null, wait:G.wait, picks:G.run && G.run.picks.slice(), ended:G.ended, endings:G.endings || null, hinted:G.hinted || 0, autoSolved:G.autoSolved || 0, misses:G.misses || 0, tn:null};
     if(G.ch && G.run && G.ch.seq[G.run.i]){ var b = G.ch.seq[G.run.i]; r.beat = {type:b.type, id:b.id || b.d || null, part:b.part || null}; }
     r.runFound = G.run && G.run.tn ? G.run.tn.found.slice() : [];
+    if(G.rewind && G.rewind.card){ var wb = G.rewind.card.querySelector('.yc-rchip[data-c="' + G.rewind.A.ok + '"]'); if(wb){ var wr = wb.getBoundingClientRect(); r.rewind = {ok:{x:wr.left + wr.width / 2, y:wr.top + wr.height / 2}}; } }
+    if(G.radio && G.radio.log){ var RL = G.radio.R.log || [], LG = G.radio.log; r.radio = {id:G.radio.id, rows:RL.map(function(x, k){ var b = LG.querySelector('.yc-rchip[data-r="' + k + '"][data-c="' + x.ok + '"]'), rc = b && b.getBoundingClientRect(); return {done:!!G.radio.st.rows[k], ok:rc ? {x:rc.left + rc.width / 2, y:rc.top + rc.height / 2} : null}; })}; var rb = LG.querySelector('.yc-rrelay .yc-rchip[data-c="' + ((G.radio.R.relay || {}).ok) + '"]'); if(rb){ var rr = rb.getBoundingClientRect(); r.radio.relay = {x:rr.left + rr.width / 2, y:rr.top + rr.height / 2}; } }
     if(G.tn){
       var ov = G.tn.scr.querySelector('.yc-tn-ov'), rc = ov.getBoundingClientRect(), tn = G.run && G.run.tn;
       r.tn = {phase:tn && tn.phase, step:tn && tn.step, found:tn ? tn.found.slice() : [], rect:{x:rc.left, y:rc.top, w:rc.width, h:rc.height},

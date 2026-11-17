@@ -1930,6 +1930,13 @@
   .ins-fun b{color:var(--ink);}
   .ins-fun b.y{color:var(--success);}
   .ins-idea{margin:6px 0 0; font-size:12.5px; line-height:1.45; color:var(--ink-soft);}
+  /* group-class fit (2026-11-17) */
+  .ins-fitcheck{margin:0 0 12px; padding:10px 14px; border-radius:14px; font-size:13px; line-height:1.45; font-weight:700;}
+  .ins-fitcheck.ok{background:color-mix(in srgb, var(--fs-green) 18%, var(--bg-elevated)); color:var(--ink);}
+  .ins-fitcheck.warn{background:var(--error-soft); color:var(--ink); border:1.5px solid var(--error);}
+  .ins-fitcheck ul{margin:6px 0; padding-inline-start:18px; font-weight:600;} .ins-fitcheck p{margin:4px 0 0; font-weight:600; color:var(--ink-soft);}
+  .ins-misfit{margin:8px 0 0; padding:8px 12px; border-radius:12px; background:var(--error-soft); color:var(--ink); font-size:12.5px; font-weight:700;}
+  .ins-moveout{font-size:12px; font-weight:900; color:var(--error) !important; margin-inline-start:4px;}
   .ins-idea b{margin-inline-end:6px; font-size:10.5px; font-weight:800; letter-spacing:.1em; text-transform:uppercase; color:var(--fs-purple-ink);}
   .ins-group.is-course{background:color-mix(in srgb, var(--fs-purple) 8%, var(--bg-elevated));}
   /* v5 (Farin 2026-11-16): gathering under 10, the offer page box, the fixed 4–6 rule */
@@ -40237,6 +40244,38 @@ function adminClassesClashed(d){
 }
 function adminClassPeopleByHash(){ const m = {}; (adminPeople || []).forEach(p=>{ if(!p.hidden) p.accounts.forEach(u=>{ if(u.hash) m[u.hash] = p; }); }); return m; }
 function adminClassMembers(c, byHash){ const seen = {}; return (c.members || []).map(h=>byHash[h]).filter(p=>p && !seen[p.key] && (seen[p.key] = 1)); }
+/* Fit (Farin 2026-11-17: "how do you put someone with c1 level in an a1a2 level class, you have to make sure everything fits"). Classes were
+   strict when made, but members were never checked again: someone who joined at A1/A2 and later redid the diagnostic (or whose admin entry
+   now shows a newer account at another level) stayed in, counted and offered. Now every member is checked against ALL of the class, at every
+   sync and on screen:
+   - level = their CURRENT level: profile.level of their most recently used account (adminInsLevel, the level the app shows them now; it
+     changes with Redo my diagnostic, a calibration move and level-ups). A level class = that exact level; a course class = its band (A1–A2 /
+     B1 / B2–C1) and the course's lowest level (one lower if they asked for it);
+   - the same app, the class's speakers group (app language, when Turkish and Persian are apart), and the level class's main goal among their
+     goals / the course among their courses.
+   A suggested class nobody was offered yet (no invitation, no answer) is re-formed: who no longer fits leaves it, goes back to the pool and
+   joins a class that fits (c.refit keeps a note: account hash, time, reason; no names). Once an offer went out or someone answered, and in a
+   running class, nobody is moved by itself: the row says why they don't fit, with "Move out". Misfits never count: not in the fit number,
+   the 10 for the offer, the offer itself or the seats. */
+function adminClassFitWhy(c, p){
+  if(!p) return 'not found';
+  const why = [], lv = adminInsLevel(p), course = adminClassKind(c) === 'course', ln = adminInsLang(p) || '?';
+  if(p.app !== c.app) why.push('now uses the ' + (p.app === 'es' ? 'Spanish' : 'English') + ' app');
+  if(!lv) why.push('has no level');
+  else if(course ? adminClassBand(lv) !== c.band : lv !== c.level) why.push('level changed: now ' + lv + ', this class is ' + (course ? c.band : c.level));
+  if(c.lang && c.lang !== '*' && ln !== c.lang) why.push('uses the app in ' + (ADMIN_INS_LANG[ln] || 'another language') + ', this class is for ' + (ADMIN_INS_LANG[c.lang] || c.lang) + ' speakers');
+  if(!course && adminInsGoals(p).indexOf(c.goal) < 0) why.push((GOAL_LABELS[c.goal] || c.goal) + ' is not one of their goals any more');
+  if(course && lv && adminClassBand(lv) === c.band && adminInsThemes(p).indexOf(c.theme) < 0) why.push('this course no longer fits their goals or level');
+  return why.join('; ');
+}
+function adminClassFits(c, p){ return !adminClassFitWhy(c, p); }
+function adminClassFitMembers(c, byHash){ return adminClassMembers(c, byHash).filter(p=>adminClassFits(c, p)); }
+// Offered = someone got the WhatsApp offer for it or answered: from then on nobody leaves it by themselves.
+function adminClassOffered(c, byHash){ return Object.keys(c.replies || {}).length > 0 || adminClassMembers(c, byHash).some(p=>adminInsInvitedAt(p) >= (Number(c.createdAt) || 0)); }
+// Every member who doesn't fit their class (open classes): the banner on Group classes and the checks use it.
+function adminClassesMisfits(byHash){ byHash = byHash || adminClassPeopleByHash(); const out = [];
+  (adminClasses ? adminClasses.classes : []).forEach(c=>{ if(!adminClassOpen(c)) return; adminClassMembers(c, byHash).forEach(p=>{ const why = adminClassFitWhy(c, p); if(why) out.push({c, p, why}); }); });
+  return out; }
 function adminClassOpen(c){ return c.status === 'suggested' || c.status === 'running'; }
 function adminClassKind(c){ return c && c.kind === 'course' ? 'course' : 'level'; }
 function adminClassBand(level){ const i = LEVELS.indexOf(level); return i < 0 ? '' : i <= 1 ? 'A1–A2' : i === 2 ? 'B1' : 'B2–C1'; }
@@ -40277,10 +40316,17 @@ function adminClassesSync(){
   // so a slow load never drops anyone; running classes never change. They are not rested: once they add a number they can join again.
   if(adminChats && adminAccessList && adminContacts && adminContactsOther) C.classes.forEach(c=>{ if(c.status !== 'suggested') return;
     const ok = c.members.filter(h=>byHash[h] && adminInsPhone(byHash[h])); if(ok.length !== c.members.length){ c.members = ok; changed = true; } });
+  // fit (2026-11-17): a suggested class nobody was offered yet loses who no longer fits; they go back to the pool below and join a class that fits
+  C.classes.forEach(c=>{ if(c.status !== 'suggested' || adminClassOffered(c, byHash)) return;
+    const out = adminClassMembers(c, byHash).filter(p=>!adminClassFits(c, p)); if(!out.length) return;
+    const hs = {}; out.forEach(p=>p.accounts.forEach(u=>{ if(u.hash) hs[u.hash] = 1; }));
+    c.members = c.members.filter(h=>!hs[h]);
+    c.refit = (Array.isArray(c.refit) ? c.refit : []).concat(out.map(p=>({h:p.main.hash, at:now, why:adminClassFitWhy(c, p).slice(0, 140)}))).slice(-12);
+    changed = true; });
   adminClassesStats = {};
   ['level', 'course'].forEach(kind=>{ if(adminClassesSyncKind(kind, rules, now, byHash)) changed = true; });
   // ready to offer from 10 who fit: offerAt = when it first got there (the To check "new" row), cleared if it drops below 10
-  C.classes.forEach(c=>{ if(c.status !== 'suggested') return; const ok = adminClassMembers(c, byHash).length >= ADMIN_CLASS_OFFER_MIN;
+  C.classes.forEach(c=>{ if(c.status !== 'suggested') return; const ok = adminClassFitMembers(c, byHash).length >= ADMIN_CLASS_OFFER_MIN;
     if(ok && !c.offerAt){ c.offerAt = now; changed = true; } else if(!ok && c.offerAt){ delete c.offerAt; changed = true; } });
   if(changed) adminClassesSave();
   return changed;
@@ -40346,12 +40392,12 @@ function adminClassesFresh(){ const seen = adminClassesSeen(); return (adminClas
 function adminClassesJoined(){ const seen = adminClassesSeen(); return (adminClasses ? adminClasses.classes : []).filter(c=>adminClassHome(c) && adminClassOffer(c) && c.offerAt <= seen && Object.keys(c.added || {}).some(h=>c.added[h] > seen)); }
 // Who said yes, first to answer first (they get the seats).
 function adminClassYes(c, byHash){ const at = p=>p.accounts.reduce((m, u)=>{ const x = u.hash && (c.replies || {})[u.hash]; return x && x.r === 'yes' ? Math.min(m, Number(x.at) || 0) : m; }, Infinity);
-  return adminClassMembers(c, byHash || adminClassPeopleByHash()).filter(p=>adminClassReply(c, p) === 'yes').sort((a,b)=>at(a) - at(b)); }
+  return adminClassFitMembers(c, byHash || adminClassPeopleByHash()).filter(p=>adminClassReply(c, p) === 'yes').sort((a,b)=>at(a) - at(b)); }
 function adminClassesReady(){ const byHash = adminClassPeopleByHash(); return (adminClasses ? adminClasses.classes : []).filter(c=>adminClassHome(c) && c.status === 'suggested' && adminClassYes(c, byHash).length >= ADMIN_CLASS_MIN); }
 // How the yes-sayers become classes of 4–6: sizes of each class (first to say yes first); who is left over waits for the next class.
 function adminClassSplit(y){ let k = Math.ceil(y / ADMIN_CLASS_MAX); while(k > 1 && y < ADMIN_CLASS_MIN * k) k--; if(y < ADMIN_CLASS_MIN) return []; const seated = Math.min(y, ADMIN_CLASS_MAX * k), base = Math.floor(seated / k);
   return Array.from({length:k}, (x, i)=>base + (i < seated % k ? 1 : 0)); }
-function adminClassGoal(c){ return GOAL_LABELS[c.goal] || c.goal || ''; }
+function adminClassGoal(c){ return c.goal === 'travel' ? 'Travel & everyday life' : GOAL_LABELS[c.goal] || c.goal || ''; }   // Travel never alone (2026-11-17)
 function adminClassName(c){ return (adminClassKind(c) === 'course' ? (ADMIN_CLASS_THEMES[c.theme] || {t:c.theme}).t + ' · ' + c.band : c.level + ' · ' + adminClassGoal(c)) + (c.part ? ' · group ' + c.part : ''); }
 function adminClassTitle(c){ return adminClassName(c) + (ADMIN_INS_LANG[c.lang] ? ' · ' + ADMIN_INS_LANG[c.lang] + ' speakers' : '') + (adminInsAppNow() === 'all' ? ' · ' + String(c.app || '').toUpperCase() + ' app' : ''); }
 function adminClassIdea(c){ return adminClassKind(c) === 'course' ? (ADMIN_CLASS_THEMES[c.theme] || {}).idea || '' : ADMIN_LEVEL_IDEAS[c.goal] || ''; }
@@ -40361,14 +40407,14 @@ function adminClassesMarkSeen(){ if(!adminClasses) return; adminClassesSeenBefor
 // ---------- the offer: a page made for each learner + the WhatsApp message that links it (v5, Farin 2026-11-16) ----------
 // Level-class names in the learner's language ([ui][the language the class teaches][goal]); same words as site/class/offer.js.
 const ADMIN_CLASS_GOAL_T = {
-  en:{en:{career:'Career English', exam:'Exam English', everyday:'Everyday English', travel:'Travel English', immigration:'English for moving abroad'},
-      es:{career:'Career Spanish', exam:'Exam Spanish', everyday:'Everyday Spanish', travel:'Travel Spanish', immigration:'Spanish for moving abroad'}},
-  tr:{en:{career:'Kariyer İngilizcesi', exam:'Sınav İngilizcesi', everyday:'Günlük İngilizce', travel:'Seyahat İngilizcesi', immigration:'Yurt dışına taşınanlar için İngilizce'},
-      es:{career:'Kariyer İspanyolcası', exam:'Sınav İspanyolcası', everyday:'Günlük İspanyolca', travel:'Seyahat İspanyolcası', immigration:'Yurt dışına taşınanlar için İspanyolca'}},
-  fa:{en:{career:'انگلیسی برای کار', exam:'انگلیسی برای آزمون', everyday:'انگلیسی روزمره', travel:'انگلیسی سفر', immigration:'انگلیسی برای مهاجرت'},
-      es:{career:'اسپانیایی برای کار', exam:'اسپانیایی برای آزمون', everyday:'اسپانیایی روزمره', travel:'اسپانیایی سفر', immigration:'اسپانیایی برای مهاجرت'}},
-  es:{en:{career:'inglés para el trabajo', exam:'inglés para exámenes', everyday:'inglés para el día a día', travel:'inglés para viajar', immigration:'inglés para mudarte al extranjero'},
-      es:{career:'español para el trabajo', exam:'español para exámenes', everyday:'español para el día a día', travel:'español para viajar', immigration:'español para mudarte al extranjero'}}
+  en:{en:{career:'Career English', exam:'Exam English', everyday:'Everyday English', travel:'Travel & everyday English', immigration:'English for moving abroad'},
+      es:{career:'Career Spanish', exam:'Exam Spanish', everyday:'Everyday Spanish', travel:'Travel & everyday Spanish', immigration:'Spanish for moving abroad'}},
+  tr:{en:{career:'Kariyer İngilizcesi', exam:'Sınav İngilizcesi', everyday:'Günlük İngilizce', travel:'Seyahat ve günlük İngilizce', immigration:'Yurt dışına taşınanlar için İngilizce'},
+      es:{career:'Kariyer İspanyolcası', exam:'Sınav İspanyolcası', everyday:'Günlük İspanyolca', travel:'Seyahat ve günlük İspanyolca', immigration:'Yurt dışına taşınanlar için İspanyolca'}},
+  fa:{en:{career:'انگلیسی برای کار', exam:'انگلیسی برای آزمون', everyday:'انگلیسی روزمره', travel:'انگلیسی سفر و زندگی روزمره', immigration:'انگلیسی برای مهاجرت'},
+      es:{career:'اسپانیایی برای کار', exam:'اسپانیایی برای آزمون', everyday:'اسپانیایی روزمره', travel:'اسپانیایی سفر و زندگی روزمره', immigration:'اسپانیایی برای مهاجرت'}},
+  es:{en:{career:'inglés para el trabajo', exam:'inglés para exámenes', everyday:'inglés para el día a día', travel:'inglés para viajar y el día a día', immigration:'inglés para mudarte al extranjero'},
+      es:{career:'español para el trabajo', exam:'español para exámenes', everyday:'español para el día a día', travel:'español para viajar y el día a día', immigration:'español para mudarte al extranjero'}}
 };
 function adminClassLevelCode(c){ return String(adminClassKind(c) === 'course' ? c.band || '' : c.level || ''); }
 function adminClassNameIn(c, lang){
@@ -40398,7 +40444,7 @@ function adminClassOfferUrl(c, p, byHash){
     if(course && adminInsAsked(p).indexOf(c.theme) >= 0) q.set('w', 'a');
   }
   const tp = adminClassTopics(c, byHash); if(tp.length) q.set('tp', tp.join('.'));
-  q.set('m', String(adminClassMembers(c, byHash || adminClassPeopleByHash()).length));
+  q.set('m', String(adminClassFitMembers(c, byHash || adminClassPeopleByHash()).length));
   q.set('id', c.id);
   return ADMIN_CLASS_OFFER_URL + (lang === 'en' ? '' : lang + '/') + '?' + q.toString();
 }
@@ -40487,6 +40533,15 @@ function adminInsAction(action, el){
     cls.status = 'closed'; cls.closedAt = Date.now(); adminClassesSave(); return re();
   }
   if(action === 'ins-reopen' && cls){ cls.status = cls.startedAt ? 'running' : 'suggested'; delete cls.closedAt; adminClassesSave(); return re(); }
+  if(action === 'ins-refit-out' && cls){
+    const p = adminPersonByKey(el.dataset.id); if(!p) return;
+    const why = adminClassFitWhy(cls, p);
+    if(!confirm('Move ' + (p.profile.name || 'this learner') + ' out of this class?' + (why ? ' (' + why + ')' : '') + ' They join a class that fits them.')) return;
+    const hs = p.accounts.map(u=>u.hash).filter(Boolean);
+    cls.members = cls.members.filter(h=>hs.indexOf(h) < 0);
+    cls.refit = (Array.isArray(cls.refit) ? cls.refit : []).concat([{h:p.main.hash, at:Date.now(), why:(why || 'moved out').slice(0, 140), by:'you'}]).slice(-12);
+    adminClassesSave(); adminClassesMaybeSync(); return re();
+  }
   if(action === 'ins-out' && cls){
     const p = adminPersonByKey(el.dataset.id); if(!p) return;
     if(!confirm('Take ' + (p.profile.name || 'this learner') + ' out of this class? They are not put in a class of this kind again for 30 days.')) return;
@@ -40557,6 +40612,20 @@ function adminInsBoxSub(){
 }
 // ---------- the classes page ----------
 // openId: just that class's full card (its own page in admin › Group classes); otherwise the list, one row per class.
+// What the fit check changed in this class (c.refit: hash, time, reason; names come from the learner list).
+function adminClassRefitNote(c, byHash){
+  const r = Array.isArray(c.refit) ? c.refit.slice(-6) : []; if(!r.length) return '';
+  return '<p class="ins-idea ins-refit"><b>Fit</b> ' + r.map(x=>{ const p = byHash[x.h], nm = ((p && p.profile.name) || 'A learner').trim().split(/\s+/)[0];
+    return esc(nm) + ' (' + esc(x.why || '') + '): ' + (x.by === 'you' ? 'moved out by you' : 'moved to a class that fits') + ', ' + esc(adminDate(x.at)); }).join(' · ') + '</p>';
+}
+// Fit check (2026-11-17): every member of an open class against its level, speakers group and goal / course.
+function adminClassFitBanner(byHash, app){
+  const mis = adminClassesMisfits(byHash).filter(x=>app === 'all' || x.c.app === app);
+  if(!mis.length) return '<p class="ins-fitcheck ok" role="status">✓ Fit check: every member fits their class (level, speakers group, goal).</p>';
+  return '<div class="ins-fitcheck warn" role="status"><b>' + mis.length + ' member' + (mis.length === 1 ? ' doesn\'t' : 's don\'t') + ' fit their class</b><ul>'
+    + mis.slice(0, 12).map(x=>'<li><button class="ap-link" data-admin-action="ins-class" data-c="' + esc(x.c.id) + '">' + esc((x.p.profile.name || 'A learner').trim().split(/\s+/)[0]) + ' · ' + esc(adminInsStage(x.p)) + ' in ' + esc(adminClassTitle(x.c)) + '</button>: ' + esc(x.why) + '</li>').join('')
+    + '</ul><p>Classes nobody was offered yet fix themselves. Offered or running classes wait for you: open the class and tap Move out.</p></div>';
+}
 function adminInsClassesHtml(openId){
   if(!adminClasses) return adminInsCard('Group classes', 'Group classes', `<p class="ap-empty">${adminClassesError ? 'Could not load the classes: ' + esc(adminClassesError) : 'Loading…'}</p>`, '');
   const r = adminClassRules(), byHash = adminClassPeopleByHash(), app = adminInsAppNow(), seen = adminClassesSeenBefore, k = adminInsKind;
@@ -40564,7 +40633,8 @@ function adminInsClassesHtml(openId){
   const THEME_GOAL = {business:'career', ielts:'exam', interview:'career', travel:'travel', marketing:'career', sales:'career', 'ai-internet':'everyday'};
   const card = c=>{
     const course = adminClassKind(c) === 'course', open = adminClassOpen(c), sug = c.status === 'suggested', offer = adminClassOffer(c), gather = sug && !offer;
-    const m = adminClassOrdered(c, byHash), n = m.length, yes = m.filter(p=>adminClassReply(c, p) === 'yes').length, no = m.filter(p=>adminClassReply(c, p) === 'no').length;
+    const all = adminClassOrdered(c, byHash), misW = {}; all.forEach(p=>{ const w = adminClassFitWhy(c, p); if(w) misW[p.key] = w; });   // fit (2026-11-17)
+    const m = all.filter(p=>!misW[p.key]), mis = all.filter(p=>misW[p.key]), n = m.length, yes = m.filter(p=>adminClassReply(c, p) === 'yes').length, no = m.filter(p=>adminClassReply(c, p) === 'no').length;
     const invited = m.filter(p=>adminInsInvitedAt(p) >= (c.createdAt || 0)).length, isNew = offer && c.offerAt > seen;
     const asked = course ? m.filter(p=>adminInsAsked(p).indexOf(c.theme) >= 0).length : 0, ready = sug && yes >= ADMIN_CLASS_MIN;
     const fit = !course && n ? adminInsFit(m, c.goal) : null, sizes = adminClassSplit(yes), seated = sizes.reduce((a, b)=>a + b, 0);
@@ -40583,13 +40653,14 @@ function adminInsClassesHtml(openId){
         <div class="ins-otxt"><b>Offer page</b><span><b>Send offer</b> opens WhatsApp with a short message in their language and a link to a page made for them: their name, goal and level, what they told the app they find hard, the group's favourite topics, and only 6 seats. It shows only for learners who said yes to news and offers, or who asked for this course.</span>
           <span class="ins-obtns"><a class="btn btn-sm btn-ghost" href="${esc(adminClassOfferUrl(c, null, byHash))}" target="_blank" rel="noopener">Open the page</a><button class="btn btn-sm btn-ghost" data-admin-action="ins-offer-copy" data-c="${esc(c.id)}">Copy link</button></span></div>
       </div>` : '';
-    const rows = c.status === 'closed' ? '' : adminInsPeopleList(m, p=>{ const rep = adminClassReply(c, p), t = [];
+    const rows = c.status === 'closed' ? '' : adminInsPeopleList(m.concat(mis), p=>{ const rep = adminClassReply(c, p), t = [], bad = misW[p.key];
+      if(bad) t.push('<span class="ap-tag warn">Doesn\'t fit: ' + esc(bad) + '</span><button class="ap-link ins-moveout" data-admin-action="ins-refit-out" data-c="' + esc(c.id) + '" data-id="' + esc(p.key) + '">Move out</button>');
       if(rep === 'yes') t.push('<span class="ap-tag ok">Said yes</span>'); if(rep === 'no') t.push('<span class="ap-tag">Said no</span>');
       if(course && adminInsAsked(p).indexOf(c.theme) >= 0) t.push('<span class="ap-tag purple">Asked for this course</span>');
       if(course && adminInsOwns(p, c.theme)) t.push('<span class="ap-tag ok">Has the course</span>');
-      const may = offer && adminClassMayOffer(c, p);
+      const may = offer && !bad && adminClassMayOffer(c, p);
       if(offer && !may) t.push('<span class="ap-tag" title="Said no to news and offers, or never chose: a class offer is a promotion">No offers consent</span>');
-      return {offer:may ? c : null, byHash, waLabel:'WhatsApp', out:open ? c.id : '', reply:offer || (sug && rep) ? {c:c.id, r:rep} : null, tags:t, dim:rep === 'no',
+      return {offer:may ? c : null, byHash, waLabel:'WhatsApp', out:open ? c.id : '', reply:offer || (sug && rep) ? {c:c.id, r:rep} : null, tags:t, dim:rep === 'no' || !!bad,
         isNew:p.accounts.some(u=>u.hash && (c.added || {})[u.hash] > seen && c.createdAt <= seen)}; });
     const acts = sug ? (ready ? `<button class="btn btn-sm btn-primary" data-admin-action="ins-start" data-c="${esc(c.id)}">✓ ${sizes.length > 1 ? 'Start ' + sizes.length + ' classes (' + sizes.join(' + ') + ')' : 'Start with the ' + seated + ' who said yes'}</button>` : '') + `<button class="btn btn-sm btn-ghost" data-admin-action="ins-close" data-c="${esc(c.id)}">Remove class</button>`
       : c.status === 'running' ? `<button class="btn btn-sm btn-ghost" data-admin-action="ins-close" data-c="${esc(c.id)}">Class finished</button>` : `<button class="btn btn-sm btn-ghost" data-admin-action="ins-reopen" data-c="${esc(c.id)}">Open again</button>`;
@@ -40597,6 +40668,8 @@ function adminInsClassesHtml(openId){
         <div class="ins-gh"><span class="ins-gn">${n}</span><span class="ins-gt"><b>${esc(adminClassTitle(c))} ${tags}</b><small>${esc(why)}</small></span></div>
         ${adminClassIdea(c) && c.status !== 'closed' && !gather ? `<p class="ins-idea"><b>Class idea</b> ${esc(adminClassIdea(c))}</p>` : ''}
         ${funnel}
+        ${mis.length ? `<p class="ins-misfit" role="status">${mis.length} member${mis.length === 1 ? ' doesn\'t' : 's don\'t'} fit this class any more (marked below). They are not counted, offered or seated; tap Move out to put them in a class that fits.</p>` : ''}
+        ${adminClassRefitNote(c, byHash)}
         ${offerBox}
         ${rows}
         <div class="ins-gb">${c.status === 'closed' ? '' : `<button class="btn btn-sm btn-ghost" data-admin-action="ins-copy" data-c="${esc(c.id)}">Copy names and numbers</button>`}${acts}</div>
@@ -40606,11 +40679,11 @@ function adminInsClassesHtml(openId){
   // info when i click on the course").
   const row = c=>{
     const course = adminClassKind(c) === 'course', sug = c.status === 'suggested', offer = adminClassOffer(c), gather = sug && !offer;
-    const m = adminClassMembers(c, byHash), n = m.length, yes = m.filter(p=>adminClassReply(c, p) === 'yes').length, no = m.filter(p=>adminClassReply(c, p) === 'no').length;
+    const m = adminClassFitMembers(c, byHash), n = m.length, misN = adminClassMembers(c, byHash).length - n, yes = m.filter(p=>adminClassReply(c, p) === 'yes').length, no = m.filter(p=>adminClassReply(c, p) === 'no').length;
     const ready = sug && yes >= ADMIN_CLASS_MIN, isNew = offer && c.offerAt > seen, joined = !isNew && offer && Object.keys(c.added || {}).some(h=>c.added[h] > seen);
     const tags = [course ? '<span class="ap-tag purple">Course class</span>' : '<span class="ap-tag">Level class</span>',
       gather ? '<span class="ap-tag">Gathering · ' + n + ' of ' + ADMIN_CLASS_OFFER_MIN + '</span>' : '', isNew ? '<span class="ap-tag new">New · ready to offer</span>' : offer && !ready ? '<span class="ap-tag purple">Ready to offer</span>' : '',
-      joined ? '<span class="ap-tag new">New learner</span>' : '', ready ? '<span class="ap-tag ok">Ready to start</span>' : '',
+      joined ? '<span class="ap-tag new">New learner</span>' : '', misN ? '<span class="ap-tag warn">' + misN + ' doesn\'t fit</span>' : '', ready ? '<span class="ap-tag ok">Ready to start</span>' : '',
       c.status === 'running' ? '<span class="ap-tag ok">Running</span>' : c.status === 'closed' ? '<span class="ap-tag">Closed</span>' : ''].join('');
     const line = gather ? n + ' of ' + ADMIN_CLASS_OFFER_MIN + ' fit · the offer opens at ' + ADMIN_CLASS_OFFER_MIN
       : sug ? n + ' fit · ' + m.filter(p=>adminInsInvitedAt(p) >= (c.createdAt || 0)).length + ' sent the offer · ' + yes + ' yes · ' + no + ' no'
@@ -40628,7 +40701,7 @@ function adminInsClassesHtml(openId){
   const notIn = [sl.left ? sl.left + ' fit no level class yet (not 3 at the same level with the same goal' + (r.split ? ' and app language' : '') + ')' : '',
     scs.left ? scs.left + ' fit no course class yet' : '', sl.once ? sl.once + ' came only once' : '', sl.noPhone ? sl.noPhone + ' left no number' : '',
     sl.resting || scs.resting ? (sl.resting || 0) + (scs.resting || 0) + ' resting after a No, a ✕ or a removed class' : ''].filter(Boolean);
-  const body = `<div class="ins-rules"><span class="ins-gl">Rules</span>
+  const body = adminClassFitBanner(byHash, app) + `<div class="ins-rules"><span class="ins-gl">Rules</span>
         <span class="ins-fixed">Only with a WhatsApp number</span>
         <button class="ap-chip${r.split ? ' on' : ''}" data-admin-action="ins-split" aria-pressed="${r.split}">Turkish and Persian apart</button>
         <span class="ins-gl">Class size</span><span class="ins-fixed">4–6 people</span><span class="ins-gl">Offer from</span><span class="ins-fixed">10 who fit</span>

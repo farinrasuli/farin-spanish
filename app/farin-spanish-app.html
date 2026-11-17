@@ -1606,7 +1606,7 @@
   .nt-card{position:relative; padding-inline-end:66px;}
   .nt-card img{width:20px; height:20px; border-radius:6px;}
   .nt-card img.nt-lic{position:absolute; top:12px; inset-inline-end:12px; width:44px; height:44px; border-radius:50%;}
-  .nt-big{display:block; width:100%; height:auto; aspect-ratio:2 / 1; object-fit:cover; border-radius:16px; margin-top:8px;}
+  img.nt-big{display:block; width:100%; height:auto; aspect-ratio:2 / 1; object-fit:cover; border-radius:16px; margin-top:8px;}   /* the wide picture only: the reach box's div.nt-big (phone count) keeps its row (2026-11-17) */
   .nt-card .nt-h{font-size:12px; color:#5b5d66;}
   .nt-card .nt-b{grid-column:2; display:grid; gap:1px; min-width:0;}
   .nt-card .nt-b b{font-size:14.5px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
@@ -15005,7 +15005,7 @@ function renderDiagUnlock(){
         ${showErr ? `<div class="unlock-error">${L("Oops — we need your name to continue.", 'Hop — devam etmek için adını almamız lazım.', 'اوپس — برای ادامه باید اسمت را بگویی.', 'Ups — necesitamos tu nombre para continuar.')}</div>` : ''}
         ${pwErr ? `<div class="unlock-error">${pwErrorText(pwErr)}</div>` : ''}
         <button class="btn btn-primary" data-action="unlock-submit" ${farinPwBusy?'disabled':''}>${farinPwBusy ? L('Saving…', 'Kaydediliyor…', 'در حال ذخیره…', 'Guardando…') : L('Go!', 'Hadi!', 'برو!', '¡Vamos!')}</button>
-        <p style="font-size:11px; color:var(--ink-faint); text-align:center;">${L('By tapping Go!, you agree to our','Hadi\'ya dokunarak şunu kabul edersin:','با زدن دکمه برو، این را می‌پذیری:', 'Al tocar ¡Vamos!, aceptas nuestra')} <button data-action="nav" data-view="privacy-policy" style="background:none; border:none; padding:0; color:var(--ink-soft); text-decoration:underline; font-size:11px; cursor:pointer;">${L('Privacy Policy','Gizlilik Politikası','حریم خصوصی', 'Política de Privacidad')}</button></p>
+        <p style="font-size:11px; color:var(--ink-faint); text-align:center;">${L('By tapping Go!, you agree to our','Hadi\'ya dokunarak şunu kabul edersin:','با زدن دکمه برو، این را می‌پذیری:', 'Al tocar ¡Vamos!, aceptas nuestra')} <button data-action="nav" data-view="privacy-policy" style="background:none; border:none; padding:0; color:var(--ink-soft); text-decoration:underline; font-size:11px; cursor:pointer;">${L('Privacy Policy','Gizlilik Politikası','حریم خصوصی', 'Política de Privacidad')}</button>${L('. Signing up turns on notifications; you can turn them off in Settings.','. Kayıt olunca bildirimler açılır; Ayarlar\'dan kapatabilirsin.','. با ثبت‌نام اعلان‌ها روشن می‌شوند؛ از تنظیمات می‌توانی خاموششان کنی.', '. Al registrarte se activan las notificaciones; puedes desactivarlas en Configuración.')}</p>
       </div>
     </div>
   </div>`;
@@ -15024,7 +15024,7 @@ function renderPrivacyPolicy(){
   const MAIL = `<a href="mailto:farinrasuli@gmail.com" dir="ltr" style="color:inherit;">farinrasuli@gmail.com</a>`;
   const ielts = LOGIN_APP === 'en';
   return `<div class="fade-in">
-    ${sectionHead(L('Privacy Policy','Gizlilik Politikası','حریم خصوصی','Política de Privacidad'), CL('Last updated: November 16, 2026','Son güncelleme: 16 Kasım 2026','آخرین به‌روزرسانی: ۱۶ نوامبر ۲۰۲۶','Última actualización: 16 de noviembre de 2026'))}
+    ${sectionHead(L('Privacy Policy','Gizlilik Politikası','حریم خصوصی','Política de Privacidad'), CL('Last updated: November 17, 2026','Son güncelleme: 17 Kasım 2026','آخرین به‌روزرسانی: ۱۷ نوامبر ۲۰۲۶','Última actualización: 17 de noviembre de 2026'))}
     <div class="screen" style="padding-top:0;">
       <div class="card-flat" style="line-height:1.7; font-size:14px;">
         ${P(L("A short summary of what Farin English and Farin Spanish keep about you, and why. The full policy is on our website.",
@@ -15182,10 +15182,10 @@ function renderPrivacyPolicy(){
 
         <!-- fe-notify-policy-2026-11-15 -->
         ${H(L('9. Phone notifications','9. Telefon bildirimleri','۹. اعلان‌های گوشی','9. Notificaciones del teléfono'))}
-        ${P(L("The app asks about notifications when you sign up (or later in Settings › “Notifications”); if your phone already allows notifications for the app, it turns them on for you without asking, and you can turn them off any time in Settings. When they are on, your phone or browser gives the app a push address, which our small notification server on Cloudflare keeps with your choices: a scrambled version of your account code, the app and its language, your level and goal, the courses you have, your first name, your time zone, the hour you usually use the app, and the reminders the app plans for you (such as your next card or a game). Notifications reach your device through its own push service (Google, Apple, Mozilla or Microsoft), encrypted on the way.",
-              "Uygulama kayıt olurken bildirimleri sorar (sonradan Ayarlar › «Bildirimler» bölümünden de açabilirsin); telefonun uygulamanın bildirimlerine zaten izin veriyorsa, uygulama bildirimleri sormadan açar ve Ayarlar'dan istediğin zaman kapatabilirsin. Açık olduklarında telefonun ya da tarayıcın uygulamaya bir bildirim adresi verir; Cloudflare üzerindeki küçük bildirim sunucumuz bu adresi seçimlerinle birlikte saklar: hesap kodundan türetilen tek yönlü bir kimlik, uygulama ve dili, seviyen ve hedefin, sahip olduğun kurslar, ilk adın, saat dilimin, uygulamayı genelde kullandığın saat ve uygulamanın senin için planladığı hatırlatmalar (örneğin sıradaki kartın ya da bir oyun). Bildirimler cihazına kendi bildirim hizmeti üzerinden (Google, Apple, Mozilla ya da Microsoft), yolda şifrelenmiş olarak ulaşır.",
-              "اپ موقع ثبت‌نام درباره‌ی اعلان‌ها از تو می‌پرسد (بعداً هم از تنظیمات › «اعلان‌ها» می‌توانی روشنشان کنی)؛ اگر گوشی‌ات از قبل به اعلان‌های اپ اجازه داده باشد، اپ بدون پرسیدن روشنشان می‌کند و هر وقت بخواهی از تنظیمات خاموششان می‌کنی. وقتی روشن باشند، گوشی یا مرورگرت یک نشانی اعلان به اپ می‌دهد و سرور کوچک اعلان ما روی Cloudflare آن را با انتخاب‌هایت نگه می‌دارد: نسخهٔ درهم‌شدهٔ کد حسابت، اپ و زبانش، سطح و هدفت، دوره‌هایی که داری، اسم کوچکت، منطقهٔ زمانی‌ات، ساعتی که معمولاً از اپ استفاده می‌کنی و یادآوری‌هایی که اپ برایت برنامه‌ریزی می‌کند (مثل کارت بعدی‌ات یا یک بازی). اعلان‌ها از طریق سرویس اعلان خود دستگاهت (گوگل، اپل، موزیلا یا مایکروسافت) و رمزگذاری‌شده به دستت می‌رسند.",
-              "La app te pregunta por las notificaciones al registrarte (o más tarde en Configuración › «Notificaciones»); si tu teléfono ya permite las notificaciones de la app, las activa sin preguntar, y puedes desactivarlas cuando quieras en Configuración. Cuando están activadas, tu teléfono o navegador da a la app una dirección de notificaciones, que nuestro pequeño servidor de notificaciones en Cloudflare guarda con tus preferencias: una versión cifrada del código de tu cuenta, la app y su idioma, tu nivel y tu objetivo, los cursos que tienes, tu nombre de pila, tu zona horaria, la hora a la que sueles usar la app y los recordatorios que la app planea para ti (como tu próxima tarjeta o un juego). Las notificaciones llegan a tu dispositivo por su propio servicio de notificaciones (Google, Apple, Mozilla o Microsoft), cifradas por el camino."))}
+        ${P(L("Signing up turns notifications on: when you sign up, your phone asks you once to allow them (if it doesn’t ask, or you say not now, the app reminds you once to turn them on), and if your phone already allows them they come on without a question. You can turn them off any time in Settings › “Notifications”. When they are on, your phone or browser gives the app a push address, which our small notification server on Cloudflare keeps with your choices: a scrambled version of your account code, the app and its language, your level and goal, the courses you have, your first name, your time zone, the hour you usually use the app, and the reminders the app plans for you (such as your next card or a game). Notifications reach your device through its own push service (Google, Apple, Mozilla or Microsoft), encrypted on the way.",
+              "Kayıt olmak bildirimleri açar: kayıt olurken telefonun bir kez izin ister (sormazsa ya da «şimdi değil» dersen, uygulama açmanı bir kez hatırlatır); telefonun zaten izin veriyorsa bildirimler sormadan açılır. Ayarlar › «Bildirimler» bölümünden istediğin zaman kapatabilirsin. Açık olduklarında telefonun ya da tarayıcın uygulamaya bir bildirim adresi verir; Cloudflare üzerindeki küçük bildirim sunucumuz bu adresi seçimlerinle birlikte saklar: hesap kodundan türetilen tek yönlü bir kimlik, uygulama ve dili, seviyen ve hedefin, sahip olduğun kurslar, ilk adın, saat dilimin, uygulamayı genelde kullandığın saat ve uygulamanın senin için planladığı hatırlatmalar (örneğin sıradaki kartın ya da bir oyun). Bildirimler cihazına kendi bildirim hizmeti üzerinden (Google, Apple, Mozilla ya da Microsoft), yolda şifrelenmiş olarak ulaşır.",
+              "ثبت‌نام اعلان‌ها را روشن می‌کند: موقع ثبت‌نام گوشی‌ات یک بار اجازه می‌خواهد (اگر نپرسید یا گفتی «الان نه»، اپ یک بار یادت می‌اندازد روشنشان کنی)، و اگر گوشی‌ات از قبل اجازه داده باشد بدون پرسیدن روشن می‌شوند. هر وقت بخواهی از تنظیمات › «اعلان‌ها» خاموششان می‌کنی. وقتی روشن باشند، گوشی یا مرورگرت یک نشانی اعلان به اپ می‌دهد و سرور کوچک اعلان ما روی Cloudflare آن را با انتخاب‌هایت نگه می‌دارد: نسخهٔ درهم‌شدهٔ کد حسابت، اپ و زبانش، سطح و هدفت، دوره‌هایی که داری، اسم کوچکت، منطقهٔ زمانی‌ات، ساعتی که معمولاً از اپ استفاده می‌کنی و یادآوری‌هایی که اپ برایت برنامه‌ریزی می‌کند (مثل کارت بعدی‌ات یا یک بازی). اعلان‌ها از طریق سرویس اعلان خود دستگاهت (گوگل، اپل، موزیلا یا مایکروسافت) و رمزگذاری‌شده به دستت می‌رسند.",
+              "Al registrarte se activan las notificaciones: tu teléfono te pide permiso una vez (si no lo pide o dices «ahora no», la app te recuerda una vez que las actives), y si tu teléfono ya las permite se activan sin preguntar. Puedes desactivarlas cuando quieras en Configuración › «Notificaciones». Cuando están activadas, tu teléfono o navegador da a la app una dirección de notificaciones, que nuestro pequeño servidor de notificaciones en Cloudflare guarda con tus preferencias: una versión cifrada del código de tu cuenta, la app y su idioma, tu nivel y tu objetivo, los cursos que tienes, tu nombre de pila, tu zona horaria, la hora a la que sueles usar la app y los recordatorios que la app planea para ti (como tu próxima tarjeta o un juego). Las notificaciones llegan a tu dispositivo por su propio servicio de notificaciones (Google, Apple, Mozilla o Microsoft), cifradas por el camino."))}
         ${P(L("You get Farin's answers and course passwords from Messages, the announcements Farin sends, and, if reminders are on, a short reminder when you haven't opened the app for a while: at most one a day, never between 22:00 and 10:00. With notifications on, you also get occasional news about our courses and offers; you can turn these off any time in Settings › “Notifications” › “Course news and offers”, and that choice and its date are saved with your account. Farin's announcements also show in the app, once as a pop-up and in Messages; the app downloads the recent list without sending anything about you. Turning notifications off deletes your push address from the server. The server counts notifications sent and opened, not who opened them.",
               "Mesajlar'daki Farin'in cevapları ve kurs şifreleri, Farin'in gönderdiği duyurular ve hatırlatmalar açıksa, bir süredir uygulamayı açmadığında kısa bir hatırlatma gelir: günde en fazla bir tane, 22:00 ile 10:00 arasında asla. Bildirimler açıkken kurslarımızla ilgili ara sıra haberler ve fırsatlar da gelir; bunları Ayarlar › «Bildirimler» › «Kurs haberleri ve fırsatlar» bölümünden istediğin zaman kapatabilirsin, seçimin ve tarihi hesabınla birlikte kaydedilir. Farin'in duyuruları uygulamada da görünür: bir kez açılan bir pencerede ve Mesajlar'da; uygulama son duyuruların listesini senin hakkında bir şey göndermeden indirir. Bildirimleri kapatınca bildirim adresin sunucudan silinir. Sunucu gönderilen ve açılan bildirimleri sayar, kimin açtığını kaydetmez.",
               "جواب‌های فرین و رمز دوره‌ها از پیام‌ها، اطلاعیه‌هایی که فرین می‌فرستد و اگر یادآوری‌ها روشن باشد، وقتی مدتی اپ را باز نکرده‌ای یک یادآوری کوتاه به دستت می‌رسد: روزی حداکثر یکی و هیچ‌وقت بین ساعت ۲۲ تا ۱۰. وقتی اعلان‌ها روشن‌اند، گاهی خبر دوره‌ها و پیشنهادهای ما هم برایت می‌آید؛ هر وقت بخواهی از تنظیمات › «اعلان‌ها» › «خبر دوره‌ها و پیشنهادها» خاموشش می‌کنی و این انتخاب با تاریخش همراه حسابت ذخیره می‌شود. اطلاعیه‌های فرین در خود اپ هم دیده می‌شوند: یک بار به شکل پنجره و در پیام‌ها؛ اپ فهرست اطلاعیه‌های اخیر را بدون فرستادن چیزی دربارهٔ تو می‌گیرد. وقتی اعلان‌ها را خاموش کنی، نشانی اعلانت از سرور پاک می‌شود. سرور تعداد اعلان‌های فرستاده و بازشده را می‌شمارد، نه اینکه چه کسی بازشان کرده.",
@@ -17088,7 +17088,7 @@ function notifAfterActivity(){
 function notifAskEligible(){
   if(!notifServer || !notifSupported() || location.hash === '#admin' || !state.profile || !state.profile.completedDiagnostic) return false;
   const n = state.profile.notif || {};
-  if(notifOn() || notifPerm() === 'denied' || (n.asks || 0) >= 2) return false;
+  if(notifOn() || (notifPerm() === 'denied' && !notifAskAfterNo) || (n.asks || 0) >= 2) return false;
   return !(n.askAt && Date.now() - n.askAt < 14 * 86400000);
 }
 function notifAskBlocked(){ return document.hidden || !!document.querySelector('#char-tip, .celebrate-overlay, .splash-overlay, .msg-zoom, .club-ask, [role="dialog"]'); }
@@ -17102,11 +17102,11 @@ function notifAskHtml(reason, phase){
   const dog = `<img class="club-ask-dog" src="${farinSrc('dog')}" alt="">`;
   const first = String((state.profile && state.profile.name) || '').trim().split(/\s+/)[0];
   // 'start' = right after signup, and once for learners who were already in (Farin 2026-11-16)
+  // 'start' = right after signup, and once for learners who were already in. Short on purpose, nothing about offers (Farin 2026-11-17).
   if(reason === 'start' && phase === 'ask') return `<div class="club-ask-card">${dog}
-      <div class="eyebrow club-ask-eyebrow">${CL('Notifications','Bildirimler','اعلان‌ها','Notificaciones')}</div>
-      <h2 class="display club-ask-title" id="notif-ask-title" dir="auto">${esc(first ? CL('Can I remind you, ' + first + '?', first + ', sana hatırlatayım mı?', first + '، یادت بندازم؟', '¿Te lo recuerdo, ' + first + '?') : CL('Can I remind you?', 'Sana hatırlatayım mı?', 'یادت بندازم؟', '¿Te lo recuerdo?'))}</h2>
-      <p class="club-ask-text">${CL('One short note when your next card is ready, never at night, and my answers when you write to me. You can turn it off in Settings.', "Sıradaki kartın hazır olunca kısa bir not, gece asla; bana yazdığında da cevaplarım. Ayarlar'dan istediğin zaman kapatabilirsin.", 'وقتی کارت بعدیت آماده بود یه پیام کوتاه برات می‌فرستم، شب‌ها هیچ‌وقت؛ جواب‌هام به پیام‌هات هم همین‌طوری می‌رسه. هر وقت خواستی از تنظیمات خاموشش کن.', 'Un aviso corto cuando tu próxima tarjeta esté lista, nunca de noche, y mis respuestas cuando me escribas. Puedes desactivarlo en Configuración.')}</p>
-      <button class="cu-btn cu-orange" data-notif="on">${CL('Turn on notifications','Bildirimleri aç','روشن کردن اعلان‌ها','Activar notificaciones')}</button>
+      <h2 class="display club-ask-title" id="notif-ask-title" dir="auto">${CL('Turn on notifications','Bildirimleri aç','اعلان‌ها رو روشن کن','Activa las notificaciones')}<span class="club-ask-dot">.</span></h2>
+      <p class="club-ask-text">${CL("So you never miss Farin's answers and your next card.",'Farin\'in cevaplarını ve sıradaki kartını kaçırmaman için.','که جواب‌های فرین و کارت بعدیت رو از دست ندی.','Para que no te pierdas las respuestas de Farin ni tu próxima tarjeta.')}</p>
+      <button class="cu-btn cu-orange" data-notif="on">${CL('Turn on','Aç','روشن کن','Activar')}</button>
       <button class="msg-link" style="margin-top:0;" data-notif="later">${CL('Not now','Şimdi değil','الان نه','Ahora no')}</button></div>`;
   if(phase === 'granted') return `<div class="club-ask-card">${dog}
       <h2 class="display club-ask-title" id="notif-ask-title">${CL("You're all set",'Hazırsın','همه‌چیز آماده است','Todo listo')}<span class="club-ask-dot">.</span></h2>
@@ -17221,13 +17221,24 @@ function notifNewsFits(b){
   if(f.course === 'has' && !owns) return false;
   if(f.course === 'none' && owns) return false;
   if(f.offer && !notifPromoOn() && p.promoOk !== true) return false;   // offers reach everyone unless turned off (2026-11-16)
+  if(f.goals && f.goals.length && !notifGoals().some(g=>f.goals.indexOf(g) !== -1)) return false;   // Marketing offers aimed at goals (2026-11-16)
+  if(f.nck && notifOwned().indexOf(f.nck) !== -1) return false;   // ... never to someone who has that course
   return true;
+}
+// fe-notify gets nothing about the learner: v=2 only says this app checks goals / courses itself and fills {name} (Marketing 2026-11-16).
+function notifNewsWho(){ return '&v=2'; }
+// {name} in an announcement: the learner's first name, or taken out cleanly ("{name}, imagine…" -> "Imagine…", "Hi {name}!" -> "Hi!").
+function notifNewsName(b){
+  const n = String((state.profile && state.profile.name) || '').trim().split(/\s+/)[0] || '';
+  const f = s=>{ s = String(s || ''); if(s.indexOf('{name}') === -1) return s; if(n) return s.split('{name}').join(n);
+    return s.replace(/\{name\}\s*[,،]\s*/g, '').replace(/\s*[,،]?\s*\{name\}/g, '').replace(/\s{2,}/g, ' ').trim().replace(/^\p{Ll}/u, c=>c.toUpperCase()); };
+  return Object.assign({}, b, {title:f(b.title), body:f(b.body)});
 }
 function notifNewsLoad(force){
   const now = Date.now();
   try{ const c = JSON.parse(localStorage.getItem('farinNews') || 'null'); if(c && c.lang === LANG && c.app === LOGIN_APP){ notifNews = c.list; if(!force && now - c.at < 3600000) return Promise.resolve(notifNews); } }catch(e){}
-  return fetch(NOTIF_URL + '/news?lang=' + encodeURIComponent(LANG) + '&app=' + LOGIN_APP).then(r=>r.json()).then(j=>{
-    notifNews = (j && Array.isArray(j.news) ? j.news : []).filter(notifNewsFits);
+  return fetch(NOTIF_URL + '/news?lang=' + encodeURIComponent(LANG) + '&app=' + LOGIN_APP + notifNewsWho()).then(r=>r.json()).then(j=>{
+    notifNews = (j && Array.isArray(j.news) ? j.news : []).filter(notifNewsFits).map(notifNewsName);
     try{ localStorage.setItem('farinNews', JSON.stringify({at:now, lang:LANG, app:LOGIN_APP, list:notifNews})); }catch(e){}
     return notifNews;
   }).catch(()=>notifNews);
@@ -17290,13 +17301,32 @@ NOTIF_HANDLERS['notif-news'] = el=>{ const b = (notifNews || []).find(x=>x.id ==
 // Farin 2026-11-16: "make this notif thing active for current users, without asking them in a pop up". Possible only where the phone already
 // lets the app notify (e.g. the Play app on Android 12 and older, or an earlier yes): subscribe quietly with reminders on and course news
 // off (that one always needs its own tick). Someone who turned notifications off in Settings (notif.offAt) is never switched back on.
-function notifAutoOn(){
+function notifAutoOn(src){
   const n = notifState();
   return notifSubscription(true).then(()=>{
-    n.on = true; n.onAt = Date.now(); n.src = 'auto'; if(n.remind == null) n.remind = true;
+    n.on = true; n.onAt = Date.now(); n.src = src || 'auto'; if(n.remind == null) n.remind = true;
     if(!n.hours) n.hours = [new Date().getHours()];
     save(); notifRegister(true);
   }).catch(()=>{});
+}
+// Signup (Farin 2026-11-17: "after they get notifs automatically, if not happening technically so after sign up pop up a message to say
+// turn the notif on, short text"). notifSignupStart() runs inside the Go! tap, so the phone may show its question; notifAfterSignup() runs
+// once the account exists: allowed = on without a pop-up, anything else = the short pop-up.
+let notifSignupPerm = null, notifAskAfterNo = false;   // a "no" on the phone at signup still gets the short pop-up once
+function notifSignupStart(){
+  notifSignupPerm = null;
+  if(!NOTIF_LIVE || !notifSupported() || notifPerm() !== 'default') return;
+  try{ const r = Notification.requestPermission(); notifSignupPerm = (r && r.then) ? r.catch(()=>'default') : Promise.resolve(notifPerm()); }catch(e){}
+}
+function notifAfterSignup(){
+  const next = ()=>{
+    const n = notifState();
+    if(notifSupported() && notifPerm() === 'granted' && !n.offAt){ n.perm = 'granted'; save(); notifAutoOn('signup'); return; }
+    notifAskAfterNo = notifPerm() === 'denied';   // Turn on then shows how to allow it in the phone's settings
+    notifMaybeAsk('start');
+  };
+  const p = notifSignupPerm; notifSignupPerm = null;
+  if(p) p.then(next, next); else next();
 }
 function notifBoot(){
   if(location.hash === '#admin') return;
@@ -30783,6 +30813,7 @@ const HANDLERS = {
       render();
       return;
     }
+    if(!prev.completedDiagnostic && !prev.joinedAt && typeof notifSignupStart === 'function') notifSignupStart();   // the phone's notifications question, inside the Go! tap (Farin 2026-11-17)
     // Redoing the diagnostic keeps the same recovery code, so an existing
     // name + password login still points at this learner's cloud save.
     const recoveryCode = prev.recoveryCode || generateRecoveryCode();
@@ -30817,7 +30848,7 @@ const HANDLERS = {
       signupPromoDraft = false;
       if(!courseLinkLand()) go('dashboard');
       showSplash();
-      if(!prev.completedDiagnostic && !prev.joinedAt) setTimeout(()=>{ try{ notifMaybeAsk('start'); }catch(err){} }, 400);   // the notifications question (2026-11-16)
+      if(!prev.completedDiagnostic && !prev.joinedAt) setTimeout(()=>{ try{ notifAfterSignup(); }catch(err){} }, 400);   // the notifications question (2026-11-16)
     };
     if(keepLogin){ finish(null); return; }
     farinPwBusy = true; state.viewParams = {name}; render();

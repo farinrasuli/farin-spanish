@@ -40409,10 +40409,12 @@ function adminClassMayOffer(c, p){ return !!(p.profile && p.profile.promoOk === 
 function adminClassOfferText(c, p, byHash){
   const n = String(p.profile.name || '').trim().split(/\s+/)[0] || '', lang = adminInsLang(p) || 'en', url = adminClassOfferUrl(c, p, byHash);
   const cls = adminClassNameIn(c, lang), lv = adminClassLevelCode(c);
-  if(lang === 'tr') return 'Merhaba' + (n ? ' ' + n : '') + '! Ben FEschool\'dan Farin 🌱\n\nYarı özel bir mini grup açıyorum: ' + cls + '. Sadece 4–6 kişi, hepsi ' + lv + ' seviyesinde ve hepsi seninle aynı hedefte. Yani her ders senin hedefine göre planlanacak.\n\nTüm detayları senin için bir sayfada topladım 👇\n' + url + '\n\nYerini ayırmamı istersen “Varım” yazman yeterli 💜';
-  if(lang === 'fa') return 'سلام' + (n ? ' ' + n + ' جان' : '') + '! 🌸 فرینم، از FEschool.\n\nدارم یه کلاس نیمه‌خصوصیِ «' + cls + '» راه می‌ندازم: فقط ۴ تا ۶ نفر، همه سطح ⁨' + lv + '⁩ و همه با همون هدفی که تو داری. یعنی هر جلسه دقیقاً برای هدف تو برنامه‌ریزی می‌شه.\n\nهمه‌چیز رو برات توی یه صفحه آماده کردم 👇\n' + url + '\n\nاگه دوست داری جات رو نگه دارم، فقط بنویس «هستم» 💜';
-  if(lang === 'es') return '¡Hola' + (n ? ', ' + n : '') + '! Soy Farin, de FEschool 🌱\n\nVoy a abrir una clase semiprivada de ' + cls.charAt(0).toLowerCase() + cls.slice(1) + ': solo de 4 a 6 personas, todas de nivel ' + lv + ' y con tu mismo objetivo. Así, cada clase se planifica pensando en ti.\n\nTe preparé una página con todos los detalles 👇\n' + url + '\n\nSi quieres una plaza, responde «Me apunto» 💜';
-  return 'Hi' + (n ? ' ' + n : '') + '! It\'s Farin from FEschool 🌱\n\nI\'m opening a mid-private ' + cls + ' class: only 4 to 6 people, all at ' + lv + ', all with the same goal as you. So every class is planned around you.\n\nI made a page for you with everything 👇\n' + url + '\n\nIf you\'d like a seat, just reply "I\'m in" 💜';
+  // the reply they are asked to send names the course and level, so a "yes" says what it is for (Farin 2026-11-17: "put that for which
+  // course they are applying not just yes i want the course"); the page's button sends course, level, name and class code
+  if(lang === 'tr') return 'Merhaba' + (n ? ' ' + n : '') + '! Ben FEschool\'dan Farin 🌱\n\nYarı özel bir mini grup açıyorum: ' + cls + '. Sadece 4–6 kişi, hepsi ' + lv + ' seviyesinde ve hepsi seninle aynı hedefte. Yani her ders senin hedefine göre planlanacak.\n\nTüm detayları senin için bir sayfada topladım 👇\n' + url + '\n\nYerini ayırmamı istersen “Varım – ' + cls + (lv ? ' ' + lv : '') + '” yazman yeterli 💜';
+  if(lang === 'fa') return 'سلام' + (n ? ' ' + n + ' جان' : '') + '! 🌸 فرینم، از FEschool.\n\nدارم یه کلاس نیمه‌خصوصیِ «' + cls + '» راه می‌ندازم: فقط ۴ تا ۶ نفر، همه سطح ⁨' + lv + '⁩ و همه با همون هدفی که تو داری. یعنی هر جلسه دقیقاً برای هدف تو برنامه‌ریزی می‌شه.\n\nهمه‌چیز رو برات توی یه صفحه آماده کردم 👇\n' + url + '\n\nاگه دوست داری جات رو نگه دارم، فقط بنویس «هستم – ' + cls + (lv ? ' ⁨' + lv + '⁩' : '') + '» 💜';
+  if(lang === 'es') return '¡Hola' + (n ? ', ' + n : '') + '! Soy Farin, de FEschool 🌱\n\nVoy a abrir una clase semiprivada de ' + cls.charAt(0).toLowerCase() + cls.slice(1) + ': solo de 4 a 6 personas, todas de nivel ' + lv + ' y con tu mismo objetivo. Así, cada clase se planifica pensando en ti.\n\nTe preparé una página con todos los detalles 👇\n' + url + '\n\nSi quieres una plaza, responde «Me apunto – ' + cls + (lv ? ' ' + lv : '') + '» 💜';
+  return 'Hi' + (n ? ' ' + n : '') + '! It\'s Farin from FEschool 🌱\n\nI\'m opening a mid-private ' + cls + ' class: only 4 to 6 people, all at ' + lv + ', all with the same goal as you. So every class is planned around you.\n\nI made a page for you with everything 👇\n' + url + '\n\nIf you\'d like a seat, just reply "I\'m in – ' + cls + (lv ? ' ' + lv : '') + '" 💜';
 }
 function adminInsWaLink(p, text){ const ph = adminInsPhone(p); return ph ? waLinkTo(adminWaitlistWaNumber({phone:ph, lang:adminInsLang(p)}), text) : ''; }
 function adminInsInvitedAt(p){ return p.accounts.reduce((m, u)=>Math.max(m, (u.hash && Number(adminInvited[u.hash])) || 0), 0); }
@@ -42344,7 +42346,13 @@ function adminContactsOtherLoad(){
     adminContactsOther = snap.docs.map(d=>Object.assign({id:d.id}, d.data()));
     adminInsLinksCache = null;
     renderAdminPage();
-  }).catch(()=>{});
+  }).catch(()=>{
+    // can't read the other app's contacts: count them as none, so taking learners without a number out of classes still runs
+    // (it waits for this list; Farin 2026-11-16: nobody without a WhatsApp number in a group class)
+    if(!adminContactsOther) adminContactsOther = [];
+    adminInsLinksCache = null;
+    renderAdminPage();
+  });
 }
 function deleteAdminContact(id){
   if(!confirm('Delete this contact? This cannot be undone.')) return;

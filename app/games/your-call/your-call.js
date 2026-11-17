@@ -39,7 +39,7 @@
 'use strict';
 if(window.YourCall) return;
 var D = document, W = window;
-var VERSION = '0.5.3';
+var VERSION = '0.5.4';
 
 /* ---------- chrome strings (the UI language; Persian informal) ---------- */
 var UI = {
@@ -1527,7 +1527,7 @@ function start(o){
     if(instant || st.done){ fin(); return; }
     // 1. the strip (native horizontal scroll = drag; snap per frame), a caption for the frame in the middle
     box.innerHTML = '<div class="yc-cap yc-cap-static">' + lineHtml(R.intro || {en:''}, ch) + '</div>' +
-      '<div class="yc-wstage"' + (R.art ? ' style="background-image:url(&quot;' + esc(artSrc(R.art)) + '&quot;)"' : '') + '><div class="yc-wstrip" tabindex="0">' + frames.map(function(f, k){ return '<div class="yc-wcell" data-k="' + k + '">' + frameImg(f) + '</div>'; }).join('') + '</div></div>' +
+      '<div class="yc-wstage"' + (R.art ? ' style="background-image:url(&quot;' + esc(artSrc(R.art)) + '&quot;);aspect-ratio:' + artRatio(R.art) + '"' : '') + '><div class="yc-wstrip" tabindex="0">' + frames.map(function(f, k){ return '<div class="yc-wcell" data-k="' + k + '">' + frameImg(f) + '</div>'; }).join('') + '</div></div>' +
       '<div class="yc-wcap" lang="' + target + '"></div>';
     var strip = box.querySelector('.yc-wstrip'), cap = box.querySelector('.yc-wcap');
     var lastK = -1, mid = function(){ var r = strip.getBoundingClientRect(), cx = r.left + r.width / 2, best = 0, bd = 1e9; strip.querySelectorAll('.yc-wcell').forEach(function(c){ var b = c.getBoundingClientRect(), d = Math.abs(b.left + b.width / 2 - cx); if(d < bd){ bd = d; best = +c.getAttribute('data-k'); } }); return best; };

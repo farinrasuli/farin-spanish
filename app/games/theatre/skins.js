@@ -76,8 +76,8 @@ window.THEATRE_SKINS = {
     backdrop:{src:null, position:'56% 50%', blur:30, veil:.56}, props:[],
     gw:{bg:'#d6ebf7', surface:'#e8c48c', paper:'#fffaf0', ink:'#14332e', hue:'var(--cat-story)', accent:'#d8343f', cta:'#14332e', ctaInk:'#ffffff'},
     world:{mood:'lamp', band:'small', stage:'clamp(96px, 18dvh, 180px)', plate:{src:'games/worlds/hunt/art/hunt-library.webp', ready:true}, layers:[
-      {src:'games/worlds/hunt/art/hunt-cardbox.webp', cls:'gw-cardbox', box:[8, 62, 16], band:[6, 0, 14], sit:true, ready:true},
-      {src:'games/worlds/hunt/art/hunt-lens.webp', cls:'gw-lens', id:'gw-lens', box:[74, 56, 11], band:[82, 0, 9], sit:true, ready:true}], text:[], sfx:{}, css:null}},
+      {src:'games/worlds/hunt/art/hunt-cardbox.webp', cls:'gw-cardbox', box:[8, 73, 16], band:[6, 0, 14], sit:true, ready:true},   // on the desk (mCqPUhyl B2)
+      {src:'games/worlds/hunt/art/hunt-lens.webp', cls:'gw-lens', id:'gw-lens', box:[60, 73, 11], band:[82, 0, 9], sit:true, ready:true}], text:[], sfx:{}, css:null}},
   // Say It Back: the echo between two voices, rose wall, teal
   echo:{card:'art/posters/card-echo.webp', focus:'68%',
     palette:{sky:'#fdf1ee', sky2:'#f2d0c9', glow:'#fff7f2', ground:'#5fb3a8', ink:'#2f2422', accent:'#0d8f87', accentInk:'#ffffff'},

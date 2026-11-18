@@ -940,6 +940,18 @@
   .sv-box{position:relative; flex:0 0 auto;}
   /* Order Up! (Games 2.0 SPEC 10): the regular's old ticket glints once as they walk in (A2) */
   .gp-pip.gp-glint{animation:gp-glint 1.1s ease-out 1;}
+  /* Games 2.0 rule 7: Trap Dash's clock is a dial, no digit, in the Theatre */
+  body.theatre-on #trap-timer-text{display:none !important;}
+  /* Word Rush (Games 2.0 SPEC 19): the golden pair's backs, the peek, a card moving in a wave, the sun */
+  .game-tile.hidden-face.gold-back{box-shadow:inset 0 0 0 3px #FFD166, inset 0 0 0 5px #C99A1E;}
+  .game-tile.peek{pointer-events:none;}
+  /* Listen & Type (SPEC 18): the first-listen star on the sticky note */
+  .game-card.dict-star{position:relative;}
+  /* Passport Desk (SPEC 11): the sharp-ear stamp in gold ink */
+  .desk-stamped.gold{color:#C99A1E !important; border-color:#C99A1E !important;}
+  .dict-star-mark{position:absolute; top:-10px; right:-6px; font-size:26px; line-height:1; color:#FFD166; text-shadow:0 0 0 #C99A1E, 0 1px 0 #C99A1E, 0 2px 4px rgba(20,51,46,.25); transform:rotate(12deg);}
+  .game-tile.wave-move{outline:2px dashed #FF6F5E; outline-offset:2px;}
+  body.gw-sun .th-m-glow{opacity:calc(var(--m-ga) + .2);}
   /* Build It (Games 2.0 SPEC 15): the scrap bin, a tossed decoy; Say It Back (SPEC 16): the cloze gaps */
   .build-bin{display:flex; align-items:center; gap:10px; margin:10px auto 0; min-height:44px; padding:6px 14px 6px 8px; border:2px solid #14332e; border-radius:12px; background:#f3e1c2; color:#14332e; font:inherit; font-size:13.5px; font-weight:800; cursor:pointer; box-shadow:0 3px 0 #14332e;}
   .build-bin-box{display:block; width:34px; height:26px; border:2px solid #14332e; border-radius:3px 3px 6px 6px; background:repeating-linear-gradient(90deg, #c98a4b 0 6px, #b5773c 6px 8px); position:relative;}
@@ -19376,7 +19388,51 @@ function buildMatchRound(setObj, n){
     tiles.push({key, side:'word', text:c.word});
     tiles.push({key, side:'meaning', text:L(c.meaning.en, c.meaning.tr, c.meaning.fa, c.meaning.es)});
   });
-  return {setId:setObj.id, pairCount:cards.length, tiles:shuffle(tiles), revealed:[], matchedKeys:[], mistakes:0, startedAt:Date.now(), finishedAt:null};
+  // Games 2.0 SPEC 19: the peek (all cards face up a moment; none in Brave), the golden pair, waves from A2
+  const lv = (state.profile && state.profile.level) || 'A1';
+  const peekMs = gameBrave('match') ? 0 : (lv === 'A1' ? 3500 : lv === 'C1' ? 2000 : 2500);
+  const waves = lv === 'A1' ? [] : lv === 'C1' ? [2, 4] : [3];
+  return {setId:setObj.id, pairCount:cards.length, tiles:shuffle(tiles), revealed:[], matchedKeys:[], mistakes:0, peekMs, peek:peekMs > 0, waves, waved:[],
+    goldKey:'p' + Math.floor(Math.random() * cards.length), startedAt:Date.now(), finishedAt:null};
+}
+// The peek: the first time the board is drawn, every card shows for peekMs (after the opening shot in the world), then they flip down
+// in a ripple 40 ms apart with a card clack. Taps wait for it.
+function matchPeekStart(round){
+  if(!round.peek || round.peekAt) return;
+  round.peekAt = Date.now();
+  const wait = round.peekMs + (worldKind() === 'match' ? 1700 : 300);
+  setTimeout(()=>{
+    if(!state.viewParams || state.viewParams.round !== round) return;
+    round.peek = false; render();
+    if(reducedMotion()) return;
+    document.querySelectorAll('[data-action="game-match-tap"]').forEach((t, i)=>anim(t, [{transform:'scaleX(1)'}, {transform:'scaleX(.08)'}, {transform:'scaleX(1)'}], {duration:220, delay:i * 40, easing:'ease-in-out'}));
+    const W = n=>window.Theatre && Theatre.world && Theatre.world() === 'match' && Theatre.sfx && Theatre.sfx(n);
+    if(!W('card-clack')) sfx('flip');
+  }, wait);
+}
+// The wave (A2+): after the 3rd pair (C1: the 2nd and the 4th) two face-down cards slide into each other's places, in plain sight.
+function matchWave(round){
+  const free = round.tiles.map((t, i)=>i).filter(i=>!round.matchedKeys.includes(round.tiles[i].key) && !round.revealed.includes(i));
+  if(free.length < 2) return null;
+  const a = free[Math.floor(Math.random() * free.length)], rest = free.filter(i=>i !== a), b = rest[Math.floor(Math.random() * rest.length)];
+  const ra = matchTileEl(a) && matchTileEl(a).getBoundingClientRect(), rb = matchTileEl(b) && matchTileEl(b).getBoundingClientRect();
+  const t = round.tiles[a]; round.tiles[a] = round.tiles[b]; round.tiles[b] = t;
+  return {a, b, ra, rb};
+}
+function fxMatchWave(w){
+  if(!w) return;
+  const line = L('A wave rocks the ferry!','Bir dalga feribotu salladı!','یه موج کشتی رو تکون داد!','¡Una ola sacude el ferri!');
+  if(window.Theatre && Theatre.isOpen() && Theatre.say) Theatre.say(line, {kind:'caption', ms:5000}); else companionSay(line, 3000);
+  const W = n=>window.Theatre && Theatre.world && Theatre.world() === 'match' && Theatre.sfx && Theatre.sfx(n);
+  if(!W('swish')) sfx('flip');
+  const ea = matchTileEl(w.a), eb = matchTileEl(w.b);
+  [ea, eb].forEach(el=>{ if(el){ el.classList.add('wave-move'); setTimeout(()=>el.classList.remove('wave-move'), 900); } });
+  if(reducedMotion() || !w.ra || !w.rb || !ea || !eb){ [ea, eb].forEach(el=>el && anim(el, [{opacity:0}, {opacity:1}], {duration:300})); return; }
+  const art = document.querySelector('.th-world-art'); if(art) anim(art, [{transform:'rotate(0)'}, {transform:'rotate(2deg)'}, {transform:'rotate(0)'}], {duration:300, easing:'ease-in-out'});
+  // each card starts where the other one was and travels on an arc to its new place
+  const go = (el, from, to, up)=>{ const dx = from.left - to.left, dy = from.top - to.top;
+    anim(el, [{transform:`translate(${dx}px, ${dy}px)`}, {transform:`translate(${dx / 2}px, ${dy / 2 + (up ? -28 : 28)}px)`, offset:.5}, {transform:'translate(0, 0)'}], {duration:600, easing:'ease-in-out'}); };
+  go(ea, w.rb, w.ra, true); go(eb, w.ra, w.rb, false);
 }
 function tokenizeForDictation(s){ return (s||'').toLowerCase().replace(/[^a-záéíóúüñ0-9'\s]/g,' ').split(/\s+/).filter(Boolean); }
 /* Order-tolerant word-overlap scoring — deliberately forgiving of minor word-order
@@ -19399,7 +19455,13 @@ function buildDictationRound(setObj, n){
   const withSentence = setObj.cards.filter(c=>c.sentence);
   n = Math.min(n || 5, withSentence.length);
   const cards = shuffle(withSentence).slice(0, n);
-  return {setId:setObj.id, sentences:cards.map(c=>({word:c.word, text:c.sentence})), index:0, typed:'', checked:false, revealedText:false, results:[], finished:false};
+  // Games 2.0 SPEC 18: the boss = the longest example of the set, last
+  const words = c=>String(c.sentence).trim().split(/\s+/).length;
+  const longest = withSentence.reduce((m, c)=>words(c) > words(m) ? c : m, withSentence[0]);
+  const at = cards.indexOf(longest);
+  if(at >= 0) cards.splice(at, 1); else cards.pop();
+  cards.push(longest);
+  return {setId:setObj.id, sentences:cards.map(c=>({word:c.word, text:c.sentence, plays:0})), index:0, typed:'', checked:false, revealedText:false, results:[], finished:false};
 }
 /* Gamification (Trello 4bDl1BS3, ported from the English app): third game
    kind, "Trap Dash" — a timed multiple-choice grammar sprint. Reuses
@@ -21543,6 +21605,9 @@ function buildDeskRound(refId){
       travellers.push(t);
     }
     if(travellers.length < DESK_TRAVELLERS) continue;
+    // Games 2.0 SPEC 11: the boss = the traveller with the most rows, last (traveller 1 stays the clean one)
+    let bi = 1; for(let i = 2; i < travellers.length; i++) if(travellers[i].lines.length > travellers[bi].lines.length) bi = i;
+    if(bi !== travellers.length - 1) travellers.push(travellers.splice(bi, 1)[0]);
     // "How to play" shows once, before the learner's first-ever round (gamesMet stays true for every replay after).
     return {level, lang, today, travellers, index:0, clean:0, combo:0, said:0, noVoice:ttsVoiceMissing(), greeted:false, finished:false, startedAt:Date.now(), finishedAt:null, intro:!gamesMet().has('desk')};
   }
@@ -21682,7 +21747,7 @@ function deskCardHtml(round, t){
     <div class="desk-band">${esc(L('ARRIVAL CARD','GİRİŞ KARTI','کارت ورود','TARJETA DE LLEGADA'))}</div>
     <div class="desk-rows">${rows}</div>
     ${today}
-    ${t.done ? `<div class="desk-stamped" id="desk-stamped">${esc(L('APPROVED','ONAYLANDI','تأیید شد','APROBADO'))}</div>` : ''}
+    ${t.done ? `<div class="desk-stamped${t.gold ? ' gold' : ''}" id="desk-stamped">${esc(L('APPROVED','ONAYLANDI','تأیید شد','APROBADO'))}</div>` : ''}
   </div>`;
 }
 function deskChipLabel(round, f, v){
@@ -21720,7 +21785,7 @@ function deskBodyHtml(round, t){
     </div>
     <div class="order-tools desk-tools">
       <button type="button" class="game-play small" data-action="desk-play" data-quiet="1" aria-label="${esc(L('Listen again','Tekrar dinle','دوباره گوش کن','Escuchar otra vez'))}">${ICONS.soundOn}</button>
-      ${shown ? '' : `<button type="button" class="btn btn-ghost btn-sm" data-action="desk-said" data-quiet="1">${esc(L('Show what they said','Söylediğini göster','گفته‌اش را نشان بده','Ver lo que ha dicho'))}</button>`}
+      ${shown || (gameBrave('desk') && (t.replays || 0) < 2) ? '' : `<button type="button" class="btn btn-ghost btn-sm" data-action="desk-said" data-quiet="1">${esc(L('Show what they said','Söylediğini göster','گفته‌اش را نشان بده','Ver lo que ha dicho'))}</button>`}
     </div>
     ${deskCardHtml(round, t)}
     ${deskFixHtml(round, t)}
@@ -21842,6 +21907,7 @@ function deskStamp(){
   }
   t.done = true; t.open = null;
   t.clean = !t.said && !t.slips && !t.tries;
+  t.gold = !t.said && !t.replays;   // the sharp-ear stamp (SPEC 11): no "Listen again", no "Show what they said" = APPROVED in gold ink
   if(t.clean){ round.clean++; round.combo++; } else round.combo = 0;
   deskRefresh();
   const mark = document.getElementById('desk-stamped');
@@ -25248,6 +25314,8 @@ function renderGameMatch(){
   const vp = state.viewParams;
   const round = vp.round;
   const done = round.matchedKeys.length === round.pairCount;
+  if(round.peek) setTimeout(()=>matchPeekStart(round), 0);
+  document.body.classList.toggle('gw-sun', !!round.sun && !done);
   const elapsed = Math.floor(((round.finishedAt||Date.now()) - round.startedAt)/1000);
   const left = round.pairCount - round.matchedKeys.length;
   // Gamification v2 (2026-09-30): no live XP display in games (XP counts silently).
@@ -25261,8 +25329,8 @@ function renderGameMatch(){
     <div class="game-tiles">
       ${round.tiles.map((t,i)=>{
         const isMatched = round.matchedKeys.includes(t.key);
-        const isRevealed = round.revealed.includes(i) || isMatched;
-        const cls = isMatched ? 'ok' : (isRevealed ? (round.revealed.length===2 ? 'no' : 'shown') : 'hidden-face');
+        const isRevealed = round.revealed.includes(i) || isMatched || !!round.peek;
+        const cls = isMatched ? 'ok' : (isRevealed ? (round.peek && !round.revealed.includes(i) ? 'shown peek' : (round.revealed.length===2 ? 'no' : 'shown')) : 'hidden-face' + (t.key === round.goldKey ? ' gold-back' : ''));
         const small = isRevealed && String(t.text).length > 16 ? ' small' : '';
         return `<button class="game-tile ${cls}${small}" dir="ltr" data-action="game-match-tap" data-i="${i}" ${isMatched?'disabled':''}>${isRevealed ? esc(t.text) : '?'}</button>`;
       }).join('')}
@@ -25299,14 +25367,15 @@ function renderGameDictation(){
       <span class="game-status-text">${gameProgressHtml(a - 1, b, L(`Sentence ${a} of ${b}`, `Cümle ${a}/${b}`, `جمله ${a} از ${b}`, `Oración ${a} de ${b}`))}</span>
     </div>
     <div class="game-card tight">
-      <button class="game-play" data-action="speak-sentence" data-text="${esc(item.text)}" aria-label="${esc(L('Play','Çal','پخش','Reproducir'))}">${ICONS.soundOn}</button>
+      <button class="game-play" data-action="dictation-play" aria-label="${esc(L('Play','Çal','پخش','Reproducir'))}"${!round.checked && gameBrave('dictation') && (item.plays || 0) >= 2 ? ' disabled' : ''}>${ICONS.soundOn}</button>
       <div class="game-play-label">${L('Tap to listen','Dinlemek için dokun','برای شنیدن بزن','Toca para escuchar')}</div>
       ${round.revealedText ? `<p class="game-sentence long" style="margin-top:14px;" dir="ltr">${esc(item.text)}</p>` : `<div><button class="btn btn-ghost" style="margin-top:8px;" data-action="game-dictation-reveal">${L("Can't hear it? Show the sentence","Duyamıyor musun? Cümleyi göster","نمی‌شنوی؟ جمله را نشان بده","¿No lo oyes? Muestra la oración")}</button></div>`}
     </div>
     <textarea id="dictation-input" class="game-input" rows="2" ${round.checked?'disabled':''} placeholder="${esc(L('Type what you heard...','Duyduğunu yaz...','چیزی که شنیدی را بنویس...','Escribe lo que escuchaste...'))}" dir="ltr">${esc(round.typed||'')}</textarea>
     ${!round.checked
       ? `<button class="btn btn-primary game-cta" data-action="game-dictation-check">${L('Check','Kontrol et','بررسی','Revisar')}</button>`
-      : (()=>{ const r = round.results[round.results.length-1]; const good = r.pct>=70; return `<div class="game-card tight" style="text-align:start;">
+      : (()=>{ const r = round.results[round.results.length-1]; const good = r.pct>=70; return `<div class="game-card tight${item.star ? ' dict-star' : ''}" style="text-align:start;">
+          ${item.star ? `<span class="dict-star-mark" role="img" aria-label="${esc(L('Heard first time','İlk dinleyişte duydun','با یه بار شنیدن','A la primera'))}">★</span>` : ''}
           <p class="game-sentence long" style="margin-top:0; font-weight:600;" dir="ltr">${dictationWordsHtml(item.text, round.typed)}</p>
           ${r.missed.length ? `<p style="margin-top:8px; font-size:12.5px; color:var(--ink-faint);">${L('Missed:','Kaçırdığın:','از دست‌رفته:','Faltó:')} ${esc(r.missed.join(', '))}</p>` : ''}
           <button class="btn btn-primary game-cta" style="margin-top:16px;" data-action="game-dictation-next">${isLast ? L('See results','Sonuçları gör','دیدن نتایج','Ver resultados') : L('Next sentence','Sonraki cümle','جمله بعدی','Siguiente oración')}</button>
@@ -25408,6 +25477,7 @@ let trapTimerInterval = setInterval(function(){
   if(state.view !== 'game-trap') return;
   const vp = state.viewParams, round = vp && vp.round;
   if(!round || round.answered || round.finished || !round.deadline) return;
+  if(trapOffScreen()){ round.deadline += 100; return; }   // mCqPUhyl B1: the clock waits while the question or an option is off screen
   const remainingMs = round.deadline - Date.now();
   const remaining = Math.max(remainingMs/1000, 0);
   const circle = document.getElementById('trap-timer-circle');
@@ -25423,6 +25493,12 @@ let trapTimerInterval = setInterval(function(){
   if(secsLeft > 0 && secsLeft <= 3) trapTimerWarn(round, secsLeft);
   if(remainingMs <= 0) trapHandleTimeout();
 }, 100);
+// the opening shot, the leave sheet, the poster, or a question / last option not wholly on screen
+function trapOffScreen(){
+  if(document.body.classList.contains('gw-establish') || document.querySelector('.th-leave') || document.querySelector('.th-frame') || document.hidden) return true;
+  const q = document.querySelector('.game-screen .game-card'), o = document.querySelector('.game-opts .game-opt:last-child');
+  return [q, o].some(n=>{ if(!n) return true; const r = n.getBoundingClientRect(); return r.top < 0 || r.bottom > innerHeight + 1; });
+}
 function trapAdvance(refId){
   const vp = state.viewParams, round = vp && vp.round;
   if(!round || state.view !== 'game-trap') return;
@@ -30227,7 +30303,7 @@ var WORLDS_LIVE = {order:true, bingo:true, cross:true, build:true, echo:true, de
 // The Brave switch (Games 2.0 SPEC 5.5): progress.brave[kind] (old saves have none = Normal). The poster shows "Normal · Brave" once the
 // learner has finished that game (gamesMet). BRAVE_KINDS = the games whose Brave rules exist: the four engines read host.brave() (their own
 // rules: film frames, Moss's pins, hints, replays); each quick game joins as its own Brave rules ship (SPEC sections 10-20).
-const BRAVE_KINDS = ['path', 'mystery', 'chores', 'radio', 'order', 'bingo', 'build', 'echo'];
+const BRAVE_KINDS = ['path', 'mystery', 'chores', 'radio', 'order', 'bingo', 'build', 'echo', 'match', 'dictation', 'desk'];
 function gameBrave(kind){ return !!(((state.progress && state.progress.brave) || {})[kind]); }
 function braveOpt(kind){
   if(!BRAVE_KINDS.includes(kind) || !gamesMet().has(kind)) return null;
@@ -30843,6 +30919,8 @@ function fxFlipBack(el){
   anim(el, [{transform:'rotateY(90deg)'}, {transform:'rotateY(0deg)'}], {duration:90, easing:'ease-out'});
 }
 function fxMatchTap(fx, pt){
+  if(fx.gold) setTimeout(()=>{ const W = window.Theatre && Theatre.world && Theatre.world() === 'match' && Theatre.sfx && Theatre.sfx('medal-clink'); if(!W) sfx('combo'); const c = centerOf(matchTileEl(fx.match[1])); sparkBurst(c.x, c.y, 10, '#FFD166'); }, 320);
+  if(fx.wave) setTimeout(()=>fxMatchWave(fx.wave), 700);
   (fx.hidden||[]).forEach(i=>fxFlipBack(matchTileEl(i)));
   if(fx.hidden && fx.hidden.length) sfx('flip');
   if(fx.flip == null) return;
@@ -31692,7 +31770,7 @@ const HANDLERS = {
   'game-match-tap'(el, e){
     const vp = state.viewParams;
     const round = vp.round;
-    if(!round || round.matchedKeys.length === round.pairCount) return;
+    if(!round || round.matchedKeys.length === round.pairCount || round.peek) return;
     const idx = Number(el.dataset.i);
     const pt = tapPoint(e);
     // Gamification v2 game feel (spec §8): which tiles flip/pop/shake is worked
@@ -31718,6 +31796,10 @@ const HANDLERS = {
         round.revealed = [];
         round.combo = (round.combo||0) + 1;
         fx.match = [a,b]; fx.combo = round.combo;
+        if(round.goldKey && round.matchedKeys.length === 1 && round.tiles[a].key === round.goldKey){ round.goldAnchor = true; fx.gold = true; }   // the golden pair, matched first
+        if(round.combo >= 3 && !round.sun){ round.sun = true; fx.sun = true; }   // three in a row: the sun breaks through the porthole
+        const nm = round.matchedKeys.length;
+        if(round.waves && round.waves.includes(nm) && !round.waved.includes(nm) && nm < round.pairCount){ round.waved.push(nm); fx.wave = matchWave(round); }
         if(round.matchedKeys.length === round.pairCount){
           round.finishedAt = Date.now();
           fx.clear = true;
@@ -31746,10 +31828,20 @@ const HANDLERS = {
     const res = scoreDictationAnswer(round.sentences[round.index].text, round.typed);
     round.results.push(res);
     round.checked = true;
+    const cur = round.sentences[round.index];
+    if(cur.plays === 1 && !round.revealedText && res.pct >= 70) cur.star = true;   // the first-listen star (SPEC 18): one play, nothing shown, a good result
     round.combo = res.pct >= 70 ? (round.combo||0) + 1 : 0;
     const combo = round.combo;
     queueFx(()=>{ fxDictationReveal(res.pct); if(res.pct >= 70) comboCheck(combo); });
     save(); render();
+  },
+  'dictation-play'(){
+    const vp = state.viewParams, round = vp && vp.round; if(!round || round.finished) return;
+    const item = round.sentences[round.index]; if(!item) return;
+    if(!round.checked && gameBrave('dictation') && (item.plays || 0) >= 2) return;   // Brave: at most 2 plays
+    item.plays = (item.plays || 0) + 1;
+    speakTarget(item.text);
+    if(gameBrave('dictation') && item.plays >= 2) render();
   },
   'game-dictation-next'(){
     const vp = state.viewParams, round = vp.round;
@@ -31846,7 +31938,7 @@ const HANDLERS = {
     const r = state.viewParams && state.viewParams.round; if(!r || !r.intro) return;
     r.intro = false; sfx('tick'); deskRefresh(); save(); deskArrive(r);
   },
-  'desk-play'(){ const r = state.viewParams && state.viewParams.round, t = r && deskCur(r); if(!t || r.finished) return; speakTarget(t.reply && t.mode === 'ask' ? t.reply : deskAllSaid(t), deskRate(r), deskVoice(t)); },
+  'desk-play'(){ const r = state.viewParams && state.viewParams.round, t = r && deskCur(r); if(!t || r.finished) return; if(!t.done){ t.replays = (t.replays || 0) + 1; if(gameBrave('desk') && t.replays === 2) setTimeout(deskRefresh, 0); } speakTarget(t.reply && t.mode === 'ask' ? t.reply : deskAllSaid(t), deskRate(r), deskVoice(t)); },
   'desk-said'(){
     const r = state.viewParams && state.viewParams.round, t = r && deskCur(r); if(!t || r.finished || t.said) return;
     t.said = true; if(!r.noVoice) r.said++;   // a hint for this traveller (free when the phone has no voice)

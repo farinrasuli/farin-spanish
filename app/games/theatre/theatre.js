@@ -349,6 +349,7 @@ function paintWorld(s){
   if(w.css) loadWorldCss(s.world.kind, w.css);
   warmSfx(w.sfx);
   bedStart();
+  spotStart();
 }
 var worldCss = {};
 function loadWorldCss(kind, href){
@@ -366,7 +367,7 @@ function openWorld(s){
 }
 function closeWorld(s){
   var body = D.body;
-  bedStop(); captainOff();
+  bedStop(); spotStop(); captainOff();
   if(s.world && s.world.el && s.world.el.parentNode) s.world.el.remove();
   if(s.sayEl && s.sayEl.parentNode) s.sayEl.remove();
   clearTimeout(s.sayTimer);
@@ -456,6 +457,58 @@ function bedTick(){
   var target = (!cur || muted() || talking || D.hidden) ? 0 : bed.vol;
   try{ bed.out.gain.setTargetAtTime(target, bed.ctx.currentTime, .3); }catch(e){}
 }
+// Spots (Games 2.0 SPEC 5.4): single sounds now and then in a world (skins.js world.spots: names), every 6-14 s at about -28 dBFS, never the
+// same one twice in a row, playbackRate 0.96-1.04; never while a line, an order or a listening task plays, when muted or the page is hidden.
+// A name plays its files (world.sfx / the CC0 kit) when there are any, else the Theatre makes it in code: 'gull' (a far gull's call, two
+// or three cries), 'clock' (a quiet library clock, a few tick-tocks). Code-made = no file, no licence. Theatre.spot(name) plays one now.
+var spotT = null, spotLast = null, spotN = 0;
+function spotStop(){ clearTimeout(spotT); spotT = null; }
+function spotList(){ var s = cur; if(!s || !s.world) return []; var l = worldData(s).w.spots; return (l && l.length) ? l : []; }
+function spotStart(){ spotStop(); if(!spotList().length) return; spotNext(); }
+function spotNext(){ spotT = setTimeout(spotTick, 6000 + Math.random() * 8000); }
+function spotQuiet(){ return !cur || muted() || D.hidden || D.body.hasAttribute('data-speaking') || (W.speechSynthesis && W.speechSynthesis.speaking) || D.body.classList.contains('gw-live') || D.body.classList.contains('gw-establish'); }
+function spotTick(){
+  var list = spotList(); if(!list.length){ spotStop(); return; }
+  if(!spotQuiet()){
+    var opts = list.length > 1 ? list.filter(function(n){ return n !== spotLast; }) : list, nm = opts[Math.floor(Math.random() * opts.length)];
+    spotLast = nm; spotPlay(nm);
+  }
+  spotNext();
+}
+function spotPlay(name){
+  if(!cur || muted()) return false;
+  var own = ((cur.world ? worldData(cur).w.sfx : null) || {})[name];
+  if(own && own.length) return sfx(name);
+  var c = actxGet(); if(!c || !SPOTS[name]) return false;
+  try{ spotN++; SPOTS[name](c, c.currentTime + .03, 0.96 + Math.random() * 0.08); return true; }catch(e){ return false; }
+}
+var SPOTS = {
+  gull:function(c, t0, rate){
+    var out = c.createGain(), lp = c.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 3600; out.gain.value = .045; lp.connect(out); out.connect(c.destination);
+    var n = Math.random() < .5 ? 2 : 3, f = (1350 + Math.random() * 300) * rate;
+    for(var k = 0; k < n; k++){
+      var t = t0 + k * (0.3 + Math.random() * 0.08), o = c.createOscillator(), o2 = c.createOscillator(), g = c.createGain(), bp = c.createBiquadFilter();
+      o.type = 'sawtooth'; o2.type = 'triangle';
+      [o, o2].forEach(function(x, j){ var m = j ? 2.01 : 1; x.frequency.setValueAtTime(f * .78 * m, t); x.frequency.linearRampToValueAtTime(f * 1.12 * m, t + .05); x.frequency.exponentialRampToValueAtTime(f * .6 * m, t + .24); x.connect(bp); x.start(t); x.stop(t + .3); });
+      bp.type = 'bandpass'; bp.frequency.setValueAtTime(f * 1.6, t); bp.Q.value = 1.6;
+      g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(k === n - 1 ? .7 : 1, t + .03); g.gain.exponentialRampToValueAtTime(0.0001, t + .26);
+      bp.connect(g); g.connect(lp);
+    }
+    setTimeout(function(){ try{ out.disconnect(); }catch(e){} }, 1600);
+  },
+  clock:function(c, t0, rate){
+    var out = c.createGain(); out.gain.value = .05; out.connect(c.destination);
+    var len = Math.floor(c.sampleRate * .02), buf = c.createBuffer(1, len, c.sampleRate), d = buf.getChannelData(0);
+    for(var i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 6);
+    var n = 4 + Math.floor(Math.random() * 3);
+    for(var k = 0; k < n; k++){
+      var t = t0 + k * 1.0 / rate, src = c.createBufferSource(), bp = c.createBiquadFilter(), g = c.createGain();
+      src.buffer = buf; bp.type = 'bandpass'; bp.frequency.value = (k % 2 ? 1700 : 2300) * rate; bp.Q.value = 9;
+      g.gain.value = k % 2 ? .8 : 1; src.connect(bp); bp.connect(g); g.connect(out); src.start(t);
+    }
+    setTimeout(function(){ try{ out.disconnect(); }catch(e){} }, (n + 1) * 1000);
+  }
+};
 // Mood Kit (Games 2.0 SPEC 5.3): Theatre.moodEl(preset, vars) -> the lighting overlay (last child of an art box, never over text);
 // presets day warm lamp noir dusk night rain storm dawn darkroom snow train onair (space-separated mixes allowed)
 function moodEl(preset, vars){
@@ -856,11 +909,11 @@ function captainSync(){
   cap.hit.style.width = (r.width + pad * 2) + 'px'; cap.hit.style.height = (r.height + pad * 2) + 'px';
 }
 var api = {
-  version:'1.2.0',
+  version:'1.2.1',
   open:open, close:close, sync:sync, exit:exit, play:start, skip:skip,
   titleCard:titleCard, transition:transition, setStrip:setStrip, setControls:setControls, stageEl:stageEl, setSkin:setSkin,
   say:say, finale:finale, sfx:sfx, progress:progress, actor:actor, establish:establish, moodEl:moodEl, flash:flash, world:function(){ return cur && cur.world ? cur.world.kind : null; },
-  boss:boss, captain:captain, captainSync:captainSync, captainOff:captainOff,
+  boss:boss, captain:captain, captainSync:captainSync, captainOff:captainOff, spot:spotPlay, spotCount:function(){ return spotN; },
   skin:function(){ return cur && cur.skin ? cur.skinKind : null; },
   isOpen:function(){ return !!cur; },
   phase:function(){ return cur ? cur.phase : null; },

@@ -478,6 +478,7 @@
   /* Five new games wave B (Jq6f9OFv): Passport Desk - traveller + bubble, arrival card, pencil circle, APPROVED stamp (spec §5.6 tokens) */
   .desk-body{position:relative; display:flex; flex-direction:column; gap:14px;}
   .desk-trav{display:flex; align-items:flex-start; gap:12px; min-height:100px;}
+  .desk-trav.in-world{min-height:0;}   /* the traveller stands on the plate; the card keeps the bubble */
   .desk-who-wrap{flex:0 0 auto; width:96px; height:100px;}
   .desk-who{width:96px; height:100px; object-fit:contain; filter:drop-shadow(0 8px 12px rgba(0,0,0,.2)); transform-origin:50% 100%;}
   .desk-bubble{margin-top:8px;}
@@ -21801,7 +21802,7 @@ function deskChipValues(t, field, lang, rnd){
   const right = deskCopy(t.truth[field]), out = [right];
   const add = x => { if(x != null && !out.some(o=>deskSame(field, o, x))) out.push(x); };
   if(field === 'purpose'){ DESK_PURPOSES.forEach(p=>add(p)); return out; }
-  if(t.wrong != null && t.issue && t.issue.field === field) add(deskCopy(t.wrong));
+  { const iss = deskIssueAt(t, field), wv = iss && iss === t.issue ? t.wrong : (iss && iss.wrong); if(wv != null) add(deskCopy(wv)); }   // the card's wrong value is one of the chips (either issue of a double)
   const pairs = DESK_TEENTY[lang];
   if(field === 'age' || field === 'nights'){ const n = right; if(pairs[n]) add(pairs[n]); add(n + 1); add(n - 1); add(n + 2); }
   else if(field === 'from'){ deskCountry(right).near.forEach(add); DESK_COUNTRIES.forEach(c=>{ if(out.length < 3) add(c.id); }); }
@@ -21811,7 +21812,22 @@ function deskChipValues(t, field, lang, rnd){
   else if(field === 'leaving'){ add(deskAddDays(right, 1)); add(deskAddDays(right, -7)); add(deskAddDays(right, -1)); }
   return crossShuffle(out.slice(0, 3), rnd);
 }
-function deskMakeTraveller(tpl, level, lang, mode, rnd, usedNames, today){
+// The double (Games 2.0 SPEC 11): a traveller may carry a second issue, t.issue2 = {field, kind, wrong} with its own chips (t.chipVals2).
+function deskIssueAt(t, f){ return !t ? null : ((t.issue && t.issue.field === f) ? t.issue : ((t.issue2 && t.issue2.field === f) ? t.issue2 : null)); }
+function deskChipsAt(t, f){ return (t.issue2 && t.issue2.field === f) ? t.chipVals2 : t.chipVals; }
+// A second wrong value in another field the traveller says out loud (a near miss of the kind the generator already uses for that field).
+function deskSecond(tpl, v, lang, rnd, today, skip, truth, fields){
+  const said = new Set([].concat(...tpl.f)), pairs = DESK_TEENTY[lang];
+  const kindOf = f => (f === 'age' || f === 'nights') ? (pairs[v[f]] ? 'teen-ty' : '±1') : (f === 'from' ? 'country-near' : (f === 'dob' ? 'date-swap' : (f === 'leaving' ? '±1' : '')));
+  for(const f of crossShuffle(fields.filter(x=>x !== skip && said.has(x)), rnd)){
+    const k = kindOf(f), p = Object.assign({}, tpl, {mk:[f, k]}); delete p.wp;
+    let w = null; try{ w = deskWrong(p, v, lang, rnd, today); }catch(e){}
+    if(w == null && f === 'dob'){ p.mk = [f, '']; try{ w = deskWrong(p, v, lang, rnd, today); }catch(e){} }
+    if(w != null && !deskSame(f, w, truth[f])) return {field:f, kind:k || 'near', wrong:w};
+  }
+  return null;
+}
+function deskMakeTraveller(tpl, level, lang, mode, rnd, usedNames, today, dbl){
   for(let g = 0; g < 12; g++){
     const v = deskTruth(tpl, level, lang, mode, rnd, usedNames, today);
     const lk = deskLevelKey(level), fields = DESK_FIELDS[lk];
@@ -21833,6 +21849,10 @@ function deskMakeTraveller(tpl, level, lang, mode, rnd, usedNames, today){
     const trav = {tpl:tpl.id, mode, lines, truth, card, issue, wrong, ask, blank, near:v.near, g:v.name.g,
       open:null, chips:null, tries:0, slips:0, said:false, asked:false, reply:null, fixed:{}, done:false, clean:false};
     if(issue) trav.chipVals = deskChipValues(trav, issue.field, lang, rnd);
+    if(dbl && issue && mode !== 'ask'){
+      const d2 = deskSecond(tpl, v, lang, rnd, today, issue.field, truth, fields);
+      if(d2){ trav.card[d2.field] = deskCopy(d2.wrong); trav.issue2 = d2; trav.chipVals2 = deskChipValues(trav, d2.field, lang, rnd); }
+    }
     return trav;
   }
   return null;
@@ -21863,20 +21883,30 @@ function buildDeskRound(refId){
       modes[i] = mode; n++;
     }
     if(n < 2) continue;
+    // Games 2.0 SPEC 11: the boss = the traveller with the most rows, last (traveller 1 stays the clean one)
+    let bi = 1; for(let i = 2; i < tpls.length; i++) if(tpls[i].f.length > tpls[bi].f.length) bi = i;
+    if(bi !== tpls.length - 1){ tpls.push(tpls.splice(bi, 1)[0]); modes.push(modes.splice(bi, 1)[0]); }
+    // the double (A2+): one traveller at position 2-4 has two mistakes, never at the position it had in the learner's last round
+    let dbl = -1;
+    if(level !== 'A1'){
+      const last = state.progress ? state.progress.deskDouble : null, at = crossShuffle([1, 2, 3].filter(i=>i !== last), rnd);
+      const j = at.find(i=>modes[i] === 'mistake' || modes[i] === 'blank');
+      if(j != null) dbl = j;
+      else { const k = at.find(i=>modes[i] === 'clean' && deskMistakeOk(tpls[i])); if(k != null){ modes[k] = 'mistake'; dbl = k; } }
+    }
     const used = new Set(), chars = crossShuffle(ORDER_CHARS.filter(k=>k !== learnerCharKey()), rnd);
     const travellers = [];
     for(let i = 0; i < tpls.length; i++){
-      const t = deskMakeTraveller(tpls[i], level, lang, modes[i], rnd, used, today);
+      const t = deskMakeTraveller(tpls[i], level, lang, modes[i], rnd, used, today, i === dbl);
       if(!t) break;
       t.ch = chars[i % chars.length];
       travellers.push(t);
     }
     if(travellers.length < DESK_TRAVELLERS) continue;
-    // Games 2.0 SPEC 11: the boss = the traveller with the most rows, last (traveller 1 stays the clean one)
-    let bi = 1; for(let i = 2; i < travellers.length; i++) if(travellers[i].lines.length > travellers[bi].lines.length) bi = i;
-    if(bi !== travellers.length - 1) travellers.push(travellers.splice(bi, 1)[0]);
+    const dblAt = travellers.findIndex(t=>t.issue2);
+    if(dblAt > 0 && state.progress) state.progress.deskDouble = dblAt;
     // "How to play" shows once, before the learner's first-ever round (gamesMet stays true for every replay after).
-    return {level, lang, today, travellers, index:0, clean:0, combo:0, said:0, noVoice:ttsVoiceMissing(), greeted:false, finished:false, startedAt:Date.now(), finishedAt:null, intro:!gamesMet().has('desk')};
+    return {level, lang, today, travellers, index:0, clean:0, combo:0, said:0, noVoice:ttsVoiceMissing(), greeted:false, finished:false, startedAt:Date.now(), finishedAt:null, intro:!gamesMet().has('desk'), double:dblAt > 0};
   }
   return null;
 }
@@ -21951,7 +21981,7 @@ function deskTypedOk(t, field, raw, lang){
   if(field === 'dob' || field === 'leaving'){
     const p = deskParseDate(s, lang); if(!p) return null;
     const w = field === 'dob' ? want : deskYmd(want);
-    const kind = t.issue && t.issue.kind;
+    const iss = deskIssueAt(t, field), kind = iss && iss.kind;
     if(field === 'dob' && kind === 'year-near' && p.d == null) return p.y === w.y;
     if(p.d == null) return null;
     if(p.d !== w.d || p.m !== w.m) return false;
@@ -22024,17 +22054,17 @@ function deskChipLabel(round, f, v){
 function deskFixHtml(round, t){
   if(t.done || !t.open) return '';
   const f = t.open;
-  if(t.mode === 'ask' && !t.fixed[f]){
+  if(t.mode === 'ask' && f === t.issue.field && !t.fixed[f]){
     return `<div class="desk-fix fade-in" id="desk-fix"><p class="game-hint desk-ask-q">${esc(L('Which question?','Hangi soru?','کدام سؤال؟','¿Qué pregunta?'))}</p>
       <div class="game-opts">${t.ask.opts.map((o, i)=>`<button class="game-opt long" data-action="desk-q" data-quiet="1" data-i="${i}" dir="ltr">${esc(o.q)}</button>`).join('')}</div></div>`;
   }
-  if(t.mode === 'blank' && !t.asked){
+  if(t.mode === 'blank' && f === t.issue.field && !t.asked){
     return `<div class="desk-fix fade-in" id="desk-fix"><button class="btn btn-primary game-cta" data-action="desk-ask">${esc(L('Ask','Sor','بپرس','Preguntar'))}</button></div>`;
   }
   // 2026-10-15 (Farin): always chips, never a typing box - deskChipValues() already
   // builds the right value + 2 near-misses for every field kind, so there is no
   // reduced path left; the old free-text input/desk-fix-go flow is retired.
-  return `<div class="desk-fix fade-in" id="desk-fix"><div class="desk-chips">${t.chipVals.map((v, i)=>`<button class="game-opt desk-chip" data-action="desk-chip" data-quiet="1" data-i="${i}">${deskChipLabel(round, f, v)}</button>`).join('')}</div></div>`;
+  return `<div class="desk-fix fade-in" id="desk-fix"><div class="desk-chips">${(deskChipsAt(t, f) || []).map((v, i)=>`<button class="game-opt desk-chip" data-action="desk-chip" data-quiet="1" data-i="${i}">${deskChipLabel(round, f, v)}</button>`).join('')}</div></div>`;
 }
 const DESK_TOWN = {f:[1, 3, 5, 7], m:[2, 4, 6, 8]};
 function deskFaceSrc(round, t){
@@ -22044,10 +22074,24 @@ function deskFaceSrc(round, t){
   const face = t.done ? 'warm' : (t.tries ? 'oh' : 'calm');
   return 'games/worlds/desk/art/traveller-' + list[(seed + i) % list.length] + '-' + face + '.webp';
 }
+// In Passport Desk's world the traveller stands at the booth window, on the plate, behind the counter (skins.js front layer; the picture is
+// shown whole, its lower edge hidden by the counter), sized by height so every traveller stands at the same scale. Out of the world: the
+// clay figure in the card, as before.
+const DESK_TRAV_W = {1:385, 2:463, 3:331, 4:430, 5:370, 6:442, 7:477, 8:427};   // traveller-N-*.webp widths (600 px tall)
+function deskTravBox(src){
+  const n = Number((String(src).match(/traveller-(\d+)-/) || [])[1]) || 2, h = 40;   // 40% of the 704x880 booth plate's height
+  const w = +(h * 880 / 704 * (DESK_TRAV_W[n] || 430) / 600).toFixed(2);
+  return [+(62 - w / 2).toFixed(2), 38, w];
+}
+function deskStageSync(round, t){
+  try{ if(window.Theatre && Theatre.actor && worldKind() === 'desk'){ const src = t ? deskFaceSrc(round, t) : null; Theatre.actor('desk-who', src, src ? deskTravBox(src) : null, 'gw-trav'); } }catch(e){}
+  return '';
+}
 function deskBodyHtml(round, t){
   const shown = t.said || round.noVoice;
-  return `<div class="desk-trav" id="desk-trav">
-      <span class="desk-who-wrap"><img class="desk-who" id="desk-who" src="${deskFaceSrc(round, t)}" alt=""></span>
+  const inWorld = worldKind() === 'desk';
+  return `<div class="desk-trav${inWorld ? ' in-world' : ''}" id="desk-trav">
+      ${inWorld ? deskStageSync(round, t) : `<span class="desk-who-wrap"><img class="desk-who" id="desk-who" src="${deskFaceSrc(round, t)}" alt=""></span>`}
       ${deskBubbleHtml(round, t)}
     </div>
     <div class="order-tools desk-tools">
@@ -22089,7 +22133,7 @@ function renderGameDesk(){
   return `<div class="fade-in game-screen">
     ${gameTopHtml(L('Passport','Pasaport','گذرنامه','Pasaporte'))}
     ${deskStatusHtml(round)}
-    <div class="desk-body" id="desk-body">${round.intro ? deskIntroHtml() : ((round.finished || !t) ? deskResultHtml(round) + renderBadgeUnlockCard(pullJustEarnedBadges()) : deskBodyHtml(round, t))}</div>
+    <div class="desk-body" id="desk-body">${(round.intro || round.finished || !t) ? deskStageSync(round, null) : ''}${round.intro ? deskIntroHtml() : ((round.finished || !t) ? deskResultHtml(round) + renderBadgeUnlockCard(pullJustEarnedBadges()) : deskBodyHtml(round, t))}</div>
   </div>`;
 }
 function deskRefresh(){
@@ -22097,7 +22141,7 @@ function deskRefresh(){
   if(!round || state.view !== 'game-desk' || round.finished) return;
   const t = deskCur(round); if(!t) return;
   const st = document.getElementById('desk-status'); if(st) st.outerHTML = deskStatusHtml(round);
-  const body = document.getElementById('desk-body'); if(body) body.innerHTML = round.intro ? deskIntroHtml() : deskBodyHtml(round, t);
+  const body = document.getElementById('desk-body'); if(body) body.innerHTML = round.intro ? deskStageSync(round, null) + deskIntroHtml() : deskBodyHtml(round, t);
 }
 /* ---- Flow and feel (spec §5.2, §5.7) ---- */
 let deskBusy = false, deskTimer = null;
@@ -22127,7 +22171,7 @@ function deskFieldTap(f){
   const vp = state.viewParams, round = vp && vp.round, t = round && deskCur(round);
   if(!t || round.finished || t.done || deskBusy) return;
   if(t.open === f) return;
-  if(t.issue && t.issue.field === f && !t.fixed[f]){
+  if(deskIssueAt(t, f) && !t.fixed[f]){
     t.open = f; sfx('tick'); deskRefresh(); save();
     const inp = document.getElementById('desk-input'); if(inp) try{ inp.focus({preventScroll:true}); }catch(e){}
     return;
@@ -22156,7 +22200,7 @@ function deskMiss(round, t, f, el){
   companionSay(revealingChips
     ? L('Not quite — pick the one you heard.','Tam değil — duyduğunu seç.','دقیق نبود — همان را که شنیدی انتخاب کن.','No exactamente — elige la que has oído.')
     : L('Listen to that part again.','O kısmı tekrar dinle.','آن قسمت را دوباره گوش کن.','Escucha otra vez esa parte.'), 1800);
-  if(t.mode === 'blank'){ if(t.blank) deskSpeak(round, t.blank.say, 380); }
+  if(t.mode === 'blank' && f === t.issue.field){ if(t.blank) deskSpeak(round, t.blank.say, 380); }
   else deskRepeat(round, t, f);
   if(revealingChips) deskRefresh();
   save();
@@ -22170,6 +22214,7 @@ function deskStamp(){
     anim(btn, [{transform:'translateY(0)'}, {transform:'translateY(-20px)'}, {transform:'translateY(0)'}], {duration:380, easing:SPRING});
     sfx('tick'); companionOops();
     companionSay(L('Hmm, something doesn’t match.','Hmm, bir şey uyuşmuyor.','هوم، چیزی جور درنمی‌آید.','Mmm, algo no cuadra.'), 2000);
+    fxDeskWiggle(deskRowEl(bad));   // the double (SPEC 11): the row that still doesn't match wiggles while the traveller repeats its line
     deskRepeat(round, t, bad);
     save();
     return;
@@ -30701,7 +30746,7 @@ const THEATRE_QUICK = ['match','build','cross','order','desk','spell','bingo','h
 const THEATRE_QUICK_VIEWS = THEATRE_QUICK.map(k=>'game-' + k);
 const THEATRE_KINDS = ['path','chores','mystery','radio'].concat(THEATRE_QUICK);
 const THEATRE_VIEWS = ['game-path','game-yc','game-chores-building','game-chores-room','game-mystery','game-v2'].concat(THEATRE_QUICK_VIEWS);
-const THEATRE_VER = '15';   // 15: Games 2.0 step 4 (Brave switch, boss beat, Captain); 14: the world art wiring + Sam's balloon waits for his picture (2026-11-16)
+const THEATRE_VER = '16';   // 16: Games 2.0 step 5 part 4 (sound spots: gulls + the library clock; Passport Desk's traveller behind the booth counter; Trap Dash lanes); 15: Games 2.0 step 4 (Brave switch, boss beat, Captain); 14: the world art wiring + Sam's balloon waits for his picture (2026-11-16)
 // World Kit switch (worlds SPEC 4.14): one flag per quick game, on once its art and checks pass (Farin 11-10: switch on what is done).
 // ?worlds=1 previews every world in this browser (?worlds=0 switches the preview off). Off = the game plays over its poster's soft backdrop.
 // 2026-11-15 World Kit v1 live: Order Up!, Word Bingo, Mini Cross, Build It, Say It Back (their plates and props passed art QC). Passport Desk waits
@@ -32380,8 +32425,8 @@ const HANDLERS = {
   'desk-field'(el){ deskFieldTap(el.dataset.f); },
   'desk-chip'(el){
     const r = state.viewParams && state.viewParams.round, t = r && deskCur(r); if(!t || r.finished || t.done || !t.open) return;
-    const f = t.open, v = t.chipVals[Number(el.dataset.i)];
-    if(deskSame(f, v, t.truth[f])){ if(t.mode === 'blank') t.reply = t.blank ? t.blank.show : null; deskApplyFix(r, t, f); return; }
+    const f = t.open, v = (deskChipsAt(t, f) || [])[Number(el.dataset.i)];
+    if(deskSame(f, v, t.truth[f])){ if(t.mode === 'blank' && f === t.issue.field) t.reply = t.blank ? t.blank.show : null; deskApplyFix(r, t, f); return; }
     deskMiss(r, t, f, el);
   },
   'desk-fix-go'(){

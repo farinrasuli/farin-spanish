@@ -18,7 +18,8 @@
                plate in the establishing shot), stage (the band height), plate {src, ready} (always whole: contained), bed {freq, q, vol, lfo} (a quiet procedural ambient bed), layers (cut-outs
                {src, cls, id, box:[x%, y%, w%], sit, ready}; sit = stands on the panel's top edge), text (live text on the art {text | key
                (content.js worldText), cls, id, box, ready}, never mirrored), sfx
-               ({name:[files]} over the shared CC0 kit), css (games/worlds/<kind>/world.css once it exists). Only ready:true art shows.
+               ({name:[files]} over the shared CC0 kit), css (games/worlds/<kind>/world.css once it exists), spots (Games 2.0 SPEC 5.4: sound
+               names played now and then, every 6-14 s; 'gull' and 'clock' are made in code when no file has the name). Only ready:true art shows.
    The world is on per kind with the app's WORLDS_LIVE switch (?worlds=1 previews all); with it off the game plays over the soft
    backdrop above. Anything a skin needs beyond tokens goes in its world.css under body.gw-on.gw-<kind>. */
 window.THEATRE_SKINS = {
@@ -56,7 +57,7 @@ window.THEATRE_SKINS = {
     palette:{sky:'#e9f8fc', sky2:'#b9e6f2', glow:'#ffffff', ground:'#5fc3cc', ink:'#163450', accent:'#c23a32', accentInk:'#ffffff'},
     backdrop:{src:null, position:'64% 50%', blur:30, veil:.54}, props:[],
     gw:{bg:'#e8f6fd', surface:'#e3c595', paper:'#fffdf7', ink:'#13304d', hue:'var(--clay-sky)', accent:'#c8352e', cta:'#13304d', ctaInk:'#ffffff'},
-    world:{mood:'day', stage:'clamp(180px, 34dvh, 340px)', plate:{src:'games/worlds/desk/art/desk-booth.webp', pos:'50% 50%', ready:true}, bed:{freq:320, q:.4, vol:.028, lfo:.12}, layers:[
+    world:{mood:'day', stage:'clamp(180px, 34dvh, 340px)', plate:{src:'games/worlds/desk/art/desk-booth.webp', pos:'50% 50%', ready:true}, front:{top:'74%'}, bed:{freq:320, q:.4, vol:.028, lfo:.12}, spots:['gull'], layers:[
       {src:'games/worlds/desk/art/desk-ferry.webp', cls:'gw-ferry', box:[14, 42, 36], ready:true},
       {src:'games/worlds/desk/art/desk-gull.webp', cls:'gw-gull', box:[76, 2, 8], ready:true}], text:[], sfx:{}, css:null}},
   // Magic Words: the golden door in the rose room
@@ -77,7 +78,7 @@ window.THEATRE_SKINS = {
     palette:{sky:'#f0f4f0', sky2:'#d5ded7', glow:'#fffaef', ground:'#bfab86', ink:'#26332c', accent:'#bf513e', accentInk:'#ffffff'},
     backdrop:{src:null, position:'56% 50%', blur:30, veil:.56}, props:[],
     gw:{bg:'#d6ebf7', surface:'#e8c48c', paper:'#fffaf0', ink:'#14332e', hue:'var(--cat-story)', accent:'#d8343f', cta:'#14332e', ctaInk:'#ffffff'},
-    world:{mood:'lamp', moodVars:{'--m-gx':'92%', '--m-gy':'64%', '--m-gr':'30%'}, band:'small', stage:'clamp(96px, 18dvh, 180px)', plate:{src:'games/worlds/hunt/art/hunt-library.webp', ready:true}, bed:{freq:420, q:.6, vol:.022, lfo:.08}, layers:[
+    world:{mood:'lamp', moodVars:{'--m-gx':'92%', '--m-gy':'64%', '--m-gr':'30%'}, band:'small', stage:'clamp(96px, 18dvh, 180px)', plate:{src:'games/worlds/hunt/art/hunt-library.webp', ready:true}, bed:{freq:420, q:.6, vol:.022, lfo:.08}, spots:['clock'], layers:[
       {src:'games/worlds/hunt/art/hunt-cardbox.webp', cls:'gw-cardbox', box:[8, 73, 16], band:[6, 0, 14], sit:true, ready:true},   // on the desk (mCqPUhyl B2)
       {src:'games/worlds/hunt/art/hunt-lens.webp', cls:'gw-lens', id:'gw-lens', box:[60, 73, 11], band:[82, 0, 9], sit:true, ready:true}], text:[], sfx:{}, css:null}},
   // Say It Back: the echo between two voices, rose wall, teal
@@ -98,7 +99,7 @@ window.THEATRE_SKINS = {
     palette:{sky:'#f0f9f9', sky2:'#cbeceb', glow:'#ffffff', ground:'#86d8d8', ink:'#173638', accent:'#d4463a', accentInk:'#ffffff'},
     backdrop:{src:null, position:'60% 50%', blur:30, veil:.54}, props:[],
     gw:{bg:'#eef8f8', surface:'#e3c595', paper:'#ffffff', ink:'#173638', hue:'var(--cat-gram)', accent:'#d4463a', cta:'#173638', ctaInk:'#ffffff'},
-    world:{mood:'day', plate:{src:'games/worlds/trap/art/trap-pier.webp', ready:true}, bed:{freq:900, q:.3, vol:.026, lfo:.2}, layers:[
+    world:{mood:'day', plate:{src:'games/worlds/trap/art/trap-pier.webp', ready:true}, bed:{freq:900, q:.3, vol:.026, lfo:.2}, spots:['gull'], layers:[
       {src:'games/worlds/trap/art/trap-barrier.webp', cls:'gw-barrier', box:[34, 62, 32], ready:true}], text:[], sfx:{}, css:null}}
 };
 // Captain, the town cat, hides in the worlds (Games 2.0 SPEC 5.8): 2 spots per world in plate % [x, y, w] (box) and, for the small-band

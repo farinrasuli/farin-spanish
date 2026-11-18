@@ -240,6 +240,20 @@
   .build-bp-tab::before{content:''; position:absolute; inset:-8px -6px;}
   .build-bp-tab.open{background:#1f4f7a; border-color:#1f4f7a; color:#fff;}
   .build-bp-note{margin:12px 0 0; padding:8px 11px; border-radius:8px; text-align:start; font-size:14.5px; font-weight:700; line-height:1.4; color:#1f3a6e; background-color:#eef5fc; background-image:linear-gradient(rgba(143,179,212,.35) 1px, transparent 1px), linear-gradient(90deg, rgba(143,179,212,.35) 1px, transparent 1px); background-size:14px 14px;}
+  /* Trap Dash lanes (Games 2.0 SPEC 20): three boardwalk lanes, each ending at a striped barrier; the streak shows as speed lines */
+  .trap-lanes{gap:8px;}
+  .trap-lane{position:relative; overflow:hidden; text-align:start; padding-inline-end:46px; background:repeating-linear-gradient(90deg, color-mix(in srgb, #c89a62 16%, var(--bg-elevated)) 0 44px, color-mix(in srgb, #c89a62 30%, var(--bg-elevated)) 44px 46px);}
+  .trap-lane-word{position:relative; z-index:1;}
+  .trap-bar{position:absolute; top:9px; bottom:9px; right:12px; width:20px; border-radius:4px; background:repeating-linear-gradient(135deg, #f2c230 0 5px, #14332e 5px 9px); box-shadow:0 2px 0 rgba(20,51,46,.25); transform-origin:50% 100%; transition:transform .35s cubic-bezier(.2,.8,.3,1.2);}
+  .trap-lane.leap .trap-bar, .trap-lane.over .trap-bar{transform:rotate(-80deg) scale(.9);}
+  .trap-lane.stumble .trap-bar{transform:rotate(8deg);}
+  .trap-lane.glow{box-shadow:0 0 0 3px #7fe0a6, 0 0 14px rgba(127,224,166,.75);}
+  .trap-lanes.fast .trap-lane::before{content:''; position:absolute; inset:0; background:repeating-linear-gradient(90deg, transparent 0 26px, rgba(255,255,255,.6) 26px 40px, transparent 40px 70px); background-size:70px 100%; animation:trap-speed .55s linear infinite; pointer-events:none;}
+  @keyframes trap-speed{from{background-position:0 0;} to{background-position:-70px 0;}}
+  .trap-gate{display:flex; justify-content:center; gap:10px; margin:2px 0 8px;}
+  .trap-gate i{width:22px; height:12px; border-radius:3px; border:2px solid #14332e; background:repeating-linear-gradient(135deg, #f2c230 0 5px, #14332e 5px 9px); opacity:.55;}
+  .trap-gate i.on{opacity:1; background:#7fe0a6; border-color:#1f7a6d;}
+  @media (prefers-reduced-motion: reduce){ .trap-lanes.fast .trap-lane::before{animation:none;} .trap-bar{transition:none;} }
   .game-opt{width:100%; min-height:58px; box-sizing:border-box; border-radius:18px; border:2px solid var(--border); background:var(--bg-elevated); color:var(--ink); font-family:'Fredoka',-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; font-weight:700; font-size:19px; line-height:1.25; padding:8px 14px; text-align:center; box-shadow:var(--clay-shadow-soft); cursor:pointer; transition:transform .08s ease, opacity .2s ease;}
   .game-opt:active{transform:scale(.98);}
   .game-opt.ok{border-color:var(--success); background:var(--success-soft); color:color-mix(in srgb, var(--success) 62%, var(--ink));}
@@ -380,6 +394,24 @@
   .cross-num{position:absolute; top:1px; left:2px; font-family:inherit; font-size:9px; font-weight:800; line-height:1; color:var(--ink-faint);}
   .cross-cell.ok .cross-num{color:rgba(255,255,255,.85);}
   .cross-dot{position:absolute; top:3px; right:3px; width:5px; height:5px; border-radius:50%; background:var(--cat-gram);}
+  /* Games 2.0 SPEC 14: the hidden word's cells (an 8 px ink ring in the corner), ink mode, the hidden-word slot */
+  .cross-cell.ring::after{content:''; position:absolute; right:2px; bottom:2px; width:8px; height:8px; box-sizing:border-box; border:1.5px solid color-mix(in srgb, var(--ink) 70%, transparent); border-radius:50%; pointer-events:none;}
+  .cross-cell.ok.ring::after{border-color:rgba(255,255,255,.9);}
+  .cross-grid-wrap.ink .cross-cell:not(.ok):not(.lock) .cross-ch{color:#1f3a6e;}
+  .cross-key.cross-ink-key{background:#1f3a6e; color:#fff;}   /* Brave ink mode: the grid's one Check, on the keyboard (always on screen) */
+  .cross-key.cross-ink-key svg{width:20px; height:20px;}
+  .cross-hidden{text-align:center;}
+  .cross-hid-title{font-family:'Fredoka',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; font-weight:800; font-size:15px; color:var(--ink);}
+  .cross-hid-slots{display:inline-flex; gap:5px; margin-top:8px; padding:4px; border-radius:10px;}
+  .cross-hid-slots.gold{box-shadow:0 0 0 2px #C99A1E;}
+  .cross-hid-slot{width:30px; height:34px; border-radius:7px; border:2px dashed color-mix(in srgb, var(--ink) 30%, transparent); display:flex; align-items:center; justify-content:center; font:800 18px/1 'Fredoka',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; text-transform:uppercase; color:var(--ink);}
+  .cross-hid-slot.on{border-style:solid; border-color:var(--cat-voc); background:color-mix(in srgb, var(--cat-voc) 14%, #fff);}
+  .cross-hid-note{margin:8px auto 0; max-width:30ch; font-size:14.5px; font-style:italic; color:var(--ink-soft); transform:rotate(-1deg);}
+  .cross-hid-tiles{display:flex; flex-wrap:wrap; justify-content:center; gap:8px; margin-top:10px;}
+  .cross-hid-tile{width:40px; height:44px; border-radius:10px; border:0; background:var(--bg-elevated); box-shadow:var(--clay-shadow-soft); font:800 19px/1 'Fredoka',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; text-transform:uppercase; color:var(--ink); cursor:pointer;}
+  .cross-hid-tile.used{visibility:hidden;}
+  .cross-hid-tile.pulse{animation:build-ear-pulse 1s ease-in-out infinite;}
+  @media (prefers-reduced-motion: reduce){ .cross-hid-tile.pulse{animation:none; outline:2px solid var(--cat-review); outline-offset:2px;} }
   .cross-cell .sparkle{top:-4px; right:-4px; left:auto; width:8px; height:8px; color:var(--cat-review); z-index:2;}
   .cross-clue{display:flex; align-items:center; gap:4px; min-height:52px; padding:6px; border-radius:16px; background:var(--ink); color:var(--bg-elevated); font-size:15px; font-weight:800; line-height:1.3;}
   .cross-clue-text{flex:1 1 auto; min-width:0; text-align:center; padding:2px 4px; overflow-wrap:anywhere;}
@@ -953,6 +985,11 @@
   .gp-pip.gp-glint{animation:gp-glint 1.1s ease-out 1;}
   /* Games 2.0 rule 7: Trap Dash's clock is a dial, no digit, in the Theatre */
   body.theatre-on #trap-timer-text{display:none !important;}
+  /* Trap Dash in the Theatre: the ship's clock dial sits in the middle of the HUD; the old ring is not shown there */
+  body.theatre-on #trap-ring{display:none !important;}
+  .trap-dial{position:fixed; z-index:52; top:calc(29px + var(--th-safe-t, 0px)); left:50%; width:48px; height:48px; transform:translateX(-50%); pointer-events:none; filter:drop-shadow(0 4px 8px rgba(20,51,46,.22));}
+  .trap-dial svg{display:block;}
+  body:not(.theatre-on) .trap-dial{display:none;}
   /* Word Rush (Games 2.0 SPEC 19): the golden pair's backs, the peek, a card moving in a wave, the sun */
   .game-tile.hidden-face.gold-back{box-shadow:inset 0 0 0 3px #FFD166, inset 0 0 0 5px #C99A1E;}
   .game-tile.peek{pointer-events:none;}
@@ -19634,10 +19671,18 @@ function buildTrapRound(profile, n){
   const extraT = shuffle(usable(carryDueItems(profile))).slice(0, 2);                   // LXD READY-6 R3a
   const exS = new Set(extraT.map(c=>c.blank.sentence));
   const ownT = candidates.filter(c=>!exS.has(c.blank.sentence));                       // the widened pool may hold the same items
-  const picked = shuffle(shuffle(ownT).slice(0, Math.min(n - extraT.length, ownT.length)).concat(extraT));
-  const questions = picked.map(c=>{
+  let picked = shuffle(shuffle(ownT).slice(0, Math.min(n - extraT.length, ownT.length)).concat(extraT));
+  // Games 2.0 SPEC 20, the gate (the boss): the last barrier is one grammar item with both blank and blank2, so the learner picks two lanes
+  // in a row (gate 1, gate 2). No such item = a normal last barrier.
+  const pairs = {}; candidates.forEach(c=>{ if(c.field === 'blank' || c.field === 'blank2') (pairs[c.itemId + '|' + c.variant] = pairs[c.itemId + '|' + c.variant] || {})[c.field] = c; });
+  const gates = shuffle(Object.values(pairs).filter(g=>g.blank && g.blank2 && g.blank.blank.sentence !== g.blank2.blank.sentence));
+  const gate = gates[0] || null;
+  if(gate && picked.length >= TRAP_MIN_QUESTIONS){ picked = picked.filter(c=>c.itemId !== gate.blank.itemId).slice(0, Math.max(TRAP_MIN_QUESTIONS - 2, Math.min(picked.length, n) - 2)); picked.push(gate.blank, gate.blank2); }
+  const questions = picked.map((c, k)=>{
     const opts = shuffle([c.blank.word].concat(c.blank.distractors));
-    return {sentence:c.blank.sentence, options:opts, correct:opts.indexOf(c.blank.word), itemId:c.itemId, field:c.field};
+    const qq = {sentence:c.blank.sentence, options:opts, correct:opts.indexOf(c.blank.word), itemId:c.itemId, field:c.field};
+    if(gate && k >= picked.length - 2 && (c === gate.blank || c === gate.blank2)) qq.gate = c === gate.blank ? 1 : 2;
+    return qq;
   });
   const timeLimit = 10;
   return {questions, index:0, score:0, streak:0, correctCount:0, mistakes:0, perfect:true, answered:false, selected:null, lastPoints:0, timeLimit, deadline:Date.now()+timeLimit*1000, finished:false, xpGain:0, startedAt:Date.now(), finishedAt:null};
@@ -20407,7 +20452,106 @@ function buildCrossRound(setObj, refId){
   if(level === 'A1') words.forEach(w=>{ const cell = cells[w.r*cols+w.c]; cell.entry = cell.fold; cell.given = true; cell.locked = true; });
   const round = {setId:setObj.id, level, rows, cols, cells, words, dir:'A', cur:0, clean:0, reveals:0, hints:0, combo:0, bad:[], popped:false, finished:false, startedAt:Date.now(), finishedAt:null};
   crossGoWord(round, crossOrder(round)[0]);
+  round.hidden = crossHiddenPick(round, setObj, rnd);   // Games 2.0 SPEC 14: today's hidden word (null = no slot)
+  if(gameBrave('cross')){ round.ink = true; round.inkChecks = 0; }   // Brave: ink mode (one Check for the whole grid)
   return round;
+}
+/* ---- Games 2.0 SPEC 14: today's hidden word. A word W of the set (else of the learner's finished sets at the level), 4-6 letters (3-4 at
+   A1), not in the grid, whose letters sit in different grid cells spread over at least 3 words; those cells get a small ink ring. When
+   the grid is done a slot opens under the masthead: W's letters as shuffled tiles + W's meaning as a pencil note; the learner taps them in
+   order (A1: the first letter is placed already). Solved = the croissant's last bite, reveal, W on the souvenir (a gold rim when no letter
+   of the grid was revealed). The round finishes only once W is solved. ---- */
+function crossHiddenCells(round, fold, rnd){
+  const letters = Array.from(fold), byCh = {};
+  round.cells.forEach((c, i)=>{ if(c) (byCh[c.fold] = byCh[c.fold] || []).push(i); });
+  if(letters.some(ch=>!byCh[ch])) return null;
+  const opts = letters.map(ch=>crossShuffle(byCh[ch], rnd)), used = new Set(), pick = [];
+  let steps = 0;
+  const wordsOf = idxs=>{ const st = new Set(); idxs.forEach(i=>{ const c = round.cells[i]; if(c.a >= 0) st.add(c.a); if(c.d >= 0) st.add(c.d); }); return st.size; };
+  const dfs = k=>{
+    if(++steps > 4000) return false;
+    if(k === letters.length) return wordsOf(pick) >= 3;
+    for(const i of opts[k]){ if(used.has(i)) continue; used.add(i); pick.push(i); if(dfs(k + 1)) return true; pick.pop(); used.delete(i); }
+    return false;
+  };
+  return dfs(0) ? pick.slice() : null;
+}
+function crossHiddenPick(round, setObj, rnd){
+  try{
+    const lv = round.level, mn = lv === 'A1' ? 3 : 4, mx = lv === 'A1' ? 4 : 6, inGrid = new Set(round.words.map(w=>w.fold));
+    const done = (state.progress && state.progress.completedVocabSets) || [];
+    const own = crossShuffle(crossCardsOf(setObj.cards, true), rnd);
+    const more = crossShuffle(VOCAB_SETS.filter(x=>x.id !== setObj.id && x.level === lv && x.category !== 'slang' && done.includes(x.id)).reduce((a, x)=>a.concat(crossCardsOf(x.cards, false)), []), rnd);
+    const seen = new Set();
+    for(const c of own.concat(more)){
+      if(seen.has(c.fold)) continue; seen.add(c.fold);
+      if(c.frame || c.len < mn || c.len > mx || !/^[a-zñ]+$/.test(c.fold) || inGrid.has(c.fold) || round.words.some(w=>w.fold.indexOf(c.fold) >= 0 || c.fold.indexOf(w.fold) >= 0)) continue;
+      const ui = L(c.m.en, c.m.tr, c.m.fa, c.m.es) || c.m.en; if(!ui || crossFold(ui).indexOf(c.fold) >= 0) continue;   // a meaning that doesn't give the word away
+      const cells = crossHiddenCells(round, c.fold, rnd); if(!cells) continue;
+      const letters = Array.from(c.w.toLowerCase());
+      let order = crossShuffle(letters.map((x, i)=>i), rnd); if(order.every((x, i)=>x === i)) order = order.slice(1).concat(order[0]);
+      return {w:c.w.toLowerCase(), fold:c.fold, m:c.m, cells, tiles:order.map(i=>letters[i]), placed:lv === 'A1' ? [order.indexOf(0)] : [], miss:0, solved:false, gold:false};
+    }
+  }catch(e){}
+  return null;
+}
+function crossHiddenOpen(round){ return !!(round && round.gridDone && round.hidden && !round.hidden.solved); }
+function crossHiddenHtml(round){
+  const h = round.hidden, n = h.placed.length, next = Array.from(h.fold)[n];
+  const help = h.miss >= 2 ? h.tiles.findIndex((t, j)=>!h.placed.includes(j) && crossFold(t) === next) : -1;
+  const slots = Array.from(h.w).map((c, k)=>`<span class="cross-hid-slot${k < n ? ' on' : ''}">${k < n ? esc(h.tiles[h.placed[k]]) : ''}</span>`).join('');
+  const tiles = h.tiles.map((t, j)=>`<button type="button" class="cross-hid-tile${h.placed.includes(j) ? ' used' : ''}${j === help ? ' pulse' : ''}" data-action="cross-hid" data-quiet="1" data-i="${j}"${h.placed.includes(j) ? ' disabled aria-hidden="true"' : ''}>${esc(t)}</button>`).join('');
+  const note = L(h.m.en, h.m.tr, h.m.fa, h.m.es) || h.m.en || '';
+  return `<div class="game-card tight cross-hidden fade-in" id="cross-hidden">
+    <div class="cross-hid-title">${esc(L("Today's hidden word",'Bugünün gizli kelimesi','کلمه‌ی پنهان امروز','La palabra oculta de hoy'))}</div>
+    <div class="cross-hid-slots${round.reveals ? '' : ' gold'}" dir="ltr">${slots}</div>
+    ${note ? `<p class="cross-hid-note" dir="auto">${esc(note)}</p>` : ''}
+    <div class="cross-hid-tiles" dir="ltr">${tiles}</div>
+  </div>`;
+}
+function crossHiddenTap(vp, round, j){
+  const h = round.hidden; if(!crossHiddenOpen(round) || h.placed.includes(j) || !h.tiles[j]) return;
+  const next = Array.from(h.fold)[h.placed.length];
+  if(crossFold(h.tiles[j]) !== next){
+    h.miss++;
+    queueFx(()=>{ const el = document.querySelector('.cross-hid-tile[data-i="' + j + '"]'); anim(el, [{transform:'translateX(0)'}, {transform:'translateX(-5px)'}, {transform:'translateX(5px)'}, {transform:'translateX(0)'}], {duration:240, easing:'linear'}); sfx('tick'); });
+    save(); render();
+    return;
+  }
+  h.placed.push(j); h.miss = 0; sfx('flip');
+  if(h.placed.length < h.tiles.length){ save(); render(); return; }
+  h.solved = true; h.gold = !round.reveals;
+  queueFx(()=>{ if(worldKind() === 'cross') worldLine(h.w, 0, {kind:'caption', ms:5000}); else speakTarget(h.w, 0.92); });
+  crossFinish(vp, round, null);
+}
+/* ---- Brave: ink mode (SPEC 14). Letters in navy ink and no word is checked on its own; one Check covers the whole grid (All right! /
+   Close: one or two words are off / Not yet); from the 3rd Check the normal word-by-word check comes back. ---- */
+function crossInkCheck(vp, round){
+  if(!round || round.finished || round.gridDone || !round.ink) return;
+  round.inkChecks = (round.inkChecks || 0) + 1;
+  const say = t=>{ if(window.Theatre && Theatre.isOpen() && Theatre.say) Theatre.say(t, {kind:'caption', ms:5000}); else companionSay(t, 2400); };
+  const full = wi=>crossWordCells(round, wi).every(i=>round.cells[i].entry);
+  const right = wi=>crossWordCells(round, wi).every(i=>round.cells[i].entry === round.cells[i].fold);
+  const open = round.words.map((w, i)=>i).filter(i=>!round.words[i].solved);
+  const off = open.filter(wi=>!right(wi)).length;
+  if(!off){
+    round.ink = false; let res = null;
+    open.forEach(wi=>{ round.words[wi].checks++; res = crossSolve(round, wi); });
+    say(L('All right!','Hepsi doğru!','همه درسته!','¡Todo bien!'));
+    crossAfter(round, vp, res);
+    return;
+  }
+  if(round.inkChecks >= 3){
+    // the normal check comes back: every full word is checked on its own now
+    round.ink = false; let last = null;
+    const kb = document.getElementById('cross-kb'); if(kb) kb.outerHTML = crossKeyboardHtml(round);   // the ink key goes
+    open.filter(full).forEach(wi=>{ const r = crossCheck(round, wi); if(r && (!last || !r.ok || last.ok)) last = r; });
+    crossAfter(round, vp, last || {typed:true});
+    return;
+  }
+  sfx('tick'); companionOops();
+  say(off <= 2 ? L('Close: one or two words are off.','Yakın: bir iki kelime yanlış.','نزدیکی: یکی دو تا کلمه درست نیست.','Casi: una o dos palabras no están bien.') : L('Not yet.','Henüz değil.','هنوز نه.','Todavía no.'));
+  save(); crossRefresh();
 }
 /* ---- Grid helpers shared by the handlers, the renderer and the smoke harness ---- */
 function crossWordCells(round, wi){ const w = round.words[wi], out = []; for(let i=0;i<w.len;i++) out.push(w.dir==='A' ? w.r*round.cols + w.c + i : (w.r+i)*round.cols + w.c); return out; }
@@ -20475,7 +20619,10 @@ function crossType(round, letter){
   for(let k=p+1;k<idxs.length;k++){ const c2 = round.cells[idxs[k]]; if(!c2.locked && !c2.entry){ q = k; break; } }
   if(q < 0) for(let k=p+1;k<idxs.length;k++){ if(!round.cells[idxs[k]].locked){ q = k; break; } }
   round.cur = idxs[q >= 0 ? q : p];
-  if(idxs.every(x=>round.cells[x].entry)) return crossCheck(round, wi);
+  if(idxs.every(x=>round.cells[x].entry)){
+    if(round.ink){ const nx = crossOrder(round).find(k=>!round.words[k].solved && crossWordCells(round, k).some(x=>!round.cells[x].entry)); if(nx != null && nx !== wi) crossGoWord(round, nx); return {typed:true}; }   // ink: no word is checked on its own
+    return crossCheck(round, wi);
+  }
   return {typed:true};
 }
 // Backspace: clears the cursor cell, or steps back to the previous open cell and clears that.
@@ -20497,7 +20644,7 @@ function crossReveal(round){
   if(round.cells[i].locked){ const o = idxs.find(x=>!round.cells[x].locked); if(o === undefined) return null; i = o; }
   crossSetReveal(round, i); round.reveals++;
   round.bad = round.bad.filter(x=>x !== i);
-  if(idxs.every(x=>round.cells[x].entry)) return crossCheck(round, wi);
+  if(idxs.every(x=>round.cells[x].entry) && !round.ink) return crossCheck(round, wi);
   round.cur = crossFirstOpen(round, wi);
   return {revealed:true};
 }
@@ -20509,12 +20656,13 @@ function crossPhraseHtml(w){ return esc(w.phrase || w.w).replace(new RegExp('(^|
 function crossTimeText(sec){ sec = Math.max(0, Math.round(sec||0)); return Math.floor(sec/60) + ':' + String(sec % 60).padStart(2, '0'); }
 function crossCellEl(i){ return document.querySelector('.cross-cell[data-i="'+i+'"]'); }
 function crossGridHtml(round){
-  const wi = round.finished ? -1 : crossCurWord(round);
+  const over = round.finished || round.gridDone, wi = over ? -1 : crossCurWord(round);
   const hl = new Set(wi >= 0 ? crossWordCells(round, wi) : []);
   const cell = crossCellSize(round.cols);
-  const pop = !round.popped && !round.finished;
+  const pop = !round.popped && !over;
+  const ring = new Set((round.hidden && round.hidden.cells) || []);
   let k = 0;
-  let html = `<div class="cross-grid-wrap${round.finished ? ' gold' : ''}" id="cross-wrap"><div class="cross-grid" dir="ltr" role="grid" style="--cell:${cell}px; grid-template-columns:repeat(${round.cols}, var(--cell));">`;
+  let html = `<div class="cross-grid-wrap${round.finished ? ' gold' : ''}${round.ink ? ' ink' : ''}" id="cross-wrap"><div class="cross-grid" dir="ltr" role="grid" style="--cell:${cell}px; grid-template-columns:repeat(${round.cols}, var(--cell));">`;
   for(let i=0;i<round.cells.length;i++){
     const c = round.cells[i];
     if(!c){ html += '<span class="cross-blank"></span>'; continue; }
@@ -20525,18 +20673,19 @@ function crossGridHtml(round){
     if(allOk) cls.push('ok'); else { if(c.locked) cls.push('lock'); if(hl.has(i)) cls.push('word'); if(i === round.cur) cls.push('cur'); }
     if(round.bad.indexOf(i) >= 0) cls.push('bad');
     if(pop) cls.push('pop');
+    if(ring.has(i)) cls.push('ring');
     const shown = (c.locked || anyOk) ? c.ch : c.entry;   // the accented form once a letter is fixed
     const w = (round.dir === 'A' && wA) ? wA : (wD || wA);
     const pos = w.dir === 'A' ? c.c - w.c + 1 : c.r - w.r + 1;
     const label = w.num + ' ' + crossDirName(w.dir) + ', ' + L(`letter ${pos} of ${w.len}`, `harf ${pos}/${w.len}`, `حرف ${pos} از ${w.len}`, `letra ${pos} de ${w.len}`);
-    html += `<button type="button" class="${cls.join(' ')}" data-action="cross-cell" data-quiet="1" data-i="${i}" aria-label="${esc(label)}"${pop ? ` style="animation-delay:${(k++)*20}ms;"` : ''}${round.finished ? ' disabled' : ''}>${c.num ? `<span class="cross-num">${c.num}</span>` : ''}${c.revealed ? '<span class="cross-dot"></span>' : ''}<span class="cross-ch">${esc(shown)}</span></button>`;
+    html += `<button type="button" class="${cls.join(' ')}" data-action="cross-cell" data-quiet="1" data-i="${i}" aria-label="${esc(label)}"${pop ? ` style="animation-delay:${(k++)*20}ms;"` : ''}${over ? ' disabled' : ''}>${c.num ? `<span class="cross-num">${c.num}</span>` : ''}${c.revealed ? '<span class="cross-dot"></span>' : ''}<span class="cross-ch">${esc(shown)}</span></button>`;
   }
   return html + '</div></div>';
 }
 function crossStatusHtml(round){
   const solved = round.words.filter(w=>w.solved).length, total = round.words.length, n = round.reveals;
   const chip = '';   // no reveal counter (Farin's no-scores rule, 2026-11-14)
-  return `<div class="game-status" id="cross-status"><span class="game-status-text">${round.finished ? L('Grid complete!','Bulmaca tamam!','جدول کامل شد!','¡Crucigrama completo!') : gameProgressHtml(solved, total, L(`${solved} of ${total} words`, `${solved}/${total} kelime`, `${solved} از ${total} کلمه`, `${solved} de ${total} palabras`))}</span>${chip}</div>`;
+  return `<div class="game-status" id="cross-status"><span class="game-status-text">${round.finished || round.gridDone ? L('Grid complete!','Bulmaca tamam!','جدول کامل شد!','¡Crucigrama completo!') : gameProgressHtml(solved, total, L(`${solved} of ${total} words`, `${solved}/${total} kelime`, `${solved} از ${total} کلمه`, `${solved} de ${total} palabras`))}</span>${chip}</div>`;
 }
 function crossClueHtml(round){
   if(round.finished) return '';
@@ -20552,7 +20701,7 @@ function crossClueHtml(round){
 function crossKeyboardHtml(round){
   if(round.finished) return '';
   const rows = ['qwertyuiop', TTS_LANG.indexOf('es') === 0 ? 'asdfghjklñ' : 'asdfghjkl', 'zxcvbnm'];
-  return `<div class="cross-kb" id="cross-kb" dir="ltr" role="group" aria-label="${esc(L('Keyboard','Klavye','صفحه‌کلید','Teclado'))}">${rows.map((r,ri)=>`<div class="cross-kb-row">${r.split('').map(k=>`<button type="button" class="cross-key" data-action="cross-key" data-quiet="1" data-k="${k}">${k}</button>`).join('')}${ri === 2 ? `<button type="button" class="cross-key wide" data-action="cross-back" data-quiet="1" aria-label="${esc(L('Delete','Sil','حذف','Borrar'))}">⌫</button>` : ''}</div>`).join('')}</div>`;
+  return `<div class="cross-kb" id="cross-kb" dir="ltr" role="group" aria-label="${esc(L('Keyboard','Klavye','صفحه‌کلید','Teclado'))}">${rows.map((r,ri)=>`<div class="cross-kb-row">${r.split('').map(k=>`<button type="button" class="cross-key" data-action="cross-key" data-quiet="1" data-k="${k}">${k}</button>`).join('')}${ri === 2 ? `<button type="button" class="cross-key wide" data-action="cross-back" data-quiet="1" aria-label="${esc(L('Delete','Sil','حذف','Borrar'))}">⌫</button>` : ''}${ri === 2 && round.ink ? `<button type="button" class="cross-key wide cross-ink-key" data-action="cross-ink-check" data-quiet="1" aria-label="${esc(L('Check the grid','Bulmacayı kontrol et','جدول رو بررسی کن','Revisar el crucigrama'))}">${ICONS.check}</button>` : ''}</div>`).join('')}</div>`;
 }
 function crossHelpHtml(round){
   if(round.finished) return '';
@@ -20579,8 +20728,8 @@ function renderGameCross(){
   return `<div class="fade-in game-screen">
     ${gameTopHtml(L('Cross','Bulmaca','جدول','Crucigrama'))}
     ${crossStatusHtml(round)}
-    ${worldKind() === 'cross' ? crossMastheadHtml() : ''}<div class="game-card tight cross-card">${crossGridHtml(round)}</div>
-    ${round.finished ? crossResultHtml(round) + renderBadgeUnlockCard(pullJustEarnedBadges()) : crossClueHtml(round) + crossKeyboardHtml(round) + crossHelpHtml(round)}
+    ${worldKind() === 'cross' ? crossMastheadHtml() : ''}${crossHiddenOpen(round) ? crossHiddenHtml(round) : ''}<div class="game-card tight cross-card">${crossGridHtml(round)}</div>
+    ${round.finished ? crossResultHtml(round) + renderBadgeUnlockCard(pullJustEarnedBadges()) : (round.gridDone ? '' : crossClueHtml(round) + crossKeyboardHtml(round) + crossHelpHtml(round))}
   </div>`;
 }
 // Mini Cross in its world (worlds SPEC 7): the morning paper, one day per level (A1 Monday ... C1 Friday)
@@ -20630,20 +20779,30 @@ function crossAfter(round, vp, res){
     return;
   }
   if(res.done){
-    round.finished = true; round.finishedAt = Date.now();
-    const gb = state.progress.gameBests || {};
-    round.prevBestTime = (gb.cross && gb.cross.time) || null;
-    const st = gameRoundStats('cross', round);
-    round.xpGain = scoreGameCompletion(vp.refId, st.perfect);
-    markGameComplete(vp.refId);
-    srsGameReview(round.setId, st.clean === st.total ? 2 : (st.clean >= st.total - 1 ? 1 : 0));
-    queueFx(()=>{ fxCrossSolve(res, round); setTimeout(fxCrossDone, 520); });
-    save(); render();
+    if(round.hidden && !round.hidden.solved){
+      // the grid is done: today's hidden word opens; the round finishes once it is solved
+      round.gridDone = true;
+      queueFx(()=>{ fxCrossSolve(res, round); setTimeout(()=>{ sfx('paper'); const el = document.getElementById('cross-hidden'); if(el && el.scrollIntoView) el.scrollIntoView({block:'nearest', behavior:reducedMotion() ? 'auto' : 'smooth'}); }, 480); });
+      save(); render();
+      return;
+    }
+    crossFinish(vp, round, res);
     return;
   }
   crossRefresh();
   fxCrossSolve(res, round);
   save();
+}
+function crossFinish(vp, round, res){
+  round.finished = true; round.finishedAt = Date.now();
+  const gb = state.progress.gameBests || {};
+  round.prevBestTime = (gb.cross && gb.cross.time) || null;
+  const st = gameRoundStats('cross', round);
+  round.xpGain = scoreGameCompletion(vp.refId, st.perfect);
+  markGameComplete(vp.refId);
+  srsGameReview(round.setId, st.clean === st.total ? 2 : (st.clean >= st.total - 1 ? 1 : 0));
+  queueFx(()=>{ if(res) fxCrossSolve(res, round); setTimeout(fxCrossDone, res ? 520 : 120); });
+  save(); render();
 }
 // Learner's choice (Jq6f9OFv): a finished vocab set that can host a puzzle offers Mini Cross as free play
 // (no roadmap node, no scheduler, no souvenir; bests still count). Shown on the set's intro screen.
@@ -25653,15 +25812,19 @@ function renderGameTrap(){
     <div class="game-card" dir="ltr">
       ${trapSentenceHtml(q, round)}
     </div>
-    <div class="game-opts">
+    ${q.gate ? `<div class="trap-gate" aria-hidden="true"><i class="${q.gate > 1 || (round.answered && q.gate === 1) ? 'on' : ''}"></i><i class="${round.answered && q.gate === 2 ? 'on' : ''}"></i></div>` : ''}
+    <div class="game-opts trap-lanes${(round.streak || 0) >= 3 && !round.answered ? ' fast' : ''}" dir="ltr">
       ${q.options.map((opt,i)=>{
+        // Games 2.0 SPEC 20: each option is a lane of the boardwalk with the barrier at its end. Right lane = a clean leap; wrong lane = a
+        // stumble and the right lane glows; time out = the runner steps over every barrier. Nothing fails.
         let cls = '';
         if(round.answered){
-          if(i===q.correct) cls = ' ok';
-          else if(i===round.selected) cls = ' no';
+          if(i===q.correct) cls = ' ok' + (round.selected === q.correct ? ' leap' : ' glow');
+          else if(i===round.selected) cls = ' no stumble';
           else cls = ' dim';
+          if(round.selected === -1) cls += ' over';
         }
-        return `<button class="game-opt${cls}" dir="ltr" data-action="game-trap-tap" data-i="${i}" ${round.answered?'disabled':''}>${esc(opt)}</button>`;
+        return `<button class="game-opt trap-lane${cls}" dir="ltr" data-action="game-trap-tap" data-i="${i}" ${round.answered?'disabled':''}><span class="trap-lane-word">${esc(opt)}</span><span class="trap-bar" aria-hidden="true"></span></button>`;
       }).join('')}
     </div>
   </div>`;
@@ -25691,13 +25854,42 @@ function trapHandleTimeout(){
     trapAdvance(capturedVp.refId);
   }, 900);
 }
+// Games 2.0 SPEC 20: in the Game Theatre the clock is a ship's clock dial in the middle of the HUD (between x and the sound button): a brass
+// rim, ten ticks, one hand and the time left as a pale wedge; no digits. It lives on document.body (the game screen re-renders and fades),
+// the same 100 ms interval moves it, and it goes away with the round.
+function trapDialEl(){
+  let d = document.getElementById('trap-dial');
+  if(d) return d;
+  if(!(window.Theatre && Theatre.isOpen && Theatre.isOpen() && document.body.classList.contains('th-running'))) return null;
+  const ticks = Array.from({length:10}, (x, k)=>{ const a = k * 36 * Math.PI / 180; return `<line x1="${(24 + 16.5 * Math.sin(a)).toFixed(2)}" y1="${(24 - 16.5 * Math.cos(a)).toFixed(2)}" x2="${(24 + 19 * Math.sin(a)).toFixed(2)}" y2="${(24 - 19 * Math.cos(a)).toFixed(2)}"/>`; }).join('');
+  d = document.createElement('div'); d.id = 'trap-dial'; d.className = 'trap-dial'; d.setAttribute('aria-hidden', 'true');
+  d.innerHTML = `<svg viewBox="0 0 48 48" width="48" height="48"><circle cx="24" cy="24" r="22.5" fill="#fffaf0" stroke="#C99A1E" stroke-width="2.5"/><path id="trap-dial-wedge" d="" fill="rgba(79,195,232,.38)"/><g stroke="#14332e" stroke-width="1.4" stroke-linecap="round" opacity=".7">${ticks}</g><line id="trap-dial-hand" x1="24" y1="24" x2="24" y2="8.5" stroke="#14332e" stroke-width="2.4" stroke-linecap="round"/><circle cx="24" cy="24" r="2.6" fill="#14332e"/></svg>`;
+  document.body.appendChild(d);
+  return d;
+}
+function trapDialSet(frac, warn){
+  const d = trapDialEl(); if(!d) return;
+  const p = Math.max(0, Math.min(1, frac)), a = (1 - p) * 360, rad = a * Math.PI / 180, r = 16;
+  const hand = document.getElementById('trap-dial-hand'), wedge = document.getElementById('trap-dial-wedge');
+  if(hand) hand.setAttribute('transform', `rotate(${a.toFixed(1)} 24 24)`);
+  if(wedge){
+    if(p <= 0.001) wedge.setAttribute('d', '');
+    else if(p >= 0.999) wedge.setAttribute('d', 'M24 24 m0 -16 a16 16 0 1 1 0 32 a16 16 0 1 1 0 -32 Z');
+    else wedge.setAttribute('d', `M24 24 L${(24 + r * Math.sin(rad)).toFixed(2)} ${(24 - r * Math.cos(rad)).toFixed(2)} A${r} ${r} 0 ${p > 0.5 ? 1 : 0} 1 24 8 Z`);
+    wedge.setAttribute('fill', warn ? 'rgba(255,111,94,.42)' : 'rgba(79,195,232,.38)');
+  }
+}
+function trapDialOff(){ const d = document.getElementById('trap-dial'); if(d) d.remove(); }
 let trapTimerInterval = setInterval(function(){
-  if(state.view !== 'game-trap') return;
+  if(state.view !== 'game-trap'){ trapDialOff(); return; }
   const vp = state.viewParams, round = vp && vp.round;
-  if(!round || round.answered || round.finished || !round.deadline) return;
+  if(!round || round.finished){ trapDialOff(); return; }
+  if(round.answered || !round.deadline) return;
+  if(!document.body.classList.contains('th-running')) trapDialOff();
   if(trapOffScreen()){ round.deadline += 100; return; }   // mCqPUhyl B1: the clock waits while the question or an option is off screen
   const remainingMs = round.deadline - Date.now();
   const remaining = Math.max(remainingMs/1000, 0);
+  trapDialSet(remaining / round.timeLimit, remaining <= 3);
   const circle = document.getElementById('trap-timer-circle');
   const text = document.getElementById('trap-timer-text');
   if(circle){
@@ -30521,7 +30713,7 @@ var WORLDS_LIVE = {order:true, bingo:true, cross:true, build:true, echo:true, de
 // The Brave switch (Games 2.0 SPEC 5.5): progress.brave[kind] (old saves have none = Normal). The poster shows "Normal · Brave" once the
 // learner has finished that game (gamesMet). BRAVE_KINDS = the games whose Brave rules exist: the four engines read host.brave() (their own
 // rules: film frames, Moss's pins, hints, replays); each quick game joins as its own Brave rules ship (SPEC sections 10-20).
-const BRAVE_KINDS = ['path', 'mystery', 'chores', 'radio', 'order', 'bingo', 'build', 'echo', 'match', 'dictation', 'desk', 'hunt'];
+const BRAVE_KINDS = ['path', 'mystery', 'chores', 'radio', 'order', 'bingo', 'build', 'echo', 'match', 'dictation', 'desk', 'hunt', 'cross'];
 function gameBrave(kind){ return !!(((state.progress && state.progress.brave) || {})[kind]); }
 function braveOpt(kind){
   if(!BRAVE_KINDS.includes(kind) || !gamesMet().has(kind)) return null;
@@ -30595,13 +30787,13 @@ function worldSpeak(text, who, done){
 function worldProgress(view, r){
   if(view === 'game-order') return {done:r.finished ? ORDER_CUSTOMERS : r.index, total:ORDER_CUSTOMERS};
   if(view === 'game-bingo') return {done:r.finished ? 9 : Math.min(r.call, 9), total:9};
-  if(view === 'game-cross') return {done:r.words.filter(w=>w.solved).length, total:r.words.length};
+  if(view === 'game-cross') return {done:r.words.filter(w=>w.solved).length + (r.hidden && r.hidden.solved ? 1 : 0), total:r.words.length + (r.hidden ? 1 : 0)};   // the hidden word = the last bite (and the boss beat)
   if(view === 'game-build') return {done:r.finished ? r.items.length : r.index, total:r.items.length};
   if(view === 'game-echo') return {done:r.finished ? r.lines.length : r.index, total:r.lines.length};
   if(view === 'game-hunt') return {done:r.finished ? r.targets.length : r.ti, total:r.targets.length};
   if(view === 'game-dictation') return {done:r.finished ? r.sentences.length : r.index, total:r.sentences.length};
   if(view === 'game-match') return {done:r.matchedKeys.length, total:r.pairCount};
-  if(view === 'game-trap') return {done:r.finished ? r.questions.length : r.index, total:r.questions.length};
+  if(view === 'game-trap'){ const g = r.questions.some(q=>q.gate === 2) ? 1 : 0, n = r.questions.length - g; return {done:r.finished ? n : Math.min(r.index, n - 1), total:n}; }   // the gate's two lanes = one barrier (the boss)
   if(view === 'game-desk' && r.travellers) return {done:r.finished ? r.travellers.length : r.index, total:r.travellers.length};
   return null;
 }
@@ -31206,13 +31398,15 @@ function trapSentenceHtml(q, round){
 }
 function fxTrapCorrect(i, pt, streak){
   fxCorrectButton(document.querySelector('[data-action="game-trap-tap"][data-i="'+i+'"]'), pt);
+  if(window.Theatre && Theatre.isOpen && Theatre.isOpen() && Theatre.sfx) Theatre.sfx('swish');   // the clean leap
   anim(document.getElementById('trap-streak'), [{transform:'scale(1)'}, {transform:'scale(1.25)'}, {transform:'scale(1)'}], {duration:220, easing:SPRING});
   anim(document.getElementById('trap-fill'), [{transform:'translateY(-8px)', opacity:0}, {transform:'translateY(0)', opacity:1}], {duration:200, easing:SPRING});
   comboCheck(streak);
 }
 function fxTrapMiss(i, word){
+  const W = window.Theatre && Theatre.isOpen && Theatre.isOpen() && Theatre.sfx && Theatre.sfx('land-soft');   // a stumble on the barrier / stepping over it
   if(i != null && i >= 0) fxWrongButton(document.querySelector('[data-action="game-trap-tap"][data-i="'+i+'"]'));
-  else sfx('wrong');
+  else if(!W) sfx('wrong');
   companionOops();
   // a redirect, never "Wrong!"
   companionSay(String(word).length <= 10
@@ -31231,6 +31425,7 @@ function trapTimerWarn(round, secs){
   if(circle) circle.setAttribute('stroke', 'var(--error)');
   if(text) text.style.color = 'var(--error)';
   anim(document.getElementById('trap-ring'), [{transform:'scale(1)'}, {transform:'scale(1.08)'}, {transform:'scale(1)'}], {duration:260, easing:'ease-out'});
+  anim(document.getElementById('trap-dial'), [{transform:'translateX(-50%) scale(1)'}, {transform:'translateX(-50%) scale(1.08)'}, {transform:'translateX(-50%) scale(1)'}], {duration:260, easing:'ease-out'});
   sfx('tick');
 }
 
@@ -32685,13 +32880,15 @@ const HANDLERS = {
     crossRefresh();
   },
   'cross-key'(el){
-    const vp = state.viewParams, round = vp && vp.round; if(!round || round.finished) return;
+    const vp = state.viewParams, round = vp && vp.round; if(!round || round.finished || round.gridDone) return;
     const k = crossFold(el.dataset.k || ''); if(!/^[a-zñ]$/.test(k)) return;
     crossAfter(round, vp, crossType(round, k));
   },
-  'cross-back'(){ const vp = state.viewParams, round = vp && vp.round; if(!round || round.finished) return; crossBackspace(round); crossRefresh(); },
-  'cross-prev'(){ const vp = state.viewParams, round = vp && vp.round; if(!round || round.finished) return; crossStep(round, -1); round.bad = []; crossRefresh(); },
-  'cross-next'(){ const vp = state.viewParams, round = vp && vp.round; if(!round || round.finished) return; crossStep(round, 1); round.bad = []; crossRefresh(); },
+  'cross-hid'(el){ const vp = state.viewParams, round = vp && vp.round; if(!round || round.finished) return; crossHiddenTap(vp, round, Number(el.dataset.i)); },
+  'cross-ink-check'(){ const vp = state.viewParams, round = vp && vp.round; crossInkCheck(vp, round); },
+  'cross-back'(){ const vp = state.viewParams, round = vp && vp.round; if(!round || round.finished || round.gridDone) return; crossBackspace(round); crossRefresh(); },
+  'cross-prev'(){ const vp = state.viewParams, round = vp && vp.round; if(!round || round.finished || round.gridDone) return; crossStep(round, -1); round.bad = []; crossRefresh(); },
+  'cross-next'(){ const vp = state.viewParams, round = vp && vp.round; if(!round || round.finished || round.gridDone) return; crossStep(round, 1); round.bad = []; crossRefresh(); },
   'cross-alt'(){
     const vp = state.viewParams, round = vp && vp.round; if(!round || round.finished) return;
     const w = round.words[crossCurWord(round)]; if(!w.clue.alt || w.altShown) return;
@@ -32700,7 +32897,7 @@ const HANDLERS = {
     sfx('flip'); save(); crossRefresh();
   },
   'cross-reveal'(){
-    const vp = state.viewParams, round = vp && vp.round; if(!round || round.finished) return;
+    const vp = state.viewParams, round = vp && vp.round; if(!round || round.finished || round.gridDone) return;
     const res = crossReveal(round); if(!res) return;
     crossAfter(round, vp, res);
   },

@@ -1930,6 +1930,12 @@
   .ins-fun b{color:var(--ink);}
   .ins-fun b.y{color:var(--success);}
   .ins-idea{margin:6px 0 0; font-size:12.5px; line-height:1.45; color:var(--ink-soft);}
+  /* class codes (2026-11-17) */
+  .cls-code{display:inline-flex; align-items:center; justify-content:center; min-width:30px; padding:1px 7px; margin-inline-end:7px; border-radius:8px; background:var(--ink); color:var(--bg-elevated); font-family:'Fredoka', 'Nunito', sans-serif; font-weight:700; font-size:13px; letter-spacing:.06em; vertical-align:1px;}
+  .ins-gt .cls-code{margin-inline:2px 6px;}
+  .cls-code.big{font-size:.62em; padding:2px 10px; border-radius:12px; vertical-align:.18em;}
+  .cls-codechip{all:unset; box-sizing:border-box; cursor:pointer; align-self:flex-start; display:inline-flex; margin:2px 0 6px; padding:3px 10px; border-radius:999px; background:var(--ink); color:var(--bg-elevated); font-size:11.5px; font-weight:800;}
+  .cls-codes{display:flex; gap:4px; margin-top:4px;} .cls-codes .cls-codechip{margin:0; cursor:inherit;}
   /* group-class fit (2026-11-17) */
   .ins-fitcheck{margin:0 0 12px; padding:10px 14px; border-radius:14px; font-size:13px; line-height:1.45; font-weight:700;}
   .ins-fitcheck.ok{background:color-mix(in srgb, var(--fs-green) 18%, var(--bg-elevated)); color:var(--ink);}
@@ -39801,6 +39807,7 @@ function adminChatRowHtml(d){
         <span class="adm-age ${todo ? adminChatAgeCls(d.lAt || d.createdAt) : 'plain'}">${todo ? esc(adminAgo(Number(d.lAt) || Number(d.createdAt) || 0)) : esc(msgWhen(Math.max(Number(d.lAt) || 0, Number(d.fAt) || 0), 'admin'))}</span></span>
       <span class="row" style="gap:6px; flex-wrap:wrap;">${msgChip(d.topic, 'admin')}<span class="msg-kind">${esc(msgKindLabel(d.type, d.req, 'admin'))}</span>${hasRc ? '<span class="msg-kind" style="color:var(--fs-purple-ink);">· receipt</span>' : ''}</span>
       <span class="msg-row-prev"><span dir="auto">${esc(msgPreview(last, 'admin'))}</span></span>
+      ${(()=>{ const cs = adminChatClasses(d); return cs.length ? '<span class="cls-codes">' + cs.map(c=>'<span class="cls-codechip">Class ' + esc(c.code) + '</span>').join('') + '</span>' : ''; })()}
     </span>
   </button>`;
 }
@@ -39834,7 +39841,7 @@ function renderAdminChat(d){
   return `<div class="stack" style="gap:14px;">
     <button class="back" style="align-self:flex-start;" data-admin-action="chat-back">${ICONS.back} Inbox</button>
     <div><h2 class="display" style="font-size:22px;" dir="auto">${esc(adminChatName(d))}</h2>
-      <div class="row" style="gap:8px; flex-wrap:wrap; margin-top:8px;">${msgChip(d.topic, 'admin')}<span class="msg-kind">${esc(msgKindLabel(d.type, d.req, 'admin'))}</span>${msgTabHtml(d, 'admin', true)}</div></div>
+      <div class="row" style="gap:8px; flex-wrap:wrap; margin-top:8px;">${msgChip(d.topic, 'admin')}<span class="msg-kind">${esc(msgKindLabel(d.type, d.req, 'admin'))}</span>${msgTabHtml(d, 'admin', true)}${adminChatClassChips(d)}</div></div>
     <div class="adm-facts">
       <div><span>Level</span><b>${esc(L2.level || '—')}</b></div>
       <div><span>App</span><b>${esc(String(d.app || 'en').toUpperCase())} · ${esc(ADMIN_CHAT_LANGS[lang])}</b></div>
@@ -39842,7 +39849,7 @@ function renderAdminChat(d){
       <div><span>Device</span><b>${esc(dev || '—')}</b></div>
       <div class="wide"><span>Phone</span><b dir="ltr">${esc(L2.phone || 'not given')}</b></div>
     </div>
-    <div class="msg-thread-list">${msgs.map(m=>msgBubbleHtml(m, 'admin', d, renderAdminPage)).join('')}</div>
+    <div class="msg-thread-list">${msgs.map(m=>msgBubbleHtml(m, 'admin', d, renderAdminPage) + (m.from === 'l' && m.text ? adminClassCodeChips(m.text) : '')).join('')}</div>
     ${act}
     ${adminChatMsg ? `<p class="msg-hint" role="status" style="color:var(--ink); font-weight:700;">${esc(adminChatMsg)}</p>` : ''}
     ${adminNotifNoteHtml(d)}
@@ -40196,11 +40203,11 @@ function adminClassesSeen(){ return (adminClasses && Number(adminClasses[ADMIN_C
 function adminClassHome(c){ return LOGIN_APP !== 'es' || c.app === 'es'; }
 function adminClassesNorm(d){
   const obj = v=>v && typeof v === 'object' && !Array.isArray(v) ? Object.assign({}, v) : {};
-  return {classes:Array.isArray(d.classes) ? d.classes.filter(c=>c && c.id && Array.isArray(c.members)) : [], skip:obj(d.skip), skipCourse:obj(d.skipCourse), rules:obj(d.rules), seenAt:Number(d.seenAt) || 0, seenAtEs:Number(d.seenAtEs) || 0};
+  return {classes:Array.isArray(d.classes) ? d.classes.filter(c=>c && c.id && Array.isArray(c.members)) : [], skip:obj(d.skip), skipCourse:obj(d.skipCourse), rules:obj(d.rules), seenAt:Number(d.seenAt) || 0, seenAtEs:Number(d.seenAtEs) || 0, codeSeq:Number(d.codeSeq) || 0};
 }
 // The part both admins edit (classes, rests, rules) as one string with sorted keys, to see whether the other admin changed it.
 function adminCanon(v){ return Array.isArray(v) ? '[' + v.map(adminCanon).join(',') + ']' : v && typeof v === 'object' ? '{' + Object.keys(v).filter(k=>v[k] !== undefined).sort().map(k=>JSON.stringify(k) + ':' + adminCanon(v[k])).join(',') + '}' : JSON.stringify(v === undefined ? null : v); }
-function adminClassesCore(c){ return adminCanon([c.classes || [], c.skip || {}, c.skipCourse || {}, c.rules || {}]); }
+function adminClassesCore(c){ return adminCanon([c.classes || [], c.skip || {}, c.skipCourse || {}, c.rules || {}, Number(c.codeSeq) || 0]); }
 function adminClassesFrom(d){
   adminClasses = adminClassesNorm(d);
   adminClassesRev = Number(d.savedAt) || 0;
@@ -40225,9 +40232,10 @@ function adminClassesSave(){
         if(adminClassesCore(fresh) !== adminClassesBase) return adminClassesClashed(d);
         adminClasses[ADMIN_CLASSES_SEEN_OTHER] = fresh[ADMIN_CLASSES_SEEN_OTHER];   // only the other admin's "last opened" moved: keep it
       }
+      adminClassesAssignCodes();   // a class made since the last sync (Start's extra groups) gets its code before it is saved
       const c = adminClasses, at = Math.max(Date.now(), base + 1, rev + 1);
       // a copy, so a tap while this save is on its way can't slip in unchecked; it is what adminClassesBase describes
-      const data = JSON.parse(JSON.stringify({kind:'admin', classes:c.classes, skip:c.skip, skipCourse:c.skipCourse, rules:c.rules, seenAt:c.seenAt, seenAtEs:c.seenAtEs, savedAt:at}));
+      const data = JSON.parse(JSON.stringify({kind:'admin', classes:c.classes, skip:c.skip, skipCourse:c.skipCourse, rules:c.rules, seenAt:c.seenAt, seenAtEs:c.seenAtEs, codeSeq:Number(c.codeSeq) || 0, savedAt:at}));
       return ref.set(data, {merge:true})
         .then(()=>{ adminClassesRev = at; adminClassesBase = adminClassesCore(data); adminClassesClash = 0; adminClassesError = ''; });
     });
@@ -40242,6 +40250,48 @@ function adminClassesClashed(d){
   if(++adminClassesClash <= 3) loadAdminUsers();
   renderAdminPage();
 }
+/* Class codes (Farin 2026-11-17: "for each course put a name, like AA,AB,AC as a code and when the student messages me the message includes which
+   class code and i can see the code on the panel too"). Every class gets one when it is made: AA, AB … AZ, BA … ZZ, then BAA …; English and
+   Spanish classes share one sequence (both admins edit progress/admin-classes; codeSeq is part of the revision check, so they can't hand out the
+   same code), and a code is never given again, even after its class is gone (codeSeq only goes up). Classes made before codes get theirs on the
+   first load, oldest first. Start's extra groups get a new code (c.codeFrom = the class they came from). The code is on the list row, the class
+   page, Copy names, the WhatsApp offer ("I'm in – AB · …"), the offer page's prefilled messages (link param cc) and, when a learner writes it in
+   Messages, as a chip in the Inbox. */
+function adminClassCodeOf(n){ let x = Math.max(0, Math.floor(n)), s = ''; do { s = String.fromCharCode(65 + x % 26) + s; x = Math.floor(x / 26); } while(x > 0); return s.length < 2 ? 'A' + s : s; }
+function adminClassCodeIndex(code){ if(!/^[A-Z]{2,4}$/.test(code || '')) return -1; let n = 0; for(let i = 0; i < code.length; i++) n = n * 26 + (code.charCodeAt(i) - 65); return n; }
+function adminClassesAssignCodes(){
+  const C = adminClasses; if(!C) return false;
+  let seq = Number(C.codeSeq) || 0, changed = false; const used = {};
+  C.classes.forEach(c=>{ const i = adminClassCodeIndex(c.code); if(i >= seq) seq = i + 1; });
+  const order = C.classes.slice().sort((a, b)=>(Number(a.createdAt) || 0) - (Number(b.createdAt) || 0) || String(a.id).localeCompare(String(b.id)));
+  order.forEach(c=>{ if(c.code && !used[c.code] && adminClassCodeIndex(c.code) >= 0){ used[c.code] = 1; return; }
+    let code; do { code = adminClassCodeOf(seq++); } while(used[code]);   // no code yet, or a copy of another class's code
+    c.code = code; used[code] = 1; changed = true; });
+  if(seq !== (Number(C.codeSeq) || 0)){ C.codeSeq = seq; changed = true; }
+  return changed;
+}
+function adminClassCodeHtml(c){ return c && c.code ? '<span class="cls-code" title="Class code' + (c.codeFrom ? ' (a group of ' + esc(c.codeFrom) + ')' : '') + '">' + esc(c.code) + '</span>' : ''; }
+function adminClassTitleCode(c){ return (c.code ? c.code + ' · ' : '') + adminClassTitle(c); }
+// A class code a learner wrote in Messages ("Class code: AB", "Sınıf kodu: AB", "کد کلاس: AB", "I'm in – AB", or just "AB"): the classes it names.
+// Only the cue words are case-tolerant; the code itself must be in capitals, so "class at 8" never reads as class AT.
+function adminClassCodesInText(text){
+  const t = String(text || ''), codes = {}; (adminClasses ? adminClasses.classes : []).forEach(c=>{ if(c.code) codes[c.code] = c; });
+  const out = [], take = code=>{ const c = codes[code]; if(c && out.indexOf(c) < 0) out.push(c); };
+  const cue = /(?:[Cc]lass [Cc]ode|[Cc]ode|[Kk]odu?|کد(?:\s*کلاس)?|[Cc]ódigo(?:\s+de\s+la\s+clase)?|[Cc]lase|[Cc]lass|[Ss]ınıf|کلاس|–)\s*[:：]?\s*\u2068?([A-Z]{2,4})\b/g;
+  let m; while((m = cue.exec(t))) take(m[1]);
+  if(/^\s*[A-Z]{2,4}\s*$/.test(t)) take(t.trim());
+  return out;
+}
+function adminClassCodeChips(text){ return adminClassCodesInText(text).map(c=>'<button class="cls-codechip" data-admin-action="ins-class" data-c="' + esc(c.id) + '" title="' + esc(adminClassTitle(c)) + '">Class ' + esc(c.code) + ' · ' + esc(adminClassName(c)) + '</button>').join(''); }
+// The open classes a chat's learner is in (by any of their accounts), and the codes they wrote: what the Inbox shows as chips.
+function adminChatClasses(d){
+  if(!adminClasses || !d) return [];
+  const byHash = adminClassPeopleByHash(), p = d.learner && d.learner.accountHash ? byHash[d.learner.accountHash] : null, out = [];
+  if(p) adminClasses.classes.forEach(c=>{ if(c.code && adminClassOpen(c) && adminClassMembers(c, byHash).indexOf(p) >= 0) out.push(c); });
+  msgAll(d).forEach(m=>{ if(m.from === 'l' && m.text) adminClassCodesInText(m.text).forEach(c=>{ if(out.indexOf(c) < 0) out.push(c); }); });
+  return out;
+}
+function adminChatClassChips(d){ return adminChatClasses(d).map(c=>'<button class="cls-codechip" data-admin-action="ins-class" data-c="' + esc(c.id) + '" title="' + esc(adminClassTitle(c)) + '">Class ' + esc(c.code) + ' · ' + esc(adminClassName(c)) + '</button>').join(''); }
 function adminClassPeopleByHash(){ const m = {}; (adminPeople || []).forEach(p=>{ if(!p.hidden) p.accounts.forEach(u=>{ if(u.hash) m[u.hash] = p; }); }); return m; }
 function adminClassMembers(c, byHash){ const seen = {}; return (c.members || []).map(h=>byHash[h]).filter(p=>p && !seen[p.key] && (seen[p.key] = 1)); }
 /* Fit (Farin 2026-11-17: "how do you put someone with c1 level in an a1a2 level class, you have to make sure everything fits"). Classes were
@@ -40328,6 +40378,7 @@ function adminClassesSync(){
   // ready to offer from 10 who fit: offerAt = when it first got there (the To check "new" row), cleared if it drops below 10
   C.classes.forEach(c=>{ if(c.status !== 'suggested') return; const ok = adminClassFitMembers(c, byHash).length >= ADMIN_CLASS_OFFER_MIN;
     if(ok && !c.offerAt){ c.offerAt = now; changed = true; } else if(!ok && c.offerAt){ delete c.offerAt; changed = true; } });
+  if(adminClassesAssignCodes()) changed = true;   // class codes (2026-11-17)
   if(changed) adminClassesSave();
   return changed;
 }
@@ -40445,6 +40496,7 @@ function adminClassOfferUrl(c, p, byHash){
   }
   const tp = adminClassTopics(c, byHash); if(tp.length) q.set('tp', tp.join('.'));
   q.set('m', String(adminClassFitMembers(c, byHash || adminClassPeopleByHash()).length));
+  if(c.code) q.set('cc', c.code);   // the class code goes into their prefilled reply (2026-11-17)
   q.set('id', c.id);
   return ADMIN_CLASS_OFFER_URL + (lang === 'en' ? '' : lang + '/') + '?' + q.toString();
 }
@@ -40454,13 +40506,14 @@ function adminClassMayOffer(c, p){ return !!(p.profile && p.profile.promoOk === 
 // The WhatsApp message: short and warm in the learner's app language, the page link does the rest.
 function adminClassOfferText(c, p, byHash){
   const n = String(p.profile.name || '').trim().split(/\s+/)[0] || '', lang = adminInsLang(p) || 'en', url = adminClassOfferUrl(c, p, byHash);
+  const cc = c.code ? c.code + ' · ' : '', ccFa = c.code ? '⁨' + c.code + '⁩ · ' : '';   // the class code in their reply (2026-11-17)
   const cls = adminClassNameIn(c, lang), lv = adminClassLevelCode(c);
   // the reply they are asked to send names the course and level, so a "yes" says what it is for (Farin 2026-11-17: "put that for which
   // course they are applying not just yes i want the course"); the page's button sends course, level, name and class code
-  if(lang === 'tr') return 'Merhaba' + (n ? ' ' + n : '') + '! Ben FEschool\'dan Farin 🌱\n\nYarı özel bir mini grup açıyorum: ' + cls + '. Sadece 4–6 kişi, hepsi ' + lv + ' seviyesinde ve hepsi seninle aynı hedefte. Yani her ders senin hedefine göre planlanacak.\n\nTüm detayları senin için bir sayfada topladım 👇\n' + url + '\n\nYerini ayırmamı istersen “Varım – ' + cls + (lv ? ' ' + lv : '') + '” yazman yeterli 💜';
-  if(lang === 'fa') return 'سلام' + (n ? ' ' + n + ' جان' : '') + '! 🌸 فرینم، از FEschool.\n\nدارم یه کلاس نیمه‌خصوصیِ «' + cls + '» راه می‌ندازم: فقط ۴ تا ۶ نفر، همه سطح ⁨' + lv + '⁩ و همه با همون هدفی که تو داری. یعنی هر جلسه دقیقاً برای هدف تو برنامه‌ریزی می‌شه.\n\nهمه‌چیز رو برات توی یه صفحه آماده کردم 👇\n' + url + '\n\nاگه دوست داری جات رو نگه دارم، فقط بنویس «هستم – ' + cls + (lv ? ' ⁨' + lv + '⁩' : '') + '» 💜';
-  if(lang === 'es') return '¡Hola' + (n ? ', ' + n : '') + '! Soy Farin, de FEschool 🌱\n\nVoy a abrir una clase semiprivada de ' + cls.charAt(0).toLowerCase() + cls.slice(1) + ': solo de 4 a 6 personas, todas de nivel ' + lv + ' y con tu mismo objetivo. Así, cada clase se planifica pensando en ti.\n\nTe preparé una página con todos los detalles 👇\n' + url + '\n\nSi quieres una plaza, responde «Me apunto – ' + cls + (lv ? ' ' + lv : '') + '» 💜';
-  return 'Hi' + (n ? ' ' + n : '') + '! It\'s Farin from FEschool 🌱\n\nI\'m opening a mid-private ' + cls + ' class: only 4 to 6 people, all at ' + lv + ', all with the same goal as you. So every class is planned around you.\n\nI made a page for you with everything 👇\n' + url + '\n\nIf you\'d like a seat, just reply "I\'m in – ' + cls + (lv ? ' ' + lv : '') + '" 💜';
+  if(lang === 'tr') return 'Merhaba' + (n ? ' ' + n : '') + '! Ben FEschool\'dan Farin 🌱\n\nYarı özel bir mini grup açıyorum: ' + cls + '. Sadece 4–6 kişi, hepsi ' + lv + ' seviyesinde ve hepsi seninle aynı hedefte. Yani her ders senin hedefine göre planlanacak.\n\nTüm detayları senin için bir sayfada topladım 👇\n' + url + '\n\nYerini ayırmamı istersen “Varım – ' + cc + cls + (lv ? ' ' + lv : '') + '” yazman yeterli 💜';
+  if(lang === 'fa') return 'سلام' + (n ? ' ' + n + ' جان' : '') + '! 🌸 فرینم، از FEschool.\n\nدارم یه کلاس نیمه‌خصوصیِ «' + cls + '» راه می‌ندازم: فقط ۴ تا ۶ نفر، همه سطح ⁨' + lv + '⁩ و همه با همون هدفی که تو داری. یعنی هر جلسه دقیقاً برای هدف تو برنامه‌ریزی می‌شه.\n\nهمه‌چیز رو برات توی یه صفحه آماده کردم 👇\n' + url + '\n\nاگه دوست داری جات رو نگه دارم، فقط بنویس «هستم – ' + ccFa + cls + (lv ? ' ⁨' + lv + '⁩' : '') + '» 💜';
+  if(lang === 'es') return '¡Hola' + (n ? ', ' + n : '') + '! Soy Farin, de FEschool 🌱\n\nVoy a abrir una clase semiprivada de ' + cls.charAt(0).toLowerCase() + cls.slice(1) + ': solo de 4 a 6 personas, todas de nivel ' + lv + ' y con tu mismo objetivo. Así, cada clase se planifica pensando en ti.\n\nTe preparé una página con todos los detalles 👇\n' + url + '\n\nSi quieres una plaza, responde «Me apunto – ' + cc + cls + (lv ? ' ' + lv : '') + '» 💜';
+  return 'Hi' + (n ? ' ' + n : '') + '! It\'s Farin from FEschool 🌱\n\nI\'m opening a mid-private ' + cls + ' class: only 4 to 6 people, all at ' + lv + ', all with the same goal as you. So every class is planned around you.\n\nI made a page for you with everything 👇\n' + url + '\n\nIf you\'d like a seat, just reply "I\'m in – ' + cc + cls + (lv ? ' ' + lv : '') + '" 💜';
 }
 function adminInsWaLink(p, text){ const ph = adminInsPhone(p); return ph ? waLinkTo(adminWaitlistWaNumber({phone:ph, lang:adminInsLang(p)}), text) : ''; }
 function adminInsInvitedAt(p){ return p.accounts.reduce((m, u)=>Math.max(m, (u.hash && Number(adminInvited[u.hash])) || 0), 0); }
@@ -40471,7 +40524,7 @@ function adminInsCopy(text){
 }
 function adminClassText(c){
   const m = adminClassOrdered(c, adminClassPeopleByHash());
-  return adminClassTitle(c) + '\n' + m.map((p, i)=>{ const r = adminClassReply(c, p); return (i + 1) + '. ' + (p.profile.name || '(no name)') + ' (' + adminInsStage(p) + ') · ' + (adminInsPhone(p) || 'no number') + (r ? ' · said ' + r : ''); }).join('\n');
+  return adminClassTitleCode(c) + '\n' + m.map((p, i)=>{ const r = adminClassReply(c, p); return (i + 1) + '. ' + (p.profile.name || '(no name)') + ' (' + adminInsStage(p) + ') · ' + (adminInsPhone(p) || 'no number') + (r ? ' · said ' + r : ''); }).join('\n');
 }
 // Members in order: said yes, then not answered (best fit first), then said no.
 function adminClassOrdered(c, byHash){ const rank = p=>({yes:0, '':1, no:2})[adminClassReply(c, p)]; const fit = adminClassSort(c); return adminClassMembers(c, byHash).sort((a,b)=>rank(a) - rank(b) || fit(a, b)); }
@@ -40519,7 +40572,7 @@ function adminInsAction(action, el){
     let from = 0;
     sizes.forEach((size, i)=>{
       const keep = hashesOf(yes.slice(from, from + size)); from += size;
-      const c = i === 0 ? cls : Object.assign({}, cls, {id:cls.id + 'g' + (i + 1), added:{}});
+      const c = i === 0 ? cls : Object.assign({}, cls, {id:cls.id + 'g' + (i + 1), added:{}, code:'', codeFrom:cls.code || ''});   // a new code (2026-11-17)
       c.members = orig.filter(h=>keep[h]);
       c.replies = {}; Object.keys(replies).forEach(h=>{ if(keep[h]) c.replies[h] = replies[h]; });
       c.status = 'running'; c.startedAt = t; delete c.offerAt;
@@ -40623,7 +40676,7 @@ function adminClassFitBanner(byHash, app){
   const mis = adminClassesMisfits(byHash).filter(x=>app === 'all' || x.c.app === app);
   if(!mis.length) return '<p class="ins-fitcheck ok" role="status">✓ Fit check: every member fits their class (level, speakers group, goal).</p>';
   return '<div class="ins-fitcheck warn" role="status"><b>' + mis.length + ' member' + (mis.length === 1 ? ' doesn\'t' : 's don\'t') + ' fit their class</b><ul>'
-    + mis.slice(0, 12).map(x=>'<li><button class="ap-link" data-admin-action="ins-class" data-c="' + esc(x.c.id) + '">' + esc((x.p.profile.name || 'A learner').trim().split(/\s+/)[0]) + ' · ' + esc(adminInsStage(x.p)) + ' in ' + esc(adminClassTitle(x.c)) + '</button>: ' + esc(x.why) + '</li>').join('')
+    + mis.slice(0, 12).map(x=>'<li><button class="ap-link" data-admin-action="ins-class" data-c="' + esc(x.c.id) + '">' + esc((x.p.profile.name || 'A learner').trim().split(/\s+/)[0]) + ' · ' + esc(adminInsStage(x.p)) + ' in ' + esc(adminClassTitleCode(x.c)) + '</button>: ' + esc(x.why) + '</li>').join('')
     + '</ul><p>Classes nobody was offered yet fix themselves. Offered or running classes wait for you: open the class and tap Move out.</p></div>';
 }
 function adminInsClassesHtml(openId){
@@ -40665,7 +40718,7 @@ function adminInsClassesHtml(openId){
     const acts = sug ? (ready ? `<button class="btn btn-sm btn-primary" data-admin-action="ins-start" data-c="${esc(c.id)}">✓ ${sizes.length > 1 ? 'Start ' + sizes.length + ' classes (' + sizes.join(' + ') + ')' : 'Start with the ' + seated + ' who said yes'}</button>` : '') + `<button class="btn btn-sm btn-ghost" data-admin-action="ins-close" data-c="${esc(c.id)}">Remove class</button>`
       : c.status === 'running' ? `<button class="btn btn-sm btn-ghost" data-admin-action="ins-close" data-c="${esc(c.id)}">Class finished</button>` : `<button class="btn btn-sm btn-ghost" data-admin-action="ins-reopen" data-c="${esc(c.id)}">Open again</button>`;
     return `<div class="ins-group${course ? ' is-course' : ''}${isNew ? ' is-new' : ''}${ready ? ' is-ready' : ''}${gather ? ' is-gather' : ''}${c.status === 'closed' ? ' is-closed' : ''}">
-        <div class="ins-gh"><span class="ins-gn">${n}</span><span class="ins-gt"><b>${esc(adminClassTitle(c))} ${tags}</b><small>${esc(why)}</small></span></div>
+        <div class="ins-gh"><span class="ins-gn">${n}</span><span class="ins-gt"><b>${esc(adminClassTitle(c))} ${adminClassCodeHtml(c)}${tags}</b><small>${esc(why)}</small></span></div>
         ${adminClassIdea(c) && c.status !== 'closed' && !gather ? `<p class="ins-idea"><b>Class idea</b> ${esc(adminClassIdea(c))}</p>` : ''}
         ${funnel}
         ${mis.length ? `<p class="ins-misfit" role="status">${mis.length} member${mis.length === 1 ? ' doesn\'t' : 's don\'t'} fit this class any more (marked below). They are not counted, offered or seated; tap Move out to put them in a class that fits.</p>` : ''}
@@ -40690,7 +40743,7 @@ function adminInsClassesHtml(openId){
       : c.status === 'running' ? n + ' in the class · started ' + adminDate(c.startedAt) : 'closed ' + adminDate(c.closedAt || c.createdAt);
     return `<button class="cls-row${course ? ' is-course' : ''}${isNew || joined ? ' is-new' : ''}${ready ? ' is-ready' : ''}${c.status === 'closed' ? ' is-closed' : ''}" data-admin-action="ins-class" data-c="${esc(c.id)}" aria-label="${esc('Open ' + adminClassTitle(c) + ': ' + line)}">
         <span class="ins-gn">${n}</span>
-        <span class="cls-rm"><b>${esc(adminClassTitle(c))}</b><span class="cls-tags">${tags}</span><small>${esc(line)}</small>${gather ? `<span class="ins-gbar" aria-hidden="true"><i style="width:${Math.min(100, Math.round(n / ADMIN_CLASS_OFFER_MIN * 100))}%"></i></span>` : ''}</span>
+        <span class="cls-rm"><b>${adminClassCodeHtml(c)}${esc(adminClassTitle(c))}</b><span class="cls-tags">${tags}</span><small>${esc(line)}</small>${gather ? `<span class="ins-gbar" aria-hidden="true"><i style="width:${Math.min(100, Math.round(n / ADMIN_CLASS_OFFER_MIN * 100))}%"></i></span>` : ''}</span>
         <span class="ap-chev">${ICONS.chev}</span>
       </button>`; };
   const order = c=>(c.status === 'suggested' ? (adminClassYes(c, byHash).length >= ADMIN_CLASS_MIN ? 0 : adminClassOffer(c) ? (c.offerAt > seen ? 1 : 2) : 3) : c.status === 'running' ? 4 : 5);
@@ -40735,7 +40788,7 @@ function renderAdminClassesTab(){
     const app = adminInsAppNow();
     return `<div class="ins"><div class="ins-filters"><div class="ap-chips" role="group" aria-label="App">${adminInsChip('ins-app', 'en', app === 'en', 'English app')}${adminInsChip('ins-app', 'es', app === 'es', 'Spanish app')}${adminInsChip('ins-app', 'all', app === 'all', 'Both')}</div></div>${adminInsClassesHtml()}</div>`;
   }
-  const byHash = adminClassPeopleByHash(), m = adminClassMembers(c, byHash), g = adminClassGoalKey(c), sug = c.status === 'suggested', offer = adminClassOffer(c);
+  const byHash = adminClassPeopleByHash(), m = adminClassFitMembers(c, byHash), g = adminClassGoalKey(c), sug = c.status === 'suggested', offer = adminClassOffer(c);   // who fits (2026-11-17)
   const yes = m.filter(p=>adminClassReply(c, p) === 'yes').length, no = m.filter(p=>adminClassReply(c, p) === 'no').length, sent = m.filter(p=>adminInsInvitedAt(p) >= (c.createdAt || 0)).length;
   const status = c.status === 'running' ? 'Running' : c.status === 'closed' ? 'Closed' : offer ? (yes >= ADMIN_CLASS_MIN ? 'Ready to start' : 'Ready to offer') : 'Gathering';
   const when = c.status === 'running' ? 'started ' + adminDate(c.startedAt) : c.status === 'closed' ? 'closed ' + adminDate(c.closedAt || c.createdAt) : 'made ' + adminDate(c.createdAt);
@@ -40747,7 +40800,8 @@ function renderAdminClassesTab(){
   return `<button class="back" data-admin-action="ins-classes">${ICONS.back} All classes</button>
     <header class="fs-hero ap-phero" style="margin-top:12px;">
       <span class="fs-pill">${adminClassKind(c) === 'course' ? 'Course class' : 'Level class'} · ${esc(status)}</span>
-      <h1 class="display">${esc(adminClassName(c))}<span class="dot">.</span></h1>
+      <h1 class="display">${c.code ? `<span class="cls-code big">${esc(c.code)}</span> ` : ''}${esc(adminClassName(c))}<span class="dot">.</span></h1>
+      ${c.codeFrom ? `<p class="fs-sub">A group of class ${esc(c.codeFrom)}</p>` : ''}
       <p class="fs-sub">${esc((ADMIN_INS_LANG[c.lang] ? ADMIN_INS_LANG[c.lang] + ' speakers · ' : '') + (c.app === 'es' ? 'Spanish' : 'English') + ' app · ' + when)}</p>
       <div class="fs-art" aria-hidden="true" style="--g:${COURSE_GOAL_COLORS[g]};"><i class="fs-disc"></i><img src="char-${g}.png" alt="" decoding="async"></div>
     </header>

@@ -79,6 +79,13 @@ window.THEATRE_CONTENT = {
     leaveQ:{en:'Leave the game? You can play it again any time.', tr:'Oyundan çıkıyor musun? İstediğin zaman yeniden oynayabilirsin.', fa:'از بازی می‌ری؟ هر وقت بخوای می‌تونی دوباره بازیش کنی.', es:'¿Sales del juego? Puedes volver a jugarlo cuando quieras.'},
     stay:{en:'Keep playing', tr:'Oynamaya devam et', fa:'بازی رو ادامه بده', es:'Seguir jugando'},
     leave:{en:'Leave', tr:'Çık', fa:'خروج', es:'Salir'},
+    // Games 2.0 Phase 1 step 4 (2026-11-17): the Brave switch (SPEC 5.5), the boss beat (5.7), Captain sightings (5.8)
+    normal:{en:'Normal', tr:'Normal', fa:'عادی', es:'Normal'},
+    brave:{en:'Brave', tr:'Cesur', fa:'شجاع', es:'Valiente'},
+    braveHint:{en:'Brave: fewer helping hands.', tr:'Cesur: daha az yardım.', fa:'شجاع: کمک کمتر.', es:'Valiente: menos ayudas.'},
+    lastOne:{en:'Last one!', tr:'Son tur!', fa:'آخریشه!', es:'¡La última!'},
+    captainHere:{en:'Captain was here.', tr:'Kaptan buradaydı.', fa:'کاپیتان اینجا بود.', es:'El Capitán estuvo aquí.'},
+    captainLabel:{en:'A cat is hiding here', tr:'Burada bir kedi saklanıyor', fa:'یه گربه اینجا قایم شده', es:'Aquí se esconde un gato'},
     hear:{en:'Hear this line', tr:'Bu satırı dinle', fa:'این جمله رو گوش کن', es:'Escucha esta frase'}
   }
 };

@@ -160,6 +160,7 @@ function buildPoster(s){
     head +
     '<div class="th-foot">' +
       '<button type="button" class="th-play">' + esc(s.seen && s.opts.label !== 'play' ? S('continue') : S('play')) + '</button>' +
+      braveHtml(s) +
       '<div class="th-strip" role="list" aria-label="' + esc(S('episodes')) + '">' + stripHtml(s.strip) + '</div>' +
       '<div class="th-billing">' +
         '<span class="th-bill-line">' + billing(app) + '</span>' +
@@ -170,6 +171,30 @@ function buildPoster(s){
     (wide ? '</div></div>' : '') +
     (first ? '<div class="th-flash" aria-hidden="true"></div>' : '');
   return frame;
+}
+// The Brave switch (Games 2.0 SPEC 5.5): "Normal · Brave" under Play, only when the app passes o.brave = {on, hint, onChange}
+// (after the learner has finished that game once). Brave never adds a timer, hides a help button, shows a number or blocks a finish.
+var ANCHOR = '<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="5" r="2.2"/><path d="M12 7.2V21M7.5 11h9M4.5 14.5c.8 3.6 3.9 6.5 7.5 6.5s6.7-2.9 7.5-6.5"/></svg>';
+function braveHtml(s){
+  var b = s.opts.brave; if(!b) return '';
+  return '<div class="th-brave" role="group" aria-label="' + esc(S('normal') + ' / ' + S('brave')) + '">' +
+      '<button type="button" class="th-brave-opt" data-brave="0" aria-pressed="' + (b.on ? 'false' : 'true') + '">' + esc(S('normal')) + '</button>' +
+      '<button type="button" class="th-brave-opt" data-brave="1" aria-pressed="' + (b.on ? 'true' : 'false') + '">' + ANCHOR + '<span>' + esc(S('brave')) + '</span></button>' +
+    '</div>' + (b.hint ? '<p class="th-brave-hint" role="status">' + esc(S('braveHint')) + '</p>' : '');
+}
+function braveWire(s){
+  var b = s.opts.brave, box = s.frame && s.frame.querySelector('.th-brave'); if(!b || !box) return;
+  box.addEventListener('click', function(e){
+    e.stopPropagation();
+    var o = e.target.closest && e.target.closest('.th-brave-opt'); if(!o) return;
+    var on = o.getAttribute('data-brave') === '1'; if(on === !!b.on) return;
+    b.on = on;
+    box.querySelectorAll('.th-brave-opt').forEach(function(x){ x.setAttribute('aria-pressed', (x.getAttribute('data-brave') === '1') === on ? 'true' : 'false'); });
+    sfx('click');
+    try{ if(b.onChange) b.onChange(on); }catch(err){ console.error('[theatre] brave', err); }
+  });
+  var hint = s.frame.querySelector('.th-brave-hint');
+  if(hint) setTimeout(function(){ if(hint.isConnected) hint.classList.add('th-gone'); }, 5000);   // one caption, 5 s
 }
 function cssNum(v, d, lo, hi){ v = Number(v); if(!isFinite(v)) v = d; return Math.max(lo, Math.min(hi, v)); }
 function cssPos(v){ return String(v || '50% 50%').replace(/[^0-9.%a-z \-]/gi, ''); }
@@ -293,6 +318,7 @@ function worldData(s){
 }
 function paintWorld(s){
   var body = D.body, d = worldData(s), w = d.w, k;
+  captainOff();
   body.className = body.className.replace(/\bgw-(?!on\b)[a-z0-9]+\b/g, '').replace(/\s+/g, ' ').trim();
   body.classList.add('gw-on', 'gw-' + s.world.kind);
   for(k in GW_VARS) body.style.removeProperty(GW_VARS[k]);
@@ -340,7 +366,7 @@ function openWorld(s){
 }
 function closeWorld(s){
   var body = D.body;
-  bedStop();
+  bedStop(); captainOff();
   if(s.world && s.world.el && s.world.el.parentNode) s.world.el.remove();
   if(s.sayEl && s.sayEl.parentNode) s.sayEl.remove();
   clearTimeout(s.sayTimer);
@@ -458,7 +484,7 @@ function establish(ms){
   return new Promise(function(resolve){
     if(!s || !s.world || !worldData(s).w.plate || !worldData(s).w.plate.ready){ resolve(); return; }
     var body = D.body, done = false, t;
-    var end = function(){ if(done) return; done = true; clearTimeout(t); body.classList.remove('gw-establish'); D.removeEventListener('pointerdown', end, true); resolve(); };
+    var end = function(){ if(done) return; done = true; clearTimeout(t); body.classList.remove('gw-establish'); D.removeEventListener('pointerdown', end, true); setTimeout(captainSync, 450); resolve(); };   // Captain's tap target follows the panel back
     body.classList.add('gw-establish');
     try{ W.scrollTo(0, 0); }catch(e){}
     D.addEventListener('pointerdown', end, true);
@@ -631,7 +657,8 @@ function open(o){
   try{ play.focus({preventScroll:true}); }catch(e){}
   if(s.frame.classList.contains('th-intro')) s.introTimer = setTimeout(function(){ if(cur === s) s.frame.classList.add('th-done'); }, 2600);
   // quick games (worlds SPEC 4.2): a poster already seen shows briefly, then dissolves into the game by itself
-  else if(o.brief) s.briefTimer = setTimeout(function(){ if(cur === s && s.phase === 'poster') start(); }, 1200);
+  else if(o.brief && !o.brave) s.briefTimer = setTimeout(function(){ if(cur === s && s.phase === 'poster') start(); }, 1200);
+  braveWire(s);
   return api;
 }
 function skip(){
@@ -706,7 +733,7 @@ function close(o){
   if(s.wake){ try{ s.wake.release(); }catch(e){} }
   if(s.fs){ s.fs = false; exitFullscreen(true); }
   var body = D.body;
-  body.classList.remove('theatre-on', 'th-running', 'th-portrait', 'th-4x5', 'th-appcol', 'th-companion', 'th-skinned');
+  body.classList.remove('theatre-on', 'th-running', 'th-portrait', 'th-4x5', 'th-appcol', 'th-companion', 'th-skinned', 'th-boss');
   body.removeAttribute('data-th-skin');
   body.style.removeProperty('--th-hud-r');
   for(var pv in PAL_VARS) body.style.removeProperty(PAL_VARS[pv]);
@@ -776,11 +803,64 @@ function stageEl(){
   return cur.stage;
 }
 
+// Theatre.boss(text): every game's last round (Games 2.0 SPEC 5.7): the light warms (body.th-boss: glow +.10), 'reveal' plays once and one
+// caption shows for 5 s ("Last one!" or the game's own line). The app clears body.th-boss when the round is over or a new one starts.
+function boss(text){
+  if(!cur) return false;
+  D.body.classList.add('th-boss');
+  sfx('reveal');
+  say(text || S('lastOne'), {kind:'caption', ms:5000});
+  return true;
+}
+// Theatre.captain({spot:{box, band, pose}, onTap}): Captain, the town cat, hidden in a quick game's world (SPEC 5.8). He sits still (no idle
+// motion); a tap: purr, an ear twitch (300 ms, scale 1.04), "Captain was here." for 5 s, then onTap once. The world sits under the app's
+// game panel, so the tap goes to a clear button over him (body level), kept on his picture by Theatre.captainSync().
+var cap = null;
+function captainOff(){ if(!cap) return; if(cap.img && cap.img.parentNode) cap.img.remove(); if(cap.hit && cap.hit.parentNode) cap.hit.remove(); W.removeEventListener('resize', captainSync); cap = null; }
+function captain(o){
+  captainOff();
+  var s = cur; if(!s || !s.world || !o || !o.spot) return null;
+  var stage = s.world.el.querySelector('.th-world-art .th-world-stage'); if(!stage) return null;
+  var small = D.body.classList.contains('gw-small'), sp = o.spot, pose = /^(sit|sleep|sniff)$/.test(sp.pose || '') ? sp.pose : 'sit';
+  var img = el('img', 'th-world-cut th-captain' + (small ? ' th-in-band' : ''));
+  img.alt = ''; img.setAttribute('draggable', 'false');
+  img.src = (o.root || '') + 'games/cozy-chores/art/pt-captain-' + pose + '.webp';
+  img.style.cssText = boxStyle(small ? (sp.band || sp.box) : sp.box, small ? true : false);
+  stage.appendChild(img);
+  var hit = el('button', 'th-captain-hit');
+  hit.type = 'button'; hit.setAttribute('aria-label', S('captainLabel'));
+  D.body.appendChild(hit);
+  cap = {img:img, hit:hit, done:false, onTap:o.onTap};
+  hit.addEventListener('click', function(e){
+    e.stopPropagation();
+    if(!cap || cap.done) return;
+    cap.done = true; hit.disabled = true;
+    sfx('purr');
+    if(!reduced()) anim(img, [{transform:'scale(1)'}, {transform:'scale(1.04)'}, {transform:'scale(1)'}], {duration:300, easing:'ease-out'});
+    say(S('captainHere'), {kind:'caption', ms:5000});
+    try{ if(cap.onTap) cap.onTap(); }catch(err){ console.error('[theatre] captain', err); }
+  });
+  if(img.decode) img.decode().then(captainSync, function(){});
+  img.addEventListener('load', captainSync);
+  W.addEventListener('resize', captainSync);
+  captainSync();
+  return img;
+}
+function captainSync(){
+  if(!cap || !cap.img.isConnected) return;
+  var r = cap.img.getBoundingClientRect(), hidden = !r.width || D.body.classList.contains('gw-establish');
+  cap.hit.style.display = hidden || cap.done ? 'none' : '';
+  if(hidden) return;
+  var pad = 6;   // a tap target a little larger than the cat (he is 36-48 px tall)
+  cap.hit.style.left = (r.left + W.scrollX - pad) + 'px'; cap.hit.style.top = (r.top + W.scrollY - pad) + 'px';
+  cap.hit.style.width = (r.width + pad * 2) + 'px'; cap.hit.style.height = (r.height + pad * 2) + 'px';
+}
 var api = {
-  version:'1.1.0',
+  version:'1.2.0',
   open:open, close:close, sync:sync, exit:exit, play:start, skip:skip,
   titleCard:titleCard, transition:transition, setStrip:setStrip, setControls:setControls, stageEl:stageEl, setSkin:setSkin,
   say:say, finale:finale, sfx:sfx, progress:progress, actor:actor, establish:establish, moodEl:moodEl, flash:flash, world:function(){ return cur && cur.world ? cur.world.kind : null; },
+  boss:boss, captain:captain, captainSync:captainSync, captainOff:captainOff,
   skin:function(){ return cur && cur.skin ? cur.skinKind : null; },
   isOpen:function(){ return !!cur; },
   phase:function(){ return cur ? cur.phase : null; },

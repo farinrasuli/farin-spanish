@@ -48,7 +48,7 @@ window.THEATRE_SKINS = {
     palette:{sky:'#ecf6f7', sky2:'#c9e3e6', glow:'#fff8ec', ground:'#7dcce5', ink:'#1d2f36', accent:'#c43428', accentInk:'#ffffff'},
     backdrop:{src:null, position:'78% 50%', blur:30, veil:.54}, props:[],
     gw:{bg:'#fdf3e4', surface:'#e9c48f', paper:'#fffaf0', ink:'#14332e', hue:'var(--cat-gram)', accent:'#d8343f', cta:'#d8343f', ctaInk:'#ffffff'},
-    world:{mood:'warm', plate:{src:'games/worlds/order/art/order-counter.webp', ready:true}, front:{top:'69%'}, bed:{freq:520, q:.6, vol:.03, lfo:.11}, layers:[
+    world:{mood:'warm', moodVars:{'--m-gx':'18%', '--m-gy':'30%', '--m-vig':'.10'}, plate:{src:'games/worlds/order/art/order-counter.webp', ready:true}, front:{top:'69%'}, bed:{freq:520, q:.6, vol:.03, lfo:.11}, layers:[
       {src:'games/worlds/order/art/order-tipjar.webp', cls:'gw-tipjar', box:[5, 64, 9], ready:true},
       {src:'games/worlds/order/art/order-bell.webp', cls:'gw-bell', box:[19, 65, 7], ready:true}], text:[], sfx:{}, css:null}},
   // Passport Desk: the booth at the end of the pier, sky, sea teal, the red-striped booth
@@ -68,7 +68,7 @@ window.THEATRE_SKINS = {
     palette:{sky:'#fbf7e6', sky2:'#ece4c6', glow:'#fffdf4', ground:'#d1a77d', ink:'#3a2c1c', accent:'#d9463a', accentInk:'#ffffff'},
     backdrop:{src:null, position:'66% 50%', blur:30, veil:.56}, props:[],
     gw:{bg:'#f3f6d9', surface:'#e8c99a', paper:'#ffffff', ink:'#14332e', hue:'var(--cat-voc)', accent:'#FF6F5E', cta:'#14332e', ctaInk:'#ffffff'},
-    world:{mood:'warm', band:'small', stage:'clamp(150px, 26dvh, 260px)', plate:{src:'games/worlds/bingo/art/bingo-window.webp', ready:true}, layers:[
+    world:{mood:'warm', moodVars:{'--m-gx':'70%', '--m-gy':'78%', '--m-gr':'45%'}, band:'small', stage:'clamp(150px, 26dvh, 260px)', plate:{src:'games/worlds/bingo/art/bingo-window.webp', ready:true}, layers:[
       {src:'games/worlds/bingo/art/bingo-dish.webp', cls:'gw-dish', box:[72, 84, 18], band:[74, 0, 18], sit:true, ready:true}], text:[], sfx:{}, css:null}},
   // Story Hunt: the open storybook and the magnifier in the library, sage and paper
   hunt:{card:'art/posters/card-hunt.webp', focus:'56%',
@@ -83,7 +83,7 @@ window.THEATRE_SKINS = {
     palette:{sky:'#fdf1ee', sky2:'#f2d0c9', glow:'#fff7f2', ground:'#5fb3a8', ink:'#2f2422', accent:'#0d8f87', accentInk:'#ffffff'},
     backdrop:{src:null, position:'68% 50%', blur:30, veil:.56}, props:[],
     gw:{bg:'#f7d3d6', surface:'#f3e9e2', paper:'#fffaf0', ink:'#14332e', hue:'var(--cat-lis)', accent:'#e8402f', cta:'#14332e', ctaInk:'#ffffff'},
-    world:{mood:'warm', plate:{src:'games/worlds/echo/art/echo-studio.webp', ready:true}, front:{top:'74%'}, layers:[], text:[
+    world:{mood:'day', plate:{src:'games/worlds/echo/art/echo-studio.webp', ready:true}, front:{top:'74%'}, layers:[], text:[
       {key:'onair', cls:'gw-onair', id:'gw-onair', box:[56, 30, 36], ready:true}], sfx:{}, css:null}},
   // Listen & Type: headphones at the window over the harbour, soft grey-rose, orange headphones
   dictation:{card:'art/posters/card-dictation.webp', focus:'76%',
@@ -99,3 +99,15 @@ window.THEATRE_SKINS = {
     world:{mood:'day', plate:{src:'games/worlds/trap/art/trap-pier.webp', ready:true}, layers:[
       {src:'games/worlds/trap/art/trap-barrier.webp', cls:'gw-barrier', box:[34, 62, 32], ready:true}], text:[], sfx:{}, css:null}}
 };
+// Captain, the town cat, hides in the worlds (Games 2.0 SPEC 5.8): 2 spots per world in plate % [x, y, w] (box) and, for the small-band
+// worlds, in band % (band, sitting on the band floor). Poses sit / sleep / sniff (games/cozy-chores/art/pt-captain-*.webp), 36-48 px tall.
+(function(S){
+  var C = {
+    order:[{box:[1, 49.5, 11], pose:'sit'}, {box:[13, 11.5, 11], pose:'sit'}],            // on the little side table; up on the window frame (clear of Sam and the customers)
+    build:[{box:[0.5, 59.5, 11], pose:'sit'}, {box:[31, 40.3, 16], pose:'sleep'}],        // on the blue crates; asleep on the window sill
+    echo:[{box:[74, 66.5, 17], pose:'sleep'}, {box:[44, 72.5, 10], pose:'sit'}],          // asleep on the desk; on the chair back
+    bingo:[{box:[6, 70, 11], band:[8, 0, 9], pose:'sit'}, {box:[60, 74, 16], band:[46, 0, 14], pose:'sleep'}],
+    cross:[{box:[60, 70, 11], band:[62, 0, 9], pose:'sit'}, {box:[40, 76, 16], band:[40, 0, 14], pose:'sleep'}]
+  };
+  for(var k in C) if(S && S[k] && S[k].world) S[k].world.captain = C[k];
+})(window.THEATRE_SKINS);

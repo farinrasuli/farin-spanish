@@ -27,7 +27,7 @@ window.THEATRE_SKINS = {
     palette:{sky:'#fcf9de', sky2:'#f2ebb2', glow:'#fffbea', ground:'#f3d47c', ink:'#3a3212', accent:'#d23f2d', accentInk:'#ffffff'},
     backdrop:{src:null, position:'70% 50%', blur:30, veil:.56}, props:[],
     gw:{bg:'#fff3c4', surface:'#e7c48e', paper:'#ffffff', ink:'#14332e', hue:'var(--cat-review)', accent:'#FF6F5E', cta:'#14332e', ctaInk:'#ffffff'},
-    world:{mood:'warm', band:'small', stage:'clamp(120px, 24dvh, 240px)', plate:{src:'games/worlds/match/art/match-cabin.webp', ready:true}, layers:[
+    world:{mood:'warm', band:'small', stage:'clamp(120px, 24dvh, 240px)', plate:{src:'games/worlds/match/art/match-cabin.webp', ready:true}, bed:{freq:300, q:.4, vol:.03, lfo:.12}, layers:[
       {src:'games/worlds/match/art/match-deck.webp', cls:'gw-deck', box:[66, 80, 20], band:[72, 0, 20], sit:true, ready:true}], text:[], sfx:{}, css:null}},
   // Build It: the workshop shelf, warm sand and wooden blocks
   build:{card:'art/posters/card-build.webp', focus:'66%',
@@ -56,7 +56,9 @@ window.THEATRE_SKINS = {
     palette:{sky:'#e9f8fc', sky2:'#b9e6f2', glow:'#ffffff', ground:'#5fc3cc', ink:'#163450', accent:'#c23a32', accentInk:'#ffffff'},
     backdrop:{src:null, position:'64% 50%', blur:30, veil:.54}, props:[],
     gw:{bg:'#e8f6fd', surface:'#e3c595', paper:'#fffdf7', ink:'#13304d', hue:'var(--clay-sky)', accent:'#c8352e', cta:'#13304d', ctaInk:'#ffffff'},
-    world:{stage:'clamp(180px, 34dvh, 340px)', plate:{src:'games/worlds/desk/art/desk-booth.webp', pos:'50% 50%', ready:true}, layers:[], text:[], sfx:{}, css:null}},
+    world:{mood:'day', stage:'clamp(180px, 34dvh, 340px)', plate:{src:'games/worlds/desk/art/desk-booth.webp', pos:'50% 50%', ready:true}, bed:{freq:320, q:.4, vol:.028, lfo:.12}, layers:[
+      {src:'games/worlds/desk/art/desk-ferry.webp', cls:'gw-ferry', box:[14, 42, 36], ready:true},
+      {src:'games/worlds/desk/art/desk-gull.webp', cls:'gw-gull', box:[76, 2, 8], ready:true}], text:[], sfx:{}, css:null}},
   // Magic Words: the golden door in the rose room
   spell:{card:'art/posters/card-spell.webp', focus:'84%',
     palette:{sky:'#fcf2f8', sky2:'#efd5e5', glow:'#fff4d6', ground:'#eca560', ink:'#3a2342', accent:'#f0b232', accentInk:'#3a2342'},
@@ -75,7 +77,7 @@ window.THEATRE_SKINS = {
     palette:{sky:'#f0f4f0', sky2:'#d5ded7', glow:'#fffaef', ground:'#bfab86', ink:'#26332c', accent:'#bf513e', accentInk:'#ffffff'},
     backdrop:{src:null, position:'56% 50%', blur:30, veil:.56}, props:[],
     gw:{bg:'#d6ebf7', surface:'#e8c48c', paper:'#fffaf0', ink:'#14332e', hue:'var(--cat-story)', accent:'#d8343f', cta:'#14332e', ctaInk:'#ffffff'},
-    world:{mood:'lamp', band:'small', stage:'clamp(96px, 18dvh, 180px)', plate:{src:'games/worlds/hunt/art/hunt-library.webp', ready:true}, layers:[
+    world:{mood:'lamp', moodVars:{'--m-gx':'92%', '--m-gy':'64%', '--m-gr':'30%'}, band:'small', stage:'clamp(96px, 18dvh, 180px)', plate:{src:'games/worlds/hunt/art/hunt-library.webp', ready:true}, bed:{freq:420, q:.6, vol:.022, lfo:.08}, layers:[
       {src:'games/worlds/hunt/art/hunt-cardbox.webp', cls:'gw-cardbox', box:[8, 73, 16], band:[6, 0, 14], sit:true, ready:true},   // on the desk (mCqPUhyl B2)
       {src:'games/worlds/hunt/art/hunt-lens.webp', cls:'gw-lens', id:'gw-lens', box:[60, 73, 11], band:[82, 0, 9], sit:true, ready:true}], text:[], sfx:{}, css:null}},
   // Say It Back: the echo between two voices, rose wall, teal
@@ -90,13 +92,13 @@ window.THEATRE_SKINS = {
     palette:{sky:'#f8f3f1', sky2:'#e5dad5', glow:'#fffaf7', ground:'#b79984', ink:'#2f2a28', accent:'#cc6428', accentInk:'#ffffff'},
     backdrop:{src:null, position:'76% 50%', blur:30, veil:.56}, props:[],
     gw:{bg:'#fbd9d3', surface:'#f1e4d6', paper:'#fbf6e6', ink:'#14332e', hue:'var(--cat-lis)', accent:'#FFA53D', cta:'#14332e', ctaInk:'#ffffff'},
-    world:{mood:'warm', plate:{src:'games/worlds/dictation/art/dictation-room.webp', ready:true}, layers:[], text:[], sfx:{}, css:null}},
+    world:{mood:'warm', plate:{src:'games/worlds/dictation/art/dictation-room.webp', ready:true}, front:{top:'80%'}, layers:[], text:[], sfx:{}, css:null}},
   // Trap Dash: the run to the striped barrier at the pier end, pale sky, sea
   trap:{card:'art/posters/card-trap.webp', focus:'60%',
     palette:{sky:'#f0f9f9', sky2:'#cbeceb', glow:'#ffffff', ground:'#86d8d8', ink:'#173638', accent:'#d4463a', accentInk:'#ffffff'},
     backdrop:{src:null, position:'60% 50%', blur:30, veil:.54}, props:[],
     gw:{bg:'#eef8f8', surface:'#e3c595', paper:'#ffffff', ink:'#173638', hue:'var(--cat-gram)', accent:'#d4463a', cta:'#173638', ctaInk:'#ffffff'},
-    world:{mood:'day', plate:{src:'games/worlds/trap/art/trap-pier.webp', ready:true}, layers:[
+    world:{mood:'day', plate:{src:'games/worlds/trap/art/trap-pier.webp', ready:true}, bed:{freq:900, q:.3, vol:.026, lfo:.2}, layers:[
       {src:'games/worlds/trap/art/trap-barrier.webp', cls:'gw-barrier', box:[34, 62, 32], ready:true}], text:[], sfx:{}, css:null}}
 };
 // Captain, the town cat, hides in the worlds (Games 2.0 SPEC 5.8): 2 spots per world in plate % [x, y, w] (box) and, for the small-band

@@ -20927,7 +20927,7 @@ function orderFaceSrc(round, cust){
 }
 // the customer on the plate, behind the counter (plate coordinates; the picture is shown whole)
 function orderStageSync(round, cust){
-  try{ if(window.Theatre && Theatre.actor) Theatre.actor('order-cust', orderFaceSrc(round, cust), [57, 30, 37], 'gw-cust'); }catch(e){}
+  try{ if(window.Theatre && Theatre.actor) Theatre.actor('order-cust', orderFaceSrc(round, cust), [57, 32.5, 37], 'gw-cust'); }catch(e){}
   return '';
 }
 function orderCardHtml(round, cust){
@@ -21808,8 +21808,10 @@ function deskResultHtml(round){
 function deskIntroHtml(){
   const steps = [
     L('Listen to the traveller — they say their own name, age and trip out loud.','Yolcuyu dinle — adını, yaşını ve gezisini kendi söylüyor.','به مسافر گوش کن — خودش اسم، سن و سفرش را می‌گوید.','Escucha al viajero — él mismo dice su nombre, edad y viaje.'),
-    L('One detail on the card doesn’t match what they said. Tap it.','Karttaki bir bilgi söylediğiyle uyuşmuyor. Ona dokun.','یک جای کارت با چیزی که گفت جور نیست. روی آن بزن.','Un dato de la tarjeta no coincide con lo que dijo. Tócalo.'),
-    L('Fix it, then press APPROVED to send them through.','Düzelt, sonra geçmesi için ONAYLANDI’ya bas.','درستش کن، بعد برای رد شدنش روی «تأیید شد» بزن.','Corrígelo y luego pulsa APROBADO para dejarlo pasar.')
+    (state.viewParams && state.viewParams.round && state.viewParams.round.double)
+      ? L('Some cards have a mistake, and one may have two. Tap it and fix it.','Bazı kartlarda bir hata var, birinde iki hata olabilir. Hataya dokun ve düzelt.','توی بعضی کارت‌ها یه اشتباه هست و یکی‌شون شاید دو تا اشتباه داشته باشه. روش بزن و درستش کن.','Algunas tarjetas tienen un error, y una puede tener dos. Tócalo y corrígelo.')
+      : L('Some cards have a mistake. Tap it and fix it.','Bazı kartlarda bir hata var. Hataya dokun ve düzelt.','توی بعضی کارت‌ها یه اشتباه هست. روش بزن و درستش کن.','Algunas tarjetas tienen un error. Tócalo y corrígelo.'),
+    L('Then press APPROVED. If the card is right, just approve.','Sonra ONAYLANDI’ya bas. Kart doğruysa sadece onayla.','بعد «تأیید شد» رو بزن. اگه کارت درسته، فقط تأییدش کن.','Luego pulsa APROBADO. Si la tarjeta está bien, solo apruébala.')
   ];
   const rows = steps.map((s, i)=>`<p style="margin:${i ? '10px' : '14px'} 0 0; font-size:14.5px; line-height:1.5; color:var(--ink-soft); text-align:start;"><b style="color:var(--ink);">${i + 1}.</b> ${esc(s)}</p>`).join('');
   return `<div class="game-card tight fade-in" id="desk-intro">
@@ -30464,7 +30466,7 @@ function worldTick(){
   if(Theatre.captainSync) Theatre.captainSync();
   const p = worldProgress(state.view, r); if(p && Theatre.progress) Theatre.progress(p.done, p.total);
   document.body.classList.toggle('gw-live', state.view === 'game-echo' && !!r.listening);
-  try{ if(k === 'build' && p){ worldLighthouse(p.done, p.total, !!r.finished); worldGoldTiers(r); } if(k === 'echo') worldEchoHost(r); }catch(e){}   // the ON AIR plate lights while the mic listens
+  try{ if(k === 'build' && p){ worldLighthouse(p.done, p.total, !!r.finished); worldGoldTiers(r); } if(k === 'echo') worldEchoHost(r); if(k === 'dictation') worldTypist(r); }catch(e){}   // the ON AIR plate lights while the mic listens
   const over = state.view === 'game-match' ? !!(r.matchedKeys && r.matchedKeys.length === r.pairCount) : !!r.finished;
   if(over && !r.beat){
     r.beat = 1;
@@ -30505,6 +30507,13 @@ function worldGoldTiers(r){
       st.appendChild(d);
     }
   });
+}
+// Listen & Type's typist (batch-5 review): calm, listening while the line plays, pleased after a good result. In plate % at the desk.
+function worldTypist(r){
+  if(worldKind() !== 'dictation' || !r || !r.sentences || !window.Theatre || !Theatre.actor) return;
+  const last = r.results && r.results[r.results.length - 1];
+  const face = r.checked && last && last.pct >= 70 ? 'pleased' : (Date.now() - (r.listenAt || 0) < 3000 ? 'listen' : 'calm');
+  Theatre.actor('gw-typist', 'games/worlds/dictation/art/typist-' + face + '.webp', [38, 47, 26], 'gw-typist');
 }
 // Say It Back (worlds SPEC 9): the host and his echo (one picture, the echo at 40 %) in the inline-start third. He listens while the line
 // plays, speaks while the mic is on, and looks pleased on a clear line and at the end.
@@ -31881,6 +31890,7 @@ const HANDLERS = {
     const item = round.sentences[round.index]; if(!item) return;
     if(!round.checked && gameBrave('dictation') && (item.plays || 0) >= 2) return;   // Brave: at most 2 plays
     item.plays = (item.plays || 0) + 1;
+    round.listenAt = Date.now(); worldTypist(round); setTimeout(()=>worldTypist(round), 3200);
     speakTarget(item.text);
     if(gameBrave('dictation') && item.plays >= 2) render();
   },

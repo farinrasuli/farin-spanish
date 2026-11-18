@@ -589,3 +589,28 @@ body.th-boss .th-world-live.gw-onair{background:#C99A1E; color:#fffbe9; box-shad
 body.th-boss.gw-live .th-world-live.gw-onair{background:#e8402f; color:#fff;}
 /* Story Hunt in its world (mCqPUhyl B1): the clue stays on screen at the foot while the story scrolls above it */
 body.gw-on.gw-hunt .hunt-clue{position:sticky; bottom:calc(8px + var(--th-safe-b, 0px)); z-index:3; box-shadow:0 -8px 18px -12px rgba(20,51,46,.45);}
+/* ---- mCqPUhyl batch-5 review (2026-11-18) ---- */
+/* the light only over art: on a small band (flat colour + cut-outs) the mood shows in the opening shot and the finale only */
+body.gw-on.gw-small:not(.gw-establish) .th-world .th-mood{display:none;}
+/* the voice pill never sits on a poster */
+body.theatre-on:not(.th-running) #tts-badge{display:none !important;}
+/* Listen & Type: the Check button follows the typing box (no sticky bar over it); the typist stands behind the desk */
+body.gw-on.gw-dictation .game-screen > .game-cta{position:static; margin-top:12px;}
+.th-world-stage .gw-typist{z-index:2; filter:none;}
+/* Story Hunt: room for the last lines above the sticky clue */
+body.gw-on.gw-hunt .hunt-card{margin-bottom:14px;}
+/* Word Rush: the card back is the match-back render (no corner marks); short screens: smaller cards and band so all 12 show */
+body.gw-on.gw-match .game-tile.hidden-face{background:#FF6F5E url("../worlds/match/art/match-back.webp") center/contain no-repeat; color:transparent; box-shadow:none;}
+body.gw-on.gw-match .game-tile.hidden-face.gold-back{box-shadow:inset 0 0 0 3px #FFD166, inset 0 0 0 5px #C99A1E;}
+@media (max-height: 700px){
+  body.gw-on.gw-match{--gw-stage:clamp(84px, 15dvh, 160px);}
+  body.gw-on.gw-match .game-tiles{gap:6px;}
+  body.gw-on.gw-match .game-tile{min-height:50px; padding:6px 4px; font-size:13px;}
+  body.gw-on.gw-match .game-hint{margin:4px 0; font-size:13px;}
+  /* Trap Dash: the question and all three options together */
+  body.gw-on.gw-trap{--gw-stage:clamp(120px, 22dvh, 200px);}
+  body.gw-on.gw-trap .game-screen .game-card{padding:12px 14px;}
+  body.gw-on.gw-trap .game-screen .game-card .game-sentence{font-size:19px; line-height:1.3;}
+  body.gw-on.gw-trap .game-opts{gap:6px;}
+  body.gw-on.gw-trap .game-opts .game-opt{min-height:44px; padding:8px 12px;}
+}

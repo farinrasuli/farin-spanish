@@ -652,6 +652,11 @@
   .hunt-w.warm{background:var(--cat-story-soft);}
   .hunt-w.found{background:var(--cat-story); color:#fff; font-weight:800; padding:1px 7px; margin:0; cursor:default;}
   .hunt-w.pulse{animation:build-ear-pulse 1s ease-in-out infinite; display:inline-block; background:var(--cat-story-soft);}
+  /* the hidden bookmark (Games 2.0 SPEC 17): one 600 ms glint, then a gold ribbon under the word once found */
+  .hunt-w.glint{animation:hunt-glint .6s ease-out 1;}
+  @keyframes hunt-glint{0%{background:transparent; box-shadow:none;} 35%{background:rgba(255,209,102,.55); box-shadow:0 0 0 3px rgba(255,209,102,.45);} 100%{background:transparent; box-shadow:none;}}
+  .hunt-w.marked{text-decoration:underline 3px #C99A1E; text-underline-offset:4px; cursor:default;}
+  @media (prefers-reduced-motion: reduce){ .hunt-w.glint{animation:none; background:rgba(255,209,102,.45);} }
   .hunt-clue{position:sticky; bottom:10px; z-index:3; background:var(--cat-story-soft); border:2px solid color-mix(in srgb, var(--cat-story) 35%, transparent); border-radius:18px; padding:12px 60px 12px 16px; box-shadow:var(--clay-shadow-soft);}
   .hunt-clue-text{font-family:'Fredoka',-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; font-weight:700; font-size:18px; line-height:1.3; color:var(--ink); margin-top:4px;}
   .hunt-clue-n{position:absolute; top:12px; inset-inline-end:12px;}
@@ -954,6 +959,12 @@
   .th-world-stage .gw-fog{filter:blur(1.2px) opacity(.75); transition:filter .4s;}
   /* Listen & Type (SPEC 18): the first-listen star on the sticky note */
   .game-card.dict-star{position:relative;}
+  /* Listen & Type gap mode (Games 2.0 SPEC 18, A1-A2): the sentence on paper, the gaps are small inputs inside it */
+  .dict-gapline{line-height:1.95; text-align:start; font-size:16.5px;}
+  .dict-gapline .dict-gap{line-height:1.25;}
+  .dict-gap{display:inline-block; box-sizing:content-box; min-width:3ch; max-width:100%; margin:0 2px; padding:2px 6px; border:0; border-bottom:2.5px dashed color-mix(in srgb, var(--ink) 45%, transparent); border-radius:6px 6px 0 0; background:color-mix(in srgb, var(--cat-lis, #4FC3E8) 12%, transparent); color:var(--ink); font:inherit; font-weight:800; text-align:center;}
+  .dict-gap:focus{outline:none; border-bottom-color:var(--accent); background:color-mix(in srgb, var(--accent) 12%, transparent);}
+  .dict-gap:disabled{opacity:1; color:var(--ink);}
   /* Passport Desk (SPEC 11): the sharp-ear stamp in gold ink */
   .desk-stamped.gold{color:#C99A1E !important; border-color:#C99A1E !important;}
   .dict-star-mark{position:absolute; top:-10px; right:-6px; font-size:26px; line-height:1; color:#FFD166; text-shadow:0 0 0 #C99A1E, 0 1px 0 #C99A1E, 0 2px 4px rgba(20,51,46,.25); transform:rotate(12deg);}
@@ -985,6 +996,12 @@
   @media (prefers-reduced-motion: reduce){ .gp-pip.gp-glint{animation:none; outline:2px solid #FFD166; outline-offset:2px;} }
   /* Games 2.0 SPEC 5.5: a Brave finish = a 3 px inner edge on the souvenir card, the only mark */
   .sv-box.sv-brave::after{content:''; position:absolute; inset:0; border-radius:inherit; box-shadow:inset 0 0 0 3px #E8790A; pointer-events:none;}
+  /* Games 2.0 marks in the world of a souvenir: gold medallions (anchor, bookmark ribbon) and today's hidden word as small tiles */
+  .sv-marks{position:absolute; left:62px; bottom:18px; z-index:2; display:flex; gap:6px;}
+  .sv-mark{width:26px; height:26px; border-radius:50%; display:flex; align-items:center; justify-content:center; color:#8a6410; background:radial-gradient(circle at 35% 30%, #fff3c4, #FFD166 55%, #C99A1E); box-shadow:0 0 0 1.5px #fffbea, 0 3px 6px -2px rgba(0,0,0,.35);}
+  .sv-hidden{position:absolute; left:14px; bottom:50px; z-index:2; display:flex; gap:2px;}
+  .sv-hidden i{font-style:normal; width:15px; height:17px; border-radius:3px; display:flex; align-items:center; justify-content:center; background:#fffaf0; color:#14332e; font:800 11px/1 'Fredoka',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; text-transform:uppercase; box-shadow:0 1px 0 rgba(20,51,46,.25);}
+  .sv-hidden.gold i{box-shadow:0 0 0 1.5px #C99A1E, 0 1px 0 rgba(20,51,46,.25);}
   /* Journal: Captain sightings (SPEC 5.8), one polaroid per world, the whole card plate, a small Captain sticker, no count */
   .cap-row{display:flex; flex-wrap:wrap; gap:14px; margin-top:12px;}
   .cap-pol{margin:0; width:136px; padding:6px 6px 8px; background:#fff; border-radius:6px; box-shadow:0 4px 10px rgba(20,51,46,.14); transform:rotate(-2deg);}
@@ -14503,6 +14520,7 @@ function awardSouvenirs(ctx){
       golden:!!((g && g.nodeId===id) || (isCtx && ctx.perfect)), date:todayISO()};
     if(node.type === 'game') sv.gameKind = (isCtx && ctx.kind) || node.gameKind || 'match';
     if(node.type === 'game' && isCtx && BRAVE_KINDS.includes(sv.gameKind) && gameBrave(sv.gameKind)) sv.brave = true;   // SPEC 5.5: the only Brave mark
+    if(node.type === 'game' && isCtx && ctx.round) svRoundMarks(sv, ctx.round);   // Games 2.0: the golden anchor, the gold ribbon, today's hidden word
     if(c.keep) sv.keep = c.keep;
     if(c.emblem) sv.emblem = c.emblem;
     if(c.svType){ sv.type = c.svType; sv.refId = c.refId; }   // Story Path: its word souvenir is reviewed under its own srs id
@@ -14545,7 +14563,9 @@ function celebrationExtras(view, vp, kind){
       if(!extra.souvenir){
         // A replay: a perfect round or a new best upgrades this game's record souvenir.
         const sv = (state.progress.souvenirs||[]).slice().reverse().find(s=>s.type==='game' && s.nodeId.split('#')[0]==='game:'+vp.refId);
-        if(sv && (st.perfect && !sv.golden || extra.newBest)){
+        const marks = sv ? svRoundMarks(Object.assign({}, sv), vp.round) : null, more = !!(sv && marks && ((marks.anchor && !sv.anchor) || (marks.ribbon && !sv.ribbon) || (marks.hidden && !sv.hidden)));
+        if(sv && (st.perfect && !sv.golden || extra.newBest || more)){
+          if(more) svRoundMarks(sv, vp.round);   // a replay that found the golden pair / the bookmark / the hidden word adds its mark
           if(st.perfect) sv.golden = true;
           if(extra.newBest){ sv.text = gameRecordText(gk, st); sv.date = todayISO(); }
           extra.souvenir = sv;
@@ -14584,8 +14604,30 @@ function souvenirFaceHtml(sv){
       ${isWord && sv.meaning ? `<div class="sv-meaning">${esc(svText(sv.meaning))}</div>` : ''}
     </div>
     <div class="sv-stamp"><b>${esc(sv.level||'')}</b><small>${esc(svDateLabel(sv.date))}</small></div>
+    ${svMarksHtml(sv)}
     ${svShineHtml(sv)}
   </div>`;
+}
+// Games 2.0 marks on a game souvenir (old souvenirs have none of these fields): the golden anchor (Word Rush: the golden pair matched
+// first, SPEC 19), the gold bookmark ribbon (Story Hunt: the hidden bookmark found, SPEC 17), today's hidden word (Mini Cross, SPEC 14;
+// a gold rim when no letter of the grid was revealed). No numbers.
+function svRoundMarks(sv, round){
+  if(!sv || !round) return sv;
+  if(round.goldAnchor) sv.anchor = 1;
+  if(round.markFound) sv.ribbon = 1;
+  if(round.hidden && round.hidden.solved && round.hidden.w) sv.hidden = {w:round.hidden.w, gold:!!round.hidden.gold};
+  return sv;
+}
+const SV_ANCHOR_SVG = '<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="5" r="2.2"/><path d="M12 7.2V21M7.5 11h9M4.5 14.5c.8 3.6 3.9 6.5 7.5 6.5s6.7-2.9 7.5-6.5"/></svg>';
+const SV_RIBBON_SVG = '<svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true"><path d="M7 2.5h10v19l-5-4.2-5 4.2z" fill="currentColor"/></svg>';
+function svMarksHtml(sv){
+  if(!sv) return '';
+  const m = [];
+  if(sv.anchor) m.push(`<span class="sv-mark" role="img" aria-label="${esc(L('Golden anchor','Altın çapa','لنگر طلایی','Ancla dorada'))}">${SV_ANCHOR_SVG}</span>`);
+  if(sv.ribbon) m.push(`<span class="sv-mark" role="img" aria-label="${esc(L('Gold bookmark','Altın ayraç','نشانک طلایی','Marcapáginas dorado'))}">${SV_RIBBON_SVG}</span>`);
+  const h = sv.hidden && sv.hidden.w ? String(sv.hidden.w) : '';
+  const hw = h ? `<span class="sv-hidden${sv.hidden.gold ? ' gold' : ''}" dir="ltr" role="img" aria-label="${esc(L("Today's hidden word",'Bugünün gizli kelimesi','کلمه‌ی پنهان امروز','La palabra oculta de hoy') + ': ' + h)}">${h.split('').map(c=>`<i>${esc(c)}</i>`).join('')}</span>` : '';
+  return (m.length ? `<span class="sv-marks">${m.join('')}</span>` : '') + hw;
 }
 function souvenirBackHtml(sv){
   const m = svTypeMeta(sv.type);
@@ -19475,7 +19517,47 @@ function buildDictationRound(setObj, n){
   const at = cards.indexOf(longest);
   if(at >= 0) cards.splice(at, 1); else cards.pop();
   cards.push(longest);
-  return {setId:setObj.id, sentences:cards.map(c=>({word:c.word, text:c.sentence, plays:0})), index:0, typed:'', checked:false, revealedText:false, results:[], finished:false};
+  // Games 2.0 SPEC 18, gap mode: A1 = 1 gap (the set's word), A2 = 2 gaps (the set's word + one more content word, not side by side);
+  // the learner types only the gaps, inside the sentence. B1+ = the whole sentence, as before. gaps = word indexes of text.split(/\s+/).
+  const lv = (state.profile && state.profile.level) || 'A1', gn = lv === 'A1' ? 1 : (lv === 'A2' ? 2 : 0);
+  return {setId:setObj.id, sentences:cards.map(c=>{ const s = {word:c.word, text:c.sentence, plays:0}; if(gn){ const g = dictGaps(c.sentence, c.word, gn); if(g.length) s.gaps = g; } return s; }),
+    index:0, typed:'', checked:false, revealedText:false, results:[], finished:false};
+}
+const DICT_GAP_SKIP = new Set('what when where which who whom whose why how there here very really just have has had will would can could should must about some any all much many then than also qué cuándo dónde cuál quién cómo muy también hay'.split(' '));
+function dictClean(w){ return String(w || '').replace(/^[^\p{L}\p{N}]+|[^\p{L}\p{N}]+$/gu, ''); }
+function dictFold(w){ return String(w || '').toLowerCase().replace(/ñ/g, '\u0001').normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/\u0001/g, 'ñ').replace(/[’`]/g, "'"); }
+function dictGaps(text, word, n){
+  const ws = String(text || '').trim().split(/\s+/), low = ws.map(w=>dictFold(dictClean(w)));
+  const content = i => low[i].length >= 3 && /\p{L}/u.test(low[i]) && !/\d/.test(low[i]) && !ECHO_FUNCTION_WORDS.has(low[i]) && !/'/.test(low[i]);
+  // the set's word: the longest of its words the sentence holds (its English / Spanish forms: plus up to 3 letters, or without a final e)
+  const keys = String(word || '').split(/[\s/]+/).map(w=>dictFold(dictClean(w))).filter(w=>w.length >= 2).sort((a, b)=>b.length - a.length);
+  const hit = w => i => low[i] === w || (low[i].length > w.length && low[i].length - w.length <= 3 && low[i].indexOf(w) === 0) || (w.length > 3 && /e$/.test(w) && low[i].indexOf(w.slice(0, -1)) === 0 && low[i].length - w.length <= 2);
+  let ti = -1;
+  for(const k of keys){ ti = low.findIndex((x, i)=>hit(k)(i)); if(ti >= 0) break; }
+  const out = [];
+  if(ti >= 0) out.push(ti);
+  else { const c = low.map((x, i)=>content(i) ? i : -1).filter(i=>i >= 0); if(c.length) out.push(c[c.length - 1]); }
+  if(out.length && n > 1){
+    const plain = i => !DICT_GAP_SKIP.has(low[i]) && !(i === 0 || /[.!?]$/.test(ws[i - 1])) || false;   // not a question word, not a sentence's first word
+    const more = low.map((x, i)=>i).filter(i=>content(i) && Math.abs(i - out[0]) > 1 && low[i] !== low[out[0]]).sort((a, b)=>(plain(b) - plain(a)) || (low[b].length - low[a].length) || (b - a));
+    if(more.length) out.push(more[0]);
+  }
+  return out.sort((a, b)=>a - b);
+}
+// gap mode: what the learner typed in each gap (kept across re-renders) and the sentence as typed (gaps filled in)
+function dictGapSync(round){
+  const it = round && round.sentences[round.index]; if(!it || !it.gaps) return;
+  const els = document.querySelectorAll('.dict-gap'); if(!els.length) return;
+  it.gapVals = it.gaps.map((g, k)=>{ const e = document.querySelector('.dict-gap[data-g="' + k + '"]'); return e ? e.value : ((it.gapVals || [])[k] || ''); });
+}
+function dictGapLineHtml(round, it){
+  const ws = String(it.text).trim().split(/\s+/), vals = it.gapVals || [];
+  const label = L('Gap','Boşluk','جای خالی','Hueco');
+  return ws.map((w, i)=>{
+    const k = it.gaps.indexOf(i); if(k < 0) return esc(w);
+    const core = dictClean(w), at = w.indexOf(core), pre = w.slice(0, at), post = w.slice(at + core.length);
+    return esc(pre) + `<input type="text" class="dict-gap" data-g="${k}" value="${esc(vals[k] || '')}" style="width:${Math.max(4, core.length + 1.5)}ch" autocomplete="off" autocapitalize="off" spellcheck="false" aria-label="${esc(label + ' ' + (k + 1))}"${round.checked ? ' disabled' : ''}>` + esc(post);
+  }).join(' ');
 }
 /* Gamification (Trello 4bDl1BS3, ported from the English app): third game
    kind, "Trap Dash" — a timed multiple-choice grammar sprint. Reuses
@@ -23473,7 +23555,40 @@ function buildHuntRound(story){
     passages.push({toks, found:[]});
   });
   if(targets.length < HUNT_MIN_TARGETS) return null;
-  return {storyId:story.id, passages, targets, ti:0, clean:0, combo:0, busy:false, finished:false, startedAt:Date.now(), finishedAt:null};
+  return {storyId:story.id, passages, targets, ti:0, clean:0, combo:0, busy:false, finished:false, startedAt:Date.now(), finishedAt:null,
+    mark:huntBookmark(ps, passages, targets, vocab), markFound:false};
+}
+// Games 2.0 SPEC 17, the hidden bookmark: one key word of the story that is not a target, in the passage on screen after the 3rd find
+// (where it glints once, 600 ms; never in Brave). A story word from its own vocabulary first, else its longest plain word (no names).
+// Tapping it during the round = a gold ribbon on the souvenir + medal-clink; no caption announces it. {pi, i} or null.
+function huntBookmark(ps, passages, targets, vocab){
+  try{
+    const pi = targets[Math.min(3, targets.length - 1)].pi, P = passages[pi]; if(!P) return null;
+    const isTarget = w => targets.some(t=>huntMatches(t.base, w));
+    const ok = (k, j) => k.w && k.w.length >= 4 && !isTarget(k.w) && !P.toks.some((x, jj)=>jj !== j && huntFold(x.w) === huntFold(k.w));   // a word the passage holds once
+    const spare = (ps[pi] ? ps[pi].found : []).filter(w=>!targets.some(t=>t.word === w)).map(huntBase);
+    let i = P.toks.findIndex((k, j)=>ok(k, j) && spare.some(b=>huntMatches(b, k.w)));
+    if(i < 0){
+      let best = -1;
+      P.toks.forEach((k, j)=>{ if(ok(k, j) && k.w.length >= 6 && /^\p{Ll}/u.test(k.w) && !ECHO_FUNCTION_WORDS.has(huntFold(k.w)) && (best < 0 || k.w.length > P.toks[best].w.length)) best = j; });
+      i = best;
+    }
+    return i >= 0 ? {pi, i} : null;
+  }catch(e){ return null; }
+}
+function huntIsMark(round, pi, i){ return !!(round && round.mark && round.mark.pi === pi && round.mark.i === i); }
+function fxHuntGlint(round){
+  if(!round || !round.mark || round.markFound || gameBrave('hunt')) return;
+  const el = huntTokEl(round.mark.i); if(!el) return;
+  el.classList.add('glint'); setTimeout(()=>el.classList.remove('glint'), 650);
+}
+function fxHuntMark(i, pt){
+  const el = huntTokEl(i);
+  anim(el, [{transform:'scale(1)'}, {transform:'scale(1.18)'}, {transform:'scale(1)'}], {duration:300, easing:SPRING});
+  const c = pt || centerOf(el);
+  sparkBurst(c.x, c.y, 8, '#FFD166', 60);
+  const W = window.Theatre && Theatre.isOpen && Theatre.isOpen() && Theatre.sfx && Theatre.sfx('medal-clink'); if(!W) sfx('combo');
+  buzz([8, 30, 8]);
 }
 function renderGameHunt(){
   const vp = state.viewParams, round = vp.round;
@@ -23498,7 +23613,7 @@ function renderGameHunt(){
   const pulse = t.wrong >= 4 ? hit : -1;
   const paras = [];
   p.toks.forEach((k,i)=>{
-    const cls = 'hunt-w' + (p.found.includes(i) ? ' found' : '') + (k.si === warmSi ? ' warm' : '') + (i === pulse ? ' pulse' : '');
+    const cls = 'hunt-w' + (p.found.includes(i) ? ' found' : '') + (k.si === warmSi ? ' warm' : '') + (i === pulse ? ' pulse' : '') + (round.markFound && huntIsMark(round, t.pi, i) ? ' marked' : '');
     (paras[k.para] = paras[k.para] || []).push(`<span class="${cls}" data-action="hunt-tap" data-i="${i}">${esc(k.raw)}</span>`);
   });
   return `<div class="fade-in game-screen">
@@ -25471,10 +25586,10 @@ function renderGameDictation(){
     </div>
     <div class="game-card tight">
       <button class="game-play" data-action="dictation-play" aria-label="${esc(L('Play','Çal','پخش','Reproducir'))}"${!round.checked && gameBrave('dictation') && (item.plays || 0) >= 2 ? ' disabled' : ''}>${ICONS.soundOn}</button>
-      <div class="game-play-label">${L('Tap to listen','Dinlemek için dokun','برای شنیدن بزن','Toca para escuchar')}</div>
+      <div class="game-play-label">${item.gaps ? L('Fill the gaps you hear.','Duyduğun boşlukları doldur.','جاهای خالی رو با چیزی که می‌شنوی پر کن.','Rellena los huecos que oyes.') : L('Tap to listen','Dinlemek için dokun','برای شنیدن بزن','Toca para escuchar')}</div>
       ${round.revealedText ? `<p class="game-sentence long" style="margin-top:14px;" dir="ltr">${esc(item.text)}</p>` : `<div><button class="btn btn-ghost" style="margin-top:8px;" data-action="game-dictation-reveal">${L("Can't hear it? Show the sentence","Duyamıyor musun? Cümleyi göster","نمی‌شنوی؟ جمله را نشان بده","¿No lo oyes? Muestra la oración")}</button></div>`}
     </div>
-    <textarea id="dictation-input" class="game-input" rows="2" ${round.checked?'disabled':''} placeholder="${esc(L('Type what you heard...','Duyduğunu yaz...','چیزی که شنیدی را بنویس...','Escribe lo que escuchaste...'))}" dir="ltr">${esc(round.typed||'')}</textarea>
+    ${item.gaps ? `<div class="game-input dict-gapline" id="dict-gapline" dir="ltr">${dictGapLineHtml(round, item)}</div>` : `<textarea id="dictation-input" class="game-input" rows="2" ${round.checked?'disabled':''} placeholder="${esc(L('Type what you heard...','Duyduğunu yaz...','چیزی که شنیدی را بنویس...','Escribe lo que escuchaste...'))}" dir="ltr">${esc(round.typed||'')}</textarea>`}
     ${!round.checked
       ? `<button class="btn btn-primary game-cta" data-action="game-dictation-check">${L('Check','Kontrol et','بررسی','Revisar')}</button>`
       : (()=>{ const r = round.results[round.results.length-1]; const good = r.pct>=70; return `<div class="game-card tight${item.star ? ' dict-star' : ''}" style="text-align:start;">
@@ -30406,7 +30521,7 @@ var WORLDS_LIVE = {order:true, bingo:true, cross:true, build:true, echo:true, de
 // The Brave switch (Games 2.0 SPEC 5.5): progress.brave[kind] (old saves have none = Normal). The poster shows "Normal · Brave" once the
 // learner has finished that game (gamesMet). BRAVE_KINDS = the games whose Brave rules exist: the four engines read host.brave() (their own
 // rules: film frames, Moss's pins, hints, replays); each quick game joins as its own Brave rules ship (SPEC sections 10-20).
-const BRAVE_KINDS = ['path', 'mystery', 'chores', 'radio', 'order', 'bingo', 'build', 'echo', 'match', 'dictation', 'desk'];
+const BRAVE_KINDS = ['path', 'mystery', 'chores', 'radio', 'order', 'bingo', 'build', 'echo', 'match', 'dictation', 'desk', 'hunt'];
 function gameBrave(kind){ return !!(((state.progress && state.progress.brave) || {})[kind]); }
 function braveOpt(kind){
   if(!BRAVE_KINDS.includes(kind) || !gamesMet().has(kind)) return null;
@@ -31933,9 +32048,21 @@ const HANDLERS = {
   'game-dictation-check'(){
     const vp = state.viewParams, round = vp.round;
     if(!round || round.checked) return;
-    const ta = document.getElementById('dictation-input');
-    round.typed = ta ? ta.value : (round.typed||'');
-    const res = scoreDictationAnswer(round.sentences[round.index].text, round.typed);
+    const ta = document.getElementById('dictation-input'), gi = round.sentences[round.index];
+    let res;
+    if(gi && gi.gaps){
+      // gap mode (SPEC 18): only the gaps are checked (accents and capitals don't matter); the result shows the sentence as typed
+      dictGapSync(round);
+      const ws = String(gi.text).trim().split(/\s+/), vals = gi.gapVals || [];
+      const right = k => dictFold(dictClean(vals[k])) === dictFold(dictClean(ws[gi.gaps[k]]));
+      round.typed = ws.map((w, i)=>{ const k = gi.gaps.indexOf(i); return k < 0 || right(k) ? w : (String(vals[k] || '').trim() || '…'); }).join(' ');
+      const missed = gi.gaps.filter((g, k)=>!right(k)).map(g=>dictClean(ws[g]).toLowerCase());
+      const total = gi.gaps.length, hits = total - missed.length;
+      res = {pct:Math.round(hits / total * 100), hits, total, missed};
+    } else {
+      round.typed = ta ? ta.value : (round.typed||'');
+      res = scoreDictationAnswer(round.sentences[round.index].text, round.typed);
+    }
     round.results.push(res);
     round.checked = true;
     const cur = round.sentences[round.index];
@@ -31952,7 +32079,7 @@ const HANDLERS = {
     item.plays = (item.plays || 0) + 1;
     round.listenAt = Date.now(); worldTypist(round); setTimeout(()=>worldTypist(round), 3200);
     speakTarget(item.text);
-    if(gameBrave('dictation') && item.plays >= 2) render();
+    if(gameBrave('dictation') && item.plays >= 2){ dictGapSync(round); render(); }
   },
   'game-dictation-next'(){
     const vp = state.viewParams, round = vp.round;
@@ -32453,6 +32580,14 @@ const HANDLERS = {
     const i = Number(el.dataset.i), t = round.targets[round.ti], p = round.passages[t.pi], tok = p.toks[i];
     if(!tok || p.found.includes(i)) return;
     const pt = tapPoint(e);
+    if(!huntMatches(t.base, tok.w) && huntIsMark(round, t.pi, i)){
+      // the hidden bookmark (SPEC 17): never a miss; found once, a gold ribbon on the souvenir, no caption
+      if(round.markFound) return;
+      round.markFound = true;
+      queueFx(()=>fxHuntMark(i, pt));
+      save(); render();
+      return;
+    }
     if(!huntMatches(t.base, tok.w)){
       t.wrong++; round.combo = 0;
       const wrong = t.wrong, heat = huntHeat(round, t, p, i);
@@ -32481,6 +32616,7 @@ const HANDLERS = {
         if(state.viewParams !== vp || vp.round.ti !== idx || vp.round.finished) return;
         round.ti++; round.busy = false;
         if(nextPi !== t.pi) queueFx(()=>fxHuntPassage(nextPi));
+        if(round.ti === 3) queueFx(()=>setTimeout(()=>{ if(state.viewParams === vp) fxHuntGlint(round); }, nextPi !== t.pi ? 420 : 120));   // the bookmark glints once
         save(); render();
       }, wait);
     }
@@ -32627,6 +32763,7 @@ const HANDLERS = {
     // sentence doesn't wipe an in-progress (uncommitted) answer.
     const ta = document.getElementById('dictation-input');
     if(ta) round.typed = ta.value;
+    dictGapSync(round);
     round.revealedText = true;
     save(); render();
   },

@@ -23326,6 +23326,12 @@ function huntMatches(target, tok){
   return false;
 }
 // The story's single-word vocab entries (phrases can't be tapped as one word).
+// story vocab carries en / tr / fa glosses only; for the Spanish UI, the same word's Spanish meaning from the vocab sets (else none: L() falls back)
+function huntSpanishGloss(w){
+  const b = huntBase(w);
+  for(const set of VOCAB_SETS) for(const c of set.cards){ if(c.meaning && c.meaning.es && huntBase(String(c.word)) === b) return c.meaning.es; }
+  return undefined;
+}
 function huntVocab(story){
   return (story && story.vocab || []).filter(v=>v && v.word && huntBase(v.word) && !/\s/.test(huntBase(v.word)));
 }
@@ -23389,11 +23395,18 @@ function buildHuntRound(story){
       });
       si++;
     });
-    const mine = [];
-    shuffle(p.found).forEach(w=>{ if(mine.length < 4 && !used.has(w)){ used.add(w); mine.push(w); } });
+    // every target needs a word of its own in the passage: a word whose matching tokens are all another target's is skipped
+    // (otherwise its clue could never be found and the round could not end)
+    const mine = [], taken = new Set();
+    shuffle(p.found).forEach(w=>{
+      if(mine.length >= 4 || used.has(w)) return;
+      const b = huntBase(w), free = toks.map((k, j)=>j).filter(j=>!taken.has(j) && huntMatches(b, toks[j].w));
+      if(!free.length) return;
+      free.forEach(j=>taken.add(j)); used.add(w); mine.push(w);
+    });
     mine.forEach(w=>{
       const v = vocab.find(x=>x.word===w) || {};
-      targets.push({word:w, base:huntBase(w), meaning:{en:v.en, tr:v.tr, fa:v.fa, es:v.es}, pi, found:false, wrong:0});
+      targets.push({word:w, base:huntBase(w), meaning:{en:v.en, tr:v.tr, fa:v.fa, es:v.es || huntSpanishGloss(w)}, pi, found:false, wrong:0});
     });
     passages.push({toks, found:[]});
   });

@@ -954,7 +954,9 @@
   .game-tile.wave-move{outline:2px dashed #FF6F5E; outline-offset:2px;}
   body.gw-sun .th-m-glow{opacity:calc(var(--m-ga) + .2);}
   /* Build It (Games 2.0 SPEC 15): the scrap bin, a tossed decoy; Say It Back (SPEC 16): the cloze gaps */
-  .build-bin{display:flex; align-items:center; gap:10px; margin:10px auto 0; min-height:44px; padding:6px 14px 6px 8px; border:2px solid #14332e; border-radius:12px; background:#f3e1c2; color:#14332e; font:inherit; font-size:13.5px; font-weight:800; cursor:pointer; box-shadow:0 3px 0 #14332e;}
+  .build-tools{display:flex; flex-wrap:wrap; align-items:center; justify-content:center; gap:10px; margin-top:10px;}
+  .build-tools .build-ear{margin:0;}
+  .build-bin{display:flex; align-items:center; gap:10px; margin:0; min-height:44px; padding:6px 14px 6px 8px; border:2px solid #14332e; border-radius:12px; background:#f3e1c2; color:#14332e; font:inherit; font-size:13.5px; font-weight:800; cursor:pointer; box-shadow:0 3px 0 #14332e;}
   .build-bin-box{display:block; width:34px; height:26px; border:2px solid #14332e; border-radius:3px 3px 6px 6px; background:repeating-linear-gradient(90deg, #c98a4b 0 6px, #b5773c 6px 8px); position:relative;}
   .build-bin-box::before{content:''; position:absolute; left:-4px; right:-4px; top:-7px; height:6px; border:2px solid #14332e; border-radius:3px; background:#d89a58; transform-origin:0 100%; transition:transform .2s;}
   .build-bin.open .build-bin-box::before{transform:rotate(-24deg);}
@@ -19865,8 +19867,8 @@ function renderGameBuild(){
         : `<div class="build-line">${it.slots.map((s,i)=>buildSlotHtml(it, s, i)).join('')}</div>`}
     </div>
     ${it.solved ? '' : `<div class="build-tray${round.binOpen ? ' bin-open' : ''}" dir="ltr">${it.tiles.map((t,i)=>`<button class="build-tile${t.used ? ' used' : ''}${t.tossed ? ' tossed' : ''}${i === it.hintTile ? ' pulse' : ''}" data-action="build-tile" data-i="${i}" ${t.used ? 'disabled' : ''}>${esc(t.t)}</button>`).join('')}</div>`}
-    ${it.solved ? '' : `<button type="button" class="build-bin${round.binOpen ? ' open' : ''}" data-action="build-bin" aria-pressed="${round.binOpen ? 'true' : 'false'}"><span class="build-bin-box" aria-hidden="true"></span>${round.binOpen ? L('Now tap the block to throw away','Şimdi atılacak bloğa dokun','حالا روی بلوکی که باید دور بریزی بزن','Ahora toca el bloque que sobra') : L('Scrap bin','Hurda kutusu','سطل خرده‌ها','Cajón de restos')}</button>`}
-    <button class="game-chip build-ear${it.showRule && !it.solved ? ' pulse' : ''}" data-action="build-hear">${ICONS.soundOn} ${L('Hear it','Dinle','بشنو','Escúchalo')}</button>
+    <div class="build-tools">${it.solved ? '' : `<button type="button" class="build-bin${round.binOpen ? ' open' : ''}" data-action="build-bin" aria-pressed="${round.binOpen ? 'true' : 'false'}"><span class="build-bin-box" aria-hidden="true"></span>${round.binOpen ? L('Now tap the block to throw away','Şimdi atılacak bloğa dokun','حالا روی بلوکی که باید دور بریزی بزن','Ahora toca el bloque que sobra') : L('Scrap bin','Hurda kutusu','سطل خرده‌ها','Cajón de restos')}</button>`}
+    <button class="game-chip build-ear${it.showRule && !it.solved ? ' pulse' : ''}" data-action="build-hear">${ICONS.soundOn} ${L('Hear it','Dinle','بشنو','Escúchalo')}</button></div>
     ${it.showRule && item ? `<div class="game-why">${farinImg('mood-thinking')}<div>${esc(grammarRuleLine(item))}${it.hintWord ? ` · ${esc(L('Next: ','Sıradaki: ','بعدی: ','Sigue: '))}'${esc(it.hintWord)}'` : ''}</div></div>` : ''}
     ${it.solved ? `<button class="btn btn-primary game-cta" data-action="build-next">${round.index + 1 < b ? L('Next sentence','Sonraki cümle','جمله بعدی','Siguiente oración') : L('See results','Sonuçları gör','دیدن نتایج','Ver resultados')}</button>` : ''}
   </div>`;

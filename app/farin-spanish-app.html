@@ -945,6 +945,7 @@
   /* Word Rush (Games 2.0 SPEC 19): the golden pair's backs, the peek, a card moving in a wave, the sun */
   .game-tile.hidden-face.gold-back{box-shadow:inset 0 0 0 3px #FFD166, inset 0 0 0 5px #C99A1E;}
   .game-tile.peek{pointer-events:none;}
+  .th-world-stage .gw-fog{filter:blur(1.2px) opacity(.75); transition:filter .4s;}
   /* Listen & Type (SPEC 18): the first-listen star on the sticky note */
   .game-card.dict-star{position:relative;}
   /* Passport Desk (SPEC 11): the sharp-ear stamp in gold ink */
@@ -23434,9 +23435,15 @@ function renderGameHunt(){
     </div>
     <div class="hunt-clue" dir="auto">
       <div class="eyebrow" style="color:var(--cat-story);">${L('Find the word that means','Şu anlama gelen kelimeyi bul','کلمه‌ای را پیدا کن که یعنی','Encuentra la palabra que significa')}</div>
-      <div class="hunt-clue-text">${esc(svText(t.meaning) || t.word)}</div>
+      <div class="hunt-clue-text"${huntBossClue(round, t) ? ' dir="ltr"' : ''}>${esc(huntBossClue(round, t) || svText(t.meaning) || t.word)}</div>
     </div>
   </div>`;
+}
+// Games 2.0 SPEC 17: from B1, the last clue is given in the language being learned (the vocab's en / es field), not the UI language
+function huntBossClue(round, t){
+  const lv = (state.profile && state.profile.level) || 'A1';
+  if(lv === 'A1' || lv === 'A2' || round.ti !== round.targets.length - 1) return '';
+  return (t.meaning && t.meaning[TTS_LANG.slice(0, 2)]) || '';
 }
 function huntTokEl(i){ return document.querySelector('[data-action="hunt-tap"][data-i="'+i+'"]'); }
 function fxHuntFound(i, pt, combo){
@@ -23447,12 +23454,31 @@ function fxHuntFound(i, pt, combo){
   sfx('correct'); buzz(12); companionCheer();
   comboCheck(combo);
 }
-function fxHuntMiss(i, wrong){
+// Hot and cold (Games 2.0 SPEC 17): how many rendered lines lie between the tapped word and the target. First miss: Hot! (same line),
+// Warm (within 2 lines), Cold; later misses compare with the previous tap: Warmer / Colder / Still warm. One caption per tap, 5 s.
+function huntHeat(round, t, p, i){
+  try{
+    const ti = p.toks.findIndex((k, j)=>!p.found.includes(j) && huntMatches(t.base, k.w));
+    const a = huntTokEl(i), b = huntTokEl(ti); if(!a || !b) return null;
+    const ra = a.getBoundingClientRect(), rb = b.getBoundingClientRect(), lh = Math.max(16, ra.height || 20);
+    const d = Math.round(Math.abs(ra.top - rb.top) / lh), prev = t.heatD;
+    t.heatD = d;
+    if(prev == null) return d === 0 ? 'hot' : d <= 2 ? 'warm' : 'cold';
+    return d < prev ? 'warmer' : d > prev ? 'colder' : 'still';
+  }catch(e){ return null; }
+}
+function fxHuntMiss(i, wrong, heat){
   const el = huntTokEl(i);
   anim(el, [{transform:'translateX(0)'}, {transform:'translateX(-4px)'}, {transform:'translateX(4px)'}, {transform:'translateX(-4px)'}, {transform:'translateX(0)'}], {duration:180, easing:'linear'});
   sfx('flip');
-  companionOops();
-  if(wrong === 2) companionSay(L('Getting warmer','Yaklaşıyorsun','داری نزدیک می‌شی','Te acercas'), 1600);
+  if(!heat){ companionOops(); if(wrong === 2) companionSay(L('Getting warmer','Yaklaşıyorsun','داری نزدیک می‌شی','Te acercas'), 1600); return; }
+  const line = {hot:L('Hot!','Sıcak!','داغ!','¡Caliente!'), warm:L('Warm','Ilık','گرم','Tibio'), cold:L('Cold','Soğuk','سرد','Frío'),
+    warmer:L('Warmer','Daha sıcak','گرم‌تر','Más caliente'), colder:L('Colder','Daha soğuk','سردتر','Más frío'), still:L('Still warm','Hâlâ ılık','هنوز گرمه','Sigue tibio')}[heat];
+  if(window.Theatre && Theatre.isOpen() && Theatre.say) Theatre.say(line, {kind:'caption', ms:5000}); else companionSay(line, 2400);
+  // the green desk lamp follows (hot .60, warm .45, cold .25); the lens fogs on cold
+  const g = heat === 'hot' || heat === 'warmer' ? .60 : heat === 'cold' || heat === 'colder' ? .25 : .45;
+  const m = document.querySelector('.th-world-art .th-mood'); if(m) m.style.setProperty('--m-ga', String(g));
+  const lens = document.getElementById('gw-lens'); if(lens) lens.classList.toggle('gw-fog', heat === 'cold' || heat === 'colder');
 }
 function fxHuntPassage(pi){
   const el = document.getElementById('hunt-passage-'+pi);
@@ -32344,8 +32370,8 @@ const HANDLERS = {
     const pt = tapPoint(e);
     if(!huntMatches(t.base, tok.w)){
       t.wrong++; round.combo = 0;
-      const wrong = t.wrong;
-      queueFx(()=>fxHuntMiss(i, wrong));
+      const wrong = t.wrong, heat = huntHeat(round, t, p, i);
+      queueFx(()=>fxHuntMiss(i, wrong, heat));
       save(); render();
       return;
     }

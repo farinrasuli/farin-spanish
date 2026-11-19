@@ -346,10 +346,22 @@ function paintWorld(s){
   // .th-world-stage is the plate's own box (4:5, contained in the band): cut-outs, actors and live text are in % of the plate
   // a front layer: the same picture again, only below its line (front.top %), over the people, so they stand behind the counter
   var front = src && w.front && w.front.top ? '<img class="th-world-front" src="' + esc(src) + '" alt="" style="clip-path:inset(' + cssNum(parseFloat(w.front.top), 70, 0, 100) + '% 0 0 0)">' : '';
-  s.world.el.innerHTML = '<div class="th-world-art' + (src ? ' th-has-plate' : '') + '">' + plate + '<div class="th-world-stage">' + plateImg + front + cut + '</div></div><div class="th-world-text"><div class="th-world-stage">' + txt + '</div></div>';
+  // a small band's own picture (worlds art, 2026-11-19): a strip that fills the band edge to edge, its height = the column / ratio (Story
+  // Hunt's library shelf, its lamp lit by the mood glow at strip.glow [x%, y%]), or a round window with a view in it (Word Rush's porthole:
+  // the harbour clears as the pairs are found, whole at the end). Both whole pictures; the establishing shot still shows the whole plate.
+  var small = w.band === 'small', strip = small && w.strip && w.strip.ready && w.strip.src ? w.strip : null, port = small && w.port && w.port.ready && w.port.ring ? w.port : null;
+  body.classList.toggle('gw-strip', !!strip); body.classList.toggle('gw-port', !!port);
+  if(strip) body.style.setProperty('--gw-stage', 'calc(var(--gw-colw) / ' + cssNum(strip.ratio, 3, 1, 8) + ')');
+  var bandArt = (strip ? '<img class="th-world-strip" src="' + esc(strip.src) + '" alt="">' : '') +
+    (port ? '<div class="th-world-port">' + (port.view ? '<img class="th-port-view" src="' + esc(port.view) + '" alt="">' : '') + '<img class="th-port-ring" src="' + esc(port.ring) + '" alt=""></div>' : '');
+  s.world.el.innerHTML = '<div class="th-world-art' + (src ? ' th-has-plate' : '') + '">' + plate + '<div class="th-world-stage">' + plateImg + bandArt + front + cut + '</div></div><div class="th-world-text"><div class="th-world-stage">' + txt + '</div></div>';
   // the world's light: one mood element, the last child of the plate's box (over the art and cut-outs, under the balloons)
   var stageBox = s.world.el.querySelector('.th-world-art .th-world-stage');
-  if(stageBox && src) stageBox.appendChild(moodEl(w.mood || 'warm', w.moodVars));
+  if(stageBox && src){
+    var mood = moodEl(w.mood || 'warm', w.moodVars);
+    if(strip && strip.glow){ mood.style.setProperty('--gw-sx', cssNum(strip.glow[0], 50, 0, 100) + '%'); mood.style.setProperty('--gw-sy', cssNum(strip.glow[1], 50, 0, 100) + '%'); }
+    stageBox.appendChild(mood);
+  }
   if(w.css) loadWorldCss(s.world.kind, w.css);
   warmSfx(w.sfx);
   bedStart();
@@ -1012,7 +1024,7 @@ function captainSync(){
   cap.hit.style.width = (r.width + pad * 2) + 'px'; cap.hit.style.height = (r.height + pad * 2) + 'px';
 }
 var api = {
-  version:'1.2.3',
+  version:'1.2.4',
   open:open, close:close, sync:sync, exit:exit, play:start, skip:skip,
   titleCard:titleCard, transition:transition, setStrip:setStrip, setControls:setControls, stageEl:stageEl, setSkin:setSkin,
   say:say, finale:finale, sfx:sfx, progress:progress, actor:actor, establish:establish, moodEl:moodEl, flash:flash, world:function(){ return cur && cur.world ? cur.world.kind : null; },

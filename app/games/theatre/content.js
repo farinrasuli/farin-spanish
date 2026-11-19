@@ -54,8 +54,8 @@ window.THEATRE_CONTENT = {
     // passes (2026-11-16: Order Up!, Word Bingo, Say It Back; Mini Cross and Build It wait for fixed posters); titles + taglines from the
     // worlds SPEC section 16 (farin-gamification)
     match:{title:'La mesa de cartas', tagline:'Gira dos. Encuentra la pareja. El ferri ya casi llega.'},
-    build:{title:'El taller de palabras', tagline:'Bloque a bloque, la frase se levanta.'},
-    cross:{title:'El crucigrama de la mañana', tagline:'Un café, un lápiz y las palabras que ya sabes.'},
+    build:{title:'El taller de palabras', tagline:'Bloque a bloque, la frase se levanta.', art:'games/posters/build.webp', artReady:true},   // the 4:5 key art (worlds art 2026-11-19)
+    cross:{title:'El crucigrama de la mañana', tagline:'Un café, un lápiz y las palabras que ya sabes.', art:'games/posters/cross.webp', artReady:true},
     bingo:{title:'Bingo en la ventana', tagline:'Nueve palabras. Un cartón al sol. Escucha la tuya.', art:'games/posters/bingo.webp', artReady:true},
     hunt:{title:'La caza de palabras', tagline:'En algún lugar de tu historia se esconden las palabras.'},
     echo:{title:'En antena', tagline:'Escucha. Repite. Oye tu eco.', art:'games/posters/echo.webp', artReady:true},

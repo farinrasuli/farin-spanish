@@ -21288,8 +21288,8 @@ function orderTrayHtml(round){
 const ORDER_TOWN = {f:['bell','okafor','ada','leyla','rosa','hana','gran'], m:['tom','ben','ollie','pike']};
 function orderWorldOn(){ return !!(window.Theatre && Theatre.world && Theatre.world() === 'order'); }
 // In the world each menu item and extra is its own clear-line render (games/worlds/order/art/item-<id>.webp, extra-<id>.webp; one render
-// each, 2026-11-15). Hot chocolate, cookie, pizza slice and milk have no render yet: they keep their emoji until it lands.
-const ORDER_ART = new Set(['coffee','tea','juice','water','sandwich','croissant','cake','apple','soup','salad','icecream','sugar','ice','lemon','cheese']);
+// each, 2026-11-15; hot chocolate, cookie, pizza slice and milk rendered in colour 2026-11-18, wired 2026-11-19).
+const ORDER_ART = new Set(['coffee','tea','juice','water','sandwich','croissant','cake','apple','soup','salad','icecream','sugar','ice','lemon','cheese','hotchoc','cookie','pizza','milk']);
 function orderArtHtml(o){
   if(!o) return '';
   if(!orderWorldOn() || !ORDER_ART.has(o.id)) return o.art;
@@ -30918,7 +30918,7 @@ const THEATRE_QUICK = ['match','build','cross','order','desk','spell','bingo','h
 const THEATRE_QUICK_VIEWS = THEATRE_QUICK.map(k=>'game-' + k);
 const THEATRE_KINDS = ['path','chores','mystery','radio'].concat(THEATRE_QUICK);
 const THEATRE_VIEWS = ['game-path','game-yc','game-chores-building','game-chores-room','game-mystery','game-v2'].concat(THEATRE_QUICK_VIEWS);
-const THEATRE_VER = '18';   // 18: Passport Desk re-review (captions on the art, the HUD strip, the end over the booth, the horn, Theatre.quiet), Theatre 1.2.3; 17: text direction in the fa UI (Latin-script lines left to right), the companion line clear of x; 16: Games 2.0 step 5 part 4 (sound spots: gulls + the library clock; Passport Desk's traveller behind the booth counter; Trap Dash lanes); 15: Games 2.0 step 4 (Brave switch, boss beat, Captain); 14: the world art wiring + Sam's balloon waits for his picture (2026-11-16)
+const THEATRE_VER = '19';   // 19: worlds art (Story Hunt strip, Word Rush porthole, Mini Cross + Build It posters, Order Up! re-rolls, traveller 1), Theatre 1.2.4; 18: Passport Desk re-review (captions on the art, the HUD strip, the end over the booth, the horn, Theatre.quiet), Theatre 1.2.3; 17: text direction in the fa UI (Latin-script lines left to right), the companion line clear of x; 16: Games 2.0 step 5 part 4 (sound spots: gulls + the library clock; Passport Desk's traveller behind the booth counter; Trap Dash lanes); 15: Games 2.0 step 4 (Brave switch, boss beat, Captain); 14: the world art wiring + Sam's balloon waits for his picture (2026-11-16)
 // World Kit switch (worlds SPEC 4.14): one flag per quick game, on once its art and checks pass (Farin 11-10: switch on what is done).
 // ?worlds=1 previews every world in this browser (?worlds=0 switches the preview off). Off = the game plays over its poster's soft backdrop.
 // 2026-11-15 World Kit v1 live: Order Up!, Word Bingo, Mini Cross, Build It, Say It Back (their plates and props passed art QC). Passport Desk waits

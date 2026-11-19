@@ -658,3 +658,19 @@ body.gw-on.gw-desk .th-world.th-ended .th-mood{--m-ga:0; --m-tint:#5B6E95; --m-t
 .th-world.th-beat .gw-closed{animation:gw-sign 1s 1.2s cubic-bezier(.3,1.35,.5,1) both;}
 @keyframes gw-sign{from{opacity:0; transform:perspective(320px) rotateX(-88deg)} 30%{opacity:1} to{opacity:1; transform:rotate(-3deg)}}
 @media (prefers-reduced-motion: reduce){ .th-world.th-beat .gw-ferry, .th-world.th-beat .gw-closed{animation:none !important;} }
+/* ---- worlds art (2026-11-19): the small bands' own pictures (theatre.js paintWorld: world.strip / world.port) ---- */
+/* Story Hunt: the library shelf strip fills the band edge to edge (the band is the column / the strip's ratio: the whole picture); the mood's
+   glow sits on its green lamp (strip.glow) and follows the hot / cold clues */
+.th-world-strip{position:absolute; inset:0; width:100%; height:100%; object-fit:contain; display:none; z-index:1;}
+body.gw-on.gw-strip:not(.gw-establish) .th-world-strip{display:block;}
+body.gw-on.gw-small.gw-strip:not(.gw-establish) .th-world .th-mood{display:block;}
+body.gw-on.gw-strip:not(.gw-establish) .th-m-glow{background:radial-gradient(circle calc(var(--gw-band) * .55) at var(--gw-sx, 76%) var(--gw-sy, 55%), var(--m-glow), transparent 70%);}
+/* Word Rush: the brass porthole in the band, the harbour in it; the haze clears pair by pair (--gw-frac), whole and clear at the end */
+.th-world-port{position:absolute; top:5%; bottom:5%; left:50%; aspect-ratio:1; transform:translateX(-50%); display:none; z-index:1;}
+body.gw-on.gw-port:not(.gw-establish) .th-world-port{display:block;}
+.th-port-ring{position:absolute; inset:0; width:100%; height:100%; object-fit:contain; z-index:2; filter:drop-shadow(0 4px 6px rgba(20,51,46,.22));}
+.th-port-view{position:absolute; left:9%; top:9%; width:82%; height:82%; object-fit:contain; border-radius:50%; z-index:1;
+  filter:blur(calc((1 - var(--gw-frac, 0)) * 4px)) saturate(calc(.55 + var(--gw-frac, 0) * .45)); opacity:calc(.5 + var(--gw-frac, 0) * .5); transition:filter .6s ease, opacity .6s ease;}
+.th-world.th-beat .th-port-view{transition:filter 1.2s ease, opacity 1.2s ease;}
+.th-world.th-ended .th-port-view{filter:none; opacity:1;}
+@media (prefers-reduced-motion: reduce){ .th-port-view{transition:none !important;} }

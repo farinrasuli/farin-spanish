@@ -641,7 +641,7 @@ body.gw-on.th-scrolled .th-hud::before{content:''; position:absolute; z-index:-1
 /* the end over the place (end.over): the whole picture at the column's width stays behind the end card, which lies over its lower part */
 body.gw-on.gw-endover{--gw-btop:0px; --gw-band:calc(var(--gw-colw) * 1.25);}
 body.gw-on.gw-endover .th-world-stage{left:0; width:100%; transform:none;}
-body.gw-on.gw-endover .game-screen{padding-top:min(calc(var(--gw-band) * .7), calc(100dvh - 380px));}
+body.gw-on.gw-endover .game-screen{padding-top:min(calc(var(--gw-band) - 24px), calc(100dvh - 380px));}   /* on a tall phone the card lies on the counter, the pier and the window clear above it */
 body.gw-on.gw-endover .game-screen::before{top:var(--gw-band);}
 /* Passport Desk's end beat (worlds SPEC 10): the ferry sails out towards the horizon, the light of the day goes, the window sign turns to CLOSED */
 .th-world .gw-ferry{transform-origin:12% 88%;}
@@ -674,3 +674,7 @@ body.gw-on.gw-port:not(.gw-establish) .th-world-port{display:block;}
 .th-world.th-beat .th-port-view{transition:filter 1.2s ease, opacity 1.2s ease;}
 .th-world.th-ended .th-port-view{filter:none; opacity:1;}
 @media (prefers-reduced-motion: reduce){ .th-port-view{transition:none !important;} }
+/* re-review #2 (2026-11-19): the band's box is centred in every UI direction (with the base rule's right:0 still set, an RTL page placed it from the right; the mirrored art then sat 7-68 px off) */
+body.gw-on .th-world-stage{right:auto;}
+/* a cut-out standing on the band floor pulses from its feet at the end beat (it never grows past the band's bottom edge) */
+.th-world .th-world-cut.th-in-band{transform-origin:50% 100%;}

@@ -501,6 +501,7 @@
   .desk-blank{display:inline-block; width:110px; height:1em; vertical-align:-.15em; border-bottom:3px dashed var(--ink-faint);}
   .desk-ring{position:absolute; inset:2px 0; width:100%; height:calc(100% - 4px); pointer-events:none; overflow:visible;}
   .desk-ring ellipse{fill:none; stroke:var(--clay-coral-deep); stroke-width:2.4; vector-effect:non-scaling-stroke; stroke-dasharray:320; stroke-dashoffset:320; animation:desk-ring .3s ease-out forwards;}
+  .desk-ring{inset-inline-start:calc(38% + 4px); inset-inline-end:auto; width:calc(62% - 4px);}   /* the pencil circle goes round the value, after its label (re-review 2026-11-19) */
   @keyframes desk-ring{to{stroke-dashoffset:0;}}
   .desk-today{margin:8px 18px 0; text-align:end; font-size:12.5px; font-weight:800; color:var(--ink-soft);}
   .desk-today b{font-variant-numeric:tabular-nums; color:var(--ink);}
@@ -539,6 +540,7 @@
   body.gw-on.gw-desk .desk-rows{padding:0 10px;}
   body.gw-on.gw-desk .desk-row{min-height:46px; padding:3px 6px; gap:8px; color:#13304d; border-bottom-color:rgba(19,48,77,.16);}
   body.gw-on.gw-desk .desk-label{flex:0 0 33%; font-size:10.5px; color:#4d6379;}
+  body.gw-on.gw-desk .desk-ring{inset-inline-start:calc(33% + 4px); width:calc(67% - 4px);}
   body.gw-on.gw-desk .desk-val{font-size:20px; line-height:1.15; color:#13304d; white-space:nowrap; overflow-wrap:normal; overflow:hidden;}
   body.gw-on.gw-desk .desk-val.long{font-size:17px;}
   body.gw-on.gw-desk .desk-val.xlong{font-size:15px;}
@@ -22268,7 +22270,10 @@ function deskGreet(round, line){
   const go = ()=>{
     if(!state.viewParams || state.viewParams.round !== round) return;
     if(document.body.classList.contains('gw-establish') && n++ < 24){ setTimeout(go, 150); return; }
-    if(worldKind() === 'desk' && deskOfficer() && Theatre.say(line, {kind:'balloon', who:'desk-officer', lang:round.lang === 'es' ? 'es' : 'en', ms:5000})) return;
+    // never read aloud by itself; a speaker to tap only once the line has its own natural clip (none rendered yet, 2026-11-19)
+    const clip = typeof ttsClips !== 'undefined' && ttsClips && ttsClips[ttsKey(line)], o = {kind:'balloon', who:'desk-officer', lang:round.lang === 'es' ? 'es' : 'en', ms:5000};
+    if(clip) o.hear = ()=>worldHear(line, 0);
+    if(worldKind() === 'desk' && deskOfficer() && Theatre.say(line, o)) return;
     companionSay(line, 2200);
   };
   go();

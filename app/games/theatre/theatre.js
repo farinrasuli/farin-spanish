@@ -38,7 +38,11 @@
    Theatre.setStrip(items) / Theatre.setControls(list)   update the poster strip / extra HUD buttons
    Theatre.setSkin(kind)        switch the running game's world to another kind's skin (a round that fell back to another game)
    Theatre.say(text, {who, kind:'caption'|'balloon', ms, lang})   World Kit caption box / speech balloon, 5 s at most, a new line replaces
-   Theatre.finale({beat, ms}) -> Promise   the world's end beat (2.4 s at most, a tap skips)
+   Theatre.finale({beat, ms}) -> Promise   the world's end beat (2.4 s at most, a tap skips); clears the captions; the end state stays
+                                (.th-world.th-ended, body.gw-ended; skins end.over = the whole place behind the end card, end.spot = a sound)
+   Theatre.resetEnd()           a new round in the same world takes the end state off
+   Theatre.quiet() / Theatre.ambience()   true while the world's bed and spots are silent (a line playing, muted, hidden) / the details
+   In a world the captions and balloons scroll with the art; once the page scrolls the HUD gets a backing strip (body.th-scrolled).
    Theatre.sfx(name) -> bool    World Kit foley (CC0 kit, variants, detune); false = no file, play the app's own sound
    Theatre.world()              the kind whose world is on, or null
    Theatre.stageEl()            a full-size element over #app for games that draw their own stage (Your Call v2)
@@ -370,6 +374,8 @@ function closeWorld(s){
   bedStop(); spotStop(); captainOff();
   if(s.world && s.world.el && s.world.el.parentNode) s.world.el.remove();
   if(s.sayEl && s.sayEl.parentNode) s.sayEl.remove();
+  if(s.sayDock && s.sayDock.parentNode) s.sayDock.remove();
+  s.sayEl = s.sayDock = s.sayBox = null;
   clearTimeout(s.sayTimer);
   body.className = body.className.replace(/\bgw-[a-z0-9]+\b/g, '').replace(/\s+/g, ' ').trim();
   for(var k in GW_VARS) body.style.removeProperty(GW_VARS[k]);
@@ -390,19 +396,57 @@ function actor(id, src, box, cls){
 // Theatre.say(text, {who, kind:'caption'|'balloon', ms, lang}): the narrator / companion caption box at the stage's top inline-start,
 // or a character's balloon over the element `who`. 5 s at most; a new line replaces the old one; nothing on a timer (the app calls it
 // after a learner action or an arrival). Works in any running Theatre; the quick games use it in world mode (SPEC 4.7).
+// In a world (2026-11-19 re-review) the caption box and the balloons belong to the art: .th-say scrolls with the page (absolute), so a line
+// never stays over the picture's people once the page scrolls. A caption whose place on the art has scrolled under the HUD shows in a fixed
+// strip just under it (.th-say-dock), unless a character is there; then it stays on the art.
+function sayHost(s, dock){
+  var k = dock ? 'sayDock' : 'sayEl';
+  if(!s[k]){ s[k] = el('div', dock ? 'th-say th-say-dock' : 'th-say'); if(!dock){ s[k].setAttribute('role', 'status'); s[k].setAttribute('aria-live', 'polite'); } D.body.appendChild(s[k]); }
+  return s[k];
+}
+function sayClear(s){
+  s = s || cur; if(!s) return;
+  clearTimeout(s.sayTimer);
+  if(s.sayBox && s.sayBox.parentNode) s.sayBox.remove();
+  s.sayBox = null;
+  [s.sayEl, s.sayDock].forEach(function(h){ if(h) h.innerHTML = ''; });
+}
+var PEOPLE = '.th-world-stage .gw-trav, .th-world-stage .gw-sam, .th-world-stage .gw-cust, .th-world-stage .gw-host, .th-world-stage .gw-typist, #order-cust';
+function hudBottom(){ var x = cur && cur.hud && cur.hud.querySelector('.th-x'); return x ? x.getBoundingClientRect().bottom + 8 : 83; }
+function overPeople(b){
+  var r = b.getBoundingClientRect(), ps = D.querySelectorAll(PEOPLE);
+  for(var i = 0; i < ps.length; i++){ var p = ps[i].getBoundingClientRect(); if(p.width && r.left < p.right && p.left < r.right && r.top < p.bottom && p.top < r.bottom) return true; }
+  return false;
+}
+function sayPlace(){
+  var s = cur, box = s && s.sayBox; if(!s || !s.world || !box || !box.isConnected || !box.classList.contains('th-caption')) return;
+  var home = sayHost(s);
+  if(box._top == null){ if(box.parentNode !== home) home.appendChild(box); box._top = box.offsetTop; }
+  var dock = home.getBoundingClientRect().top + box._top < hudBottom() - 2;
+  if(dock){ var dk = sayHost(s, true); if(box.parentNode !== dk) dk.appendChild(box); if(overPeople(box)) home.appendChild(box); }
+  else if(box.parentNode !== home) home.appendChild(box);
+}
+// the page scrolled: the HUD gets its backing strip (only then: at the top the art stays whole) and a caption finds its place
+var scrollRaf = 0;
+function onScroll(){
+  if(scrollRaf) return;
+  scrollRaf = (W.requestAnimationFrame || setTimeout)(function(){ scrollRaf = 0; if(!cur) return; D.body.classList.toggle('th-scrolled', (W.scrollY || D.documentElement.scrollTop || 0) > 1); sayPlace(); });
+}
 function say(text, o){
   var s = cur; if(!s || !text) return false;
   o = o || {};
   var ms = Math.min(cssNum(o.ms, 5000, 600, 5000), 5000), kind = o.kind === 'balloon' && o.who ? 'balloon' : 'caption';
-  if(!s.sayEl){ s.sayEl = el('div', 'th-say'); s.sayEl.setAttribute('role', 'status'); s.sayEl.setAttribute('aria-live', 'polite'); D.body.appendChild(s.sayEl); }
+  var host = sayHost(s);
   var lang = o.lang || (kind === 'balloon' ? (content().target || 'en') : s.app.lang) || 'en';
   var rtl = lang === 'fa';
   // a line with no Persian letter (an English / Spanish line in the fa UI: "Passport, please!") runs left to right in the target language
   if(rtl && !/[\u0590-\u08FF\uFB1D-\uFDFF\uFE70-\uFEFF]/.test(String(text))){ rtl = false; lang = content().target || 'en'; }
   var hear = typeof o.hear === 'function';
-  s.sayEl.innerHTML = '<div class="th-' + kind + (hear ? ' th-say-hear' : '') + '" lang="' + esc(lang) + '" dir="' + (rtl ? 'rtl' : 'ltr') + '"' + (hear ? ' role="button" tabindex="0" aria-label="' + esc(text + ' · ' + S('hear')) + '"' : '') + '>' + esc(text) +
-    (hear ? '<span class="th-say-ear" aria-hidden="true">' + ICON.soundOn + '</span>' : '') + '</div>';
-  var box = s.sayEl.firstChild;
+  sayClear(s);   // a new line replaces the old one
+  var wrap = el('div', null, '<div class="th-' + kind + (hear ? ' th-say-hear' : '') + '" lang="' + esc(lang) + '" dir="' + (rtl ? 'rtl' : 'ltr') + '"' + (hear ? ' role="button" tabindex="0" aria-label="' + esc(text + ' · ' + S('hear')) + '"' : '') + '>' + esc(text) +
+    (hear ? '<span class="th-say-ear" aria-hidden="true">' + ICON.soundOn + '</span>' : '') + '</div>');
+  var box = wrap.firstChild;
+  host.appendChild(box); s.sayBox = box;
   if(hear && o.ring) box.classList.add('th-ring');   // the first speaker a learner meets in a game pulses twice (SPEC 5.2)
   if(hear){ var go = function(e){ if(e) e.stopPropagation(); try{ o.hear(); }catch(err){} }; box.addEventListener('click', go); box.addEventListener('keydown', function(e){ if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); go(); } }); }
   if(kind === 'balloon'){
@@ -410,7 +454,7 @@ function say(text, o){
     if(r && r.width){
       // the whole balloon stays in the column (8 px margins) and below the voice pill; the tail points at the speaker; no room above
       // the speaker = the balloon goes under it, tail up
-      var col = s.sayEl.getBoundingClientRect(), bw = box.offsetWidth, bh = box.offsetHeight, ax = r.left - col.left + r.width / 2;
+      var col = host.getBoundingClientRect(), bw = box.offsetWidth, bh = box.offsetHeight, ax = r.left - col.left + r.width / 2;
       var minTop = 124 + (parseFloat(getComputedStyle(D.body).getPropertyValue('--th-safe-t')) || 0);
       var left = Math.max(8, Math.min(col.width - 8 - bw, ax - bw / 2)), top = r.top - 14 - bh, below = false;
       if(top < minTop){ top = Math.max(minTop, r.bottom + 14); below = true; }
@@ -419,9 +463,10 @@ function say(text, o){
       if(below) box.classList.add('th-balloon-below');
     } else { box.classList.remove('th-balloon'); box.classList.add('th-caption'); }   // no speaker on screen: a caption, still tap to hear
   }
+  sayPlace();
   if(!reduced()) anim(box, [{opacity:0, transform:'translateY(6px)'}, {opacity:1, transform:'none'}], {duration:200, easing:'cubic-bezier(.2,.7,.2,1)'});
   clearTimeout(s.sayTimer);
-  s.sayTimer = setTimeout(function(){ if(s.sayEl && s.sayEl.firstChild === box){ var a = reduced() ? null : anim(box, [{opacity:1}, {opacity:0}], {duration:180, fill:'forwards'}); var rm = function(){ if(box.parentNode) box.remove(); }; if(a) a.onfinish = rm; else rm(); } }, ms);
+  s.sayTimer = setTimeout(function(){ if(s.sayBox === box){ var a = reduced() ? null : anim(box, [{opacity:1}, {opacity:0}], {duration:180, fill:'forwards'}); var rm = function(){ if(box.parentNode) box.remove(); if(s.sayBox === box) s.sayBox = null; }; if(a) a.onfinish = rm; else rm(); } }, ms);
   return true;
 }
 // Theatre.progress(done, total): the world's own progress object (SPEC 4.8) reads data-done / data-total / data-third (0-3) and
@@ -480,13 +525,18 @@ function bedStart(){
     bed.timer = setInterval(bedTick, 250); bedTick();
   }catch(e){ bed = null; }
 }
+// a voice line, an order or a listening task is playing (the app's speaking flag, the device voice, Say It Back's open mic)
+function talking(){ return D.body.hasAttribute('data-speaking') || !!(W.speechSynthesis && W.speechSynthesis.speaking) || D.body.classList.contains('gw-live'); }
+function bedTarget(){ return (!bed || !cur || muted() || talking() || D.hidden) ? 0 : bed.vol; }
 function bedTick(){
   if(!bed) return;
-  var badge = D.getElementById('tts-badge');
-  var talking = D.body.hasAttribute('data-speaking') || (W.speechSynthesis && W.speechSynthesis.speaking) || D.body.classList.contains('gw-live');   // the app's speaking flag
-  var target = (!cur || muted() || talking || D.hidden) ? 0 : bed.vol;
+  var target = bedTarget(); bed.target = target;
   try{ bed.out.gain.setTargetAtTime(target, bed.ctx.currentTime, .3); }catch(e){}
 }
+// Theatre.quiet(): true while the world's ambience is silent (the bed's level is 0 and no spot may play): muted, hidden, the opening shot,
+// or a line playing. Theatre.ambience(): the details, for the checks.
+function quiet(){ return bedTarget() === 0 && spotQuiet(); }
+function ambience(){ var g = null; try{ g = bed ? bed.out.gain.value : null; }catch(e){} return {bed:!!bed, target:bedTarget(), gain:g, spots:spotList().slice(), spotQuiet:spotQuiet(), talking:talking(), muted:!!cur && muted()}; }
 // Spots (Games 2.0 SPEC 5.4): single sounds now and then in a world (skins.js world.spots: names), every 6-14 s at about -28 dBFS, never the
 // same one twice in a row, playbackRate 0.96-1.04; never while a line, an order or a listening task plays, when muted or the page is hidden.
 // A name plays its files (world.sfx / the CC0 kit) when there are any, else the Theatre makes it in code: 'gull' (a far gull's call, two
@@ -496,7 +546,7 @@ function spotStop(){ clearTimeout(spotT); spotT = null; }
 function spotList(){ var s = cur; if(!s || !s.world) return []; var l = worldData(s).w.spots; return (l && l.length) ? l : []; }
 function spotStart(){ spotStop(); if(!spotList().length) return; spotNext(); }
 function spotNext(){ spotT = setTimeout(spotTick, 6000 + Math.random() * 8000); }
-function spotQuiet(){ return !cur || muted() || D.hidden || D.body.hasAttribute('data-speaking') || (W.speechSynthesis && W.speechSynthesis.speaking) || D.body.classList.contains('gw-live') || D.body.classList.contains('gw-establish'); }
+function spotQuiet(){ return !cur || muted() || D.hidden || talking() || D.body.classList.contains('gw-establish'); }
 function spotTick(){
   var list = spotList(); if(!list.length){ spotStop(); return; }
   if(!spotQuiet()){
@@ -525,6 +575,17 @@ var SPOTS = {
       bp.connect(g); g.connect(lp);
     }
     setTimeout(function(){ try{ out.disconnect(); }catch(e){} }, 1600);
+  },
+  horn:function(c, t0, rate){
+    var out = c.createGain(), lp = c.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 900; lp.Q.value = .7; out.gain.value = .07; lp.connect(out); out.connect(c.destination);
+    [[0, .62, 1], [.72, .7, 1.19]].forEach(function(n){
+      var t = t0 + n[0], d = n[1], f = 98 * n[2] * rate, g = c.createGain(), vib = c.createOscillator(), vd = c.createGain();
+      vib.frequency.value = 5.2; vd.gain.value = 1.4; vib.connect(vd);
+      [1, 2.003, 3.01].forEach(function(h, j){ var o = c.createOscillator(), og = c.createGain(); o.type = j ? 'sine' : 'sawtooth'; o.frequency.value = f * h; vd.connect(o.frequency); og.gain.value = j ? .28 / j : .55; o.connect(og); og.connect(g); o.start(t); o.stop(t + d + .25); });
+      g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(1, t + .08); g.gain.setValueAtTime(1, t + d - .1); g.gain.exponentialRampToValueAtTime(0.0001, t + d + .2);
+      g.connect(lp); vib.start(t); vib.stop(t + d + .25);
+    });
+    setTimeout(function(){ try{ out.disconnect(); }catch(e){} }, 2200);
   },
   clock:function(c, t0, rate){
     var out = c.createGain(); out.gain.value = .05; out.connect(c.destination);
@@ -579,15 +640,23 @@ function establish(ms){
 function finale(o){
   var s = cur; o = o || {};
   return new Promise(function(resolve){
-    if(!s || !s.world || reduced()){ resolve(); return; }
-    var w = s.world.el, done = false, t;
+    if(s) sayClear(s);   // no line from the round stays on the end screen
+    if(!s || !s.world){ resolve(); return; }
+    var w = s.world.el, done = false, t, wd = worldData(s).w, en = wd.end || {};
+    w.classList.add('th-ended'); D.body.classList.add('gw-ended'); D.body.classList.toggle('gw-endover', !!en.over);
+    try{ W.scrollTo(0, 0); }catch(e){}
+    if(en.spot) setTimeout(function(){ if(cur === s) spotPlay(en.spot); }, reduced() ? 0 : cssNum(en.at, 250, 0, 2000));
+    if(reduced()){ resolve(); return; }
     var end = function(){ if(done) return; done = true; clearTimeout(t); w.classList.remove('th-beat'); D.body.classList.remove('gw-beat', 'gw-establish'); D.removeEventListener('pointerdown', end, true); resolve(); };
-    w.classList.add('th-beat'); D.body.classList.add('gw-beat', 'gw-establish');
+    // end.over: the beat plays over the whole place with the end card already lying on it (no empty sky under a slid-away panel)
+    w.classList.add('th-beat'); D.body.classList.add('gw-beat'); if(!en.over) D.body.classList.add('gw-establish');
     try{ if(typeof o.beat === 'function') o.beat(w); }catch(e){}
     D.addEventListener('pointerdown', end, true);
     t = setTimeout(end, Math.min(cssNum(o.ms, 2400, 0, 2400), 2400));
   });
 }
+// Theatre.resetEnd(): a new round in the same world (Play again) takes the end state off
+function resetEnd(){ var s = cur; if(!s || !s.world) return; s.world.el.classList.remove('th-ended'); D.body.classList.remove('gw-ended', 'gw-endover'); }
 // Theatre.sfx(name): the Open House foley player lifted into the Theatre (SPEC 4.10). A name maps to files (skin.world.sfx over the shared
 // CC0 kit in games/cozy-chores/sfx/); a variant never plays twice in a row, playbackRate 0.96-1.04, decoded once, the mute switch
 // respected. false = no file for that name (the app plays its own sfx()).
@@ -725,6 +794,7 @@ function open(o){
   };
   D.addEventListener('keydown', s.onKey, true);
   D.addEventListener('visibilitychange', onVis);
+  W.addEventListener('scroll', onScroll, {passive:true});
   bidiStart();   // fa UI: Latin-script lines run left to right
   s.returnFocus = D.activeElement;
   wake();
@@ -815,10 +885,11 @@ function close(o){
   clearTimeout(s.introTimer); clearTimeout(s.briefTimer);
   D.removeEventListener('keydown', s.onKey, true);
   D.removeEventListener('visibilitychange', onVis);
+  W.removeEventListener('scroll', onScroll);
   if(s.wake){ try{ s.wake.release(); }catch(e){} }
   if(s.fs){ s.fs = false; exitFullscreen(true); }
   var body = D.body;
-  body.classList.remove('theatre-on', 'th-running', 'th-portrait', 'th-4x5', 'th-appcol', 'th-companion', 'th-skinned', 'th-boss');
+  body.classList.remove('theatre-on', 'th-running', 'th-portrait', 'th-4x5', 'th-appcol', 'th-companion', 'th-skinned', 'th-boss', 'th-scrolled');
   body.removeAttribute('data-th-skin');
   body.style.removeProperty('--th-hud-r');
   for(var pv in PAL_VARS) body.style.removeProperty(PAL_VARS[pv]);
@@ -941,11 +1012,12 @@ function captainSync(){
   cap.hit.style.width = (r.width + pad * 2) + 'px'; cap.hit.style.height = (r.height + pad * 2) + 'px';
 }
 var api = {
-  version:'1.2.2',
+  version:'1.2.3',
   open:open, close:close, sync:sync, exit:exit, play:start, skip:skip,
   titleCard:titleCard, transition:transition, setStrip:setStrip, setControls:setControls, stageEl:stageEl, setSkin:setSkin,
   say:say, finale:finale, sfx:sfx, progress:progress, actor:actor, establish:establish, moodEl:moodEl, flash:flash, world:function(){ return cur && cur.world ? cur.world.kind : null; },
   boss:boss, captain:captain, captainSync:captainSync, captainOff:captainOff, spot:spotPlay, spotCount:function(){ return spotN; },
+  quiet:quiet, ambience:ambience, resetEnd:resetEnd, sayClear:function(){ sayClear(); },
   skin:function(){ return cur && cur.skin ? cur.skinKind : null; },
   isOpen:function(){ return !!cur; },
   phase:function(){ return cur ? cur.phase : null; },

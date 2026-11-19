@@ -627,3 +627,34 @@ body.gw-on.gw-match .game-tile.hidden-face.gold-back{box-shadow:inset 0 0 0 3px 
   body.gw-on.gw-dictation .game-input{min-height:54px; margin-top:8px;}
   body.gw-on.gw-dictation .game-screen > .game-cta{margin-top:8px; min-height:48px;}
 }
+/* ---- Passport Desk re-review (2026-11-19): captions on the art, the HUD's backing strip, the end over the place ---- */
+/* in a world the caption box and the balloons scroll with the art (never left over its people); a caption whose place has scrolled under
+   the HUD shows in the dock just under it (theatre.js sayPlace) */
+body.gw-on .th-say{position:absolute; bottom:auto; height:0; overflow:visible;}
+body.gw-on .th-say.th-say-dock{position:fixed;}
+.th-say-dock .th-caption{top:calc(31px + 44px + 14px + var(--th-safe-t, 0px));}
+/* once the page scrolls, the HUD gets a backing strip in the panel's colour: nothing slides under x or sound; at the top the art stays whole */
+body.gw-on.th-scrolled .th-hud::before{content:''; position:absolute; z-index:-1; left:0; right:0; top:calc(-31px - var(--th-safe-t, 0px)); height:calc(31px + 44px + 8px + var(--th-safe-t, 0px));
+  pointer-events:auto; background:var(--gw-surface, #f3e9e2); border-bottom:2px solid color-mix(in srgb, var(--gw-line, #14332e) 22%, transparent); box-shadow:0 8px 14px -12px rgba(20,51,46,.55);}
+/* an invisible anchor on the plate for a balloon spoken from off the picture (the officer at Passport Desk: the bottom centre) */
+.th-world-stage .gw-anchor{position:absolute; display:block; left:50%; top:99%; width:2px; height:2px; margin-left:-1px; pointer-events:none;}
+/* the end over the place (end.over): the whole picture at the column's width stays behind the end card, which lies over its lower part */
+body.gw-on.gw-endover{--gw-btop:0px; --gw-band:calc(var(--gw-colw) * 1.25);}
+body.gw-on.gw-endover .th-world-stage{left:0; width:100%; transform:none;}
+body.gw-on.gw-endover .game-screen{padding-top:min(calc(var(--gw-band) * .7), calc(100dvh - 380px));}
+body.gw-on.gw-endover .game-screen::before{top:var(--gw-band);}
+/* Passport Desk's end beat (worlds SPEC 10): the ferry sails out towards the horizon, the light of the day goes, the window sign turns to CLOSED */
+.th-world .gw-ferry{transform-origin:12% 88%;}
+.th-world.th-beat .gw-ferry{animation:gw-sail 1.5s .25s cubic-bezier(.45,0,.7,.4) both;}
+.th-world.th-ended:not(.th-beat) .gw-ferry{opacity:0;}
+@keyframes gw-sail{0%{transform:none; opacity:1} 12%{transform:translateY(-1.5%)} 75%{opacity:.9} 100%{transform:translate(-3%, -10%) scale(.38); opacity:0}}
+body.gw-on.gw-desk .th-mood{--m-glow:#FFF3CF; --m-ga:.42; --m-gx:46%; --m-gy:50%; --m-gr:48%;}
+body.gw-on.gw-desk .th-mood > i{transition:opacity 1.4s ease;}
+body.gw-on.gw-desk .th-world.th-ended .th-mood{--m-ga:0; --m-tint:#5B6E95; --m-ta:.17;}
+.th-world-text .th-world-stage{container-type:inline-size;}
+.th-world-live.gw-closed{padding:.32em 0; border:2.5px solid #14332e; border-radius:7px; background:#13304d; color:#fffdf7; font-size:clamp(11px, 3.4vw, 20px); font-size:clamp(11px, 4.4cqw, 20px);
+  line-height:1.1; letter-spacing:.12em; text-transform:uppercase; white-space:nowrap; box-shadow:0 3px 0 rgba(20,51,46,.28); opacity:0; transform-origin:50% 0; transform:perspective(320px) rotateX(-88deg);}
+.th-world.th-ended .gw-closed{opacity:1; transform:rotate(-3deg);}
+.th-world.th-beat .gw-closed{animation:gw-sign 1s 1.2s cubic-bezier(.3,1.35,.5,1) both;}
+@keyframes gw-sign{from{opacity:0; transform:perspective(320px) rotateX(-88deg)} 30%{opacity:1} to{opacity:1; transform:rotate(-3deg)}}
+@media (prefers-reduced-motion: reduce){ .th-world.th-beat .gw-ferry, .th-world.th-beat .gw-closed{animation:none !important;} }

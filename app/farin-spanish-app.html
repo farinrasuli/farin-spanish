@@ -518,6 +518,54 @@
   .desk-stampbtn:disabled{opacity:.55; cursor:default;}
   .desk-skip{position:absolute; inset:0; z-index:5; border:0; background:transparent; cursor:pointer;}
   .desk-lamp{width:46px; height:46px; margin:0 auto 10px; border-radius:50%; background:radial-gradient(circle, var(--cat-review) 0 45%, color-mix(in srgb, var(--cat-review) 30%, transparent) 60%, transparent 72%);}
+  /* Passport Desk in its world (2026-11-19 re-review, worlds SPEC 10): one screen per round. The traveller's line in the navy bubble row
+     (replay and "Show what they said" inside it, the tail up to the window), a compact arrival card (navy ink on paper, a pale sky band
+     with the level edition stripe, values on one line), the corrected value in navy with a pencil underline, APPROVED as the sticky navy
+     action bar with a stamp icon (white on #13304d = 13:1). The end: a stamped passport page with the value the learner caught. */
+  body.gw-on.gw-desk .game-screen{gap:8px;}
+  body.gw-on.gw-desk .game-status{min-height:20px;}
+  body.gw-on.gw-desk .desk-body{gap:10px;}
+  body.gw-on.gw-desk .desk-say{display:flex; align-items:center; gap:10px; margin:8px 0 0; min-height:56px; padding:6px 8px 6px 6px; border-radius:18px; background:#13304d; color:#fffdf7;}
+  body.gw-on.gw-desk .desk-say::before{top:-9px; inset-inline-start:calc(56% - 9px); border:9px solid transparent; border-top-width:0; border-bottom-color:#13304d;}
+  body.gw-on.gw-desk .desk-replay{flex:0 0 auto; width:44px; height:44px; margin:0; box-shadow:none;}
+  body.gw-on.gw-desk .desk-replay svg{width:20px; height:20px;}
+  body.gw-on.gw-desk .desk-said-text{flex:1 1 auto; min-width:0; font-size:15px; line-height:1.35;}
+  body.gw-on.gw-desk .desk-show{flex:0 1 auto; width:auto; max-width:48%; min-height:44px; margin:0; padding:5px 12px; border:0; border-radius:999px; background:#fffdf7; color:#13304d; box-shadow:none; font-size:13px; line-height:1.2; white-space:normal;}
+  body.gw-on.gw-desk .desk-card{padding:0 0 4px; border-radius:16px; background:var(--gw-paper, #fffdf7); color:#13304d;}
+  body.gw-on.gw-desk .desk-band{min-height:0; padding:4px 14px 6px; background:#d4ecf7; color:#13304d; font-size:10.5px; letter-spacing:.1em; box-shadow:inset 0 -4px 0 var(--gw-ed, #4FC3E8);}
+  body.gw-on.gw-desk .desk-rows{padding:0 10px;}
+  body.gw-on.gw-desk .desk-row{min-height:46px; padding:3px 6px; gap:8px; color:#13304d; border-bottom-color:rgba(19,48,77,.16);}
+  body.gw-on.gw-desk .desk-label{flex:0 0 33%; font-size:10.5px; color:#4d6379;}
+  body.gw-on.gw-desk .desk-val{font-size:20px; line-height:1.15; color:#13304d; white-space:nowrap; overflow-wrap:normal; overflow:hidden;}
+  body.gw-on.gw-desk .desk-val.long{font-size:17px;}
+  body.gw-on.gw-desk .desk-val.xlong{font-size:15px;}
+  body.gw-on.gw-desk .desk-row.fixed .desk-val{display:flex; flex-direction:column; align-items:flex-start; gap:1px; padding:2px 0;}
+  body.gw-on.gw-desk .desk-old{font-size:12px; line-height:1.1; color:#5f7083; text-decoration-thickness:1.5px;}
+  body.gw-on.gw-desk .desk-pen{color:#13304d; text-decoration:underline; text-decoration-color:rgba(19,48,77,.42); text-decoration-thickness:2px; text-underline-offset:4px;}
+  body.gw-on.gw-desk .desk-blank{width:96px; border-bottom-color:#8193a6;}
+  body.gw-on.gw-desk .desk-today{margin:4px 14px 2px; font-size:12px; color:#4d6379;}
+  body.gw-on.gw-desk .desk-today b{color:#13304d;}
+  body.gw-on.gw-desk .desk-stamped{color:#c8352e; border-color:#c8352e; top:40%;}
+  body.gw-on.gw-desk .desk-chips{gap:6px;}
+  body.gw-on.gw-desk .desk-chip{min-height:48px; padding:4px 6px;}
+  body.gw-on.gw-desk .desk-stampbtn{position:sticky; bottom:calc(14px + var(--th-safe-b, 0px)); z-index:4; flex-direction:row; gap:10px; width:100%; height:56px; margin:2px 0 0; border-radius:999px;
+    background:#13304d; color:#fff; box-shadow:0 5px 0 rgba(19,48,77,.28), 0 12px 24px -14px rgba(19,48,77,.7);}
+  body.gw-on.gw-desk .desk-stampbtn svg{width:24px; height:24px;}
+  body.gw-on.gw-desk .desk-stampbtn span{font-family:'Fredoka',-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; font-size:18px; font-weight:700; letter-spacing:.08em;}
+  body.gw-on.gw-desk .desk-stampbtn:disabled{opacity:.62;}
+  @media (max-height:700px){ body.gw-on.gw-desk .desk-row{min-height:44px;} body.gw-on.gw-desk .game-status{min-height:16px;} body.gw-on.gw-desk .th-balloon, .gw-desk .th-say .th-balloon{font-size:14.5px; padding:6px 12px;} }
+  body.gw-on.gw-desk .desk-end{display:flex; flex-direction:column; align-items:center; gap:12px; padding:16px 16px 14px;}
+  body.gw-on.gw-desk .desk-end .game-result-title{margin:0;}
+  body.gw-on.gw-desk .desk-end .game-cta{width:100%;}
+  .desk-pass{position:relative; width:min(100%, 290px); box-sizing:border-box; padding:10px 16px 12px; border-radius:10px; text-align:center; transform:rotate(-1.2deg); border:2px solid #13304d;
+    background:repeating-linear-gradient(0deg, transparent 0 13px, rgba(19,48,77,.05) 13px 14px), linear-gradient(180deg, #e3f2fa 0, #fffdf7 46%); box-shadow:0 4px 0 rgba(19,48,77,.16);}
+  .desk-pass-head{display:block; margin:0 0 8px; padding-bottom:6px; border-bottom:1.5px dashed rgba(19,48,77,.32); font-size:10.5px; font-weight:900; letter-spacing:.2em; color:#4d6379; text-transform:uppercase;}
+  .desk-pass-val{display:block; font-family:'Fredoka',-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; font-weight:600; font-size:19px; line-height:1.3; color:#13304d;}
+  .desk-pass-stamp{display:inline-block; margin-top:8px; padding:3px 12px; border:2.5px solid #c8352e; border-radius:999px; box-shadow:inset 0 0 0 2px #fffdf7, inset 0 0 0 3.5px #c8352e; color:#c8352e;
+    font-family:'Fredoka',-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; font-weight:700; font-size:13px; letter-spacing:.1em; text-transform:uppercase; transform:rotate(-7deg); opacity:0;}
+  .desk-pass-stamp.on{opacity:1;}
+  .desk-pass.gold .desk-pass-stamp{color:#9a740f; border-color:#C99A1E; box-shadow:inset 0 0 0 2px #fffdf7, inset 0 0 0 3.5px #C99A1E;}
+  [dir="rtl"] .desk-pass-head, [dir="rtl"] .desk-pass-stamp{letter-spacing:0;}   /* Persian letters stay joined */
   /* Five new games wave B (Jq6f9OFv): Case Closed - case file, polaroids, place chips, clue cards, notebook, CASE CLOSED stamp (spec §4.6 tokens) */
   .case-body{display:flex; flex-direction:column; gap:14px;}
   .case-file{position:relative; overflow:hidden; text-align:start; padding:16px 14px 14px; background:var(--cat-review-soft); border-top:4px dashed color-mix(in srgb, var(--cat-review) 70%, transparent); transform:rotate(-.6deg);}
@@ -14952,7 +15000,8 @@ function maybeCelebrate(){
   if(typeof worldKind === 'function' && worldKind() && THEATRE_QUICK_VIEWS.includes(v)) extra.badges = pullJustEarnedBadges(true);   // teaching redesign phase 2: Try, then Your turn / Use it
   save();
   // in a world the end beat (2.4 s) and Order Up!'s closing line play first, then the overlay (worlds SPEC 4.9)
-  const wait = (typeof worldKind === 'function' && worldKind() && THEATRE_QUICK_VIEWS.includes(v)) ? (v === 'game-order' ? 4600 : 2700) : 900;
+  // Passport Desk: the ferry leaves over the booth with the end card on its counter, the passport is stamped at 2.4 s, then a moment to see it
+  const wait = (typeof worldKind === 'function' && worldKind() && THEATRE_QUICK_VIEWS.includes(v)) ? (v === 'game-order' ? 4600 : (v === 'game-desk' ? 4000 : 2700)) : 900;
   setTimeout(()=>{ if(state.view===v) showCelebration(v === 'game-path' || v === 'game-yc' ? 'path' : kind, detail, low, extra); }, wait);
 }
 
@@ -22053,14 +22102,13 @@ function deskStatusHtml(round){
   const streak = '';   // no streak pill (Farin's no-scores rule, 2026-11-14)
   return `<div class="game-status" id="desk-status"><span class="game-status-text">${round.finished ? L('Desk closed','Masa kapandı','میز بسته شد','Control cerrado') : gameProgressHtml(round.index, DESK_TRAVELLERS, L(`Traveller ${n} of ${DESK_TRAVELLERS}`, `Yolcu ${n} / ${DESK_TRAVELLERS}`, `مسافر ${n} از ${DESK_TRAVELLERS}`, `Viajero ${n} de ${DESK_TRAVELLERS}`))}</span>${streak}</div>`;
 }
-function deskBubbleHtml(round, t){
+function deskSaidInner(round, t){
   const shown = t.said || round.noVoice;
-  let inner;
-  if(t.reply && (t.mode === 'ask' || shown)) inner = `<span dir="ltr">${esc(t.reply)}</span>`;
-  else if(shown) inner = t.lines.map(l=>`<span class="desk-line" dir="ltr">${esc(l.show)}</span>`).join('');
-  else inner = `<span class="order-dots" aria-label="…"><i></i><i></i><i></i></span>`;
-  return `<div class="order-bubble desk-bubble" id="desk-bubble">${inner}</div>`;
+  if(t.reply && (t.mode === 'ask' || shown)) return `<span dir="ltr">${esc(t.reply)}</span>`;
+  if(shown) return t.lines.map(l=>`<span class="desk-line" dir="ltr">${esc(l.show)}</span>`).join('');
+  return `<span class="order-dots" aria-label="…"><i></i><i></i><i></i></span>`;
 }
+function deskBubbleHtml(round, t){ return `<div class="order-bubble desk-bubble" id="desk-bubble">${deskSaidInner(round, t)}</div>`; }
 function deskValHtml(round, t, f){
   const lang = round.lang, v = t.card[f], fx = t.fixed[f];
   if(fx) return `${fx.old ? `<s class="desk-old">${esc(fx.old)}</s> ` : ''}<span class="desk-pen">${esc(deskShow(f, v, lang))}</span>`;
@@ -22075,7 +22123,7 @@ function deskCardHtml(round, t){
     if(t.fixed[f]) cls.push('fixed');
     const val = t.card[f] == null ? L('empty','boş','خالی','vacío') : deskShow(f, t.card[f], lang);
     return `<button type="button" class="${cls.join(' ')}" data-action="desk-field" data-quiet="1" data-f="${f}" aria-label="${esc(deskLabel(f) + ': ' + val)}"${t.done ? ' disabled' : ''}>
-      <span class="desk-label">${esc(deskLabel(f))}</span><span class="desk-val" dir="ltr">${deskValHtml(round, t, f)}</span>${t.open === f ? '<svg class="desk-ring" viewBox="0 0 100 40" preserveAspectRatio="none" aria-hidden="true"><ellipse cx="50" cy="20" rx="47" ry="17"/></svg>' : ''}
+      <span class="desk-label">${esc(deskLabel(f))}</span><span class="desk-val${val.length > 16 ? ' xlong' : (val.length > 13 ? ' long' : '')}" dir="ltr">${deskValHtml(round, t, f)}</span>${t.open === f ? '<svg class="desk-ring" viewBox="0 0 100 40" preserveAspectRatio="none" aria-hidden="true"><ellipse cx="50" cy="20" rx="47" ry="17"/></svg>' : ''}
     </button>`;
   }).join('');
   const today = deskLevelKey(round.level) === 'B1' ? `<div class="desk-today">${esc(L('Today','Bugün','امروز','Hoy'))}: <b dir="ltr">${esc(deskShow('leaving', round.today, lang))}</b></div>` : '';
@@ -22106,6 +22154,8 @@ function deskFixHtml(round, t){
   return `<div class="desk-fix fade-in" id="desk-fix"><div class="desk-chips">${(deskChipsAt(t, f) || []).map((v, i)=>`<button class="game-opt desk-chip" data-action="desk-chip" data-quiet="1" data-i="${i}">${deskChipLabel(round, f, v)}</button>`).join('')}</div></div>`;
 }
 const DESK_TOWN = {f:[1, 3, 5, 7], m:[2, 4, 6, 8]};
+// a rubber stamp (handle, block, ink line): the icon on the world's APPROVED action bar
+const DESK_STAMP_ICON = '<svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true"><circle cx="12" cy="5" r="2.9" fill="currentColor"/><path d="M10.5 7.2h3l.8 4.6H9.7z" fill="currentColor"/><rect x="4.5" y="11.6" width="15" height="4.6" rx="1.4" fill="currentColor"/><path d="M6 20.2h12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>';
 function deskFaceSrc(round, t){
   if(worldKind() !== 'desk') return 'char-' + t.ch + '.png';
   const g = t.g || 'f', list = DESK_TOWN[g === 'm' ? 'm' : 'f'];
@@ -22129,6 +22179,17 @@ function deskStageSync(round, t){
 function deskBodyHtml(round, t){
   const shown = t.said || round.noVoice;
   const inWorld = worldKind() === 'desk';
+  // in the world (2026-11-19): replay and "Show what they said" sit inside the bubble row; APPROVED is the sticky navy action bar
+  if(inWorld){
+    const show = shown || (gameBrave('desk') && (t.replays || 0) < 2) ? '' : `<button type="button" class="btn btn-ghost btn-sm desk-show" data-action="desk-said" data-quiet="1">${esc(L('Show what they said','Söylediğini göster','گفته‌اش را نشان بده','Ver lo que ha dicho'))}</button>`;
+    return `${deskStageSync(round, t)}<div class="desk-trav in-world" id="desk-trav"><div class="order-bubble desk-bubble desk-say" id="desk-bubble">
+        <button type="button" class="game-play small desk-replay" data-action="desk-play" data-quiet="1" aria-label="${esc(L('Listen again','Tekrar dinle','دوباره گوش کن','Escuchar otra vez'))}">${ICONS.soundOn}</button>
+        <span class="desk-said-text">${deskSaidInner(round, t)}</span>${show}</div></div>
+      ${deskCardHtml(round, t)}
+      ${deskFixHtml(round, t)}
+      <button type="button" class="desk-stampbtn" id="desk-stampbtn" data-action="desk-stamp" data-quiet="1"${t.done ? ' disabled' : ''}>${DESK_STAMP_ICON}<span>${esc(L('APPROVED','ONAYLANDI','تأیید شد','APROBADO'))}</span></button>
+      ${t.done ? `<button type="button" class="desk-skip" data-action="desk-skip" data-quiet="1" aria-label="${esc(L('Next traveller','Sonraki yolcu','مسافر بعدی','Siguiente viajero'))}"></button>` : ''}`;
+  }
   return `<div class="desk-trav${inWorld ? ' in-world' : ''}" id="desk-trav">
       ${inWorld ? deskStageSync(round, t) : `<span class="desk-who-wrap"><img class="desk-who" id="desk-who" src="${deskFaceSrc(round, t)}" alt=""></span>`}
       ${deskBubbleHtml(round, t)}
@@ -22150,6 +22211,45 @@ function deskResultHtml(round){
     ${gameDoneCta()}
   </div>`;
 }
+// The end in the world (worlds SPEC 10, 2026-11-19 re-review): the booth stays behind the card (skins.js end.over); the souvenir is a passport
+// page with the value the learner caught ("thirteen, not thirty"), stamped once the ferry has gone (deskEndStamp); no numbers anywhere.
+function deskEndHtml(round){
+  const st = gameRoundStats('desk', round), k = deskSouvenir(round), lang = round.lang === 'es' ? 'es' : 'en';
+  return `<div class="game-card tight desk-end fade-in" id="desk-end">
+    <div class="desk-pass${st.perfect ? ' gold' : ''}" id="desk-pass" role="img" aria-label="${esc(L('Passport','Pasaport','گذرنامه','Pasaporte') + (k ? ': ' + k.text : ''))}">
+      <span class="desk-pass-head" aria-hidden="true">${esc(L('PASSPORT','PASAPORT','گذرنامه','PASAPORTE'))}</span>
+      ${k ? `<b class="desk-pass-val" dir="ltr" lang="${lang}" aria-hidden="true">${esc(k.text)}</b>` : ''}
+      <span class="desk-pass-stamp${round.endStamped ? ' on' : ''}" aria-hidden="true">${esc(L('APPROVED','ONAYLANDI','تأیید شد','APROBADO'))}</span>
+    </div>
+    <div class="game-result-title">${st.perfect ? L('All clear!','Hepsi temiz!','همه بی‌خطا!','¡Todo en orden!') : L('Everyone is through.','Herkes geçti.','همه رد شدن.','Ya han pasado todos.')}</div>
+    ${gameDoneCta()}
+  </div>`;
+}
+function deskEndStamp(){
+  const vp = state.viewParams, round = vp && vp.round, st = document.querySelector('#desk-pass .desk-pass-stamp');
+  if(!round || !st || st.classList.contains('on')) return;
+  round.endStamped = true; st.classList.add('on');
+  if(!reducedMotion()) anim(st, [{transform:'rotate(-14deg) scale(1.7)', opacity:0}, {transform:'rotate(-7deg) scale(1)', opacity:1}], {duration:220, easing:'ease-out'});
+  sfx('stamp'); buzz([14]);
+}
+// The officer's "Passport, please!" in the world: a balloon from off the picture, at the bottom centre of the plate (the booth's counter, where
+// the learner stands), in the language being learned; it waits for the opening shot to end so it sits on the band.
+function deskOfficer(){
+  const st = document.querySelector('.th-world-art .th-world-stage'); if(!st) return null;
+  let a = document.getElementById('desk-officer');
+  if(!a){ a = document.createElement('i'); a.id = 'desk-officer'; a.className = 'gw-anchor'; a.setAttribute('aria-hidden', 'true'); st.appendChild(a); }
+  return a;
+}
+function deskGreet(round, line){
+  let n = 0;
+  const go = ()=>{
+    if(!state.viewParams || state.viewParams.round !== round) return;
+    if(document.body.classList.contains('gw-establish') && n++ < 24){ setTimeout(go, 150); return; }
+    if(worldKind() === 'desk' && deskOfficer() && Theatre.say(line, {kind:'balloon', who:'desk-officer', lang:round.lang === 'es' ? 'es' : 'en', ms:5000})) return;
+    companionSay(line, 2200);
+  };
+  go();
+}
 // One-time "how to play" card, shown only before the learner's very first Passport Desk round
 // (gamesMet() turns false->true the moment they finish one, on roadmap or Games shelf alike).
 function deskIntroHtml(){
@@ -22168,11 +22268,11 @@ function deskIntroHtml(){
   </div>`;
 }
 function renderGameDesk(){
-  const vp = state.viewParams, round = vp.round, t = deskCur(round);
+  const vp = state.viewParams, round = vp.round, t = deskCur(round), over = round.finished || !t, inWorld = worldKind() === 'desk';
   return `<div class="fade-in game-screen">
     ${gameTopHtml(L('Passport','Pasaport','گذرنامه','Pasaporte'))}
-    ${deskStatusHtml(round)}
-    <div class="desk-body" id="desk-body">${(round.intro || round.finished || !t) ? deskStageSync(round, null) : ''}${round.intro ? deskIntroHtml() : ((round.finished || !t) ? deskResultHtml(round) + renderBadgeUnlockCard(pullJustEarnedBadges()) : deskBodyHtml(round, t))}</div>
+    ${over && inWorld ? '' : deskStatusHtml(round)}
+    <div class="desk-body" id="desk-body">${(round.intro || over) ? deskStageSync(round, null) : ''}${round.intro ? deskIntroHtml() : (over ? (inWorld ? deskEndHtml(round) : deskResultHtml(round)) + renderBadgeUnlockCard(pullJustEarnedBadges()) : deskBodyHtml(round, t))}</div>
   </div>`;
 }
 function deskRefresh(){
@@ -22197,7 +22297,7 @@ function deskArrive(round){
   anim(document.getElementById('desk-who'), [{transform:`translateX(${rtl ? -80 : 80}px)`, opacity:0}, {transform:'translateX(0)', opacity:1, offset:.75}, {transform:'translateX(0) scale(1.06, .94)', offset:.9}, {transform:'translateX(0) scale(1)'}], {duration:400, easing:SPRING});
   anim(document.getElementById('desk-card'), [{transform:'rotate(4deg) translateY(12px)', opacity:0}, {transform:'rotate(0) translateY(0)', opacity:1}], {duration:250, easing:'ease-out'});
   sfx('hop');
-  if(round.index === 0 && !round.greeted){ round.greeted = true; companionSay(round.lang === 'es' ? '¡Pasaporte, por favor!' : 'Passport, please!', 2200); }
+  if(round.index === 0 && !round.greeted){ round.greeted = true; deskGreet(round, round.lang === 'es' ? '¡Pasaporte, por favor!' : 'Passport, please!'); }
   if(round.noVoice && !round.noVoiceSaid){ round.noVoiceSaid = true; setTimeout(()=>{ if(state.view === 'game-desk') companionSay(orderNoVoiceText(), 3400); }, 2300); }
   deskSpeak(round, deskAllSaid(t), 420);
 }
@@ -22276,7 +22376,7 @@ function deskStamp(){
   deskTimer = setTimeout(()=>{ deskBusy = false; if(state.viewParams !== vp || state.view !== 'game-desk') return; deskAdvance(vp, round); }, 1500);
 }
 function fxDeskClosed(){
-  const lamp = document.getElementById('desk-lamp');
+  const lamp = document.getElementById('desk-lamp'); if(!lamp) return;   // in the world the end is the ferry, the sign and the passport stamp
   anim(lamp, [{opacity:1, transform:'scale(1)'}, {opacity:.25, transform:'scale(.92)'}], {duration:420, easing:'ease-out', fill:'forwards'});
   sfx('tick');
   setTimeout(()=>{ sfx('reveal'); const p = centerOf(lamp); sparkBurst(p.x, p.y, 10, 'var(--cat-review)', 70); }, 380);
@@ -30785,7 +30885,7 @@ const THEATRE_QUICK = ['match','build','cross','order','desk','spell','bingo','h
 const THEATRE_QUICK_VIEWS = THEATRE_QUICK.map(k=>'game-' + k);
 const THEATRE_KINDS = ['path','chores','mystery','radio'].concat(THEATRE_QUICK);
 const THEATRE_VIEWS = ['game-path','game-yc','game-chores-building','game-chores-room','game-mystery','game-v2'].concat(THEATRE_QUICK_VIEWS);
-const THEATRE_VER = '17';   // 17: text direction in the fa UI (Latin-script lines left to right), the companion line clear of x; 16: Games 2.0 step 5 part 4 (sound spots: gulls + the library clock; Passport Desk's traveller behind the booth counter; Trap Dash lanes); 15: Games 2.0 step 4 (Brave switch, boss beat, Captain); 14: the world art wiring + Sam's balloon waits for his picture (2026-11-16)
+const THEATRE_VER = '18';   // 18: Passport Desk re-review (captions on the art, the HUD strip, the end over the booth, the horn, Theatre.quiet), Theatre 1.2.3; 17: text direction in the fa UI (Latin-script lines left to right), the companion line clear of x; 16: Games 2.0 step 5 part 4 (sound spots: gulls + the library clock; Passport Desk's traveller behind the booth counter; Trap Dash lanes); 15: Games 2.0 step 4 (Brave switch, boss beat, Captain); 14: the world art wiring + Sam's balloon waits for his picture (2026-11-16)
 // World Kit switch (worlds SPEC 4.14): one flag per quick game, on once its art and checks pass (Farin 11-10: switch on what is done).
 // ?worlds=1 previews every world in this browser (?worlds=0 switches the preview off). Off = the game plays over its poster's soft backdrop.
 // 2026-11-15 World Kit v1 live: Order Up!, Word Bingo, Mini Cross, Build It, Say It Back (their plates and props passed art QC). Passport Desk waits
@@ -30921,9 +31021,10 @@ function worldTick(){
   const over = state.view === 'game-match' ? !!(r.matchedKeys && r.matchedKeys.length === r.pairCount) : !!r.finished;
   if(over && !r.beat){
     r.beat = 1;
-    if(Theatre.finale) Theatre.finale({});
+    if(Theatre.finale){ const fin = Theatre.finale({}), vp = state.viewParams; if(state.view === 'game-desk' && fin && fin.then) fin.then(()=>{ if(state.viewParams === vp && state.view === 'game-desk') deskEndStamp(); }); }
     if(state.view === 'game-order') orderSam('close');
   }
+  if(!over && Theatre.resetEnd) Theatre.resetEnd();   // Play again in the same world: the end state goes
 }
 // Build It (worlds SPEC 7): the model lighthouse on the bench grows one tier per sentence and lights at the end. Tiers shown =
 // round(6 x solved / total), so a short round still ends whole. One render, cut at its own red / white band edges (manifest-lighthouse.json).
@@ -31115,7 +31216,7 @@ function theatreExit(){
    their nodes, Cozy Chores and Case Closed play the old way. Set GAMES_V2_LIVE.radio / .mystery / .chores to true (both apps) to put that game live; bump GAMES_VER
    whenever a games/ engine changes. (var, not const: SHELF_GAMES reads the flag earlier in the file.) */
 // (GAMES_V2_LIVE, the per-game switch, is declared above SHELF_GAMES)
-var GAMES_VER = '11';   // 11: Games 2.0 phase 1 for Harbour Files / Open House / Mini Radio (2026-11-16)
+var GAMES_VER = '12';   // 12: Open House 0.6.1 (the ask chips' pictures contained, 2026-11-19); 11: Games 2.0 phase 1 for Harbour Files / Open House / Mini Radio (2026-11-16)
 var g2Flag = null, g2Game = null, g2KeepNow = null, g2Pending = null;
 var G2_KINDS = ['chores', 'mystery', 'radio'];
 var G2_COZY = {A1:'movein', A2:'cake', B1:'bouquet', B2:'laundry', C1:'party'};   // the anchor project per level (Cozy GDD 0)

@@ -19,7 +19,8 @@
                {src, cls, id, box:[x%, y%, w%], sit, ready}; sit = stands on the panel's top edge), text (live text on the art {text | key
                (content.js worldText), cls, id, box, ready}, never mirrored), sfx
                ({name:[files]} over the shared CC0 kit), css (games/worlds/<kind>/world.css once it exists), spots (Games 2.0 SPEC 5.4: sound
-               names played now and then, every 6-14 s; 'gull' and 'clock' are made in code when no file has the name). Only ready:true art shows.
+               names played now and then, every 6-14 s; 'gull' and 'clock' are made in code when no file has the name), end ({over, spot, at}: the finale keeps the
+               whole place behind the end card / plays a sound such as the code-made 'horn' at ms). Only ready:true art shows.
    The world is on per kind with the app's WORLDS_LIVE switch (?worlds=1 previews all); with it off the game plays over the soft
    backdrop above. Anything a skin needs beyond tokens goes in its world.css under body.gw-on.gw-<kind>. */
 window.THEATRE_SKINS = {
@@ -57,9 +58,12 @@ window.THEATRE_SKINS = {
     palette:{sky:'#e9f8fc', sky2:'#b9e6f2', glow:'#ffffff', ground:'#5fc3cc', ink:'#163450', accent:'#c23a32', accentInk:'#ffffff'},
     backdrop:{src:null, position:'64% 50%', blur:30, veil:.54}, props:[],
     gw:{bg:'#e8f6fd', surface:'#e3c595', paper:'#fffdf7', ink:'#13304d', hue:'var(--clay-sky)', accent:'#c8352e', cta:'#13304d', ctaInk:'#ffffff'},
-    world:{mood:'day', stage:'clamp(180px, 34dvh, 340px)', plate:{src:'games/worlds/desk/art/desk-booth.webp', pos:'50% 50%', ready:true}, front:{top:'74%'}, bed:{freq:320, q:.4, vol:.028, lfo:.12}, spots:['gull'], layers:[
+    // the band about 30dvh on a phone (one screen per round, 2026-11-19 re-review): 140 px at 640 tall, 253 at 844, 292 at 915
+    world:{mood:'day', stage:'clamp(140px, calc(55.4dvh - 214.5px), 300px)', plate:{src:'games/worlds/desk/art/desk-booth.webp', pos:'50% 50%', ready:true}, front:{top:'74%'}, bed:{freq:320, q:.4, vol:.028, lfo:.12}, spots:['gull'],
+      end:{over:true, spot:'horn', at:250}, layers:[   // the end: the booth stays behind the end card; the ferry sails out with its horn
       {src:'games/worlds/desk/art/desk-ferry.webp', cls:'gw-ferry', box:[14, 42, 36], ready:true},
-      {src:'games/worlds/desk/art/desk-gull.webp', cls:'gw-gull', box:[76, 2, 8], ready:true}], text:[], sfx:{}, css:null}},
+      {src:'games/worlds/desk/art/desk-gull.webp', cls:'gw-gull', box:[76, 2, 8], ready:true}], text:[
+      {key:'closed', cls:'gw-closed', id:'gw-closed', box:[35, 27.5, 30], ready:true}], sfx:{}, css:null}},   // the window sign turns to CLOSED at the end
   // Magic Words: the golden door in the rose room
   spell:{card:'art/posters/card-spell.webp', focus:'84%',
     palette:{sky:'#fcf2f8', sky2:'#efd5e5', glow:'#fff4d6', ground:'#eca560', ink:'#3a2342', accent:'#f0b232', accentInk:'#3a2342'},

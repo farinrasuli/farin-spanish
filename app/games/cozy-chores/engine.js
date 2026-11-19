@@ -36,7 +36,7 @@
 'use strict';
 if(window.CozyChores) return;
 var W = window, D = document;
-var VERSION = '0.6.0';   // 2026-11-16 Games 2.0 phase 1: tap to hear, Jot it down, the folded note + gold corners, 25 / 60 s hints, precision sparkle, light + room beds
+var VERSION = '0.6.1';   // 0.6.1 2026-11-19: the ask chips' pictures at their own shape (contain); 0.6.0 2026-11-16 Games 2.0 phase 1: tap to hear, Jot it down, the folded note + gold corners, 25 / 60 s hints, precision sparkle, light + room beds
 var ABORT = {abort:true};
 var G = null;                       // the running game (one at a time, like chStage in the app)
 var SPRING = 'cubic-bezier(.34,1.56,.64,1)';

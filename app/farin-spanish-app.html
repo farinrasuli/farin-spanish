@@ -22294,7 +22294,9 @@ function deskAllSaid(t){ return t.lines.map(l=>l.say).join(' '); }
 function deskArrive(round){
   const t = deskCur(round); if(!t || round.finished) return;
   const rtl = document.documentElement.dir === 'rtl';
-  anim(document.getElementById('desk-who'), [{transform:`translateX(${rtl ? -80 : 80}px)`, opacity:0}, {transform:'translateX(0)', opacity:1, offset:.75}, {transform:'translateX(0) scale(1.06, .94)', offset:.9}, {transform:'translateX(0) scale(1)'}], {duration:400, easing:SPRING});
+  // in the world the traveller's picture is never squeezed (Farin's rule 1: full art, never pressed): a slide and a fade, no squash
+  if(worldKind() === 'desk') anim(document.getElementById('desk-who'), [{transform:`translateX(${rtl ? -12 : 12}%)`, opacity:0}, {transform:'translateX(0)', opacity:1}], {duration:400, easing:'cubic-bezier(.2,.7,.2,1)'});
+  else anim(document.getElementById('desk-who'), [{transform:`translateX(${rtl ? -80 : 80}px)`, opacity:0}, {transform:'translateX(0)', opacity:1, offset:.75}, {transform:'translateX(0) scale(1.06, .94)', offset:.9}, {transform:'translateX(0) scale(1)'}], {duration:400, easing:SPRING});
   anim(document.getElementById('desk-card'), [{transform:'rotate(4deg) translateY(12px)', opacity:0}, {transform:'rotate(0) translateY(0)', opacity:1}], {duration:250, easing:'ease-out'});
   sfx('hop');
   if(round.index === 0 && !round.greeted){ round.greeted = true; deskGreet(round, round.lang === 'es' ? '¡Pasaporte, por favor!' : 'Passport, please!'); }
@@ -22367,7 +22369,7 @@ function deskStamp(){
   anim(mark, [{transform:'rotate(-10deg) scale(1.5)', opacity:0}, {transform:'rotate(-10deg) scale(1)', opacity:1}], {duration:200, easing:'ease-out'});
   sfx('stamp'); buzz([14]);
   const p = centerOf(mark); sparkBurst(p.x, p.y, 6, 'var(--success)', 50);
-  anim(document.getElementById('desk-who'), [{transform:'rotate(0)'}, {transform:'rotate(-5deg)'}, {transform:'rotate(5deg)'}, {transform:'rotate(0)'}], {duration:500, easing:'ease-in-out'});
+  anim(document.getElementById('desk-who'), worldKind() === 'desk' ? [{transform:'translateY(0)'}, {transform:'translateY(-3%)'}, {transform:'translateY(0)'}] : [{transform:'rotate(0)'}, {transform:'rotate(-5deg)'}, {transform:'rotate(5deg)'}, {transform:'rotate(0)'}], {duration:500, easing:'ease-in-out'});   // in the world: a small happy hop (the whole picture)
   companionCheer();
   if(t.clean && (round.combo === 3 || round.combo === 5)) setTimeout(()=>comboCheck(round.combo), 300);
   deskBusy = true;
@@ -32598,7 +32600,7 @@ const HANDLERS = {
     if(o.ok){ t.reply = t.ask.answer.show; deskApplyFix(r, t, t.open); deskSpeak(r, t.ask.answer.say, 200); return; }
     t.tries++; r.combo = 0;
     deskShake(el); sfx('tick'); companionOops();
-    anim(document.getElementById('desk-who'), [{transform:'rotate(0)'}, {transform:'rotate(-6deg)'}, {transform:'rotate(0)'}], {duration:360, easing:'ease-in-out'});
+    anim(document.getElementById('desk-who'), worldKind() === 'desk' ? [{transform:'translateX(0)'}, {transform:'translateX(-2%)'}, {transform:'translateX(2%)'}, {transform:'translateX(0)'}] : [{transform:'rotate(0)'}, {transform:'rotate(-6deg)'}, {transform:'rotate(0)'}], {duration:360, easing:'ease-in-out'});
     companionSay(L('Hmm, that question sounds odd. Try another.','Hmm, bu soru tuhaf geldi. Başkasını dene.','هوم، این سؤال عجیب است. یکی دیگر را امتحان کن.','Mmm, esa pregunta suena rara. Prueba otra.'), 2200);
     save();
   },

@@ -1577,6 +1577,8 @@
   .wl-admin-banner.wl-on{background:#FFA53D; color:#1A1410;}
   .wl-admin-banner.wl-on .item-sub, .wl-admin-banner.wl-on .item-title, .wl-admin-banner.wl-on .eyebrow, .wl-admin-banner.wl-on .chevron{color:#1A1410;}
   .btn-whatsapp{background:#2e9e5b; color:#fff; box-shadow:inset 0 1.5px 2px rgba(255,255,255,.4), inset 0 -5px 8px -3px rgba(0,0,0,.25), 0 8px 16px -8px rgba(46,158,91,.55);}
+  .btn-telegram{background:#1d8fcb; color:#fff; box-shadow:inset 0 1.5px 2px rgba(255,255,255,.4), inset 0 -5px 8px -3px rgba(0,0,0,.25), 0 8px 16px -8px rgba(29,143,203,.55);}   /* Telegram beside WhatsApp (2026-11-19) */
+  .btn-telegram:active{filter:brightness(.88);}
   /* ---------- Messages: in-app chat with Farin + admin › Inbox (2026-11-12) ---------- */
   .msg-screen{padding-top:4px;}
   .msg-h{font-size:30px; line-height:1.08; margin:6px 0 0;}
@@ -2025,8 +2027,8 @@
   .ins-phl:hover, .ins-phl:focus-visible{text-decoration:underline; text-underline-offset:2px;}
   .ins-phl svg{width:14px; height:14px; flex:none;}
   .ins-pa{flex:none; display:flex; align-items:center; gap:4px;}
-  .ins-pa .btn-whatsapp{display:inline-flex; align-items:center; gap:6px; text-decoration:none;}
-  .ins-pa .btn-whatsapp svg{width:16px; height:16px;}
+  .ins-pa .btn-whatsapp, .ins-pa .btn-telegram{display:inline-flex; align-items:center; gap:6px; text-decoration:none;}
+  .ins-pa .btn-whatsapp svg, .ins-pa .btn-telegram svg{width:16px; height:16px;}
   @media (max-width:440px){ .ins-p{flex-wrap:wrap;} .ins-pa{width:100%; padding-inline-start:50px;} }
   .ins-top{display:flex; align-items:center; gap:10px; border-bottom:1px solid var(--border-soft); min-width:0;}
   .ins-top:last-child{border-bottom:0;}
@@ -2140,8 +2142,8 @@
   .ins-otxt>span{font-size:12.5px; line-height:1.5; color:var(--ink-soft);}
   .ins-obtns{display:flex; flex-wrap:wrap; gap:6px;}
   @media (max-width:520px){ .ins-offer{grid-template-columns:1fr;} }
-  .ins-pa .btn-whatsapp span{white-space:nowrap;}
-  .ins-pa .ins-rbs, .ins-pa .btn-whatsapp{flex:none;}
+  .ins-pa .btn-whatsapp span, .ins-pa .btn-telegram span{white-space:nowrap;}
+  .ins-pa .ins-rbs, .ins-pa .btn-whatsapp, .ins-pa .btn-telegram{flex:none;}
   .ins-pa{flex-wrap:wrap; row-gap:6px; justify-content:flex-end;}
   @media (max-width:440px){ .ins-pa{justify-content:flex-start;} }
   .ins-group.is-ready{border-color:var(--success); box-shadow:inset 0 0 0 1px var(--success);}
@@ -4038,6 +4040,7 @@ const ICONS = {
   back:'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>',
   gear:'<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3.2"/><path d="M19.4 13.5a7.6 7.6 0 0 0 0-3l2-1.4-2-3.4-2.3.7a7.6 7.6 0 0 0-2.6-1.5L14 2h-4l-.5 2.4a7.6 7.6 0 0 0-2.6 1.5l-2.3-.7-2 3.4 2 1.4a7.6 7.6 0 0 0 0 3l-2 1.4 2 3.4 2.3-.7a7.6 7.6 0 0 0 2.6 1.5L10 22h4l.5-2.4a7.6 7.6 0 0 0 2.6-1.5l2.3.7 2-3.4z"/></svg>',
   home:'<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11.5 12 4l8 7.5"/><path d="M6 10v9h12v-9"/></svg>',
+  telegram:'<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M21.2 4.3 2.9 11.4c-1.2.5-1.2 1.2-.2 1.5l4.6 1.4 1.8 5.4c.2.6.4.8.9.8.4 0 .6-.2.9-.5l2.2-2.1 4.6 3.4c.8.5 1.4.2 1.6-.8l3-14.3c.3-1.3-.5-1.8-1.3-1.5zM9.1 14.2l8.7-5.5c.4-.3.8-.1.5.2l-7.4 6.7-.3 3.1-1.5-4.5z"/></svg>',
   whatsapp:'<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M17.5 14.4c-.3-.1-1.7-.9-2-1-.3-.1-.5-.1-.7.1-.2.3-.8 1-.9 1.1-.2.2-.3.2-.6.1-.3-.1-1.2-.5-2.3-1.5-.9-.8-1.4-1.8-1.6-2.1-.2-.3 0-.5.1-.6.1-.1.3-.3.4-.5.1-.1.2-.3.3-.5.1-.2 0-.4 0-.5C10.1 9 9.6 7.8 9.4 7.3c-.2-.5-.4-.4-.6-.4h-.5c-.2 0-.5.1-.7.3-.3.3-1 1-1 2.4s1 2.8 1.2 3c.1.2 2 3.1 4.9 4.3.7.3 1.2.5 1.6.6.7.2 1.3.2 1.8.1.6-.1 1.7-.7 1.9-1.3.2-.7.2-1.2.2-1.3-.1-.2-.3-.2-.6-.4z"/><path d="M12 2.5A9.5 9.5 0 0 0 3.6 17L2.5 21.5l4.6-1.2A9.5 9.5 0 1 0 12 2.5z" fill="none" stroke="currentColor" stroke-width="1.4"/></svg>',
   warn:'<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.5 22 20.5H2z"/><line x1="12" y1="9.5" x2="12" y2="14.5"/><circle cx="12" cy="17.5" r="0.9" fill="currentColor" stroke="none"/></svg>',
   search:'<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.6" y2="16.6"/></svg>',
@@ -15469,7 +15472,7 @@ function renderPrivacyPolicy(){
   const MAIL = `<a href="mailto:farinrasuli@gmail.com" dir="ltr" style="color:inherit;">farinrasuli@gmail.com</a>`;
   const ielts = LOGIN_APP === 'en';
   return `<div class="fade-in">
-    ${sectionHead(L('Privacy Policy','Gizlilik Politikası','حریم خصوصی','Política de Privacidad'), CL('Last updated: November 18, 2026','Son güncelleme: 18 Kasım 2026','آخرین به‌روزرسانی: ۱۸ نوامبر ۲۰۲۶','Última actualización: 18 de noviembre de 2026'))}
+    ${sectionHead(L('Privacy Policy','Gizlilik Politikası','حریم خصوصی','Política de Privacidad'), CL('Last updated: November 19, 2026','Son güncelleme: 19 Kasım 2026','آخرین به‌روزرسانی: ۱۹ نوامبر ۲۰۲۶','Última actualización: 19 de noviembre de 2026'))}
     <div class="screen" style="padding-top:0;">
       <div class="card-flat" style="line-height:1.7; font-size:14px;">
         ${P(L("A short summary of what Farin English and Farin Spanish keep about you, and why. The full policy is on our website.",
@@ -15490,10 +15493,10 @@ function renderPrivacyPolicy(){
             "Şifren, unutursan Farin sana yardım edebilsin diye giriş kaydınla birlikte saklanır. Onu yalnızca Farin, uygulamanın şifreyle korunan yönetim sayfasında görür; bu kayıt da ancak adın ve şifrenle bulunabilir. Başka hiçbir yerde kullanmadığın bir şifre seç.",
             "رمزت، همراه با سابقهٔ ورودت نگه داشته می‌شود تا اگر فراموشش کردی، فرین بتواند کمکت کند. فقط فرین آن را در صفحهٔ مدیریت اپ که با رمز محافظت می‌شود می‌بیند، و این سابقه را فقط با اسم و رمز خودت می‌شود پیدا کرد. رمزی انتخاب کن که جای دیگری از آن استفاده نمی‌کنی.",
             "Tu contraseña, guardada con tu registro de inicio de sesión para que Farin pueda ayudarte si la olvidas. Solo Farin la ve, en la página de administración de la app, protegida con contraseña, y el registro solo se puede encontrar con tu nombre y tu contraseña. Elige una contraseña que no uses en ningún otro sitio."),
-          L("Your WhatsApp number, and whether you want news and offers on WhatsApp (see section 2).",
-            "WhatsApp numaran ve WhatsApp'tan haber ve fırsat almak isteyip istemediğin (bkz. 2. bölüm).",
-            "شمارهٔ واتس‌اپت، و اینکه اخبار و پیشنهادها را در واتس‌اپ می‌خواهی یا نه (بخش ۲ را ببین).",
-            "Tu número de WhatsApp, y si quieres recibir novedades y ofertas por WhatsApp (mira la sección 2)."),
+          L("Your WhatsApp number, and whether you want news and offers on WhatsApp or Telegram (see section 2).",
+            "WhatsApp numaran ve WhatsApp ya da Telegram'dan haber ve fırsat almak isteyip istemediğin (bkz. 2. bölüm).",
+            "شمارهٔ واتس‌اپت، و اینکه اخبار و پیشنهادها را در واتس‌اپ یا تلگرام می‌خواهی یا نه (بخش ۲ را ببین).",
+            "Tu número de WhatsApp, y si quieres recibir novedades y ofertas por WhatsApp o Telegram (mira la sección 2)."),
           L("Your course waiting list entries, only if you join a course's waiting list: your name and surname, phone number, the course, the app and your language (see section 5).",
             "Kurs bekleme listesi kayıtların, yalnızca bir kursun bekleme listesine katılırsan: adın ve soyadın, telefon numaran, kurs, uygulama ve dilin (bkz. 5. bölüm).",
             "ثبت‌نامت در فهرست انتظار دوره‌ها، فقط اگر در فهرست انتظار یک دوره ثبت‌نام کنی: اسم و فامیلت، شمارهٔ تلفنت، دوره، اپ و زبانت (بخش ۵ را ببین).",
@@ -15518,18 +15521,18 @@ function renderPrivacyPolicy(){
             B("Ne istiyoruz.")+" Kaydı tamamlamak için numaranı ülke koduyla birlikte girmen gerekir. 13 Kasım 2026'dan önce katıldıysan uygulama bunu bir kez «Kulübümüze katıl» penceresiyle sorar; «Şimdi değil» diyebilirsin. Numaranı Ayarlar'dan da ekleyebilir veya değiştirebilirsin.",
             B("چه می‌خواهیم.")+" برای تمام کردن ثبت‌نام باید شماره‌ات را با کد کشور وارد کنی. اگر قبل از ۱۳ نوامبر ۲۰۲۶ عضو شده‌ای، اپ یک بار در پنجرهٔ «به باشگاه ما بپیوند» آن را می‌پرسد و می‌توانی «الان نه» را بزنی. از تنظیمات هم می‌توانی شماره را اضافه کنی یا عوضش کنی.",
             B("Qué pedimos.")+" Lo necesitas, con el código de país, para terminar el registro. Si te uniste antes del 13 de noviembre de 2026, la app te lo pide una vez en la ventana «Únete a nuestro club», y puedes tocar «Ahora no». También puedes añadirlo o cambiarlo en Configuración."),
-          L(B("Why.")+" So Farin, the teacher who runs FE School, can help you on WhatsApp with your account, your courses and your questions. For example, if you join a course's waiting list, he sends you the course link and how to pay. He writes these messages himself; the app does not send WhatsApp messages automatically.",
-            B("Neden.")+" FE School'u yöneten öğretmen Farin; hesabın, kursların ve soruların konusunda sana WhatsApp'tan yardım edebilsin diye. Örneğin bir kursun bekleme listesine katılırsan sana kursun bağlantısını ve nasıl ödeme yapacağını yazar. Bu mesajları Farin kendisi yazar; uygulama otomatik WhatsApp mesajı göndermez.",
-            B("چرا.")+" تا فرین، معلمی که FE School را اداره می‌کند، بتواند در واتس‌اپ دربارهٔ حسابت، دوره‌هایت و سؤال‌هایت کمکت کند. مثلاً اگر در فهرست انتظار یک دوره ثبت‌نام کنی، لینک دوره و روش پرداخت را برایت می‌فرستد. این پیام‌ها را خود فرین می‌نویسد؛ اپ به‌طور خودکار پیام واتس‌اپ نمی‌فرستد.",
-            B("Por qué.")+" Para que Farin, el profesor que dirige FE School, pueda ayudarte por WhatsApp con tu cuenta, tus cursos y tus preguntas. Por ejemplo, si te apuntas a la lista de espera de un curso, te envía el enlace del curso y cómo pagar. Él mismo escribe estos mensajes; la app no envía mensajes de WhatsApp automáticamente."),
-          L(B("News and offers, only if you say yes.")+" Farin sends you news, discounts and offers on WhatsApp only if you tick “Send me news and offers on WhatsApp”. This box is separate from your number, optional and unticked by default, at signup and in the “Join our club” pop-up. The app saves your choice and its date with your account, and Farin sees it in the admin page. If you haven't ticked it (this includes everyone who joined before 14 November 2026), you don't get news and offers. You can turn it on or off any time in Settings › “Stay in touch”.",
-            B("Haberler ve fırsatlar, yalnızca istersen.")+" Farin sana WhatsApp'tan haber, indirim ve fırsat mesajlarını yalnızca «Bana WhatsApp'tan haberler ve fırsatlar gönder» kutusunu işaretlersen gönderir. Bu kutu numarandan ayrıdır, isteğe bağlıdır ve hem kayıtta hem «Kulübümüze katıl» penceresinde işaretsiz gelir. Uygulama seçimini ve tarihini hesabınla birlikte saklar; Farin bunu yönetim sayfasında görür. Kutuyu işaretlemediysen (14 Kasım 2026'dan önce katılan herkes dahil) haber ve fırsat mesajı almazsın. Bunu istediğin zaman Ayarlar › «İletişimde kal» bölümünden açıp kapatabilirsin.",
-            B("اخبار و پیشنهادها، فقط اگر خودت بخواهی.")+" فرین فقط وقتی اخبار، تخفیف‌ها و پیشنهادها را در واتس‌اپ برایت می‌فرستد که تیک «اخبار و پیشنهادها را در واتس‌اپ برایم بفرست» را زده باشی. این جعبه از شماره‌ات جداست، اختیاری است و هم موقع ثبت‌نام و هم در پنجرهٔ «به باشگاه ما بپیوند» بدون تیک است. اپ انتخابت و تاریخش را همراه حسابت ذخیره می‌کند و فرین آن را در صفحهٔ مدیریت می‌بیند. اگر تیکش را نزده باشی (از جمله همهٔ کسانی که قبل از ۱۴ نوامبر ۲۰۲۶ عضو شده‌اند)، اخبار و پیشنهاد نمی‌گیری. هر وقت بخواهی می‌توانی از تنظیمات › «در ارتباط باش» روشن یا خاموشش کنی.",
-            B("Novedades y ofertas, solo si dices que sí.")+" Farin te envía novedades, descuentos y ofertas por WhatsApp solo si marcas «Envíame novedades y ofertas por WhatsApp». Esta casilla es aparte de tu número, es opcional y aparece sin marcar en el registro y en la ventana «Únete a nuestro club». La app guarda tu elección y su fecha con tu cuenta, y Farin la ve en la página de administración. Si no la has marcado (incluido todo el que se unió antes del 14 de noviembre de 2026), no recibes novedades ni ofertas. Puedes activarla o desactivarla cuando quieras en Configuración › «Mantente en contacto»."),
-          L(B("Small group class offers.")+" When enough learners with your level and goal could fill a small group class (4 to 6 people), Farin may send you an offer on WhatsApp, but only if you said yes to news and offers. His message links a page on thefeschool.com made for you. It shows your first name, your level and goal, your group's favourite topics, how many learners match, and the class times and price (the times in Iran or Turkey time, chosen from your phone number's country code). The page reads these from its own link; it saves nothing and uses no cookies or analytics.",
-            B("Küçük grup dersi teklifleri.")+" Senin seviyende ve hedefinde küçük bir grup dersini (4–6 kişi) dolduracak kadar öğrenci olduğunda Farin sana WhatsApp'tan bir teklif gönderebilir; bunu yalnızca haber ve fırsatlara onay verdiysen yapar. Mesajındaki bağlantı thefeschool.com'da senin için hazırlanmış bir sayfayı açar. Sayfa ilk adını, seviyeni ve hedefini, grubunun en sevdiği konuları, kaç öğrencinin eşleştiğini, ders saatlerini ve fiyatı gösterir (saatler, telefon numaranın ülke koduna göre İran ya da Türkiye saatiyle). Bunları kendi bağlantısından okur; hiçbir şey kaydetmez, çerez ya da analiz aracı kullanmaz.",
-            B("پیشنهاد کلاس‌های گروهی کوچک.")+" وقتی به اندازهٔ یک کلاس گروهی کوچک (۴ تا ۶ نفر) زبان‌آموز با سطح و هدف تو پیدا شود، فرین ممکن است در واتس‌اپ یک پیشنهاد برایت بفرستد؛ فقط اگر به اخبار و پیشنهادها «بله» گفته باشی. پیامش لینکی به صفحه‌ای در thefeschool.com دارد که برای تو ساخته شده است. این صفحه نام کوچکت، سطح و هدفت، موضوع‌های محبوب گروهت، تعداد زبان‌آموزهای هم‌گروه، و زمان‌ها و هزینهٔ کلاس را نشان می‌دهد (زمان‌ها به وقت ایران یا ترکیه، بر اساس کد کشور شماره‌ات). صفحه این‌ها را از خود لینک می‌خواند، چیزی ذخیره نمی‌کند و از کوکی یا ابزار آمار استفاده نمی‌کند.",
-            B("Ofertas de clases en grupo pequeño.")+" Cuando haya suficientes estudiantes con tu nivel y tu objetivo para llenar una clase en grupo pequeño (de 4 a 6 personas), Farin puede enviarte una oferta por WhatsApp, pero solo si dijiste que sí a las novedades y ofertas. Su mensaje enlaza una página en thefeschool.com hecha para ti. Muestra tu nombre, tu nivel y tu objetivo, los temas favoritos de tu grupo, cuántos estudiantes coinciden, y los horarios y el precio de la clase (los horarios en hora de Irán o de Turquía, según el prefijo de tu número). La página lee estos datos de su propio enlace; no guarda nada y no usa cookies ni analítica."),
+          L(B("Why.")+" So Farin, the teacher who runs FE School, can help you on WhatsApp (or Telegram, if you don't use WhatsApp) with your account, your courses and your questions. For example, if you join a course's waiting list, he sends you the course link and how to pay. He writes these messages himself; the app does not send WhatsApp messages automatically.",
+            B("Neden.")+" FE School'u yöneten öğretmen Farin; hesabın, kursların ve soruların konusunda sana WhatsApp'tan (WhatsApp kullanmıyorsan Telegram'dan) yardım edebilsin diye. Örneğin bir kursun bekleme listesine katılırsan sana kursun bağlantısını ve nasıl ödeme yapacağını yazar. Bu mesajları Farin kendisi yazar; uygulama otomatik WhatsApp mesajı göndermez.",
+            B("چرا.")+" تا فرین، معلمی که FE School را اداره می‌کند، بتواند در واتس‌اپ (یا اگر واتس‌اپ نداری، در تلگرام) دربارهٔ حسابت، دوره‌هایت و سؤال‌هایت کمکت کند. مثلاً اگر در فهرست انتظار یک دوره ثبت‌نام کنی، لینک دوره و روش پرداخت را برایت می‌فرستد. این پیام‌ها را خود فرین می‌نویسد؛ اپ به‌طور خودکار پیام واتس‌اپ نمی‌فرستد.",
+            B("Por qué.")+" Para que Farin, el profesor que dirige FE School, pueda ayudarte por WhatsApp (o por Telegram, si no usas WhatsApp) con tu cuenta, tus cursos y tus preguntas. Por ejemplo, si te apuntas a la lista de espera de un curso, te envía el enlace del curso y cómo pagar. Él mismo escribe estos mensajes; la app no envía mensajes de WhatsApp automáticamente."),
+          L(B("News and offers.")+" Farin may send you news, discounts and offers (for example a new course, or a small group class that fits your level and goals) on WhatsApp, or on Telegram to the same number if you don't use WhatsApp. Since 19 November 2026 this includes learners who didn't tick “Send me news and offers on WhatsApp or Telegram”. That box is separate from your number, optional and unticked by default, at signup and in the “Join our club” pop-up, and it tells Farin you'd like them. The app saves your choice and its date with your account, and Farin sees it in the admin page. To stop news and offers, untick it in Settings › “Stay in touch” or turn off “Course news and offers” in Settings › “Notifications”, or tell Farin; then he doesn't send you any.",
+            B("Haberler ve fırsatlar.")+" Farin sana haber, indirim ve fırsat mesajları (örneğin yeni bir kurs ya da seviyene ve hedeflerine uyan küçük bir grup dersi) WhatsApp'tan, WhatsApp kullanmıyorsan aynı numaraya Telegram'dan gönderebilir. 19 Kasım 2026'dan beri bu, «Bana WhatsApp ya da Telegram'dan haberler ve fırsatlar gönder» kutusunu işaretlemeyen öğrencileri de kapsar. Bu kutu numarandan ayrıdır, isteğe bağlıdır ve hem kayıtta hem «Kulübümüze katıl» penceresinde işaretsiz gelir; işaretlersen Farin bunları istediğini bilir. Uygulama seçimini ve tarihini hesabınla birlikte saklar; Farin bunu yönetim sayfasında görür. Haber ve fırsat mesajlarını durdurmak için Ayarlar › «İletişimde kal» bölümünde kutunun işaretini kaldır, Ayarlar › «Bildirimler» bölümünde «Kurs haberleri ve fırsatlar»ı kapat ya da Farin'e söyle; o andan sonra sana göndermez.",
+            B("خبرها و پیشنهادها.")+" فرین ممکن است خبرها، تخفیف‌ها و پیشنهادها را (مثلاً یک دورهٔ تازه یا یک کلاس گروهی کوچک که با سطح و هدف‌هایت جور است) در واتس‌اپ برایت بفرستد، یا اگر واتس‌اپ نداری، در تلگرام به همان شماره. از ۱۹ نوامبر ۲۰۲۶ این شامل زبان‌آموزهایی هم می‌شود که تیک «اخبار و پیشنهادها را در واتس‌اپ یا تلگرام برایم بفرست» را نزده‌اند. این جعبه از شماره‌ات جداست، اختیاری است و هم موقع ثبت‌نام و هم در پنجرهٔ «به باشگاه ما بپیوند» بدون تیک است؛ اگر تیکش را بزنی، فرین می‌داند که این پیام‌ها را می‌خواهی. اپ انتخابت و تاریخش را همراه حسابت ذخیره می‌کند و فرین آن را در صفحهٔ مدیریت می‌بیند. برای قطع خبرها و پیشنهادها، تیک این جعبه را در تنظیمات › «در ارتباط باش» بردار، «خبر دوره‌ها و پیشنهادها» را در تنظیمات › «اعلان‌ها» خاموش کن یا به فرین بگو؛ از آن به بعد برایت نمی‌فرستد.",
+            B("Novedades y ofertas.")+" Farin puede enviarte novedades, descuentos y ofertas (por ejemplo, un curso nuevo o una clase en grupo pequeño que encaje con tu nivel y tus objetivos) por WhatsApp, o por Telegram al mismo número si no usas WhatsApp. Desde el 19 de noviembre de 2026 esto incluye a quienes no marcaron «Envíame novedades y ofertas por WhatsApp o Telegram». Esa casilla es aparte de tu número, es opcional y aparece sin marcar en el registro y en la ventana «Únete a nuestro club»; si la marcas, Farin sabe que las quieres. La app guarda tu elección y su fecha con tu cuenta, y Farin la ve en la página de administración. Para dejar de recibirlas, desmarca la casilla en Configuración › «Mantente en contacto», desactiva «Novedades de cursos y ofertas» en Configuración › «Notificaciones» o díselo a Farin; a partir de entonces no te envía ninguna."),
+          L(B("Small group class offers.")+" When enough learners with your level and goal could fill a small group class (4 to 6 people), Farin may send you an offer on WhatsApp (or on Telegram, if you don't use WhatsApp), unless you turned offers off. His message links a page on thefeschool.com made for you. It shows your first name, your level and goal, your group's favourite topics, how many learners match, and the class times and price (the times in Iran or Turkey time, chosen from your phone number's country code). The page reads these from its own link; it saves nothing and uses no cookies or analytics.",
+            B("Küçük grup dersi teklifleri.")+" Senin seviyende ve hedefinde küçük bir grup dersini (4–6 kişi) dolduracak kadar öğrenci olduğunda Farin sana WhatsApp'tan (WhatsApp kullanmıyorsan Telegram'dan) bir teklif gönderebilir; haber ve fırsatları kapattıysan göndermez. Mesajındaki bağlantı thefeschool.com'da senin için hazırlanmış bir sayfayı açar. Sayfa ilk adını, seviyeni ve hedefini, grubunun en sevdiği konuları, kaç öğrencinin eşleştiğini, ders saatlerini ve fiyatı gösterir (saatler, telefon numaranın ülke koduna göre İran ya da Türkiye saatiyle). Bunları kendi bağlantısından okur; hiçbir şey kaydetmez, çerez ya da analiz aracı kullanmaz.",
+            B("پیشنهاد کلاس‌های گروهی کوچک.")+" وقتی به اندازهٔ یک کلاس گروهی کوچک (۴ تا ۶ نفر) زبان‌آموز با سطح و هدف تو پیدا شود، فرین ممکن است در واتس‌اپ (یا اگر واتس‌اپ نداری، در تلگرام) یک پیشنهاد برایت بفرستد، مگر اینکه خبرها و پیشنهادها را خاموش کرده باشی. پیامش لینکی به صفحه‌ای در thefeschool.com دارد که برای تو ساخته شده است. این صفحه نام کوچکت، سطح و هدفت، موضوع‌های محبوب گروهت، تعداد زبان‌آموزهای هم‌گروه، و زمان‌ها و هزینهٔ کلاس را نشان می‌دهد (زمان‌ها به وقت ایران یا ترکیه، بر اساس کد کشور شماره‌ات). صفحه این‌ها را از خود لینک می‌خواند، چیزی ذخیره نمی‌کند و از کوکی یا ابزار آمار استفاده نمی‌کند.",
+            B("Ofertas de clases en grupo pequeño.")+" Cuando haya suficientes estudiantes con tu nivel y tu objetivo para llenar una clase en grupo pequeño (de 4 a 6 personas), Farin puede enviarte una oferta por WhatsApp (o por Telegram, si no usas WhatsApp), salvo que hayas desactivado las ofertas. Su mensaje enlaza una página en thefeschool.com hecha para ti. Muestra tu nombre, tu nivel y tu objetivo, los temas favoritos de tu grupo, cuántos estudiantes coinciden, y los horarios y el precio de la clase (los horarios en hora de Irán o de Turquía, según el prefijo de tu número). La página lee estos datos de su propio enlace; no guarda nada y no usa cookies ni analítica."),
           L(B("Where.")+" On your device, in your account's backup in Google Firebase (Firestore) and in a contact list in the same database, with your name, level, goal, recovery code, the app's language and the date. It is also attached to your chats and course requests in Messages"+(ielts ? ", to IELTS writing you send for review" : "")+" and to the record of any course password you get, so Farin knows who he is talking to.",
             B("Nerede.")+" Cihazında, hesabının Google Firebase (Firestore) yedeğinde ve aynı veritabanındaki bir iletişim listesinde; adın, seviyen, hedefin, kurtarma kodun, uygulama dili ve tarihle birlikte. Farin kiminle konuştuğunu bilsin diye Mesajlar'daki sohbetlerine ve kurs taleplerine"+(ielts ? ", incelemeye gönderdiğin IELTS yazılarına" : "")+" ve aldığın kurs şifresinin kaydına da eklenir.",
             B("کجا.")+" روی دستگاهت، در پشتیبان حسابت در Google Firebase (Firestore) و در یک فهرست تماس در همان پایگاه داده، همراه با اسم، سطح، هدف، کد بازیابی، زبان اپ و تاریخ. به گفتگوها و درخواست‌های دوره‌ات در پیام‌ها"+(ielts ? "، به نوشته‌های آیلتسی که برای بررسی می‌فرستی" : "")+" و به سابقهٔ هر رمز دوره‌ای که می‌گیری هم اضافه می‌شود تا فرین بداند با چه کسی حرف می‌زند.",
@@ -17227,7 +17230,7 @@ function promoSet(ok, source){ const p = state.profile; p.promoOk = !!ok; p.prom
 function promoBoxHtml(id, checked, action){
   return `<label class="row" style="gap:10px; margin-top:8px; align-items:flex-start; cursor:pointer; text-align:start;">
       <input type="checkbox" id="${id}"${action ? ` data-action="${action}"` : ''} ${checked ? 'checked' : ''} style="margin-top:3px; flex:0 0 auto; width:18px; height:18px; accent-color:var(--accent);">
-      <span style="font-size:13.5px; font-weight:700; color:var(--ink);">${CL('Send me news and offers on WhatsApp','Bana WhatsApp\'tan haberler ve fırsatlar gönder','اخبار و پیشنهادها را در واتس‌اپ برایم بفرست','Envíame novedades y ofertas por WhatsApp')}</span>
+      <span style="font-size:13.5px; font-weight:700; color:var(--ink);">${CL('Send me news and offers on WhatsApp or Telegram','Bana WhatsApp ya da Telegram\'dan haberler ve fırsatlar gönder','اخبار و پیشنهادها را در واتس‌اپ یا تلگرام برایم بفرست','Envíame novedades y ofertas por WhatsApp o Telegram')}</span>
     </label>`;
 }
 function contactPhoneExample(){ return LANG === 'fa' ? '+98 912 345 6789' : LANG === 'es' ? '+34 612 345 678' : '+90 532 123 45 67'; }
@@ -41246,6 +41249,10 @@ function adminClassesAssignTimes(byHash){
   let changed = false;
   // a class back under 10 that nobody said yes to gives its times back
   C.classes.forEach(c=>{ if(c.status !== 'suggested' || c.offerAt || !Array.isArray(c.sched) || adminClassAnyYes(c)) return; delete c.sched; delete c.schedBy; changed = true; });
+  // back to 20 or fewer (one class each, 2026-11-19): a second time nobody picked and no offer went out with goes back to the free slots
+  C.classes.forEach(c=>{ if(c.status !== 'suggested' || c.schedBy || adminClassSched(c).length < 2 || adminClassFitMembers(c, byHash).length >= ADMIN_CLASS_TWO_TIMES_FROM) return;
+    if(Object.keys(c.sent || {}).length || adminClassOffered(c, byHash) || Object.keys(c.replies || {}).some(h=>c.replies[h] && Number(c.replies[h].o) === 1)) return;
+    c.sched = c.sched.slice(0, 1); changed = true; });
   // one slot, one class: running classes first, then the earliest ready (a reopened class or two admins at once could clash)
   const held = {}, first = c=>(c.status === 'running' ? 0 : 1);
   C.classes.filter(c=>adminClassOpen(c) && Array.isArray(c.sched)).sort((a, b)=>first(a) - first(b) || (Number(a.startedAt || a.offerAt) || 0) - (Number(b.startedAt || b.offerAt) || 0)).forEach(c=>{
@@ -41458,8 +41465,11 @@ function adminClassesSync(){
     c.members = c.members.filter(h=>!hs[h]);
     c.refit = (Array.isArray(c.refit) ? c.refit : []).concat(out.map(p=>({h:p.main.hash, at:now, why:adminClassFitWhy(c, p).slice(0, 140)}))).slice(-12);
     changed = true; });
+  if(adminClassesOneEach(byHash, now)) changed = true;   // one class per learner (2026-11-19), before newcomers are placed
   adminClassesStats = {};
-  ['level', 'course'].forEach(kind=>{ if(adminClassesSyncKind(kind, rules, now, byHash)) changed = true; });
+  // course classes first (2026-11-19, one class per learner): the premium-course classes (Business, IELTS, Job Interview, Travel & everyday …)
+  // group a level band, so they need the learners first to ever reach 10; level classes take everyday learners and whoever is left
+  ['course', 'level'].forEach(kind=>{ if(adminClassesSyncKind(kind, rules, now, byHash)) changed = true; });
   // ready to offer from 10 who fit: offerAt = when it first got there (the To check "new" row), cleared if it drops below 10
   C.classes.forEach(c=>{ if(c.status !== 'suggested') return; const ok = adminClassFitMembers(c, byHash).length >= ADMIN_CLASS_OFFER_MIN;
     if(ok && !c.offerAt){ c.offerAt = now; changed = true; } else if(!ok && c.offerAt){ delete c.offerAt; changed = true; } });
@@ -41468,11 +41478,49 @@ function adminClassesSync(){
   if(changed) adminClassesSave();
   return changed;
 }
+/* One class per learner (Farin 2026-11-19: "dont share students in classes unless really really necessary. now i have message the students in
+   AA class, i dont want to send other courses to them. unless really necessary"). Until then a learner could be in one level class AND one
+   course class. Now someone in two open classes keeps:
+   1. every class where they answered (Yes / No): their own choice is the one "really necessary" case of two classes; and a running class
+      never changes;
+   2. else the class Farin sent them the offer from (c.sent, kept per class since 2026-11-19; everyone in AA counts as sent: Farin had
+      messaged them, ADMIN_CLASS_SENT_SEED);
+   3. else the class most likely to run: most offers sent, then ready to offer (10+), then the most who fit, then the oldest.
+   They leave their other suggested classes (c.refit note "kept in class AA"), and newcomers join one class only (adminClassesSyncKind). */
+const ADMIN_CLASS_SENT_SEED = ['AA'];
+function adminClassSentTo(c, p){ const s = c.sent || {}; return p.accounts.some(u=>u.hash && s[u.hash]); }
+function adminClassesOneEach(byHash, now){
+  const C = adminClasses; let changed = false;
+  // Farin's AA messages (2026-11-19): every current AA member counts as sent, once
+  C.classes.forEach(c=>{ if(ADMIN_CLASS_SENT_SEED.indexOf(c.code) < 0 || c.sentSeeded || !adminClassOpen(c)) return;
+    c.sent = c.sent || {}; adminClassMembers(c, byHash).forEach(p=>{ if(p.main && p.main.hash && !adminClassSentTo(c, p)) c.sent[p.main.hash] = adminInsInvitedAt(p) || now; });
+    c.sentSeeded = now; changed = true; });
+  const open = C.classes.filter(adminClassOpen), score = {};
+  open.forEach(c=>{ score[c.id] = [Object.keys(c.sent || {}).length, c.offerAt ? 1 : 0, adminClassFitMembers(c, byHash).length, -(Number(c.createdAt) || 0), c.code || '']; });
+  const better = (a, b)=>{ const x = score[a.id], y = score[b.id]; for(let i = 0; i < 4; i++){ if(x[i] !== y[i]) return x[i] > y[i]; } return String(x[4]) < String(y[4]); };
+  const seen = {};
+  (adminPeople || []).forEach(p=>{
+    if(p.hidden || seen[p.key]) return; seen[p.key] = 1;
+    const hs = {}; p.accounts.forEach(u=>{ if(u.hash) hs[u.hash] = 1; });
+    const mine = open.filter(c=>c.members.some(h=>hs[h])); if(mine.length < 2) return;
+    let keep = mine.filter(c=>c.status === 'running' || adminClassReply(c, p));
+    if(!keep.length) keep = mine.filter(c=>adminClassSentTo(c, p));
+    if(!keep.length) keep = [mine.reduce((a, b)=>better(b, a) ? b : a)];
+    const where = keep.map(c=>c.code || adminClassName(c)).join(' + ');
+    mine.forEach(c=>{ if(keep.indexOf(c) >= 0 || c.status !== 'suggested') return;
+      c.members = c.members.filter(h=>!hs[h]);
+      c.refit = (Array.isArray(c.refit) ? c.refit : []).concat([{h:p.main.hash, at:now, why:'kept in class ' + where, by:'one'}]).slice(-12);
+      changed = true; });
+  });
+  return changed;
+}
 // One kind: who is free for a class of this kind, newcomers into suggested classes, then new classes.
 function adminClassesSyncKind(kind, rules, now, byHash){
   const C = adminClasses, skip = adminClassSkip(kind), mine = C.classes.filter(c=>adminClassKind(c) === kind);
   const taken = {}, phones = {};
   mine.forEach(c=>c.members.forEach(h=>{ const p = byHash[h]; taken[h] = 1; if(p){ p.accounts.forEach(u=>{ if(u.hash) taken[u.hash] = 1; }); const k = adminInsPhoneKey(p); if(k) phones[k] = 1; } }));
+  // one class per learner (2026-11-19): who is in a class of the other kind is taken too (a class closed in the last 30 days counts, as for its own kind)
+  C.classes.forEach(c=>{ if(adminClassKind(c) === kind) return; c.members.forEach(h=>{ const p = byHash[h]; taken[h] = 1; if(p) p.accounts.forEach(u=>{ if(u.hash) taken[u.hash] = 1; }); }); });
   const st = {pool:0, left:0, noFit:0, once:0, noPhone:0, twin:0, resting:0, inClass:0}, pool = [];
   let changed = false;
   (adminPeople || []).filter(p=>!p.hidden && p.main && p.main.hash && now - (p.lastSeen || 0) < ADMIN_CLASS_POOL_DAYS * DAY_MS)
@@ -41601,9 +41649,14 @@ function adminClassOfferUrl(c, p, byHash){
   q.set('id', c.id);
   return ADMIN_CLASS_OFFER_URL + (lang === 'en' ? '' : lang + '/') + '?' + q.toString();
 }
-// Who may get the offer: a class offer is a promotion, so only learners who said yes to news and offers (promoOk, privacy policy
-// "News, discounts and offers on WhatsApp"), or who asked for this course themselves (waiting list / Inbox: an answer to their request).
-function adminClassMayOffer(c, p){ return !!(p.profile && p.profile.promoOk === true) || (adminClassKind(c) === 'course' && adminInsAsked(p).indexOf(c.theme) >= 0); }
+// Who may get the offer: everyone in the class, ticked or not (Farin 2026-11-19: "for all users in group classes and everywhere it doesnt
+// matter they clicked offer or not put the message templatye as offer as there is"). Until then only learners who said yes to news and
+// offers (promoOk) or asked for the course got it. The one exception is a stop: who turned offers off themselves (unticked "news and
+// offers" in Settings, or switched off "Course news and offers" in Notifications) gets no offer unless they asked for this course; the
+// privacy policies describe exactly this. adminClassOfferTicked says who ticked it (a tag on their row).
+function adminOffersStopped(p){ const pf = p.profile || {}, n = pf.notif || {}; return pf.promoOk !== true && ((pf.promoOk === false && pf.promoSource === 'settings') || !!n.promoOff || (n.promo === false && n.promoSource === 'settings')); }
+function adminClassOfferTicked(c, p){ return !!(p.profile && p.profile.promoOk === true) || (adminClassKind(c) === 'course' && adminInsAsked(p).indexOf(c.theme) >= 0); }
+function adminClassMayOffer(c, p){ return !adminOffersStopped(p) || adminClassOfferTicked(c, p); }
 // Times, sessions, price (Farin 2026-11-18): the lines under the goals, in their language; Iran time for Persian / +98, toman only for Iran.
 function adminClassOfferInfo(c, p, lang){
   const z = adminClassZone(c, p), s = adminClassSched(c), l = ADMIN_CLASS_ZONE_W[lang] ? lang : 'en', Z = ADMIN_CLASS_ZONE_W[l][z], N = l === 'fa' ? adminClassFaNum : String;
@@ -41636,6 +41689,7 @@ function adminClassOfferText(c, p, byHash){
   return 'Hi' + (n ? ' ' + n : '') + '! It\'s Farin from FEschool 🌱\n\nI\'m opening a mid-private ' + cls + ' class: only 4 to 6 people, all at ' + lv + ', all with the same goal as you. So every class is planned around you.\n\n' + goals + 'I made a page for you with everything 👇\n' + url + '\n\nIf you\'d like a seat, just reply "I\'m in – ' + cc + cls + (lv ? ' ' + lv : '') + pick + '"' + orPick + ' 💜';
 }
 function adminInsWaLink(p, text){ const ph = adminInsPhone(p); return ph ? waLinkTo(adminWaitlistWaNumber({phone:ph, lang:adminInsLang(p)}), text) : ''; }
+function adminInsTgLink(p, text){ const ph = adminInsPhone(p); return ph ? tgLinkTo(adminWaitlistWaNumber({phone:ph, lang:adminInsLang(p)}), text) : ''; }   // Telegram (2026-11-19)
 function adminInsInvitedAt(p){ return p.accounts.reduce((m, u)=>Math.max(m, (u.hash && Number(adminInvited[u.hash])) || 0), 0); }
 function adminInsCopy(text){
   const done = ()=>{ adminInsNote = 'Copied.'; renderAdminPage(); setTimeout(()=>{ if(adminInsNote === 'Copied.'){ adminInsNote = ''; renderAdminPage(); } }, 1600); };
@@ -41706,7 +41760,9 @@ function adminInsAction(action, el){
     const timeNote = times.length ? ' Times: ' + plan.groups.map((g, i)=>g.members.length + ' on ' + (slots[i] ? adminClassSlotShort(slots[i]) : 'a time still to agree')).join(', ') + '.' : '';
     if(!confirm((sizes.length > 1 ? 'Start ' + sizes.length + ' classes (' + sizes.join(' + ') + ') with the ' + seated + ' who said yes?' : 'Start the class with the ' + seated + ' who said yes' + (wait.length ? ' first' : '') + '?')
       + timeNote + (wait.length ? ' ' + wait.length + ' more said yes: they stay free for the next class.' : '') + ' Who said no is not asked again for 30 days, who didn\'t answer for 14 days.')) return;
-    all.forEach(p=>{ const r = adminClassReply(cls, p); if(r === 'yes') return; const until = t + (r === 'no' ? ADMIN_CLASS_REST_MS : ADMIN_CLASS_NOANSWER_MS); p.accounts.forEach(u=>{ if(u.hash) skip[u.hash] = until; }); });
+    // a rest keeps them out of every class now, not only this kind (one class per learner, 2026-11-19)
+    const skipBoth = [adminClassSkip('level'), adminClassSkip('course')];
+    all.forEach(p=>{ const r = adminClassReply(cls, p); if(r === 'yes') return; const until = t + (r === 'no' ? ADMIN_CLASS_REST_MS : ADMIN_CLASS_NOANSWER_MS); p.accounts.forEach(u=>{ if(u.hash) skipBoth.forEach(m=>{ m[u.hash] = Math.max(Number(m[u.hash]) || 0, until); }); }); });
     const hashesOf = list=>{ const h = {}; list.forEach(p=>p.accounts.forEach(u=>{ if(u.hash) h[u.hash] = 1; })); return h; };
     const orig = cls.members.slice(), replies = Object.assign({}, cls.replies || {});
     plan.groups.forEach((g, i)=>{
@@ -41737,16 +41793,19 @@ function adminInsAction(action, el){
   }
   if(action === 'ins-out' && cls){
     const p = adminPersonByKey(el.dataset.id); if(!p) return;
-    if(!confirm('Take ' + (p.profile.name || 'this learner') + ' out of this class? They are not put in a class of this kind again for 30 days.')) return;
-    const hs = p.accounts.map(u=>u.hash).filter(Boolean), until = Date.now() + ADMIN_CLASS_REST_MS, skip = adminClassSkip(adminClassKind(cls));
-    cls.members = cls.members.filter(h=>hs.indexOf(h) < 0); hs.forEach(h=>{ skip[h] = until; });
+    if(!confirm('Take ' + (p.profile.name || 'this learner') + ' out of this class? They are not put in any class again for 30 days.')) return;
+    // one class per learner (2026-11-19): the rest covers both kinds, so they don't land in a class of the other kind at the next sync
+    const hs = p.accounts.map(u=>u.hash).filter(Boolean), until = Date.now() + ADMIN_CLASS_REST_MS, skips = [adminClassSkip('level'), adminClassSkip('course')];
+    cls.members = cls.members.filter(h=>hs.indexOf(h) < 0); hs.forEach(h=>{ skips.forEach(m=>{ m[h] = until; }); });
     adminClassesSave(); return re();
   }
-  if(action === 'ins-invite'){
+  if(action === 'ins-invite' || action === 'ins-invite-tg'){   // WhatsApp or Telegram (2026-11-19): either marks the offer as sent
     // the link opens WhatsApp by itself (no preventDefault); this only remembers the invitation
     const p = adminPersonByKey(el.dataset.id), h = p && p.main && p.main.hash;
     if(!h || !adminSeen) return;
     adminInvited[h] = Date.now(); adminSeenSave();
+    // which class the offer came from (2026-11-19): that class keeps them (one class per learner)
+    if(cls && !adminClassSentTo(cls, p)){ (cls.sent = cls.sent || {})[h] = Date.now(); adminClassesSave(); }
     setTimeout(re, 0);
     return;
   }
@@ -41821,7 +41880,8 @@ function adminInsHelloText(p){
 function adminInsPersonRow(p, extra){
   extra = extra || {};
   const pf = p.profile, goals = adminInsGoals(p), ph = adminInsPhone(p), invite = !!extra.offer, inv = invite ? adminInsInvitedAt(p) : 0;
-  const wa = invite ? adminInsWaLink(p, adminClassOfferText(extra.offer, p, extra.byHash)) : adminInsWaLink(p, adminInsHelloText(p));
+  // the same text on WhatsApp and on Telegram, for learners without WhatsApp (2026-11-19)
+  const msgText = invite ? adminClassOfferText(extra.offer, p, extra.byHash) : adminInsHelloText(p), wa = adminInsWaLink(p, msgText), tg = adminInsTgLink(p, msgText);
   const page = invite ? adminClassOfferUrl(extra.offer, p, extra.byHash) : '';
   // reply {c, r, o, t}: with two times (t = their labels) Yes is "Yes · 1" / "Yes · 2", o = the one they picked (2026-11-18)
   const rp = extra.reply, two = !!(rp && rp.t && rp.t.length > 1);
@@ -41834,7 +41894,8 @@ function adminInsPersonRow(p, extra){
         <span class="ins-ph" dir="ltr">${ph ? (adminInsWaLink(p, adminInsHelloText(p)) ? `<a class="ins-phl" href="${esc(adminInsWaLink(p, adminInsHelloText(p)))}" target="_blank" rel="noopener" title="WhatsApp ${esc(pf.name || '')}">${ICONS.whatsapp}${esc(ph)}</a>` : esc(ph)) : '<span class="ins-none">no number</span>'}</span>
       </span>
       <span class="ins-pa">
-        ${wa ? `<a class="btn btn-whatsapp btn-sm" target="_blank" rel="noopener" href="${esc(wa)}" ${invite ? `data-admin-action="ins-invite" data-id="${esc(p.key)}"` : ''} aria-label="${invite ? 'Send the offer to' : 'WhatsApp'} ${esc(pf.name || '')}">${ICONS.whatsapp}${invite ? `<span>${inv ? 'Send again' : 'Send offer'}</span>` : `<span>${esc(extra.waLabel || 'WhatsApp')}</span>`}</a>` : ''}
+        ${wa ? `<a class="btn btn-whatsapp btn-sm" target="_blank" rel="noopener" href="${esc(wa)}" ${invite ? `data-admin-action="ins-invite" data-c="${esc(extra.offer.id)}" data-id="${esc(p.key)}"` : ''} aria-label="${invite ? 'Send the offer to' : 'WhatsApp'} ${esc(pf.name || '')}">${ICONS.whatsapp}${invite ? `<span>${inv ? 'Send again' : 'Send offer'}</span>` : `<span>${esc(extra.waLabel || 'WhatsApp')}</span>`}</a>` : ''}
+        ${tg ? `<a class="btn btn-telegram btn-sm" target="_blank" rel="noopener" href="${esc(tg)}" ${invite ? `data-admin-action="ins-invite-tg" data-c="${esc(extra.offer.id)}" data-id="${esc(p.key)}"` : ''} aria-label="${invite ? 'Send the offer on Telegram to' : 'Telegram'} ${esc(pf.name || '')}" title="${invite ? 'The same offer on Telegram (for learners without WhatsApp)' : 'Telegram'}">${ICONS.telegram}<span>Telegram</span></a>` : ''}
         ${rp ? `<span class="ins-rbs" role="group" aria-label="Their answer">${two ? rb('yes', 'Yes · 1', 0) + rb('yes', 'Yes · 2', 1) : rb('yes', 'Yes')}${rb('no', 'No')}</span>` : ''}
         ${page ? `<a class="ap-link" href="${esc(page)}" target="_blank" rel="noopener" title="The offer page made for ${esc(pf.name || 'them')}">Their page</a>` : ''}
         <button class="ap-link" data-admin-action="ap-open-learner" data-id="${esc(p.key)}">Profile</button>
@@ -41856,6 +41917,7 @@ function adminInsBoxSub(){
 function adminClassRefitNote(c, byHash){
   const r = Array.isArray(c.refit) ? c.refit.slice(-6) : []; if(!r.length) return '';
   return '<p class="ins-idea ins-refit"><b>Fit</b> ' + r.map(x=>{ const p = byHash[x.h], nm = ((p && p.profile.name) || 'A learner').trim().split(/\s+/)[0];
+    if(x.by === 'one') return esc(nm) + ': ' + esc(x.why || 'kept in another class') + ' (one class each), ' + esc(adminDate(x.at));   // 2026-11-19
     return esc(nm) + ' (' + esc(x.why || '') + '): ' + (x.by === 'you' ? 'moved out by you' : 'moved to a class that fits') + ', ' + esc(adminDate(x.at)); }).join(' · ') + '</p>';
 }
 // Fit check (2026-11-17): every member of an open class against its level, speakers group and goal / course.
@@ -41893,7 +41955,7 @@ function adminInsClassesHtml(openId){
     const g = course ? THEME_GOAL[c.theme] || 'everyday' : (COURSE_GOAL_COLORS[c.goal] ? c.goal : 'everyday'), lvc = adminClassLevelCode(c);
     const offerBox = offer ? `<div class="ins-offer" style="--g:${COURSE_GOAL_COLORS[g]};">
         <div class="ins-odoc" aria-hidden="true"><span class="ins-od-pill">Mid-private · 4–6 people</span><b>${esc(adminClassNameIn(c, 'en'))}<i>.</i></b>${lvc ? `<small>Level ${esc(lvc)}</small>` : ''}<img src="char-${g}.png" alt="" decoding="async"></div>
-        <div class="ins-otxt"><b>Offer page</b><span><b>Send offer</b> opens WhatsApp with a short message in their language and a link to a page made for them: their name, goal and level, what they told the app they find hard, the group's favourite topics, only 6 seats, the class time${twoT ? 's to choose from' : ''} (Iran time for Persian speakers), the ${ADMIN_CLASS_SESSIONS} sessions and, for Iran, the price. It shows only for learners who said yes to news and offers, or who asked for this course.</span>
+        <div class="ins-otxt"><b>Offer page</b><span><b>Send offer</b> opens WhatsApp with a short message in their language and a link to a page made for them: their name, goal and level, what they told the app they find hard, the group's favourite topics, only 6 seats, the class time${twoT ? 's to choose from' : ''} (Iran time for Persian speakers), the ${ADMIN_CLASS_SESSIONS} sessions and, for Iran, the price. <b>Telegram</b> sends the same message, for learners without WhatsApp. Every learner in the class gets it, ticked “news and offers” or not; only someone who turned offers off themselves gets a plain hello.</span>
           <span class="ins-obtns"><a class="btn btn-sm btn-ghost" href="${esc(adminClassOfferUrl(c, null, byHash))}" target="_blank" rel="noopener">Open the page</a><button class="btn btn-sm btn-ghost" data-admin-action="ins-offer-copy" data-c="${esc(c.id)}">Copy link</button></span></div>
       </div>` : '';
     const rows = c.status === 'closed' ? '' : adminInsPeopleList(m.concat(mis), p=>{ const rep = adminClassReply(c, p), t = [], bad = misW[p.key];
@@ -41902,7 +41964,8 @@ function adminInsClassesHtml(openId){
       if(course && adminInsAsked(p).indexOf(c.theme) >= 0) t.push('<span class="ap-tag purple">Asked for this course</span>');
       if(course && adminInsOwns(p, c.theme)) t.push('<span class="ap-tag ok">Has the course</span>');
       const may = offer && !bad && adminClassMayOffer(c, p);
-      if(offer && !may) t.push('<span class="ap-tag" title="Said no to news and offers, or never chose: a class offer is a promotion">No offers consent</span>');
+      if(offer && !bad && !may) t.push('<span class="ap-tag warn" title="They turned offers off themselves (Settings): a plain hello only">Turned offers off</span>');
+      else if(offer && !bad && !adminClassOfferTicked(c, p)) t.push('<span class="ap-tag" title="They did not tick news and offers; the offer goes to everyone since 2026-11-19">Offers not ticked</span>');
       return {offer:may ? c : null, byHash, waLabel:'WhatsApp', out:open ? c.id : '', reply:offer || (sug && rep) ? {c:c.id, r:rep, o:adminClassReplyTime(c, p), t:times.map(adminClassSlotShort)} : null, tags:t, dim:rep === 'no' || !!bad,
         isNew:p.accounts.some(u=>u.hash && (c.added || {})[u.hash] > seen && c.createdAt <= seen)}; });
     const acts = sug ? (ready ? `<button class="btn btn-sm btn-primary" data-admin-action="ins-start" data-c="${esc(c.id)}">✓ ${sizes.length > 1 ? 'Start ' + sizes.length + ' classes (' + sizes.join(' + ') + ')' : 'Start with the ' + seated + ' who said yes'}</button>` : '') + `<button class="btn btn-sm btn-ghost" data-admin-action="ins-close" data-c="${esc(c.id)}">Remove class</button>`
@@ -41947,7 +42010,7 @@ function adminInsClassesHtml(openId){
     scs.left ? scs.left + ' fit no course class yet' : '', sl.once ? sl.once + ' came only once' : '', sl.noPhone ? sl.noPhone + ' left no number' : '',
     sl.resting || scs.resting ? (sl.resting || 0) + (scs.resting || 0) + ' resting after a No, a ✕ or a removed class' : ''].filter(Boolean);
   const body = adminClassFitBanner(byHash, app) + `<div class="ins-rules"><span class="ins-gl">Rules</span>
-        <span class="ins-fixed">Only with a WhatsApp number</span>
+        <span class="ins-fixed">Only with a WhatsApp number</span><span class="ins-fixed" title="Since 2026-11-19: someone who answered or got an offer stays in that class">One class per learner</span>
         <button class="ap-chip${r.split ? ' on' : ''}" data-admin-action="ins-split" aria-pressed="${r.split}">Turkish and Persian apart</button>
         <span class="ins-gl">Class size</span><span class="ins-fixed">4–6 people</span><span class="ins-gl">Offer from</span><span class="ins-fixed">10 who fit</span>
         <span class="ins-gl">Two times from</span><span class="ins-fixed">21 who fit</span><span class="ins-gl">Course</span><span class="ins-fixed">${ADMIN_CLASS_SESSIONS} sessions · ${esc(adminClassPriceIn('en'))}</span>
@@ -41964,7 +42027,7 @@ function adminInsClassesHtml(openId){
       ${done.length ? `<details class="ins-done"><summary>Closed in the last 30 days · ${done.length}</summary>${done.map(row).join('')}</details>` : ''}
       ${notIn.length ? `<p class="ins-note ins-notin">Not in a class: ${esc(notIn.join(' · '))}. Nobody is pushed into a group that doesn't fit.</p>` : ''}`;
   return adminInsCard('Group classes', offerL.length ? offerL.length + ' class' + (offerL.length === 1 ? '' : 'es') + ' ready to offer' : sug.length ? 'Gathering: no class has 10 yet' : 'No class fits yet', body,
-    'A class is <b>4 to 6 people</b>. Its list gathers everyone who fits, and once <b>10</b> fit it is ready to offer: <b>Send offer</b> sends each learner a WhatsApp message with a page made for them. Tap <b>Yes</b> or <b>No</b> when they answer, and start once 4 said yes (8 or more yes make two classes). <b>Course classes</b> are built around a premium course (people who asked for it first, then their goals) and grouped by level band; <b>level classes</b> around a level and a goal. A class ready to offer gets its <b>time</b> from your week by itself (two days a week, 50 minutes; with more than 20 who fit, <b>two times</b> to choose from), and every course is <b>8 sessions for 8,000,000 toman</b>, VIP roadmap check and a private analysis of their learning path included. A learner is in at most one class of each kind. New classes and newcomers arrive by themselves; a running class never changes. <b>Tap a class</b> to open it.');
+    'A class is <b>4 to 6 people</b>. Its list gathers everyone who fits, and once <b>10</b> fit it is ready to offer: <b>Send offer</b> sends each learner a WhatsApp message with a page made for them. Tap <b>Yes</b> or <b>No</b> when they answer, and start once 4 said yes (8 or more yes make two classes). <b>Course classes</b> are built around a premium course (people who asked for it first, then their goals) and grouped by level band; <b>level classes</b> around a level and a goal. A class ready to offer gets its <b>time</b> from your week by itself (two days a week, 50 minutes; with more than 20 who fit, <b>two times</b> to choose from), and every course is <b>8 sessions for 8,000,000 toman</b>, VIP roadmap check and a private analysis of their learning path included. A learner is in <b>one class</b> only (since 19 Nov): who answered or got an offer stays in that class, and the class page says who moved. New classes and newcomers arrive by themselves; a running class never changes. <b>Tap a class</b> to open it.');
 }
 /* admin › Group classes, its own section since 2026-11-16 (Farin: "make the classes in insight part a seperate section on the menu tab.
    besides make them selectable so i can open them and their info when i click on the course"): the list (app filter, rules, kind
@@ -42119,6 +42182,12 @@ function renderAdminInsightsTab(){
 function waLinkTo(phone, message){
   const clean = courseWaitlistPhone(phone).replace(/\D/g, '');   // old saves too: Persian digits, 00, 0532… / 0912… (2026-11-16)
   return 'https://wa.me/' + clean + '?text=' + encodeURIComponent(message);
+}
+// Telegram beside WhatsApp (Farin 2026-11-19: "put telegram button too, because some students dont have whatsapp"): t.me/+<number>?text= opens
+// the chat with that number with the message typed in (Telegram's phone links; it works when the learner lets people find them by number).
+function tgLinkTo(phone, message){
+  const clean = courseWaitlistPhone(phone).replace(/\D/g, '');
+  return 'https://t.me/+' + clean + (message ? '?text=' + encodeURIComponent(message) : '');
 }
 function buildHomeworkWhatsAppMessage(student, item){
   const name = student.name || 'there';
@@ -43780,7 +43849,7 @@ function adminUserFactsHtml(p){
   const pw = adminPersonPassword(p), phone = adminPersonPhone(p), more = p.accounts.length - 1;
   const faint = s=>`<i class="ap-ufaint">${esc(s)}</i>`;
   const as = pw.pass && pw.name && normalizeLoginName(pw.name) !== normalizeLoginName(p.profile.name) ? ' ' + faint('logs in as “' + pw.name + '”') : '';
-  const wa = phone ? ` <a class="ap-wa" href="${esc(waLinkTo(phone, 'Hi ' + (p.profile.name || '') + '! This is your Farin English teacher.'))}" target="_blank" rel="noopener">WhatsApp</a>` : '';
+  const wa = phone ? ` <a class="ap-wa" href="${esc(waLinkTo(phone, 'Hi ' + (p.profile.name || '') + '! This is your Farin English teacher.'))}" target="_blank" rel="noopener">WhatsApp</a> <a class="ap-wa" href="${esc(tgLinkTo(phone, 'Hi ' + (p.profile.name || '') + '! This is your Farin English teacher.'))}" target="_blank" rel="noopener">Telegram</a>` : '';   // Telegram too (2026-11-19)
   return `<div class="ap-ufacts">
       <div><span>Password</span><b>${pw.pass ? adminCopyBtn(pw.pass, '<code>' + esc(pw.pass) + '</code>') + as : faint(pw.note)}</b></div>
       <div><span>Recovery code</span><b>${adminCopyBtn(p.id, '<code>' + esc(p.id) + '</code>')}${more ? ' ' + faint('+' + more + ' older') : ''}</b></div>
@@ -43893,7 +43962,7 @@ function adminContactSourceLabel(k){ return ADMIN_CONTACT_FROM[k] || ADMIN_CONTA
 // News-and-offers opt-in (2026-11-14, see promoSet): the newest recorded choice on any of the learner's records. None = NOT opted in.
 function adminPromoOf(accounts){ return (accounts || []).map(u=>u.profile || {}).filter(pf=>Number(pf.promoAt) > 0).sort((a, b)=>Number(b.promoAt) - Number(a.promoAt))[0] || null; }
 function adminPromoTag(pf){ const yes = !!(pf && pf.promoOk === true);   // Contacts row: "✓ Promo 14 Nov 2026" / "✗ Promo" in the meta line
-  return `<span title="News and offers on WhatsApp" style="font-weight:800; color:${yes ? 'var(--success)' : 'var(--ink-faint)'};">${yes ? '✓' : '✗'} Promo${pf ? ' ' + esc(adminDate(Number(pf.promoAt))) : ''}</span>`; }
+  return `<span title="News and offers on WhatsApp or Telegram (offers go to everyone unless they turned them off)" style="font-weight:800; color:${yes ? 'var(--success)' : 'var(--ink-faint)'};">${yes ? '✓' : '✗'} Promo${pf ? ' ' + esc(adminDate(Number(pf.promoAt))) : ''}</span>`; }
 function adminPromoText(pf){ return !pf ? '✗ No · no choice recorded' : (pf.promoOk === true ? '✓ Yes · since ' : '✗ No · chosen ') + adminDate(Number(pf.promoAt)) + ' · ' + adminContactSourceLabel(pf.promoSource); }
 function adminContactDocSource(c){ const k = c && c.source; return ADMIN_CONTACT_FROM[k] ? k : 'settings'; }
 let adminContactsByCodeFor = null, adminContactsByCode = {};
@@ -44099,6 +44168,7 @@ function renderAdminUserProfile(p){
       ${asked ? kv('Asked to be contacted', contacted ? 'Yes · you marked it done' : 'Yes · not contacted yet') : ''}
       <div class="ap-btns">
         <a class="ap-cta" target="_blank" rel="noopener" href="${esc(waLinkTo(L.phone, 'Hi ' + (pf.name || '') + '! This is your Farin English teacher.'))}">Message on WhatsApp</a>
+        <a class="btn btn-telegram" style="text-decoration:none;" target="_blank" rel="noopener" href="${esc(tgLinkTo(L.phone, 'Hi ' + (pf.name || '') + '! This is your Farin English teacher.'))}">${ICONS.telegram} Telegram</a>
         ${p.contact ? `<button class="btn btn-ghost" data-admin-action="ap-contacted" data-id="${esc(p.key)}"${adminSeen ? '' : ' disabled'}>${contacted ? 'Undo “contacted”' : '✓ Mark as contacted'}</button>` : ''}
       </div>
     </div>`) : '';

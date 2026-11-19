@@ -174,7 +174,8 @@
   /* Character tip bubble (2026-09-30, Farin: delete the sentence box on home, "once
      in a while show these sentences in a very cute bubble saying from the
      character" — 30s on, 60s off). Lives on <body>, outside #app, so dashboard
-     re-renders don't restart it; see scheduleCharTips(). */
+     re-renders don't restart it; see scheduleCharTips(). The "once in a while" lines are off since 2026-11-19
+     (Farin: "turn off this pop up message that omes on roadmap once in a while"), CHAR_TIP_MOTIV_ON. */
   .char-tip{position:fixed; left:50%; bottom:92px; transform:translateX(-50%); width:100%; max-width:480px; height:0; z-index:30; pointer-events:none;}
   .char-tip-inner{position:absolute; bottom:0; inset-inline-start:10px; inset-inline-end:10px; display:flex; align-items:flex-end; pointer-events:none; animation:char-tip-in .6s cubic-bezier(.34,1.56,.64,1) both;}
   .char-tip-float{display:flex; align-items:flex-end; gap:4px; pointer-events:auto; cursor:pointer; animation:soft-float 4s ease-in-out infinite;}
@@ -2259,7 +2260,8 @@
   .character-card{position:relative; overflow:hidden; border:none; border-radius:32px; padding:20px 20px 24px; text-align:center; margin-top:10px; box-shadow:var(--clay-shadow); background-image:radial-gradient(circle at 14% 8%, rgba(255,255,255,.4), transparent 46%);}
   .character-card::before{content:''; position:absolute; top:-35%; left:-25%; width:65%; height:190%; background:linear-gradient(120deg, rgba(255,255,255,.4), rgba(255,255,255,0) 65%); transform:rotate(-16deg); pointer-events:none;}
   .character-card .sparkle{color:#fff;}
-  .character-portrait{width:210px; height:210px; object-fit:contain; display:block; margin:0 auto 4px; filter:drop-shadow(0 12px 14px rgba(0,0,0,.2)); animation:tile-float 4.5s ease-in-out infinite; position:relative; z-index:1;}
+  /* FE (2026-11-19): 176 px keeps the ~352 px cut-out sharp on 2x screens (was 210 px for the clay figure) */
+  .character-portrait{width:176px; height:176px; object-fit:contain; display:block; margin:0 auto 4px; filter:drop-shadow(0 12px 14px rgba(0,0,0,.2)); animation:tile-float 4.5s ease-in-out infinite; position:relative; z-index:1;}
   .tile-ic{width:36px;height:36px;border-radius:14px;display:flex;align-items:center;justify-content:center;}
   .tile-illustration{position:absolute; top:6px; right:2px; width:72px; height:72px; filter:drop-shadow(0 6px 8px rgba(0,0,0,.16));}
   .tile-illustration img, .tile-illustration svg{width:100%; height:100%; object-fit:contain; animation:tile-float 4.5s ease-in-out infinite;}
@@ -3742,9 +3744,9 @@
   var lang = '';
   var saved = null;
   try{ saved = JSON.parse(localStorage.getItem('farinSpanishApp.v1') || 'null'); if(saved && T[saved.lang]) lang = saved.lang; }catch(e){}
-  // the learner's own clay companion, as learnerCharKey() picks it: the goal's character, else 'everyday'
+  // FE in the learner's goal outfit, as learnerCharKey() picks it (FE_GOAL; 'everyday' when there is no goal)
   var ch = saved && saved.profile && saved.profile.motivationTag;
-  document.getElementById('fe-boot-char').src = 'char-' + (/^(career|everyday|exam|immigration|travel)$/.test(ch || '') ? ch : 'everyday') + '.png';
+  document.getElementById('fe-boot-char').src = 'art/fe/fe-' + {career:'l-laptop', everyday:'p-mug', exam:'l-books', immigration:'t-binoculars', travel:'t-explorer'}[/^(career|everyday|exam|immigration|travel)$/.test(ch || '') ? ch : 'everyday'] + '.webp';
   if(!lang){ var q = /[?&]lang=(tr|en|fa|es)\b/.exec(location.search); if(q) lang = q[1]; }
   if(!lang){ var nav = String(navigator.language || '').slice(0, 2).toLowerCase(); lang = T[nav] ? nav : 'tr'; }
   var t = T[lang], $ = function(id){ return document.getElementById(id); };
@@ -13982,6 +13984,8 @@ function mergeRoadmapForGoalChange(){
 }
 
 /* ============================= FARIN THE CHARACTER =============================
+   2026-11-19 (Farin: "no clay characters and no farin and dog characters. just this"): FE took every one of these places. farinSrc()
+   below maps each old pose name to an FE pose; the notes that follow are the history of where the drawn Farin appeared.
    Farin 2026-10-28 (Trello J1H0U3VU, build i8t09sOx): option A with changes. Farin does the talking and reacting
    (onboarding hello, hint boxes, lesson and course heroes, results, empty states); her dog sits in the Home bubble's
    corner and the practice header's corner; the clay buddy stays only as the learner's token on the roadmap and in the
@@ -13989,7 +13993,28 @@ function mergeRoadmapForGoalChange(){
    bottom band, never over text). Cut-outs from her character sheet, art/farin/*.webp, lazy-loaded. One Farin per
    screen, no hops. Not on flashcards, level tests, stage checks or the Club. */
 const FARIN_ART = 'art/farin/';
-function farinSrc(n){ return FARIN_ART + n + '.webp'; }
+/* FE (say "fee") is the app's character (Farin 2026-11-19: "this and name him FE", from his FE sheet; "no clay characters anymore").
+   He replaces the clay goal figures and the drawn Farin everywhere outside the games. The cut-outs live in art/fe/
+   (source + cutter: Claude/specs/fe-character-2026-11-19). Each old pose name maps to the closest FE pose, so the
+   callers stay the same; item-* stay the plain objects they were. The learner's goal picks FE's outfit (FE_GOAL). */
+const FE_ART = 'art/fe/fe-';
+const FE_GOAL = {career:'l-laptop', everyday:'p-mug', exam:'l-books', immigration:'t-binoculars', travel:'t-explorer'};
+const FE_FOR_FARIN = {
+  'face-smile':'e-happy', 'face-content':'m-heart', 'face-laugh':'p-cheer', 'face-proud':'m-medal', 'face-oh':'e-wow',
+  'face-wonder':'e-wonder', 'face-hmm':'e-wonder', 'face-sly':'e-happy',
+  'mood-happy':'p-hooray', 'mood-thinking':'p-idea', 'mood-excited':'p-cheer', 'mood-annoyed':'e-annoyed', 'mood-tired':'m-blanket',
+  'dog':'e-happy', 'dog-hug':'m-heart', 'dog-kiss':'m-heart', 'dog-walk':'p-walk', 'hero-walk-dog':'p-walk',
+  'body-front':'p-hooray', 'body-34':'e-neutral', 'body-side':'p-walk', 'body-back':'p-walk', 'body-lookup':'e-wonder',
+  'body-pockets':'e-neutral', 'body-crouch-coffee':'p-mug', 'body-sit-knees':'p-mug',
+  'head-front':'e-neutral', 'head-34':'e-neutral', 'head-side':'e-neutral', 'head-back':'e-neutral', 'head-lookdown':'e-neutral', 'head-lookup':'e-wonder',
+  'outfit-teacher':'l-teacher', 'outfit-travel':'t-explorer', 'outfit-work':'l-laptop', 'outfit-winter':'s-winter', 'outfit-home':'d-chef',
+  'outfit-sporty':'p-run', 'outfit-goingout':'d-bubbletea', 'outfit-casual':'p-walk',
+  'scene-planning':'l-write', 'scene-studying':'l-books', 'scene-music':'l-music', 'scene-exploring':'t-binoculars',
+  'scene-latenight':'p-laptop-lying', 'scene-latenight2':'p-laptop-lying', 'scene-plants':'d-garden'
+};
+function feSrc(p){ return FE_ART + p + '.webp'; }
+function feGoalSrc(g){ return feSrc(Object.prototype.hasOwnProperty.call(FE_GOAL, g) ? FE_GOAL[g] : FE_GOAL.everyday); }
+function farinSrc(n){ return /^item-/.test(n) ? FARIN_ART + n + '.webp' : feSrc(Object.prototype.hasOwnProperty.call(FE_FOR_FARIN, n) ? FE_FOR_FARIN[n] : 'e-happy'); }
 function farinImg(n, cls){ return '<img class="' + (cls || 'fw') + '" src="' + farinSrc(n) + '" alt="" loading="lazy" decoding="async">'; }
 function farinHash(t){ let h = 0; t = String(t || ''); for(let i = 0; i < t.length; i++) h = (h * 31 + t.charCodeAt(i)) | 0; return Math.abs(h); }
 const FARIN_TOPIC_OUTFITS = [
@@ -14024,8 +14049,8 @@ function farinCelebrateFace(detail, low){
 }
 function farinHelloHtml(){
   return '<div class="farin-hi">' + farinImg('body-front', 'farin-hi-img') + '<p dir="auto"><b>'
-    + L("Hi, I'm Farin.", 'Merhaba, ben Farin.', 'سلام، من فرین هستم.', 'Hola, soy Farin.') + '</b>'
-    + L("I'm your teacher here. Two quick choices and we start.", 'Burada senin öğretmeninim. İki kısa seçim yapalım, sonra başlıyoruz.', 'اینجا معلمت هستم. دو انتخاب کوتاه داریم و بعد شروع می‌کنیم.', 'Aquí soy tu profe. Dos elecciones rápidas y empezamos.')
+    + L("Hi, I'm FE.", 'Merhaba, ben FE.', 'سلام، من فی هستم.', 'Hola, soy FE.') + '</b>'
+    + L("I'm with you all the way. Two quick choices and we start.", 'Yol boyunca yanındayım. İki kısa seçim yapalım, sonra başlıyoruz.', 'تمام راه کنارتم. دو تا انتخاب کوتاه داریم و بعد شروع می‌کنیم.', 'Te acompaño en todo el camino. Dos elecciones rápidas y empezamos.')
     + '</p></div>';
 }
 /* Roadmap card art (Farin 2026-10-28). Worked out once per draw, the same every time for the same page:
@@ -14091,7 +14116,7 @@ function roadmapCardArt(rm){
   const games = rm.map((it,i)=>i).filter(i=>rm[i].type === 'game' && fits(i)).sort((x,y)=>(rm[y].pos === 3) - (rm[x].pos === 3) || Math.abs(x - midAt) - Math.abs(y - midAt));
   const mid = games.length ? games[0] : rm.map((it,i)=>i).filter(fits).sort((x,y)=>Math.abs(x - midAt) - Math.abs(y - midAt))[0];
   if(mid != null && mid > first + 1) put(mid, {farin:farinOutfit(rmTopicText(rm[mid]), rm[mid].refId)});
-  for(let i = rm.length - 1; i >= Math.max(0, rm.length - 4); i--) if(fits(i) && i > (mid == null ? first : mid) + 1){ put(i, {farin:'dog-hug', wide:true}); break; }   // Farin 2026-10-28: never a head on the roadmap, a happy full-body pose
+  for(let i = rm.length - 1; i >= Math.max(0, rm.length - 4); i--) if(fits(i) && i > (mid == null ? first : mid) + 1){ put(i, {farin:'dog-hug', wide:true}); break; }   // FE holding a heart since 2026-11-19 (was Farin hugging her dog). Farin 2026-10-28: never a head on the roadmap, a happy full-body pose
   let items = 0;
   rm.forEach((it, i)=>{
     if(items >= 5 || !fits(i)) return;
@@ -14108,6 +14133,10 @@ function learnerCharKey(){
 // bubble shows once per real action (opening the app, finishing a lesson, a bubble button), then
 // nothing until the next action; in between only a motivational line, at most once every 5 min.
 const CHAR_TIP_SHOW_MS = 5000, CHAR_TIP_ASK_MS = 10000, CHAR_TIP_MOTIV_GAP_MS = 300000;
+// Off since 2026-11-19 (Farin: "turn off this pop up message that omes on roadmap once in a while"): no motivational line on its own
+// (GREETINGS / COMPANION_LINES greetings via pickGreeting), neither every 5 min nor on app open with nothing to offer. The bubble still
+// answers a real action: today's plan / week goal / comeback / calibration offer, the locked-step hint, "Farin answered your message".
+const CHAR_TIP_MOTIV_ON = false;
 let charTipTimer = null, charTipRot = Math.floor(Math.random()*10);
 function hideCharTip(instant){
   const el = document.getElementById('char-tip');
@@ -14122,6 +14151,7 @@ function showCharTip(motivOnly, line){
   // Gamification v3: the bubble also carries the comeback greeting and today's plan (with buttons).
   // line (2026-10-18): a fixed hint instead of the plan/greeting — used by the locked roadmap step
   const offer = (motivOnly || line) ? null : companionBubbleContent();
+  if(!line && !offer && !CHAR_TIP_MOTIV_ON) return 0;   // nothing to say: no bubble (0 = done, false = not on Home yet)
   const asksWeekGoal = !!offer && !isComeback() && (!state.progress.goalChosen || /data-action="calib-move"/.test(offer));
   const text = line || offer || pickGreeting(state.profile, dueItems().length, charTipRot++);
   const el = document.createElement('div');
@@ -14143,15 +14173,16 @@ function showCharTip(motivOnly, line){
   document.body.appendChild(el);
   return asksWeekGoal ? CHAR_TIP_ASK_MS : CHAR_TIP_SHOW_MS;
 }
-// Called on a real action (app open, lesson finished, bubble button). After that bubble
-// hides, only motivational lines follow, one per CHAR_TIP_MOTIV_GAP_MS.
+// Called on a real action (app open, lesson finished, bubble button). After that bubble hides, nothing more until the next action
+// (the motivational lines that followed, one per CHAR_TIP_MOTIV_GAP_MS, are off: CHAR_TIP_MOTIV_ON).
 function scheduleCharTips(delay, motivOnly){
   clearTimeout(charTipTimer);
+  if(motivOnly && !CHAR_TIP_MOTIV_ON) return;
   charTipTimer = setTimeout(()=>{
     const ms = showCharTip(motivOnly);
     if(ms){
-      charTipTimer = setTimeout(()=>{ hideCharTip(); scheduleCharTips(CHAR_TIP_MOTIV_GAP_MS, true); }, ms);
-    } else {
+      charTipTimer = setTimeout(()=>{ hideCharTip(); if(CHAR_TIP_MOTIV_ON) scheduleCharTips(CHAR_TIP_MOTIV_GAP_MS, true); }, ms);
+    } else if(ms !== 0){
       scheduleCharTips(5000, motivOnly); // not on home right now — check again shortly
     }
   }, delay);
@@ -15714,7 +15745,7 @@ function profileHeaderCard(p){
     <span class="sparkle" style="top:36px; right:26px; left:auto; width:6px; height:6px; animation-delay:.5s;"></span>
     <span class="sparkle" style="top:90px; left:16px; width:5px; height:5px; animation-delay:1s;"></span>
     <span class="sparkle" style="bottom:14px; right:20px; left:auto; width:5px; height:5px; animation-delay:1.5s;"></span>
-    <img src="char-${charKey}.png" alt="" class="character-portrait" loading="lazy">
+    <img src="${feGoalSrc(charKey)}" alt="" class="character-portrait" loading="lazy">
     ${typeof companionPinRowHtml === 'function' ? companionPinRowHtml() : ''}
     <div class="eyebrow" style="color:rgba(255,255,255,.8);"><bdi>${esc(p.name)}</bdi></div>
     <h1 class="display" style="font-size:23px; margin-top:4px; color:#fff;">${esc(L(arch.name.en,arch.name.tr,arch.name.fa, arch.name.es))}</h1>
@@ -15960,7 +15991,7 @@ function waitBuddyHtml(kind){
   if(now - waitBuddyLast > 2000) waitBuddyT0 = now;
   waitBuddyLast = now;
   const el = (now - waitBuddyT0) / 1000;
-  return `<div class="wb${el > 0.6 ? ' wb-now' : ''}" role="status" aria-live="polite"><div class="cute-bubble" dir="auto">${esc(L(t[0], t[1], t[2], t[3]))}</div><img class="wb-char" src="char-${learnerCharKey()}.png" alt="">`
+  return `<div class="wb${el > 0.6 ? ' wb-now' : ''}" role="status" aria-live="polite"><div class="cute-bubble" dir="auto">${esc(L(t[0], t[1], t[2], t[3]))}</div><img class="wb-char" src="${feGoalSrc(learnerCharKey())}" alt="">`
     + `<span class="wb-slow" dir="auto" style="animation-delay:${Math.max(0, 8 - el).toFixed(2)}s">${esc(L(WAIT_BUDDY_SLOW[0], WAIT_BUDDY_SLOW[1], WAIT_BUDDY_SLOW[2], WAIT_BUDDY_SLOW[3]))}</span></div>`;
 }
 let waitBuddyEl = null;
@@ -16050,7 +16081,7 @@ function companionPinRowHtml(){
     + ((state.progress.souvenirs||[]).length ? `<span class="cmp-cover-tag"><span class="cmp-cover" style="${journalCoverStyle()}"></span>${esc(journalName())} · ${esc(coverName)}</span>` : '');
 }
 function roadmapCompanionHtml(size, extraCls){
-  return `<button class="rm2-companion ${extraCls||''}" data-action="nav" data-view="journal" aria-label="${esc(journalName())}" style="width:${size}px; height:${size}px;"><img src="char-${learnerCharKey()}.png" alt="" class="roadmap-char-portrait" style="width:${size}px; height:${size}px;">${companionCoverHtml()}${companionPinsHtml(3)}</button>`;
+  return `<button class="rm2-companion ${extraCls||''}" data-action="nav" data-view="journal" aria-label="${esc(journalName())}" style="width:${size}px; height:${size}px;"><img src="${feGoalSrc(learnerCharKey())}" alt="" class="roadmap-char-portrait" style="width:${size}px; height:${size}px;">${companionCoverHtml()}${companionPinsHtml(3)}</button>`;
 }
 // Called from renderRoadmapCard: decides whether this draw is a "return after a node".
 function roadmapAdvanceFrom(currentIndex){
@@ -16222,7 +16253,7 @@ function companionEntryHtml(levelBase, i){
   const choiceBtn = (o, letter) => `<button class="jr-choice" data-action="story-choice" data-key="${esc(key)}" data-choice="${letter}" dir="ltr"><span>${esc(companionPick(o))}</span>${svText(o) && svText(o) !== companionPick(o) ? `<small>${esc(svText(o))}</small>` : ''}</button>`;
   return `<div class="jr-entry">
     <div class="jr-entry-head">
-      <img src="char-${learnerCharKey()}.png" alt="">
+      <img src="${feGoalSrc(learnerCharKey())}" alt="">
       <span class="eyebrow" style="margin:0; color:var(--cat-story);">${esc(levelBase)} · ${COMPANION_ENTRY_PCT[i]}%${d.title ? ' · ' + esc(svText(d.title) || d.title) : ''}</span>
       <button class="tts-btn" data-action="speak-sentence" data-text="${esc(d.target)}" aria-label="${esc(L('Listen','Dinle','گوش کن','Escuchar'))}">${ICONS.soundOn}</button>
     </div>
@@ -16544,7 +16575,7 @@ function showPageKept(level){
       <div class="pc-grid">${slots.map(s=>`<div class="pc-slot" style="opacity:1;">${journalSlotHtml(Object.assign({}, s, {i:undefined, start:true}), 'tiny')}</div>`).join('')}</div>
       <div class="pc-stamp kept" id="pc-stamp"><span>${esc(level)}</span><small>${L('KEPT','KALICI','ماندگار','GUARDADO')}</small></div>
     </div>
-    <div class="pc-char-wrap" id="pc-char"><img src="char-${learnerCharKey()}.png" alt=""></div>
+    <div class="pc-char-wrap" id="pc-char"><img src="${feGoalSrc(learnerCharKey())}" alt=""></div>
     <p class="game-result-line" style="color:#fff; margin-top:10px; text-align:center;">${L('Every souvenir on this page is yours for good.','Bu sayfadaki her hatıra artık hep senin.','هر یادگاری این صفحه دیگر برای همیشه مال توست.','Cada recuerdo de esta página ya es tuyo para siempre.')}</p>
     <div class="celebrate-hint">${L('Tap to close','Kapatmak için dokun','برای بستن بزن','Toca para cerrar')}</div>
   </div>`;
@@ -16563,7 +16594,7 @@ function journalCoverHtml(){
   const line = [vols ? L(`${vols} volume${vols===1?'':'s'} on the shelf`, `Rafta ${vols} cilt`, `${vols} جلد در قفسه`, `${vols} volumen${vols===1?'':'es'} en la estantería`) : L('Volume 1, in progress','1. cilt, devam ediyor','جلد ۱، در حال نوشتن','Volumen 1, en marcha'),
     kept ? L(`${kept} kept`, `${kept} kalıcı`, `${kept} ماندگار`, `${kept} guardado${kept===1?'':'s'}`) : ''].filter(Boolean).join(' · ');
   return `<div class="jr-cover" style="${journalCoverStyle()}">
-    <img src="char-${learnerCharKey()}.png" alt="" class="jr-cover-char">
+    <img src="${feGoalSrc(learnerCharKey())}" alt="" class="jr-cover-char">
     <div><div class="jr-cover-name">${esc(archShortName())} ${esc(journalName())}</div><div class="jr-cover-line">${esc(line)}</div>${companionLevelPins().length ? `<div class="cmp-pin-row" style="justify-content:flex-start;">${companionLevelPins().map(lv=>`<span class="cmp-pin">${esc(lv)}</span>`).join('')}</div>` : ''}</div>
   </div>`;
 }
@@ -16680,7 +16711,7 @@ function showPageComplete(){
       <div class="pc-grid">${slots.map(s=>`<div class="pc-slot">${journalSlotHtml(Object.assign({}, s, {i:undefined, start:true}), 'tiny')}</div>`).join('')}</div>
       <div class="pc-stamp" id="pc-stamp"><span>${esc(level)}</span><small>${L('COMPLETE','TAMAM','کامل شد','COMPLETO')}</small></div>
     </div>
-    <div class="pc-char-wrap" id="pc-char"><img src="char-${learnerCharKey()}.png" alt=""><span class="pc-pin" id="pc-pin">${esc(level)}</span></div>
+    <div class="pc-char-wrap" id="pc-char"><img src="${feGoalSrc(learnerCharKey())}" alt=""><span class="pc-pin" id="pc-pin">${esc(level)}</span></div>
     <button class="btn" data-pc="advance" style="margin-top:10px; width:100%; max-width:320px; justify-content:center; background:var(--clay-orange); color:#fff; border:none;"><img src="icon-gradcap.png" alt="" style="width:22px; height:22px; object-fit:contain;">${L('Go to the next level','Bir sonraki seviyeye geç','برو به سطح بعدی','Ir al siguiente nivel')}</button>
     <button class="btn btn-ghost" data-pc="close" style="margin-top:8px; width:100%; max-width:320px; justify-content:center; color:#fff; border-color:rgba(255,255,255,.5); background:transparent;">${L('Not now','Şimdi değil','الان نه','Ahora no')}</button>
   </div>`;
@@ -17709,7 +17740,7 @@ function notifNewsShow(b, fromPush){
   const fa = /[؀-ۿ]/.test(b.title + b.body), btn = notifNewsBtn(b);
   const el = document.createElement('div');
   el.className = 'club-ask notif-ask'; el.setAttribute('role', 'dialog'); el.setAttribute('aria-modal', 'true'); el.setAttribute('aria-labelledby', 'notif-news-title');
-  const pic = b.ch && /^(climber|explorer|graduate|traveller|friends)$/.test(b.ch) ? 'notif/' + b.ch + '-icon.png' : farinSrc('dog');   // the announcement's clay character (2026-11-16)
+  const pic = b.ch && /^(climber|explorer|graduate|traveller|friends)$/.test(b.ch) ? 'notif/' + b.ch + '-icon.png' : farinSrc('dog');   // the announcement's picture: FE in a goal outfit (notif/*, repainted 2026-11-19; was the clay figures)
   el.innerHTML = `<div class="club-ask-card" dir="${fa ? 'rtl' : 'auto'}"><img class="club-ask-dog" src="${pic}" alt="">
       <div class="eyebrow club-ask-eyebrow">${CL('From Farin','Farin\'den','از طرف فرین','De Farin')}</div>
       <h2 class="display club-ask-title" id="notif-news-title" dir="auto">${esc(b.title)}<span class="club-ask-dot">.</span></h2>
@@ -17810,7 +17841,7 @@ function notifBoot(){
 let adminNotifLast = {};        // chat id -> 'phone' | 'none' | 'err' (the last answer's notification)
 let adminNt = {stats:null, copy:null, err:'', loading:false, phones:null, countFor:'', confirm:false, sending:null, note:'', open:'',
   d:{lang:'tr', title:'', body:'', btn:'none', ck:'', ch:'explorer', app:'all', levels:[], course:'all', offer:false}};
-const NT_CHARS = {explorer:'The Explorer (curiosity)', climber:'The Climber (effort, wins)', graduate:'The Graduate (exams)', traveller:'The Traveller (moving abroad)', friends:'The Friends (warmth, groups)', none:'No character'};
+const NT_CHARS = {explorer:'FE the explorer (curiosity)', climber:'FE at his laptop (effort, wins)', graduate:'FE with his books (exams)', traveller:'FE with binoculars (moving abroad)', friends:'FE with his mug (warmth, groups)', none:'No picture'};   // FE since 2026-11-19 (notif/<key>-icon.png, -wide.jpg); the keys stay for the notify worker
 function adminNtToken(){ const u = firebase.auth && firebase.auth().currentUser; return u ? u.getIdToken() : Promise.reject(new Error('Sign in again.')); }
 function adminNtFetch(path, body){
   return adminNtToken().then(tok=>fetch(NOTIF_URL + path, body ? {method:'POST', headers:{'Authorization':'Bearer ' + tok, 'Content-Type':'application/json'}, body:JSON.stringify(body)}
@@ -21264,7 +21295,7 @@ function orderTrayHtml(round){
 }
 // World Kit (worlds SPEC 5, C6): in Order Up!'s world the customers are the town regulars (the Open House portraits, faces calm / warm /
 // oh), never the clay figures. A woman or a man to match the voice that speaks the orders (state.profile.accent); the round's first
-// line seeds who comes in. Out of the world: the clay figure, as before.
+// line seeds who comes in. Out of the world: FE in that customer's goal outfit (Farin 2026-11-19: "no clay characters ... just this").
 const ORDER_TOWN = {f:['bell','okafor','ada','leyla','rosa','hana','gran'], m:['tom','ben','ollie','pike']};
 function orderWorldOn(){ return !!(window.Theatre && Theatre.world && Theatre.world() === 'order'); }
 // In the world each menu item and extra is its own clear-line render (games/worlds/order/art/item-<id>.webp, extra-<id>.webp; one render
@@ -21276,7 +21307,7 @@ function orderArtHtml(o){
   return '<img class="order-art-img" src="games/worlds/order/art/' + (ORDER_EXTRAS.includes(o) ? 'extra' : 'item') + '-' + o.id + '.webp" alt="" decoding="async" draggable="false">';
 }
 function orderFaceSrc(round, cust){
-  if(!orderWorldOn()) return 'char-' + cust.ch + '.png';
+  if(!orderWorldOn()) return feGoalSrc(cust.ch);
   const list = ORDER_TOWN[TTS_ACCENTS.indexOf(ttsAccent()) === 1 ? 'm' : 'f'], i = cust.usual ? cust.of : Math.max(0, round.customers.indexOf(cust));
   const seed = String((round.customers[0] && round.customers[0].text) || '').length;
   return 'games/cozy-chores/art/pt-' + list[(seed + i) % list.length] + '-' + (cust.done ? 'warm' : (cust.fb ? 'oh' : 'calm')) + '.webp';
@@ -22160,15 +22191,15 @@ const DESK_TOWN = {f:[1, 3, 5, 7], m:[2, 4, 6, 8]};
 // a rubber stamp (handle, block, ink line): the icon on the world's APPROVED action bar
 const DESK_STAMP_ICON = '<svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true"><circle cx="12" cy="5" r="2.9" fill="currentColor"/><path d="M10.5 7.2h3l.8 4.6H9.7z" fill="currentColor"/><rect x="4.5" y="11.6" width="15" height="4.6" rx="1.4" fill="currentColor"/><path d="M6 20.2h12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>';
 function deskFaceSrc(round, t){
-  if(worldKind() !== 'desk') return 'char-' + t.ch + '.png';
+  if(worldKind() !== 'desk') return feGoalSrc(t.ch);
   const g = t.g || 'f', list = DESK_TOWN[g === 'm' ? 'm' : 'f'];
   const i = Math.max(0, round.travellers.indexOf(t)), seed = String((round.travellers[0] && round.travellers[0].ch) || '').length;
   const face = t.done ? 'warm' : (t.tries ? 'oh' : 'calm');
   return 'games/worlds/desk/art/traveller-' + list[(seed + i) % list.length] + '-' + face + '.webp';
 }
 // In Passport Desk's world the traveller stands at the booth window, on the plate, behind the counter (skins.js front layer; the picture is
-// shown whole, its lower edge hidden by the counter), sized by height so every traveller stands at the same scale. Out of the world: the
-// clay figure in the card, as before.
+// shown whole, its lower edge hidden by the counter), sized by height so every traveller stands at the same scale. Out of the world: FE in the
+// traveller's goal outfit, in the card (2026-11-19, no clay figures).
 const DESK_TRAV_W = {1:385, 2:463, 3:331, 4:430, 5:370, 6:442, 7:477, 8:427};   // traveller-N-*.webp widths (600 px tall)
 function deskTravBox(src){
   const n = Number((String(src).match(/traveller-(\d+)-/) || [])[1]) || 2, h = 40;   // 40% of the 704x880 booth plate's height
@@ -29565,7 +29596,7 @@ function renderStageCheckIntro(){
   return `<div class="fade-in game-screen">
     ${gameTopHtml(scTitle(key))}
     <div class="game-card" style="text-align:center;">
-      <img src="char-${learnerCharKey()}.png" alt="" style="width:96px; height:96px; object-fit:contain; margin:0 auto 10px; display:block;">
+      <img src="${feGoalSrc(learnerCharKey())}" alt="" style="width:96px; height:96px; object-fit:contain; margin:0 auto 10px; display:block;">
       <div class="game-result-title" style="font-size:20px;" dir="auto">${esc(scTitle(key))}</div>
       <p class="game-result-line" dir="auto">${esc(intro)}</p>
     </div>
@@ -29602,7 +29633,7 @@ function renderStageCheckResults(){
   return `<div class="fade-in game-screen" style="gap:0;">
     ${gameTopHtml(scTitle(q.scKey || ''))}
     <div style="text-align:center;">
-      <img src="char-${learnerCharKey()}.png" alt="" style="width:84px; height:84px; object-fit:contain; margin:4px auto 6px; display:block;">
+      <img src="${feGoalSrc(learnerCharKey())}" alt="" style="width:84px; height:84px; object-fit:contain; margin:4px auto 6px; display:block;">
       <h2 class="game-result-title" dir="auto">${esc(head)}</h2>
       <p class="game-result-line" dir="auto" style="margin-bottom:6px;">${esc(score)}</p>
     </div>
@@ -29847,7 +29878,7 @@ function renderRoadmapReport(){
   } else if(i === 2){
     const am = rrAreaMeta(rep.area), strong = (rep.strong || []).map(it=>row(it, true)).filter(Boolean);
     body = head(L('Your superpower','Süper gücün','ابرقدرتت','Tu superpoder'), esc(am.t))
-      + `<div class="rr-power" style="--c:var(--cat-${am.c});">${claySparkles()}<img src="char-${learnerCharKey()}.png" alt=""><p dir="auto">${esc(am.s)}</p></div>`
+      + `<div class="rr-power" style="--c:var(--cat-${am.c});">${claySparkles()}<img src="${feGoalSrc(learnerCharKey())}" alt=""><p dir="auto">${esc(am.s)}</p></div>`
       + (strong.length ? `<div class="rr-sub">${L('Right on the first try','İlk denemede doğru','همان بار اول درست','Bien a la primera')}</div><div class="rr-list">${strong.join('')}</div>`
         : `<p class="rr-quiet" dir="auto">${L('Every card on this page is done. That alone is a win.','Bu sayfadaki her kart bitti. Bu bile bir zafer.','همهٔ کارت‌های این صفحه تمام شد. همین خودش یک پیروزی است.','Todas las tarjetas de esta página están hechas. Eso ya es una victoria.')}</p>`);
   } else if(i === 3){
@@ -32058,7 +32089,7 @@ const HANDLERS = {
     }
   },
   // Locked roadmap step tapped (Farin 2026-10-18): one hint through the existing home bubble, 5 s,
-  // then the usual motivational cycle resumes. No render, nothing saved.
+  // then nothing (the motivational cycle that resumed here is off since 2026-11-19). No render, nothing saved.
   'roadmap-locked'(){
     clearTimeout(charTipTimer); hideCharTip(true);
     const ms = showCharTip(true, L('Finish the step above first','Önce yukarıdaki adımı bitir','اول مرحله‌ی بالایی را تمام کن','Termina primero el paso de arriba'));
@@ -37970,7 +38001,7 @@ function courseGoalKey(c){ const id = String((c && c.id) || '');
   if(/immig|abroad/.test(id)) return 'immigration';
   return 'everyday'; }
 function courseArtHtml(c, small){ const g = courseGoalKey(c);
-  return `<div class="fs-art${small ? ' sm' : ''}" aria-hidden="true" style="--g:${COURSE_GOAL_COLORS[g]};"><i class="fs-disc"></i><img src="char-${g}.png" alt="" decoding="async"></div>`; }
+  return `<div class="fs-art${small ? ' sm' : ''}" aria-hidden="true" style="--g:${COURSE_GOAL_COLORS[g]};"><i class="fs-disc"></i><img src="${feGoalSrc(g)}" alt="" decoding="async"></div>`; }
 // "IELTS: 10 full exams" -> pill tag "IELTS", hero title "10 full exams"; a title without a colon stays whole.
 function courseHeroTitleParts(c){ const t = cl(c.title), i = t.indexOf(':'); return i > 0 && i < t.length - 1 ? [t.slice(0, i).trim(), t.slice(i + 1).trim()] : ['', t]; }
 // One line under the hero title: the course's own short line, else the promise's first sentence up to a colon.
@@ -41954,7 +41985,7 @@ function adminInsClassesHtml(openId){
       : sug ? '<p class="ins-fun"><b>' + n + '</b> fit · <b>' + m.filter(p=>adminClassMayOffer(c, p)).length + '</b> can get the offer · <b>' + invited + '</b> sent the offer · <b class="y">' + yes + '</b> said yes' + perTime + ' · <b>' + no + '</b> said no · ' + startNote + '</p>' : '';
     const g = course ? THEME_GOAL[c.theme] || 'everyday' : (COURSE_GOAL_COLORS[c.goal] ? c.goal : 'everyday'), lvc = adminClassLevelCode(c);
     const offerBox = offer ? `<div class="ins-offer" style="--g:${COURSE_GOAL_COLORS[g]};">
-        <div class="ins-odoc" aria-hidden="true"><span class="ins-od-pill">Mid-private · 4–6 people</span><b>${esc(adminClassNameIn(c, 'en'))}<i>.</i></b>${lvc ? `<small>Level ${esc(lvc)}</small>` : ''}<img src="char-${g}.png" alt="" decoding="async"></div>
+        <div class="ins-odoc" aria-hidden="true"><span class="ins-od-pill">Mid-private · 4–6 people</span><b>${esc(adminClassNameIn(c, 'en'))}<i>.</i></b>${lvc ? `<small>Level ${esc(lvc)}</small>` : ''}<img src="${feGoalSrc(g)}" alt="" decoding="async"></div>
         <div class="ins-otxt"><b>Offer page</b><span><b>Send offer</b> opens WhatsApp with a short message in their language and a link to a page made for them: their name, goal and level, what they told the app they find hard, the group's favourite topics, only 6 seats, the class time${twoT ? 's to choose from' : ''} (Iran time for Persian speakers), the ${ADMIN_CLASS_SESSIONS} sessions and, for Iran, the price. <b>Telegram</b> sends the same message, for learners without WhatsApp. Every learner in the class gets it, ticked “news and offers” or not; only someone who turned offers off themselves gets a plain hello.</span>
           <span class="ins-obtns"><a class="btn btn-sm btn-ghost" href="${esc(adminClassOfferUrl(c, null, byHash))}" target="_blank" rel="noopener">Open the page</a><button class="btn btn-sm btn-ghost" data-admin-action="ins-offer-copy" data-c="${esc(c.id)}">Copy link</button></span></div>
       </div>` : '';
@@ -42061,7 +42092,7 @@ function renderAdminClassesTab(){
       ${c.codeFrom ? `<p class="fs-sub">A group of class ${esc(c.codeFrom)}</p>` : ''}
       <p class="fs-sub">${esc((ADMIN_INS_LANG[c.lang] ? ADMIN_INS_LANG[c.lang] + ' speakers · ' : '') + (c.app === 'es' ? 'Spanish' : 'English') + ' app · ' + when)}</p>
       ${adminClassSched(c).length && c.status !== 'closed' ? `<p class="fs-sub cls-htime">${adminClassSched(c).map((id, k, a)=>esc((a.length > 1 ? 'Time ' + (k + 1) + ': ' : 'Time: ') + adminClassSlotShort(id))).join('<br>')}<br><small>your clock (Turkey) · Iran is 30 min later</small></p>` : ''}
-      <div class="fs-art" aria-hidden="true" style="--g:${COURSE_GOAL_COLORS[g]};"><i class="fs-disc"></i><img src="char-${g}.png" alt="" decoding="async"></div>
+      <div class="fs-art" aria-hidden="true" style="--g:${COURSE_GOAL_COLORS[g]};"><i class="fs-disc"></i><img src="${feGoalSrc(g)}" alt="" decoding="async"></div>
     </header>
     <div class="lx-stats fs-stats">${stats}</div>
     <div class="ins cls-page">${adminClassesClashNote ? `<p class="acc-err" role="status">${esc(adminClassesClashNote)}</p>` : ''}${adminInsNote ? `<p class="acc-ok" role="status">${esc(adminInsNote)}</p>` : ''}${adminInsClassesHtml(c.id)}</div>`;
@@ -42477,7 +42508,7 @@ function renderAdminHome(todo){
       <span class="fs-pill">FEschool admin · ${esc(day)}</span>
       <h1 class="display">${hello}<span class="dot">.</span></h1>
       <p class="fs-sub">${esc(sub)}</p>
-      <div class="fs-art" aria-hidden="true" style="--g:#FFA53D;"><i class="fs-disc"></i><img src="char-career.png" alt="" decoding="async"></div>
+      <div class="fs-art" aria-hidden="true" style="--g:#FFA53D;"><i class="fs-disc"></i><img src="${feGoalSrc('career')}" alt="" decoding="async"></div>
     </header>
     <div class="lx-stats fs-stats">
       <div class="lx-stat"><span>Learners</span><b class="display">${num(live.length)}</b></div>
@@ -44184,7 +44215,7 @@ function renderAdminUserProfile(p){
       <span class="fs-pill">${p.app === 'es' ? 'Spanish' : 'English'} app · ${esc(pf.level || 'no level')}</span>
       <h1 class="display"><bdi>${esc(pf.name || '(no name)')}</bdi><span class="dot">.</span></h1>
       <p class="fs-sub">${p.joined ? 'Joined ' + adminDate(p.joined) + ' · ' : ''}seen ${adminAgo(p.lastSeen)}</p>
-      <div class="fs-art" aria-hidden="true" style="--g:${COURSE_GOAL_COLORS[goal]};"><i class="fs-disc"></i><img src="char-${goal}.png" alt="" decoding="async"></div>
+      <div class="fs-art" aria-hidden="true" style="--g:${COURSE_GOAL_COLORS[goal]};"><i class="fs-disc"></i><img src="${feGoalSrc(goal)}" alt="" decoding="async"></div>
     </header>
     <div class="lx-stats fs-stats">
       <div class="lx-stat"><span>Days active</span><b class="display">${act.days || '—'}</b></div>

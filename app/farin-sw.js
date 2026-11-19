@@ -1,4 +1,4 @@
-const CACHE = 'farin-spanish-v8';   // v8 2026-11-14: card-mystery.webp replaced under the same name (Harbour Files poster crop)
+const CACHE = 'farin-spanish-v9';   // v9 2026-11-19: notif/*-icon.png + -wide.jpg repainted with FE under the same names (no clay figures); FE art precached; the new FE app icon (icon-180/512.png, same names)
 const CACHE_PREFIX = CACHE.replace(/\d+$/, '');   // 'farin-english-v' / 'farin-spanish-v'
 const PAGE_URL = self.registration.scope;
 /* Cozy Chores painted art (Trello 1m2Y0zdU, 8JAiLuV7): the game's plates and cut-outs are sibling files
@@ -116,12 +116,14 @@ const PATH_PRECACHE = [
   'path/lane-ch1-d2b.webp'
 ];
 const PATH_RE = /\/path\/[^/?#]+\.webp$/;
-/* Character and story art (Trello c24wjywa): the companions (char-<goal>.png, also the Order Up! customers),
+/* Character and story art (Trello c24wjywa): the companion (FE, art/fe/fe-<pose>.webp, since 2026-11-19; was char-<goal>.png),
    the story genre cut-outs (stories, souvenirs, the journal) and the logo on every souvenir back, precached at
    install so they show offline even before a screen first used them. One request per file, so a missing file
    never blocks the rest. The bigger menu icons stay cache-on-first-use (IMG_RE below). */
 const APP_ART_PRECACHE = [
-  'char-career.png', 'char-everyday.png', 'char-exam.png', 'char-immigration.png', 'char-travel.png',
+  // FE, the app's character (2026-11-19): the five goal outfits + the faces the bubbles, hints and results use most
+  'art/fe/fe-l-laptop.webp', 'art/fe/fe-p-mug.webp', 'art/fe/fe-l-books.webp', 'art/fe/fe-t-binoculars.webp', 'art/fe/fe-t-explorer.webp',
+  'art/fe/fe-e-happy.webp', 'art/fe/fe-p-idea.webp', 'art/fe/fe-p-cheer.webp', 'art/fe/fe-m-medal.webp', 'art/fe/fe-m-heart.webp', 'art/fe/fe-p-hooray.webp',
   'story-adventure-cutout.png', 'story-documentary-cutout.png', 'story-fiction-cutout.png', 'story-romance-cutout.png', 'story-thriller-cutout.png',
   'logo-fe-cutout.png',
   // roadmap game-card posters (2026-10-28, filled 2026-11-12): one art/posters/card-<kind>.webp per kind CARD_POSTERS lists, + the Story Path plates
@@ -283,7 +285,7 @@ self.addEventListener('fetch', (e) => {
 });
 
 /* ---------- Phone notifications (2026-11-15): fe-notify sends {title, body, go, k, id, tag, icon, image}, encrypted for this phone ----------
-   icon / image = the clay character (notif/<name>-icon.png, notif/<name>-wide.jpg, next to this file; 2026-11-16).
+   icon / image = FE in a goal outfit (notif/<name>-icon.png, notif/<name>-wide.jpg, next to this file; 2026-11-16, FE since 2026-11-19).
    The tap opens the app on the right screen: an open app gets a 'notif-go' message, otherwise the page opens with #n=<go>. */
 const NOTIF_OPENED_URL = 'https://fe-notify.farinrasuli.workers.dev/opened';
 self.addEventListener('push', (e) => {

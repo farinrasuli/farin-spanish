@@ -227,9 +227,11 @@ body.theatre-on.th-companion .game-companion{display:block !important;}
 body.theatre-on.th-companion .game-companion .gc-bubble{display:block !important;}
 /* the poster has named the game (worlds SPEC 4.4): the title stays for screen readers only; the row keeps the companion beside the sound
    button, and its line (5 s, once per action) has room to wrap over the free middle */
-body.theatre-on.th-companion .game-top{justify-content:flex-end;}
+body.theatre-on.th-companion .game-top{justify-content:flex-end; direction:ltr;}   /* the HUD is left-to-right (x left, sound right) in every UI: the companion stays by the sound button, never by the x */
 body.theatre-on.th-companion .game-title{position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap;}
-body.theatre-on.th-companion .game-companion .gc-bubble{white-space:normal; width:max-content; max-width:calc(var(--th-col, 100vw) - 160px); text-align:start;}
+body.theatre-on.th-companion .game-companion .gc-bubble{white-space:normal; width:max-content; max-width:calc(var(--th-col, 100vw) - 200px); text-align:start; inset-inline-start:auto; inset-inline-end:auto; left:auto; right:60px;}
+/* the HUD (x, sound) always stays over the game column and its companion line: the x is never covered (2026-11-19) */
+body.theatre-on.th-running .th-hud{z-index:55;}   /* over captions (52) and the clock dial, under the celebration (60) */
 /* the natural-voice accent pill drops under the HUD row, clear of x, sound and the companion */
 body.theatre-on.th-companion #tts-badge{top:calc(84px + var(--th-safe-t));}
 

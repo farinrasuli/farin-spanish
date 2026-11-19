@@ -15,19 +15,58 @@ var BUDGET = {A1:50, A2:70, B1:90, B2:110, C1:130};
 var LONG = {A1:16, A2:16, B1:22, B2:22, C1:22};
 function wc(s){ return String(s || '').trim().split(/\s+/).filter(Boolean).length; }
 function fold(s){ return String(s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, ''); }
+// Spanish entries with an article are nouns even when they end like a verb (el telar): filled by base()
+var NOUNS = {};
 function base(word, lang){
-  var w = String(word || '').split('/')[0].trim().toLowerCase();
-  if(lang === 'es') w = w.replace(/^(el|la|los|las|un|una|unos|unas)\s+/, '');
+  var w = String(word || '').trim().toLowerCase();
+  if(lang === 'es') w = w.replace(/^(el|la|los|las|un|una)\s*\/\s*(el|la|los|las|un|una)\s+/, '$1 ');   // el/la desconocido/a
+  w = w.split('/')[0].trim();
+  if(lang === 'es'){ var m = w.match(/^(el|la|los|las|un|una|unos|unas)\s+/); if(m){ w = w.slice(m[0].length); NOUNS[fold(w)] = 1; } }
   return w;
 }
-// the Story Hunt match rule (huntMatches): EN word + up to 3 letters (or the stem without a final e); ES the hunt stem rule
+// The Story Hunt match rule (huntMatches in both apps, strict since 2026-11-19): a token matches only as the word itself or one of its real
+// inflections, never another word that shares its start (sobre / sobrina, taxi / taxista, pen / pencil). EN: + s / es / ed / ing / 's,
+// a final e dropped before -ing (+ d, s), y -> ies / ied / ier / iest / ily, a doubled last consonant, f(e) -> ves. ES: a noun or adjective
+// = its gender and number forms; a verb (-ar / -er / -ir, -se) = its stem + a conjugation ending, with the usual spelling changes, stem
+// changes and pronouns on the end ("se arrastró" finds arrastrarse).
+var ES_END = {
+  ar:'ar o as a amos ais an e es emos eis en aba abas abamos abais aban aste asteis aron ara aras aramos arais aran ase ases asen are aremos areis aria arias ariamos ariais arian ado ada ados adas ando ad'.split(' '),
+  er:'er ir o es e emos eis en imos is ia ias iamos iais ian i iste io isteis ieron iera ieras ieramos ierais ieran iese iesen ido ida idos idas iendo yendo ere eras era eremos ereis eran ire iras ira iremos ireis iran eria erias eriamos eriais erian iria irias iriamos iriais irian a as amos ais an ed id yo ye yen yeron yera'.split(' ')
+};
+var ES_SP = ['e', 'es', 'emos', 'eis', 'en', 'o', 'a', 'as', 'amos', 'ais', 'an'];
+function esVerb(t, w){
+  var inf = w.replace(/se$/, ''), cls = inf.slice(-2) === 'ar' ? 'ar' : 'er', stem = inf.slice(0, -2);
+  if(stem.length < 2) return false;
+  var stems = [stem], e = stem.lastIndexOf('e'), o = stem.lastIndexOf('o'), u = stem.lastIndexOf('u');
+  if(e >= 0){ stems.push(stem.slice(0, e) + 'ie' + stem.slice(e + 1), stem.slice(0, e) + 'i' + stem.slice(e + 1)); }
+  if(o >= 0) stems.push(stem.slice(0, o) + 'ue' + stem.slice(o + 1));
+  if(u >= 0 && cls === 'ar') stems.push(stem.slice(0, u) + 'ue' + stem.slice(u + 1));
+  var spell = [];
+  if(cls === 'ar'){ if(/c$/.test(stem)) spell.push(stem.slice(0, -1) + 'qu'); if(/g$/.test(stem)) spell.push(stem + 'u'); if(/z$/.test(stem)) spell.push(stem.slice(0, -1) + 'c'); }
+  else { if(/g$/.test(stem)) spell.push(stem.slice(0, -1) + 'j'); if(/c$/.test(stem)) spell.push(stem.slice(0, -1) + 'z'); }
+  return [t, t.replace(/(me|te|se|nos|os|lo|la|los|las|le|les)+$/, '')].some(function(f){
+    return stems.some(function(s){ return f.indexOf(s) === 0 && ES_END[cls].indexOf(f.slice(s.length)) >= 0; }) ||
+      spell.some(function(s){ return f.indexOf(s) === 0 && ES_SP.indexOf(f.slice(s.length)) >= 0; });
+  });
+}
 function matches(target, tok, lang){
-  var t = fold(tok), w = fold(target);
+  var t = fold(tok).replace(/’/g, "'"), w = fold(target).replace(/’/g, "'");
   if(!t || !w) return false;
-  if(lang === 'es'){ var b = w.replace(/(a|e|i)rse$/, '$1r'), n = Math.max(4, b.length - 3); return b.length >= 4 && t.slice(0, n) === b.slice(0, n); }
+  if(lang === 'es' && w.length < 3) return false;
   if(t === w) return true;
-  if(t.length > w.length && t.length - w.length <= 3 && t.slice(0, w.length) === w) return true;
-  if(w.slice(-1) === 'e'){ var st = w.slice(0, -1); return t.length >= st.length && t.length - st.length <= 3 && t.slice(0, st.length) === st; }
+  if(lang === 'es'){
+    if(/(ar|er|ir)(se)?$/.test(w) && !NOUNS[w]) return esVerb(t, w);
+    var st = /[aeo]$/.test(w) ? w.slice(0, -1) : w;
+    if(t.indexOf(st) === 0 && ['a', 'o', 'as', 'os', 'e', 'es', 's'].indexOf(t.slice(st.length)) >= 0) return true;
+    if(t === w + 's' || t === w + 'es' || t === w + 'a' || t === w + 'as') return true;
+    return /z$/.test(w) && t === w.slice(0, -1) + 'ces';
+  }
+  if(['s', 'es', 'ed', 'ing', "'s"].some(function(s){ return t === w + s; })) return true;
+  if(/e$/.test(w) && (t === w + 'd' || t === w + 's' || (!/ee$/.test(w) && t === w.slice(0, -1) + 'ing'))) return true;
+  if(/[^aeiou]y$/.test(w) && ['ies', 'ied', 'ier', 'iest', 'ily'].some(function(s){ return t === w.slice(0, -1) + s; })) return true;
+  if(/ie$/.test(w) && t === w.slice(0, -2) + 'ying') return true;
+  if(/[^aeiou][aeiou][bdgklmnprt]$/.test(w) && ['ed', 'ing'].some(function(s){ return t === w + w.slice(-1) + s; })) return true;
+  if(/fe?$/.test(w) && t === w.replace(/fe?$/, '') + 'ves') return true;
   return false;
 }
 function toks(text){ return String(text || '').split(/\s+/).map(function(t){ return t.replace(/^[^\p{L}\p{N}]+|[^\p{L}\p{N}]+$/gu, ''); }).filter(Boolean); }
@@ -160,5 +199,5 @@ function pickAuthored(o){
   if(!ep || done.indexOf(id + '-radio') >= 0 || done.indexOf(id) >= 0) return null;
   return ep;
 }
-root.RadioEpisode = {pickAuthored:pickAuthored, refId:function(epId){ return epId + '-radio'; }, fromStory:fromStory, fromAuthored:fromAuthored, ok:function(story, ctx){ return !fromStory(story, ctx).fail; }, matches:matches, heardIn:heardIn, BUDGET:BUDGET};
+root.RadioEpisode = {matches:matches, base:base, pickAuthored:pickAuthored, refId:function(epId){ return epId + '-radio'; }, fromStory:fromStory, fromAuthored:fromAuthored, ok:function(story, ctx){ return !fromStory(story, ctx).fail; }, matches:matches, heardIn:heardIn, BUDGET:BUDGET};
 })(typeof window !== 'undefined' ? window : globalThis);

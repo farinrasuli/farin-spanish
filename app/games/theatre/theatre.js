@@ -397,6 +397,8 @@ function say(text, o){
   if(!s.sayEl){ s.sayEl = el('div', 'th-say'); s.sayEl.setAttribute('role', 'status'); s.sayEl.setAttribute('aria-live', 'polite'); D.body.appendChild(s.sayEl); }
   var lang = o.lang || (kind === 'balloon' ? (content().target || 'en') : s.app.lang) || 'en';
   var rtl = lang === 'fa';
+  // a line with no Persian letter (an English / Spanish line in the fa UI: "Passport, please!") runs left to right in the target language
+  if(rtl && !/[\u0590-\u08FF\uFB1D-\uFDFF\uFE70-\uFEFF]/.test(String(text))){ rtl = false; lang = content().target || 'en'; }
   var hear = typeof o.hear === 'function';
   s.sayEl.innerHTML = '<div class="th-' + kind + (hear ? ' th-say-hear' : '') + '" lang="' + esc(lang) + '" dir="' + (rtl ? 'rtl' : 'ltr') + '"' + (hear ? ' role="button" tabindex="0" aria-label="' + esc(text + ' · ' + S('hear')) + '"' : '') + '>' + esc(text) +
     (hear ? '<span class="th-say-ear" aria-hidden="true">' + ICON.soundOn + '</span>' : '') + '</div>';
@@ -430,6 +432,34 @@ function progress(done, total){
   w.setAttribute('data-done', done); w.setAttribute('data-total', total); w.setAttribute('data-third', Math.min(3, Math.floor(done / total * 3)));
   w.style.setProperty('--gw-frac', (done / total).toFixed(3));
 }
+// Text direction in the fa UI (2026-11-19, "!Passport, please"): while a game runs in the Theatre, every element whose own text is in a
+// Latin script only (an English / Spanish line: statements, transcripts, cards, measures, title cards, badge lines) gets dir="ltr", so the
+// bidi algorithm never moves its marks and numbers. An element the app gave a dir itself is left alone. Never a change to the string.
+var bidiObs = null, BIDI_RTL = /[֐-ࣿיִ-﷿ﹰ-﻿]/, BIDI_LAT = /[A-Za-zÀ-ɏ]/;
+function bidiOwn(e){ var t = ''; for(var n = e.firstChild; n; n = n.nextSibling) if(n.nodeType === 3) t += n.nodeValue; return t; }
+function bidiFix(root){
+  if(!root || root.nodeType !== 1) return;
+  var list = [root], all = root.getElementsByTagName('*'); for(var i = 0; i < all.length; i++) list.push(all[i]);
+  for(var k = 0; k < list.length; k++){
+    var e = list[k]; if(/^(INPUT|TEXTAREA|SCRIPT|STYLE|SELECT)$/i.test(e.tagName) || e.namespaceURI === 'http://www.w3.org/2000/svg') continue;
+    var t = bidiOwn(e), mine = e.hasAttribute('data-th-ltr');
+    if(!t || !BIDI_LAT.test(t) || BIDI_RTL.test(t)){ if(mine && BIDI_RTL.test(t)){ e.removeAttribute('dir'); e.removeAttribute('data-th-ltr'); } continue; }
+    if(e.hasAttribute('dir') && !mine) continue;
+    if(!mine){ e.setAttribute('dir', 'ltr'); e.setAttribute('data-th-ltr', ''); }
+  }
+}
+function bidiStart(){
+  bidiStop();
+  if(!cur || !cur.app || cur.app.lang !== 'fa' || !W.MutationObserver) return;
+  bidiFix(D.body);
+  bidiObs = new MutationObserver(function(ms){
+    for(var i = 0; i < ms.length; i++){ var m = ms[i];
+      if(m.type === 'characterData'){ bidiFix(m.target.parentElement); continue; }
+      for(var j = 0; j < m.addedNodes.length; j++){ var n = m.addedNodes[j]; bidiFix(n.nodeType === 1 ? n : n.parentElement); } }
+  });
+  bidiObs.observe(D.body, {childList:true, subtree:true, characterData:true});
+}
+function bidiStop(){ if(bidiObs){ bidiObs.disconnect(); bidiObs = null; } }
 var bed = null;
 function bedStop(){ if(!bed) return; try{ clearInterval(bed.timer); bed.src.stop(); bed.lfo.stop(); bed.out.disconnect(); }catch(e){} bed = null; }
 function bedStart(){
@@ -695,6 +725,7 @@ function open(o){
   };
   D.addEventListener('keydown', s.onKey, true);
   D.addEventListener('visibilitychange', onVis);
+  bidiStart();   // fa UI: Latin-script lines run left to right
   s.returnFocus = D.activeElement;
   wake();
   enterFullscreen();
@@ -779,6 +810,7 @@ function exit(){
 }
 function close(o){
   var s = cur; if(!s) return;
+  bidiStop();
   cur = null; s.phase = 'closed';
   clearTimeout(s.introTimer); clearTimeout(s.briefTimer);
   D.removeEventListener('keydown', s.onKey, true);
@@ -909,7 +941,7 @@ function captainSync(){
   cap.hit.style.width = (r.width + pad * 2) + 'px'; cap.hit.style.height = (r.height + pad * 2) + 'px';
 }
 var api = {
-  version:'1.2.1',
+  version:'1.2.2',
   open:open, close:close, sync:sync, exit:exit, play:start, skip:skip,
   titleCard:titleCard, transition:transition, setStrip:setStrip, setControls:setControls, stageEl:stageEl, setSkin:setSkin,
   say:say, finale:finale, sfx:sfx, progress:progress, actor:actor, establish:establish, moodEl:moodEl, flash:flash, world:function(){ return cur && cur.world ? cur.world.kind : null; },

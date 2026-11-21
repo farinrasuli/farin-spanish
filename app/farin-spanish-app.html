@@ -1592,25 +1592,30 @@
   .msg-list{display:flex; flex-direction:column; gap:12px;}
   .msg-list-req{gap:26px; padding-top:12px;}
   .msg-stack{display:flex; flex-direction:column; gap:12px; margin-top:20px;}
-  .msg-row{position:relative; display:grid; grid-template-columns:40px minmax(0,1fr); gap:12px; align-items:start; width:100%; text-align:start; font-family:inherit; color:var(--ink); background:var(--bg-elevated); border:2px solid var(--border-soft); border-radius:22px; padding:14px 14px 13px; box-shadow:var(--surface-shadow); cursor:pointer;}
-  .msg-row.waiting{border-color:#FFD166;}
-  .msg-row.done{border-color:var(--success);}
-  .msg-tab{position:absolute; top:-13px; inset-inline-start:16px; height:23px; display:inline-flex; align-items:center; gap:4px; padding:0 11px; border-radius:9px 9px 4px 4px; font-size:10.5px; font-weight:900; letter-spacing:.09em; text-transform:uppercase; line-height:1; white-space:nowrap;}
-  html[lang="fa"] .msg-tab{letter-spacing:0;}
-  .msg-tab svg{width:12px; height:12px;}
-  .msg-tab.waiting{background:#FFD166; color:#5c4300;}
-  .msg-tab.done{background:#2ecc71; color:#0b4d27;}
-  .msg-tab.inline{position:static; border-radius:9px;}
-  .msg-disc{width:40px; height:40px; border-radius:50%; display:flex; align-items:center; justify-content:center; flex:0 0 auto;}
+  /* MSG-V2 2026-11-21 (Farin: "be cleaner… make the tabs cleaner in the colors that we have"): one plain card per chat, the topic as its
+     title, the status as a small pill in the brand colours (Waiting = orange, Done = green), no tab hanging off the card. */
+  .msg-row{position:relative; display:grid; grid-template-columns:42px minmax(0,1fr); gap:12px; align-items:start; width:100%; text-align:start; font-family:inherit; color:var(--ink); background:var(--bg-elevated); border:1px solid var(--border-soft); border-radius:22px; padding:14px 16px; box-shadow:var(--surface-shadow); cursor:pointer;}
+  .msg-st{display:inline-flex; align-items:center; gap:4px; padding:3px 9px; border-radius:999px; font-size:11px; font-weight:800; line-height:1.2; white-space:nowrap; vertical-align:middle;}
+  .msg-st svg{width:11px; height:11px;}
+  .msg-st.waiting{background:var(--accent-soft); color:var(--accent-strong);}
+  .msg-st.done{background:var(--success-soft); color:#1b7a44;}
+  .msg-disc{width:42px; height:42px; border-radius:50%; display:flex; align-items:center; justify-content:center; flex:0 0 auto;}
   .msg-disc svg{width:20px; height:20px;}
   .msg-disc.course, .msg-chip.course{background:var(--fs-purple-soft); color:var(--fs-purple-ink);}
   .msg-disc.club, .msg-chip.club{background:var(--fs-orange-soft); color:var(--fs-orange-ink);}
-  .msg-disc.app, .msg-chip.app{background:var(--cat-lis-soft); color:var(--ink);}
-  .msg-disc.general, .msg-chip.general{background:var(--cat-voc-soft); color:var(--ink);}
-  .msg-row-main{display:flex; flex-direction:column; gap:6px; min-width:0;}
+  .msg-disc.app, .msg-chip.app{background:var(--accent-soft); color:var(--accent-strong);}
+  .msg-disc.general, .msg-chip.general{background:var(--bg-sunken); color:var(--ink-soft);}
+  .msg-row-main{display:flex; flex-direction:column; gap:4px; min-width:0;}
   .msg-row-top{display:flex; align-items:center; justify-content:space-between; gap:8px; min-width:0;}
   .msg-row-top time{font-size:11.5px; font-weight:700; color:var(--ink-faint); flex:0 0 auto;}
-  .msg-row-prev{display:flex; align-items:center; gap:6px; min-width:0; font-size:13.5px; color:var(--ink-soft);}
+  .msg-title{font-size:15.5px; font-weight:800; line-height:1.25; min-width:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .msg-row-sub{display:flex; align-items:center; gap:8px; min-width:0; font-size:12px; font-weight:700; color:var(--ink-faint);}
+  .msg-row-sub > span{white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .msg-th{display:grid; grid-template-columns:42px minmax(0,1fr); gap:12px; align-items:center;}
+  .msg-th b{display:block; font-size:16px; line-height:1.25;}
+  .msg-th small{display:flex; align-items:center; gap:8px; margin-top:3px; font-size:12px; font-weight:700; color:var(--ink-faint);}
+  .msg-b time .ed, .msg-card time .ed{opacity:.8;}
+  .msg-row-prev{display:flex; align-items:center; gap:6px; min-width:0; margin-top:2px; font-size:13.5px; line-height:1.35; color:var(--ink-soft);}
   .msg-row-prev span{white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
   .msg-row.unread .msg-row-prev{color:var(--ink); font-weight:800;}
   .msg-udot{width:9px; height:9px; border-radius:50%; background:var(--accent); flex:0 0 auto;}
@@ -1632,8 +1637,8 @@
   .msg-thread-head{display:flex; flex-direction:column; gap:12px;}
   .msg-band{display:flex; align-items:center; gap:10px; border-radius:16px; padding:11px 14px; font-size:13.5px; line-height:1.4; color:var(--ink);}
   .msg-band i{width:10px; height:10px; border-radius:50%; flex:0 0 auto;}
-  .msg-band.waiting{background:var(--cat-review-soft);}
-  .msg-band.waiting i{background:#FFD166; box-shadow:0 0 0 3px rgba(255,209,102,.35);}
+  .msg-band.waiting{background:var(--accent-soft);}
+  .msg-band.waiting i{background:var(--accent); box-shadow:0 0 0 3px rgba(255,122,89,.25);}
   .msg-band.done{background:var(--success-soft);}
   .msg-band.done i{background:var(--success);}
   .msg-thread-list{display:flex; flex-direction:column; gap:10px; margin-top:18px;}
@@ -1708,6 +1713,25 @@
   .msg-auto{margin:4px 0 0; font-size:12.5px; font-weight:700; color:var(--ink-soft); background:var(--bg-sunken); border-radius:12px; padding:8px 11px;}
   .msg-zoom{position:fixed; inset:0; z-index:300; background:rgba(20,51,46,.8); display:flex; align-items:center; justify-content:center; padding:20px; cursor:zoom-out;}
   .msg-zoom img{max-width:100%; max-height:90vh; border-radius:14px;}
+  /* MSG-V2 admin: who is answering what, where they wrote from, Farin's Edit / Delete */
+  .adm-ctx{display:flex; align-items:flex-start; gap:5px; min-width:0; font-size:12.5px; line-height:1.35; color:var(--ink-soft);}
+  .adm-ctx svg{width:14px; height:14px; flex:0 0 auto; margin-top:1px;}
+  .adm-ctx.reply{color:var(--fs-purple-ink);}
+  .adm-ctx i{font-style:normal; color:var(--ink); overflow:hidden; text-overflow:ellipsis; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical;}
+  .adm-ctx-band{display:flex; align-items:flex-start; gap:8px; background:var(--fs-purple-soft); color:var(--fs-purple-ink); border-radius:16px; padding:11px 14px; font-size:13.5px; line-height:1.4;}
+  .adm-ctx-band.from{background:var(--bg-sunken); color:var(--ink-soft);}
+  .adm-ctx-band svg{width:16px; height:16px; flex:0 0 auto; margin-top:2px;}
+  .adm-ctx-band i{font-style:normal; color:var(--ink);}
+  .msg-quote{display:block; margin:0 0 6px; padding:6px 10px; border-inline-start:3px solid var(--fs-purple); background:var(--fs-purple-soft); color:var(--fs-purple-ink); border-radius:10px; font-size:12.5px; line-height:1.35; white-space:normal;}
+  .msg-quote i{font-style:normal; color:var(--ink); display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;}
+  .adm-mtools{align-self:flex-end; display:flex; align-items:center; gap:10px; margin:-4px 8px 4px 0; font-size:11.5px; font-weight:800; color:var(--ink-faint);}
+  .adm-mtools button{background:none; border:0; padding:0; font:inherit; font-weight:800; color:var(--ink-faint); cursor:pointer;}
+  .adm-mtools button:hover{color:var(--ink);}
+  .adm-mtools button.del:hover{color:var(--error);}
+  .adm-delask{align-self:flex-end; display:flex; align-items:center; gap:8px; margin:-2px 0 4px; padding:8px 12px; border-radius:14px; background:var(--error-soft); color:var(--ink); font-size:12.5px; font-weight:700;}
+  .adm-delask .btn{min-height:30px; padding:4px 12px;}
+  .adm-editing{display:flex; align-items:center; justify-content:space-between; gap:8px; font-size:12.5px; font-weight:800; color:var(--fs-purple-ink); background:var(--fs-purple-soft); border-radius:12px; padding:6px 10px;}
+  .adm-editing button{background:none; border:0; padding:0; font:inherit; font-weight:800; color:var(--fs-purple-ink); text-decoration:underline; cursor:pointer;}
   .adm-chat-row .adm-top{justify-content:flex-start;}
   .adm-chat-row .adm-top b{font-size:15px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; min-width:0;}
   .adm-tag{font-size:11px; font-weight:800; color:var(--ink-soft); background:var(--bg-sunken); border-radius:999px; padding:2px 8px; white-space:nowrap;}
@@ -10107,7 +10131,7 @@ function go(view, params){
   resetConfirmPending = false;
   stopAllSpeech();   // every navigation stops whatever is speaking (Farin, card n4NxuH0f)
   if(typeof echoStopRec === 'function' && view !== 'game-echo') echoStopRec();
-  navHistory.push({view: state.view, params: state.viewParams});
+  navHistory.push({view: state.view, params: state.viewParams, label: msgScreenLabel()});   // MSG-V2: the screen's heading, for "wrote from"
   state.view = view; state.viewParams = params || {}; save(); render(); window.scrollTo(0,0);
   pushHistoryEntry();
 }
@@ -34259,11 +34283,42 @@ function msgKindLabel(type, req, side){
   if(type !== 'request') return msgT(side, 'Question','Soru','سؤال','Pregunta');
   return req === 'buy' ? msgT(side, 'Course request','Kurs talebi','درخواست دوره','Solicitud de curso') : msgT(side, 'Join request','Katılım talebi','درخواست عضویت','Solicitud para unirse');
 }
-function msgTabHtml(d, side, inline){
+// MSG-V2 2026-11-21: the status is a small pill in the brand colours (orange Waiting, green Done), inline, never a tab on the card edge.
+function msgTabHtml(d, side){
   if(!d || d.type !== 'request') return '';
   return d.status === 'done'
-    ? `<span class="msg-tab done${inline ? ' inline' : ''}">${ICONS.check}${msgT(side, 'Done','Tamam','انجام شد','Listo')}</span>`
-    : `<span class="msg-tab waiting${inline ? ' inline' : ''}">${msgT(side, 'Waiting','Bekliyor','در انتظار','En espera')}</span>`;
+    ? `<span class="msg-st done">${ICONS.check}${msgT(side, 'Done','Tamam','انجام شد','Listo')}</span>`
+    : `<span class="msg-st waiting">${msgT(side, 'Waiting','Bekliyor','در انتظار','En espera')}</span>`;
+}
+// The second line under a chat's title: what kind of chat it is (only when the title does not already say it) + the status pill.
+function msgSubHtml(d, type, req, side){
+  const tp = (d && d.topic) || {};
+  const kind = tp.t === 'course' || tp.t === 'club' || type === 'offer' || type === 'request' ? msgKindLabel(type, req, side) : '';
+  const st = msgTabHtml(d, side);
+  return kind || st ? `<span class="msg-row-sub">${kind ? '<span>' + esc(kind) + '</span>' : ''}${st}</span>` : '';
+}
+// Where the learner wrote from (MSG-V2, Farin: "tell me … they are messaging me from what topic"): the last screen before the Messages
+// screens, with its heading. The heading is read from the page when the learner leaves a screen (go()), so lessons, games and courses
+// all name themselves without a list of every screen.
+function msgScreenLabel(){
+  try{
+    if(/^(messages|msg-)/.test(state.view || '')) return '';
+    const h = document.querySelector('#app h1, #app h2.display, #app .display');
+    return h ? String(h.textContent || '').replace(/\s+/g, ' ').replace(/[.。]\s*$/, '').trim().slice(0, 90) : '';
+  }catch(e){ return ''; }
+}
+function msgSource(){
+  let h = null;
+  for(let i = navHistory.length - 1; i >= 0; i--){ const e = navHistory[i]; if(e && e.view && !/^(messages|msg-)/.test(e.view)){ h = e; break; } }
+  const view = h ? h.view : (/^(messages|msg-)/.test(state.view || '') ? 'messages' : state.view);
+  if(!view) return null;
+  const vp = (h && h.params) || {}, src = {v:String(view).slice(0, 40), l:String((h && h.label) || '').slice(0, 90)};
+  if(vp.cid) src.c = String(vp.cid).slice(0, 40);
+  if(vp.uid) src.u = String(vp.uid).slice(0, 60);
+  if(vp.id && !vp.cid) src.i = String(vp.id).slice(0, 60);
+  if(/^course-/.test(view) && vp.cid && vp.uid){ try{ src.ul = String(courseUnitLabel(vp.cid, vp.uid) || '').slice(0, 90); }catch(e){} }
+  if(state.profile && state.profile.level) src.lv = state.profile.level;
+  return src;
 }
 function msgPreview(m, side){
   if(!m) return '…';
@@ -34271,7 +34326,7 @@ function msgPreview(m, side){
   const pre = mine ? msgT(side, 'You: ','Sen: ','تو: ','Tú: ') : '';
   if(m.sys) return m.sys === 'done' ? msgT(side, 'Marked as done','Tamamlandı','انجام شد','Marcado como listo') : msgT(side, 'Reopened','Yeniden açıldı','دوباره باز شد','Reabierto');
   if(m.card && m.card.type === 'request' && side === 'admin') return m.card.note ? String(m.card.note) : (m.card.receipt ? 'Receipt attached' : 'No receipt yet');
-  if(m.card && m.card.type === 'request') return pre + msgKindLabel('request', 'buy', side) + (m.card.receipt ? ' · ' + msgT(side, 'receipt attached','dekont ekli','رسید پیوست شده','con comprobante') : '');
+  if(m.card && m.card.type === 'request') return msgT(side, 'Request sent','Talep gönderildi','درخواست فرستاده شد','Solicitud enviada') + (m.card.receipt ? ' · ' + msgT(side, 'receipt attached','dekont ekli','رسید پیوست شده','con comprobante') : '');
   if(m.card && m.card.type === 'password') return pre + msgT(side, 'Password','Şifre','رمز','Contraseña') + ' ' + (m.card.pw || '');
   if(m.img) return pre + msgT(side, 'Photo','Fotoğraf','عکس','Foto');
   return pre + String(m.text || '');
@@ -34390,7 +34445,7 @@ function msgCreate(o, first){
   const id = msgNewId(MSG_PREFIX), now = Date.now();
   return msgLearnerInfo().then(learner=>{
     const doc = {kind:'chat', v:1, app:LOGIN_APP, topic:o.topic, type:o.type, req:o.req || null, status:o.type === 'request' ? 'waiting' : null,
-      learner, createdAt:now, lm:first, lAt:now, lSeen:now, fm:[], fAt:0, aSeen:0, statusAt:now, gone:[]};
+      learner, createdAt:now, lm:first, lAt:now, lSeen:now, fm:[], fAt:0, aSeen:0, statusAt:now, gone:[], src:msgSource()};   // src: where they wrote from (MSG-V2)
     return firebase.firestore().collection('progress').doc(id).set(doc).then(()=>{
       msgCache[id] = doc; msgCacheSave();
       msgMap()[id] = {t:o.topic, ty:o.type, at:now, seen:0};
@@ -34466,9 +34521,11 @@ function msgZoom(src){
 }
 
 /* ---------- one message, for the learner (side 'learner') or admin › Inbox (side 'admin') ---------- */
-function msgBubbleHtml(m, side, d, repaint){
+function msgBubbleHtml(m, side, d, repaint, prev){
   const mine = side === 'admin' ? m.from === 'f' : m.from === 'l', cls = mine ? 'me' : 'them';
-  const time = `<time>${esc(msgWhen(m.at, side))}</time>`;
+  const time = `<time>${m.ed ? '<span class="ed">' + esc(msgT(side, 'edited','düzenlendi','ویرایش‌شده','editado')) + ' · </span>' : ''}${esc(msgWhen(m.at, side))}</time>`;
+  // admin: a learner message right after one of Farin's quotes it ("Replying to …"), so Farin sees what they are answering (MSG-V2)
+  const quote = side === 'admin' && m.from === 'l' && prev && prev.from === 'f' && !prev.sys ? `<span class="msg-quote">Replying to: <i>${esc(adminChatQuoteText(prev, d))}</i></span>` : '';
   const zoomAttr = side === 'admin' ? 'data-admin-action="chat-zoom"' : 'data-action="msg-zoom"';
   if(m.sys) return `<div class="msg-sys">${esc(m.sys === 'done' ? msgT(side, 'Farin marked this as done.','Farin bunu tamamlandı olarak işaretledi.','فرین این را انجام‌شده علامت زد.','Farin lo marcó como listo.') : msgT(side, 'Farin reopened this.','Farin bunu yeniden açtı.','فرین این را دوباره باز کرد.','Farin lo volvió a abrir.'))}</div>`;
   const imgHtml = (imgId, wide)=>{
@@ -34500,8 +34557,8 @@ function msgBubbleHtml(m, side, d, repaint){
     return `<div class="msg-pw ${cls}"><span class="eyebrow">${esc(msgT(side, 'Your password','Şifren','رمز تو','Tu contraseña'))} · ${esc(msgCourseName(c.c, side))}</span>
       <div class="msg-pw-code" dir="ltr" translate="no">${esc(c.pw || '')}</div>${foot}${time}</div>`;
   }
-  if(m.img) return `<div class="msg-b msg-photo ${cls}">${imgHtml(m.img)}${time}</div>`;
-  return `<div class="msg-b ${cls}" dir="auto">${!mine && m.from === 'f' ? `<span class="msg-who">${esc(msgT(side, 'Farin','Farin','فرین','Farin'))}</span>` : ''}${esc(m.text || '')}${time}</div>`;
+  if(m.img) return `<div class="msg-b msg-photo ${cls}">${quote ? '<span style="display:block; padding:4px 6px 0;">' + quote + '</span>' : ''}${imgHtml(m.img)}${time}</div>`;
+  return `<div class="msg-b ${cls}" dir="auto">${quote}${!mine && m.from === 'f' ? `<span class="msg-who">${esc(msgT(side, 'Farin','Farin','فرین','Farin'))}</span>` : ''}${esc(m.text || '')}${time}</div>`;
 }
 
 /* ---------- learner screens ---------- */
@@ -34511,27 +34568,24 @@ function msgRowHtml(id){
   const d = msgCache[id], tp = msgTopic(id), un = msgUnread(id), last = msgAll(d).filter(m=>!m.sys).pop();
   const st = d && d.type === 'request' ? (d.status === 'done' ? ' done' : ' waiting') : '';
   return `<button class="msg-row${st}${un ? ' unread' : ''}" data-action="msg-open" data-id="${esc(id)}">
-    ${msgTabHtml(d, 'learner')}
     <span class="msg-disc ${msgTopicCls(tp)}">${msgTopicIcon(tp)}</span>
-    <span class="msg-row-main"><span class="msg-row-top">${msgChip(tp, 'learner')}<time>${esc(msgWhen(msgLastAt(id), 'learner'))}</time></span>
+    <span class="msg-row-main"><span class="msg-row-top"><span class="msg-title" dir="auto">${esc(msgTopicName(tp, 'learner'))}</span><time>${esc(msgWhen(msgLastAt(id), 'learner'))}</time></span>
+      ${msgSubHtml(d, msgType(id), d ? d.req : null, 'learner')}
       <span class="msg-row-prev">${un ? '<i class="msg-udot"></i>' : ''}<span dir="auto">${esc(d ? msgPreview(last, 'learner') : '…')}</span></span></span>
   </button>`;
 }
 function renderMessages(){
   setTimeout(()=>msgRefreshAll(8000), 0);
   const ids = msgIds().sort((a,b)=>msgLastAt(b) - msgLastAt(a));
-  const reqs = ids.filter(id=>msgType(id) === 'request'), qs = ids.filter(id=>msgType(id) !== 'request');
   return `<div class="fade-in msg-page">
     ${topbar(false)}
     <div class="screen msg-screen">
       <h1 class="display msg-h">${CL('Messages','Mesajlar','پیام‌ها','Mensajes')}<span class="msg-dot">.</span></h1>
-      <p class="msg-sub">${CL("Talk to Farin here. Requests show if they're waiting or done.",'Farin\'le burada konuş. Taleplerinin beklediği ya da tamamlandığı burada görünür.','اینجا با فرین حرف بزن. درخواست‌هایت نشان می‌دهند در انتظارند یا انجام شده‌اند.','Habla con Farin aquí. Tus solicitudes muestran si están en espera o listas.')}</p>
+      <p class="msg-sub">${CL('Talk to Farin here. He usually answers within a day.','Farin\'le burada konuş. Genelde bir gün içinde cevap verir.','اینجا با فرین حرف بزن. معمولاً تا یک روز جواب می‌دهد.','Habla con Farin aquí. Suele responder en un día.')}</p>
       <button class="cu-btn cu-orange msg-new-btn" data-action="nav" data-view="msg-new">+ ${CL('New message','Yeni mesaj','پیام جدید','Mensaje nuevo')}</button>
-      ${reqs.length ? `<div class="msg-grp"><div class="eyebrow">${CL('Requests','Talepler','درخواست‌ها','Solicitudes')}</div><div class="msg-list msg-list-req">${reqs.map(msgRowHtml).join('')}</div></div>` : ''}
-      ${qs.length ? `<div class="msg-grp"><div class="eyebrow">${CL('Questions','Sorular','سؤال‌ها','Preguntas')}</div><div class="msg-list">${qs.map(msgRowHtml).join('')}</div></div>` : ''}
+      ${ids.length ? `<div class="msg-grp"><div class="msg-list">${ids.map(msgRowHtml).join('')}</div></div>` : ''}
       ${ids.length ? '' : `<div class="card-flat msg-empty">${CL('No messages yet. Ask Farin anything, or ask for a course.','Henüz mesaj yok. Farin\'e her şeyi sorabilir ya da bir kurs isteyebilirsin.','هنوز پیامی نداری. هر سؤالی داری از فرین بپرس، یا یک دوره درخواست کن.','Aún no hay mensajes. Pregúntale a Farin lo que quieras o pide un curso.')}</div>`}
       ${notifNewsListHtml()}
-      <p class="msg-foot">${CL('Farin usually answers within a day.','Farin genelde bir gün içinde cevap verir.','فرین معمولاً تا یک روز جواب می‌دهد.','Farin suele responder en un día.')}</p>
     </div>
   </div>`;
 }
@@ -34545,12 +34599,12 @@ function msgStatusBand(d){
 }
 function msgThreadHead(id){
   const d = msgCache[id], tp = msgTopic(id);
-  return `<div class="row" style="gap:8px; flex-wrap:wrap;">${msgChip(tp, 'learner')}<span class="msg-kind">${esc(msgKindLabel(msgType(id), d ? d.req : null, 'learner'))}</span></div>${msgStatusBand(d)}`;
+  return `<div class="msg-th"><span class="msg-disc ${msgTopicCls(tp)}">${msgTopicIcon(tp)}</span><div><b dir="auto">${esc(msgTopicName(tp, 'learner'))}</b>${msgSubHtml(d, msgType(id), d ? d.req : null, 'learner')}</div></div>${msgStatusBand(d)}`;
 }
 function msgThreadInner(id){
   const d = msgCache[id];
   if(!d) return waitBuddyHtml('messages');   // the clay companion brings the messages (2026-11-14)
-  return msgAll(d).map(m=>msgBubbleHtml(m, 'learner', d, msgPaintThread)).join('');
+  return msgAll(d).map((m, i, all)=>msgBubbleHtml(m, 'learner', d, msgPaintThread, all[i - 1])).join('');
 }
 function msgComposerHtml(){
   return `<div class="msg-composer"><div class="msg-composer-in">
@@ -34696,7 +34750,7 @@ function renderMsgCompose(){
   queueFx(msgAfterChatRender);
   return `<div class="fade-in msg-page msg-chat">${msgTop('', true)}
     <div class="screen msg-screen">
-      <div class="msg-thread-head"><div class="row" style="gap:8px; flex-wrap:wrap;">${msgChip(tp, 'learner')}<span class="msg-kind">${esc(msgKindLabel(type, vp.req, 'learner'))}</span></div></div>
+      <div class="msg-thread-head"><div class="msg-th"><span class="msg-disc ${msgTopicCls(tp)}">${msgTopicIcon(tp)}</span><div><b dir="auto">${esc(msgTopicName(tp, 'learner'))}</b><small><span>${esc(msgKindLabel(type, vp.req, 'learner'))}</span></small></div></div></div>
       <div class="card-flat msg-step" style="margin-top:16px;"><b>${hint[0]}</b><p class="msg-hint" style="color:var(--ink-soft);">${hint[1]}</p>
         ${dev ? `<p class="msg-auto">${CL('Added for you:','Senin için eklendi:','خودکار اضافه شد:','Añadido automáticamente:')} ${esc(dev)}</p>` : ''}</div>
     </div>
@@ -40659,6 +40713,7 @@ function renderAdminReviewsTab(){
    Quick replies go out in the learner's app language. Photos older than 90 days (a done request's, or a question's) are deleted here. */
 let adminChats = null, adminChatsLoading = false, adminChatsError = '', adminChatsSig = '', adminChatOpen = null, adminChatFilter = 'todo';
 let adminChatBusy = false, adminChatConfirm = false, adminChatNote = '', adminChatMsg = '', adminChatPoll = null, adminChatCleaned = false;
+let adminChatEdit = null, adminChatDelAsk = null;   // MSG-V2: the id of Farin's message being edited / asked to delete
 const ADMIN_CHAT_LANGS = {en:'English', tr:'Turkish', fa:'Persian', es:'Spanish'};
 const ADMIN_CHAT_QR = {
   checking:{label:'Checking now', en:"Thanks! I'm checking your payment now.", tr:'Teşekkürler! Ödemeni şimdi kontrol ediyorum.', fa:'ممنون! همین الان پرداختت را بررسی می‌کنم.', es:'¡Gracias! Estoy revisando tu pago ahora.'},
@@ -40676,6 +40731,86 @@ function adminChatUnread(d){ return Number(d.lAt || 0) > Number(d.aSeen || 0); }
 function adminChatGet(id){ return (adminChats || []).find(d=>d.id === id) || null; }
 function adminChatName(d){ return String((d.learner && d.learner.name) || '').trim() || 'Learner'; }
 function adminChatTodoList(){ return (adminChats || []).filter(adminChatTodo).sort((a,b)=>(Number(a.lAt) || 0) - (Number(b.lAt) || 0)); }
+// MSG-V2 (Farin 2026-11-21: "when a user message me tell me if they are answering something or they are messaging me from what topic").
+// What the learner's latest message is: a reply to one of Farin's messages (quoted), or a fresh message from a screen (named).
+function adminChatQuoteText(m, d){
+  if(!m) return '';
+  if(m.card && m.card.type === 'offer') return 'your offer · ' + msgCourseName(m.card.c, 'admin') + (m.text ? ' · "' + String(m.text).slice(0, 70) + (m.text.length > 70 ? '…' : '') + '"' : '');
+  if(m.card && m.card.type === 'password') return 'your password message · ' + msgCourseName(m.card.c, 'admin');
+  if(m.img) return 'your photo';
+  const t = String(m.text || '').replace(/\s+/g, ' ').trim();
+  return t.length > 110 ? t.slice(0, 110) + '…' : t;
+}
+const ADMIN_SRC_NAMES = {dashboard:'Home', messages:'Messages', 'goals-list':'Goals', 'student-club':'Club', 'courses-home':'Courses', journal:'Journal', profile:'Profile', settings:'Settings',
+  'games-shelf':'Games', 'review-home':'Review', 'vocab-box':'Vocab Box', 'speaking-club':'Speaking club', 'roadmap-report':'Page report', 'goal-level-detail':'Roadmap', 'goal-levels':'Roadmap',
+  'course-detail':'Course page', 'course-lesson':'Course lesson', 'course-pause':'Course lesson', 'course-unit':'Course lesson', 'course-step':'Course lesson', 'course-view':'Course',
+  'vocab-rounds':'Vocabulary lesson', 'grammar-rounds':'Grammar lesson', 'dialogue-rounds':'Dialogue lesson', 'story-rounds':'Story lesson', 'studio-rounds':'Studio lesson', 'vocab-set':'Vocabulary set',
+  'grammar-trap':'Grammar', 'story-detail':'Story', 'story-list':'Stories', 'song-session':'Song', 'media-session':'Watch / listen', 'stage-check':'Stage check', 'session-prep':'Session', dialogue:'Dialogue'};
+function adminChatSrcText(d){
+  const s = d && d.src;
+  if(!s || !s.v) return '';
+  let name = ADMIN_SRC_NAMES[s.v] || (/^game-/.test(s.v) ? 'Game' : /^course-/.test(s.v) ? 'Course' : s.v.replace(/-/g, ' ').replace(/^./, ch=>ch.toUpperCase()));
+  let what = '';
+  if(s.c){ const c = adminAccessCourse(s.c); what = (c && c.title) || s.c; if(s.ul) what += ' · ' + s.ul; else if(s.l && s.l !== what) what += ' · ' + s.l; }
+  else if(s.l && s.l.toLowerCase() !== name.toLowerCase()) what = s.l;
+  return name + (what ? ' · "' + what + '"' : '') + (s.lv ? ' · ' + s.lv : '');
+}
+function adminChatCtx(d){
+  const all = msgAll(d).filter(m=>!m.sys), lastL = all.filter(m=>m.from === 'l').pop();
+  if(!lastL) return null;
+  const i = all.indexOf(lastL), prev = i > 0 ? all[i - 1] : null;
+  if(prev && prev.from === 'f') return {kind:'reply', to:prev, text:adminChatQuoteText(prev, d)};
+  const src = adminChatSrcText(d);
+  const fallback = d.topic && d.topic.t === 'course' ? 'the course · ' + msgTopicName(d.topic, 'admin') : d.topic && d.topic.t === 'club' ? 'the Club tile' : d.topic && d.topic.t === 'app' ? '"Something isn\'t working"' : 'Messages · New message';
+  return {kind:'new', text:src || fallback, first:all.indexOf(lastL) === 0};
+}
+const ADMIN_ICON_REPLY = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 14L4 9l5-5"/><path d="M4 9h9a7 7 0 0 1 7 7v4"/></svg>';
+const ADMIN_ICON_FROM = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s7-6.2 7-11a7 7 0 0 0-14 0c0 4.8 7 11 7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>';
+function adminChatCtxRow(d){
+  const c = adminChatCtx(d); if(!c) return '';
+  return c.kind === 'reply' ? `<span class="adm-ctx reply">${ADMIN_ICON_REPLY}<span>Answering you: <i>${esc(c.text)}</i></span></span>`
+    : `<span class="adm-ctx">${ADMIN_ICON_FROM}<span>${c.first ? 'New, from' : 'Wrote again from'}: <i>${esc(c.text)}</i></span></span>`;
+}
+function adminChatCtxBand(d){
+  const c = adminChatCtx(d); if(!c) return '';
+  return c.kind === 'reply' ? `<div class="adm-ctx-band">${ADMIN_ICON_REPLY}<span><b>${esc(adminChatName(d))} is answering you:</b> <i>${esc(c.text)}</i></span></div>`
+    : `<div class="adm-ctx-band from">${ADMIN_ICON_FROM}<span><b>${esc(adminChatName(d))} wrote from:</b> <i>${esc(c.text)}</i></span></div>`;
+}
+// Edit / delete one of Farin's messages (MSG-V2): rewrites fm only (the learner's lm is never touched). fAt follows the last message left.
+function adminChatRewrite(d, fn){
+  const ref = firebase.firestore().collection('progress').doc(d.id);
+  return ref.get().then(doc=>{
+    const cur = doc.exists ? (doc.data() || {}) : {};
+    const fm = fn((Array.isArray(cur.fm) ? cur.fm : []).slice());
+    const fAt = fm.reduce((a, m)=>Math.max(a, Number(m.at) || 0), 0);
+    const patch = {fm, fAt};
+    return ref.set(patch, {merge:true}).then(()=>{ Object.assign(d, cur, patch, {id:d.id}); });
+  });
+}
+function adminChatSaveEdit(d, text){
+  const mid = adminChatEdit; if(!mid || adminChatBusy) return;
+  adminChatBusy = true; adminChatMsg = ''; renderAdminPage();
+  adminChatRewrite(d, fm=>fm.map(m=>m.id === mid ? Object.assign({}, m, {text, ed:Date.now()}) : m))
+    .then(()=>{ adminChatEdit = null; adminChatNote = ''; adminChatMsg = 'Message updated. ' + adminChatName(d) + ' sees the new text.'; })
+    .catch(err=>{ adminChatMsg = 'Not saved: ' + (err.message || err); })
+    .then(()=>{ adminChatBusy = false; adminChatRender(); });
+}
+function adminChatDelete(d, mid){
+  if(adminChatBusy) return;
+  const m = (d.fm || []).find(x=>x.id === mid); if(!m) return;
+  adminChatBusy = true; adminChatMsg = ''; renderAdminPage();
+  adminChatRewrite(d, fm=>fm.filter(x=>x.id !== mid))
+    .then(()=>{ if(m.img) return firebase.firestore().collection('progress').doc(m.img).delete().catch(()=>{}); })
+    .then(()=>{ adminChatDelAsk = null; if(adminChatEdit === mid){ adminChatEdit = null; adminChatNote = ''; } adminChatMsg = 'Message deleted for you and ' + adminChatName(d) + '.'; })
+    .catch(err=>{ adminChatMsg = 'Not deleted: ' + (err.message || err); })
+    .then(()=>{ adminChatBusy = false; adminChatRender(); });
+}
+function adminChatToolsHtml(m, d){
+  if(m.from !== 'f' || m.sys || (m.card && m.card.type === 'password')) return '';
+  if(adminChatDelAsk === m.id) return `<div class="adm-delask"><span>Delete this message for ${esc(adminChatName(d))} too?</span><button class="btn btn-sm btn-primary" style="background:var(--error);" data-admin-action="chat-del-yes" data-mid="${esc(m.id)}" ${adminChatBusy ? 'disabled' : ''}>Delete</button><button class="btn btn-sm btn-ghost" data-admin-action="chat-del-no">Keep</button></div>`;
+  const canEdit = typeof m.text === 'string' && !m.img;
+  return `<div class="adm-mtools">${adminChatEdit === m.id ? '<span style="color:var(--fs-purple-ink);">Editing…</span>' : canEdit ? `<button data-admin-action="chat-edit" data-mid="${esc(m.id)}">Edit</button>` : ''}<button class="del" data-admin-action="chat-del" data-mid="${esc(m.id)}">Delete</button></div>`;
+}
 function adminChatAgeCls(ms){ const h = (Date.now() - Number(ms || 0)) / 3600000; return h >= 48 ? 'red' : h >= 24 ? 'amber' : ''; }
 // Re-render without losing the reply being typed or the scroll position (the 30 s refresh can land mid-sentence).
 function adminChatRender(){
@@ -40768,7 +40903,7 @@ function adminChatAction(action, el){
   if(action === 'chat-reload'){ adminChatsLoad(); return; }
   if(action === 'chat-filter'){ adminChatFilter = el.dataset.filter; renderAdminPage(); return; }
   if(action === 'chat-open'){
-    adminTab = 'inbox'; adminChatOpen = el.dataset.id; adminChatConfirm = false; adminChatMsg = ''; adminChatNote = '';
+    adminTab = 'inbox'; adminChatOpen = el.dataset.id; adminChatConfirm = false; adminChatMsg = ''; adminChatNote = ''; adminChatEdit = null; adminChatDelAsk = null;
     const d = adminChatGet(adminChatOpen);
     if(d && adminChatUnread(d)){ const now = Date.now(); d.aSeen = now; firebase.firestore().collection('progress').doc(d.id).set({aSeen:now}, {merge:true}).catch(()=>{}); }
     renderAdminPage(); window.scrollTo(0, 0); return;
@@ -40777,7 +40912,12 @@ function adminChatAction(action, el){
   if(action === 'chat-zoom'){ msgZoom(el.getAttribute('src')); return; }
   const d = adminChatGet(adminChatOpen); if(!d) return;
   if(action === 'chat-qr'){ adminChatNote = adminChatQrText(el.dataset.k, d); const ta = document.getElementById('adm-chat-text'); if(ta){ ta.value = adminChatNote; ta.focus(); } return; }
-  if(action === 'chat-send'){ const ta = document.getElementById('adm-chat-text'), text = String(ta ? ta.value : adminChatNote).trim().slice(0, MSG_TEXT_MAX); if(text){ adminChatNote = text; adminChatSend(d, {text}); } return; }
+  if(action === 'chat-send'){ const ta = document.getElementById('adm-chat-text'), text = String(ta ? ta.value : adminChatNote).trim().slice(0, MSG_TEXT_MAX); if(text){ adminChatNote = text; if(adminChatEdit) adminChatSaveEdit(d, text); else adminChatSend(d, {text}); } return; }
+  if(action === 'chat-edit'){ const m = (d.fm || []).find(x=>x.id === el.dataset.mid); if(!m) return; adminChatEdit = m.id; adminChatDelAsk = null; adminChatNote = String(m.text || ''); renderAdminPage(); const ta = document.getElementById('adm-chat-text'); if(ta){ ta.focus(); ta.scrollIntoView({block:'center'}); } return; }
+  if(action === 'chat-edit-cancel'){ adminChatEdit = null; adminChatNote = ''; renderAdminPage(); return; }
+  if(action === 'chat-del'){ adminChatDelAsk = el.dataset.mid; adminChatRender(); return; }
+  if(action === 'chat-del-no'){ adminChatDelAsk = null; adminChatRender(); return; }
+  if(action === 'chat-del-yes'){ adminChatDelete(d, el.dataset.mid); return; }
   if(action === 'chat-attach'){ const f = document.getElementById('adm-chat-file'); if(f) f.click(); return; }
   if(action === 'chat-payok'){ adminChatConfirm = true; adminChatMsg = ''; renderAdminPage(); window.scrollTo(0, document.documentElement.scrollHeight); return; }
   if(action === 'chat-cancel'){ adminChatConfirm = false; renderAdminPage(); return; }
@@ -40808,13 +40948,13 @@ function adminChatRowHtml(d){
   const hasRc = msgAll(d).some(m=>m.card && m.card.type === 'request' && m.card.receipt);
   const lang = ADMIN_CHAT_LANGS[adminChatLang(d)];
   return `<button class="msg-row adm-chat-row${st}${un ? ' unread' : ''}" data-admin-action="chat-open" data-id="${esc(d.id)}">
-    ${msgTabHtml(d, 'admin')}
     <span class="msg-disc ${msgTopicCls(d.topic)}">${msgTopicIcon(d.topic)}</span>
     <span class="msg-row-main">
       <span class="msg-row-top adm-top">${un ? '<i class="msg-udot"></i>' : ''}<b dir="auto">${esc(adminChatName(d))}</b><span class="adm-tag">${esc(String(d.app || 'en').toUpperCase())} · ${esc(lang)}</span>
         <span class="adm-age ${todo ? adminChatAgeCls(d.lAt || d.createdAt) : 'plain'}">${todo ? esc(adminAgo(Number(d.lAt) || Number(d.createdAt) || 0)) : esc(msgWhen(Math.max(Number(d.lAt) || 0, Number(d.fAt) || 0), 'admin'))}</span></span>
-      <span class="row" style="gap:6px; flex-wrap:wrap;">${msgChip(d.topic, 'admin')}<span class="msg-kind">${esc(msgKindLabel(d.type, d.req, 'admin'))}</span>${hasRc ? '<span class="msg-kind" style="color:var(--fs-purple-ink);">· receipt</span>' : ''}</span>
+      <span class="row" style="gap:6px; flex-wrap:wrap;">${msgChip(d.topic, 'admin')}<span class="msg-kind">${esc(msgKindLabel(d.type, d.req, 'admin'))}</span>${hasRc ? '<span class="msg-kind" style="color:var(--fs-purple-ink);">· receipt</span>' : ''}${msgTabHtml(d, 'admin')}</span>
       <span class="msg-row-prev"><span dir="auto">${esc(msgPreview(last, 'admin'))}</span></span>
+      ${adminChatCtxRow(d)}
       ${(()=>{ const cs = adminChatClasses(d); return cs.length ? '<span class="cls-codes">' + cs.map(c=>'<span class="cls-codechip">Class ' + esc(c.code) + '</span>').join('') + '</span>' : ''; })()}
     </span>
   </button>`;
@@ -40842,28 +40982,30 @@ function renderAdminChat(d){
     act = `<div class="adm-act"><p class="msg-hint" style="color:var(--ink-soft);">Reply with a time first, then mark it done. ${esc(adminChatName(d))} sees the tab turn green.</p>
       <button class="cu-btn cu-purple" data-admin-action="chat-done" ${adminChatBusy ? 'disabled' : ''}>Mark done</button></div>`;
   } else if(d.type === 'request'){
-    act = `<div class="adm-act" style="border-color:var(--success); flex-direction:row; align-items:center; justify-content:space-between;">${msgTabHtml(d, 'admin', true)}<button class="btn btn-ghost btn-sm" data-admin-action="chat-reopen" ${adminChatBusy ? 'disabled' : ''}>Reopen</button></div>`;
+    act = `<div class="adm-act" style="border-color:var(--success); flex-direction:row; align-items:center; justify-content:space-between;">${msgTabHtml(d, 'admin')}<button class="btn btn-ghost btn-sm" data-admin-action="chat-reopen" ${adminChatBusy ? 'disabled' : ''}>Reopen</button></div>`;
   }
   const keys = d.type === 'request' && d.req === 'buy' ? (d.status !== 'done' ? ['checking', 'unclear', 'amount'] : []) : d.type === 'request' ? ['when', 'welcome'] : ['check'];
   const qr = keys.length ? `<div class="msg-kind">Quick replies · sent in ${esc(ADMIN_CHAT_LANGS[lang])}</div><div class="row" style="gap:6px; flex-wrap:wrap;">${keys.map(k=>`<button class="btn btn-sm btn-ghost" data-admin-action="chat-qr" data-k="${k}" title="${esc(ADMIN_CHAT_QR[k].en)}">${esc(ADMIN_CHAT_QR[k].label)}</button>`).join('')}</div>` : '';
   return `<div class="stack" style="gap:14px;">
     <button class="back" style="align-self:flex-start;" data-admin-action="chat-back">${ICONS.back} Inbox</button>
     <div><h2 class="display" style="font-size:22px;" dir="auto">${esc(adminChatName(d))}</h2>
-      <div class="row" style="gap:8px; flex-wrap:wrap; margin-top:8px;">${msgChip(d.topic, 'admin')}<span class="msg-kind">${esc(msgKindLabel(d.type, d.req, 'admin'))}</span>${msgTabHtml(d, 'admin', true)}${adminChatClassChips(d)}</div></div>
+      <div class="row" style="gap:8px; flex-wrap:wrap; margin-top:8px;">${msgChip(d.topic, 'admin')}<span class="msg-kind">${esc(msgKindLabel(d.type, d.req, 'admin'))}</span>${msgTabHtml(d, 'admin')}${adminChatClassChips(d)}</div></div>
+    ${adminChatCtxBand(d)}
     <div class="adm-facts">
       <div><span>Level</span><b>${esc(L2.level || '—')}</b></div>
       <div><span>App</span><b>${esc(String(d.app || 'en').toUpperCase())} · ${esc(ADMIN_CHAT_LANGS[lang])}</b></div>
       <div><span>Started</span><b>${esc(adminDate(d.createdAt))}</b></div>
       <div><span>Device</span><b>${esc(dev || '—')}</b></div>
       <div class="wide"><span>Phone</span><b dir="ltr">${esc(L2.phone || 'not given')}</b></div>
+      ${adminChatSrcText(d) ? `<div class="wide"><span>Wrote from</span><b>${esc(adminChatSrcText(d))}</b></div>` : ''}
     </div>
-    <div class="msg-thread-list">${msgs.map(m=>msgBubbleHtml(m, 'admin', d, renderAdminPage) + (m.from === 'l' && m.text ? adminClassCodeChips(m.text) : '')).join('')}</div>
+    <div class="msg-thread-list">${msgs.map((m, i)=>msgBubbleHtml(m, 'admin', d, renderAdminPage, msgs[i - 1]) + adminChatToolsHtml(m, d) + (m.from === 'l' && m.text ? adminClassCodeChips(m.text) : '')).join('')}</div>
     ${act}
     ${adminChatMsg ? `<p class="msg-hint" role="status" style="color:var(--ink); font-weight:700;">${esc(adminChatMsg)}</p>` : ''}
     ${adminNotifNoteHtml(d)}
     ${qr}
-    <div class="adm-comp"><textarea id="adm-chat-text" rows="3" maxlength="${MSG_TEXT_MAX}" dir="auto" placeholder="Reply to ${esc(adminChatName(d))}">${esc(adminChatNote)}</textarea>
-      <div class="row between"><button class="btn btn-sm btn-ghost" data-admin-action="chat-attach">Photo</button><button class="btn btn-sm btn-primary" data-admin-action="chat-send" ${adminChatBusy ? 'disabled' : ''}>${adminChatBusy ? '…' : 'Send'}</button></div>
+    <div class="adm-comp">${adminChatEdit ? `<div class="adm-editing"><span>Editing your message</span><button type="button" data-admin-action="chat-edit-cancel">Cancel</button></div>` : ''}<textarea id="adm-chat-text" rows="3" maxlength="${MSG_TEXT_MAX}" dir="auto" placeholder="Reply to ${esc(adminChatName(d))}">${esc(adminChatNote)}</textarea>
+      <div class="row between"><button class="btn btn-sm btn-ghost" data-admin-action="chat-attach" ${adminChatEdit ? 'disabled' : ''}>Photo</button><button class="btn btn-sm btn-primary" data-admin-action="chat-send" ${adminChatBusy ? 'disabled' : ''}>${adminChatBusy ? '…' : adminChatEdit ? 'Save' : 'Send'}</button></div>
       <input type="file" id="adm-chat-file" accept="image/*" hidden></div>
   </div>`;
 }

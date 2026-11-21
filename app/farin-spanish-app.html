@@ -3457,6 +3457,14 @@
   .onb-wp{margin:12px auto 0; max-width:300px; font-weight:600; font-size:15px; line-height:1.55; color:var(--ink-soft);}
   .onb-wfe{display:block; height:290px; max-height:42vh; width:auto; margin:auto auto 0; padding-top:22px; filter:drop-shadow(0 12px 16px rgba(60,40,20,.14));}
   @media (max-height:700px){ .onb-wcard{padding-top:26px;} }
+  .onb-wcard{position:relative;}
+  .onb-wt, .onb-wp{position:relative; z-index:2;}
+  .onb-wfe{position:relative; z-index:2; transform-origin:50% 100%; animation:onbPop .9s cubic-bezier(.22,1.35,.36,1) .25s both;}
+  @keyframes onbPop{from{opacity:0; transform:scale(.55) translateY(24px);} 60%{opacity:1;} to{opacity:1; transform:none;}}
+  .onb-confetti{position:absolute; inset:0; overflow:hidden; pointer-events:none; z-index:1;}
+  .onb-confetti i{position:absolute; top:-18px; display:block; border-radius:2px; opacity:0; animation:onbConfetti 2.8s cubic-bezier(.25,.6,.5,1) both;}
+  @keyframes onbConfetti{0%{opacity:0; transform:translate3d(0,0,0) rotate(var(--r));} 8%{opacity:1;} 100%{opacity:0; transform:translate3d(0, 110vh, 0) rotate(calc(var(--r) + 540deg));}}
+  @media (prefers-reduced-motion: reduce){ .onb-wfe{animation:none;} .onb-confetti{display:none;} }
   /* header language control (Farin 2026-10-27): learning-language flag + interface code; opens the language sheet */
   .lang-pill{display:inline-flex; align-items:center; gap:6px; height:34px; box-sizing:border-box; padding:0 11px 0 8px; border-radius:999px; background:var(--bg-elevated); border:1px solid var(--border-soft); box-shadow:var(--clay-shadow-soft); color:var(--ink-soft); font:inherit; font-weight:800; font-size:12px; letter-spacing:.03em; flex:0 0 auto; cursor:pointer; -webkit-tap-highlight-color:transparent;}
   html[dir="rtl"] .lang-pill{padding:0 8px 0 11px;}
@@ -15310,6 +15318,18 @@ function diagProgressBar(step, total){
 /* The welcome screen (Farin 2026-11-21: "welcome the user at the end with a good message", in the shape of his reference: a card with
    the title, a short message and FE big; one button). Shown once, after Go! on a first sign-up; 'welcome-continue' opens Home and
    then asks the phone's notification question (moved here from the Go! tap). A course link lands on its course page instead. */
+// the celebration on the welcome card (Farin 2026-11-21: "put a motion of celebration when they get to the last part"): 36 paper pieces
+// in the app's colours fall through the card once (CSS only, 3 s), FE pops in under the title; nothing moves after that
+function onbConfettiHtml(){
+  const colors = ['#FFA03A', '#7C5CFC', '#FF8FB3', '#FFC93C', '#5CC8A8', '#FF6B4A'];
+  let out = '';
+  for(let i = 0; i < 36; i++){
+    const left = (i * 2.78 + Math.random() * 2.5).toFixed(1), delay = (Math.random() * 1.1).toFixed(2), dur = (2.2 + Math.random() * 1.1).toFixed(2);
+    const w = 6 + Math.round(Math.random() * 6), h = 8 + Math.round(Math.random() * 8), rot = Math.round(Math.random() * 360), round = Math.random() < 0.3;
+    out += `<i style="left:${left}%; width:${w}px; height:${round ? w : h}px; background:${colors[i % colors.length]}; animation-delay:${delay}s; animation-duration:${dur}s; --r:${rot}deg;${round ? ' border-radius:50%;' : ''}"></i>`;
+  }
+  return out;
+}
 function renderWelcome(){
   const name = (state.profile.name || '').trim();
   const who = name ? '<bdi>' + esc(name) + '</bdi>' : '';
@@ -15325,7 +15345,8 @@ function renderWelcome(){
           'Yol haritan hazır; seviyene ve hedeflerine göre kuruldu. Günde birkaç dakika yeter, ben de her adımda yanındayım.',
           'نقشهٔ راهت آماده‌ست؛ درست بر اساس سطح و هدف‌های خودت. روزی چند دقیقه کافیه، منم قدم‌به‌قدم کنارتم.',
           'Tu hoja de ruta está lista, hecha para tu nivel y tus objetivos. Con unos minutos al día basta, y yo estoy a tu lado en cada paso.')}</p>
-        <img class="onb-wfe" src="${feSrc('m-heart')}" alt="">
+        <div class="onb-confetti" aria-hidden="true">${onbConfettiHtml()}</div>
+        <img class="onb-wfe" src="${feSrc('m-medal')}" alt="">
       </div>
     </div>
     <div class="onb-foot"><button class="btn btn-primary fs-cta onb-cta" data-action="welcome-continue">${L("Let's go", 'Hadi başlayalım', 'بزن بریم', '¡Vamos!')}</button></div>

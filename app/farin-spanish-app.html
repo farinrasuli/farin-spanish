@@ -2089,6 +2089,12 @@
   .ins-rb.on.no{background:var(--ink-soft); color:var(--bg-elevated);}
   .ins-rb:focus-visible{outline:2px solid var(--fs-purple); outline-offset:-2px;}
   .ins-p.dim{opacity:.6;}
+  /* Group classes (Farin 2026-11-21): a learner the class offer has not been sent to yet sits in a gold frame until Farin ticks "Offer sent" */
+  .ins-p.is-due{border:2px solid #E3B341; background:color-mix(in srgb, #F3C85A 13%, var(--bg-elevated)); border-radius:14px; padding:10px 12px; margin:6px 0;}
+  .ins-tick{border-color:#E3B341; color:#7A5600; background:#FFF6DC;}
+  .ins-tick:hover{background:#FFEFC2;}
+  .ap-tag.gold{background:#F7E3A1; color:#6B4A00;}
+  .ins-unsent{opacity:.75;}
   .ins-fun{margin:8px 0 2px; padding:8px 12px; border-radius:12px; background:var(--bg-elevated); font-size:12.5px; line-height:1.5; color:var(--ink-soft);}
   .ins-fun b{color:var(--ink);}
   .ins-fun b.y{color:var(--success);}
@@ -41569,10 +41575,17 @@ function adminClassesSync(){
    They leave their other suggested classes (c.refit note "kept in class AA"), and newcomers join one class only (adminClassesSyncKind). */
 const ADMIN_CLASS_SENT_SEED = ['AA'];
 function adminClassSentTo(c, p){ const s = c.sent || {}; return p.accounts.some(u=>u.hash && s[u.hash]); }
+function adminClassSentAt(c, p){ const s = c.sent || {}; return p.accounts.reduce((m, u)=>Math.max(m, (u.hash && Number(s[u.hash])) || 0), 0); }
+// When the offer went to them for this class (0 = not yet): Farin's tick (adminInvited, since this class was made) or the class's own record
+// (c.sent; class AA was seeded with all its members on 2026-11-19). Until then their row sits in a gold frame (Farin 2026-11-21).
+function adminClassOfferSentAt(c, p){ const t = adminInsInvitedAt(p); return Math.max(t >= (c.createdAt || 0) ? t : 0, adminClassSentAt(c, p)); }
+// How many fitting members (m) of an offer-ready class still wait for the offer: may get it, not sent, did not say no
+function adminClassOfferDue(c, m){ return c.status === 'suggested' && adminClassOffer(c) ? m.filter(p=>adminClassMayOffer(c, p) && !adminClassOfferSentAt(c, p) && adminClassReply(c, p) !== 'no').length : 0; }
 function adminClassesOneEach(byHash, now){
   const C = adminClasses; let changed = false;
   // Farin's AA messages (2026-11-19): every current AA member counts as sent, once
-  C.classes.forEach(c=>{ if(ADMIN_CLASS_SENT_SEED.indexOf(c.code) < 0 || c.sentSeeded || !adminClassOpen(c)) return;
+  // Only the AA of that day: a class made after 2026-11-20 (a later AA after a reset, or a test) is not seeded; its rows wait for Farin’s tick (2026-11-21)
+  C.classes.forEach(c=>{ if(ADMIN_CLASS_SENT_SEED.indexOf(c.code) < 0 || c.sentSeeded || !adminClassOpen(c) || (Number(c.createdAt) || 0) > Date.UTC(2026, 10, 20)) return;
     c.sent = c.sent || {}; adminClassMembers(c, byHash).forEach(p=>{ if(p.main && p.main.hash && !adminClassSentTo(c, p)) c.sent[p.main.hash] = adminInsInvitedAt(p) || now; });
     c.sentSeeded = now; changed = true; });
   const open = C.classes.filter(adminClassOpen), score = {};
@@ -41879,15 +41892,14 @@ function adminInsAction(action, el){
     cls.members = cls.members.filter(h=>hs.indexOf(h) < 0); hs.forEach(h=>{ skips.forEach(m=>{ m[h] = until; }); });
     adminClassesSave(); return re();
   }
-  if(action === 'ins-invite' || action === 'ins-invite-tg'){   // WhatsApp or Telegram (2026-11-19): either marks the offer as sent
-    // the link opens WhatsApp by itself (no preventDefault); this only remembers the invitation
-    const p = adminPersonByKey(el.dataset.id), h = p && p.main && p.main.hash;
+  if(action === 'ins-sent' || action === 'ins-unsent'){   // Farin's own tick (2026-11-21): "they have the rectangle until I click that I sent the offer"
+    // WhatsApp / Telegram only open the chat now (from 2026-11-19 to 11-21 the click itself marked the offer sent). The tick records it: the gold
+    // frame goes, "Send again", the funnel's "sent the offer", and c.sent (the class that keeps them, one class each). "Not sent" undoes a wrong tick.
+    const p = adminPersonByKey(el.dataset.id), h = p && p.main && p.main.hash, hs = p ? p.accounts.map(u=>u.hash).filter(Boolean) : [];
     if(!h || !adminSeen) return;
-    adminInvited[h] = Date.now(); adminSeenSave();
-    // which class the offer came from (2026-11-19): that class keeps them (one class per learner)
-    if(cls && !adminClassSentTo(cls, p)){ (cls.sent = cls.sent || {})[h] = Date.now(); adminClassesSave(); }
-    setTimeout(re, 0);
-    return;
+    if(action === 'ins-sent'){ adminInvited[h] = Date.now(); if(cls && !adminClassSentTo(cls, p)){ (cls.sent = cls.sent || {})[h] = Date.now(); adminClassesSave(); } }
+    else { hs.forEach(x=>{ if(adminInvited[x]) adminInvited[x] = 0; if(cls && cls.sent) delete cls.sent[x]; }); if(cls) adminClassesSave(); }   // 0, not delete: admin-seen is saved with merge
+    adminSeenSave(); return re();
   }
 }
 // A class's time dropdowns: only free slots are offered; a time someone said yes for asks first (2026-11-18)
@@ -41959,23 +41971,24 @@ function adminInsHelloText(p){
 //   button sends a plain hello), byHash, waLabel (text on the plain WhatsApp button), out (class id: ✕), reply:{c, r} (Yes / No), tags:[html], dim}
 function adminInsPersonRow(p, extra){
   extra = extra || {};
-  const pf = p.profile, goals = adminInsGoals(p), ph = adminInsPhone(p), invite = !!extra.offer, inv = invite ? adminInsInvitedAt(p) : 0;
+  const pf = p.profile, goals = adminInsGoals(p), ph = adminInsPhone(p), invite = !!extra.offer, inv = invite ? adminClassOfferSentAt(extra.offer, p) : 0, due = invite && !inv && !extra.dim;   // due (2026-11-21): gold frame until Farin ticks "Offer sent"
   // the same text on WhatsApp and on Telegram, for learners without WhatsApp (2026-11-19)
   const msgText = invite ? adminClassOfferText(extra.offer, p, extra.byHash) : adminInsHelloText(p), wa = adminInsWaLink(p, msgText), tg = adminInsTgLink(p, msgText);
   const page = invite ? adminClassOfferUrl(extra.offer, p, extra.byHash) : '';
   // reply {c, r, o, t}: with two times (t = their labels) Yes is "Yes · 1" / "Yes · 2", o = the one they picked (2026-11-18)
   const rp = extra.reply, two = !!(rp && rp.t && rp.t.length > 1);
   const rb = (v, label, o)=>{ const on = rp.r === v && (o == null || rp.o === o); return `<button class="ins-rb${on ? ' on ' + v : ''}" data-admin-action="ins-reply" data-c="${esc(rp.c)}" data-id="${esc(p.key)}" data-v="${v}"${o != null ? ` data-o="${o}" title="${esc('Yes, ' + rp.t[o])}"` : ''} aria-pressed="${on}">${label}</button>`; };
-  return `<div class="ins-p${extra.dim ? ' dim' : ''}">
+  return `<div class="ins-p${extra.dim ? ' dim' : ''}${due ? ' is-due' : ''}">
       ${adminAvatarHtml(pf.name, adminGoalKey(goals.length ? goals : pf.motivationTag), Date.now() - (p.lastSeen || 0))}
       <span class="ins-pm">
-        <span class="ins-pn"><button class="ins-pname" data-admin-action="ap-open-learner" data-id="${esc(p.key)}" title="Open the profile"><b dir="auto">${esc(pf.name || '(no name)')}</b></button>${extra.isNew ? '<span class="ap-tag new">New</span>' : ''}${(extra.tags || []).join('')}${inv ? `<span class="ap-tag">Invited ${esc(adminAgo(inv))}</span>` : ''}</span>
+        <span class="ins-pn"><button class="ins-pname" data-admin-action="ap-open-learner" data-id="${esc(p.key)}" title="Open the profile"><b dir="auto">${esc(pf.name || '(no name)')}</b></button>${extra.isNew ? '<span class="ap-tag new">New</span>' : ''}${(extra.tags || []).join('')}${inv ? `<span class="ap-tag ok">Offer sent ${esc(adminAgo(inv))}</span>` : ''}</span>
         <span class="ins-pd">${esc(adminInsStage(p))} · ${goals.length ? esc(goals.map(g=>GOAL_LABELS[g] || g).join(', ')) : 'no goal'}${adminInsLang(p) ? ' · ' + esc(ADMIN_INS_LANG[adminInsLang(p)]) : ''} · seen ${esc(adminAgo(p.lastSeen))} · ${p.activity.days || 0} day${p.activity.days === 1 ? '' : 's'}</span>
         <span class="ins-ph" dir="ltr">${ph ? (adminInsWaLink(p, adminInsHelloText(p)) ? `<a class="ins-phl" href="${esc(adminInsWaLink(p, adminInsHelloText(p)))}" target="_blank" rel="noopener" title="WhatsApp ${esc(pf.name || '')}">${ICONS.whatsapp}${esc(ph)}</a>` : esc(ph)) : '<span class="ins-none">no number</span>'}</span>
       </span>
       <span class="ins-pa">
-        ${wa ? `<a class="btn btn-whatsapp btn-sm" target="_blank" rel="noopener" href="${esc(wa)}" ${invite ? `data-admin-action="ins-invite" data-c="${esc(extra.offer.id)}" data-id="${esc(p.key)}"` : ''} aria-label="${invite ? 'Send the offer to' : 'WhatsApp'} ${esc(pf.name || '')}">${ICONS.whatsapp}${invite ? `<span>${inv ? 'Send again' : 'Send offer'}</span>` : `<span>${esc(extra.waLabel || 'WhatsApp')}</span>`}</a>` : ''}
-        ${tg ? `<a class="btn btn-telegram btn-sm" target="_blank" rel="noopener" href="${esc(tg)}" ${invite ? `data-admin-action="ins-invite-tg" data-c="${esc(extra.offer.id)}" data-id="${esc(p.key)}"` : ''} aria-label="${invite ? 'Send the offer on Telegram to' : 'Telegram'} ${esc(pf.name || '')}" title="${invite ? 'The same offer on Telegram (for learners without WhatsApp)' : 'Telegram'}">${ICONS.telegram}<span>Telegram</span></a>` : ''}
+        ${wa ? `<a class="btn btn-whatsapp btn-sm" target="_blank" rel="noopener" href="${esc(wa)}" aria-label="${invite ? 'Send the offer to' : 'WhatsApp'} ${esc(pf.name || '')}">${ICONS.whatsapp}${invite ? `<span>${inv ? 'Send again' : 'Send offer'}</span>` : `<span>${esc(extra.waLabel || 'WhatsApp')}</span>`}</a>` : ''}
+        ${tg ? `<a class="btn btn-telegram btn-sm" target="_blank" rel="noopener" href="${esc(tg)}" aria-label="${invite ? 'Send the offer on Telegram to' : 'Telegram'} ${esc(pf.name || '')}" title="${invite ? 'The same offer on Telegram (for learners without WhatsApp)' : 'Telegram'}">${ICONS.telegram}<span>Telegram</span></a>` : ''}
+        ${invite && !extra.dim ? (inv ? `<button class="ap-link ins-unsent" data-admin-action="ins-unsent" data-c="${esc(extra.offer.id)}" data-id="${esc(p.key)}" title="Not sent after all: the gold frame comes back">Not sent</button>` : `<button class="btn btn-sm btn-ghost ins-tick" data-admin-action="ins-sent" data-c="${esc(extra.offer.id)}" data-id="${esc(p.key)}" aria-label="I sent the offer to ${esc(pf.name || '')}" title="Tick once you have sent them the offer: the gold frame goes">✓ Offer sent</button>`) : ''}
         ${rp ? `<span class="ins-rbs" role="group" aria-label="Their answer">${two ? rb('yes', 'Yes · 1', 0) + rb('yes', 'Yes · 2', 1) : rb('yes', 'Yes')}${rb('no', 'No')}</span>` : ''}
         ${page ? `<a class="ap-link" href="${esc(page)}" target="_blank" rel="noopener" title="The offer page made for ${esc(pf.name || 'them')}">Their page</a>` : ''}
         <button class="ap-link" data-admin-action="ap-open-learner" data-id="${esc(p.key)}">Profile</button>
@@ -42017,13 +42030,14 @@ function adminInsClassesHtml(openId){
     const course = adminClassKind(c) === 'course', open = adminClassOpen(c), sug = c.status === 'suggested', offer = adminClassOffer(c), gather = sug && !offer;
     const all = adminClassOrdered(c, byHash), misW = {}; all.forEach(p=>{ const w = adminClassFitWhy(c, p); if(w) misW[p.key] = w; });   // fit (2026-11-17)
     const m = all.filter(p=>!misW[p.key]), mis = all.filter(p=>misW[p.key]), n = m.length, yes = m.filter(p=>adminClassReply(c, p) === 'yes').length, no = m.filter(p=>adminClassReply(c, p) === 'no').length;
-    const invited = m.filter(p=>adminInsInvitedAt(p) >= (c.createdAt || 0)).length, isNew = offer && c.offerAt > seen;
+    const invited = m.filter(p=>adminClassOfferSentAt(c, p)).length, due = adminClassOfferDue(c, m), isNew = offer && c.offerAt > seen;
     // Start's groups per time (2026-11-18): one time = as before (4 yes, 8+ = two classes); two times = 4 yes for the same time
     const times = adminClassSched(c), plan = adminClassPlan(c, byHash), twoT = times.length > 1;
     const asked = course ? m.filter(p=>adminInsAsked(p).indexOf(c.theme) >= 0).length : 0, ready = sug && plan.groups.length > 0;
     const fit = !course && n ? adminInsFit(m, c.goal) : null, sizes = plan.sizes, seated = sizes.reduce((a, b)=>a + b, 0);
     const tags = [course ? '<span class="ap-tag purple">Course class</span>' : '<span class="ap-tag">Level class</span>',
       gather ? '<span class="ap-tag">Gathering · ' + n + ' of ' + ADMIN_CLASS_OFFER_MIN + '</span>' : '', isNew ? '<span class="ap-tag new">New · ready to offer</span>' : offer && !ready ? '<span class="ap-tag purple">Ready to offer</span>' : '',
+      due ? '<span class="ap-tag gold" title="In a gold frame until you tick Offer sent">' + due + ' to offer</span>' : '',
       ready ? '<span class="ap-tag ok">Ready to start</span>' : '', c.status === 'running' ? '<span class="ap-tag ok">Running</span>' : c.status === 'closed' ? '<span class="ap-tag">Closed</span>' : ''].join('');
     const why = [course ? (asked ? asked + ' asked for this course' : '') : (fit ? adminClassGoal(c) + ' is the main goal of ' + (fit.main === n ? 'all ' + n : fit.main + ' of ' + n) : ''),
       course ? 'levels ' + Object.entries(m.reduce((o, p)=>{ const s = adminInsLevel(p); o[s] = (o[s] || 0) + 1; return o; }, {})).map(([s, x])=>s + ' ×' + x).join(', ') : (fit ? (fit.stageN === n ? 'all at ' : fit.stageN + ' at ') + fit.stage : ''),
@@ -42071,10 +42085,10 @@ function adminInsClassesHtml(openId){
     const times = adminClassSched(c), timeLine = times.length ? (times.length > 1 ? 'Times: ' : 'Time: ') + times.map(adminClassSlotShort).join(' · ') : '';
     const tags = [course ? '<span class="ap-tag purple">Course class</span>' : '<span class="ap-tag">Level class</span>',
       gather ? '<span class="ap-tag">Gathering · ' + n + ' of ' + ADMIN_CLASS_OFFER_MIN + '</span>' : '', isNew ? '<span class="ap-tag new">New · ready to offer</span>' : offer && !ready ? '<span class="ap-tag purple">Ready to offer</span>' : '',
-      joined ? '<span class="ap-tag new">New learner</span>' : '', misN ? '<span class="ap-tag warn">' + misN + ' doesn\'t fit</span>' : '', ready ? '<span class="ap-tag ok">Ready to start</span>' : '',
+      joined ? '<span class="ap-tag new">New learner</span>' : '', adminClassOfferDue(c, m) ? '<span class="ap-tag gold">' + adminClassOfferDue(c, m) + ' to offer</span>' : '', misN ? '<span class="ap-tag warn">' + misN + ' doesn\'t fit</span>' : '', ready ? '<span class="ap-tag ok">Ready to start</span>' : '',
       c.status === 'running' ? '<span class="ap-tag ok">Running</span>' : c.status === 'closed' ? '<span class="ap-tag">Closed</span>' : ''].join('');
     const line = gather ? n + ' of ' + ADMIN_CLASS_OFFER_MIN + ' fit · the offer opens at ' + ADMIN_CLASS_OFFER_MIN
-      : sug ? n + ' fit · ' + m.filter(p=>adminInsInvitedAt(p) >= (c.createdAt || 0)).length + ' sent the offer · ' + yes + ' yes · ' + no + ' no'
+      : sug ? n + ' fit · ' + m.filter(p=>adminClassOfferSentAt(c, p)).length + ' sent the offer · ' + yes + ' yes · ' + no + ' no'
       : c.status === 'running' ? n + ' in the class · started ' + adminDate(c.startedAt) : 'closed ' + adminDate(c.closedAt || c.createdAt);
     return `<button class="cls-row${course ? ' is-course' : ''}${isNew || joined ? ' is-new' : ''}${ready ? ' is-ready' : ''}${c.status === 'closed' ? ' is-closed' : ''}" data-admin-action="ins-class" data-c="${esc(c.id)}" aria-label="${esc('Open ' + adminClassTitle(c) + ': ' + line)}">
         <span class="ins-gn">${n}</span>
@@ -42126,7 +42140,7 @@ function renderAdminClassesTab(){
     return `<div class="ins"><div class="ins-filters"><div class="ap-chips" role="group" aria-label="App">${adminInsChip('ins-app', 'en', app === 'en', 'English app')}${adminInsChip('ins-app', 'es', app === 'es', 'Spanish app')}${adminInsChip('ins-app', 'all', app === 'all', 'Both')}</div></div>${adminInsClassesHtml()}</div>`;
   }
   const byHash = adminClassPeopleByHash(), m = adminClassFitMembers(c, byHash), g = adminClassGoalKey(c), sug = c.status === 'suggested', offer = adminClassOffer(c);   // who fits (2026-11-17)
-  const yes = m.filter(p=>adminClassReply(c, p) === 'yes').length, no = m.filter(p=>adminClassReply(c, p) === 'no').length, sent = m.filter(p=>adminInsInvitedAt(p) >= (c.createdAt || 0)).length;
+  const yes = m.filter(p=>adminClassReply(c, p) === 'yes').length, no = m.filter(p=>adminClassReply(c, p) === 'no').length, sent = m.filter(p=>adminClassOfferSentAt(c, p)).length;
   const status = c.status === 'running' ? 'Running' : c.status === 'closed' ? 'Closed' : offer ? (adminClassReady(c, byHash) ? 'Ready to start' : 'Ready to offer') : 'Gathering';
   const when = c.status === 'running' ? 'started ' + adminDate(c.startedAt) : c.status === 'closed' ? 'closed ' + adminDate(c.closedAt || c.createdAt) : 'made ' + adminDate(c.createdAt);
   const stat = (label, v)=>`<div class="lx-stat"><span>${label}</span><b class="display">${v}</b></div>`;

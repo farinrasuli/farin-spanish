@@ -354,12 +354,20 @@ function paintWorld(s){
   if(strip) body.style.setProperty('--gw-stage', 'calc(var(--gw-colw) / ' + cssNum(strip.ratio, 3, 1, 8) + ')');
   var bandArt = (strip ? '<img class="th-world-strip" src="' + esc(strip.src) + '" alt="">' : '') +
     (port ? '<div class="th-world-port">' + (port.view ? '<img class="th-port-view" src="' + esc(port.view) + '" alt="">' : '') + '<img class="th-port-ring" src="' + esc(port.ring) + '" alt=""></div>' : '');
-  s.world.el.innerHTML = '<div class="th-world-art' + (src ? ' th-has-plate' : '') + '">' + plate + '<div class="th-world-stage">' + plateImg + bandArt + front + cut + '</div></div><div class="th-world-text"><div class="th-world-stage">' + txt + '</div></div>';
+  // world.shot (2026-11-21 review): the opening and closing shots show this whole picture instead of the 4:5 plate (Story Hunt: the wide
+  // library, the same room as its band strip), at the column's width with its blurred copy around it; the plate's cut-outs stay hidden then
+  var shot = w.shot && w.shot.ready && w.shot.src ? w.shot : null;
+  body.classList.toggle('gw-shot', !!shot);
+  var shotBlur = shot ? '<div class="th-world-shotblur" style="background-image:url(\'' + esc(shot.src) + '\')"></div>' : '';
+  var shotImg = shot ? '<img class="th-world-shot" src="' + esc(shot.src) + '" alt="">' : '';
+  s.world.el.innerHTML = '<div class="th-world-art' + (src ? ' th-has-plate' : '') + '">' + plate + shotBlur + '<div class="th-world-stage">' + plateImg + shotImg + bandArt + front + cut + '</div></div><div class="th-world-text"><div class="th-world-stage">' + txt + '</div></div>';
   // the world's light: one mood element, the last child of the plate's box (over the art and cut-outs, under the balloons)
   var stageBox = s.world.el.querySelector('.th-world-art .th-world-stage');
   if(stageBox && src){
     var mood = moodEl(w.mood || 'warm', w.moodVars);
     if(strip && strip.glow){ mood.style.setProperty('--gw-sx', cssNum(strip.glow[0], 50, 0, 100) + '%'); mood.style.setProperty('--gw-sy', cssNum(strip.glow[1], 50, 0, 100) + '%'); }
+    // the shot's glow, in % of the opening shot's band (the picture is contained at full width in a 4:5 band, centred)
+    if(shot && shot.glow){ var r = cssNum(shot.ratio, 1.5, .5, 4); mood.style.setProperty('--gw-hx', cssNum(shot.glow[0], 50, 0, 100) + '%'); mood.style.setProperty('--gw-hy', (50 + (cssNum(shot.glow[1], 50, 0, 100) - 50) / r / 1.25).toFixed(2) + '%'); }
     stageBox.appendChild(mood);
   }
   if(w.css) loadWorldCss(s.world.kind, w.css);
@@ -661,7 +669,8 @@ function finale(o){
     if(reduced()){ resolve(); return; }
     var end = function(){ if(done) return; done = true; clearTimeout(t); w.classList.remove('th-beat'); D.body.classList.remove('gw-beat', 'gw-establish'); D.removeEventListener('pointerdown', end, true); resolve(); };
     // end.over: the beat plays over the whole place with the end card already lying on it (no empty sky under a slid-away panel)
-    w.classList.add('th-beat'); D.body.classList.add('gw-beat'); if(!en.over) D.body.classList.add('gw-establish');
+    // end.keep: the beat plays in the band as it is (Word Rush: the porthole clears to the harbour)
+    w.classList.add('th-beat'); D.body.classList.add('gw-beat'); if(!en.over && !en.keep) D.body.classList.add('gw-establish');
     try{ if(typeof o.beat === 'function') o.beat(w); }catch(e){}
     D.addEventListener('pointerdown', end, true);
     t = setTimeout(end, Math.min(cssNum(o.ms, 2400, 0, 2400), 2400));
@@ -1024,7 +1033,7 @@ function captainSync(){
   cap.hit.style.width = (r.width + pad * 2) + 'px'; cap.hit.style.height = (r.height + pad * 2) + 'px';
 }
 var api = {
-  version:'1.2.4',
+  version:'1.2.5',
   open:open, close:close, sync:sync, exit:exit, play:start, skip:skip,
   titleCard:titleCard, transition:transition, setStrip:setStrip, setControls:setControls, stageEl:stageEl, setSkin:setSkin,
   say:say, finale:finale, sfx:sfx, progress:progress, actor:actor, establish:establish, moodEl:moodEl, flash:flash, world:function(){ return cur && cur.world ? cur.world.kind : null; },

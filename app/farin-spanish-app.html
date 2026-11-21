@@ -30923,7 +30923,7 @@ const THEATRE_QUICK = ['match','build','cross','order','desk','spell','bingo','h
 const THEATRE_QUICK_VIEWS = THEATRE_QUICK.map(k=>'game-' + k);
 const THEATRE_KINDS = ['path','chores','mystery','radio'].concat(THEATRE_QUICK);
 const THEATRE_VIEWS = ['game-path','game-yc','game-chores-building','game-chores-room','game-mystery','game-v2'].concat(THEATRE_QUICK_VIEWS);
-const THEATRE_VER = '19';   // 19: worlds art (Story Hunt strip, Word Rush porthole, Mini Cross + Build It posters, Order Up! re-rolls, traveller 1), Theatre 1.2.4; 18: Passport Desk re-review (captions on the art, the HUD strip, the end over the booth, the horn, Theatre.quiet), Theatre 1.2.3; 17: text direction in the fa UI (Latin-script lines left to right), the companion line clear of x; 16: Games 2.0 step 5 part 4 (sound spots: gulls + the library clock; Passport Desk's traveller behind the booth counter; Trap Dash lanes); 15: Games 2.0 step 4 (Brave switch, boss beat, Captain); 14: the world art wiring + Sam's balloon waits for his picture (2026-11-16)
+const THEATRE_VER = '20';   // 20: Story Hunt's wide opening / closing shot, Word Rush's end beat in the band + short-screen fit + clean card pile, Theatre 1.2.5; 19: worlds art (Story Hunt strip, Word Rush porthole, Mini Cross + Build It posters, Order Up! re-rolls, traveller 1), Theatre 1.2.4; 18: Passport Desk re-review (captions on the art, the HUD strip, the end over the booth, the horn, Theatre.quiet), Theatre 1.2.3; 17: text direction in the fa UI (Latin-script lines left to right), the companion line clear of x; 16: Games 2.0 step 5 part 4 (sound spots: gulls + the library clock; Passport Desk's traveller behind the booth counter; Trap Dash lanes); 15: Games 2.0 step 4 (Brave switch, boss beat, Captain); 14: the world art wiring + Sam's balloon waits for his picture (2026-11-16)
 // World Kit switch (worlds SPEC 4.14): one flag per quick game, on once its art and checks pass (Farin 11-10: switch on what is done).
 // ?worlds=1 previews every world in this browser (?worlds=0 switches the preview off). Off = the game plays over its poster's soft backdrop.
 // 2026-11-15 World Kit v1 live: Order Up!, Word Bingo, Mini Cross, Build It, Say It Back (their plates and props passed art QC). Passport Desk waits
@@ -31030,7 +31030,8 @@ function quickBoss(){
   if(p && p.total > 1 && !over && p.done === p.total - 1 && !r.boss){
     r.boss = 1;
     const line = state.view === 'game-echo' ? L('Last line, live!','Son satır, canlı!','خط آخر، زنده!','¡Última frase, en directo!') : null;   // the game's own boss line, else "Last one!"
-    setTimeout(()=>{ const vp = state.viewParams; if(vp && vp.round === r && !r.finished && Theatre.isOpen()) Theatre.boss(line); }, 900);
+    // not once the round is over (Word Rush ends on its pairs, not r.finished: "Last one!" stayed through its finale, 2026-11-21 review)
+    setTimeout(()=>{ const vp = state.viewParams, gone = state.view === 'game-match' ? !!(r.matchedKeys && r.matchedKeys.length === r.pairCount) : !!r.finished; if(vp && vp.round === r && !gone && Theatre.isOpen()) Theatre.boss(line); }, 900);
   }
   document.body.classList.toggle('th-boss', !!r.boss && !over);
 }

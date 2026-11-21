@@ -21,7 +21,8 @@
                ({name:[files]} over the shared CC0 kit), css (games/worlds/<kind>/world.css once it exists), spots (Games 2.0 SPEC 5.4: sound
                names played now and then, every 6-14 s; 'gull' and 'clock' are made in code when no file has the name), end ({over, spot, at}: the finale keeps the
                whole place behind the end card / plays a sound such as the code-made 'horn' at ms), strip ({src, ratio, glow:[x%, y%]}: a small
-               band's picture edge to edge), port ({ring, view}: a round window in a small band, its view clearing with the progress). Only ready:true art shows.
+               band's picture edge to edge), port ({ring, view}: a round window in a small band, its view clearing with the progress), shot ({src, ratio,
+               glow}: the opening / closing shot's own whole picture), end.keep (the end beat stays in the band). Only ready:true art shows.
    The world is on per kind with the app's WORLDS_LIVE switch (?worlds=1 previews all); with it off the game plays over the soft
    backdrop above. Anything a skin needs beyond tokens goes in its world.css under body.gw-on.gw-<kind>. */
 window.THEATRE_SKINS = {
@@ -31,9 +32,10 @@ window.THEATRE_SKINS = {
     backdrop:{src:null, position:'70% 50%', blur:30, veil:.56}, props:[],
     gw:{bg:'#fff3c4', surface:'#e7c48e', paper:'#ffffff', ink:'#14332e', hue:'var(--cat-review)', accent:'#FF6F5E', cta:'#14332e', ctaInk:'#ffffff'},
     // the porthole in the band (worlds art 2026-11-19): the harbour in it clears pair by pair, whole at the end
-    world:{mood:'warm', band:'small', stage:'clamp(120px, 24dvh, 240px)', plate:{src:'games/worlds/match/art/match-cabin.webp', ready:true}, bed:{freq:300, q:.4, vol:.03, lfo:.12},
-      port:{ring:'games/worlds/match/art/match-porthole.webp', view:'games/worlds/match/art/match-harbour.webp', ready:true}, layers:[
-      {src:'games/worlds/match/art/match-deck.webp', cls:'gw-deck', box:[66, 80, 20], band:[72, 0, 20], sit:true, ready:true}], text:[], sfx:{}, css:null}},
+    // the band about 136 px at 640 tall (all 12 cards show at once, 2026-11-21 review), 230 at 844; the end beat stays in the band: the porthole clears
+    world:{mood:'warm', band:'small', stage:'clamp(110px, calc(46dvh - 158px), 240px)', plate:{src:'games/worlds/match/art/match-cabin.webp', ready:true}, bed:{freq:300, q:.4, vol:.03, lfo:.12},
+      port:{ring:'games/worlds/match/art/match-porthole.webp', view:'games/worlds/match/art/match-harbour.webp', ready:true}, end:{keep:true}, layers:[
+      {src:'games/worlds/match/art/match-back.webp', cls:'gw-deck', box:[68, 78, 12], band:[76, 0, 13], sit:true, ready:true}], text:[], sfx:{}, css:null}},   // the pile: the clean card back
   // Build It: the workshop shelf, warm sand and wooden blocks
   build:{card:'art/posters/card-build.webp', focus:'66%',
     palette:{sky:'#fcf2dc', sky2:'#f1daa8', glow:'#fff8ea', ground:'#e1b77d', ink:'#3b2a14', accent:'#cc5428', accentInk:'#ffffff'},
@@ -87,7 +89,8 @@ window.THEATRE_SKINS = {
     gw:{bg:'#d6ebf7', surface:'#e8c48c', paper:'#fffaf0', ink:'#14332e', hue:'var(--cat-story)', accent:'#d8343f', cta:'#14332e', ctaInk:'#ffffff'},
     // the library shelf strip fills the band edge to edge (worlds art 2026-11-19); the lamp glow sits on its green lamp
     world:{mood:'lamp', moodVars:{'--m-gx':'92%', '--m-gy':'64%', '--m-gr':'30%'}, band:'small', stage:'clamp(96px, 18dvh, 180px)', plate:{src:'games/worlds/hunt/art/hunt-library.webp', ready:true}, bed:{freq:420, q:.6, vol:.022, lfo:.08}, spots:['clock'],
-      strip:{src:'games/worlds/hunt/art/hunt-strip.webp', ratio:3, glow:[76, 56], ready:true}, layers:[
+      strip:{src:'games/worlds/hunt/art/hunt-strip.webp', ratio:3, glow:[76, 56], ready:true},
+      shot:{src:'games/worlds/hunt/art/hunt-library-wide.webp', ratio:1.5, glow:[76, 58], ready:true}, layers:[   // the opening and closing shots: the same room as the strip
       {src:'games/worlds/hunt/art/hunt-cardbox.webp', cls:'gw-cardbox', box:[8, 73, 16], band:[6, 0, 14], sit:true, ready:true},   // on the desk (mCqPUhyl B2)
       {src:'games/worlds/hunt/art/hunt-lens.webp', cls:'gw-lens', id:'gw-lens', box:[60, 73, 11], band:[58, 0, 8], sit:true, ready:true}], text:[], sfx:{}, css:null}},   // the lens on the floor by the window (clear of the lamp)
   // Say It Back: the echo between two voices, rose wall, teal

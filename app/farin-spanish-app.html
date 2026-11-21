@@ -3112,17 +3112,16 @@
   .rm2-cap-label{font-size:9.5px; font-weight:800; color:var(--ink-faint); text-transform:uppercase; letter-spacing:.05em; margin-top:6px;}
   .rm2-seam{height:0; display:flex; justify-content:center; position:relative; z-index:5;}
   .rm2-seam-ic{position:relative; top:-30px;}
-  /* The roadmap box scrolls on its own (Farin 2026-11-21: "the roadmap thing should be scrollable, the cards that are done goes up
-     and the current comes at the below of premium course"): the page stays at the top (hero, Premium courses, "Let's keep training",
-     the stage line) and the white box fills the rest of the screen down to the bottom-nav room, scrolling inside. Every render of
-     Home sets its scroll so the current card is at its top with the finished cards above it, out of view (scroll up inside the box
-     to see them); after a finished card the box centres the finished circle, pops it, then glides to the new current card
-     (runRoadmapAdvance). No bar, no folding. --rm2-top (the box's top on screen with the page at the top) is set by roadmapBoxSize.
-     The buttons under the roadmap ("Go to the next level", "Redo my diagnostic") sit inside the box after the end cap, and the Home
-     screen drops its bottom padding, so the page itself never needs to scroll. */
-  .rm2-box{box-sizing:border-box; height:calc(100vh - var(--rm2-top, 0px) - var(--home-fab-room)); height:calc(100dvh - var(--rm2-top, 0px) - var(--home-fab-room)); min-height:160px; overflow-y:auto; overflow-x:hidden; -webkit-overflow-scrolling:touch; overflow-anchor:none;}
-  .rm2-box-foot{padding:0 0 6px;}
-  .screen.home-screen{padding-bottom:0;}
+  /* Roadmap v4 (Farin 2026-11-21: "the roadmap scroll is good, but the thing is i dont want that in a small box, i want that the
+     current and following cards be seeable to down like before, just the previous cards go up and we need scroll up to see them"):
+     the white roadmap box is as tall as everything from the current card down to the end cap (roadmapBoxFit sets its height), so the
+     current and following cards run down the page and the page scrolls as before. Only the finished cards (and the start cap) sit
+     above the current card inside the box, scrolled out of view: scrolling up over the roadmap brings them down, then the page goes
+     on up to Premium courses (the browser chains the two scrolls, so it reads as one list). No scrollbar of its own, no bar, no
+     folding. After a finished card the box shows it where the learner left it, pops its circle, then glides to the new current card
+     (runRoadmapAdvance). The buttons under the roadmap sit outside the box again, under it on the page. */
+  .rm2-box{box-sizing:border-box; overflow-y:auto; overflow-x:hidden; -webkit-overflow-scrolling:touch; overflow-anchor:none; scrollbar-width:none;}
+  .rm2-box::-webkit-scrollbar{display:none;}
   .rm2-node{position:relative; z-index:1; overflow:hidden; display:block; width:100%; text-align:start; color:inherit; font-family:inherit;}
   .rm2-node-current{z-index:3; transform:scale(1.035); animation:rm2-node-pulse 2.6s ease-in-out infinite;}
   @keyframes rm2-node-pulse{0%,100%{transform:scale(1.035);} 50%{transform:scale(1.047);}}
@@ -16197,14 +16196,14 @@ function runRoadmapAdvance(currentIndex, fromIdx){
   const pins = document.querySelectorAll('.rm2-seam-ic');
   const finished = pins[fromIdx];
   if(reducedMotion() || !finished){ roadmapSettleHome(false); return; }
-  // Start the scene where the learner left off: the page at the top, the box scrolled so the finished circle is centred in it. It
-  // pops (it is already drawn as a solid disc — 2026-11-21, no pie fill any more), then the box glides so the new current card sits
-  // at its top. The page itself never moves (scrollY 0 throughout).
+  // Start the scene where the learner left off: the page at the top, the finished card still first in the box (where it was as the
+  // current card). It pops (it is already drawn as a solid disc — 2026-11-21, no pie fill any more), then the box glides so the new
+  // current card sits at its top and the finished card goes up with the others. The page itself never moves (scrollY 0 throughout).
   ui.rmScrollBusy = true;
   requestAnimationFrame(()=>{   // after go()'s own scrollTo(0,0)
     try{ window.scrollTo(0, 0); }catch(e){}
-    const box = roadmapBoxSize();
-    if(box) roadmapBoxScrollTo(box, roadmapBoxOffset(box, finished) - (box.clientHeight - finished.offsetHeight)/2, false);
+    const box = roadmapBoxFit();   // already sized for the new current card; the finished card's spot is above that, so it fits
+    if(box) roadmapBoxScrollTo(box, roadmapBoxOffset(box, finished) - 4, false);
   });
   setTimeout(()=>{
     anim(finished, [{transform:'scale(1)'}, {transform:'scale(1.15)'}, {transform:'scale(1)'}], {duration:240, easing:'ease-out'});
@@ -16213,43 +16212,74 @@ function runRoadmapAdvance(currentIndex, fromIdx){
   }, 250);
   setTimeout(()=>{ ui.rmScrollBusy = false; roadmapSettleHome(true); }, 1100);
 }
-// Home opens at the top (Farin 2026-11-21: "the roadmap thing should be scrollable, the cards that are done goes up and the current
-// comes at the below of premium course"): hero, Premium courses, "Let's keep training", the stage line, then the roadmap box, which
-// scrolls on its own with the current card at its top. Only ever called from a render (open, back, after a card), never while the
-// learner scrolls.
+// Home (Farin 2026-11-21, roadmap v4): hero, Premium courses, "Let's keep training", the stage line, then the roadmap with the current
+// card first and the following cards under it down the page; the finished cards sit above the current card inside the box, out of
+// view. Only ever called from a render (open, back, after a card), never while the learner scrolls. It does not move the page: go()
+// already puts it at the top when Home opens, and a redraw of Home while the learner is down the page keeps their place.
 function roadmapSettleHome(smooth){
   if(state.view !== 'dashboard') return false;
-  try{ window.scrollTo(0, 0); }catch(e){}
   roadmapBoxSettle(smooth);
   return true;
 }
 // Layout position of el from the top of its ancestor `upTo` (the document when upTo is null): the offsetParent chain, so the entrance
 // / fade animations (transforms) running at the time do not shift the numbers.
 function layoutTop(el, upTo){ let y = 0, n = el; while(n && n !== upTo){ y += n.offsetTop; n = n.offsetParent; } return y; }
-// The roadmap box (.rm2-box) fills the screen from its top down to the bottom-nav room (--home-fab-room, see the CSS): --rm2-top is
-// its top on screen with the page at the top. Re-run on resize / orientation change. Returns the box.
-function roadmapBoxSize(){
-  const box = document.querySelector('.rm2-box');
-  if(!box) return null;
-  box.style.setProperty('--rm2-top', Math.max(0, Math.round(layoutTop(box, null))) + 'px');
-  return box;
-}
 // Where an element inside the box sits in the box's scroll content (px from the top).
 function roadmapBoxOffset(box, el){ return layoutTop(el, box); }
+// How much of the box's content sits above the current card's circle: the start cap and the finished cards. With no current card
+// left (the page's report seen) the last circle (the report) is the anchor.
+function roadmapBoxHidden(box){
+  const pins = box.querySelectorAll('.rm2-seam-ic');
+  const anchor = box.querySelector('.rm2-seam-ic.roadmap-pin-current') || pins[pins.length - 1];
+  return anchor ? Math.max(0, Math.round(roadmapBoxOffset(box, anchor) - 4)) : 0;
+}
+// Size the box to everything from the current card down (its full content minus the hidden part above), so it never scrolls past
+// the end and the page carries the rest. The height is worked out from the unrounded content height (not scrollHeight, which is
+// rounded), so the box's scroll range is exactly `hidden` whole pixels: parked at its end, a swipe or wheel down over the roadmap
+// goes straight to the page instead of being spent on a leftover half pixel inside the box. Keeps the cards on screen still when the
+// content above them changes height (a poster loads, the window turns): the scroll moves by the same amount, or a glide under way
+// is re-aimed at the new spot. Returns the box.
+function roadmapBoxFit(){
+  const box = document.querySelector('.rm2-box');
+  if(!box) return null;
+  const track = box.querySelector('.rm2-track'), cs = getComputedStyle(box);
+  const hidden = roadmapBoxHidden(box), prev = box._rmHidden;
+  const content = track ? parseFloat(cs.paddingTop) + parseFloat(getComputedStyle(track).height) + parseFloat(cs.paddingBottom) : box.scrollHeight;
+  const frame = (parseFloat(cs.borderTopWidth) || 0) + (parseFloat(cs.borderBottomWidth) || 0);
+  box.style.height = Math.max(120, content - hidden + frame) + 'px';
+  box._rmHidden = hidden;
+  if(prev != null && prev !== hidden && !ui.rmScrollBusy){
+    if(box._rmGlideUntil > Date.now()) roadmapBoxScrollTo(box, hidden, true);
+    else box.scrollTop += hidden - prev;
+  }
+  roadmapBoxWatch(box);
+  return box;
+}
+let rmBoxObserver = null;
+function roadmapBoxWatch(box){
+  if(typeof ResizeObserver === 'undefined') return;
+  const track = box.querySelector('.rm2-track');
+  if(!track || box._rmWatched) return;
+  if(!rmBoxObserver) rmBoxObserver = new ResizeObserver(()=>{ if(state.view === 'dashboard' && document.querySelector('.rm2-box')) roadmapBoxFit(); });
+  rmBoxObserver.disconnect();
+  rmBoxObserver.observe(track);
+  box._rmWatched = true;
+}
 function roadmapBoxScrollTo(box, top, smooth){
-  top = Math.max(0, Math.min(top, box.scrollHeight - box.clientHeight));
-  try{ box.scrollTo({top, behavior:smooth && !reducedMotion() ? 'smooth' : 'auto'}); }catch(e){ box.scrollTop = top; }
+  top = Math.max(0, top);   // the browser holds it to the box's own end
+  smooth = smooth && !reducedMotion();
+  if(smooth) box._rmGlideUntil = Date.now() + 1500;
+  try{ box.scrollTo({top, behavior:smooth ? 'smooth' : 'auto'}); }catch(e){ box.scrollTop = top; }
 }
 // Scroll the box so the current card's circle ("You're here") sits just under the box's top edge, the finished cards above it out
-// of view; with no current card left (the page's report seen) the list rests at its end.
+// of view (scroll up over the roadmap to see them). That is the box's end, by roadmapBoxFit's sizing.
 function roadmapBoxSettle(smooth){
-  const box = roadmapBoxSize();
+  const box = roadmapBoxFit();
   if(!box) return false;
-  const cur = box.querySelector('.rm2-seam-ic.roadmap-pin-current');
-  roadmapBoxScrollTo(box, cur ? roadmapBoxOffset(box, cur) - 4 : box.scrollHeight, smooth);
+  roadmapBoxScrollTo(box, box._rmHidden || 0, smooth);
   return true;
 }
-window.addEventListener('resize', ()=>{ if(state.view === 'dashboard' && !ui.rmScrollBusy) roadmapBoxSize(); });
+window.addEventListener('resize', ()=>{ if(state.view === 'dashboard' && !ui.rmScrollBusy) roadmapBoxFit(); });
 // End goal warms up with progress p (0..1).
 function roadmapGoalHtml(p, allDone){
   const size = allDone ? 128 : 112;
@@ -17107,14 +17137,12 @@ function renderRoadmapCard(p){
       <div class="rm2-stage-title">${esc(displayLevel(p))} ${L('roadmap','yol haritası','نقشه‌ی راه', 'hoja de ruta')}${(() => { const th = roadmapThemeLabel(p); return th ? ` <span aria-hidden="true">·</span> <span class="rm2-theme" style="color:${archColor};">${esc(th)}</span>` : ''; })()}</div>
       <div class="card-flat rm2-box" style="position:relative; padding:20px 10px;">
         ${stackedRoadmap(roadmap.length + 1, pinFn, cardFn, L(arch.name.en,arch.name.tr,arch.name.fa, arch.name.es), startMedia, allDone ? L("You've made it!",'Başardın!','موفق شدی!', '¡Lo lograste!') : nextDisplayLevel(p), endMedia, staggerFrom)}
-      <div class="rm2-box-foot">
+      </div>
       ${allDone ? `
       <button class="btn" style="margin-top:18px; width:100%; justify-content:center; background:var(--clay-orange); color:#fff; border:none;" data-action="advance-roadmap-level"><img src="icon-gradcap.png" alt="" style="width:22px; height:22px; object-fit:contain;">${L('Go to the next level','Bir sonraki seviyeye geç','برو به سطح بعدی', 'Ir al siguiente nivel')}</button>
       ${!stageCheckRecord(stageKeyOf(state.profile)) ? `<p style="font-size:12.5px; color:var(--ink-soft); text-align:center; margin-top:6px;" dir="auto">${esc(L('First a quick 10-question check (about 4 min). It never stops you.','Önce 10 soruluk kısa bir kontrol (yaklaşık 4 dk). İlerlemene asla engel olmaz.','اول یک مرور کوتاه ۱۰ سؤالی (حدود ۴ دقیقه). هیچ‌وقت جلویت را نمی‌گیرد.','Primero un repaso rápido de 10 preguntas (unos 4 min). Nunca te impide avanzar.'))}</p>` : ''}` : `
       <button class="btn" disabled style="margin-top:18px; width:100%; justify-content:center; background:var(--bg-sunken); color:var(--ink-faint); border:1.5px solid var(--border-soft); cursor:default;">${L('Finish everything above to unlock the next level','Bir sonraki seviyeyi açmak için yukarıdakilerin hepsini bitir','برای باز کردن سطح بعدی، همه موارد بالا را تمام کن', 'Termina todo lo de arriba para desbloquear el siguiente nivel')}</button>`}
-      <button class="btn btn-ghost" style="margin-top:10px;" data-action="retake-diagnostic">${L('Redo my diagnostic','Testimi yeniden yap','دوباره انجام‌دادن آزمون', 'Rehacer mi diagnóstico')}</button>
-      </div>
-      </div>`;
+      <button class="btn btn-ghost" style="margin-top:10px;" data-action="retake-diagnostic">${L('Redo my diagnostic','Testimi yeniden yap','دوباره انجام‌دادن آزمون', 'Rehacer mi diagnóstico')}</button>`;
 }
 // Unreachable safety net (see renderRoadmapCard's comment above) — kept in case a
 // dedicated "Your Plan" screen is wanted again later, but nothing links here anymore.

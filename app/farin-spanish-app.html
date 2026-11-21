@@ -3112,6 +3112,16 @@
   .rm2-cap-label{font-size:9.5px; font-weight:800; color:var(--ink-faint); text-transform:uppercase; letter-spacing:.05em; margin-top:6px;}
   .rm2-seam{height:0; display:flex; justify-content:center; position:relative; z-index:5;}
   .rm2-seam-ic{position:relative; top:-30px;}
+  /* Earlier cards (Farin 2026-11-21: "the current card should be the first card to be seen ... if the user wants they can scroll
+     up and see the previous cards"): the finished cards sit folded in one slim bar above the current card; a tap opens them above
+     it (the current card stays where it is on screen, the learner scrolls up to see them); a second tap, or re-rendering Home,
+     folds them again. Home itself opens at the top: hero, Premium courses, then the current card under the bar. */
+  .rm2-track.rm2-nostart:has(> .rm2-earlier-bar){padding-top:4px;}
+  .rm2-earlier-bar{display:flex; align-items:center; justify-content:center; gap:8px; width:100%; margin:0 0 38px; padding:9px 14px; border-radius:999px; border:1.5px solid color-mix(in srgb, #7C5CFC 24%, var(--bg-elevated)); background:var(--bg-elevated); color:var(--fs-purple-ink); font-family:inherit; font-size:12.5px; font-weight:800; letter-spacing:.02em; cursor:pointer; box-shadow:var(--clay-shadow-soft);}
+  .rm2-earlier-bar .rm2-earlier-arrow{font-size:9px; line-height:1; transition:transform .25s ease;}
+  .rm2-earlier-bar[aria-expanded="true"] .rm2-earlier-arrow{transform:rotate(180deg);}
+  .rm2-earlier{overflow-anchor:none;}
+  .rm2-earlier[hidden]{display:none;}
   .rm2-node{position:relative; z-index:1; overflow:hidden; display:block; width:100%; text-align:start; color:inherit; font-family:inherit;}
   .rm2-node-current{z-index:3; transform:scale(1.035); animation:rm2-node-pulse 2.6s ease-in-out infinite;}
   @keyframes rm2-node-pulse{0%,100%{transform:scale(1.035);} 50%{transform:scale(1.047);}}
@@ -15147,8 +15157,8 @@ function render(){
   runPendingFx();
   maybeCelebrate();
   try{ maybeShowPageKept(); }catch(e){}
-  // Home opens on the card to play now (Farin 2026-11-21). After go()'s own scrollTo(0,0), once per render, never on a scroll.
-  if(state.view === 'dashboard' && !ui.rmScrollBusy) requestAnimationFrame(()=>{ if(!ui.rmScrollBusy) roadmapScrollToCurrent(false); });
+  // Home opens at the top with the current card first under the earlier-cards bar (Farin 2026-11-21). Once per render, never on a scroll.
+  if(state.view === 'dashboard' && !ui.rmScrollBusy) requestAnimationFrame(()=>{ if(!ui.rmScrollBusy) roadmapSettleHome(false); });
 }
 function langToggle(){
   // 2026-10-27 (Farin): one language control in the header = the learning language's flag + the interface language code.
@@ -15960,20 +15970,29 @@ const PALETTE_COLORS = ['#7c5cfc','#ff9500','#00bfa6','#ff3d8f','#4c6fff','#ffc2
    negative offset - see the CSS comment above .rm2-track). No fixed row height
    assumption, so cards can be any height. Pins/cards fade+pop in with a staggered
    per-index delay. */
-function stackedRoadmap(count, pinFn, cardFn, startLabel, startMediaHtml, endLabel, endMediaHtml){
+// earlierCount (2026-11-21): the first earlierCount rows (the finished cards before the current one) go into one folded section
+// under a slim "N earlier cards" bar, so the current card is the first card on screen; earlierOpen renders them open (the return
+// animation pops the finished circle first, then folds them - runRoadmapAdvance). The entrance stagger starts at the first visible row.
+function stackedRoadmap(count, pinFn, cardFn, startLabel, startMediaHtml, endLabel, endMediaHtml, earlierCount, earlierOpen){
   if(!count) return '';
-  const rows = [];
+  const earlier = Math.max(0, Math.min(earlierCount || 0, count - 1));
+  const rows = [], before = [];
   for(let i=0;i<count;i++){
-    const delay = Math.min(i*55, 650);
-    rows.push(`
+    const delay = i < earlier ? 0 : Math.min((i - earlier)*55, 650);
+    (i < earlier ? before : rows).push(`
     <div class="rm2-seam rm2-seam-enter" style="animation-delay:${delay}ms;">${pinFn(i)}</div>
     <div class="rm2-card-enter" style="animation-delay:${delay+40}ms;">${cardFn(i)}</div>`);
   }
+  const closedLabel = earlier === 1 ? L('1 earlier card','1 önceki kart','1 کارت قبلی','1 tarjeta anterior') : L(earlier + ' earlier cards', earlier + ' önceki kart', earlier + ' کارت قبلی', earlier + ' tarjetas anteriores');
+  const openLabel = L('Hide earlier cards','Önceki kartları gizle','کارت‌های قبلی را پنهان کن','Ocultar tarjetas anteriores');
+  const bar = earlier ? `<button type="button" class="rm2-earlier-bar" data-action="rm-earlier-toggle" aria-expanded="${earlierOpen ? 'true' : 'false'}" aria-controls="rm2-earlier" data-label-closed="${esc(closedLabel)}" data-label-open="${esc(openLabel)}"><span class="rm2-earlier-arrow" aria-hidden="true">▲</span><span class="rm2-earlier-txt">${esc(earlierOpen ? openLabel : closedLabel)}</span></button>
+    <div class="rm2-earlier" id="rm2-earlier"${earlierOpen ? '' : ' hidden'}>${before.join('')}</div>` : '';
   return `<div class="rm2-track${startMediaHtml ? '' : ' rm2-nostart'}">
     ${startMediaHtml ? `<div class="rm2-cap rm2-cap-start">
       ${startMediaHtml}
       <div class="rm2-cap-label">${esc(startLabel)}</div>
     </div>` : ''}
+    ${bar}
     ${rows.join('')}
     <div class="rm2-cap rm2-cap-end">
       ${endMediaHtml}
@@ -16182,9 +16201,10 @@ function runRoadmapAdvance(currentIndex, fromIdx){
   ui.advanceFrom = null;
   const pins = document.querySelectorAll('.rm2-seam-ic');
   const finished = pins[fromIdx];
-  if(reducedMotion() || !finished){ roadmapScrollToCurrent(false); return; }
-  // Start the scene where the learner left off: the finished circle, centred. It pops (it is already drawn as a solid disc —
-  // 2026-11-21, no pie fill any more), then the page glides to the new current card at the top of the screen.
+  if(reducedMotion() || !finished){ roadmapEarlierSet(false); roadmapSettleHome(false); return; }
+  // Start the scene where the learner left off: the finished circle, centred (this draw rendered the earlier cards open). It pops
+  // (it is already drawn as a solid disc — 2026-11-21, no pie fill any more), then the finished cards fold into the bar and the
+  // page glides to the top, the new current card first under the bar.
   ui.rmScrollBusy = true;
   requestAnimationFrame(()=>finished.scrollIntoView({block:'center', behavior:'auto'}));   // after go()'s own scrollTo(0,0)
   setTimeout(()=>{
@@ -16192,19 +16212,30 @@ function runRoadmapAdvance(currentIndex, fromIdx){
     const c = centerOf(finished);
     sparkBurst(c.x, c.y, 6, 'var(--clay-orange-deep)', 54);
   }, 250);
-  setTimeout(()=>{ ui.rmScrollBusy = false; roadmapScrollToCurrent(true); }, 1100);
+  setTimeout(()=>{ ui.rmScrollBusy = false; roadmapEarlierSet(false); roadmapSettleHome(true); }, 1100);
 }
-// Home opens on the card to play now (Farin 2026-11-21: "make the roadmap scroll down to the card that should be played now ...
-// the roadmap is scrollable and the user can scroll up and see the previous cards too"): the current card's circle sits at the
-// top of the screen; the hero, Premium courses and the earlier cards stay above it. Only ever called from a render (open, back,
-// after a card), never while the learner scrolls. With nothing left to play it shows the page report card (the next-level
-// button is right under it).
-function roadmapScrollToCurrent(smooth){
+// Home opens at the top (Farin 2026-11-21: "the current card should be the first card to be seen ... the current and following
+// cards be the first one to be seen under premium course"): hero, Premium courses, "Let's keep training", then the current card
+// first under the earlier-cards bar. Only ever called from a render (open, back, after a card), never while the learner scrolls.
+function roadmapSettleHome(smooth){
   if(state.view !== 'dashboard') return false;
-  const el = document.querySelector('.rm2-seam-ic.roadmap-pin-current') || document.querySelector('.rm2-node-current') || document.querySelector('.rm2-report');
-  if(!el) return false;
-  const top = Math.max(0, el.getBoundingClientRect().top + (window.scrollY || window.pageYOffset || 0) - 14);
-  try{ window.scrollTo({top, behavior:smooth ? 'smooth' : 'auto'}); }catch(e){ window.scrollTo(0, top); }
+  try{ window.scrollTo({top:0, behavior:smooth ? 'smooth' : 'auto'}); }catch(e){ window.scrollTo(0, 0); }
+  return true;
+}
+// The folded earlier cards: open = true shows them above the current card, false folds them into the bar. The current card's
+// circle keeps its place on screen either way (the scroll is moved by exactly the height that appeared or went above it), so
+// nothing jumps; after opening, the learner scrolls up to see them. Not saved: every render of Home starts folded.
+function roadmapEarlierSet(open){
+  const box = document.getElementById('rm2-earlier'), bar = document.querySelector('.rm2-earlier-bar');
+  if(!box || !bar) return false;
+  if(open === undefined) open = box.hidden;
+  const anchor = document.querySelector('.rm2-seam-ic.roadmap-pin-current') || document.querySelector('.rm2-report');
+  const before = anchor ? anchor.getBoundingClientRect().top : 0;
+  box.hidden = !open;
+  bar.setAttribute('aria-expanded', open ? 'true' : 'false');
+  const txt = bar.querySelector('.rm2-earlier-txt');
+  if(txt) txt.textContent = open ? (bar.dataset.labelOpen || '') : (bar.dataset.labelClosed || '');
+  if(anchor){ const d = anchor.getBoundingClientRect().top - before; if(d) window.scrollBy(0, d); }
   return true;
 }
 // End goal warms up with progress p (0..1).
@@ -16921,6 +16952,10 @@ function renderRoadmapCard(p){
   // Returning after a node: the finished circle pops, then the page scrolls to the new current card (runRoadmapAdvance).
   const advFrom = roadmapAdvanceFrom(currentIndex);
   queueFx(()=>runRoadmapAdvance(currentIndex, advFrom));
+  // Earlier cards fold into the bar above the current card (Farin 2026-11-21); the draw right after a finished card keeps them
+  // open so the finished circle can pop on screen, then runRoadmapAdvance folds them.
+  const earlierCount = currentIndex > 0 ? currentIndex : 0;
+  const earlierOpen = advFrom != null && !reducedMotion();
   // Card colours (Farin 2026-11-21: "after changing our character to FE we have the purple and white as main colors, after that the
   // orange that we had and after that the rest colors"): purple = grammar, story, dialogue, watch/listen, speaking session, song, page
   // report; white (purple text) = vocab, slang, writing practice, speaking practice; orange = Vocab Box review; games keep their
@@ -17061,7 +17096,7 @@ function renderRoadmapCard(p){
   return `
       <div class="rm2-stage-title">${esc(displayLevel(p))} ${L('roadmap','yol haritası','نقشه‌ی راه', 'hoja de ruta')}${(() => { const th = roadmapThemeLabel(p); return th ? ` <span aria-hidden="true">·</span> <span class="rm2-theme" style="color:${archColor};">${esc(th)}</span>` : ''; })()}</div>
       <div class="card-flat" style="position:relative; overflow:visible; padding:20px 10px;">
-        ${stackedRoadmap(roadmap.length + 1, pinFn, cardFn, L(arch.name.en,arch.name.tr,arch.name.fa, arch.name.es), startMedia, allDone ? L("You've made it!",'Başardın!','موفق شدی!', '¡Lo lograste!') : nextDisplayLevel(p), endMedia)}
+        ${stackedRoadmap(roadmap.length + 1, pinFn, cardFn, L(arch.name.en,arch.name.tr,arch.name.fa, arch.name.es), startMedia, allDone ? L("You've made it!",'Başardın!','موفق شدی!', '¡Lo lograste!') : nextDisplayLevel(p), endMedia, earlierCount, earlierOpen)}
       </div>
       ${allDone ? `
       <button class="btn" style="margin-top:18px; width:100%; justify-content:center; background:var(--clay-orange); color:#fff; border:none;" data-action="advance-roadmap-level"><img src="icon-gradcap.png" alt="" style="width:22px; height:22px; object-fit:contain;">${L('Go to the next level','Bir sonraki seviyeye geç','برو به سطح بعدی', 'Ir al siguiente nivel')}</button>
@@ -32107,6 +32142,8 @@ const HANDLERS = {
     const ms = showCharTip(true, L('Finish the step above first','Önce yukarıdaki adımı bitir','اول مرحله‌ی بالایی را تمام کن','Termina primero el paso de arriba'));
     charTipTimer = setTimeout(()=>{ hideCharTip(); scheduleCharTips(CHAR_TIP_MOTIV_GAP_MS, true); }, ms || 0);
   },
+  // The earlier-cards bar on Home (2026-11-21): opens / folds the finished cards above the current card, no re-render.
+  'rm-earlier-toggle'(){ roadmapEarlierSet(); },
   'toggle-roadmap-item'(el){
     const id = el.dataset.id;
     const rc = state.progress.roadmapChecked;

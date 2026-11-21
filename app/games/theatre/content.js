@@ -47,8 +47,8 @@ window.THEATRE_CONTENT = {
     },
     spell:{
       title:'Las puertas de las palabras',
-      tagline:'Dila bien y la puerta se abre.',
-      art:'games/posters/spell.webp', artReady:false   // until this portrait key art lands: the card poster + the palette from skins.js
+      tagline:'Escríbela bien y la puerta se abre.',
+      art:'games/posters/spell.webp', artReady:true   // the 4:5 key art (worlds art 2026-11-19), wired with Magic Words v2 (2026-11-21)
     },
     // quick games (2026-11-14): the poster is the live roadmap card art and its palette (skins.js), or the game's own 4:5 key art once it
     // passes (2026-11-16: Order Up!, Word Bingo, Say It Back; Mini Cross and Build It wait for fixed posters); titles + taglines from the

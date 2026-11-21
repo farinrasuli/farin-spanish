@@ -69,12 +69,13 @@ window.THEATRE_SKINS = {
       {src:'games/worlds/desk/art/desk-ferry.webp', cls:'gw-ferry', box:[14, 42, 36], ready:true},
       {src:'games/worlds/desk/art/desk-gull.webp', cls:'gw-gull', box:[76, 2, 8], ready:true}], text:[
       {key:'closed', cls:'gw-closed', id:'gw-closed', box:[35, 27.5, 30], ready:true}], sfx:{}, css:null}},   // the window sign turns to CLOSED at the end
-  // Magic Words: the golden door in the rose room
+  // Magic Words: the hall of doors (Magic Words v2, 2026-11-21, Trello GW6fI424): lavender walls, curtains, two lanterns, the wooden floor.
+  // The app stands each word's painted door in the plate's box (its sill on the floor line); the wide corridor plate is the world at the sides.
   spell:{card:'art/posters/card-spell.webp', focus:'84%',
     palette:{sky:'#fcf2f8', sky2:'#efd5e5', glow:'#fff4d6', ground:'#eca560', ink:'#3a2342', accent:'#f0b232', accentInk:'#3a2342'},
-    backdrop:{src:null, position:'82% 50%', blur:30, veil:.56}, props:[],
+    backdrop:{src:'games/worlds/spell/art/spell-corridor-wide.webp', position:'50% 50%', blur:30, veil:.5}, props:[],
     gw:{bg:'#efe8fb', surface:'#f5eee1', paper:'#fff3d2', ink:'#2a1d55', hue:'var(--clay-lavender-deep)', accent:'#f2b632', cta:'#f2b632', ctaInk:'#2a1d55'},
-    world:{stage:'clamp(220px, 44dvh, 420px)', plate:{src:'games/worlds/spell/art/spell-corridor.webp', pos:'50% 50%', ready:false}, layers:[], text:[], sfx:{}, css:null}},
+    world:{mood:'warm', moodVars:{'--m-gx':'50%', '--m-gy':'34%', '--m-gr':'58%'}, stage:'clamp(180px, calc(62dvh - 220px), 360px)', plate:{src:'games/worlds/spell/art/mw-hall.webp', ready:true}, bed:{freq:240, q:.5, vol:.022, lfo:.06}, layers:[], text:[], sfx:{}, css:null}},
   // Word Bingo: the bingo card on the kitchen table, cream, wood, red dots
   bingo:{card:'art/posters/card-bingo.webp', focus:'66%',
     palette:{sky:'#fbf7e6', sky2:'#ece4c6', glow:'#fffdf4', ground:'#d1a77d', ink:'#3a2c1c', accent:'#d9463a', accentInk:'#ffffff'},

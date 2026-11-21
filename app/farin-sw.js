@@ -1,4 +1,4 @@
-const CACHE = 'farin-spanish-v9';   // v9 2026-11-19: notif/*-icon.png + -wide.jpg repainted with FE under the same names (no clay figures); FE art precached; the new FE app icon (icon-180/512.png, same names)
+const CACHE = 'farin-spanish-v10';   // v10 2026-11-20: FE white (art/fe, notif/*, icon-*.png repainted under the same names), only the clean pose set
 const CACHE_PREFIX = CACHE.replace(/\d+$/, '');   // 'farin-english-v' / 'farin-spanish-v'
 const PAGE_URL = self.registration.scope;
 /* Cozy Chores painted art (Trello 1m2Y0zdU, 8JAiLuV7): the game's plates and cut-outs are sibling files
@@ -123,7 +123,7 @@ const PATH_RE = /\/path\/[^/?#]+\.webp$/;
 const APP_ART_PRECACHE = [
   // FE, the app's character (2026-11-19): the five goal outfits + the faces the bubbles, hints and results use most
   'art/fe/fe-l-laptop.webp', 'art/fe/fe-p-mug.webp', 'art/fe/fe-l-books.webp', 'art/fe/fe-t-binoculars.webp', 'art/fe/fe-t-explorer.webp',
-  'art/fe/fe-e-happy.webp', 'art/fe/fe-p-idea.webp', 'art/fe/fe-p-cheer.webp', 'art/fe/fe-m-medal.webp', 'art/fe/fe-m-heart.webp', 'art/fe/fe-p-hooray.webp',
+  'art/fe/fe-p-idea.webp', 'art/fe/fe-p-cheer.webp', 'art/fe/fe-m-trophy.webp', 'art/fe/fe-m-medal.webp', 'art/fe/fe-m-heart.webp', 'art/fe/fe-p-hooray.webp',
   'story-adventure-cutout.png', 'story-documentary-cutout.png', 'story-fiction-cutout.png', 'story-romance-cutout.png', 'story-thriller-cutout.png',
   'logo-fe-cutout.png',
   // roadmap game-card posters (2026-10-28, filled 2026-11-12): one art/posters/card-<kind>.webp per kind CARD_POSTERS lists, + the Story Path plates

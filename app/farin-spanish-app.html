@@ -295,7 +295,7 @@
   .lx-hero.has-farin{padding-inline-end:108px; min-height:236px;}
   .lx-hero > img.farin-hero{position:absolute; inset-inline-end:12px; bottom:50px; height:142px; width:auto; max-width:104px; object-fit:contain; object-position:bottom; pointer-events:none; filter:drop-shadow(0 8px 10px rgba(0,0,0,.2));}
   .farin-hi{display:flex; align-items:flex-end; gap:14px; margin:12px 0 -14px;}
-  .farin-hi-img{flex:0 0 auto; height:128px; width:auto; filter:drop-shadow(0 6px 8px rgba(60,40,20,.12));}
+  .farin-hi-img{flex:0 0 auto; height:110px; width:auto; filter:drop-shadow(0 6px 8px rgba(60,40,20,.12));}
   .farin-hi p{margin:0 0 16px; font-weight:600; font-size:15px; line-height:1.45; color:var(--ink-soft); max-width:220px;}
   .farin-hi p b{display:block; font-family:'Fredoka',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; font-weight:700; font-size:17px; color:var(--ink); margin-bottom:2px;}
   .farin-empty{display:block; height:140px; width:auto; margin:4px auto 10px; filter:drop-shadow(0 8px 10px rgba(0,0,0,.12));}
@@ -2984,6 +2984,12 @@
   .intro-glow .sparkle{color:#ffc22e;}
   @keyframes intro-heartbeat{0%,100%{transform:scale(1);} 50%{transform:scale(1.035);}}
   .roadmap-pin-current{animation:path-ping 1.8s ease-out infinite;}
+  /* the roadmap's one FE (2026-11-20): in the "You're here" circle, on a light tint of the card's colour; still, never above his size */
+  .rm2-seam-ic .rm2-here-fe{width:44px; height:46px; object-fit:contain; display:block; pointer-events:none;}
+  /* the game companion without a picture (2026-11-20): its short line shows at the right edge of the game's top bar */
+  .game-companion.gc-noface{width:0; height:40px;}
+  .game-companion.gc-noface .gc-bubble{inset-inline-end:0; top:4px;}
+  body:has(.celebrate-overlay, .wb-layer) .rm2-here-fe{visibility:hidden;}
   @keyframes path-ping{0%{box-shadow:0 0 0 0 rgba(255,122,89,.55);} 70%{box-shadow:0 0 0 11px rgba(255,122,89,0);} 100%{box-shadow:0 0 0 0 rgba(255,122,89,0);}}
   .roadmap-here-badge{animation:roadmap-here-bounce 1.6s ease-in-out infinite;}
   @keyframes roadmap-here-bounce{0%,100%{transform:translateY(0);} 50%{transform:translateY(-3px);}}
@@ -3695,7 +3701,7 @@
   .wb{display:flex; flex-direction:column; align-items:center; gap:12px; padding:28px 16px; text-align:center; opacity:0; animation:wb-fade .25s ease .35s both;}
   .wb .cute-bubble{max-width:290px; text-align:center;}
   .wb .cute-bubble::after{content:''; position:absolute; bottom:-8px; left:50%; width:18px; height:18px; margin-left:-9px; background:#fff; transform:rotate(45deg); border-radius:0 0 5px 0;}
-  .wb-char{width:124px; height:124px; object-fit:contain; filter:drop-shadow(0 12px 16px rgba(0,0,0,.18));}
+  .wb-char{width:104px; height:104px; object-fit:contain; filter:drop-shadow(0 12px 16px rgba(0,0,0,.18));}
   .wb-slow{display:block; max-width:280px; margin-top:-2px; font-size:13px; font-weight:700; color:var(--ink-soft); opacity:0; animation:wb-fade .25s ease 8s both;}
   .wb.wb-now{animation:none; opacity:1;}
   @keyframes wb-fade{from{opacity:0;} to{opacity:1;}}
@@ -10217,7 +10223,6 @@ function openRhythmSheet(){
   const draw = ()=>{
     const pr = state.progress, goal = weekGoal(), n = Math.min(weekDaysDone(), goal);
     el.innerHTML = `<div class="rh-sheet" role="dialog" aria-label="${esc(L('Your week','Haftan','هفته تو','Tu semana'))}">
-      <img class="rh-char" src="${farinSrc('mood-happy')}" alt="">
       <div class="rh-title">${L('Your week','Haftan','هفته تو','Tu semana')}</div>
       <div class="rh-big-dots">${weekDotsHtml()}</div>
       <div class="rh-line">${n >= goal ? L('Week goal reached — lovely rhythm!','Haftalık hedef tamam — harika bir ritim!','هدف این هفته کامل شد — ریتم قشنگی است!','¡Meta semanal cumplida! ¡Qué buen ritmo!') : L(`${n} of ${goal} days this week`, `Bu hafta ${n}/${goal} gün`, `${n} از ${goal} روز این هفته`, `${n} de ${goal} días esta semana`)}</div>
@@ -13998,24 +14003,19 @@ const FARIN_ART = 'art/farin/';
    (source + cutter: Claude/specs/fe-character-2026-11-19). Each old pose name maps to the closest FE pose, so the
    callers stay the same; item-* stay the plain objects they were. The learner's goal picks FE's outfit (FE_GOAL). */
 const FE_ART = 'art/fe/fe-';
+// Farin 2026-11-20: "the character should be white ... choose better pics of the character, and not this much everywhere, its exaggerated".
+// White FE, this clean set only (art/fe/ holds just these), and only in: the loading screen + wait companion, the onboarding hello, the
+// Home bubble avatar, the roadmap's "You're here" circle, lesson / course results and hints (never in game screens), the Portfolio
+// cover, one Roadmap Report slide, the phone-notification pictures. Everywhere else he is gone (no other character in his place).
+const FE_SET = new Set(['p-hooray', 'p-cheer', 'm-trophy', 'm-medal', 'm-heart', 'p-idea', 'p-mug', 'p-walk', 'p-read', 'l-books', 'l-laptop', 't-explorer', 't-binoculars', 'l-teacher']);
 const FE_GOAL = {career:'l-laptop', everyday:'p-mug', exam:'l-books', immigration:'t-binoculars', travel:'t-explorer'};
-const FE_FOR_FARIN = {
-  'face-smile':'e-happy', 'face-content':'m-heart', 'face-laugh':'p-cheer', 'face-proud':'m-medal', 'face-oh':'e-wow',
-  'face-wonder':'e-wonder', 'face-hmm':'e-wonder', 'face-sly':'e-happy',
-  'mood-happy':'p-hooray', 'mood-thinking':'p-idea', 'mood-excited':'p-cheer', 'mood-annoyed':'e-annoyed', 'mood-tired':'m-blanket',
-  'dog':'e-happy', 'dog-hug':'m-heart', 'dog-kiss':'m-heart', 'dog-walk':'p-walk', 'hero-walk-dog':'p-walk',
-  'body-front':'p-hooray', 'body-34':'e-neutral', 'body-side':'p-walk', 'body-back':'p-walk', 'body-lookup':'e-wonder',
-  'body-pockets':'e-neutral', 'body-crouch-coffee':'p-mug', 'body-sit-knees':'p-mug',
-  'head-front':'e-neutral', 'head-34':'e-neutral', 'head-side':'e-neutral', 'head-back':'e-neutral', 'head-lookdown':'e-neutral', 'head-lookup':'e-wonder',
-  'outfit-teacher':'l-teacher', 'outfit-travel':'t-explorer', 'outfit-work':'l-laptop', 'outfit-winter':'s-winter', 'outfit-home':'d-chef',
-  'outfit-sporty':'p-run', 'outfit-goingout':'d-bubbletea', 'outfit-casual':'p-walk',
-  'scene-planning':'l-write', 'scene-studying':'l-books', 'scene-music':'l-music', 'scene-exploring':'t-binoculars',
-  'scene-latenight':'p-laptop-lying', 'scene-latenight2':'p-laptop-lying', 'scene-plants':'d-garden'
-};
-function feSrc(p){ return FE_ART + p + '.webp'; }
+// The old drawn-Farin pose names the remaining places still use: hints, results, the hello. Any other name = no picture.
+const FE_FOR_FARIN = {'mood-thinking':'p-idea', 'face-laugh':'p-cheer', 'face-proud':'m-medal', 'face-content':'m-heart', 'body-front':'p-hooray'};
+function feSrc(p){ return FE_ART + (FE_SET.has(p) ? p : 'p-hooray') + '.webp'; }
 function feGoalSrc(g){ return feSrc(Object.prototype.hasOwnProperty.call(FE_GOAL, g) ? FE_GOAL[g] : FE_GOAL.everyday); }
-function farinSrc(n){ return /^item-/.test(n) ? FARIN_ART + n + '.webp' : feSrc(Object.prototype.hasOwnProperty.call(FE_FOR_FARIN, n) ? FE_FOR_FARIN[n] : 'e-happy'); }
-function farinImg(n, cls){ return '<img class="' + (cls || 'fw') + '" src="' + farinSrc(n) + '" alt="" loading="lazy" decoding="async">'; }
+function farinSrc(n){ return /^item-/.test(n) ? FARIN_ART + n + '.webp' : (Object.prototype.hasOwnProperty.call(FE_FOR_FARIN, n) ? feSrc(FE_FOR_FARIN[n]) : ''); }
+// '' = no picture: an old pose name that is not kept, or FE inside a game screen (games come later, Farin 2026-11-20)
+function farinImg(n, cls){ const src = (/^item-/.test(n) || !/^game-/.test(String(state.view || ''))) ? farinSrc(n) : ''; return src ? '<img class="' + (cls || 'fw') + '" src="' + src + '" alt="" loading="lazy" decoding="async">' : ''; }
 function farinHash(t){ let h = 0; t = String(t || ''); for(let i = 0; i < t.length; i++) h = (h * 31 + t.charCodeAt(i)) | 0; return Math.abs(h); }
 const FARIN_TOPIC_OUTFITS = [
   [/exam|ielts|study|school|class|grammar|examen|estudi|escuela/i, 'teacher'],
@@ -14032,7 +14032,7 @@ function farinOutfit(text, key){
   return 'outfit-' + FARIN_ROTATE[farinHash(key || text) % FARIN_ROTATE.length];
 }
 // Lesson heroes: selected lessons only — the first set of a level and about 1 in 3 after it; never inside a course step.
-function farinHeroPick(id){ return /-1$/.test(String(id || '')) || farinHash(id) % 3 === 0; }
+function farinHeroPick(id){ return false; }   // no FE on lesson / topic heroes since 2026-11-20 (was: the first set of a level + about 1 in 3)
 function farinVocabPose(s){
   if(!s || inCourseStep() || !farinHeroPick(s.id)) return '';
   const t = s.title || {};
@@ -14040,7 +14040,7 @@ function farinVocabPose(s){
 }
 function farinGrammarPose(t){ return (!t || inCourseStep() || !farinHeroPick(t.id)) ? '' : 'outfit-teacher'; }
 function farinCoursePose(c){ const t = (c && c.title) || {}; return c ? farinOutfit([c.id, t.en, t.es].join(' '), c.id) : ''; }
-function farinHeroHtml(pose){ return pose ? farinImg(pose, 'farin-hero') : ''; }
+function farinHeroHtml(pose){ return ''; }   // no FE on lesson / topic / course heroes (2026-11-20)
 // Results: 80%+ laugh, 50-79% proud, under 50% content ("Nice effort").
 function farinCelebrateFace(detail, low){
   const m = String(detail || '').match(/(\d+)\s*\/\s*(\d+)/);
@@ -14117,6 +14117,7 @@ function roadmapCardArt(rm){
   const mid = games.length ? games[0] : rm.map((it,i)=>i).filter(fits).sort((x,y)=>Math.abs(x - midAt) - Math.abs(y - midAt))[0];
   if(mid != null && mid > first + 1) put(mid, {farin:farinOutfit(rmTopicText(rm[mid]), rm[mid].refId)});
   for(let i = rm.length - 1; i >= Math.max(0, rm.length - 4); i--) if(fits(i) && i > (mid == null ? first : mid) + 1){ put(i, {farin:'dog-hug', wide:true}); break; }   // FE holding a heart since 2026-11-19 (was Farin hugging her dog). Farin 2026-10-28: never a head on the roadmap, a happy full-body pose
+  art.forEach((a, i)=>{ if(a && a.farin) art[i] = null; });   // 2026-11-20: no FE on the cards; the roadmap's one FE is in the "You're here" circle
   let items = 0;
   rm.forEach((it, i)=>{
     if(items >= 5 || !fits(i)) return;
@@ -14157,7 +14158,7 @@ function showCharTip(motivOnly, line){
   const el = document.createElement('div');
   el.className = 'char-tip'; el.id = 'char-tip';
   el.innerHTML = `<div class="char-tip-inner"><div class="char-tip-float farin-still">
-    <div class="cute-bubble farin-db${offer ? ' cb-plan' : ''}"><img class="farin-dog" src="${farinSrc('dog')}" alt=""><span class="sparkle" style="top:-3px; right:12px; left:auto; width:6px; height:6px;"></span><span class="sparkle" style="bottom:6px; right:-4px; left:auto; width:5px; height:5px; animation-delay:.8s;"></span>${text}</div>
+    <div class="cute-bubble farin-db${offer ? ' cb-plan' : ''}"><img class="farin-dog" src="${feSrc('p-hooray')}" alt=""><span class="sparkle" style="top:-3px; right:12px; left:auto; width:6px; height:6px;"></span><span class="sparkle" style="bottom:6px; right:-4px; left:auto; width:5px; height:5px; animation-delay:.8s;"></span>${text}</div>
   </div></div>`;
   el.addEventListener('click', (e)=>{
     const b = e.target.closest('[data-action]');
@@ -14894,7 +14895,7 @@ function showCelebration(kind, detail, low, extra){
     <div class="cute-bubble">🎉 ${celebrationText(kind, low)}${stickers.length
       ? `<div class="cel-stickers">${stickers.map(s=>`<span class="cel-sticker ${s.hot?'hot':''}">${esc(s.t)}</span>`).join('')}</div>`
       : (detail ? `<small>${esc(detail)}</small>` : '')}</div>
-    <img class="celebrate-char farin-cel" id="cel-char" src="${farinSrc(farinCelebrateFace(detail, low))}" alt="">
+    ${kind === 'game' || kind === 'path' ? '' : `<img class="celebrate-char farin-cel" id="cel-char" src="${farinSrc(farinCelebrateFace(detail, low))}" alt="">`}
     ${sv ? `<div class="cel-sv" id="cel-sv"><div class="cel-flip" id="cel-flip">
         <div class="cel-side cel-back">${souvenirCardHtml(sv, 'big', souvenirBackHtml(sv))}</div>
         <div class="cel-side cel-front">${souvenirCardHtml(sv, 'big')}</div>
@@ -15745,7 +15746,6 @@ function profileHeaderCard(p){
     <span class="sparkle" style="top:36px; right:26px; left:auto; width:6px; height:6px; animation-delay:.5s;"></span>
     <span class="sparkle" style="top:90px; left:16px; width:5px; height:5px; animation-delay:1s;"></span>
     <span class="sparkle" style="bottom:14px; right:20px; left:auto; width:5px; height:5px; animation-delay:1.5s;"></span>
-    <img src="${feGoalSrc(charKey)}" alt="" class="character-portrait" loading="lazy">
     ${typeof companionPinRowHtml === 'function' ? companionPinRowHtml() : ''}
     <div class="eyebrow" style="color:rgba(255,255,255,.8);"><bdi>${esc(p.name)}</bdi></div>
     <h1 class="display" style="font-size:23px; margin-top:4px; color:#fff;">${esc(L(arch.name.en,arch.name.tr,arch.name.fa, arch.name.es))}</h1>
@@ -16253,7 +16253,6 @@ function companionEntryHtml(levelBase, i){
   const choiceBtn = (o, letter) => `<button class="jr-choice" data-action="story-choice" data-key="${esc(key)}" data-choice="${letter}" dir="ltr"><span>${esc(companionPick(o))}</span>${svText(o) && svText(o) !== companionPick(o) ? `<small>${esc(svText(o))}</small>` : ''}</button>`;
   return `<div class="jr-entry">
     <div class="jr-entry-head">
-      <img src="${feGoalSrc(learnerCharKey())}" alt="">
       <span class="eyebrow" style="margin:0; color:var(--cat-story);">${esc(levelBase)} · ${COMPANION_ENTRY_PCT[i]}%${d.title ? ' · ' + esc(svText(d.title) || d.title) : ''}</span>
       <button class="tts-btn" data-action="speak-sentence" data-text="${esc(d.target)}" aria-label="${esc(L('Listen','Dinle','گوش کن','Escuchar'))}">${ICONS.soundOn}</button>
     </div>
@@ -16575,7 +16574,7 @@ function showPageKept(level){
       <div class="pc-grid">${slots.map(s=>`<div class="pc-slot" style="opacity:1;">${journalSlotHtml(Object.assign({}, s, {i:undefined, start:true}), 'tiny')}</div>`).join('')}</div>
       <div class="pc-stamp kept" id="pc-stamp"><span>${esc(level)}</span><small>${L('KEPT','KALICI','ماندگار','GUARDADO')}</small></div>
     </div>
-    <div class="pc-char-wrap" id="pc-char"><img src="${feGoalSrc(learnerCharKey())}" alt=""></div>
+    <div class="pc-char-wrap" id="pc-char"><img src="roadmap-goal-clay.png" alt=""></div>
     <p class="game-result-line" style="color:#fff; margin-top:10px; text-align:center;">${L('Every souvenir on this page is yours for good.','Bu sayfadaki her hatıra artık hep senin.','هر یادگاری این صفحه دیگر برای همیشه مال توست.','Cada recuerdo de esta página ya es tuyo para siempre.')}</p>
     <div class="celebrate-hint">${L('Tap to close','Kapatmak için dokun','برای بستن بزن','Toca para cerrar')}</div>
   </div>`;
@@ -16584,7 +16583,7 @@ function showPageKept(level){
   const land = ()=>{
     st.style.opacity = '1';
     anim(st, [{transform:'translate(-50%,-50%) scale(1.6) rotate(0deg)', opacity:0}, {transform:'translate(-50%,-50%) scale(1) rotate(-12deg)', opacity:1}], {duration:380, easing:SPRING});
-    setTimeout(()=>{ sfx('stamp'); buzz(20); const img = el.querySelector('#pc-char img'); const c = centerOf(img); sparkBurst(c.x, c.y, 10, '#ffd166', 100); anim(img, [{transform:'rotate(0deg) scale(1)'}, {transform:'rotate(180deg) scale(1.15)'}, {transform:'rotate(360deg) scale(1)'}], {duration:800, easing:'ease-in-out'}); }, 300);
+    setTimeout(()=>{ sfx('stamp'); buzz(20); const img = el.querySelector('#pc-char img'); const c = centerOf(img); sparkBurst(c.x, c.y, 10, '#ffd166', 100); anim(img, [{transform:'scale(1)'}, {transform:'scale(1.1)'}, {transform:'scale(1)'}], {duration:500, easing:'ease-out'}); }, 300);
   };
   el.addEventListener('click', ()=>el.remove());
   if(reducedMotion()){ st.style.opacity = '1'; sfx('stamp'); } else setTimeout(land, 500);
@@ -16711,7 +16710,7 @@ function showPageComplete(){
       <div class="pc-grid">${slots.map(s=>`<div class="pc-slot">${journalSlotHtml(Object.assign({}, s, {i:undefined, start:true}), 'tiny')}</div>`).join('')}</div>
       <div class="pc-stamp" id="pc-stamp"><span>${esc(level)}</span><small>${L('COMPLETE','TAMAM','کامل شد','COMPLETO')}</small></div>
     </div>
-    <div class="pc-char-wrap" id="pc-char"><img src="${feGoalSrc(learnerCharKey())}" alt=""><span class="pc-pin" id="pc-pin">${esc(level)}</span></div>
+    <div class="pc-char-wrap" id="pc-char"><img src="roadmap-goal-clay.png" alt=""><span class="pc-pin" id="pc-pin">${esc(level)}</span></div>
     <button class="btn" data-pc="advance" style="margin-top:10px; width:100%; max-width:320px; justify-content:center; background:var(--clay-orange); color:#fff; border:none;"><img src="icon-gradcap.png" alt="" style="width:22px; height:22px; object-fit:contain;">${L('Go to the next level','Bir sonraki seviyeye geç','برو به سطح بعدی','Ir al siguiente nivel')}</button>
     <button class="btn btn-ghost" data-pc="close" style="margin-top:8px; width:100%; max-width:320px; justify-content:center; color:#fff; border-color:rgba(255,255,255,.5); background:transparent;">${L('Not now','Şimdi değil','الان نه','Ahora no')}</button>
   </div>`;
@@ -16754,7 +16753,7 @@ function showPageComplete(){
     anim(st, [{transform:'translate(-50%,-50%) scale(1.6) rotate(0deg)', opacity:0}, {transform:'translate(-50%,-50%) scale(1) rotate(-12deg)', opacity:1}], {duration:380, easing:SPRING});
     setTimeout(stampHit, 300);
     const img = q('#pc-char img');
-    anim(img, [{transform:'rotate(0deg) scale(1)'}, {transform:'rotate(180deg) scale(1.15)'}, {transform:'rotate(360deg) scale(1)'}], {duration:800, easing:'ease-in-out'});
+    anim(img, [{transform:'scale(1)'}, {transform:'scale(1.1)'}, {transform:'scale(1)'}], {duration:500, easing:'ease-out'});
     const c = centerOf(img); sparkBurst(c.x, c.y, 10, '#ffd166', 100);
   });
   at(tStamp + 800, ()=>{
@@ -16892,7 +16891,7 @@ function renderRoadmapCard(p){
     const circleBg = fillPct>=100 ? color : (fillPct>0 ? `conic-gradient(${color} 0 ${fillPct}%, var(--bg-elevated) ${fillPct}% 100%)` : 'var(--bg-elevated)');
     const fillVar = (idx === advFrom && fillPct>0) ? `--rm2-fill:${fillPct}%;` : '';
     const circleBgFinal = fillVar ? `conic-gradient(${color} 0 var(--rm2-fill), var(--bg-elevated) var(--rm2-fill) 100%)` : circleBg;
-    return `<button class="rm2-seam-ic ${isCurrent?'roadmap-pin-current':''}" ${action?('data-action="'+action+'"'):'disabled'} ${dataAttrs} aria-label="${ariaLabel}" style="width:60px; height:60px; border-radius:50%; ${locked?'opacity:.45; ':''}${fillVar}background:${circleBgFinal}; border:${isCurrent?'5px':'4px'} solid ${color}; display:flex; align-items:center; justify-content:center; box-shadow:${isCurrent?`0 0 0 4px ${glowRing}, 0 8px 18px -4px ${glowStrong}`:(checked?`0 6px 14px -3px ${doneGlow}, inset 0 2px 3px rgba(255,255,255,.35)`:'0 5px 12px -3px rgba(0,0,0,.25)')}; cursor:${action?'pointer':'default'}; padding:0;">
+    return `<button class="rm2-seam-ic ${isCurrent?'roadmap-pin-current':''}" ${action?('data-action="'+action+'"'):'disabled'} ${dataAttrs} aria-label="${ariaLabel}" style="width:60px; height:60px; border-radius:50%; ${locked?'opacity:.45; ':''}${fillVar}background:${isCurrent ? `color-mix(in srgb, ${color} 20%, var(--bg-elevated))` : circleBgFinal}; border:${isCurrent?'5px':'4px'} solid ${color}; display:flex; align-items:center; justify-content:center; box-shadow:${isCurrent?`0 0 0 4px ${glowRing}, 0 8px 18px -4px ${glowStrong}`:(checked?`0 6px 14px -3px ${doneGlow}, inset 0 2px 3px rgba(255,255,255,.35)`:'0 5px 12px -3px rgba(0,0,0,.25)')}; cursor:${action?'pointer':'default'}; padding:0;">${isCurrent ? `<img class="rm2-here-fe" src="${feGoalSrc(learnerCharKey())}" alt="" decoding="async">` : ''}
     </button>`;
   }
 
@@ -17311,11 +17310,11 @@ function clubAskSchedule(delay){
   }, delay);
 }
 function clubAskHtml(done){
-  if(done) return `<div class="club-ask-card"><img class="club-ask-dog" src="${farinSrc('dog')}" alt="">
+  if(done) return `<div class="club-ask-card">
       <h2 class="display club-ask-title" id="club-ask-title">${CL("You're in!",'Kulüptesin!','عضو شدی!','¡Ya estás dentro!')}</h2>
       <p class="club-ask-text">${promoOn(state.profile) ? CL('Farin will message you soon on WhatsApp.','Farin yakında sana WhatsApp\'tan yazacak.','فرین به‌زودی در واتس‌اپ به تو پیام می‌دهد.','Farin te escribirá pronto por WhatsApp.') : CL('Your number is saved. You can turn on news and offers any time in Settings.','Numaran kaydedildi. Haberleri ve fırsatları istediğin zaman Ayarlar\'dan açabilirsin.','شماره‌ات ذخیره شد. هر وقت بخواهی می‌توانی اخبار و پیشنهادها را از تنظیمات روشن کنی.','Tu número está guardado. Puedes activar las novedades y ofertas cuando quieras en Configuración.')}</p>
       <button class="cu-btn cu-orange" data-club="close">${CL('Great','Harika','عالی','Genial')}</button></div>`;
-  return `<div class="club-ask-card"><img class="club-ask-dog" src="${farinSrc('dog')}" alt="">
+  return `<div class="club-ask-card">
       <div class="eyebrow club-ask-eyebrow">FEschool Club</div>
       <h2 class="display club-ask-title" id="club-ask-title">${CL('Join our club','Kulübümüze katıl','به باشگاه ما بپیوند','Únete a nuestro club')}<span class="club-ask-dot">.</span></h2>
       <p class="club-ask-text">${CL('Leave your WhatsApp number so Farin can help you with your account and your courses. Would you also like news, discounts and interesting things before everyone else? Tick the box.','Hesabın ve kursların konusunda Farin sana yardım edebilsin diye WhatsApp numaranı bırak. Haberleri, indirimleri ve ilginç şeyleri herkesten önce almak ister misin? Kutuyu işaretle.','شماره‌ی واتس‌اپت را بگذار تا فرین بتواند درباره‌ی حساب و دوره‌هایت کمکت کند. اخبار، تخفیف‌ها و چیزهای جالب را هم زودتر از همه می‌خواهی؟ تیک جعبه را بزن.','Deja tu número de WhatsApp para que Farin pueda ayudarte con tu cuenta y tus cursos. ¿Quieres también novedades, descuentos y cosas interesantes antes que nadie? Marca la casilla.')}</p>
@@ -17583,7 +17582,7 @@ function notifMaybeAsk(reason){
   setTimeout(tick, reason === 'msg' ? 1500 : reason === 'start' ? 1200 : 2500);
 }
 function notifAskHtml(reason, phase){
-  const dog = `<img class="club-ask-dog" src="${farinSrc('dog')}" alt="">`;
+  const dog = ``;
   const first = String((state.profile && state.profile.name) || '').trim().split(/\s+/)[0];
   // 'start' = right after signup, and once for learners who were already in (Farin 2026-11-16)
   // 'start' = right after signup, and once for learners who were already in. Short on purpose, nothing about offers (Farin 2026-11-17).
@@ -17741,7 +17740,7 @@ function notifNewsShow(b, fromPush){
   const el = document.createElement('div');
   el.className = 'club-ask notif-ask'; el.setAttribute('role', 'dialog'); el.setAttribute('aria-modal', 'true'); el.setAttribute('aria-labelledby', 'notif-news-title');
   const pic = b.ch && /^(climber|explorer|graduate|traveller|friends)$/.test(b.ch) ? 'notif/' + b.ch + '-icon.png' : farinSrc('dog');   // the announcement's picture: FE in a goal outfit (notif/*, repainted 2026-11-19; was the clay figures)
-  el.innerHTML = `<div class="club-ask-card" dir="${fa ? 'rtl' : 'auto'}"><img class="club-ask-dog" src="${pic}" alt="">
+  el.innerHTML = `<div class="club-ask-card" dir="${fa ? 'rtl' : 'auto'}">
       <div class="eyebrow club-ask-eyebrow">${CL('From Farin','Farin\'den','از طرف فرین','De Farin')}</div>
       <h2 class="display club-ask-title" id="notif-news-title" dir="auto">${esc(b.title)}<span class="club-ask-dot">.</span></h2>
       <p class="club-ask-text" dir="auto">${esc(b.body)}</p>
@@ -21307,7 +21306,7 @@ function orderArtHtml(o){
   return '<img class="order-art-img" src="games/worlds/order/art/' + (ORDER_EXTRAS.includes(o) ? 'extra' : 'item') + '-' + o.id + '.webp" alt="" decoding="async" draggable="false">';
 }
 function orderFaceSrc(round, cust){
-  if(!orderWorldOn()) return feGoalSrc(cust.ch);
+  if(!orderWorldOn()) return farinSrc('item-coffee');   // out of the world: the café's cup (no character in games, 2026-11-20)
   const list = ORDER_TOWN[TTS_ACCENTS.indexOf(ttsAccent()) === 1 ? 'm' : 'f'], i = cust.usual ? cust.of : Math.max(0, round.customers.indexOf(cust));
   const seed = String((round.customers[0] && round.customers[0].text) || '').length;
   return 'games/cozy-chores/art/pt-' + list[(seed + i) % list.length] + '-' + (cust.done ? 'warm' : (cust.fb ? 'oh' : 'calm')) + '.webp';
@@ -22191,7 +22190,7 @@ const DESK_TOWN = {f:[1, 3, 5, 7], m:[2, 4, 6, 8]};
 // a rubber stamp (handle, block, ink line): the icon on the world's APPROVED action bar
 const DESK_STAMP_ICON = '<svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true"><circle cx="12" cy="5" r="2.9" fill="currentColor"/><path d="M10.5 7.2h3l.8 4.6H9.7z" fill="currentColor"/><rect x="4.5" y="11.6" width="15" height="4.6" rx="1.4" fill="currentColor"/><path d="M6 20.2h12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>';
 function deskFaceSrc(round, t){
-  if(worldKind() !== 'desk') return feGoalSrc(t.ch);
+  if(worldKind() !== 'desk') return farinSrc('item-tote');   // out of the world: the traveller's bag (no character in games, 2026-11-20)
   const g = t.g || 'f', list = DESK_TOWN[g === 'm' ? 'm' : 'f'];
   const i = Math.max(0, round.travellers.indexOf(t)), seed = String((round.travellers[0] && round.travellers[0].ch) || '').length;
   const face = t.done ? 'warm' : (t.tries ? 'oh' : 'calm');
@@ -26272,7 +26271,7 @@ function yourTurnHtml(t){
     </div>`;
   const hits = errorWatchHits(rec.text, t);
   const watch = hits.length
-    ? hits.map(h=>`<div class="game-why" style="margin-top:10px;">${farinImg('mood-thinking')}<div dir="auto"><b>${esc(L('Check this','Şuna bak','این را بررسی کن','Revisa esto'))}:</b> "${esc(h.phrase)}" · ${esc(trLine(h.fix))}</div></div>`).join('')
+    ? hits.map((h, k)=>`<div class="game-why" style="margin-top:10px;">${k ? '' : farinImg('mood-thinking')}<div dir="auto"><b>${esc(L('Check this','Şuna bak','این را بررسی کن','Revisa esto'))}:</b> "${esc(h.phrase)}" · ${esc(trLine(h.fix))}</div></div>`).join('')
     : `<p class="yt-clean" style="margin:10px 0 0; font-size:13.5px; font-weight:700; color:var(--success);">${ICONS.check} ${esc(L('No common mistake found.','Yaygın bir hata bulunmadı.','اشتباه رایجی پیدا نشد.','No hay errores frecuentes.'))}</p>`;
   return `<div class="card-flat yt-card" style="margin-top:16px; text-align:start;">
       ${head}
@@ -26479,7 +26478,7 @@ function useItHtml(s){
     ? `<div class="use-chips" dir="ltr" translate="no">${used.map(w=>`<span class="use-chip">${ICONS.check} ${esc(w)}</span>`).join('')}</div>`
     : '';
   const usedLine = used.length >= 2 ? '' : `<p class="use-more" dir="auto">${esc(used.length ? L('Nice. Next time, try a second phrase from this set.','Güzel. Bir dahaki sefere bu setten ikinci bir ifade dene.','خوبه. دفعه‌ی بعد یک عبارت دیگر از این مجموعه هم امتحان کن.','Bien. La próxima vez, prueba una segunda frase de este grupo.') : L('Try to use 2 phrases from this set.','Bu setten 2 ifade kullanmayı dene.','سعی کن ۲ عبارت از این مجموعه به کار ببری.','Intenta usar 2 frases de este grupo.'))}</p>`;
-  const watch = hits.map(h=>`<div class="game-why" style="margin-top:10px;">${farinImg('mood-thinking')}<div dir="auto"><b>${esc(L('Check this','Şuna bak','این را بررسی کن','Revisa esto'))}:</b> "${esc(h.phrase)}" · ${esc(trLine(h.fix))}</div></div>`).join('');
+  const watch = hits.map((h, k)=>`<div class="game-why" style="margin-top:10px;">${k ? '' : farinImg('mood-thinking')}<div dir="auto"><b>${esc(L('Check this','Şuna bak','این را بررسی کن','Revisa esto'))}:</b> "${esc(h.phrase)}" · ${esc(trLine(h.fix))}</div></div>`).join('');
   return `<div class="card-flat use-card" style="margin-top:16px; text-align:start;">
       ${head}
       <div class="phrase-mean" dir="ltr" translate="no" style="margin-top:8px; font-style:italic; white-space:pre-line;">${esc(rec.text)}</div>
@@ -27269,7 +27268,7 @@ function rlComplete(s, R, round){
 }
 function rlMoreScreen(s, R, act){
   return {key:'more', i:R.kind === 'g' ? 0 : 2, k:R.kind === 'g' ? 1 : 0, body:`<div class="rl-body"><div class="game-card tight" style="text-align:center;">
-      ${farinImg('mood-thinking', 'rl-resface')}
+      ${farinImg('face-content', 'rl-resface')}
       <div class="game-result-title" style="font-size:20px; margin-top:8px;">${L('Almost there. One more go?', 'Neredeyse oldu. Bir tur daha?', 'نزدیک بود. یک دور دیگر؟', 'Casi. ¿Otra vuelta?')}</div>
       <p class="game-result-line">${L('Practise again with the ones you missed plus a few new ones. Then this step is done.', 'Kaçırdıklarınla birkaç yeni soruyla tekrar çalış. Sonra bu adım tamamlanır.', 'دوباره با سوال‌هایی که اشتباه کردی و چند سوال تازه تمرین کن. بعد این قدم تمام می‌شود.', 'Practica otra vez con los que has fallado y algunos nuevos. Después este paso queda hecho.')}</p>
     </div></div>`, foot:rlCta(act || 'rl-more', L('Practise again', 'Tekrar çalış', 'دوباره تمرین کن', 'Practicar otra vez')) + rlGhost('rl-stop', rlS('btn.stop'))};
@@ -27579,7 +27578,7 @@ function rlgWhy(t, e, R){
     return `<button class="${cls}" dir="auto" data-action="rlg-why" data-j="${j}"${P ? ' disabled' : ''}>${esc(all[kk])}</button>`; }).join('');
   const ask = `<div class="game-why prove-ask">${farinImg('face-smile')}<div dir="auto">${esc(rlS('g.ask'))}</div></div><div class="game-opts prove-opts">${chips}</div>`;
   const pairs = [[e.wrong, e.right], [e.wrong2, e.right2]].filter(p=>p[0] && p[1]);
-  const say = P && P.ok && (R.sayUntil || 0) > Date.now() ? `<div class="rl-say" id="rl-say">${farinImg('face-proud')}<span>${esc(rlS('g.cracked'))}</span></div>` : '';
+  const say = P && P.ok && (R.sayUntil || 0) > Date.now() ? `<div class="rl-say" id="rl-say"><span>${esc(rlS('g.cracked'))}</span></div>` : '';
   const card = !P ? '' : `<div class="game-card tight rl-rule badge-unlock-shine" id="rl-rule">
       <div class="lx-eyebrow" dir="${courseTD()}">${esc(rlS('g.rule'))}</div>${say}
       <p class="rl-rule-t" dir="auto">${esc(all[0])}</p>
@@ -28208,7 +28207,7 @@ function rlstTry(vp, R){
   if(vp.mode === 'writing'){
     const g = vp.round.grammar && GRAMMAR_ITEMS.find(x=>x.id === vp.round.grammar.id), hits = T.checked && g ? errorWatchHits(T.text, g) : [];
     const res = !T.checked ? '' : hits.length
-      ? hits.map(h=>`<div class="game-why">${farinImg('mood-thinking')}<div dir="auto"><b>${esc(rlS('st.watch'))}:</b> "${esc(h.phrase)}" · ${esc(trLine(h.fix))}</div></div>`).join('')
+      ? hits.map((h, k)=>`<div class="game-why">${k ? '' : farinImg('mood-thinking')}<div dir="auto"><b>${esc(rlS('st.watch'))}:</b> "${esc(h.phrase)}" · ${esc(trLine(h.fix))}</div></div>`).join('')
       : `<div class="game-why">${farinImg('face-smile')}<div dir="auto">${esc(rlS('st.goodW'))}</div></div>`;
     return Object.assign(base, {body:`<div class="rl-body">${rlstTopicHtml(vp)}
         <p class="game-hint" dir="auto"><b>${esc(rlS('st.firstW'))}</b> ${esc(plan0 || (starts.length ? rlS('st.tapStart') : ''))}</p>
@@ -29596,7 +29595,6 @@ function renderStageCheckIntro(){
   return `<div class="fade-in game-screen">
     ${gameTopHtml(scTitle(key))}
     <div class="game-card" style="text-align:center;">
-      <img src="${feGoalSrc(learnerCharKey())}" alt="" style="width:96px; height:96px; object-fit:contain; margin:0 auto 10px; display:block;">
       <div class="game-result-title" style="font-size:20px;" dir="auto">${esc(scTitle(key))}</div>
       <p class="game-result-line" dir="auto">${esc(intro)}</p>
     </div>
@@ -29633,7 +29631,6 @@ function renderStageCheckResults(){
   return `<div class="fade-in game-screen" style="gap:0;">
     ${gameTopHtml(scTitle(q.scKey || ''))}
     <div style="text-align:center;">
-      <img src="${feGoalSrc(learnerCharKey())}" alt="" style="width:84px; height:84px; object-fit:contain; margin:4px auto 6px; display:block;">
       <h2 class="game-result-title" dir="auto">${esc(head)}</h2>
       <p class="game-result-line" dir="auto" style="margin-bottom:6px;">${esc(score)}</p>
     </div>
@@ -29860,7 +29857,7 @@ function renderRoadmapReport(){
         <span class="fs-pill">${esc(rep.lv)} · ${L('Page report','Sayfa karnesi','کارنامهٔ صفحه','Informe de la página')}</span>
         <h1 class="display" dir="auto">${esc(name ? L(`${name}, you did it`, `${name}, başardın`, `${name}، از پسش برآمدی`, `${name}, lo has logrado`) : L('You did it','Başardın','از پسش برآمدی','Lo has logrado'))}<span class="dot">.</span></h1>
         <p class="fs-sub" dir="auto">${esc(L(`Page ${rep.lv} is done. Here is what it gave you, in six quick cards.`, `${rep.lv} sayfası bitti. Sana neler kattığını altı kısa kartta gör.`, `صفحهٔ ${rep.lv} تمام شد. ببین چه چیزهایی به تو داد، در شش کارت کوتاه.`, `La página ${rep.lv} está hecha. Mira lo que te dio, en seis tarjetas rápidas.`))}</p>
-        <div class="fs-art"><div class="fs-disc" style="--g:${archColor};"></div>${farinImg('outfit-goingout', '')}</div>
+        <div class="fs-art"><div class="fs-disc" style="--g:${archColor};"></div><img src="${feSrc('m-trophy')}" alt=""></div>
       </div>
       ${tiles.length ? `<div class="lx-stats fs-stats" style="grid-template-columns:repeat(${tiles.length}, minmax(0,1fr));">${tiles.map(x=>`<div class="lx-stat"><span>${x[1]}</span><b class="display">${x[0]}</b></div>`).join('')}</div>` : ''}
       <div class="rr-sub">${L('Inside','İçinde','داخلش','Dentro')}</div>
@@ -29878,7 +29875,7 @@ function renderRoadmapReport(){
   } else if(i === 2){
     const am = rrAreaMeta(rep.area), strong = (rep.strong || []).map(it=>row(it, true)).filter(Boolean);
     body = head(L('Your superpower','Süper gücün','ابرقدرتت','Tu superpoder'), esc(am.t))
-      + `<div class="rr-power" style="--c:var(--cat-${am.c});">${claySparkles()}<img src="${feGoalSrc(learnerCharKey())}" alt=""><p dir="auto">${esc(am.s)}</p></div>`
+      + `<div class="rr-power" style="--c:var(--cat-${am.c});">${claySparkles()}<p dir="auto">${esc(am.s)}</p></div>`
       + (strong.length ? `<div class="rr-sub">${L('Right on the first try','İlk denemede doğru','همان بار اول درست','Bien a la primera')}</div><div class="rr-list">${strong.join('')}</div>`
         : `<p class="rr-quiet" dir="auto">${L('Every card on this page is done. That alone is a win.','Bu sayfadaki her kart bitti. Bu bile bir zafer.','همهٔ کارت‌های این صفحه تمام شد. همین خودش یک پیروزی است.','Todas las tarjetas de esta página están hechas. Eso ya es una victoria.')}</p>`);
   } else if(i === 3){
@@ -29887,7 +29884,7 @@ function renderRoadmapReport(){
     body = head(L('Tricky spots','Zorlandığın yerler','جاهای سخت','Puntos difíciles'), any ? L('These fought back a little','Bunlar biraz direndi','این‌ها کمی مقاومت کردند','Estos se resistieron un poco') : L('Nothing fought back','Hiçbiri direnmedi','هیچ‌کدام مقاومت نکرد','Nada se resistió'))
       + (weak.length ? `<div class="rr-list">${weak.join('')}</div>` : '')
       + (hard.length ? `<div class="rr-sub">${L('Words that tried to escape','Kaçmaya çalışan kelimeler','کلمه‌هایی که می‌خواستند فرار کنند','Palabras que intentaron escaparse')}</div><div class="fs-chips rr-hard">${hard.map(w=>`<span dir="ltr" translate="no">${esc(w)}</span>`).join('')}</div>` : '')
-      + `<div class="game-why rr-note">${farinImg(any ? 'mood-thinking' : 'face-laugh')}<div dir="auto">${any
+      + `<div class="game-why rr-note"><div dir="auto">${any
           ? L("Totally normal. They are already in your review, so you will meet them again soon and they will stick.", 'Çok normal. Hepsi tekrarında, yakında yine karşına çıkacaklar ve aklında kalacaklar.', 'کاملاً عادی است. همه‌شان در مرورت هستند، پس به‌زودی دوباره می‌بینی‌شان و در ذهنت می‌مانند.', 'Es totalmente normal. Ya están en tu repaso, así que pronto los verás otra vez y se te quedarán.')
           : L('A clean page! Your review will still bring a few back now and then, so they stay yours.', 'Tertemiz bir sayfa! Tekrarın yine de ara sıra birkaçını geri getirecek, böylece hep senin kalacaklar.', 'یک صفحهٔ تمیز! مرورت باز هم گاهی چندتایی را برمی‌گرداند تا برای همیشه مال تو بمانند.', '¡Una página limpia! Tu repaso aún traerá algunos de vez en cuando, para que sigan siendo tuyos.')}</div></div>`
       + (any && rrPractiseIds(rep).length ? `<button class="btn rr-soft" data-action="rr-practise">${L('Practise them now','Şimdi çalış','همین حالا تمرینشان کن','Practícalos ahora')}</button>` : '');
@@ -29912,7 +29909,6 @@ function renderRoadmapReport(){
         <h1 class="display">${esc(rep.next || rep.lv)}<span class="dot">.</span></h1>
         <p class="fs-sub" dir="auto">${esc(rep.next ? (thName ? thName : L('New words, new grammar, new games.','Yeni kelimeler, yeni dilbilgisi, yeni oyunlar.','کلمه‌های تازه، گرامر تازه، بازی‌های تازه.','Palabras nuevas, gramática nueva, juegos nuevos.'))
           : L('You finished the whole path. Keep your souvenirs shining in the Journal.','Bütün yolu bitirdin. Hatıralarını Günlük’te parlak tut.','کل مسیر را تمام کردی. یادگاری‌هایت را در دفترچه درخشان نگه دار.','Has terminado todo el camino. Mantén tus recuerdos brillando en el diario.'))}</p>
-        <div class="fs-art"><div class="fs-disc" style="--g:${archColor};"></div>${farinImg('hero-walk-dog', '')}</div>
       </div>
       <div class="fs-chips rr-track">${LEVEL_STAGES.map((s, k)=>`<span class="${k <= li ? 'done' : (s === rep.next ? 'cur' : '')}">${k <= li ? ICONS.check : ''}${esc(s)}</span>`).join('')}</div>
       <p class="rr-sign" dir="auto">${esc(rep.next ? L('See you on the next page!','Bir sonraki sayfada görüşürüz!','صفحهٔ بعد می‌بینمت!','¡Nos vemos en la próxima página!') : L('So proud of you!','Seninle gurur duyuyorum!','به تو افتخار می‌کنم!','¡Qué orgullo!'))} <b>Farin</b></p>`;
@@ -30341,7 +30337,7 @@ function renderQuizResults(){
   return `<div class="fade-in game-screen" style="gap:0;">
     ${gameTopHtml(quizKindTitle(q))}
     <div style="text-align:center;">
-      ${lpOn('finish') && LESSON_KINDS.includes(q.kind) ? (q.retryOffered ? '' : `${farinImg('face-proud', 'rl-resface')}<h2 class="game-result-title" style="margin-top:10px;">${esc(rlS('done.' + q.kind))}</h2>`) : `<div class="result-ring" style="background:var(--cat-${CAT}-soft); color:var(--cat-${CAT});">
+      ${lpOn('finish') && LESSON_KINDS.includes(q.kind) ? (q.retryOffered ? '' : `<h2 class="game-result-title" style="margin-top:10px;">${esc(rlS('done.' + q.kind))}</h2>`) : `<div class="result-ring" style="background:var(--cat-${CAT}-soft); color:var(--cat-${CAT});">
         <div class="big num">${pct}%</div>
         <div class="small">${L('Score','Skor','امتیاز','Puntuación')}</div>
       </div>
@@ -31472,7 +31468,7 @@ function gameTopHtml(title, noFace){
 }
 function gameCompanionHtml(){
   const b = (gcBubble && gcBubble.until > Date.now()) ? gcBubble : null;
-  return `<div class="game-companion" aria-hidden="true"><img id="gc-char" class="gc-dog" src="${farinSrc('dog')}" alt="">${b ? `<div class="gc-bubble" id="gc-bubble" dir="${textDir(b.text)}">${esc(b.text)}</div>` : ''}</div>`;
+  return `<div class="game-companion gc-noface" aria-hidden="true">${b ? `<div class="gc-bubble" id="gc-bubble" dir="${textDir(b.text)}">${esc(b.text)}</div>` : ''}</div>`;
 }
 // The direction of a line by its own letters: any Persian letter = right to left, else left to right (an English / Spanish line inside the fa
 // UI: "Passport, please!" must not become "!Passport, please"). Set as dir on the element, never by changing the string.
@@ -35455,7 +35451,7 @@ function renderCourseIntro(c){
   return `<div class="fade-in course-intro lx-page lx-course">
     ${coursePathHeadHtml()}
     <div class="screen" style="padding-top:0;">
-      <div class="lx-hero has-farin" style="padding-bottom:44px;">
+      <div class="lx-hero" style="padding-bottom:44px;">
         ${claySparkles()}${farinHeroHtml(farinCoursePose(c))}
         <span class="lx-pill">${CL('Premium course','Premium kurs','دوره‌ی ویژه','Curso premium')}</span>
         <h1 class="display"><bdi>${esc(cl(c.title))}</bdi><span class="dot">.</span></h1>
@@ -38001,7 +37997,7 @@ function courseGoalKey(c){ const id = String((c && c.id) || '');
   if(/immig|abroad/.test(id)) return 'immigration';
   return 'everyday'; }
 function courseArtHtml(c, small){ const g = courseGoalKey(c);
-  return `<div class="fs-art${small ? ' sm' : ''}" aria-hidden="true" style="--g:${COURSE_GOAL_COLORS[g]};"><i class="fs-disc"></i><img src="${feGoalSrc(g)}" alt="" decoding="async"></div>`; }
+  return ''; }   // no character on course art since 2026-11-20 (was FE in the course's goal outfit)
 // "IELTS: 10 full exams" -> pill tag "IELTS", hero title "10 full exams"; a title without a colon stays whole.
 function courseHeroTitleParts(c){ const t = cl(c.title), i = t.indexOf(':'); return i > 0 && i < t.length - 1 ? [t.slice(0, i).trim(), t.slice(i + 1).trim()] : ['', t]; }
 // One line under the hero title: the course's own short line, else the promise's first sentence up to a colon.
@@ -41985,7 +41981,7 @@ function adminInsClassesHtml(openId){
       : sug ? '<p class="ins-fun"><b>' + n + '</b> fit · <b>' + m.filter(p=>adminClassMayOffer(c, p)).length + '</b> can get the offer · <b>' + invited + '</b> sent the offer · <b class="y">' + yes + '</b> said yes' + perTime + ' · <b>' + no + '</b> said no · ' + startNote + '</p>' : '';
     const g = course ? THEME_GOAL[c.theme] || 'everyday' : (COURSE_GOAL_COLORS[c.goal] ? c.goal : 'everyday'), lvc = adminClassLevelCode(c);
     const offerBox = offer ? `<div class="ins-offer" style="--g:${COURSE_GOAL_COLORS[g]};">
-        <div class="ins-odoc" aria-hidden="true"><span class="ins-od-pill">Mid-private · 4–6 people</span><b>${esc(adminClassNameIn(c, 'en'))}<i>.</i></b>${lvc ? `<small>Level ${esc(lvc)}</small>` : ''}<img src="${feGoalSrc(g)}" alt="" decoding="async"></div>
+        <div class="ins-odoc" aria-hidden="true"><span class="ins-od-pill">Mid-private · 4–6 people</span><b>${esc(adminClassNameIn(c, 'en'))}<i>.</i></b>${lvc ? `<small>Level ${esc(lvc)}</small>` : ''}</div>
         <div class="ins-otxt"><b>Offer page</b><span><b>Send offer</b> opens WhatsApp with a short message in their language and a link to a page made for them: their name, goal and level, what they told the app they find hard, the group's favourite topics, only 6 seats, the class time${twoT ? 's to choose from' : ''} (Iran time for Persian speakers), the ${ADMIN_CLASS_SESSIONS} sessions and, for Iran, the price. <b>Telegram</b> sends the same message, for learners without WhatsApp. Every learner in the class gets it, ticked “news and offers” or not; only someone who turned offers off themselves gets a plain hello.</span>
           <span class="ins-obtns"><a class="btn btn-sm btn-ghost" href="${esc(adminClassOfferUrl(c, null, byHash))}" target="_blank" rel="noopener">Open the page</a><button class="btn btn-sm btn-ghost" data-admin-action="ins-offer-copy" data-c="${esc(c.id)}">Copy link</button></span></div>
       </div>` : '';
@@ -42092,7 +42088,6 @@ function renderAdminClassesTab(){
       ${c.codeFrom ? `<p class="fs-sub">A group of class ${esc(c.codeFrom)}</p>` : ''}
       <p class="fs-sub">${esc((ADMIN_INS_LANG[c.lang] ? ADMIN_INS_LANG[c.lang] + ' speakers · ' : '') + (c.app === 'es' ? 'Spanish' : 'English') + ' app · ' + when)}</p>
       ${adminClassSched(c).length && c.status !== 'closed' ? `<p class="fs-sub cls-htime">${adminClassSched(c).map((id, k, a)=>esc((a.length > 1 ? 'Time ' + (k + 1) + ': ' : 'Time: ') + adminClassSlotShort(id))).join('<br>')}<br><small>your clock (Turkey) · Iran is 30 min later</small></p>` : ''}
-      <div class="fs-art" aria-hidden="true" style="--g:${COURSE_GOAL_COLORS[g]};"><i class="fs-disc"></i><img src="${feGoalSrc(g)}" alt="" decoding="async"></div>
     </header>
     <div class="lx-stats fs-stats">${stats}</div>
     <div class="ins cls-page">${adminClassesClashNote ? `<p class="acc-err" role="status">${esc(adminClassesClashNote)}</p>` : ''}${adminInsNote ? `<p class="acc-ok" role="status">${esc(adminInsNote)}</p>` : ''}${adminInsClassesHtml(c.id)}</div>`;
@@ -42508,7 +42503,6 @@ function renderAdminHome(todo){
       <span class="fs-pill">FEschool admin · ${esc(day)}</span>
       <h1 class="display">${hello}<span class="dot">.</span></h1>
       <p class="fs-sub">${esc(sub)}</p>
-      <div class="fs-art" aria-hidden="true" style="--g:#FFA53D;"><i class="fs-disc"></i><img src="${feGoalSrc('career')}" alt="" decoding="async"></div>
     </header>
     <div class="lx-stats fs-stats">
       <div class="lx-stat"><span>Learners</span><b class="display">${num(live.length)}</b></div>
@@ -44215,7 +44209,6 @@ function renderAdminUserProfile(p){
       <span class="fs-pill">${p.app === 'es' ? 'Spanish' : 'English'} app · ${esc(pf.level || 'no level')}</span>
       <h1 class="display"><bdi>${esc(pf.name || '(no name)')}</bdi><span class="dot">.</span></h1>
       <p class="fs-sub">${p.joined ? 'Joined ' + adminDate(p.joined) + ' · ' : ''}seen ${adminAgo(p.lastSeen)}</p>
-      <div class="fs-art" aria-hidden="true" style="--g:${COURSE_GOAL_COLORS[goal]};"><i class="fs-disc"></i><img src="${feGoalSrc(goal)}" alt="" decoding="async"></div>
     </header>
     <div class="lx-stats fs-stats">
       <div class="lx-stat"><span>Days active</span><b class="display">${act.days || '—'}</b></div>

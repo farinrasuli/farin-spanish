@@ -294,10 +294,12 @@
   .celebrate-char.farin-cel{width:136px; height:136px; padding:10px; box-sizing:border-box; border-radius:50%; background:#fff; filter:drop-shadow(0 14px 20px rgba(0,0,0,.3));}
   .lx-hero.has-farin{padding-inline-end:108px; min-height:236px;}
   .lx-hero > img.farin-hero{position:absolute; inset-inline-end:12px; bottom:50px; height:142px; width:auto; max-width:104px; object-fit:contain; object-position:bottom; pointer-events:none; filter:drop-shadow(0 8px 10px rgba(0,0,0,.2));}
-  .farin-hi{display:flex; align-items:flex-end; gap:14px; margin:12px 0 -14px;}
-  .farin-hi-img{flex:0 0 auto; height:110px; width:auto; filter:drop-shadow(0 6px 8px rgba(60,40,20,.12));}
-  .farin-hi p{margin:0 0 16px; font-weight:600; font-size:15px; line-height:1.45; color:var(--ink-soft); max-width:220px;}
-  .farin-hi p b{display:block; font-family:'Fredoka',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; font-weight:700; font-size:17px; color:var(--ink); margin-bottom:2px;}
+  /* Onboarding hello (Farin 2026-11-21: "show the character like this ... neater cleaner and less crowded"): FE big and centred,
+     his line under him as the screen's title. */
+  .farin-hi{display:flex; flex-direction:column; align-items:center; text-align:center; margin:2px 0 8px;}
+  .farin-hi-img{flex:0 0 auto; height:150px; width:auto; filter:drop-shadow(0 10px 14px rgba(60,40,20,.14));}
+  .farin-hi p{margin:14px 0 0; font-weight:600; font-size:15px; line-height:1.5; color:var(--ink-soft); max-width:300px;}
+  .farin-hi p b{display:block; font-family:'Fredoka',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; font-weight:700; font-size:27px; line-height:1.15; letter-spacing:-.02em; color:var(--ink); margin-bottom:6px;}
   .farin-empty{display:block; height:140px; width:auto; margin:4px auto 10px; filter:drop-shadow(0 8px 10px rgba(0,0,0,.12));}
   .farin-empty.farin-empty-dog{height:84px;}
   .farin-empty.farin-empty-scene{height:118px; border-radius:14px;}
@@ -3370,7 +3372,7 @@
      native language rows (sets the interface language at once) + language-to-learn rows (the other one opens the other app),
      flags only for languages, one pinned orange button, lots of free space. Byte-identical in the English and Spanish apps. */
   .onb-lang .screen{padding:10px 22px calc(160px + env(safe-area-inset-bottom, 0px));}
-  .onb-top{display:flex; align-items:center; justify-content:space-between; padding:12px 0 30px;}
+  .onb-top{display:flex; align-items:center; justify-content:space-between; padding:12px 0 22px;}
   .onb-eb{font-size:11px; font-weight:800; letter-spacing:.16em; text-transform:uppercase; color:var(--fs-orange-ink);}
   html[dir="rtl"] .onb-eb{letter-spacing:0; font-size:12.5px;}
   .onb-h1{font-family:'Fredoka',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; font-weight:700; font-size:31px; line-height:1.1; letter-spacing:-.02em; margin:6px 0 0; color:var(--ink);}
@@ -3388,6 +3390,40 @@
   .onb-lang .onb-cta{background:var(--fs-orange); color:var(--fs-cta-ink); border-color:transparent; font-weight:800; font-size:16px; box-shadow:0 8px 16px -8px rgba(168,90,5,.5);}
   .onb-login{all:unset; box-sizing:border-box; cursor:pointer; padding:10px 12px; font-weight:700; font-size:13.5px; color:var(--ink-soft); text-align:center; text-decoration:underline; text-underline-offset:3px;}
   .onb-login:focus-visible{outline:2px solid var(--fs-purple); outline-offset:2px; border-radius:8px;}
+  /* The six onboarding questions + the account step (Farin 2026-11-21, "neater cleaner and less crowded"): one header (Back + language
+     on one row, a small counter, the question, an optional one-line hint), every answer on the approved selection row (.fs-opt), the
+     topics on a two-column grid, Continue pinned at the bottom where a step has one. Byte-identical in both apps. */
+  .onb-q-scr .screen{padding:0 22px 40px;}
+  .onb-q-scr.onb-pinned .screen{padding-bottom:calc(120px + env(safe-area-inset-bottom, 0px));}
+  .onb-nav{display:flex; align-items:center; justify-content:space-between; padding:12px 0 22px;}
+  .onb-nav .back{margin:0;}
+  .onb-h2{font-family:'Fredoka',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; font-weight:700; font-size:24px; line-height:1.2; letter-spacing:-.02em; margin:6px 0 0; color:var(--ink);}
+  .onb-sub{margin:8px 0 0; font-weight:600; font-size:14px; line-height:1.5; color:var(--ink-soft);}
+  .onb-rows{margin-top:22px;}
+  .onb-row{padding:14px 16px; gap:14px; border-radius:18px;}
+  .onb-row:disabled{opacity:.45; cursor:default;}
+  .onb-row .fs-ot b{font-size:15px;}
+  .onb-row .fs-ot small{font-size:12.5px; line-height:1.4;}
+  .onb-lv{flex:none; width:40px; height:40px; border-radius:12px; display:grid; place-items:center; background:var(--fs-purple-soft); color:var(--fs-purple-ink); font-family:'Fredoka',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; font-weight:700; font-size:15px; letter-spacing:.01em;}
+  .onb-grid{display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:22px;}
+  .onb-grid .fs-opt{flex-direction:row; align-items:center; gap:10px; padding:12px 12px; border-radius:16px;}
+  .onb-grid .fs-gic{width:32px; height:32px; border-radius:10px; font-size:17px;}
+  .onb-grid .fs-gic svg{width:16px; height:16px;}
+  .onb-grid .fs-ot b{font-size:13.5px; line-height:1.25;}
+  .onb-grid .fs-chk{display:none;}
+  .onb-grid .fs-opt:disabled{opacity:.45; cursor:default;}
+  .onb-q-scr .onb-cta{background:var(--fs-orange); color:var(--fs-cta-ink); border-color:transparent; font-weight:800; font-size:16px; box-shadow:0 8px 16px -8px rgba(168,90,5,.5);}
+  .onb-q-scr .onb-cta:disabled{opacity:.45; box-shadow:none;}
+  .onb-acct .stack{margin-top:22px;}
+  .onb-acct .field-hint{font-size:12.5px; line-height:1.45;}
+  /* The welcome screen after Go! (Farin 2026-11-21: "welcome the user at the end with a good message"): the same shape as his
+     reference, title + a short message + FE big on a white card, the orange button pinned under it. One FE on the screen. */
+  .onb-welcome .screen{box-sizing:border-box; min-height:100vh; min-height:100dvh; display:flex; flex-direction:column; padding:10px 22px calc(110px + env(safe-area-inset-bottom, 0px));}
+  .onb-wcard{flex:1; display:flex; flex-direction:column; margin-top:6px; padding:34px 24px 0; border-radius:28px; background:var(--bg-elevated); border:1px solid var(--border-soft); box-shadow:0 1px 2px rgba(26,20,16,.05), 0 14px 34px -16px rgba(26,20,16,.22); text-align:center; overflow:hidden;}
+  .onb-wt{font-family:'Fredoka',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; font-weight:700; font-size:30px; line-height:1.12; letter-spacing:-.02em; margin:0; color:var(--ink); overflow-wrap:anywhere;}
+  .onb-wp{margin:12px auto 0; max-width:300px; font-weight:600; font-size:15px; line-height:1.55; color:var(--ink-soft);}
+  .onb-wfe{display:block; height:290px; max-height:42vh; width:auto; margin:auto auto 0; padding-top:22px; filter:drop-shadow(0 12px 16px rgba(60,40,20,.14));}
+  @media (max-height:700px){ .onb-wcard{padding-top:26px;} }
   /* header language control (Farin 2026-10-27): learning-language flag + interface code; opens the language sheet */
   .lang-pill{display:inline-flex; align-items:center; gap:6px; height:34px; box-sizing:border-box; padding:0 11px 0 8px; border-radius:999px; background:var(--bg-elevated); border:1px solid var(--border-soft); box-shadow:var(--clay-shadow-soft); color:var(--ink-soft); font:inherit; font-weight:800; font-size:12px; letter-spacing:.03em; flex:0 0 auto; cursor:pointer; -webkit-tap-highlight-color:transparent;}
   html[dir="rtl"] .lang-pill{padding:0 8px 0 11px;}
@@ -15058,7 +15094,7 @@ function render(){
   root.insertAdjacentHTML('beforeend', nav);
   if(langSheet && langSheet.view !== state.view) langSheet = null;   // the header language sheet belongs to the screen it was opened on
   langSheetPaint();
-  const noHomeButtonViews = bottomNavViews.concat(['diagnostic-intro','diagnostic-step','roadmap-report','msg-thread','msg-compose']);
+  const noHomeButtonViews = bottomNavViews.concat(['diagnostic-intro','diagnostic-step','welcome','roadmap-report','msg-thread','msg-compose']);
   if(!noHomeButtonViews.includes(state.view)){
     root.insertAdjacentHTML('beforeend', `<div class="home-fab-wrap"><button class="home-fab" data-action="nav" data-view="dashboard" aria-label="${L('Home','Ana Sayfa','خانه', 'Inicio')}">${ICONS.home}</button></div>`);
   }
@@ -15187,11 +15223,10 @@ function onbBlocksHtml(){
       ${leaving ? `<p class="onb-go" role="status"><i aria-hidden="true"></i><span>${learn === 'es' ? L('Switching to the Spanish app…','İspanyolca uygulamasına geçiyoruz…','داریم به اپ اسپانیایی می‌رویم…','Pasamos a la app de español…') : L('Switching to the English app…','İngilizce uygulamasına geçiyoruz…','داریم به اپ انگلیسی می‌رویم…','Pasamos a la app de inglés…')}</span></p>` : ''}`;
 }
 function renderLangPick(){
+  // Farin 2026-11-21: FE big and centred with his hello as the title (no eyebrow, no second heading), then the two choices.
   return `<div class="fade-in fs-scr onb-lang">
     <div class="screen">
       <div class="onb-top"><div class="wordmark">Farin<span>${ONB_APP.word}</span></div></div>
-      <div class="onb-eb">${L('2 minutes','2 dakika','۲ دقیقه','2 minutos')}</div>
-      <h1 class="onb-h1">${L("Let's begin",'Başlayalım','بیا شروع کنیم','Empecemos')}<span class="dot">.</span></h1>
       ${farinHelloHtml()}
       ${courseLinkNoteHtml()}
       ${onbBlocksHtml()}
@@ -15256,6 +15291,30 @@ function diagProgressBar(step, total){
   for(let i=0;i<total;i++) out += `<i class="${i<step?'done':''}"></i>`;
   return out + '</div>';
 }
+/* The welcome screen (Farin 2026-11-21: "welcome the user at the end with a good message", in the shape of his reference: a card with
+   the title, a short message and FE big; one button). Shown once, after Go! on a first sign-up; 'welcome-continue' opens Home and
+   then asks the phone's notification question (moved here from the Go! tap). A course link lands on its course page instead. */
+function renderWelcome(){
+  const name = (state.profile.name || '').trim();
+  const who = name ? '<bdi>' + esc(name) + '</bdi>' : '';
+  const title = name
+    ? L('Welcome, {n}!', 'Hoş geldin, {n}!', 'خوش اومدی، {n}!', '¡Te doy la bienvenida, {n}!').replace('{n}', who)
+    : L('Welcome!', 'Hoş geldin!', 'خوش اومدی!', '¡Te doy la bienvenida!');
+  return `<div class="fade-in fs-scr onb-welcome">
+    <div class="screen">
+      <div class="onb-top"><div class="wordmark">Farin<span>${ONB_APP.word}</span></div></div>
+      <div class="onb-wcard">
+        <h1 class="onb-wt" dir="auto">${title}</h1>
+        <p class="onb-wp" dir="auto">${L("Your roadmap is ready, built for your level and your goals. A few minutes a day is all it takes, and I'm right beside you, every step of the way.",
+          'Yol haritan hazır; seviyene ve hedeflerine göre kuruldu. Günde birkaç dakika yeter, ben de her adımda yanındayım.',
+          'نقشهٔ راهت آماده‌ست؛ درست بر اساس سطح و هدف‌های خودت. روزی چند دقیقه کافیه، منم قدم‌به‌قدم کنارتم.',
+          'Tu hoja de ruta está lista, hecha para tu nivel y tus objetivos. Con unos minutos al día basta, y yo estoy a tu lado en cada paso.')}</p>
+        <img class="onb-wfe" src="${feSrc('m-heart')}" alt="">
+      </div>
+    </div>
+    <div class="onb-foot"><button class="btn btn-primary fs-cta onb-cta" data-action="welcome-continue">${L("Let's go", 'Hadi başlayalım', 'بزن بریم', '¡Vamos!')}</button></div>
+  </div>`;
+}
 function renderDiagStep(){
   const step = state.diag.step;
   if(step===0) return renderDiagMotivation();
@@ -15266,34 +15325,37 @@ function renderDiagStep(){
   if(step===5) return renderDiagUnlock();
   return renderDashboard();
 }
-function diagQHead(n, title){
+function diagQHead(n, title, sub){
+  // Farin 2026-11-21 ("neater cleaner and less crowded"): Back and the language pill share one row, a small counter, the question,
+  // and the "pick up to 3" kind of instruction as a one-line hint instead of part of the question.
   return `${diagProgressBar(n, DIAG_TOTAL_STEPS)}
     <div class="screen">
-      <button class="back" style="margin-top:14px;" data-action="back">${ICONS.back} ${L('Back','Geri','برگشت', 'Volver')}</button>
-      <div class="row between" style="margin-top:6px;">
-        <div class="eyebrow">${L('Question','Soru','سوال', 'Pregunta')} ${n} ${L('of','/','از', 'de')} ${DIAG_TOTAL_STEPS}</div>
-        ${langToggle()}
-      </div>
-      <h2 class="display" style="font-size:21px; margin-top:6px;">${esc(title)}</h2>`;
+      <div class="onb-nav"><button class="back" data-action="back">${ICONS.back} ${L('Back','Geri','برگشت','Volver')}</button>${langToggle()}</div>
+      <div class="onb-eb">${L('Question','Soru','سوال','Pregunta')} ${n} ${L('of','/','از','de')} ${DIAG_TOTAL_STEPS}</div>
+      <h2 class="onb-h2">${esc(title)}</h2>${sub ? `<p class="onb-sub">${esc(sub)}</p>` : ''}`;
+}
+// one answer row (the approved selection row, .fs-opt): lead = the tile in front (icon / level letters), multi = a tick instead of a radio
+function onbRowHtml(action, value, lead, title, sub, on, multi, disabled){
+  return `<button class="fs-opt onb-row${on ? ' on' : ''}" data-action="${action}" data-value="${value}" aria-pressed="${on ? 'true' : 'false'}"${disabled ? ' disabled' : ''}>${lead || ''}<span class="fs-ot"><b>${esc(title)}</b>${sub ? `<small>${esc(sub)}</small>` : ''}</span><span class="fs-chk${multi ? ' multi' : ''}" aria-hidden="true">${on && multi ? ICONS.check : ''}</span></button>`;
+}
+function onbPickHint(){ return L('Pick up to 3.', 'En fazla 3 seç.', 'حداکثر ۳ مورد انتخاب کن.', 'Elige hasta 3.'); }
+function onbFootHtml(action, enabled){
+  return `<div class="onb-foot"><button class="btn btn-primary fs-cta onb-cta" data-action="${action}"${enabled ? '' : ' disabled'}>${L('Continue','Devam et','ادامه','Continuar')}</button></div>`;
 }
 function renderDiagMotivation(){
   const sel = state.diag.goals || [];
-  return `<div class="fade-in">
-    ${diagQHead(1, L("What's pulling you toward Spanish right now? Pick up to 3.","Şu anda seni İspanyolcaya yönelten ne? En fazla 3 seç.",'الان چه چیزی تو را به سمت اسپانیایی می‌کشد؟ حداکثر ۳ مورد انتخاب کن.','¿Qué te está acercando al español ahora mismo? Elige hasta 3.'))}
-      <div class="opt-list" style="margin-top:18px;">
+  const colors = {career:'#CB7D4D', everyday:'#C9978A', exam:'#8B7273', immigration:'#48796B', travel:'#4C6C82'};
+  return `<div class="fade-in fs-scr onb-q-scr onb-pinned">
+    ${diagQHead(1, L("What's pulling you toward Spanish right now?", "Şu anda seni İspanyolcaya yönelten ne?", "الان چه چیزی تو را به سمت اسپانیایی می‌کشد؟", "¿Qué te está acercando al español ahora mismo?"), onbPickHint())}
+      <div class="fs-opts onb-rows" role="group">
         ${MOTIVATION_OPTIONS.map(o=>{
           const isSel = sel.includes(o.value);
-          const atCap = sel.length>=3 && !isSel;
-          return `
-          <button class="fs-opt${isSel?' on':''}" data-action="diag-goal-toggle" data-value="${o.value}" aria-pressed="${isSel?'true':'false'}" ${atCap?'disabled':''} style="${atCap?'opacity:.4;':''}">
-            <span class="fs-gic" style="--c:${({career:'#CB7D4D', everyday:'#C9978A', exam:'#8B7273', immigration:'#48796B', travel:'#4C6C82'})[o.value] || '#7C5CFC'};">${ICONS[o.icon]}</span>
-            <span class="fs-ot"><b>${esc(L(o.label.en,o.label.tr,o.label.fa,o.label.es))}</b><small>${esc(L(o.sub.en,o.sub.tr,o.sub.fa,o.sub.es))}</small></span>
-            <span class="fs-chk multi" aria-hidden="true">${isSel ? ICONS.check : ''}</span>
-          </button>`;
+          return onbRowHtml('diag-goal-toggle', o.value, `<span class="fs-gic" style="--c:${colors[o.value] || '#7C5CFC'};">${ICONS[o.icon]}</span>`,
+            L(o.label.en,o.label.tr,o.label.fa,o.label.es), L(o.sub.en,o.sub.tr,o.sub.fa,o.sub.es), isSel, true, sel.length>=3 && !isSel);
         }).join('')}
       </div>
-      <button class="btn btn-primary" style="margin-top:18px; ${sel.length?'':'opacity:.4;'}" data-action="diag-goal-continue" ${sel.length?'':'disabled'}>${L('Continue','Devam et','ادامه','Continuar')}</button>
     </div>
+    ${onbFootHtml('diag-goal-continue', sel.length > 0)}
   </div>`;
 }
 /* ---- Placement test engine (Roadmap 2.0 Phase 1): originally replaced the old
@@ -15381,14 +15443,10 @@ function finishPlacementTest(test){
 // state.diag.level directly, same field unlock-submit/buildRoadmap already read
 // before and still read now — no downstream change needed.
 function renderDiagLevel(){
-  return `<div class="fade-in">
-    ${diagQHead(2, L('How would you describe your Spanish level?','İspanyolca seviyeni nasıl tarif edersin?','سطح اسپانیایی‌ات را چطور توصیف می‌کنی؟', '¿Cómo describirías tu nivel de español?'))}
-      <div class="opt-list" style="margin-top:18px;">
-        ${LEVEL_OPTIONS.map(o=>`
-          <button class="opt" data-action="diag-level" data-value="${o.value}">
-            <span class="opt-ic" style="font-weight:800; color:var(--cat-diag);">${o.value}</span>
-            <span class="opt-main">${esc(L(o.label.en,o.label.tr,o.label.fa, o.label.es))}<small style="display:block; margin-top:3px; font-weight:600; font-size:12.5px; color:var(--ink-soft); line-height:1.4;">${esc(L(o.sub.en,o.sub.tr,o.sub.fa, o.sub.es))}</small></span>
-          </button>`).join('')}
+  return `<div class="fade-in fs-scr onb-q-scr">
+    ${diagQHead(2, L("How would you describe your Spanish level?", "İspanyolca seviyeni nasıl tarif edersin?", "سطح اسپانیایی‌ات را چطور توصیف می‌کنی؟", "¿Cómo describirías tu nivel de español?"))}
+      <div class="fs-opts onb-rows" role="group">
+        ${LEVEL_OPTIONS.map(o=>onbRowHtml('diag-level', o.value, `<span class="onb-lv">${o.value}</span>`, L(o.label.en,o.label.tr,o.label.fa,o.label.es), L(o.sub.en,o.sub.tr,o.sub.fa,o.sub.es), false, false, false)).join('')}
       </div>
     </div>
   </div>`;
@@ -15414,45 +15472,33 @@ const TOPIC_OPTIONS = [
 ];
 function renderDiagTopics(){
   const sel = state.diag.topics || [];
-  return `<div class="fade-in">
-    ${diagQHead(3, L('What are your favorite topics? Pick up to 3.','En sevdiğin konular neler? En fazla 3 seç.',' موضوعات مورد علاقه‌ات چیه؟ حداکثر ۳ مورد انتخاب کن.','¿Cuáles son tus temas favoritos? Elige hasta 3.'))}
-      <div class="opt-list" style="margin-top:18px;">
+  return `<div class="fade-in fs-scr onb-q-scr onb-pinned">
+    ${diagQHead(3, L('What are your favorite topics?','En sevdiğin konular neler?','موضوعات مورد علاقه‌ات چیه؟','¿Cuáles son tus temas favoritos?'), onbPickHint())}
+      <div class="onb-grid" role="group">
         ${TOPIC_OPTIONS.map(o=>{
           const isSel = sel.includes(o.value);
           const atCap = sel.length>=3 && !isSel;
-          return `
-          <button class="opt ${isSel?'selected':''}" data-action="diag-topics-toggle" data-value="${o.value}" ${atCap?'disabled':''} style="${atCap?'opacity:.4;':''}">
-            <span class="opt-ic">${o.icon ? ICONS[o.icon] : o.emoji}</span>
-            <span class="opt-main">${esc(L(o.label.en,o.label.tr,o.label.fa, o.label.es))}</span>
-            ${isSel ? `<span style="margin-left:auto; flex-shrink:0; color:var(--accent-strong);">${ICONS.check}</span>` : ''}
-          </button>`;
+          return `<button class="fs-opt${isSel?' on':''}" data-action="diag-topics-toggle" data-value="${o.value}" aria-pressed="${isSel?'true':'false'}"${atCap?' disabled':''}><span class="fs-gic" style="--c:#7C5CFC;">${o.icon ? ICONS[o.icon] : o.emoji}</span><span class="fs-ot"><b>${esc(L(o.label.en,o.label.tr,o.label.fa,o.label.es))}</b></span><span class="fs-chk multi" aria-hidden="true"></span></button>`;
         }).join('')}
       </div>
-      <button class="btn btn-primary" style="margin-top:18px; ${sel.length?'':'opacity:.4;'}" data-action="diag-topics-continue" ${sel.length?'':'disabled'}>${L('Continue','Devam et','ادامه', 'Continuar')}</button>
     </div>
+    ${onbFootHtml('diag-topics-continue', sel.length > 0)}
   </div>`;
 }
 function renderDiagLearner(){
-  return `<div class="fade-in">
-    ${diagQHead(4, L('When you get something wrong, what helps most?','Bir şeyi yanlış yaptığında sana en çok ne yardımcı olur?','وقتی چیزی را اشتباه می‌کنی، چه چیزی بیشتر کمکت می‌کند؟', 'Cuando algo te sale mal, ¿qué te ayuda más?'))}
-      <div class="opt-list" style="margin-top:18px;">
-        ${LEARNER_OPTIONS.map(o=>`
-          <button class="opt" data-action="diag-learner" data-value="${o.value}">
-            <span class="opt-ic">${ICONS[o.icon]}</span>
-            <span class="opt-main">${esc(L(o.label.en,o.label.tr,o.label.fa, o.label.es))}</span>
-          </button>`).join('')}
+  return `<div class="fade-in fs-scr onb-q-scr">
+    ${diagQHead(4, L('When you get something wrong, what helps most?','Bir şeyi yanlış yaptığında sana en çok ne yardımcı olur?','وقتی چیزی را اشتباه می‌کنی، چه چیزی بیشتر کمکت می‌کند؟','Cuando algo te sale mal, ¿qué te ayuda más?'))}
+      <div class="fs-opts onb-rows" role="group">
+        ${LEARNER_OPTIONS.map(o=>onbRowHtml('diag-learner', o.value, `<span class="fs-gic" style="--c:#7C5CFC;">${ICONS[o.icon]}</span>`, L(o.label.en,o.label.tr,o.label.fa,o.label.es), '', false, false, false)).join('')}
       </div>
     </div>
   </div>`;
 }
 function renderDiagPriority(){
-  return `<div class="fade-in">
-    ${diagQHead(5, L('What trips you up the most?','Seni en çok ne zorluyor?','بیشتر چه چیزی گیرت می‌اندازد؟', '¿Qué es lo que más te cuesta?'))}
-      <div class="opt-list" style="margin-top:18px;">
-        ${PRIORITY_OPTIONS.map(o=>`
-          <button class="opt" data-action="diag-priority" data-value="${o.value}">
-            <span><span class="opt-main">${esc(L(o.label.en,o.label.tr,o.label.fa, o.label.es))}</span><br><span class="opt-sub">${esc(L(o.sub.en,o.sub.tr,o.sub.fa, o.sub.es))}</span></span>
-          </button>`).join('')}
+  return `<div class="fade-in fs-scr onb-q-scr">
+    ${diagQHead(5, L('What trips you up the most?','Seni en çok ne zorluyor?','بیشتر چه چیزی گیرت می‌اندازد؟','¿Qué es lo que más te cuesta?'))}
+      <div class="fs-opts onb-rows" role="group">
+        ${PRIORITY_OPTIONS.map(o=>onbRowHtml('diag-priority', o.value, '', L(o.label.en,o.label.tr,o.label.fa,o.label.es), L(o.sub.en,o.sub.tr,o.sub.fa,o.sub.es), false, false, false)).join('')}
       </div>
     </div>
   </div>`;
@@ -15461,17 +15507,14 @@ function renderDiagUnlock(){
   const showErr = state.viewParams && state.viewParams.showError;
   const pwErr = state.viewParams && state.viewParams.pwError;
   const keepsPassword = !!state.profile.loginId; // redoing the diagnostic: the existing password stays
-  return `<div class="fade-in">
+  return `<div class="fade-in fs-scr onb-q-scr onb-acct">
     ${diagProgressBar(6, DIAG_TOTAL_STEPS)}
     <div class="screen">
-      <button class="back" style="margin-top:14px;" data-action="back">${ICONS.back} ${L('Back','Geri','برگشت', 'Volver')}</button>
-      <div class="row between" style="margin-top:6px;">
-        <div class="eyebrow">${L('Almost there!','Neredeyse bitti!','تقریباً رسیدیم!', '¡Ya casi!')}</div>
-        ${langToggle()}
-      </div>
-      <h2 class="display" style="font-size:21px; margin-top:6px;">${L('One last thing and you\'re in','Son bir adım ve içeridesin','یک قدم دیگر و وارد می‌شوی', 'Un último paso y ya estás dentro')}</h2>
-      <p style="color:var(--ink-soft); font-size:13.5px; margin-top:8px;">${keepsPassword ? L('Just your name and the whole app swings open — free, right now, no catch.', 'Sadece adın yeter, tüm uygulama açılsın — ücretsiz, hemen, hiçbir gizli şart yok.', 'فقط اسمت را بگو تا کل اپ باز شود — رایگان، همین الان، بدون هیچ شرطی.', 'Solo tu nombre y toda la app se abre — gratis, ahora mismo, sin trampa.') : L('Just your name and a password, and the whole app swings open — free, right now, no catch.', 'Sadece adın ve bir şifre yeter, tüm uygulama açılsın — ücretsiz, hemen, hiçbir gizli şart yok.', 'فقط اسمت و یک رمز را بگو تا کل اپ باز شود — رایگان، همین الان، بدون هیچ شرطی.', 'Solo tu nombre y una contraseña, y toda la app se abre — gratis, ahora mismo, sin trampa.')}</p>
-      <div class="stack" style="margin-top:18px;">
+      <div class="onb-nav"><button class="back" data-action="back">${ICONS.back} ${L('Back','Geri','برگشت','Volver')}</button>${langToggle()}</div>
+      <div class="onb-eb">${L('Last step','Son adım','قدم آخر','Último paso')}</div>
+      <h2 class="onb-h2">${L("One last thing and you're in",'Son bir adım ve içeridesin','یک قدم دیگر و وارد می‌شوی','Un último paso y ya estás dentro')}</h2>
+      <p class="onb-sub">${keepsPassword ? L('Just your name, and the whole app opens. Free, no catch.','Sadece adın yeter, tüm uygulama açılsın. Ücretsiz, hiçbir gizli şart yok.','فقط اسمت را بگو تا کل اپ باز شود. رایگان، بدون هیچ شرطی.','Solo tu nombre y toda la app se abre. Gratis, sin trampa.') : L('Your name, a password and your number, and the whole app opens. Free, no catch.','Adın, bir şifre ve numaran yeter, tüm uygulama açılsın. Ücretsiz, hiçbir gizli şart yok.','اسمت، یک رمز و شماره‌ات را بگو تا کل اپ باز شود. رایگان، بدون هیچ شرطی.','Tu nombre, una contraseña y tu número, y toda la app se abre. Gratis, sin trampa.')}</p>
+      <div class="stack">
         <div>
           <label class="field-label">${L('What is your beautiful name?','Senin güzel adın ne?','اسم زیبای تو چیست؟', '¿Cuál es tu hermoso nombre?')}</label>
           <input class="name-input" id="unlock-name" type="text" placeholder="${L('First name','Adın','نام', 'Nombre')}" value="${esc(state.viewParams.name || state.profile.name || '')}" />
@@ -30369,6 +30412,7 @@ function renderQuizResults(){
 /* ============================= SCREENS TABLE ============================= */
 const screens = {
   'diagnostic-intro': renderDiagIntro,
+  'welcome': renderWelcome,
   'restore-code': renderRestoreCode,
   'diagnostic-step': renderDiagStep,
   'privacy-policy': renderPrivacyPolicy,
@@ -32001,9 +32045,13 @@ const HANDLERS = {
       save();
       if(phone){ contactSavePhone(phone, 'signup'); signupPhoneDraft = ''; }
       signupPromoDraft = false;
-      if(!courseLinkLand()) go('dashboard');
-      showSplash();
-      if(!prev.completedDiagnostic && !prev.joinedAt) setTimeout(()=>{ try{ notifAfterSignup(); }catch(err){} }, 400);   // the notifications question (2026-11-16)
+      const firstTime = !prev.completedDiagnostic && !prev.joinedAt;
+      if(firstTime && !courseLinkPending()){ go('welcome'); }   // the welcome screen (Farin 2026-11-21); 'welcome-continue' opens Home and asks about notifications
+      else {
+        if(!courseLinkLand()) go('dashboard');
+        showSplash();
+        if(firstTime) setTimeout(()=>{ try{ notifAfterSignup(); }catch(err){} }, 400);   // the notifications question (2026-11-16)
+      }
     };
     if(keepLogin){ finish(null); return; }
     farinPwBusy = true; state.viewParams = {name}; render();
@@ -32018,6 +32066,11 @@ const HANDLERS = {
     }).catch(()=>{   // name + number + password are all required: no account until the password is saved (Farin 2026-11-16)
       farinPwBusy = false; state.viewParams = {pwError:'network', name}; render();
     });
+  },
+  'welcome-continue'(){
+    navHistory.length = 0;   // Back on Home never returns to the welcome screen
+    go('dashboard');
+    setTimeout(()=>{ try{ notifAfterSignup(); }catch(err){} }, 400);   // the notifications question (2026-11-16), after the welcome
   },
   'retake-diagnostic'(){
     state.diag = {step:0, goals:[], level:null, topics:[], learnerType:null, priorityArea:null, test:null};

@@ -3092,6 +3092,9 @@
   .rm2-node-current::before{content:''; position:absolute; top:-65%; left:-45%; width:32%; height:240%; background:linear-gradient(120deg, transparent, rgba(255,255,255,.75), transparent); transform:rotate(16deg); animation:rm2-shine 2.7s ease-in-out infinite; pointer-events:none;}
   @keyframes rm2-shine{0%{left:-45%;} 55%,100%{left:135%;}}
   .rm2-node-done{filter:saturate(.55); opacity:.75;}
+  /* 2026-11-21 (Farin): a finished card is just the dimmed card: no strikethrough, no tick, no icon; cards carry the label line and the title only */
+  .rm2-node-done .rm2-title{text-decoration:none;}
+  .rm2-node .rm2-title{overflow-wrap:anywhere;}
   /* Locked steps (Farin 2026-10-18, "make the current card a bit bigger and lock the others with
      lower opacity"): every not-done card after the current one is dimmed and inert (no study action,
      no sparkles, chevron hidden); a tap shows one companion hint. The current card rests at
@@ -9635,6 +9638,8 @@ function load(){
     if(!merged.progress.stageChecks || typeof merged.progress.stageChecks !== 'object' || Array.isArray(merged.progress.stageChecks)) merged.progress.stageChecks = {};
     // Roadmap report (2026-11-16): {"A1.1":{v, lv, date, n, area, strong, weak, hard, ...}} + pageStart {lv, date}
     if(!merged.progress.roadmapReports || typeof merged.progress.roadmapReports !== 'object' || Array.isArray(merged.progress.roadmapReports)) merged.progress.roadmapReports = {};
+    // Page report card (2026-11-21): {"A1.1": "2026-11-21"} once the learner opened that page's report from its roadmap card
+    if(!merged.progress.roadmapReportSeen || typeof merged.progress.roadmapReportSeen !== 'object' || Array.isArray(merged.progress.roadmapReportSeen)) merged.progress.roadmapReportSeen = {};
     // LXD READY-6 R2: carried item per first-two grammar node, {"A2.1":{nodeItemId: carriedItemId}}
     if(!merged.progress.carryAsked || typeof merged.progress.carryAsked !== 'object' || Array.isArray(merged.progress.carryAsked)) merged.progress.carryAsked = {};
     if(!merged.progress.storyAnswers || typeof merged.progress.storyAnswers !== 'object') merged.progress.storyAnswers = {};
@@ -10451,17 +10456,12 @@ function calibOfferHtml(){
     + `<div class="cb-btns"><button class="cb-btn" data-action="calib-move">${r.dir === 'up' ? L(`Move up to ${lab}`, `${lab} seviyesine geç`, `برو به ${lab}`, `Subir a ${lab}`) : L(`Start at ${lab}`, `${lab} seviyesinden başla`, `از ${lab} شروع کن`, `Empezar en ${lab}`)}</button><button class="cb-btn alt" data-action="calib-stay">${L('Stay here','Burada kal','همین‌جا بمان','Quedarme aquí')}</button></div>`;
 }
 function companionBubbleContent(){
-  if(isComeback()){
-    const name = '<bdi>'+esc(state.profile.name||'')+'</bdi>';
-    const hasCards = Object.keys(state.progress.srs || {}).some(id=>srsSource(id, state.progress.srs[id].kind));
-    return (companionLine('comeback') || L(`Good to see you, ${name}!`, `Seni görmek çok güzel, ${name}!`, `چه خوب که دوباره می‌بینمت، ${name}!`, `¡Qué alegría verte, ${name}!`)) + ' '
-      + (hasCards ? (companionLine('warmup') || L('Shall we warm up with 3 of your souvenirs?','3 hatıranla ısınalım mı?','با ۳ تا از یادگاری‌هایت گرم کنیم؟','¿Calentamos con 3 de tus recuerdos?'))
-          + `<div class="cb-btns"><button class="cb-btn" data-action="start-shuffle" data-mode="warm">${L('Warm up','Isın','گرم کنیم','Calentar')}</button></div>`
-        : L('Your roadmap is right where you left it.','Yol haritan bıraktığın yerde.','نقشه‌ی راهت همان‌جایی است که رهایش کردی.','Tu hoja de ruta está donde la dejaste.'));
-  }
-  // Pack for class (FCgBqtei): a new Club session souvenir is announced once, quietly, in the normal bubble.
-  // S1: a pending calibration offer comes first (ALYtdMw2 d).
-  return calibOfferHtml() || clubArrivalHtml() || companionPlanHtml() || null;
+  // Off since 2026-11-21 (Farin: "the pop up message that comes and say how many days a week or lets go for quick or long lesson
+  // be deleted, though its still there"): no plan / week-goal / comeback / calibration / club-arrival offer in the Home bubble.
+  // The bubble only answers a real action now: the locked-step hint ('roadmap-locked') and "Farin answered your message"
+  // (msgMaybeTip); announcements have their own pop-up. The days-a-week setting still lives quietly in the week chip's sheet
+  // (openRhythmSheet); weekGoal() defaults to 3 when it was never chosen.
+  return null;
 }
 function checkBadges(){
   BADGES.forEach(b=>{
@@ -12046,7 +12046,7 @@ function songSkyHtml(){
 function songCardFaceHtml(item){
   const s = songById(item.refId);
   if(!s) return '';
-  return `<div class="song-card-tag"><img src="logo-fe-cutout.png" alt="">${L('Original FEschool song','Özgün FEschool şarkısı','آهنگ اورجینال FEschool','Canción original de FEschool')}</div>`;
+  return `<div class="song-card-tag">${L('Original FEschool song','Özgün FEschool şarkısı','آهنگ اورجینال FEschool','Canción original de FEschool')}</div>`;
 }
 
 /* ============================= GAMIFY EVERY CARD TYPE (2026-10-07, Trello tobT7nwI) =============================
@@ -14148,25 +14148,9 @@ function rmTopicText(it){
 // Roadmap cards only ever show Farin full-body (Farin 2026-10-28): a head/face/mood asset falls back to a standing pose.
 function rmFarinBody(p){ return /^(face|head|mood)-/.test(String(p || '')) ? 'body-34' : p; }
 function roadmapCardArt(rm){
-  const art = rm.map(it=>{ const p = gamePosterSrc(it); return p ? {poster:p} : null; });
-  const free = i => i >= 0 && i < rm.length && !art[i] && !RM_OWN_ART[rm[i].type];
-  const deco = i => !!(art[i] && !art[i].poster);
-  const fits = i => free(i) && !deco(i - 1) && !deco(i + 1);
-  const put = (i, a) => { art[i] = a; return i; };
-  let first = -1; for(let i = 0; i < Math.min(4, rm.length); i++) if(fits(i)){ first = put(i, {farin:'body-front'}); break; }
-  const midAt = rm.length / 2;
-  const games = rm.map((it,i)=>i).filter(i=>rm[i].type === 'game' && fits(i)).sort((x,y)=>(rm[y].pos === 3) - (rm[x].pos === 3) || Math.abs(x - midAt) - Math.abs(y - midAt));
-  const mid = games.length ? games[0] : rm.map((it,i)=>i).filter(fits).sort((x,y)=>Math.abs(x - midAt) - Math.abs(y - midAt))[0];
-  if(mid != null && mid > first + 1) put(mid, {farin:farinOutfit(rmTopicText(rm[mid]), rm[mid].refId)});
-  for(let i = rm.length - 1; i >= Math.max(0, rm.length - 4); i--) if(fits(i) && i > (mid == null ? first : mid) + 1){ put(i, {farin:'dog-hug', wide:true}); break; }   // FE holding a heart since 2026-11-19 (was Farin hugging her dog). Farin 2026-10-28: never a head on the roadmap, a happy full-body pose
-  art.forEach((a, i)=>{ if(a && a.farin) art[i] = null; });   // 2026-11-20: no FE on the cards; the roadmap's one FE is in the "You're here" circle
-  let items = 0;
-  rm.forEach((it, i)=>{
-    if(items >= 5 || !fits(i)) return;
-    const t = rmTopicText(it), rule = FARIN_ITEM_RULES.find(([, ok])=>ok(it, t));
-    if(rule){ put(i, {item:rule[0]}); items++; }
-  });
-  return art;
+  // Posters only (Farin 2026-11-21: "dont put symbols on cards, the games have their posters and the simple cards be just the
+  // color"): no FE, no Farin, no sheet items on the cards any more.
+  return rm.map(it=>{ const p = gamePosterSrc(it); return p ? {poster:p} : null; });
 }
 function learnerCharKey(){
   const p = state.profile || {};
@@ -15129,6 +15113,8 @@ function render(){
   runPendingFx();
   maybeCelebrate();
   try{ maybeShowPageKept(); }catch(e){}
+  // Home opens on the card to play now (Farin 2026-11-21). After go()'s own scrollTo(0,0), once per render, never on a scroll.
+  if(state.view === 'dashboard' && !ui.rmScrollBusy) requestAnimationFrame(()=>{ if(!ui.rmScrollBusy) roadmapScrollToCurrent(false); });
 }
 function langToggle(){
   // 2026-10-27 (Farin): one language control in the header = the learning language's flag + the interface language code.
@@ -16108,7 +16094,7 @@ function renderDashboard(){
    finished circle fills, then the companion hops to the new current seam.
    ui.advanceFrom is transient (never saved): it is worked out by comparing the
    current index with the one this roadmap showed last time it was drawn. */
-const ui = {advanceFrom:null, rmLast:null, holdAdvance:false};
+const ui = {advanceFrom:null, rmLast:null, holdAdvance:false, rmScrollBusy:false};
 /* Gamification v3 build 2 (M5 step 1, no new art): the companion carries the current
    journal cover (M2) and collects a pin for every finished level page (v2 pins). */
 function companionLevelPins(){ return finishedJournalLevels(); }
@@ -16139,7 +16125,7 @@ function roadmapAdvanceFrom(currentIndex){
   ui.advanceFrom = (last && last.key === key && last.idx >= 0 && (currentIndex === -1 || currentIndex > last.idx)) ? last.idx : null;
   return ui.advanceFrom;
 }
-function runRoadmapAdvance(currentIndex, fromIdx, oldFill, newFill){
+function runRoadmapAdvance(currentIndex, fromIdx){
   const key = roadmapLevelKey();
   // A celebration overlay is about to cover the roadmap (a check-off on the
   // roadmap itself): keep the old position so the animation plays once it closes.
@@ -16149,29 +16135,30 @@ function runRoadmapAdvance(currentIndex, fromIdx, oldFill, newFill){
   ui.advanceFrom = null;
   const pins = document.querySelectorAll('.rm2-seam-ic');
   const finished = pins[fromIdx];
-  const comp = document.querySelector('.rm2-companion');
-  if(reducedMotion()){
-    const cur = document.querySelector('.rm2-node-current');
-    if(cur && cur.scrollIntoView) cur.scrollIntoView({block:'center'});
-    return;
-  }
-  // Start the scene where the learner left off: the finished node, centred.
-  if(finished && finished.scrollIntoView) finished.scrollIntoView({block:'center', behavior:'auto'});
-  // No hop down the roadmap (Farin 2026-10-08): the companion is simply drawn at the new seam.
+  if(reducedMotion() || !finished){ roadmapScrollToCurrent(false); return; }
+  // Start the scene where the learner left off: the finished circle, centred. It pops (it is already drawn as a solid disc —
+  // 2026-11-21, no pie fill any more), then the page glides to the new current card at the top of the screen.
+  ui.rmScrollBusy = true;
+  requestAnimationFrame(()=>finished.scrollIntoView({block:'center', behavior:'auto'}));   // after go()'s own scrollTo(0,0)
   setTimeout(()=>{
-    if(!finished) return;
-    const fill = anim(finished, [{'--rm2-fill':oldFill+'%'}, {'--rm2-fill':newFill+'%'}], {duration:600, easing:'ease-out'});
-    const pop = ()=>{
-      anim(finished, [{transform:'scale(1)'}, {transform:'scale(1.15)'}, {transform:'scale(1)'}], {duration:240, easing:'ease-out'});
-      const c = centerOf(finished);
-      sparkBurst(c.x, c.y, 6, 'var(--clay-orange-deep)', 54);
-    };
-    if(fill) fill.onfinish = pop; else pop();
+    anim(finished, [{transform:'scale(1)'}, {transform:'scale(1.15)'}, {transform:'scale(1)'}], {duration:240, easing:'ease-out'});
+    const c = centerOf(finished);
+    sparkBurst(c.x, c.y, 6, 'var(--clay-orange-deep)', 54);
   }, 250);
-  setTimeout(()=>{
-    const cur = document.querySelector('.rm2-node-current') || document.querySelector('.rm2-cap-end');
-    if(cur && cur.scrollIntoView) cur.scrollIntoView({block:'center', behavior:'smooth'});
-  }, 1400);
+  setTimeout(()=>{ ui.rmScrollBusy = false; roadmapScrollToCurrent(true); }, 1100);
+}
+// Home opens on the card to play now (Farin 2026-11-21: "make the roadmap scroll down to the card that should be played now ...
+// the roadmap is scrollable and the user can scroll up and see the previous cards too"): the current card's circle sits at the
+// top of the screen; the hero, Premium courses and the earlier cards stay above it. Only ever called from a render (open, back,
+// after a card), never while the learner scrolls. With nothing left to play it shows the page report card (the next-level
+// button is right under it).
+function roadmapScrollToCurrent(smooth){
+  if(state.view !== 'dashboard') return false;
+  const el = document.querySelector('.rm2-seam-ic.roadmap-pin-current') || document.querySelector('.rm2-node-current') || document.querySelector('.rm2-report');
+  if(!el) return false;
+  const top = Math.max(0, el.getBoundingClientRect().top + (window.scrollY || window.pageYOffset || 0) - 14);
+  try{ window.scrollTo({top, behavior:smooth ? 'smooth' : 'auto'}); }catch(e){ window.scrollTo(0, top); }
+  return true;
 }
 // End goal warms up with progress p (0..1).
 function roadmapGoalHtml(p, allDone){
@@ -16875,100 +16862,88 @@ function renderRoadmapCard(p){
   };
   const doneCount = roadmap.filter(it=>isRoadmapNodeDone(it)).length;
   const allDone = roadmap.every(it=>!rmRequired(it) || isRoadmapNodeDone(it));
-  const currentIndex = roadmap.findIndex(it=>rmRequired(it) && !isRoadmapNodeDone(it));
+  // Page report card (Farin 2026-11-21: "the end of each roadmap should be a report analysis card for each user"): one extra card
+  // after the last node, index roadmap.length. Locked until every card above it is done, then it is the current card; opening it
+  // builds this page's Roadmap Report (rrBuild, kept in progress.roadmapReports) and marks it seen (progress.roadmapReportSeen),
+  // which is what finishes it. It is not a roadmap node: currentRoadmap(), the Home ring, souvenirs and the stage check ignore it.
+  const reportIdx = roadmap.length, reportDone = rrPageReportSeen();
+  const firstOpen = roadmap.findIndex(it=>rmRequired(it) && !isRoadmapNodeDone(it));
+  const currentIndex = firstOpen >= 0 ? firstOpen : (allDone && !reportDone ? reportIdx : -1);
   const cardArt = roadmapCardArt(roadmap);
-  // Lock rule (Farin 2026-10-18, "lets just for now make the current card a bit bigger and lock
-  // the others with lower opacity"): a node is locked when it is not done AND it comes after the
-  // current one. Done nodes after the current (finished out of order) stay done, never locked.
-  // Gamification v2 §7: returning after a node — fill the finished circle, hop the companion.
+  // Lock rule (Farin 2026-10-18): a step is locked when it is not done AND it comes after the current one.
+  // Returning after a node: the finished circle pops, then the page scrolls to the new current card (runRoadmapAdvance).
   const advFrom = roadmapAdvanceFrom(currentIndex);
-  const advFill = advFrom != null ? Math.round(roadmap.slice(0, advFrom+1).filter(it=>isRoadmapNodeDone(it)).length/roadmap.length*100) : 0;
-  queueFx(()=>runRoadmapAdvance(currentIndex, advFrom, 0, advFill));
+  queueFx(()=>runRoadmapAdvance(currentIndex, advFrom));
+  // Card colours (Farin 2026-11-21: "after changing our character to FE we have the purple and white as main colors, after that the
+  // orange that we had and after that the rest colors"): purple = grammar, story, dialogue, watch/listen, speaking session, song, page
+  // report; white (purple text) = vocab, slang, writing practice, speaking practice; orange = Vocab Box review; games keep their
+  // posters and purple circles (half the cards are games: gold discs on all of them would drown the brand); the unfinished song card keeps its own purple-to-orange gradient (.song-node).
+  // No symbols on the cards (no tick, no chevron, no type icon, no sheet item, no sparkles): label line + title only.
+  const RM_LOOK = {
+    purple:{bg:'linear-gradient(150deg, #7C5CFC, #5A3FD6)', ink:'#fff', sub:'rgba(255,255,255,.86)', ring:'#7C5CFC', pillBg:'#fff', pillInk:'#5A3FD6', inset:'rgba(255,255,255,.55)'},
+    white:{bg:'var(--bg-elevated)', ink:'var(--fs-purple-ink)', sub:'color-mix(in srgb, var(--fs-purple-ink) 70%, var(--ink-soft))', ring:'#7C5CFC', pillBg:'#7C5CFC', pillInk:'#fff', inset:'color-mix(in srgb, #7C5CFC 45%, transparent)', border:'1.5px solid color-mix(in srgb, #7C5CFC 24%, var(--bg-elevated))'},
+    orange:{bg:'linear-gradient(150deg, #FFB65F, #FFA53D)', ink:'#3B2300', sub:'rgba(59,35,0,.78)', ring:'#FFA53D', pillBg:'#3B2300', pillInk:'#fff', inset:'rgba(255,255,255,.55)'},
+    game:{bg:'linear-gradient(150deg, #7C5CFC, #5A3FD6)', ink:'#fff', sub:'rgba(255,255,255,.86)', ring:'#7C5CFC', pillBg:'#fff', pillInk:'#5A3FD6', inset:'rgba(255,255,255,.55)'}   // a game without a poster (none today) would be a purple card
+  };
+  const RM_LOOK_OF = {grammar:'purple', story:'purple', dialogue:'purple', media:'purple', session:'purple', song:'purple', vocab:'white', slang:'white', writing:'white', speaking:'white', box:'orange', game:'game'};
+  const lookOf = item => RM_LOOK[item ? (RM_LOOK_OF[item.type] || 'purple') : 'purple'];
+  const reportTitle = L('Page report','Sayfa karnesi','کارنامهٔ صفحه','Informe de la página');
 
   function pinFn(idx){
-    const item = roadmap[idx], m = TYPE_META[item.type], checked = isRoadmapNodeDone(item);
+    const isReport = idx === reportIdx;
+    const item = isReport ? null : roadmap[idx], checked = isReport ? reportDone : isRoadmapNodeDone(item);
     const isCurrent = idx === currentIndex;
-    const locked = !checked && rmRequired(item) && currentIndex >= 0 && idx > currentIndex;
-    const isGame = item.type === 'game';
-    // Real completion (quiz/story finished, or a game — see roadmapNodeAutoDone)
-    // vs. a type that only ever has the manual toggle (session/writing/speaking).
-    const autoDone = roadmapNodeAutoDone(item) === true;
-    const color = 'var(--cat-'+m.c+')';
-    // Roadmap 2.0 Phase 4 polish: once something is really done, its pin isn't a
-    // checkbox to fiddle with — a tap that silently did nothing (or worse,
-    // couldn't actually "un-complete" a finished quiz) is the same confusing
-    // no-op problem games already avoided in Phase 3 (see isRoadmapNodeDone).
-    // Only offer the manual toggle for types/states with no real completion
-    // signal to fall back on.
-    let action, dataAttrs, ariaLabel;
-    if(isGame){
+    const locked = !checked && currentIndex >= 0 && idx > currentIndex && (isReport || rmRequired(item));
+    const color = lookOf(item).ring;
+    // Real completion (quiz/story finished, or a game) vs. a type that only ever has the manual toggle (session/writing/speaking).
+    let action = null, dataAttrs = '', ariaLabel = L('Completed','Tamamlandı','تکمیل‌شده','Completado');
+    if(isReport){
+      action = 'open-page-report';
+      ariaLabel = reportTitle;
+    } else if(item.type === 'game'){
       action = 'start-game';
       dataAttrs = 'data-set-id="'+(item.setId||'')+'" data-kind="'+(item.gameKind||'')+'" data-ref-id="'+item.refId+'" data-goal="'+(item.goal||'')+'"';
-      ariaLabel = L('Play','Oyna','بازی کن', 'Jugar');
-    } else if(autoDone){
-      action = null;
-      dataAttrs = '';
-      ariaLabel = L('Completed','Tamamlandı','تکمیل‌شده', 'Completado');
-    } else {
+      ariaLabel = L('Play','Oyna','بازی کن','Jugar');
+    } else if(roadmapNodeAutoDone(item) !== true){
       action = 'toggle-roadmap-item';
       dataAttrs = 'data-id="'+roadmapNodeId(item)+'"';
-      ariaLabel = L('Mark done','Tamamlandı say','علامت‌زدن به‌عنوان انجام‌شده', 'Marcar como hecho');
+      ariaLabel = L('Mark done','Tamamlandı say','علامت‌زدن به‌عنوان انجام‌شده','Marcar como hecho');
     }
     // Locked step: no action at all (not even the manual toggle), dimmed like its card.
     if(locked){ action = null; dataAttrs = ''; }
-    // Roadmap 2.0 redesign (2026-09-29, Farin): this is the "symbol sitting between
-    // the cards" badge — a chunky 60px circle per section type (book/dumbbell/mic/
-    // etc, see TYPE_META), rendered by stackedRoadmap() inside a zero-height
-    // .rm2-seam wrapper so it visually straddles the seam between the card above and
-    // the card below. Current step gets the existing ping animation plus a slightly
-    // stronger ring so it reads as the "shiny" one even at a glance.
-    // NB: color here is a `var(--cat-x)` reference, not a literal hex — appending a
-    // hex alpha suffix directly to it (e.g. `${color}88`) is invalid CSS and silently
-    // drops the whole declaration (a pre-existing bug in this file's older code, e.g.
-    // the ARCHETYPE_COLOR-based header gradient). color-mix() is the fix that still
-    // resolves the CSS variable correctly, incl. its light/dark theme value.
-    const glowRing = `color-mix(in srgb, ${color} 22%, transparent)`;
-    const glowStrong = `color-mix(in srgb, ${color} 60%, transparent)`;
-    const doneGlow = `color-mix(in srgb, ${color} 55%, transparent)`;
-    // 2026-09-30, Farin: "the circles above each card nothing in them, just each
-    // session that is done the next circle is more complete with color, so at the
-    // end of the roadmap we have a full circle". No icon/number any more: a done
-    // circle is filled (conic) to the share of the roadmap completed up to it, so
-    // the fills grow step by step and the last one is a full disc.
-    const doneUpTo = roadmap.slice(0, idx+1).filter(it=>isRoadmapNodeDone(it)).length;
-    const fillPct = checked ? Math.round(doneUpTo/roadmap.length*100) : 0;
-    const circleBg = fillPct>=100 ? color : (fillPct>0 ? `conic-gradient(${color} 0 ${fillPct}%, var(--bg-elevated) ${fillPct}% 100%)` : 'var(--bg-elevated)');
-    const fillVar = (idx === advFrom && fillPct>0) ? `--rm2-fill:${fillPct}%;` : '';
-    const circleBgFinal = fillVar ? `conic-gradient(${color} 0 var(--rm2-fill), var(--bg-elevated) var(--rm2-fill) 100%)` : circleBg;
-    return `<button class="rm2-seam-ic ${isCurrent?'roadmap-pin-current':''}" ${action?('data-action="'+action+'"'):'disabled'} ${dataAttrs} aria-label="${ariaLabel}" style="width:60px; height:60px; border-radius:50%; ${locked?'opacity:.45; ':''}${fillVar}background:${isCurrent ? `color-mix(in srgb, ${color} 20%, var(--bg-elevated))` : circleBgFinal}; border:${isCurrent?'5px':'4px'} solid ${color}; display:flex; align-items:center; justify-content:center; box-shadow:${isCurrent?`0 0 0 4px ${glowRing}, 0 8px 18px -4px ${glowStrong}`:(checked?`0 6px 14px -3px ${doneGlow}, inset 0 2px 3px rgba(255,255,255,.35)`:'0 5px 12px -3px rgba(0,0,0,.25)')}; cursor:${action?'pointer':'default'}; padding:0;">${isCurrent ? `<img class="rm2-here-fe" src="${feGoalSrc(learnerCharKey())}" alt="" decoding="async">` : ''}
-    </button>`;
+    // The circles (Farin 2026-11-21: the part-filled pie "seems confusing"): a finished card's circle is a solid disc in the card's
+    // colour, an unplayed one is an empty ring, the current one is the ring with FE inside on a light tint. Nothing else in them.
+    // NB: color may be a var(--cat-x) reference, so alpha goes through color-mix(), never a hex suffix.
+    const bg = checked ? color : (isCurrent ? `color-mix(in srgb, ${color} 20%, var(--bg-elevated))` : 'var(--bg-elevated)');
+    const shadow = isCurrent
+      ? `0 0 0 4px color-mix(in srgb, ${color} 22%, transparent), 0 8px 18px -4px color-mix(in srgb, ${color} 60%, transparent)`
+      : (checked ? `0 6px 14px -3px color-mix(in srgb, ${color} 55%, transparent)` : '0 5px 12px -3px rgba(0,0,0,.25)');
+    return `<button class="rm2-seam-ic${isCurrent?' roadmap-pin-current':''}${checked?' rm2-pin-done':''}${isReport?' rm2-pin-report':''}" ${action?('data-action="'+action+'"'):'disabled'} ${dataAttrs} aria-label="${esc(ariaLabel)}" style="width:60px; height:60px; border-radius:50%; ${locked?'opacity:.45; ':''}background:${bg}; border:${isCurrent?'5px':'4px'} solid ${color}; display:flex; align-items:center; justify-content:center; box-shadow:${shadow}; cursor:${action?'pointer':'default'}; padding:0;">${isCurrent ? `<img class="rm2-here-fe" src="${feGoalSrc(learnerCharKey())}" alt="" decoding="async">` : ''}</button>`;
   }
 
   function cardFn(idx){
-    const item = roadmap[idx], m = TYPE_META[item.type], checked = isRoadmapNodeDone(item);
-    const art = cardArt[idx] || null, poster = art && art.poster;
-    const isSession = item.type === 'session';
-    const isGame = item.type === 'game';
+    const isReport = idx === reportIdx;
+    const item = isReport ? null : roadmap[idx], m = isReport ? null : TYPE_META[item.type];
+    const checked = isReport ? reportDone : isRoadmapNodeDone(item);
+    const art = isReport ? null : (cardArt[idx] || null), poster = art && art.poster;
+    const isSession = !isReport && item.type === 'session';
+    const isGame = !isReport && item.type === 'game';
     const isCurrent = idx === currentIndex;
-    const locked = !checked && rmRequired(item) && currentIndex >= 0 && idx > currentIndex;
-    const color = 'var(--cat-'+m.c+')';
-    // Goal-label gold highlight (2026-09-29, Farin) — see the .goal-label-gold
-    // CSS comment above .rm2-track. Built as HTML here (not a plain string
-    // through esc()) so only the goal-name part gets wrapped in the gold pill;
-    // the " · <type label>" part keeps the plain subtitle-color styling.
-    const hasGoalLabel = !isSession && item.goal && GOALS_META[item.goal];
-    const subtitleHtml = isSession
-      ? esc(L('Recommended — see prep, then message on WhatsApp',"Önerilir — önce hazırlığa bak, sonra WhatsApp'tan mesaj at",'پیشنهادی — اول آماده‌سازی را ببین، بعد در واتس‌اپ پیام بده','Recomendado — mira la preparación y luego escribe por WhatsApp'))
-      : (hasGoalLabel
-          ? `<span class="goal-label-gold">${esc(goalMetaLabel(item.goal))}<span class="sparkle" style="top:-4px; right:-5px; left:auto; width:5px; height:5px; animation-delay:.3s;"></span></span> · ${esc(m.label)}`
-          : esc(item.type === 'song' && songById(item.refId) ? songSubLabel(songById(item.refId)) : m.label));
-    // Gamification v2 (Journey Journal, approved 2026-09-30): card faces carry no
-    // gamification labels at all — the v1 "+10 XP" chip was removed (Farin: it
-    // "ruined the design of the card"). XP still accumulates silently in
-    // state.progress.xp; the fun lives in completion moments/souvenirs instead.
+    const locked = !checked && currentIndex >= 0 && idx > currentIndex && (isReport || rmRequired(item));
+    const look = lookOf(item);
+    // Label line: goal · type, plain text (the gold goal pill went with the other card decorations, 2026-11-21).
+    let subtitleHtml;
+    if(isReport) subtitleHtml = esc(displayLevel(p) + ' · ' + L('Report','Karne','کارنامه','Informe'));
+    else if(isSession) subtitleHtml = esc(L('Recommended — see prep, then message on WhatsApp',"Önerilir — önce hazırlığa bak, sonra WhatsApp'tan mesaj at",'پیشنهادی — اول آماده‌سازی را ببین، بعد در واتس‌اپ پیام بده','Recomendado — mira la preparación y luego escribe por WhatsApp'));
+    else if(item.goal && GOALS_META[item.goal]) subtitleHtml = esc(goalMetaLabel(item.goal)) + ' · ' + esc(m.label);
+    else subtitleHtml = esc(item.type === 'song' && songById(item.refId) ? songSubLabel(songById(item.refId)) : m.label);
+    const title = isReport ? reportTitle : nodeTitle(item);
     let studyOpenTag, studyCloseTag;
     const studyStyle = 'display:block; width:100%; text-align:start; padding:0; background:none; border:none; color:inherit; font:inherit; cursor:pointer;';
-    if(isSession){
+    if(isReport){
+      studyOpenTag = '<button class="roadmap-study" data-action="open-page-report" style="'+studyStyle+'">';
+      studyCloseTag = '</button>';
+    } else if(isSession){
       studyOpenTag = '<button class="roadmap-study" data-action="nav" data-view="session-prep" data-idx="'+idx+'" style="'+studyStyle+'">';
       studyCloseTag = '</button>';
     } else if(item.type==='grammar'){
@@ -17006,99 +16981,20 @@ function renderRoadmapCard(p){
       studyOpenTag = '<div class="roadmap-study" aria-disabled="true" style="'+studyStyle.replace('cursor:pointer;', 'cursor:default;')+'">';
       studyCloseTag = '</div>';
     }
-    // Roadmap 2.0 redesign (2026-09-29, Farin): "each section bigger, filled with a
-    // pastel color... if the user is in that step, that one is shiny... no more
-    // curve, cards under cards in different colors". Each node is one big block
-    // (done nodes go flat gray via .rm2-node-done so completion reads at a glance);
-    // the current node adds .rm2-node-current, which layers a stronger ring/glow +
-    // an animated diagonal shine sweep (see CSS above .rm2-track) so it's
-    // unmistakably "the one you're on" without needing a separate floating
-    // "you're here" pill.
-    // Follow-up polish (2026-09-29, Farin: "colors so dull... look at the profile
-    // square, I want like that but my brand colors" + "font also dull"): the
-    // "profile square" turned out to be .character-card on the Profile screen
-    // (profileHeaderCard) — a full-strength brand/category color fill with white
-    // text + a radial highlight + sparkle stars, NOT the muted "-soft" pastel
-    // tokens this roadmap used before. Reusing that exact recipe here: upcoming
-    // cards get a bolder color-mix tint (more saturated than the old "-soft"
-    // token), the current card gets the full solid brand color, and titles switch
-    // to the app's existing Fredoka "display" treatment (same font used for hero
-    // headings like the profile name) instead of the default body font.
-    const cls = 'rm2-node' + (poster ? ' rm2-poster' + (/yc-|card-/.test(poster) ? ' rm2-poster-subj-r' : '') : '') + (item.type === 'song' && !checked ? ' song-node' : '') + (isCurrent ? ' rm2-node-current' : '') + (checked ? ' rm2-node-done' : '') + (locked ? ' rm2-node-locked' : '');
-    // 2026-09-30, Farin (3rd correction, emphatic): "DO YOU SEE THE COLORS AND GOAL
-    // TABS? I WANT THOSE COLORS AND SPARKLE IN THE ROADMAP TOO". The Goals screen's
-    // .goal-card is the reference: a FULL-STRENGTH var(--cat-x) fill + white text +
-    // var(--clay-shadow) + claySparkles() on EVERY card, not a pale tint with the
-    // bold treatment reserved for one active card. That reservation was the whole
-    // "still dull" problem — most roadmap cards were a 32% color-mix wash. Every
-    // card now gets the goal-card recipe; the current one is distinguished by the
-    // extra shine sweep + inset white ring (mirroring .goal-card.goal-active)
-    // rather than by being the only colored one.
-    // The current card must be the MOST vivid, not the palest — an earlier white
-    // radial-highlight wash made it read lighter than its solid-color neighbours.
-    // It's distinguished instead by depth (gradient), the outer glow ring, the
-    // shine sweep, the scale pulse and the "You're here" pill.
-    // 2026-09-30, Farin: "the boxes are too sharp in color make their opacity to
-    // 85%" — the fill is softened to 85% alpha rather than the element's own
-    // opacity, so the white title text, sparkles and icon all stay at full strength.
-    const soft = `color-mix(in srgb, ${color} 85%, transparent)`;
-    const vividGradient = `linear-gradient(150deg, ${soft}, color-mix(in srgb, color-mix(in srgb, ${color} 74%, #000 26%) 85%, transparent))`;
-    // Gamification v2 (2026-09-30): game cards follow the same rules as every card
-    // (soft fill when not current, full gradient only when current) — the v1
-    // always-on gold --glow-game ring made a non-current game outshine the current
-    // card. Game identity comes from the GAME subtitle label; the ring recipe now
-    // lives on rare souvenirs instead.
-    const bg = isCurrent ? vividGradient : soft;
-    // NB: color is a var(--cat-x) reference — see the color-mix() note in pinFn above,
-    // same fix applies here (a plain `color+'70'` hex-alpha suffix on a var() is
-    // invalid CSS and silently drops the whole border-color/box-shadow declaration).
+    // One big block per step (Farin 2026-09-29); done = the dimmed "off" card (.rm2-node-done, no strikethrough since 2026-11-21);
+    // current = a bit bigger, inset ring, shine sweep, "You're here" pill; locked = dimmed and inert.
+    const cls = 'rm2-node' + (isReport ? ' rm2-report' : '') + (poster ? ' rm2-poster' + (/yc-|card-/.test(poster) ? ' rm2-poster-subj-r' : '') : '') + (!isReport && item.type === 'song' && !checked ? ' song-node' : '') + (isCurrent ? ' rm2-node-current' : '') + (checked ? ' rm2-node-done' : '') + (locked ? ' rm2-node-locked' : '');
     const shadow = isCurrent
-      ? `var(--clay-shadow), 0 0 0 3px rgba(255,255,255,.55) inset, 0 18px 34px -12px color-mix(in srgb, ${color} 55%, transparent)`
+      ? `var(--clay-shadow), 0 0 0 3px ${look.inset} inset, 0 18px 34px -12px color-mix(in srgb, ${look.ring} 55%, transparent)`
       : 'var(--clay-shadow)';
-    const subtitleColor = 'rgba(255,255,255,.92)';
-    const titleColor = '#fff';
-    const chevColor = 'rgba(255,255,255,.92)';
     const titleFont = `font-family:'Fredoka',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; font-weight:800; font-size:${isCurrent?20.5:18.5}px; letter-spacing:-.01em;`;
-    // Sparkles on every card now (see the block comment above), reusing the same
-    // .sparkle/@sparkle-twinkle stars the goal cards use via claySparkles().
-    const sparkles = (checked || locked || poster) ? '' : `
-        <span class="sparkle" style="top:10px; left:16px; animation-delay:0s;"></span>
-        <span class="sparkle" style="top:22px; right:22px; left:auto; width:6px; height:6px; animation-delay:.5s;"></span>
-        <span class="sparkle" style="bottom:16px; right:44px; left:auto; width:5px; height:5px; animation-delay:1s;"></span>
-        <span class="sparkle" style="bottom:22px; left:38px; width:4px; height:4px; animation-delay:1.4s;"></span>`;
-    // Big type icon inside the card (2026-09-30, Farin: "in some card related put
-    // the proper icon like the studio icon, or the book icon"). Absolutely
-    // positioned so it can overhang the roomier padding without pushing the text
-    // block around; the title column reserves space for it via padding-inline-end.
-    // the studio art sits inside a lot of transparent canvas, so it needs a larger
-    // box to read the same size as the book
-    const iconBig = m.img === 'studio-icon-cutout.png';
-    // the current card is a bit bigger (2026-10-18), its icon grows with it
-    const iconPx = iconBig ? (isCurrent ? 152 : 140) : (isCurrent ? 116 : 104);
-    // Cosy details (Farin 2026-10-28): a small item from Farin's sheet on every other card without its own art,
-    // in the card's empty bottom band (never over the title, the pill or the chevron); decorative only.
-    const cardIcon = item.type === 'song' ? (checked ? '' : `<span class="song-shimmer" aria-hidden="true"></span>`) + `<span class="song-vinyl rm-disc" aria-hidden="true"${checked ? ' style="opacity:.5;"' : ''}><span class="song-vinyl-label"><img src="logo-fe-cutout.png" alt=""></span></span>` + (checked ? '' : songStarsHtml()) : m.img
-      ? `<img src="${m.img}" alt="" class="rm2-icon-float" style="position:absolute; inset-inline-end:${iconBig?'-6px':'10px'}; bottom:${iconBig?'-4px':'12px'}; width:${iconPx}px; height:${iconPx}px; object-fit:contain; pointer-events:none; filter:drop-shadow(0 6px 12px rgba(0,0,0,.28)); ${checked?'opacity:.5;':''}">`
-      : '';
-    // Gamification v2 (2026-09-30): the v1 "⚡ GAME" corner pill and the streak
-    // mirror chip on the current card are gone (card faces carry no gamification
-    // labels). A game's identity is its GAME subtitle; the streak stays in the top bar.
-    return `<div class="${cls}"${locked ? ' data-action="roadmap-locked"' : ''} style="border-radius:32px; padding:${isCurrent ? '66px 30px 68px' : '58px 28px 60px'}; min-height:${isCurrent ? 196 : 176}px; background:${bg}; border:none; box-shadow:${shadow}; color:#fff;">
-      ${sparkles}
-      ${poster ? `<img class="rm2-poster-img" src="${poster}" alt="" style="object-position:${posterFocus(poster)};" loading="lazy" decoding="async">` : ''}${cardIcon}${art && art.item ? farinImg('item-' + art.item, 'rm2-cozy') : ''}${art && art.farin ? farinImg(rmFarinBody(art.farin), 'rm2-farin' + (art.wide ? ' rm2-farin-wide' : '')) : ''}
+    return `<div class="${cls}"${locked ? ' data-action="roadmap-locked"' : ''} style="border-radius:32px; padding:${isCurrent ? '66px 30px 68px' : '58px 28px 60px'}; min-height:${isCurrent ? 196 : 176}px; background:${look.bg}; border:${look.border || 'none'}; box-shadow:${shadow}; color:${look.ink};">
+      ${poster ? `<img class="rm2-poster-img" src="${poster}" alt="" style="object-position:${posterFocus(poster)};" loading="lazy" decoding="async">` : ''}
       ${studyOpenTag}
-        <div class="row between" style="align-items:flex-start; gap:10px;">
-          <div style="min-width:0;">
-            <div class="rm2-sub" style="font-size:11px; font-weight:900; color:${subtitleColor}; text-transform:uppercase; letter-spacing:.05em;">${subtitleHtml}</div>
-            <!-- only the title clears the bottom-corner icon; the subtitle above it
-                 sits clear of the icon already, so reserving space there just made
-                 short labels wrap for no reason. -->
-            <div class="rm2-title" style="${titleFont} margin-top:8px; color:${titleColor}; line-height:1.28; padding-inline-end:${(m.img || item.type === 'song' || (art && art.farin))?'100px':'0'}; ${checked?'text-decoration:line-through; opacity:.62;':''}">${bidiMix(nodeTitle(item))}</div>
-            ${item.type === 'song' ? songCardFaceHtml(item) : ''}
-          </div>
-          <span class="rm2-chev" style="flex:0 0 auto; margin-top:3px; color:${chevColor}; opacity:${checked?1:.65};${locked?' visibility:hidden;':''}">${checked?ICONS.check:ICONS.chev}</span>
-        </div>
-        ${isCurrent && !checked ? `<div class="pill" style="margin-top:14px; background:#fff; color:${color}; font-weight:900; text-transform:uppercase; letter-spacing:.03em; box-shadow:0 4px 10px -3px rgba(0,0,0,.3);"><img src="icon-mappin.png" alt="" style="width:15px; height:15px; object-fit:contain;">${L("You're here","Buradasın","اینجایی", 'Estás aquí')}</div>` : ''}
+        <div class="rm2-sub" style="font-size:11px; font-weight:900; color:${look.sub}; text-transform:uppercase; letter-spacing:.05em;">${subtitleHtml}</div>
+        <div class="rm2-title" style="${titleFont} margin-top:8px; color:${look.ink}; line-height:1.28;">${bidiMix(title)}</div>
+        ${!isReport && item.type === 'song' ? songCardFaceHtml(item) : ''}
+        ${isCurrent && !checked ? `<div class="pill" style="margin-top:14px; background:${look.pillBg}; color:${look.pillInk}; font-weight:900; text-transform:uppercase; letter-spacing:.03em; box-shadow:0 4px 10px -3px rgba(0,0,0,.3);">${L("You're here","Buradasın","اینجایی","Estás aquí")}</div>` : ''}
       ${studyCloseTag}
     </div>`;
   }
@@ -17118,7 +17014,7 @@ function renderRoadmapCard(p){
   return `
       <div class="rm2-stage-title">${esc(displayLevel(p))} ${L('roadmap','yol haritası','نقشه‌ی راه', 'hoja de ruta')}${(() => { const th = roadmapThemeLabel(p); return th ? ` <span aria-hidden="true">·</span> <span class="rm2-theme" style="color:${archColor};">${esc(th)}</span>` : ''; })()}</div>
       <div class="card-flat" style="position:relative; overflow:visible; padding:20px 10px;">
-        ${stackedRoadmap(roadmap.length, pinFn, cardFn, L(arch.name.en,arch.name.tr,arch.name.fa, arch.name.es), startMedia, allDone ? L("You've made it!",'Başardın!','موفق شدی!', '¡Lo lograste!') : nextDisplayLevel(p), endMedia)}
+        ${stackedRoadmap(roadmap.length + 1, pinFn, cardFn, L(arch.name.en,arch.name.tr,arch.name.fa, arch.name.es), startMedia, allDone ? L("You've made it!",'Başardın!','موفق شدی!', '¡Lo lograste!') : nextDisplayLevel(p), endMedia)}
       </div>
       ${allDone ? `
       <button class="btn" style="margin-top:18px; width:100%; justify-content:center; background:var(--clay-orange); color:#fff; border:none;" data-action="advance-roadmap-level"><img src="icon-gradcap.png" alt="" style="width:22px; height:22px; object-fit:contain;">${L('Go to the next level','Bir sonraki seviyeye geç','برو به سطح بعدی', 'Ir al siguiente nivel')}</button>
@@ -29822,6 +29718,15 @@ function rrBuild(lv, nodes, live){
     strong:strong.map(x=>[x.t, x.id]), weak:weak.map(x=>[x.t, x.id]), hard:hard.slice(0, 6), gram:gram.slice(0, 8),
     moment, svIds, game:gk, gameN:gk ? games[gk] : 0, check:sc ? 1 : 0, next:rrNextLevel(lv)};
 }
+// Page report card on the roadmap (Farin 2026-11-21): seen = the learner opened this page's report from its card, or it opened
+// after the page moved on. A page whose report already exists counts as seen once every card is done.
+function rrPageReportSeenKey(sk){ const pr = state.progress || {}; return !!(pr.roadmapReportSeen && typeof pr.roadmapReportSeen === 'object' && pr.roadmapReportSeen[sk]); }
+function rrPageReportSeen(){ const sk = rrStageKey(roadmapLevelKey()); return rrPageReportSeenKey(sk) || (!!rrReports()[sk] && roadmapAllDone()); }
+function rrMarkPageReportSeen(sk){
+  const pr = state.progress; if(!pr || !sk) return;
+  if(!pr.roadmapReportSeen || typeof pr.roadmapReportSeen !== 'object' || Array.isArray(pr.roadmapReportSeen)) pr.roadmapReportSeen = {};
+  pr.roadmapReportSeen[sk] = todayISO();
+}
 // Called where a finished page moves on: builds the report from the page before it is replaced, then advances.
 // Returns the report when the page really moved on, else null (nothing changes then).
 function advanceWithReport(){
@@ -29838,6 +29743,7 @@ function advanceWithReport(){
 }
 // Opens a fresh report on top of Home (Back from it lands on Home, never on the stage check).
 function openFreshReport(rep){
+  rrMarkPageReportSeen(rep.sk);   // its roadmap card is done too (2026-11-21)
   navHistory = [];
   state.view = 'dashboard'; state.viewParams = {};
   hideCharTip(true);
@@ -32182,6 +32088,24 @@ const HANDLERS = {
   'open-souvenir'(el){ openSouvenirModal(Number(el.dataset.i)); },
   'open-rhythm'(){ openRhythmSheet(); },
   'open-page-complete'(){ showPageComplete(); },
+  // Page report card (Farin 2026-11-21): the last card of every roadmap page. Locked until the page is done (its tap gives the
+  // usual locked-step hint); then it builds this page's report, keeps it (progress.roadmapReports), marks it seen and opens it.
+  // A later tap opens the kept report again. Seen = the card is done, and the page's report does not open a second time after
+  // "Go to the next level" (advanceWithReport still rebuilds it there with the real next level).
+  'open-page-report'(){
+    if(!state.profile || !state.profile.completedDiagnostic) return;
+    if(!roadmapAllDone()){ HANDLERS['roadmap-locked'](); return; }
+    const lv = roadmapLevelKey(), sk = rrStageKey(lv);
+    let rep = rrReports()[sk] || null;
+    if(!rep || !rrPageReportSeenKey(sk)){
+      try{ rep = rrBuild(lv, rrNodesFromRoadmap(), true); }catch(e){ rep = rrReports()[sk] || null; }
+      if(!rep) return;
+      rrReports()[sk] = rep;
+    }
+    rrMarkPageReportSeen(sk);
+    markActivity(); save();
+    go('roadmap-report', {lv, i:0, fresh:true});
+  },
   // Gamification v3 build 2 (M6): the companion's journal entries
   'story-entry-toggle'(el){
     const key = el.dataset.key;
@@ -32217,7 +32141,7 @@ const HANDLERS = {
     }
     // Roadmap report (2026-11-16): the finished page's report opens on top of the new Home
     const rep = advanceWithReport();
-    if(rep){ openFreshReport(rep); return; }
+    if(rep && !rrPageReportSeenKey(rep.sk)){ openFreshReport(rep); return; }   // seen from its roadmap card already: no second showing (2026-11-21)
     save(); render();
   },
   'sc-start'(){
@@ -32239,7 +32163,7 @@ const HANDLERS = {
   'sc-advance'(){
     const rep = advanceWithReport();   // Roadmap report (2026-11-16)
     markActivity();
-    if(rep){ openFreshReport(rep); return; }
+    if(rep && !rrPageReportSeenKey(rep.sk)){ openFreshReport(rep); return; }   // seen from its roadmap card already (2026-11-21)
     go('dashboard');
   },
   // Roadmap report (2026-11-16)

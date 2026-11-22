@@ -37427,7 +37427,7 @@ function courseExitQuestions(it, b2, cid, uid){
     const own = it.exit.unit || (uid || '');
     if(!it.explain || !own) return all;
     // Lesson shape (UX-FLOW 7.2): up to 2 earlier-lesson questions first, tagged "From an earlier lesson"; the review step's picks (at most 2) are folded in here.
-    const f = cid ? courseFindUnit(cid, own) : null, rv = f && courseReviewOn(cid, f.u) ? courseReviewPicks(cid, own).map(p=>{ const q = courseQ(p.item, p.key); if(!q.from) q.from = p.uid; return q; }) : [];
+    const f = cid ? courseFindUnit(cid, own) : null, rv = f && courseFoldReviewOn(cid, f.u) ? courseReviewPicks(cid, own).map(p=>{ const q = courseQ(p.item, p.key); if(!q.from) q.from = p.uid; return q; }) : [];
     const early = rv.concat(all.filter(q=>q.from && q.from !== own)), mine = all.filter(q=>!q.from || q.from === own);
     early.forEach(q=>{ q.earlier = true; });
     return early.slice(0, 2).concat(mine, early.slice(2));   // at most 2 before the lesson's own; any further spaced item comes after them
@@ -37480,7 +37480,7 @@ function courseMissPointHtml(cid, uid, q){
    earlier-lesson questions (missed ones first, courseReviewPicks) into a lesson's Check, as a lesson that lists a review step does. */
 // The earlier-lesson questions a Check showed: the next lesson's Check does not bring the same ones straight back (P4 rule 6).
 function courseRememberCheck(cid, st){ const qs = (st && st.qs) || [], e = qs.filter(q=>q.earlier); courseProg(cid).lastCheck = {uid:st.uid, early:e.map(q=>q.key).filter(Boolean), earlyPrompts:e.map(q=>q.prompt)}; }
-function courseReviewOn(cid, u){ const c = courseGet(cid); return !!u && ((u.sessions || []).some(s=>s.includes('review')) || !!(c && c.id !== 'ielts' && !courseIsExam(c))); }
+function courseFoldReviewOn(cid, u){ const c = courseGet(cid); return !!u && ((u.sessions || []).some(s=>s.includes('review')) || !!(c && c.id !== 'ielts' && !courseIsExam(c))); }
 function renderCourseExit(cid, uid, it){
   let st = courseUi.exit;
   if(!st || st.uid !== uid) st = courseUi.exit = {uid, cid, qs:courseExitQuestions(it, courseB2(cid, uid), cid, uid), i:0, picked:null, right:0, miss:[]};
@@ -37488,7 +37488,7 @@ function renderCourseExit(cid, uid, it){
   if(st.i >= st.qs.length){
     const n = st.qs.length, wrong = n - st.right;
     return `<div class="card-flat cx-result" style="text-align:center;"><h2 class="display" style="font-size:24px;">${esc(CL(st.right+' of '+n+' right', n+' sorudan '+st.right+' doğru', st.right+' از '+n+' درست', st.right+' de '+n+' correctas'))}</h2>
-      <p style="font-size:12.5px; color:var(--ink-faint); margin:6px 0 0;">${!wrong ? CL('All right. You can use this now.','Hepsi doğru. Bunu artık kullanabilirsin.','همه درست است. حالا می‌توانی از این استفاده کنی.','Todo bien. Ya puedes usarlo.') : courseReviewOn(cid, (courseFindUnit(cid, uid) || {}).u) ? CL(wrong+' missed. Missed questions come back in your next lessons.', wrong+' yanlış. Kaçırdığın sorular sonraki derslerde yeniden gelir.', wrong+' مورد غلط بود. سؤال‌هایی که غلط جواب دادی در درس‌های بعدی دوباره می‌آیند.', wrong+' falladas. Las preguntas falladas vuelven en tus próximas lecciones.')
+      <p style="font-size:12.5px; color:var(--ink-faint); margin:6px 0 0;">${!wrong ? CL('All right. You can use this now.','Hepsi doğru. Bunu artık kullanabilirsin.','همه درست است. حالا می‌توانی از این استفاده کنی.','Todo bien. Ya puedes usarlo.') : courseFoldReviewOn(cid, (courseFindUnit(cid, uid) || {}).u) ? CL(wrong+' missed. Missed questions come back in your next lessons.', wrong+' yanlış. Kaçırdığın sorular sonraki derslerde yeniden gelir.', wrong+' مورد غلط بود. سؤال‌هایی که غلط جواب دادی در درس‌های بعدی دوباره می‌آیند.', wrong+' falladas. Las preguntas falladas vuelven en tus próximas lecciones.')
         : CL(wrong+' missed. You can redo this step any time from the lesson page.', wrong+' yanlış. Bu adımı ders sayfasından istediğin zaman yeniden yapabilirsin.', wrong+' مورد غلط بود. هر وقت خواستی می‌توانی این قدم را از صفحه‌ی درس دوباره انجام بدهی.', wrong+' falladas. Puedes repetir este paso cuando quieras desde la página de la lección.')}</p></div>
       ${courseLookAgainHtml(cid, uid, st)}
       <button class="btn btn-primary cs-main" data-action="course-exit-finish" data-cid="${cid}" data-uid="${uid}">${esc(courseNextBtnLabel())}</button>`;
@@ -38327,7 +38327,7 @@ function courseUnitObjective(cid, uid){
 function courseCheckCount(cid, uid){
   const it = courseUnitItems(uid), f = courseFindUnit(cid, uid);
   const n = it.exit && it.exit.items ? it.exit.items.length : courseExitQuestions(it, null).length;
-  const rv = courseHasExplain(uid) && f && courseReviewOn(cid, f.u) ? courseReviewPicks(cid, uid).length : 0;
+  const rv = courseHasExplain(uid) && f && courseFoldReviewOn(cid, f.u) ? courseReviewPicks(cid, uid).length : 0;
   return n + rv;
 }
 function courseQuestionsText(n){ return CL(n+' questions', n+' soru', n+' سؤال', n+' preguntas'); }
@@ -40170,7 +40170,7 @@ function courseRFresh(cid, uid, it){
   if(a && Array.isArray(a.fresh) && !(rd && rd.uid === uid && rd.redo)) return a.fresh;
   if(rd && rd.uid === uid && rd.redo && rd.fresh) return rd.fresh;
   const f = courseFindUnit(cid, uid), items = (it.exit && it.exit.items) || [];
-  const rv = f && courseReviewOn(cid, f.u) ? courseReviewPicks(cid, uid).map(p=>({key:p.key, item:p.item, from:p.item.from || p.uid, earlier:true})) : [];
+  const rv = f && courseFoldReviewOn(cid, f.u) ? courseReviewPicks(cid, uid).map(p=>({key:p.key, item:p.item, from:p.item.from || p.uid, earlier:true})) : [];
   const data = items.map((x, i)=>({key:it.exit.id + '#' + i, item:x, from:x.from, earlier:true})).filter(o=>o.item.from && o.item.from !== uid);
   return rv.concat(data).slice(0, 2);
 }

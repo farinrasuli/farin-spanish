@@ -458,3 +458,53 @@
 
 /* 0.5.4 (art-fit): the Rewind stage takes its picture's own shape (the whole quay / light table / candle table), the strip of prints in the middle */
 .yc-wstage{display:flex; flex-direction:column; justify-content:center;}
+
+/* ---- 0.7.0 comic pages (Farin 2026-11-21): only chapters whose panels carry a shot (.yc-sheet); everything else as before ---- */
+.yc-page.yc-sheet{grid-template-columns:repeat(12, minmax(0, 1fr)); gap:10px; align-items:start;
+  padding-left:max(14px, env(safe-area-inset-left, 0px)); padding-right:max(14px, env(safe-area-inset-right, 0px));}
+.yc-sheet > *{grid-column:1 / -1;}
+.yc-sheet > .yc-s-est{grid-column:span 8;} .yc-sheet > .yc-s-inset{grid-column:span 4;}
+.yc-sheet > .yc-s-cu{grid-column:span 6;}
+.yc-sheet > .yc-s-tall{grid-column:span 7; grid-row:span 2;} .yc-sheet > .yc-s-stk{grid-column:span 5;}
+.yc-sheet > .yc-panel{overflow:visible; border-width:2.5px; box-shadow:2px 2px 0 rgba(27,26,23,.14); min-height:0;}
+.yc-sheet .yc-panel > .yc-pic{position:relative; overflow:hidden; width:100%;}
+.yc-sheet .yc-pic .yc-pimg{position:absolute; display:block;}
+.yc-sheet .yc-panel > .yc-cap, .yc-sheet .yc-panel > .yc-bal{position:absolute; max-width:80%; font-size:14.5px; line-height:1.22; padding:5px 32px 5px 8px; z-index:3;}
+.yc-sheet .yc-panel > .yc-bal{border-radius:16px; padding:6px 32px 6px 10px;}
+.yc-sheet .yc-panel > .yc-cap > .yc-saybtn, .yc-sheet .yc-panel > .yc-bal > .yc-saybtn{width:22px; height:22px; right:5px;}
+.yc-sheet .yc-panel > .yc-cap > .yc-saybtn svg, .yc-sheet .yc-panel > .yc-bal > .yc-saybtn svg{width:13px; height:13px;}
+.yc-sheet .yc-s-strip > .yc-cap{max-width:66%;}
+.yc-sheet .yc-panel > .yc-bal::after{left:var(--tx, 30%);}
+.yc-sheet .yc-panel > .yc-cap .yc-tr, .yc-sheet .yc-panel > .yc-bal .yc-tr{font-size:11.5px;}
+.yc-at-tl{left:6px; top:6px; right:auto; bottom:auto;}
+.yc-at-tr{right:6px; top:6px; left:auto; bottom:auto;}
+.yc-at-bl{left:6px; bottom:6px; top:auto; right:auto;}
+.yc-at-br{right:6px; bottom:8px; top:auto; left:auto;}
+.yc-sheet .yc-panel > .yc-at-up{left:6px; top:-20px; right:auto; bottom:auto;}
+.yc-sheet .yc-panel > .yc-at-down{right:6px; bottom:-16px; top:auto; left:auto;}
+.yc-sheet .yc-panel > .yc-bal.yc-at-down::after{bottom:auto; top:-9px; transform:rotate(-135deg);}
+.yc-sheet .yc-panel > .yc-at-bridge{left:-48%; right:6px; top:auto; bottom:calc(100% - 14px); max-width:none; z-index:6; font-size:13.5px;}
+.yc-sheet .yc-s-cu > .yc-cap, .yc-sheet .yc-s-cu > .yc-bal, .yc-sheet .yc-s-stk > .yc-cap, .yc-sheet .yc-s-stk > .yc-bal{max-width:90%; font-size:13.5px;}
+.yc-sheet > .yc-hasprop{z-index:4;}
+.yc-sheet > .yc-capanel{min-height:0; padding:0; border:0; background:none; box-shadow:none; overflow:visible;}
+.yc-sheet > .yc-capanel > .yc-cap{position:relative; left:auto; top:auto; max-width:none; width:100%; font-size:15px; padding:8px 40px 8px 10px; box-shadow:3px 3px 0 var(--ink);}
+.yc-prop{position:absolute; z-index:5; transform:rotate(var(--rot, -8deg)); filter:drop-shadow(3px 4px 0 rgba(27,26,23,.25)); pointer-events:none;
+  animation:yc-propin .6s cubic-bezier(.3,1.4,.5,1) .35s both;}
+.yc-prop .yc-print{width:100%; transform:none; box-shadow:none; padding:5px 5px 16px; border-width:1.5px;}
+.yc-prop .yc-print img{aspect-ratio:auto; object-fit:contain; height:auto;}
+.yc-prop .yc-print i{font-size:9px;}
+@keyframes yc-propin{from{opacity:0; transform:translate(30px, -10px) rotate(4deg)} to{opacity:1; transform:rotate(var(--rot, -8deg))}}
+.yc-flashw{position:absolute; inset:0; opacity:0; pointer-events:none; background:radial-gradient(circle at 46% 80%, #fff 0, rgba(255,255,255,.9) 14%, rgba(255,255,255,0) 58%);}
+.yc-flashw.go{animation:yc-flash 1.1s ease-out;}
+.yc-sheet .yc-next.yc-corner{grid-column:1 / -1; justify-self:end; position:sticky; bottom:calc(10px + env(safe-area-inset-bottom, 0px));
+  width:56px; height:56px; min-height:56px; border-radius:50%; padding:0 0 3px; font-size:30px; line-height:1; letter-spacing:0; margin-top:0; z-index:8;}
+.yc-sheet .yc-ch.yc-chpic{padding:0; position:relative; display:block; min-height:0; overflow:visible; text-align:left;}
+.yc-chimg{display:block; aspect-ratio:1; overflow:hidden;}
+.yc-chimg img{display:block; width:100%; height:100%; object-fit:cover;}
+.yc-chpic .yc-chtx{position:absolute; left:6px; right:6px; top:6px; background:#fff; border:2px solid var(--ink); border-radius:14px; padding:5px 8px;
+  display:flex; flex-direction:column; gap:2px; font-size:14px; line-height:1.2;}
+.yc-chpic .yc-chtx b{font-size:10px;}
+.yc-chpic.picked .yc-chtx{background:var(--cap);}
+.yc-sheet.yc-turn > *{animation-delay:.08s;}
+.yc-rm .yc-prop{animation:none;}
+@media (prefers-reduced-motion: reduce){ .yc-prop{animation:none;} .yc-flashw{display:none;} }

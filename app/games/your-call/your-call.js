@@ -39,7 +39,7 @@
 'use strict';
 if(window.YourCall) return;
 var D = document, W = window;
-var VERSION = '0.5.4';
+var VERSION = '0.7.0';
 
 /* ---------- chrome strings (the UI language; Persian informal) ---------- */
 var UI = {
@@ -153,6 +153,8 @@ function chapterArt(c){
   (c.seq || []).concat.apply([], [c.seq || []].concat(['d1', 'd2'].map(function(dk){ var d = c.decisions[dk]; return d ? [].concat(d.a.panels || [], d.b.panels || []) : []; }))).forEach(function(p){ (p && p.artAlt || []).forEach(function(x){ add(x.art); }); });
   if(c.photo && c.photo.vars){ Object.keys(c.photo.vars).forEach(function(k){ add(c.photo.vars[k]); }); }
   if(c.photo){ add(c.photo.now); add(c.photo.then); if(c.photo.trail){ c.photo.trail.forEach(function(t){ add(t.plate); }); if(c.photo.revealFind) add(c.photo.revealFind.plate); } }
+  ['d1', 'd2'].forEach(function(dk){ var d = c.decisions[dk]; if(d) ['a', 'b'].forEach(function(o){ add(d[o].art); }); });   // 0.7.0 picture choices
+  (c.seq || []).concat.apply([], [c.seq || []].concat(['d1', 'd2'].map(function(dk){ var d = c.decisions[dk]; return d ? [].concat(d.a.panels || [], d.b.panels || []) : []; }))).forEach(function(p){ if(p && p.prop) add(p.prop.art); });   // 0.7.0 props
   add(c.postcard);
   return ids;
 }
@@ -802,11 +804,18 @@ function start(o){
   /* ---- the Next button: one at a time, at the foot of the page ---- */
   function waitNext(label, why){
     return new Promise(function(ok){
-      var b = el('button', 'yc-btn yc-next', esc(label || us('next')));
+      var corner = !!G.sheet && !label;
+      var b = el('button', 'yc-btn yc-next' + (corner ? ' yc-corner' : ''), corner ? '<span aria-hidden="true">&#8250;</span>' : esc(label || us('next')));
       b.type = 'button'; b.setAttribute('lang', ui); b.dir = uiDir();
+      if(corner) b.setAttribute('aria-label', us('next'));
       page.appendChild(b);
       G.wait = why || 'next';
-      b.addEventListener('click', function(){ b.remove(); G.wait = null; hideGloss(); G.speakTok = (G.speakTok || 0) + 1; stopSpeech(); snd.play('page'); ok(); }, {once:true});
+      var done = false;
+      var go = function(){ if(done) return; done = true; page.removeEventListener('click', tap); b.remove(); G.wait = null; hideGloss(); G.speakTok = (G.speakTok || 0) + 1; stopSpeech(); snd.play('page'); ok(); };
+      // 0.7.0: a tap anywhere on the page turns to the next panel, except on a line (tap to hear), a word gloss or a button
+      var tap = function(e){ if(!corner || e.target.closest('button, a, input, [data-say], .yc-gl, .yc-glossbar, .yc-ch')) return; go(); };
+      b.addEventListener('click', go, {once:true});
+      if(corner) later(function(){ if(!done) page.addEventListener('click', tap); }, 250);
       scrollEnd();
     });
   }
@@ -836,7 +845,50 @@ function start(o){
   }
   function flashOk(){ var n = Date.now(); if(reduced() || (G.lastFlash && n - G.lastFlash < 5000)) return false; G.lastFlash = n; return true; }
   function lightning(fig){ if(!flashOk()) return; var f = el('div', 'yc-bolt'); fig.appendChild(f); later(function(){ snd.play('thunder'); }, 380); later(function(){ f.remove(); }, 1300); }
+  /* 0.7.0 comic pages (Farin 2026-11-21: "look at the structure of this comic book, try to be like this"). A chapter whose panels carry
+     `shot` plays as pages: a 12-column grid, a page turn when `page` changes, every text box on the picture at a set corner (or breaking
+     out of the frame), a prop that lies across panels, picture choices, and the corner arrow (or a tap on the page) instead of Next.
+     Every panel shows its whole picture at the picture's own shape (Fit Kit F1/F2); the art ships already cut to its shot, so a row
+     lines up: est 7:4 + inset 0.84, cu 1:1 + cu 1:1, tall 4:5 + two stk 7:6 (comic-page-2026-11-21/tools/ship-art.mjs). */
+  function sheetPos(p){
+    var used = {}, out = [];
+    (p.els || []).forEach(function(e, i){
+      var pos = e.pos;
+      if(!pos){ var order = e.type === 'cap' ? ['tl', 'br', 'bl', 'tr'] : ['br', 'tr', 'tl', 'bl']; pos = order.filter(function(k){ return !used[k]; })[0] || order[0]; }
+      used[pos] = 1; out[i] = pos;
+    });
+    return out;
+  }
+  function sheetPanelEl(p, ch, instant, lt){
+    var fig = el('figure', 'yc-panel yc-s-' + p.shot + (p.size === 'photo' ? ' yc-photo' : '') + (p.prop ? ' yc-hasprop' : '') + (p.tone ? ' yc-tone-' + p.tone : '') + (lt ? ' yc-light-' + lt : '') + (p._warm ? ' yc-light-warm' : '') + (instant ? ' yc-instant' : ''));
+    fig.setAttribute('data-id', p.id || '');
+    var pic = '', boxes = '', says = [], chs = arcChoices();
+    var r = p.art ? artRatio(p.art) : 1.4;
+    if(p.art){
+      var imgStyle = 'width:100%;left:0;top:0;';
+      pic += '<img class="yc-pimg" src="' + esc(artSrc(p.art)) + '" alt="" decoding="async" style="' + imgStyle + '">';
+      if((p.motion || []).some(function(m){ return /^flash/.test(m); })) pic += '<i class="yc-flashw" aria-hidden="true"></i>';
+    }
+    if((p.motion || []).indexOf('gulls') >= 0) pic += GULL + GULL.replace('yc-gull', 'yc-gull yc-gull2');
+    pic += (p.sfx || []).map(function(s){ return '<div class="yc-sfx" lang="' + target + '" aria-hidden="true" style="left:' + s.x + '%;top:' + s.y + '%;' + (s.size ? 'font-size:' + s.size + 'px;' : '') + '">' + esc(s.word) + '</div>'; }).join('');
+    var pos = sheetPos(p);
+    (p.els || []).forEach(function(e, i){
+      if(e.when && !whenOk(e.when, chs)) return;
+      says.push(tg(e.text));
+      var cls = e.type === 'cap' ? 'yc-cap' : 'yc-bal' + (e.type === 'whisper' ? ' yc-whisperb' : '');
+      boxes += '<div class="' + cls + ' yc-at-' + pos[i] + '" data-who="' + esc(e.who || '') + '" data-say="' + esc(tg(e.text)) + '"' + (e.tail != null ? ' style="--tx:' + e.tail + '%"' : '') + '>' + lineHtml(e.text, ch) + '<button type="button" class="th-say-btn yc-saybtn" tabindex="-1" aria-label="' + esc(us('listen')) + '">' + ICON.say + '</button></div>';
+    });
+    var prop = '';
+    if(p.prop && p.prop.art){
+      var q = p.prop;
+      prop = '<div class="yc-prop" style="right:' + (q.right != null ? q.right : -2) + '%;top:' + (q.top != null ? q.top : 40) + '%;width:' + (q.w || 30) + '%;--rot:' + (q.rot != null ? q.rot : -8) + 'deg" aria-hidden="true"><div class="yc-print"><img src="' + esc(artSrc(q.art)) + '" alt="" decoding="async"><i>' + esc(q.label || '') + '</i></div></div>';
+    }
+    fig.innerHTML = '<div class="yc-pic" style="aspect-ratio:' + r + '">' + pic + '</div>' + boxes + prop;
+    fig._says = says.filter(Boolean);
+    return fig;
+  }
   function panelEl(p, ch, instant){
+    if(G.sheet && p.shot){ var alt0 = p.artAlt && p.artAlt.filter(function(x){ return whenOk(x.when, arcChoices()); })[0]; if(alt0) p = Object.assign({}, p, {art:alt0.art}); return sheetPanelEl(p, ch, instant, p.art ? lightOf(p) : ''); }
     var lt = p.art ? lightOf(p) : '';
     var fig = el('figure', 'yc-panel yc-' + (p.size || 'wide') + (p.art ? '' : ' yc-capanel') + (p.tone ? ' yc-tone-' + p.tone : '') + (lt ? ' yc-light-' + lt : '') + (p._warm ? ' yc-light-warm' : '') + (instant ? ' yc-instant' : ''));
     fig.setAttribute('data-id', p.id || '');
@@ -918,7 +970,7 @@ function start(o){
       cues.forEach(function(c, k){ later(function(){ snd.play(c); }, k * 550 * pace); });
       if((p.motion || []).indexOf('pushin') >= 0 && !reduced()) fig.classList.add('yc-pushin');
       if((p.motion || []).indexOf('gulls') >= 0) snd.play('gull');
-      var fl = fig.querySelector('.yc-flashl'); if(fl && flashOk()) fl.classList.add('go');   // 0.5.2: the camera flashes share the 5 s limit
+      var fl = fig.querySelector('.yc-flashl, .yc-flashw'); if(fl && flashOk()) fl.classList.add('go');   // 0.5.2: the camera flashes share the 5 s limit
       if(fig.classList.contains('yc-light-storm')) lightning(fig);
       if(fig.classList.contains('yc-light-rain')) snd.play('rainfall');   // 0.5.2: code-made rain on rain panels
       if((p.motion || []).indexOf('shake') >= 0 && !reduced()) anim(fig, [{transform:'translateX(0)'}, {transform:'translateX(-5px)'}, {transform:'translateX(5px)'}, {transform:'translateX(0)'}], {duration:300});
@@ -948,6 +1000,7 @@ function start(o){
     wrap.innerHTML = '<div class="yc-cap yc-cap-static yc-prompt" data-say="' + esc(tg(d.prompt)) + '">' + lineHtml(d.prompt, ch) + '</div>' +
       '<div class="yc-choices">' + ['a', 'b'].map(function(o){
         var t = optText(d[o]);
+        if(G.sheet && d[o].art) return '<button type="button" class="yc-ch yc-chpic" data-o="' + o + '"><span class="yc-chimg"><img src="' + esc(artSrc(d[o].art)) + '" alt="" decoding="async"></span><span class="yc-chtx"><b>' + o.toUpperCase() + '</b><span class="yc-t" lang="' + target + '">' + esc(tg(t)) + '</span>' + (trn(t) ? '<small dir="auto" lang="' + ui + '">' + esc(trn(t)) + '</small>' : '') + '</span></button>';
         return '<button type="button" class="yc-ch" data-o="' + o + '"><b>' + o.toUpperCase() + '</b><span class="yc-t" lang="' + target + '">' + esc(tg(t)) + '</span>' + (trn(t) ? '<small dir="auto" lang="' + ui + '">' + esc(trn(t)) + '</small>' : '') + '</button>';
       }).join('') + '</div>';
     page.appendChild(wrap);
@@ -1780,6 +1833,17 @@ function start(o){
   }
 
   /* ---------- the chapter loop ---------- */
+  // 0.7.0: a beat on a new page clears the page (a resume replays the earlier beats instantly, so it lands on its own page)
+  function turnPage(b, instant){
+    var pg = b.page || G.pageNo || 1;
+    if(pg === G.pageNo) return;
+    var had = G.pageNo && page.children.length;
+    G.pageNo = pg; page.setAttribute('data-page', String(pg));
+    if(!had) return;
+    page.innerHTML = '';
+    try{ page.scrollTop = 0; }catch(e){}
+    if(!instant){ page.classList.remove('yc-turn'); void page.offsetWidth; page.classList.add('yc-turn'); }
+  }
   function playBeat(b, ch, instant){
     if(b.type === 'panel') return playPanel(b, ch, instant);
     if(b.type === 'decision') return playDecision(b, ch, instant);
@@ -1803,6 +1867,8 @@ function start(o){
     G.run = resume && resume.ch === n ? resume : {v:1, ch:n, i:0, picks:['', ''], tn:null, note:null, startedAt:Date.now()};
     page.innerHTML = '';
     page.classList.toggle('yc-devch', !!ch.auto || !ready(C, [n]));
+    G.sheet = (ch.seq || []).some(function(b){ return b.type === 'panel' && b.shot; }); G.pageNo = 0;   // 0.7.0
+    page.classList.toggle('yc-sheet', G.sheet);
     snd.dim(1); chapterScene(ch, G.run.i || 0);
     if(!resume){
       G.wait = 'title';
@@ -1823,6 +1889,7 @@ function start(o){
       if(ch.seq[i].type === 'panel' && ch.seq[i].rewindFallback && (ch.rewinds || {})[ch.seq[i].rewindFallback]) continue;   // B2
       var instant = i < startI;
       if(!instant){ G.run.i = i; save(); }
+      if(G.sheet) turnPage(ch.seq[i], instant);
       await playBeat(ch.seq[i], ch, instant);
       if(!G.alive) return;
     }

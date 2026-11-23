@@ -41896,7 +41896,7 @@ function adminInsBuildGroups(pool, max, split){
    whatsapp it would be available to send ... the classes i want to be 4-6. so if a group doesnt have at least 10 student in it dont
    consider it ready to offer."
    - A class is 6 to 8 people since 2026-11-23, 4 to 6 before (ADMIN_CLASS_MIN / ADMIN_CLASS_MAX; the old "open at N yes" rule is gone).
-     Start needs 6 yes; 9–11 yes = the first 8 to say yes, 12+ = two or more classes of 6–8 (c.part), split evenly. A yes who gets no seat stays free for the next class.
+     Start needs 6 yes; full classes first (2026-11-23): 9–13 yes = the first 8, the rest wait; 14+ = 8 + another class (c.part) at the next free time. A yes who gets no seat stays free for the next class.
    - A suggested class is "gathering" until 10 fit (ADMIN_CLASS_OFFER_MIN): no invites, no To check row. At 10 it is "ready to offer"
      (c.offerAt = the first time it reached 10; it falls back to gathering below 10).
    - The offer = a designed page on the website, thefeschool.com/class/ (+ tr/ fa/ es/ = site/class/), made for each learner from
@@ -41940,17 +41940,23 @@ const ADMIN_LEVEL_IDEAS = {career:'Career English: meetings, e-mails and small t
      class or a +98 number sees Iran time. The slots never overlap each other or his fixed lessons (ADMIN_CLASS_BUSY), 10 minutes apart.
    - One slot holds one class time, for both apps (one teacher; the Spanish admin shares progress/admin-classes). c.sched = the class's
      times (slot ids, at most 2). A class gets its time when it becomes ready to offer (10 fit): the approved table first, then the first
-     free slot; with more than 20 who fit (ADMIN_CLASS_TWO_TIMES_FROM) a second one, on other days first. A time is never taken away by
+     free slot (one time per class since 2026-11-23; with more than 20 who fit a second one before). A time is never taken away by
      itself, except: a class back under 10 that nobody said yes to gives its times back, and a closed class holds none.
    - Farin can change, add or remove a time on the class page (c.schedBy = 'you': from then on only he changes that class's times).
    - Who says yes picks a time (replies[h].o = 0 / 1; a yes from before the second time = the first). Start makes the groups per time.
    - The WhatsApp offer and the offer page (link params s, z, ns, pr) show the times, the 8 sessions and the price: toman for Iran, lira for Türkiye, the old price crossed out (2026-11-23). */
-const ADMIN_CLASS_SESSIONS = 8, ADMIN_CLASS_MINUTES = 50, ADMIN_CLASS_TWO_TIMES_FROM = 21;
+const ADMIN_CLASS_SESSIONS = 8, ADMIN_CLASS_MINUTES = 50, ADMIN_CLASS_TWO_TIMES_FROM = Infinity;   // one time per class since 2026-11-23 (a second one from 21 who fit before)
 // The course price per zone, now + the old one shown crossed out (Farin 2026-11-18: 8,000,000 toman; 2026-11-23: "put the offer changed as
 // from 8 millions to 5.500" and, approved the same day, Turkish learners ₺4,400 → ₺3,000). Only Iran (toman) and Türkiye (lira) see a price.
 const ADMIN_CLASS_PRICE = {ir:{now:5500000, was:8000000}, tr:{now:3000, was:4400}};
-const ADMIN_CLASS_SLOTS = ['satmon-1800', 'sunwed-1800', 'tuethu-1800', 'satsun-1900', 'satmon-2040', 'sunwed-2040', 'sattue-1700', 'sunthu-1700', 'monwed-1700'];
-const ADMIN_CLASS_SCHED_SEED = {AA:['sunwed-1800', 'satmon-2040'], AB:['satmon-1800', 'sunwed-2040'], AC:['sattue-1700'], AD:['tuethu-1800'], AE:['sunthu-1700']};
+// One time per class, given in this order: the latest first, next to his fixed lessons (Farin 2026-11-23: "put just one time for each class and
+// when its finished and full we open another slot. also choose the later times first fulled, close to the private classes time i have already";
+// this order approved the same day). Mon + Wed 20:40 follows his Mon/Wed lessons, Tue + Thu 18:45 and Mon + Wed 18:30 come right before them.
+// Until 2026-11-23: satmon-1800, sunwed-1800, tuethu-1800, satsun-1900, satmon-2040, sunwed-2040, sattue-1700, sunthu-1700, monwed-1700; a class
+// that hasn't started and still holds one of those moves to the new order (adminClassesAssignTimes).
+const ADMIN_CLASS_SLOTS = ['monwed-2040', 'tuethu-1845', 'monwed-1830', 'satsun-2040', 'satsun-1940', 'tuethu-1745', 'monwed-1730', 'satsun-1840', 'satsun-1740'];
+// the classes offered before 2026-11-23 (were AA, AB, AC, AT, AV) and their new times, approved
+const ADMIN_CLASS_SCHED_SEED = {EA:['monwed-2040'], EB:['tuethu-1845'], EC:['monwed-1830'], SA:['satsun-2040'], SB:['satsun-1940']};
 const ADMIN_CLASS_BUSY = {mon:'19:30–20:30', tue:'19:45–20:45', wed:'19:30–20:30', thu:'19:45–20:45'};   // Farin's fixed lessons (his clock)
 const ADMIN_CLASS_WEEK = ['sat', 'sun', 'mon', 'tue', 'wed', 'thu'];
 const ADMIN_CLASS_DAY_W = {
@@ -42007,10 +42013,11 @@ function adminClassesAssignTimes(byHash){
   let changed = false;
   // a class back under 10 that nobody said yes to gives its times back
   C.classes.forEach(c=>{ if(c.status !== 'suggested' || c.offerAt || !Array.isArray(c.sched) || adminClassAnyYes(c)) return; delete c.sched; delete c.schedBy; changed = true; });
-  // back to 20 or fewer (one class each, 2026-11-19): a second time nobody picked and no offer went out with goes back to the free slots
-  C.classes.forEach(c=>{ if(c.status !== 'suggested' || c.schedBy || adminClassSched(c).length < 2 || adminClassFitMembers(c, byHash).length >= ADMIN_CLASS_TWO_TIMES_FROM) return;
-    if(Object.keys(c.sent || {}).length || adminClassOffered(c, byHash) || Object.keys(c.replies || {}).some(h=>c.replies[h] && Number(c.replies[h].o) === 1)) return;
-    c.sched = c.sched.slice(0, 1); changed = true; });
+  // one time per class (2026-11-23): a class that hasn't started keeps only its first time, and a time from the old table goes back (the class
+  // gets one from the new order below)
+  C.classes.forEach(c=>{ if(c.status === 'running' || !Array.isArray(c.sched)) return;
+    const ok = c.sched.filter(id=>ADMIN_CLASS_SLOTS.indexOf(id) >= 0).slice(0, 1);
+    if(ok.length !== c.sched.length){ c.sched = ok; if(!ok.length) delete c.schedBy; changed = true; } });
   // one slot, one class: running classes first, then the earliest ready (a reopened class or two admins at once could clash)
   const held = {}, first = c=>(c.status === 'running' ? 0 : 1);
   C.classes.filter(c=>adminClassOpen(c) && Array.isArray(c.sched)).sort((a, b)=>first(a) - first(b) || (Number(a.startedAt || a.offerAt) || 0) - (Number(b.startedAt || b.offerAt) || 0)).forEach(c=>{
@@ -42050,11 +42057,11 @@ function adminClassesSeen(){ return (adminClasses && Number(adminClasses[ADMIN_C
 function adminClassHome(c){ return LOGIN_APP !== 'es' || c.app === 'es'; }
 function adminClassesNorm(d){
   const obj = v=>v && typeof v === 'object' && !Array.isArray(v) ? Object.assign({}, v) : {};
-  return {classes:Array.isArray(d.classes) ? d.classes.filter(c=>c && c.id && Array.isArray(c.members)) : [], skip:obj(d.skip), skipCourse:obj(d.skipCourse), rules:obj(d.rules), seenAt:Number(d.seenAt) || 0, seenAtEs:Number(d.seenAtEs) || 0, codeSeq:Number(d.codeSeq) || 0};
+  return {classes:Array.isArray(d.classes) ? d.classes.filter(c=>c && c.id && Array.isArray(c.members)) : [], skip:obj(d.skip), skipCourse:obj(d.skipCourse), rules:obj(d.rules), seenAt:Number(d.seenAt) || 0, seenAtEs:Number(d.seenAtEs) || 0, codeSeq:Number(d.codeSeq) || 0, codeSeqE:Number(d.codeSeqE) || 0, codeSeqS:Number(d.codeSeqS) || 0};
 }
 // The part both admins edit (classes, rests, rules) as one string with sorted keys, to see whether the other admin changed it.
 function adminCanon(v){ return Array.isArray(v) ? '[' + v.map(adminCanon).join(',') + ']' : v && typeof v === 'object' ? '{' + Object.keys(v).filter(k=>v[k] !== undefined).sort().map(k=>JSON.stringify(k) + ':' + adminCanon(v[k])).join(',') + '}' : JSON.stringify(v === undefined ? null : v); }
-function adminClassesCore(c){ return adminCanon([c.classes || [], c.skip || {}, c.skipCourse || {}, c.rules || {}, Number(c.codeSeq) || 0]); }
+function adminClassesCore(c){ return adminCanon([c.classes || [], c.skip || {}, c.skipCourse || {}, c.rules || {}, Number(c.codeSeq) || 0, Number(c.codeSeqE) || 0, Number(c.codeSeqS) || 0]); }
 function adminClassesFrom(d){
   adminClasses = adminClassesNorm(d);
   adminClassesRev = Number(d.savedAt) || 0;
@@ -42082,7 +42089,7 @@ function adminClassesSave(){
       adminClassesAssignCodes();   // a class made since the last sync (Start's extra groups) gets its code before it is saved
       const c = adminClasses, at = Math.max(Date.now(), base + 1, rev + 1);
       // a copy, so a tap while this save is on its way can't slip in unchecked; it is what adminClassesBase describes
-      const data = JSON.parse(JSON.stringify({kind:'admin', classes:c.classes, skip:c.skip, skipCourse:c.skipCourse, rules:c.rules, seenAt:c.seenAt, seenAtEs:c.seenAtEs, codeSeq:Number(c.codeSeq) || 0, savedAt:at}));
+      const data = JSON.parse(JSON.stringify({kind:'admin', classes:c.classes, skip:c.skip, skipCourse:c.skipCourse, rules:c.rules, seenAt:c.seenAt, seenAtEs:c.seenAtEs, codeSeq:Number(c.codeSeq) || 0, codeSeqE:Number(c.codeSeqE) || 0, codeSeqS:Number(c.codeSeqS) || 0, savedAt:at}));
       return ref.set(data, {merge:true})
         .then(()=>{ adminClassesRev = at; adminClassesBase = adminClassesCore(data); adminClassesClash = 0; adminClassesError = ''; });
     });
@@ -42106,15 +42113,26 @@ function adminClassesClashed(d){
    Messages, as a chip in the Inbox. */
 function adminClassCodeOf(n){ let x = Math.max(0, Math.floor(n)), s = ''; do { s = String.fromCharCode(65 + x % 26) + s; x = Math.floor(x / 26); } while(x > 0); return s.length < 2 ? 'A' + s : s; }
 function adminClassCodeIndex(code){ if(!/^[A-Z]{2,4}$/.test(code || '')) return -1; let n = 0; for(let i = 0; i < code.length; i++) n = n * 26 + (code.charCodeAt(i) - 65); return n; }
+// Since 2026-11-23: E + A, B … for English classes, S + A, B … for Spanish (Farin: "name the classes like this, if english start with E. then
+// A OR B OR C like EA, EB. and if its spanish course start with S. SA, SB"); after Z comes BA, BB …. Each app has its own counter (codeSeqE /
+// codeSeqS, never going down). The older codes (AA … BF, one shared sequence) were given again in their own order, so AA → EA, AB → EB, AT → SA,
+// AV → SB; the old one stays as c.codeOld, so a reply that names it still finds the class.
+function adminClassCodePre(c){ return c && c.app === 'es' ? 'S' : 'E'; }
+function adminClassCodeSuffix(n){ let x = Math.max(0, Math.floor(n)), s = ''; do { s = String.fromCharCode(65 + x % 26) + s; x = Math.floor(x / 26); } while(x > 0); return s; }
+function adminClassCodeNum(c){ const code = String((c && c.code) || ''); if(!/^[A-Z]{2,4}$/.test(code) || code.charAt(0) !== adminClassCodePre(c)) return -1;
+  let n = 0; for(let i = 1; i < code.length; i++) n = n * 26 + (code.charCodeAt(i) - 65); return n; }
 function adminClassesAssignCodes(){
   const C = adminClasses; if(!C) return false;
-  let seq = Number(C.codeSeq) || 0, changed = false; const used = {};
-  C.classes.forEach(c=>{ const i = adminClassCodeIndex(c.code); if(i >= seq) seq = i + 1; });
+  const seq = {E:Number(C.codeSeqE) || 0, S:Number(C.codeSeqS) || 0}, was = {E:seq.E, S:seq.S}, used = {}; let changed = false;
+  C.classes.forEach(c=>{ const i = adminClassCodeNum(c), p = adminClassCodePre(c); if(i >= seq[p]) seq[p] = i + 1; });
+  const fresh = p=>{ let code; do { code = p + adminClassCodeSuffix(seq[p]++); } while(used[code]); return code; };
   const order = C.classes.slice().sort((a, b)=>(Number(a.createdAt) || 0) - (Number(b.createdAt) || 0) || String(a.id).localeCompare(String(b.id)));
-  order.forEach(c=>{ if(c.code && !used[c.code] && adminClassCodeIndex(c.code) >= 0){ used[c.code] = 1; return; }
-    let code; do { code = adminClassCodeOf(seq++); } while(used[code]);   // no code yet, or a copy of another class's code
-    c.code = code; used[code] = 1; changed = true; });
-  if(seq !== (Number(C.codeSeq) || 0)){ C.codeSeq = seq; changed = true; }
+  const olds = [], none = [];
+  order.forEach(c=>{ if(adminClassCodeNum(c) >= 0 && !used[c.code]){ used[c.code] = 1; return; }
+    (adminClassCodeNum(c) < 0 && adminClassCodeIndex(c.code) >= 0 ? olds : none).push(c); });   // an old code (AA …), or none / a copy
+  olds.sort((a, b)=>adminClassCodeIndex(a.code) - adminClassCodeIndex(b.code)).forEach(c=>{ if(!c.codeOld) c.codeOld = c.code; c.code = fresh(adminClassCodePre(c)); used[c.code] = 1; changed = true; });
+  none.forEach(c=>{ c.code = fresh(adminClassCodePre(c)); used[c.code] = 1; changed = true; });
+  if(seq.E !== was.E || seq.S !== was.S){ C.codeSeqE = seq.E; C.codeSeqS = seq.S; changed = true; }
   return changed;
 }
 function adminClassCodeHtml(c){ return c && c.code ? '<span class="cls-code" title="Class code' + (c.codeFrom ? ' (a group of ' + esc(c.codeFrom) + ')' : '') + '">' + esc(c.code) + '</span>' : ''; }
@@ -42122,7 +42140,8 @@ function adminClassTitleCode(c){ return (c.code ? c.code + ' · ' : '') + adminC
 // A class code a learner wrote in Messages ("Class code: AB", "Sınıf kodu: AB", "کد کلاس: AB", "I'm in – AB", or just "AB"): the classes it names.
 // Only the cue words are case-tolerant; the code itself must be in capitals, so "class at 8" never reads as class AT.
 function adminClassCodesInText(text){
-  const t = String(text || ''), codes = {}; (adminClasses ? adminClasses.classes : []).forEach(c=>{ if(c.code) codes[c.code] = c; });
+  const t = String(text || ''), codes = {}, all = adminClasses ? adminClasses.classes : [];
+  all.forEach(c=>{ if(c.code) codes[c.code] = c; }); all.forEach(c=>{ if(c.codeOld && !codes[c.codeOld]) codes[c.codeOld] = c; });   // AA still finds EA (2026-11-23)
   const out = [], take = code=>{ const c = codes[code]; if(c && out.indexOf(c) < 0) out.push(c); };
   const cue = /(?:[Cc]lass [Cc]ode|[Cc]ode|[Kk]odu?|کد(?:\s*کلاس)?|[Cc]ódigo(?:\s+de\s+la\s+clase)?|[Cc]lase|[Cc]lass|[Ss]ınıf|کلاس|–)\s*[:：]?\s*\u2068?([A-Z]{2,4})\b/g;
   let m; while((m = cue.exec(t))) take(m[1]);
@@ -42155,6 +42174,7 @@ function adminClassMembers(c, byHash){ const seen = {}; return (c.members || [])
    running class, nobody is moved by itself: the row says why they don't fit, with "Move out". Misfits never count: not in the fit number,
    the 10 for the offer, the offer itself or the seats. */
 function adminClassFitWhy(c, p){
+  if(c && c.status === 'running') return '';   // a running class is what it is (2026-11-23): nobody is flagged or moved
   if(!p) return 'not found';
   const why = [], lv = adminInsLevel(p), course = adminClassKind(c) === 'course', ln = adminInsLang(p) || '?';
   if(p.app !== c.app) why.push('now uses the ' + (p.app === 'es' ? 'Spanish' : 'English') + ' app');
@@ -42216,13 +42236,15 @@ function adminClassesSync(){
   // so a slow load never drops anyone; running classes never change. They are not rested: once they add a number they can join again.
   if(adminChats && adminAccessList && adminContacts && adminContactsOther) C.classes.forEach(c=>{ if(c.status !== 'suggested') return;
     const ok = c.members.filter(h=>byHash[h] && adminInsPhone(byHash[h])); if(ok.length !== c.members.length){ c.members = ok; changed = true; } });
-  // fit (2026-11-17): a suggested class nobody was offered yet loses who no longer fits; they go back to the pool below and join a class that fits
-  C.classes.forEach(c=>{ if(c.status !== 'suggested' || adminClassOffered(c, byHash)) return;
+  // fit (2026-11-17): a class that hasn't started loses who no longer fits; they go back to the pool below and join a class that fits. Since
+  // 2026-11-23 also offered classes, with no message (Farin: "if someone doesnt fiot just put them where they fit dont message that").
+  C.classes.forEach(c=>{ if(c.status !== 'suggested') return;
     const out = adminClassMembers(c, byHash).filter(p=>!adminClassFits(c, p)); if(!out.length) return;
     const hs = {}; out.forEach(p=>p.accounts.forEach(u=>{ if(u.hash) hs[u.hash] = 1; }));
     c.members = c.members.filter(h=>!hs[h]);
     c.refit = (Array.isArray(c.refit) ? c.refit : []).concat(out.map(p=>({h:p.main.hash, at:now, why:adminClassFitWhy(c, p).slice(0, 140)}))).slice(-12);
     changed = true; });
+  if(adminClassesAssignCodes()) changed = true;   // the codes first (2026-11-23), so a one-class-each note names the new code (EA, not AA)
   if(adminClassesOneEach(byHash, now)) changed = true;   // one class per learner (2026-11-19), before newcomers are placed
   adminClassesStats = {};
   // course classes first (2026-11-19, one class per learner): the premium-course classes (Business, IELTS, Job Interview, Travel & everyday …)
@@ -42257,7 +42279,7 @@ function adminClassesOneEach(byHash, now){
   const C = adminClasses; let changed = false;
   // Farin's AA messages (2026-11-19): every current AA member counts as sent, once
   // Only the AA of that day: a class made after 2026-11-20 (a later AA after a reset, or a test) is not seeded; its rows wait for Farin’s tick (2026-11-21)
-  C.classes.forEach(c=>{ if(ADMIN_CLASS_SENT_SEED.indexOf(c.code) < 0 || c.sentSeeded || !adminClassOpen(c) || (Number(c.createdAt) || 0) > Date.UTC(2026, 10, 20)) return;
+  C.classes.forEach(c=>{ if(ADMIN_CLASS_SENT_SEED.indexOf(c.codeOld || c.code) < 0 || c.sentSeeded || !adminClassOpen(c) || (Number(c.createdAt) || 0) > Date.UTC(2026, 10, 20)) return;
     c.sent = c.sent || {}; adminClassMembers(c, byHash).forEach(p=>{ if(p.main && p.main.hash && !adminClassSentTo(c, p)) c.sent[p.main.hash] = adminInsInvitedAt(p) || now; });
     c.sentSeeded = now; changed = true; });
   const open = C.classes.filter(adminClassOpen), score = {};
@@ -42345,8 +42367,10 @@ function adminClassYes(c, byHash){ const at = p=>p.accounts.reduce((m, u)=>{ con
   return adminClassFitMembers(c, byHash || adminClassPeopleByHash()).filter(p=>adminClassReply(c, p) === 'yes').sort((a,b)=>at(a) - at(b)); }
 function adminClassesReady(){ const byHash = adminClassPeopleByHash(); return (adminClasses ? adminClasses.classes : []).filter(c=>adminClassHome(c) && adminClassReady(c, byHash)); }
 // How the yes-sayers become classes of 6–8: sizes of each class (first to say yes first); who is left over waits for the next class.
-function adminClassSplit(y){ let k = Math.ceil(y / ADMIN_CLASS_MAX); while(k > 1 && y < ADMIN_CLASS_MIN * k) k--; if(y < ADMIN_CLASS_MIN) return []; const seated = Math.min(y, ADMIN_CLASS_MAX * k), base = Math.floor(seated / k);
-  return Array.from({length:k}, (x, i)=>base + (i < seated % k ? 1 : 0)); }
+// Full classes first (Farin 2026-11-23: "when its finished and full we open another slot"): 8 seats each, one more class if 6 or more are left;
+// fewer wait for the next class. 9 yes = 8 + 1 waiting, 14 yes = 8 + 6, 16 = 8 + 8.
+function adminClassSplit(y){ if(y < ADMIN_CLASS_MIN) return []; const sizes = Array.from({length:Math.floor(y / ADMIN_CLASS_MAX)}, ()=>ADMIN_CLASS_MAX), r = y % ADMIN_CLASS_MAX;
+  if(r >= ADMIN_CLASS_MIN || !sizes.length) sizes.push(r); return sizes; }
 // Start's groups (2026-11-18): per time, classes of 6–8 from who said yes for that time (first to answer first). The first group of a time
 // keeps that time; a further group of the same time needs a free slot (one teacher). Who gets no seat waits for the next class.
 function adminClassPlan(c, byHash){
@@ -42448,10 +42472,10 @@ function adminClassOfferText(c, p, byHash){
   const pick = two ? ' · ' + tw + ' ' + (lang === 'fa' ? '۱' : '1') : '', orPick = !two ? '' : lang === 'fa' ? ' (یا ' + tw + ' ۲)' : lang === 'tr' ? ' (ya da ' + tw + ' 2)' : lang === 'es' ? ' (u ' + tw + ' 2)' : ' (or ' + tw + ' 2)';
   // the reply they are asked to send names the course and level, so a "yes" says what it is for (Farin 2026-11-17: "put that for which
   // course they are applying not just yes i want the course"); the page's button sends course, level, name and class code
-  if(lang === 'tr') return 'Merhaba' + (n ? ' ' + n : '') + '! Ben FEschool\'dan Farin 🌱\n\nYarı özel bir mini grup açıyorum: ' + cls + '. Sadece 6–8 kişi, hepsi ' + lv + ' seviyesinde ve hepsi seninle aynı hedefte. Yani her ders senin hedefine göre planlanacak.\n\n' + goals + 'Tüm detayları senin için bir sayfada topladım 👇\n' + url + '\n\nYerini ayırmamı istersen “Varım – ' + cc + cls + (lv ? ' ' + lv : '') + pick + '”' + orPick + ' yazman yeterli 💜';
-  if(lang === 'fa') return 'سلام' + (n ? ' ' + n + ' جان' : '') + '! 🌸 فرینم، از FEschool.\n\nدارم یه کلاس نیمه‌خصوصیِ «' + cls + '» راه می‌ندازم: فقط ۶ تا ۸ نفر، همه سطح ⁨' + lv + '⁩ و همه با همون هدفی که تو داری. یعنی هر جلسه دقیقاً برای هدف تو برنامه‌ریزی می‌شه.\n\n' + goals + 'همه‌چیز رو برات توی یه صفحه آماده کردم 👇\n' + url + '\n\nاگه دوست داری جات رو نگه دارم، فقط بنویس «هستم – ' + ccFa + cls + (lv ? ' ⁨' + lv + '⁩' : '') + pick + '»' + orPick + ' 💜';
-  if(lang === 'es') return '¡Hola' + (n ? ', ' + n : '') + '! Soy Farin, de FEschool 🌱\n\nVoy a abrir una clase semiprivada de ' + cls.charAt(0).toLowerCase() + cls.slice(1) + ': solo de 6 a 8 personas, todas de nivel ' + lv + ' y con tu mismo objetivo. Así, cada clase se planifica pensando en ti.\n\n' + goals + 'Te preparé una página con todos los detalles 👇\n' + url + '\n\nSi quieres una plaza, responde «Me apunto – ' + cc + cls + (lv ? ' ' + lv : '') + pick + '»' + orPick + ' 💜';
-  return 'Hi' + (n ? ' ' + n : '') + '! It\'s Farin from FEschool 🌱\n\nI\'m opening a mid-private ' + cls + ' class: only 6 to 8 people, all at ' + lv + ', all with the same goal as you. So every class is planned around you.\n\n' + goals + 'I made a page for you with everything 👇\n' + url + '\n\nIf you\'d like a seat, just reply "I\'m in – ' + cc + cls + (lv ? ' ' + lv : '') + pick + '"' + orPick + ' 💜';
+  if(lang === 'tr') return 'Merhaba' + (n ? ' ' + n : '') + '! Ben FEschool\'dan Farin 🌱\n\nKüçük bir grup dersi açıyorum: ' + cls + '. Sadece 6–8 kişi, hepsi ' + lv + ' seviyesinde ve hepsi seninle aynı hedefte. Yani her ders senin hedefine göre planlanacak.\n\n' + goals + 'Tüm detayları senin için bir sayfada topladım 👇\n' + url + '\n\nYerini ayırmamı istersen “Varım – ' + cc + cls + (lv ? ' ' + lv : '') + pick + '”' + orPick + ' yazman yeterli 💜';
+  if(lang === 'fa') return 'سلام' + (n ? ' ' + n + ' جان' : '') + '! 🌸 فرینم، از FEschool.\n\nدارم یه کلاس گروهیِ «' + cls + '» راه می‌ندازم: فقط ۶ تا ۸ نفر، همه سطح ⁨' + lv + '⁩ و همه با همون هدفی که تو داری. یعنی هر جلسه دقیقاً برای هدف تو برنامه‌ریزی می‌شه.\n\n' + goals + 'همه‌چیز رو برات توی یه صفحه آماده کردم 👇\n' + url + '\n\nاگه دوست داری جات رو نگه دارم، فقط بنویس «هستم – ' + ccFa + cls + (lv ? ' ⁨' + lv + '⁩' : '') + pick + '»' + orPick + ' 💜';
+  if(lang === 'es') return '¡Hola' + (n ? ', ' + n : '') + '! Soy Farin, de FEschool 🌱\n\nVoy a abrir una clase en grupo de ' + cls.charAt(0).toLowerCase() + cls.slice(1) + ': solo de 6 a 8 personas, todas de nivel ' + lv + ' y con tu mismo objetivo. Así, cada clase se planifica pensando en ti.\n\n' + goals + 'Te preparé una página con todos los detalles 👇\n' + url + '\n\nSi quieres una plaza, responde «Me apunto – ' + cc + cls + (lv ? ' ' + lv : '') + pick + '»' + orPick + ' 💜';
+  return 'Hi' + (n ? ' ' + n : '') + '! It\'s Farin from FEschool 🌱\n\nI\'m opening a ' + cls + ' group class: only 6 to 8 people, all at ' + lv + ', all with the same goal as you. So every class is planned around you.\n\n' + goals + 'I made a page for you with everything 👇\n' + url + '\n\nIf you\'d like a seat, just reply "I\'m in – ' + cc + cls + (lv ? ' ' + lv : '') + pick + '"' + orPick + ' 💜';
 }
 function adminInsWaLink(p, text){ const ph = adminInsPhone(p); return ph ? waLinkTo(adminWaitlistWaNumber({phone:ph, lang:adminInsLang(p)}), text) : ''; }
 function adminInsTgLink(p, text){ const ph = adminInsPhone(p); return ph ? tgLinkTo(adminWaitlistWaNumber({phone:ph, lang:adminInsLang(p)}), text) : ''; }   // Telegram (2026-11-19)
@@ -42515,7 +42539,7 @@ function adminInsAction(action, el){
     Object.keys(cls.replies || {}).forEach(h=>{ const r = cls.replies[h]; if(r && Number(r.o) === k) delete r.o; });
     cls.sched = s.slice(0, k); cls.schedBy = 'you'; adminClassesSave(); return re();
   }
-  // Start: classes of 6–8 from who said yes, first to answer first, per time (2026-11-18); 12+ yes for one time = two or more classes, split evenly.
+  // Start: classes of 6–8 from who said yes, first to answer first, per time (2026-11-18); full classes of 8 first, one more class from 6 left (2026-11-23).
   if(action === 'ins-start' && cls){
     const byHash = adminClassPeopleByHash(), plan = adminClassPlan(cls, byHash), yes = plan.yes, all = adminClassMembers(cls, byHash), skip = adminClassSkip(adminClassKind(cls)), t = Date.now();
     const sizes = plan.sizes, seated = sizes.reduce((a, b)=>a + b, 0), wait = plan.wait, times = adminClassSched(cls);
@@ -42596,10 +42620,9 @@ function adminClassTimesHtml(c, m){
   const sel = (k, cur)=>`<select class="ins-tsel" data-cls-time="1" data-c="${esc(c.id)}" data-k="${k}" aria-label="${two ? 'Time ' + (k + 1) : 'Time'}">${cur ? '' : '<option value="" selected>Pick a time…</option>'}${(cur ? [cur] : []).concat(free).map(id=>`<option value="${esc(id)}"${id === cur ? ' selected' : ''}>${esc(adminClassSlotShort(id))}</option>`).join('')}</select>`;
   const list = s.length ? s : run ? [''] : [];
   const rows = list.map((id, k)=>`<div class="ins-trow"><span class="ins-tk">${two ? 'Time ' + (k + 1) : 'Time'}</span>${sel(k, id)}${id ? `<span class="ins-tir">Iran ${esc(adminClassHm(adminClassSlot(id).at + 30))}–${esc(adminClassHm(adminClassSlot(id).at + 30 + ADMIN_CLASS_MINUTES))}</span>` : ''}${id && !run ? `<span class="ins-ty"><b>${yesAt(k)}</b> yes</span>` : ''}${id && !run && k === s.length - 1 ? `<button class="ap-link" data-admin-action="ins-time-del" data-c="${esc(c.id)}" data-k="${k}">Remove</button>` : ''}</div>`).join('');
-  const add = !run && s.length < 2 && free.length ? `<button class="btn btn-sm btn-ghost" data-admin-action="ins-time-add" data-c="${esc(c.id)}">+ ${s.length ? 'Add a second time' : 'Add a time'}</button>` : '';
+  const add = !run && !s.length && free.length ? `<button class="btn btn-sm btn-ghost" data-admin-action="ins-time-add" data-c="${esc(c.id)}">+ ${s.length ? 'Add a second time' : 'Add a time'}</button>` : '';
   const note = run ? '' : !s.length ? (free.length ? 'No time yet: offers say “we pick the time together”.' : 'Every time in your week is taken: free one on another class, or agree a time with the group.')
-    : two ? (n >= ADMIN_CLASS_TWO_TIMES_FROM ? 'More than 20 fit, so they choose between two times: tap Yes · 1 or Yes · 2 when they answer.' : 'Two times (you added the second).')
-    : n >= ADMIN_CLASS_TWO_TIMES_FROM ? (free.length ? '' : 'More than 20 fit, but no free time is left for a second option.') : 'A second time opens by itself when more than 20 fit (' + n + ' now).';
+    : 'One time per class. When it is full (' + ADMIN_CLASS_MAX + '), Start opens the next class at the next free time.';
   return `<div class="ins-times"><div class="ins-th"><b>Class time${two ? 's' : ''}</b><span>your clock (Turkey) · ${ADMIN_CLASS_SESSIONS} sessions, 2 a week, ${ADMIN_CLASS_MINUTES} min · ${esc(adminClassPriceOfferIn('en', 'ir'))}; Türkiye ${esc(adminClassPriceOfferIn('en', 'tr'))}, VIP roadmap check + private analysis of their learning path included</span></div>${rows}${add}${note ? `<p class="ins-tnote">${esc(note)}</p>` : ''}</div>`;
 }
 // Farin's week (the Group classes list): every slot, Saturday to Thursday, the class code in it (·1 / ·2 = its first or second time) or "free",
@@ -42680,19 +42703,14 @@ function adminInsBoxSub(){
 // openId: just that class's full card (its own page in admin › Group classes); otherwise the list, one row per class.
 // What the fit check changed in this class (c.refit: hash, time, reason; names come from the learner list).
 function adminClassRefitNote(c, byHash){
-  const r = Array.isArray(c.refit) ? c.refit.slice(-6) : []; if(!r.length) return '';
+  const r = Array.isArray(c.refit) ? c.refit.filter(x=>x && x.by === 'one').slice(-6) : []; if(!r.length) return '';   // fit moves are silent (2026-11-23)
   return '<p class="ins-idea ins-refit"><b>Fit</b> ' + r.map(x=>{ const p = byHash[x.h], nm = ((p && p.profile.name) || 'A learner').trim().split(/\s+/)[0];
     if(x.by === 'one') return esc(nm) + ': ' + esc(x.why || 'kept in another class') + ' (one class each), ' + esc(adminDate(x.at));   // 2026-11-19
     return esc(nm) + ' (' + esc(x.why || '') + '): ' + (x.by === 'you' ? 'moved out by you' : 'moved to a class that fits') + ', ' + esc(adminDate(x.at)); }).join(' · ') + '</p>';
 }
 // Fit check (2026-11-17): every member of an open class against its level, speakers group and goal / course.
-function adminClassFitBanner(byHash, app){
-  const mis = adminClassesMisfits(byHash).filter(x=>app === 'all' || x.c.app === app);
-  if(!mis.length) return '<p class="ins-fitcheck ok" role="status">✓ Fit check: every member fits their class (level, speakers group, goal).</p>';
-  return '<div class="ins-fitcheck warn" role="status"><b>' + mis.length + ' member' + (mis.length === 1 ? ' doesn\'t' : 's don\'t') + ' fit their class</b><ul>'
-    + mis.slice(0, 12).map(x=>'<li><button class="ap-link" data-admin-action="ins-class" data-c="' + esc(x.c.id) + '">' + esc((x.p.profile.name || 'A learner').trim().split(/\s+/)[0]) + ' · ' + esc(adminInsStage(x.p)) + ' in ' + esc(adminClassTitleCode(x.c)) + '</button>: ' + esc(x.why) + '</li>').join('')
-    + '</ul><p>Classes nobody was offered yet fix themselves. Offered or running classes wait for you: open the class and tap Move out.</p></div>';
-}
+// No fit messages (Farin 2026-11-23: "if someone doesnt fiot just put them where they fit dont message that"): the sync moves them.
+function adminClassFitBanner(){ return ''; }
 function adminInsClassesHtml(openId){
   if(!adminClasses) return adminInsCard('Group classes', 'Group classes', `<p class="ap-empty">${adminClassesError ? 'Could not load the classes: ' + esc(adminClassesError) : 'Loading…'}</p>`, '');
   const r = adminClassRules(), byHash = adminClassPeopleByHash(), app = adminInsAppNow(), seen = adminClassesSeenBefore, k = adminInsKind;
@@ -42703,7 +42721,7 @@ function adminInsClassesHtml(openId){
     const all = adminClassOrdered(c, byHash), misW = {}; all.forEach(p=>{ const w = adminClassFitWhy(c, p); if(w) misW[p.key] = w; });   // fit (2026-11-17)
     const m = all.filter(p=>!misW[p.key]), mis = all.filter(p=>misW[p.key]), n = m.length, yes = m.filter(p=>adminClassReply(c, p) === 'yes').length, no = m.filter(p=>adminClassReply(c, p) === 'no').length;
     const invited = m.filter(p=>adminClassOfferSentAt(c, p)).length, due = adminClassOfferDue(c, m), isNew = offer && c.offerAt > seen;
-    // Start's groups per time (2026-11-18): one time = as before (6 yes, 12+ = two classes); two times = 6 yes for the same time
+    // Start's groups per time (2026-11-18): one time = as before (6 yes; 8 seats, then 14+ = two classes); two times = 6 yes for the same time
     const times = adminClassSched(c), plan = adminClassPlan(c, byHash), twoT = times.length > 1;
     const asked = course ? m.filter(p=>adminInsAsked(p).indexOf(c.theme) >= 0).length : 0, ready = sug && plan.groups.length > 0;
     const fit = !course && n ? adminInsFit(m, c.goal) : null, sizes = plan.sizes, seated = sizes.reduce((a, b)=>a + b, 0);
@@ -42720,12 +42738,11 @@ function adminInsClassesHtml(openId){
       : sug ? '<p class="ins-fun"><b>' + n + '</b> fit · <b>' + m.filter(p=>adminClassMayOffer(c, p)).length + '</b> can get the offer · <b>' + invited + '</b> sent the offer · <b class="y">' + yes + '</b> said yes' + perTime + ' · <b>' + no + '</b> said no · ' + startNote + '</p>' : '';
     const g = course ? THEME_GOAL[c.theme] || 'everyday' : (COURSE_GOAL_COLORS[c.goal] ? c.goal : 'everyday'), lvc = adminClassLevelCode(c);
     const offerBox = offer ? `<div class="ins-offer" style="--g:${COURSE_GOAL_COLORS[g]};">
-        <div class="ins-odoc" aria-hidden="true"><span class="ins-od-pill">Mid-private · 6–8 people</span><b>${esc(adminClassNameIn(c, 'en'))}<i>.</i></b>${lvc ? `<small>Level ${esc(lvc)}</small>` : ''}</div>
+        <div class="ins-odoc" aria-hidden="true"><span class="ins-od-pill">Group class · 6–8 people</span><b>${esc(adminClassNameIn(c, 'en'))}<i>.</i></b>${lvc ? `<small>Level ${esc(lvc)}</small>` : ''}</div>
         <div class="ins-otxt"><b>Offer page</b><span><b>Send offer</b> opens WhatsApp with a short message in their language and a link to a page made for them: their name, goal and level, what they told the app they find hard, the group's favourite topics, only 8 seats, the class time${twoT ? 's to choose from' : ''} (Iran time for Persian speakers), the ${ADMIN_CLASS_SESSIONS} sessions and, for Iran, the price. <b>Telegram</b> sends the same message, for learners without WhatsApp. Every learner in the class gets it, ticked “news and offers” or not; only someone who turned offers off themselves gets a plain hello.</span>
           <span class="ins-obtns"><a class="btn btn-sm btn-ghost" href="${esc(adminClassOfferUrl(c, null, byHash))}" target="_blank" rel="noopener">Open the page</a><button class="btn btn-sm btn-ghost" data-admin-action="ins-offer-copy" data-c="${esc(c.id)}">Copy link</button></span></div>
       </div>` : '';
     const rows = c.status === 'closed' ? '' : adminInsPeopleList(m.concat(mis), p=>{ const rep = adminClassReply(c, p), t = [], bad = misW[p.key];
-      if(bad) t.push('<span class="ap-tag warn">Doesn\'t fit: ' + esc(bad) + '</span><button class="ap-link ins-moveout" data-admin-action="ins-refit-out" data-c="' + esc(c.id) + '" data-id="' + esc(p.key) + '">Move out</button>');
       if(rep === 'yes') t.push('<span class="ap-tag ok">Said yes' + (twoT ? ' · time ' + (adminClassReplyTime(c, p) + 1) : '') + '</span>'); if(rep === 'no') t.push('<span class="ap-tag">Said no</span>');
       if(course && adminInsAsked(p).indexOf(c.theme) >= 0) t.push('<span class="ap-tag purple">Asked for this course</span>');
       if(course && adminInsOwns(p, c.theme)) t.push('<span class="ap-tag ok">Has the course</span>');
@@ -42740,7 +42757,6 @@ function adminInsClassesHtml(openId){
         <div class="ins-gh"><span class="ins-gn">${n}</span><span class="ins-gt"><b>${esc(adminClassTitle(c))} ${adminClassCodeHtml(c)}${tags}</b><small>${esc(why)}</small></span></div>
         ${adminClassIdea(c) && c.status !== 'closed' && !gather ? `<p class="ins-idea"><b>Class idea</b> ${esc(adminClassIdea(c))}</p>` : ''}
         ${funnel}
-        ${mis.length ? `<p class="ins-misfit" role="status">${mis.length} member${mis.length === 1 ? ' doesn\'t' : 's don\'t'} fit this class any more (marked below). They are not counted, offered or seated; tap Move out to put them in a class that fits.</p>` : ''}
         ${adminClassRefitNote(c, byHash)}
         ${adminClassTimesHtml(c, m)}
         ${offerBox}
@@ -42779,7 +42795,7 @@ function adminInsClassesHtml(openId){
         <span class="ins-fixed">Only with a WhatsApp number</span><span class="ins-fixed" title="Since 2026-11-19: someone who answered or got an offer stays in that class">One class per learner</span>
         <button class="ap-chip${r.split ? ' on' : ''}" data-admin-action="ins-split" aria-pressed="${r.split}">Turkish and Persian apart</button>
         <span class="ins-gl">Class size</span><span class="ins-fixed">6–8 people</span><span class="ins-gl">Offer from</span><span class="ins-fixed">10 who fit</span>
-        <span class="ins-gl">Two times from</span><span class="ins-fixed">21 who fit</span><span class="ins-gl">Course</span><span class="ins-fixed">${ADMIN_CLASS_SESSIONS} sessions · ${esc(adminClassPriceIn('en', 'ir'))} / ${esc(adminClassPriceIn('en', 'tr'))}</span>
+        <span class="ins-gl">Times</span><span class="ins-fixed">one per class, latest first</span><span class="ins-gl">Course</span><span class="ins-fixed">${ADMIN_CLASS_SESSIONS} sessions · ${esc(adminClassPriceIn('en', 'ir'))} / ${esc(adminClassPriceIn('en', 'tr'))}</span>
       </div>
       ${adminClassWeekHtml()}
       <div class="ap-chips" role="group" aria-label="Kind of class" style="margin-top:4px;">${adminInsChip('ins-kind', 'all', k === 'all', 'All')}${adminInsChip('ins-kind', 'course', k === 'course', 'Course classes · ' + nk('course'))}${adminInsChip('ins-kind', 'level', k === 'level', 'Level classes · ' + nk('level'))}</div>
@@ -42793,7 +42809,7 @@ function adminInsClassesHtml(openId){
       ${done.length ? `<details class="ins-done"><summary>Closed in the last 30 days · ${done.length}</summary>${done.map(row).join('')}</details>` : ''}
       ${notIn.length ? `<p class="ins-note ins-notin">Not in a class: ${esc(notIn.join(' · '))}. Nobody is pushed into a group that doesn't fit.</p>` : ''}`;
   return adminInsCard('Group classes', offerL.length ? offerL.length + ' class' + (offerL.length === 1 ? '' : 'es') + ' ready to offer' : sug.length ? 'Gathering: no class has 10 yet' : 'No class fits yet', body,
-    'A class is <b>6 to 8 people</b>. Its list gathers everyone who fits, and once <b>10</b> fit it is ready to offer: <b>Send offer</b> sends each learner a WhatsApp message with a page made for them. Tap <b>Yes</b> or <b>No</b> when they answer, and start once 4 said yes (8 or more yes make two classes). <b>Course classes</b> are built around a premium course (people who asked for it first, then their goals) and grouped by level band; <b>level classes</b> around a level and a goal. A class ready to offer gets its <b>time</b> from your week by itself (two days a week, 50 minutes; with more than 20 who fit, <b>two times</b> to choose from), and every course is <b>8 sessions for 5,500,000 toman (was 8,000,000), ₺3,000 (was ₺4,400) in Türkiye</b>, VIP roadmap check and a private analysis of their learning path included. A learner is in <b>one class</b> only (since 19 Nov): who answered or got an offer stays in that class, and the class page says who moved. New classes and newcomers arrive by themselves; a running class never changes. <b>Tap a class</b> to open it.');
+    'A class is <b>6 to 8 people</b>. Its list gathers everyone who fits, and once <b>10</b> fit it is ready to offer: <b>Send offer</b> sends each learner a WhatsApp message with a page made for them. Tap <b>Yes</b> or <b>No</b> when they answer, and start once 6 said yes. A class seats 8: once it is full, the next 6 who said yes start another class at the next free time. <b>Course classes</b> are built around a premium course (people who asked for it first, then their goals) and grouped by level band; <b>level classes</b> around a level and a goal. A class ready to offer gets its <b>time</b> from your week by itself (<b>one time</b> per class, the latest first, next to your lessons; two days a week, 50 minutes), and every course is <b>8 sessions for 5,500,000 toman (was 8,000,000), ₺3,000 (was ₺4,400) in Türkiye</b>, VIP roadmap check and a private analysis of their learning path included. A learner is in <b>one class</b> only (since 19 Nov): who answered or got an offer stays in that class, and the class page says who moved. New classes and newcomers arrive by themselves; a running class never changes. <b>Tap a class</b> to open it.');
 }
 /* admin › Group classes, its own section since 2026-11-16 (Farin: "make the classes in insight part a seperate section on the menu tab.
    besides make them selectable so i can open them and their info when i click on the course"): the list (app filter, rules, kind

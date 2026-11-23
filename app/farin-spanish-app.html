@@ -2269,6 +2269,12 @@
   .cls-wk{all:unset; cursor:pointer; font-family:'Fredoka', 'Nunito', sans-serif; font-weight:700; font-size:13px; color:var(--ink);}
   .cls-wk small{font-size:10px; color:var(--ink-soft);}
   .cls-wk:focus-visible{outline:2px solid var(--fs-purple); outline-offset:2px; border-radius:6px;}
+  /* Your week: drag a class to another time (2026-11-23) */
+  .ins-wk .cls-wk{display:block; width:100%; box-sizing:border-box; text-align:center; padding:3px 0; cursor:grab; touch-action:none; -webkit-user-select:none; user-select:none;}
+  .ins-wk.is-drag, .ins-wk.is-drag .cls-wk{cursor:grabbing;}
+  .ins-wk td.wk-src{opacity:.55; outline:2px dashed var(--fs-purple); outline-offset:-2px;}
+  .ins-wk td.wk-over{outline:2px solid var(--fs-purple); outline-offset:-2px; background:color-mix(in srgb, var(--fs-purple) 32%, var(--bg-elevated)); color:var(--ink);}
+  .wk-ghost{position:fixed; left:0; top:0; z-index:9999; pointer-events:none; padding:7px 12px; border-radius:10px; background:var(--fs-purple); color:#fff; font:700 15px/1 'Fredoka', 'Nunito', sans-serif; box-shadow:0 10px 24px rgba(20,8,80,.3);}
   /* sign in */
   .ap.ap-solo{display:block;}
   .ap-signin{max-width:420px; margin:0 auto; padding-top:12px;}
@@ -42499,7 +42505,7 @@ function adminInsAction(action, el){
   const C = adminClasses, cls = C && el.dataset.c ? C.classes.find(x=>x.id === el.dataset.c) : null;
   if(action === 'ins-app'){ adminInsApp = el.dataset.v; adminInsCell = null; adminInsList = null; return re(); }
   // admin › Group classes: open one class's page / back to the list where it was
-  if(action === 'ins-class' && cls){ adminClassesListY = window.scrollY || 0; adminClassView = cls.id; re(); window.scrollTo(0, 0); return; }
+  if(action === 'ins-class' && cls){ if(el.dataset.dragged) return; adminClassesListY = window.scrollY || 0; adminClassView = cls.id; re(); window.scrollTo(0, 0); return; }
   if(action === 'ins-classes'){ adminClassView = null; re(); window.scrollTo(0, adminClassesListY || 0); return; }
   if(action === 'ins-seen'){ adminInsSeen = Number(el.dataset.v) || 0; adminInsCell = null; return re(); }
   if(action === 'ins-view'){ adminInsView = el.dataset.v || null; adminInsCell = null; adminInsList = null; if(adminInsView === 'groups'){ adminClassesMaybeSync(); adminClassesMarkSeen(); } re(); window.scrollTo(0, 0); return; }
@@ -42630,9 +42636,9 @@ function adminClassTimesHtml(c, m){
 function adminClassWeekHtml(){
   const held = adminClassSlotsHeld(null), slots = ADMIN_CLASS_SLOTS.map(adminClassSlot), times = slots.map(s=>s.at).filter((x, i, a)=>a.indexOf(x) === i).sort((a, b)=>a - b);
   const cell = (d, at)=>{ const s = slots.find(x=>x.at === at && x.d.indexOf(d) >= 0); if(!s) return '<td class="na">·</td>';
-    const c = held[s.id]; if(!c) return '<td class="free">free</td>';
+    const c = held[s.id]; if(!c) return '<td class="free" data-slot="' + esc(s.id) + '">free</td>';
     const mine = adminClassSched(c), k = mine.indexOf(s.id);
-    return `<td class="${c.status === 'running' ? 'run' : 'on'}"><button class="cls-wk" data-admin-action="ins-class" data-c="${esc(c.id)}" title="${esc(adminClassTitleCode(c) + ' · ' + adminClassSlotShort(s.id))}">${esc(c.code || '?')}${mine.length > 1 ? '<small>·' + (k + 1) + '</small>' : ''}</button></td>`; };
+    return `<td class="${c.status === 'running' ? 'run' : 'on'}" data-slot="${esc(s.id)}"><button class="cls-wk" data-admin-action="ins-class" data-c="${esc(c.id)}" title="${esc(adminClassTitleCode(c) + ' · ' + adminClassSlotShort(s.id))}">${esc(c.code || '?')}${mine.length > 1 ? '<small>·' + (k + 1) + '</small>' : ''}</button></td>`; };
   const row = at=>`<tr><th scope="row">${adminClassHm(at)}</th>${ADMIN_CLASS_WEEK.map(d=>cell(d, at)).join('')}</tr>`;
   const busy = `<tr class="busy"><th scope="row">Your lessons</th>${ADMIN_CLASS_WEEK.map(d=>ADMIN_CLASS_BUSY[d] ? `<td>${esc(ADMIN_CLASS_BUSY[d]).replace('–', '–<br>')}</td>` : '<td class="na">·</td>').join('')}</tr>`;
   const before = times.filter(t=>t < 19 * 60 + 30), after = times.filter(t=>t >= 19 * 60 + 30);
@@ -42640,7 +42646,53 @@ function adminClassWeekHtml(){
   return `<details class="ins-week" open><summary>Your week · ${ADMIN_CLASS_SLOTS.length - freeN} of ${ADMIN_CLASS_SLOTS.length} class times taken</summary>
       <div class="ins-wkwrap"><table class="ins-wk"><colgroup><col class="ins-wkh">${ADMIN_CLASS_WEEK.map(()=>'<col>').join('')}</colgroup><thead><tr><th></th>${ADMIN_CLASS_WEEK.map(d=>`<th scope="col">${ADMIN_CLASS_DAY_W.short[d]}</th>`).join('')}</tr></thead>
       <tbody>${before.map(row).join('')}${busy}${after.map(row).join('')}</tbody></table></div>
-      <p class="ins-note">Your clock (Turkey), ${ADMIN_CLASS_MINUTES} min each; Iran is 30 minutes later. A class time is two days a week, so ${ADMIN_CLASS_SESSIONS} sessions take 4 weeks. Tap a code to open its class.</p></details>`;
+      <p class="ins-note">Your clock (Turkey), ${ADMIN_CLASS_MINUTES} min each; Iran is 30 minutes later. A class time is two days a week, so ${ADMIN_CLASS_SESSIONS} sessions take 4 weeks. Tap a code to open its class; drag it to another time to move the class there (onto another class to swap them).</p></details>`;
+}
+/* Your week, drag to move (Farin 2026-11-23: "make the table on admin movable so ican move the time sl;ots of the classes"): drag a class code onto
+   a free time to move the class there, or onto another class to swap their times. Pointer events, so mouse and touch both work; a tap (under 8 px
+   of movement) still opens the class. A swap, a running class, or a class where someone already said yes asks first (they need the new time).
+   The moved classes are marked as Farin's (schedBy 'you'), so nothing moves them back by itself. */
+function adminClassMoveTo(cls, id){
+  if(!cls || ADMIN_CLASS_SLOTS.indexOf(id) < 0) return false;
+  const from = adminClassSched(cls)[0] || '', other = adminClassSlotsHeld(cls)[id] || null;
+  if(from === id) return false;
+  const byHash = adminClassPeopleByHash(), yesN = c=>adminClassFitMembers(c, byHash).filter(p=>adminClassReply(c, p) === 'yes').length;
+  const warn = c=>c.status === 'running' ? (c.code || 'it') + ' is running' : yesN(c) ? yesN(c) + ' said yes in ' + (c.code || 'it') : '';
+  const w = [warn(cls)].concat(other ? [warn(other)] : []).filter(Boolean);
+  const q = other ? 'Swap ' + (cls.code || 'this class') + ' and ' + (other.code || 'the other class') + '? ' + (cls.code || 'This class') + ' → ' + adminClassSlotShort(id) + ', ' + (other.code || 'the other') + ' → ' + (from ? adminClassSlotShort(from) : 'no time yet') + '.'
+    : 'Move ' + (cls.code || 'this class') + ' to ' + adminClassSlotShort(id) + '?';
+  if((other || w.length) && !confirm(q + (w.length ? ' ' + w.join(', ') + ': tell them the new time.' : ''))){ renderAdminPage(); return false; }
+  if(other){ other.sched = from ? [from] : []; other.schedBy = 'you'; }
+  cls.sched = [id]; cls.schedBy = 'you';
+  [cls, other].forEach(c=>{ if(c) Object.keys(c.replies || {}).forEach(h=>{ const r = c.replies[h]; if(r && r.o != null) delete r.o; }); });   // one time each: no time picks
+  adminClassesSave(); renderAdminPage(); return true;
+}
+let adminWkDrag = null;   // the drag in progress: {id, from, to, x, y, on, el, ghost}
+function adminClassWeekBind(root){
+  const wk = root.querySelector('.ins-wk'); if(!wk) return;
+  const clear = ()=>wk.querySelectorAll('.wk-over, .wk-src').forEach(x=>x.classList.remove('wk-over', 'wk-src'));
+  wk.querySelectorAll('.cls-wk').forEach(b=>{
+    b.addEventListener('pointerdown', e=>{ if(e.button > 0) return; const td = b.closest('td');
+      adminWkDrag = {id:b.dataset.c, from:td ? td.dataset.slot || '' : '', to:'', x:e.clientX, y:e.clientY, on:false, el:b, ghost:null};
+      try{ b.setPointerCapture(e.pointerId); }catch(err){} });
+    b.addEventListener('pointermove', e=>{ const d = adminWkDrag; if(!d || d.el !== b) return;
+      if(!d.on){ if(Math.hypot(e.clientX - d.x, e.clientY - d.y) < 8) return;
+        d.on = true; wk.classList.add('is-drag'); wk.querySelectorAll('td[data-slot="' + d.from + '"]').forEach(x=>x.classList.add('wk-src'));
+        d.ghost = document.createElement('div'); d.ghost.className = 'wk-ghost'; d.ghost.textContent = b.textContent; document.body.appendChild(d.ghost); }
+      e.preventDefault();
+      d.ghost.style.transform = 'translate(' + (e.clientX - 18) + 'px,' + (e.clientY - 34) + 'px)';
+      const hit = document.elementFromPoint(e.clientX, e.clientY), td = hit && hit.closest ? hit.closest('.ins-wk td[data-slot]') : null;
+      d.to = td && td.dataset.slot !== d.from ? td.dataset.slot : '';
+      wk.querySelectorAll('.wk-over').forEach(x=>x.classList.remove('wk-over'));
+      if(d.to) wk.querySelectorAll('td[data-slot="' + d.to + '"]').forEach(x=>x.classList.add('wk-over')); });
+    const end = cancel=>{ const d = adminWkDrag; if(!d || d.el !== b) return; adminWkDrag = null;
+      if(d.ghost) d.ghost.remove(); wk.classList.remove('is-drag'); clear();
+      if(!d.on) return;   // a tap: the click opens the class
+      b.dataset.dragged = '1'; setTimeout(()=>{ delete b.dataset.dragged; }, 400);   // no click after a drag
+      if(!cancel && d.to) adminClassMoveTo(adminClasses && adminClasses.classes.find(x=>x.id === d.id), d.to); };
+    b.addEventListener('pointerup', ()=>end(false));
+    b.addEventListener('pointercancel', ()=>end(true));
+  });
 }
 // ---------- small views ----------
 // One series of thin bars from one baseline; the value is written beside each bar (the bar is never the only way to read it).
@@ -44071,6 +44123,7 @@ function bindAdminActions(root){
   const chatText = root.querySelector('#adm-chat-text'); if(chatText) chatText.oninput = ()=>{ adminChatNote = chatText.value; };
   adminNotifyBind(root);   // admin › Notifications inputs
   adminClassTimesBind(root);   // admin › Group classes: a class's time dropdowns (2026-11-18)
+  adminClassWeekBind(root);   // admin › Group classes: drag a class to another time in Your week (2026-11-23)
   root.querySelectorAll('[data-admin-action]').forEach(el=>{
     el.onclick = function(){
       const action = el.dataset.adminAction;

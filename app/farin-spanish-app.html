@@ -3766,6 +3766,8 @@
   .rl-done .rl-stamp, .rl-done .rl-stamp img{width:84px; height:84px;}
   .rl-h1{text-align:center; margin:18px 0 0;}
   .rl-got{margin-top:14px; padding:16px 18px;}
+  .rl-calib{margin-top:14px; padding:16px 18px; text-align:start;} .rl-calib p{margin:0 0 12px; font-size:14.5px; line-height:1.5; font-weight:700;}
+  .rl-calib-btns{display:flex; gap:8px; flex-wrap:wrap;} .rl-calib-btns .btn{flex:1 1 auto; width:auto; margin:0;}
   .rl-got b{font-size:14px;} .rl-got p{margin:6px 0 0; font-size:14.5px; line-height:1.5; font-weight:700;}
   .rl-line{font-size:13.5px; line-height:1.5; color:var(--ink-soft); margin:12px 2px 0;}
   .rl-nextline{font-size:14px; font-weight:800; margin:16px 2px 0; color:var(--fs-orange-ink);}
@@ -4904,8 +4906,8 @@ const STARTER_HANDLERS = {
 /* S1 calibration offer, bubble lines (farin-lxd, Claude/specs/lxd-phase1-content/level-options.js). Data only for now: the offer itself
    (after the first 3 Try beats of a new roadmap, 90%+ -> up, 35%- -> one stage earlier, one offer per roadmap) is a follow-up. */
 const CALIBRATION = {
- up:{en:"These were easy for you. Want to jump up a level?", tr:"Bunlar sana kolay geldi. Bir seviye yukarı çıkmak ister misin?", fa:"این‌ها برایت آسان بود. می‌خواهی یک سطح بالاتر بروی؟", es:"Esto te ha resultado fácil. ¿Quieres subir un nivel?"},
- down:{en:"Let's make this feel right. Start one stage earlier?", tr:"Hadi bunu sana uygun hale getirelim. Bir aşama önceden başlayalım mı?", fa:"بیا مناسبش کنیم. از یک مرحله قبل‌تر شروع کنیم؟", es:"Vamos a ajustarlo. ¿Empezamos una etapa antes?"}
+ up:{en:"These were easy for you. Want to move up?", tr:"Bunlar sana kolay geldi. Bir adım yukarı çıkmak ister misin?", fa:"این‌ها برایت آسان بود. می‌خواهی یک قدم بالاتر بروی؟", es:"Esto te ha resultado fácil. ¿Quieres avanzar un paso?"},
+ down:{en:"This page is a big step for you. Want to start one page earlier?", tr:"Bu sayfa senin için büyük bir adım. Bir önceki sayfadan başlamak ister misin?", fa:"این صفحه برایت قدم بزرگی است. می‌خواهی از یک صفحه قبل‌تر شروع کنی؟", es:"Esta página es un salto grande para ti. ¿Quieres empezar una página antes?"}
 };
 const LEARNER_OPTIONS = [
   {value:'analyst', icon:'search', label:{en:'Seeing the rule explained clearly', tr:'Kuralın açıkça anlatılmasını görmek', fa:'دیدن قانون با توضیح واضح', es:'Ver la regla explicada con claridad'},
@@ -11079,6 +11081,7 @@ function openRoadmapNode(n){
   if(n.type === 'song') return nav({view:'song-session', id:n.refId});
   if(n.type === 'dialogue') return nav({view:'dialogue', id:n.refId});
   if(n.type === 'box') return HANDLERS['open-box']({dataset:{node:n.refId}});
+  if(n.type === 'review') return HANDLERS['open-review']({dataset:{node:n.refId}});
   if(n.type === 'session') return nav({view:'session-prep', idx:String(currentRoadmap().indexOf(n))});
   return nav({view:'vocab-set-intro', id:n.refId, goal:n.goal||'', cat:n.type === 'slang' ? 'slang' : 'vocab'});
 }
@@ -11174,6 +11177,35 @@ function calibOfferHtml(){
   const lab = '<bdi>' + esc(displayLevel(calibShift(state.profile, r.dir))) + '</bdi>';
   return esc(trLine(CALIBRATION[r.dir]))
     + `<div class="cb-btns"><button class="cb-btn" data-action="calib-move">${r.dir === 'up' ? L(`Move up to ${lab}`, `${lab} seviyesine geç`, `برو به ${lab}`, `Subir a ${lab}`) : L(`Start at ${lab}`, `${lab} seviyesinden başla`, `از ${lab} شروع کن`, `Empezar en ${lab}`)}</button><button class="cb-btn alt" data-action="calib-stay">${L('Stay here','Burada kal','همین‌جا بمان','Quedarme aquí')}</button></div>`;
+}
+/* Learning-path plan R2 (2026-11-23; ALYtdMw2 S1): the level-fit offer shows where it answers what the learner just did, on the final
+   finish screen of a roadmap lesson (the rounds' last done screen, or the lesson quiz result), never on Home and never as a bubble (the Home
+   bubble went on 2026-11-21). A showing counts once per finish screen (mark = the rounds state or the quiz), at most CALIB_SHOWS times a
+   page; "Stay here" ends it for the page; "Move up" / "Start at" builds that page (calib-move). Never for Club learners or in a course step. */
+function calibFinishHtml(refId, mark){
+  const p = state.profile, pr = state.progress;
+  if(!p || !pr || !p.completedDiagnostic || p.clubCode || inCourseStep()) return '';
+  if(!refId || !currentRoadmap().some(n=>n.refId === refId && ['grammar','vocab','slang','story'].includes(n.type))) return '';
+  let r;
+  if(mark && mark.calibShown){ r = pr.calibration && pr.calibration[stageKeyOf(p)]; if(!r || !r.dir || r.answer) return ''; }
+  else { r = calibPending(); if(!r) return ''; r.shown = (r.shown || 0) + 1; if(mark) mark.calibShown = 1; try{ save(); }catch(e){} }
+  const to = calibShift(p, r.dir); if(!to) return '';
+  const lab = '<bdi>' + esc(displayLevel(to)) + '</bdi>';
+  return `<div class="card-flat rl-calib"><p dir="auto">${esc(trLine(CALIBRATION[r.dir]))}</p><div class="rl-calib-btns"><button class="btn btn-primary" data-action="calib-move"><span>${r.dir === 'up' ? L(`Move up to ${lab}`, `${lab} seviyesine geç`, `برو به ${lab}`, `Subir a ${lab}`) : L(`Start at ${lab}`, `${lab} seviyesinden başla`, `از ${lab} شروع کن`, `Empezar en ${lab}`)}</span></button><button class="btn btn-ghost" data-action="calib-stay">${L('Stay here','Burada kal','همین‌جا بمان','Quedarme aquí')}</button></div></div>`;
+}
+/* R2: records written while the offer had no surface (the Home bubble went on 2026-11-21) expire once (progress.calibMig = 1), so nobody
+   is offered a move for a page they are nearly through: unanswered and older than 14 days, or for this page when more than half is done. */
+function calibMigrate(){
+  const p = state.profile, pr = state.progress;
+  if(!p || !pr || pr.calibMig || !p.completedDiagnostic) return false;
+  const c = pr.calibration;
+  if(c && typeof c === 'object' && !Array.isArray(c)){
+    const old = Date.now() - 14 * 864e5, sk = stageKeyOf(p), req = (state.roadmap || []).filter(n=>rmRequired(n));
+    const half = req.length > 0 && req.filter(n=>isRoadmapNodeDone(n)).length * 2 > req.length;
+    Object.keys(c).forEach(k=>{ const r = c[k]; if(!r || typeof r !== 'object' || r.answer) return; const t = Date.parse(r.date || ''); if((isFinite(t) && t < old) || (k === sk && half)) r.answer = 'expired'; });
+  }
+  pr.calibMig = 1;
+  return true;
 }
 function companionBubbleContent(){
   // Off since 2026-11-21 (Farin: "the pop up message that comes and say how many days a week or lets go for quick or long lesson
@@ -11817,7 +11849,7 @@ function nodeTitle(it){
       grammar:L('Grammar','Dilbilgisi','گرامر','Gramática'), vocab:L('Vocab','Kelime','کلمات','Vocabulario'), slang:L('Slang','Argo','اصطلاحات','Argot'),
       song:L('Song','Şarkı','آهنگ','Canción'), story:L('Story','Hikaye','داستان','Historia'), media:L('Watch or listen','İzle veya dinle','تماشا یا گوش‌کن','Mira o escucha'),
       writing:L('Writing practice','Yazma pratiği','تمرین نوشتن','Práctica de escritura'), speaking:L('Speaking practice','Konuşma pratiği','تمرین صحبت‌کردن','Práctica de conversación'),
-      game:L('Game','Oyun','بازی','Juego'), box:L('Vocab Box','Kelime Kutusu','جعبه‌ی لغات','Caja de palabras')
+      game:L('Game','Oyun','بازی','Juego'), box:L('Vocab Box','Kelime Kutusu','جعبه‌ی لغات','Caja de palabras'), review:L('Warm-up','Isınma','گرم‌کردن','Calentamiento')
     };
     let p = pre[it.type], tail = null;
     if(it.type==='grammar'){ const g = GRAMMAR_ITEMS.find(x=>x.id===it.refId); if(g) tail = grammarTitle(g); }
@@ -11831,6 +11863,7 @@ function nodeTitle(it){
     else if(it.type==='media'){ const m = MEDIA_LIBRARY.find(x=>x.id===it.refId); if(m) tail = L(m.title.en, m.title.tr, m.title.fa, m.title.es); }
     else if(it.type==='writing' || it.type==='speaking'){ const dl = STUDIO_DIFFICULTY_LABEL[it.difficulty]; if(dl) tail = L(dl.en, dl.tr, dl.fa, dl.es); }
     else if(it.type==='box'){ tail = L('review','tekrar','مرور','repaso'); }
+    else if(it.type==='review'){ tail = L('from your last page','önceki sayfandan','از صفحه‌ی قبلی‌ات','de tu página anterior'); }
     else if(it.type==='starter'){ const sl = starterLesson(it.refId); if(sl) return stT(sl.title); }
     else if(it.type==='game'){
       tail = gameDisplayName(it.gameKind);
@@ -11951,7 +11984,7 @@ function continueLabel(p){
   if(starterOn(p)) return L('Start A1','A1\'e başla','A1 را شروع کن','Empezar A1');
   if(p.level === LEVELS[LEVELS.length - 1] && p.levelStage === 2) return L('Finish the roadmap','Yol haritasını bitir','نقشه‌ی راه را تمام کن','Terminar la hoja de ruta');
   const nx = esc(nextDisplayLevel(p));
-  return L(`Continue: ${nx}`, `Devam et: ${nx}`, `برو به <bdi>${nx}</bdi>`, `Pasar a ${nx}`);
+  return '<span>' + L(`Continue: ${nx}`, `Devam et: ${nx}`, `برو به <bdi>${nx}</bdi>`, `Pasar a ${nx}`) + '</span>';   // one flex item in the .btn, the <bdi> inline
 }
 /* ============================= LIVE SPEAKING SESSION ENGINE =============================
    Real per-goal, per-level content for the WhatsApp speaking-session handoff, instead of a
@@ -13073,6 +13106,18 @@ const PLAY_AFF = {    // partner kinds by the lesson right before the gap, best 
 const PLAY_ANY = ['dictation','echo','bingo','cross','spell','match','build','order','desk'];
 const PLAY_REVIEW = ['echo','spell','cross','dictation'];   // the READY-5 review kinds, in READY-5 order
 const PLAY_WEIGHT = {match:1};   // Word Rush (the simplest game) is picked as if it were already on the page once more
+/* Learning-path plan R4 (2026-11-23): the onboarding answer "What trips you up the most?" (priorityArea) and the level shape which partner
+   games come up: beginners get more listening and sound work, B2 / C1 more production. Built from the plan's tables; ordering only as
+   a tie-break (the plan's first draft) moved nothing at A1, where the level's kinds are already PLAY_ANY's own order, so: within each
+   tier the bias kinds come first (before the used-count), and after a word card (vocab, slang, Vocab Box) the bias set games join its
+   partner kinds, so they still play the set just taught. Grammar, dialogue and speaking cards keep their own partner kinds first. In
+   the first pass a bias kind may come 3 times on a page instead of 2 (never next to the same kind: the spread rule is unchanged); the
+   other variety passes still apply. Harness (Claude/specs/learning-path-2026-11-23/tools): EN A1 Listen and Type + Say It Back 2.8 ->
+   4.4 a page, B2 / C1 Say It Back + Passport Desk 2.5 / 3.2 -> 3.7 / 3.8, "speaking" vs "grammar" +1.1 of those, every page >= 50% games. */
+const PLAY_BIAS_SETLESSON = ['vocab','slang','box'], PLAY_BIAS_SETKINDS = ['dictation','echo','bingo','cross','spell'];
+const PLAY_BIAS_AREA = {speaking:['echo','desk'], listening:['dictation','echo','bingo'], vocab:['bingo','cross','spell'], grammar:['build','order']};
+const PLAY_BIAS_LEVEL = {A1:['dictation','echo','bingo'], A2:['dictation','echo'], B1:[], B2:['echo','build','desk'], C1:['echo','build','desk']};
+function playBias(p){ const out = [].concat(PLAY_BIAS_AREA[p && p.priorityArea] || [], PLAY_BIAS_LEVEL[p && p.level] || []); return out.filter((k, i)=>out.indexOf(k) === i); }
 function playSetFits(s, k){
   if(!s || !s.cards) return false;
   if(k === 'bingo') return s.cards.length >= 9;
@@ -13091,7 +13136,9 @@ function roadmapPlayFill(items, o){
   const isG = it => !!it && it.type === 'game';
   const p = o.profile, lvl = p.level, st = o.stage, from = o.from || 0, avoid = o.avoid || new Set();
   const goal = (items.find(it=>isG(it) && it.goal) || {}).goal || profileGoalKeys(p)[0] || 'everyday';
-  let fp = 20 + items.filter(it=>isG(it) && it.fill).length;   // partner positions 20, 21, ... (unique per page, so own-content refIds are too)
+  // partner positions 20, 21, ... (unique per page, so own-content refIds are too; past the highest one left, once a pass re-picked some: R4)
+  let fp = Math.max(20 + items.filter(it=>isG(it) && it.fill).length, 1 + Math.max(19, ...items.filter(it=>isG(it) && it.fill && typeof it.pos === 'number').map(it=>it.pos)));
+  const bias = playBias(p), br = k => { const i = bias.indexOf(k); return i < 0 ? 99 : i; };   // R4
   const near = (at, dir, n) => { const out = []; for(let j = dir < 0 ? at - 1 : at; j >= 0 && j < items.length && out.length < n; j += dir) if(isG(items[j])) out.push(items[j].gameKind); return out; };
   const count = k => items.filter(it=>isG(it) && it.gameKind === k).length;
   const spread = (k, at, w) => w ? !near(at, -1, w).includes(k) && !near(at, 1, w).includes(k) : ![items[at - 2], items[at + 1]].some(x=>isG(x) && x.gameKind === k);
@@ -13143,12 +13190,14 @@ function roadmapPlayFill(items, o){
   // 1. Every gap between two lesson cards (Vocab Box, song and media count as lessons) gets one partner game.
   for(let i = Math.max(0, from - 1); i < items.length - 1; i++){
     if(isG(items[i]) || isG(items[i + 1])) continue;
-    const at = i + 1, aff = PLAY_AFF[items[i].type] || [];
+    // R4: after a word card the bias set games join its partner kinds (they play the set just taught); other cards keep their own list
+    const at = i + 1, aff0 = PLAY_AFF[items[i].type] || [], aff = PLAY_BIAS_SETLESSON.includes(items[i].type) ? aff0.concat(bias.filter(k=>PLAY_BIAS_SETKINDS.includes(k) && !aff0.includes(k))) : aff0;
     let n = null;
     for(const [cap, w] of PLAY_PASSES){   // cap = most of one kind on the page; w = no same kind among the w nearest games on each side
-      const ok = k => count(k) < (k === 'hunt' ? 1 : cap) && spread(k, at, w);
+      const capOf = k => k === 'hunt' ? 1 : ((cap === 2 && w === PLAY_PASSES[0][1] && bias.includes(k)) ? 3 : cap);   // R4: a bias kind may come 3 times in the first pass
+      const ok = k => count(k) < capOf(k) && spread(k, at, w);
       const w8 = k => count(k) + (PLAY_WEIGHT[k] || 0);
-      const tier = arr => arr.filter(ok).sort((a, b)=>w8(a) - w8(b) || arr.indexOf(a) - arr.indexOf(b));
+      const tier = arr => arr.filter(ok).sort((a, b)=>br(a) - br(b) || w8(a) - w8(b) || arr.indexOf(a) - arr.indexOf(b));   // R4: the bias kinds first
       for(const k of tier(aff).concat(tier(PLAY_ANY.filter(k=>!aff.includes(k))))){ n = make(k, at); if(n) break; }
       if(n) break;
     }
@@ -13194,6 +13243,38 @@ function roadmapPlayTail(p){
     return true;
   }catch(e){
     try{ console.warn('Roadmap: partner games not added to this page; it stays as it was and the next open tries again.', e); }catch(e2){}
+    return false;
+  }
+}
+/* R4 on saved pages (built before 2026-11-23): once per page (progress.playBias = its stage key; a page this release builds sets it), the
+   partner games ahead of the current step that are not done are picked again with the bias. Done cards, the rotation games (Your Call,
+   Harbour Files, Mini Radio, Cozy Chores), review games, story steps and the golden card never change; nothing at or before the current
+   step moves. Works on a copy: an error leaves the page as it was and the next open tries again. */
+function ensureRoadmapPlayBias(){
+  const p = state.profile, pr = state.progress;
+  if(!state.roadmap || !state.roadmap.length || !p || !p.completedDiagnostic || !p.level || !pr) return false;
+  const key = stageKeyOf(p);
+  if(pr.playBias === key) return false;
+  try{
+    const rm = state.roadmap.slice(), open = rm.findIndex(n=>rmRequired(n) && !isRoadmapNodeDone(n)), gold = pr.roadmapGolden && pr.roadmapGolden.nodeId;
+    if(open < 0){ pr.playBias = key; return false; }
+    const drop = rm.filter((n, i)=>i > open && n.type === 'game' && n.fill && !n.review && !n.story && !STORY_BIG.includes(n.gameKind) && !isRoadmapNodeDone(n) && roadmapNodeId(n) !== gold);
+    if(!drop.length){ pr.playBias = key; return false; }
+    const before = drop.map(n=>n.gameKind).join(',');
+    const kept = rm.filter(n=>!drop.includes(n));
+    roadmapPlayFill(kept, {profile:p, stage:p.levelStage === 2 ? 2 : 1, from:open + 1, saved:true,
+      before:carrySetIds(p).map(id=>VOCAB_SETS.find(s=>s.id === id)).filter(Boolean),
+      gramBefore:completedGrammarItems(p.level), avoid:new Set(pr.completedGames || [])});
+    pr.playBias = key;
+    const after = kept.filter((n, i)=>i > open && n.type === 'game' && n.fill && !isRoadmapNodeDone(n) && roadmapNodeId(n) !== gold && !n.review && !n.story).map(n=>n.gameKind).join(',');
+    if(after === before && kept.length === rm.length) return false;   // the same games: keep the saved cards as they were
+    kept.forEach((n, i)=>{ n.n = i + 1; });
+    state.roadmap = kept;
+    const g = pr.roadmapGolden;
+    if(g && g.nodeId){ const gi = kept.findIndex(n=>roadmapNodeId(n) === g.nodeId); if(gi > -1) g.goldenIdx = gi; }
+    return true;
+  }catch(e){
+    try{ console.warn('Roadmap: partner games not re-picked on this page; it stays as it was and the next open tries again.', e); }catch(e2){}
     return false;
   }
 }
@@ -13572,6 +13653,10 @@ function buildRoadmap(profile){
   // Position 0 (opener): the first node of the page, after the warm-up. Empty on stage 1 until
   // Story Path is live (a page never opens with a game on content it has not taught yet).
   pushGame(gameKindForPosition(profile.level, stage, 0), 0);
+  // Learning-path plan R1 (2026-11-23): the page before's tricky spots open this page, right after the opener (progress.pendingReview,
+  // written when the page before moved on; see reviewIdsFor). roadmapPlayFill() puts a partner game after it like after any lesson.
+  { const pv = state.progress && state.progress.pendingReview;
+    if(pv && pv.for === stageKeyOf(profile) && pv.ids) items.push(reviewRoadmapNode(stageKeyOf(profile), pv.ids)); }
   // Pre-existing bug fixed in passing (found via Phase 2 script-testing): when a
   // warm-up rep is given, the main loop below used to start at the same vPool[0]
   // it just showed, producing a same-id duplicate roadmap node (harmless before
@@ -13636,7 +13721,8 @@ function buildRoadmap(profile){
   pushGame(gameKindForPosition(profile.level, stage, 5), 5);
   // Talkers (and anyone who said listening/speaking is their weak spot) get an extra
   // self-practice speaking rep, now that the live-session version of this is gone.
-  if((profile.learnerType==='talker' || profile.priorityArea==='listening') && stage===1){
+  // R4 (2026-11-23): "I freeze up when I need to speak" counts too (the 10-28 de-duplication still drops it while the goal has one topic a level)
+  if((profile.learnerType==='talker' || profile.priorityArea==='listening' || profile.priorityArea==='speaking') && stage===1){
     pushPractice('speaking');
   }
   // Position 6 (closer): the last node of the page (page 2: Your Call chapters 5-6).
@@ -14652,6 +14738,7 @@ function roadmapNodeAutoDone(item){
     case 'grammar': return state.progress.completedTraps.includes(item.refId);
     case 'vocab': case 'slang': return state.progress.completedVocabSets.includes(item.refId);
     case 'box': return !!(state.progress.boxDone && state.progress.boxDone[item.refId]);
+    case 'review': return !!(state.progress.reviewDone && state.progress.reviewDone[item.refId]);
     case 'story': return state.progress.completedStories.includes(item.refId);
     case 'dialogue': return Array.isArray(state.progress.completedDialogues) && state.progress.completedDialogues.includes(item.refId);
     case 'starter': return starterDone(item.refId);
@@ -14706,6 +14793,11 @@ function currentRoadmap(){
 function regenerateRoadmap(){
   state.roadmap = buildRoadmap(state.profile);
   state.progress.roadmapChecked = {};
+  // R1: the page just built took its warm-up card (or had none); ensureRoadmapReview() leaves a page built here alone
+  delete state.progress.pendingReview;
+  state.progress.reviewPlanned = stageKeyOf(state.profile);
+  state.progress.playBias = stageKeyOf(state.profile);   // R4: built with the bias
+  delete state.profile.pathDone;   // R5c: a new page is never the end of the roadmap
   return state.roadmap;
 }
 /* Roadmap 2.0 (ported from the English app): advancing levels is a deliberate
@@ -14718,6 +14810,15 @@ function checkRoadmapStageAdvance(){
   const roadmap = currentRoadmap();
   if(!roadmap.length || !roadmap.every(it=>!rmRequired(it) || isRoadmapNodeDone(it))) return;
   if(starterOn()){ starterFinish(); return; }
+  // Learning-path plan R5c (2026-11-23): the roadmap ends at C1.2 (it used to start C1.1 again). The finished page stays; Home offers a
+  // review mix (profile.pathDone; progress.pathEnd = the first time). A C1.1 page the old code looped to from a finished C1.2 (whose
+  // report is kept) ends the same way, once.
+  const last = LEVELS[LEVELS.length - 1], pr = state.progress;
+  if(state.profile.level === last && (state.profile.levelStage === 2 || (!pr.pathEnd && rrReports()[last + '.2']))){
+    state.profile.pathDone = todayISO();
+    if(!pr.pathEnd) pr.pathEnd = state.profile.pathDone;
+    return;
+  }
   if(state.profile.levelStage === 2){
     const li = LEVELS.indexOf(state.profile.level);
     if(li < LEVELS.length-1) state.profile.level = LEVELS[li+1];
@@ -14744,6 +14845,12 @@ function ensureRoadmap(){
   if(state.profile && state.profile.completedDiagnostic){ try{ if(ensureRoadmapLateGrammar()) mediaAdded = true; }catch(e){} }
   // story steps (one Your Call chapter / one Harbour Files episode per card, 2026-11-12) once per saved page, before the partner games
   if(state.profile && state.profile.completedDiagnostic){ try{ if(ensureRoadmapStory()) mediaAdded = true; }catch(e){ try{ console.warn('Roadmap: story-step pass failed', e); }catch(e2){} } }
+  // R1: a saved page barely started gets the warm-up card from the page before's report (before the partner games fill its gap)
+  if(state.profile && state.profile.completedDiagnostic){ try{ if(ensureRoadmapReview()) mediaAdded = true; }catch(e){} }
+  // R2: calibration records from while the offer had no surface expire once
+  if(state.profile && state.profile.completedDiagnostic){ try{ calibMigrate(); }catch(e){} }
+  // R4: a saved page re-picks its partner games ahead of the current step once, with the weak-area and level bias
+  if(state.profile && state.profile.completedDiagnostic){ try{ if(ensureRoadmapPlayBias()) mediaAdded = true; }catch(e){} }
   // partner games last, after every pass above has added its cards (rot:5; ensureRoadmapPlay reports its own errors)
   if(state.profile && state.profile.completedDiagnostic){ try{ if(ensureRoadmapPlay()) mediaAdded = true; }catch(e){ try{ console.warn('Roadmap: partner-game pass failed', e); }catch(e2){} } }
   if(state.profile && state.profile.completedDiagnostic){ try{ awardSouvenirs(null); }catch(e){} }
@@ -15188,7 +15295,8 @@ function svTypeMeta(t){
     song:    {c:'lis',   ic:ICONS.play, label:L('Song','Şarkı','آهنگ','Canción')},
     media:   {c:'story', ic:ICONS.play, label:L('Watch','İzle','تماشا','Ver')},
     dialogue:{c:'lis',   ic:ICONS.chat, label:L('Dialogue','Diyalog','گفت‌وگو','Diálogo')},
-    start:   {c:'diag',  ic:ICONS.star, label:L('Level start','Seviye başı','شروع سطح','Inicio de nivel')}
+    start:   {c:'diag',  ic:ICONS.star, label:L('Level start','Seviye başı','شروع سطح','Inicio de nivel')},
+    review:  {c:'review',ic:ICONS.repeat, label:L('Review','Tekrar','مرور','Repaso')}
   };
   return M[t] || M.grammar;
 }
@@ -17541,7 +17649,7 @@ function showPageComplete(){
       <div class="pc-stamp" id="pc-stamp"><span>${esc(level)}</span><small>${L('COMPLETE','TAMAM','کامل شد','COMPLETO')}</small></div>
     </div>
     <div class="pc-char-wrap" id="pc-char"><img src="roadmap-goal-clay.png" alt=""><span class="pc-pin" id="pc-pin">${esc(level)}</span></div>
-    <button class="btn" data-pc="advance" style="margin-top:10px; width:100%; max-width:320px; justify-content:center; background:var(--clay-orange); color:#fff; border:none;"><img src="icon-gradcap.png" alt="" style="width:22px; height:22px; object-fit:contain;">${continueLabel()}</button>
+    ${state.profile && state.profile.pathDone ? `<button class="btn" data-pc="mix" style="margin-top:10px; width:100%; max-width:320px; justify-content:center; background:var(--clay-orange); color:#fff; border:none;">${L('Keep it fresh: a review mix','Taze tut: karışık bir tekrar','تازه نگهش دار: یک مرور ترکیبی','Mantenlo fresco: un repaso variado')}</button>` : `<button class="btn" data-pc="advance" style="margin-top:10px; width:100%; max-width:320px; justify-content:center; background:var(--clay-orange); color:#fff; border:none;"><img src="icon-gradcap.png" alt="" style="width:22px; height:22px; object-fit:contain;">${continueLabel()}</button>`}
     <button class="btn btn-ghost" data-pc="close" style="margin-top:8px; width:100%; max-width:320px; justify-content:center; color:#fff; border-color:rgba(255,255,255,.5); background:transparent;">${L('Not now','Şimdi değil','الان نه','Ahora no')}</button>
   </div>`;
   document.body.appendChild(el);
@@ -17566,6 +17674,7 @@ function showPageComplete(){
     if(b){
       el.remove();
       if(b.dataset.pc === 'advance') HANDLERS['advance-roadmap-level']();
+      if(b.dataset.pc === 'mix') HANDLERS['start-shuffle']({dataset:{mode:'due', else:'warm'}});   // R5c
       return;
     }
     finish();
@@ -17634,6 +17743,7 @@ function renderRoadmapCard(p){
     vocab:{ic:ICONS.cards, img:'icon-story.png', c:'voc', label:L('Vocabulary','Kelime','واژگان', 'Vocabulario')},
     slang:{ic:ICONS.cards, c:'diag', label:L('Slang','Argo','اصطلاحات', 'Argot')},
     box:{ic:ICONS.cards, c:'voc', label:L('Vocab Box','Kelime Kutusu','جعبه‌ی لغات','Caja de palabras')},
+    review:{ic:ICONS.cards, c:'voc', label:L('Review','Tekrar','مرور','Repaso')},   // R1: the warm-up card, orange like the Vocab Box
     // icon-review.png is a clock — it reads as "a scheduled session", which fits
     // the live speaking session better than it fit slang.
     session:{ic:ICONS.chat, c:'lis', label:L('Speaking session','Konuşma seansı','جلسه مکالمه','Sesión de conversación')},
@@ -17682,7 +17792,7 @@ function renderRoadmapCard(p){
     orange:{bg:'linear-gradient(150deg, #FFB65F, #FFA53D)', ink:'#3B2300', sub:'rgba(59,35,0,.78)', ring:'#FFA53D', pillBg:'#3B2300', pillInk:'#fff', inset:'rgba(255,255,255,.55)'},
     game:{bg:'linear-gradient(150deg, #7C5CFC, #5A3FD6)', ink:'#fff', sub:'rgba(255,255,255,.86)', ring:'#7C5CFC', pillBg:'#fff', pillInk:'#5A3FD6', inset:'rgba(255,255,255,.55)'}   // a game without a poster (none today) would be a purple card
   };
-  const RM_LOOK_OF = {grammar:'purple', story:'purple', dialogue:'purple', media:'purple', session:'purple', song:'purple', vocab:'white', slang:'white', writing:'white', speaking:'white', box:'orange', game:'game'};
+  const RM_LOOK_OF = {grammar:'purple', story:'purple', dialogue:'purple', media:'purple', session:'purple', song:'purple', vocab:'white', slang:'white', writing:'white', speaking:'white', box:'orange', review:'orange', game:'game'};
   const lookOf = item => RM_LOOK[item ? (item.type === 'starter' ? starterLook(item) : (RM_LOOK_OF[item.type] || 'purple')) : 'purple'];
   const reportTitle = L('Page report','Sayfa karnesi','کارنامهٔ صفحه','Informe de la página');
 
@@ -17765,6 +17875,9 @@ function renderRoadmapCard(p){
     } else if(item.type==='box'){
       studyOpenTag = '<button class="roadmap-study" data-action="open-box" data-node="'+item.refId+'" style="'+studyStyle+'">';
       studyCloseTag = '</button>';
+    } else if(item.type==='review'){
+      studyOpenTag = '<button class="roadmap-study" data-action="open-review" data-node="'+item.refId+'" style="'+studyStyle+'">';
+      studyCloseTag = '</button>';
     } else if(item.type==='song'){
       studyOpenTag = '<button class="roadmap-study" data-action="nav" data-view="song-session" data-id="'+item.refId+'" style="'+studyStyle+'">';
       studyCloseTag = '</button>';
@@ -17817,7 +17930,8 @@ function renderRoadmapCard(p){
       <div class="card-flat rm2-box" style="position:relative; padding:20px 10px;">
         ${stackedRoadmap(roadmap.length + (stOn ? 0 : 1), pinFn, cardFn, L(arch.name.en,arch.name.tr,arch.name.fa, arch.name.es), startMedia, allDone ? L("You've made it!",'Başardın!','موفق شدی!', '¡Lo lograste!') : nextDisplayLevel(p), endMedia, staggerFrom)}
       </div>
-      ${allDone ? `
+      ${allDone && p.pathDone ? `
+      <button class="btn" style="margin-top:18px; width:100%; justify-content:center; background:var(--clay-orange); color:#fff; border:none;" data-action="start-shuffle" data-mode="due" data-else="warm">${L('Keep it fresh: a review mix','Taze tut: karışık bir tekrar','تازه نگهش دار: یک مرور ترکیبی','Mantenlo fresco: un repaso variado')}</button>` : allDone ? `
       <button class="btn" style="margin-top:18px; width:100%; justify-content:center; background:var(--clay-orange); color:#fff; border:none;" data-action="advance-roadmap-level"><img src="icon-gradcap.png" alt="" style="width:22px; height:22px; object-fit:contain;">${stOn ? L('Start A1','A1\'e başla','A1 را شروع کن','Empezar A1') : continueLabel(p)}</button>
       ${!stOn && !stageCheckRecord(stageKeyOf(state.profile)) ? `<p style="font-size:12.5px; color:var(--ink-soft); text-align:center; margin-top:6px;" dir="auto">${esc(L('First a quick 10-question check (about 4 min). It never stops you.','Önce 10 soruluk kısa bir kontrol (yaklaşık 4 dk). İlerlemene asla engel olmaz.','اول یک مرور کوتاه ۱۰ سؤالی (حدود ۴ دقیقه). هیچ‌وقت جلویت را نمی‌گیرد.','Primero un repaso rápido de 10 preguntas (unos 4 min). Nunca te impide avanzar.'))}</p>` : ''}` : `
       <button class="btn" disabled style="margin-top:18px; width:100%; justify-content:center; background:var(--bg-sunken); color:var(--ink-faint); border:1.5px solid var(--border-soft); cursor:default;">${L('Finish everything above to unlock the next level','Bir sonraki seviyeyi açmak için yukarıdakilerin hepsini bitir','برای باز کردن سطح بعدی، همه موارد بالا را تمام کن', 'Termina todo lo de arriba para desbloquear el siguiente nivel')}</button>`}
@@ -27619,7 +27733,7 @@ function rlDoneScreen(s, R, fin){
   const next = r < 2 ? `<p class="rl-nextline" dir="${courseTD()}">${isoHtml(rlS('done.next', {n:r + 2, name:rlName(r + 1), m:2}))}</p>` : '';
   return {key:'done', body:`<div class="rl-done">${rlTicketHtml(R.st, land)}<h1 class="display cs-h1 rl-h1" dir="${courseTD()}">${isoHtml(rlS('done.round', {n:r + 1}))}</h1>
       ${got.length ? `<div class="card-flat rl-got"><b dir="${courseTD()}">${isoHtml(rlS('done.got'))}</b><p dir="${courseTD()}">${got.map(x=>isoHtml(rlIso(x))).join(esc(courseSep()))}</p></div>` : ''}
-      ${weak}${r === 2 && R.badges && R.badges.length ? renderBadgeUnlockCard(R.badges) : ''}${next}</div>`,
+      ${r === 2 ? calibFinishHtml(s.id, R) : ''}${weak}${r === 2 && R.badges && R.badges.length ? renderBadgeUnlockCard(R.badges) : ''}${next}</div>`,
     foot:r < 2 ? rlCta('rl-start', rlS('btn.startRound', {n:r + 2})) + rlGhost('rl-stop', rlS('btn.stop')) : rlCta(fin || 'rl-finish', rlS('finish'))};
 }
 
@@ -29821,6 +29935,7 @@ function shuffleSweepSound(n, t0){
 }
 function finishShuffle(sh){
   sh.finished = true;
+  if(sh.reviewNode) reviewMarkDone(sh.reviewNode);   // R1: the page's warm-up card is done
   checkPagesKept();
   state.progress.reviewsCompleted = (state.progress.reviewsCompleted||0) + 1;
   state.progress.lastShuffleDate = todayISO();
@@ -30143,6 +30258,11 @@ function scPlayRowHtml(item){
       <button class="btn btn-ghost" style="width:auto;" data-action="sc-play" data-r="0.8">${ICONS.soundOn} ${L('Slower','Daha yavaş','آهسته‌تر','Más despacio')}</button>
     </div>`;
 }
+// R1 (2026-11-23): the misses open the next page (its orange warm-up card). The last page of the roadmap has no next page: the review.
+function scMissLine(key){
+  if(String(key || '') === LEVELS[LEVELS.length - 1] + '.2') return L('The ones marked “Needs a review” come back in your review tomorrow.','“Tekrar gerekli” olanlar yarın tekrarında geri gelir.','مواردی که برچسب «مرور لازم دارد» دارند، فردا در مرورت برمی‌گردند.','Lo marcado como «Para repasar» vuelve mañana en tu repaso.');
+  return L('The ones marked “Needs a review” come back at the start of your next page.','“Tekrar gerekli” olanlar bir sonraki sayfanın başında geri gelir.','مواردی که برچسب «مرور لازم دارد» دارند، اول صفحه‌ی بعدی‌ات برمی‌گردند.','Lo marcado como «Para repasar» vuelve al principio de tu próxima página.');
+}
 // x.2 ends the level, so its check is the level check ("Level A2 check"); x.1 stays the quick check
 function scIsLevelCheck(key){ return /\.2$/.test(String(key || '')); }
 function scTitle(key){ const lv = String(key || '').split('.')[0];
@@ -30174,7 +30294,7 @@ function renderStageCheckIntro(){
       <p class="game-result-line" dir="auto">${esc(intro)}</p>
     </div>
     <button class="btn btn-primary game-cta" data-action="sc-start">${L('Start','Başla','شروع کن','Empezar')}</button>
-    <button class="btn btn-ghost" style="margin-top:8px;" data-action="sc-skip">${L('Skip and go to the next level','Atla ve bir sonraki seviyeye geç','رد شو و برو به سطح بعدی','Saltar e ir al siguiente nivel')}</button>
+    <button class="btn btn-ghost" style="margin-top:8px;" data-action="sc-skip">${state.viewParams.then === 'report' ? L('Skip and see your page report','Atla ve sayfa karneni gör','رد شو و کارنامهٔ این صفحه را ببین','Saltar y ver el informe de la página') : L('Skip and go to the next level','Atla ve bir sonraki seviyeye geç','رد شو و برو به سطح بعدی','Saltar e ir al siguiente nivel')}</button>
   </div>`;
 }
 // Results (never blocks): headline by score, Grammar / Words / Listening rows tagged Strong or Needs a review.
@@ -30213,9 +30333,9 @@ function renderStageCheckResults(){
       ${section(L('Grammar','Dilbilgisi','گرامر','Gramática'), g)}
       ${section(L('Words','Kelimeler','کلمه‌ها','Palabras'), wRows)}
       ${section(L('Listening','Dinleme','شنیدن','Comprensión auditiva'), l.length ? [l[0]] : [])}
-      ${anyMiss ? `<p style="font-size:12.5px; color:var(--ink-soft); margin-top:12px;" dir="auto">${esc(L('The ones marked “Needs a review” come back in your review tomorrow.','“Tekrar gerekli” olanlar yarın tekrarında geri gelir.','مواردی که برچسب «مرور لازم دارد» دارند، فردا در مرورت برمی‌گردند.','Lo marcado como «Para repasar» vuelve mañana en tu repaso.'))}</p>` : ''}
+      ${anyMiss ? `<p style="font-size:12.5px; color:var(--ink-soft); margin-top:12px;" dir="auto">${esc(scMissLine(q.scKey))}</p>` : ''}
     </div>
-    <button class="btn game-cta" style="margin-top:18px; width:100%; justify-content:center; background:var(--clay-orange); color:#fff; border:none;" data-action="sc-advance"><img src="icon-gradcap.png" alt="" style="width:22px; height:22px; object-fit:contain;">${continueLabel()}</button>
+    <button class="btn game-cta" style="margin-top:18px; width:100%; justify-content:center; background:var(--clay-orange); color:#fff; border:none;" data-action="${q.scThen === 'report' ? 'sc-report' : 'sc-advance'}"><img src="icon-gradcap.png" alt="" style="width:22px; height:22px; object-fit:contain;">${q.scThen === 'report' ? L('See your page report','Sayfa karneni gör','کارنامهٔ این صفحه را ببین','Ver el informe de la página') : continueLabel()}</button>
   </div>`;
 }
 // The check is answered to the end: misses go to review box 0, the record is stored (local + cloud with progress).
@@ -30363,13 +30483,68 @@ function advanceWithReport(){
   const p = state.profile;
   let rep = null;
   try{ if(p && p.completedDiagnostic && roadmapAllDone()) rep = rrBuild(roadmapLevelKey(), rrNodesFromRoadmap(), true); }catch(e){ rep = null; }
-  const before = p ? stageKeyOf(p) : '';
+  const before = p ? stageKeyOf(p) : '', endBefore = !!(p && p.pathDone);
+  // R1: this page's tricky spots open the next page as its warm-up card (progress.pendingReview, read by buildRoadmap)
+  try{ if(p && p.completedDiagnostic && roadmapAllDone()) reviewPlanNext(before, rep); }catch(e){}
   checkRoadmapStageAdvance();
-  if(!rep || !state.profile || stageKeyOf(state.profile) === before) return null;
-  rep.next = before === 'C1.2' ? '' : displayLevel(state.profile);
+  const ended = !!(state.profile && state.profile.pathDone) && !endBefore;   // R5c: this page finished the roadmap (the report still comes)
+  if(!rep || !state.profile || (stageKeyOf(state.profile) === before && !ended)) return null;
+  rep.next = (before === 'C1.2' || ended) ? '' : displayLevel(state.profile);
   rrReports()[rep.sk] = rep;
-  state.progress.pageStart = {lv:displayLevel(state.profile), date:todayISO()};
+  if(!ended) state.progress.pageStart = {lv:displayLevel(state.profile), date:todayISO()};
   return rep;
+}
+/* Learning-path plan R1 (2026-11-23): "tricky spots open the next page". When a page moves on, up to 4 of its items come back as the
+   next page's warm-up card (type 'review', orange like the Vocab Box, right after the opener), played in the Souvenir Shuffle: the level
+   check's misses (grammar, then the sets of missed words), then the report's weak items and the sets of its hard words, then due reviews.
+   Only items the Shuffle can ask (an SRS entry, a source, not a course item). Nothing to review = no card. The ids travel as one
+   comma-joined string (the cloud copy takes no nested arrays): progress.pendingReview = {for:<next stage>, ids}, then on the node. */
+function reviewIdsFor(sk, rep){
+  const pr = state.progress || {}, srs = pr.srs || {}, out = [];
+  const sc = pr.stageChecks && pr.stageChecks[sk], chk = (sc && !sc.skipped) ? sc : null;
+  if(chk){
+    Object.keys(chk.grammar || {}).forEach(id=>{ if(chk.grammar[id] === 0) out.push(id); });
+    Object.keys(chk.words || {}).forEach(id=>{ if(Array.isArray(chk.words[id]) && chk.words[id].length) out.push(id); });
+  }
+  if(rep){ (rep.weak || []).forEach(x=>out.push(x && x[1])); (rep.hard || []).forEach(h=>out.push(h && h[1])); }
+  try{ dueItems().forEach(id=>out.push(id)); }catch(e){}
+  return out.filter((id, i)=>id && out.indexOf(id) === i && srs[id] && srsSource(id, srs[id].kind) && !srsIsCourseItem(id)).slice(0, 4);
+}
+function reviewNextKey(sk){ const m = /^([A-C][12])\.([12])$/.exec(String(sk || '')); if(!m) return ''; if(m[2] === '1') return m[1] + '.2'; const i = LEVELS.indexOf(m[1]); return (i >= 0 && i < LEVELS.length - 1) ? LEVELS[i + 1] + '.1' : ''; }
+function reviewPlanNext(sk, rep){
+  const pr = state.progress; if(!pr) return;
+  delete pr.pendingReview;
+  const next = reviewNextKey(sk), ids = next ? reviewIdsFor(sk, rep) : [];
+  if(ids.length) pr.pendingReview = {for:next, ids:ids.join(',')};
+}
+function reviewRoadmapNode(sk, ids){ return {type:'review', refId:'review-' + sk, ids:String(ids || ''), goal:null, title:L('Warm-up: from your last page','Isınma: önceki sayfandan','گرم‌کردن: از صفحه‌ی قبلی‌ات','Calentamiento: de tu página anterior')}; }
+function reviewMarkDone(refId){
+  if(!refId || !state.progress) return;
+  if(!state.progress.reviewDone || typeof state.progress.reviewDone !== 'object' || Array.isArray(state.progress.reviewDone)) state.progress.reviewDone = {};
+  state.progress.reviewDone[refId] = todayISO();
+}
+/* Saved pages (built before this release) get the warm-up card once, when the learner has barely started the page (fewer than 3 cards
+   done) and the page before has a report: right after the current step, never before a done card; the golden node is re-pointed (like
+   ensureRoadmapBox). Runs before the partner-game pass, so the gap it leaves gets its game. A page this release built decided its card
+   when it was built (progress.reviewPlanned = its stage key) and is left alone. */
+function ensureRoadmapReview(){
+  const p = state.profile, pr = state.progress, rm = state.roadmap;
+  if(!rm || !rm.length || !p || !p.completedDiagnostic || !p.level || !pr) return false;
+  const sk = stageKeyOf(p);
+  if(pr.reviewPlanned === sk || rm.some(n=>n.type === 'review')) return false;
+  const prev = prevStageKey(sk), rep = prev ? rrReports()[prev] : null;
+  if(!rep) return false;
+  if(rm.filter(n=>rmRequired(n) && isRoadmapNodeDone(n)).length >= 3) return false;
+  const open = rm.findIndex(n=>rmRequired(n) && !isRoadmapNodeDone(n));
+  if(open < 0) return false;
+  const ids = reviewIdsFor(prev, rep);
+  if(!ids.length) return false;
+  let lastDone = -1; rm.forEach((n, i)=>{ if(isRoadmapNodeDone(n)) lastDone = i; });
+  rm.splice(Math.min(rm.length, Math.max(open + 1, lastDone + 1)), 0, reviewRoadmapNode(sk, ids.join(',')));
+  rm.forEach((n, i)=>{ n.n = i + 1; });
+  const g = pr.roadmapGolden;
+  if(g && g.nodeId){ const gi = rm.findIndex(n=>roadmapNodeId(n) === g.nodeId); if(gi > -1) g.goldenIdx = gi; }
+  return true;
 }
 // Opens a fresh report on top of Home (Back from it lands on Home, never on the stage check).
 function openFreshReport(rep){
@@ -30935,6 +31110,7 @@ function renderQuizResults(){
         <p class="game-result-line">${L('Practise again with the ones you missed plus a few new ones. Then this step is done.','Kaçırdıklarınla birkaç yeni soruyla tekrar çalış. Sonra bu adım tamamlanır.','دوباره با سوال‌هایی که اشتباه کردی و چند سوال تازه تمرین کن. بعد این قدم تمام می‌شود.','Practica otra vez con los que has fallado y algunos nuevos. Después este paso queda hecho.')}</p>
         <button class="btn btn-primary game-cta" data-action="quiz-retry">${L('Practise again','Tekrar çalış','دوباره تمرین کن','Practicar otra vez')}</button>
       </div>` : (q.weak ? `<p class="game-result-line" style="margin-top:8px;">${L('Done. This one will come back in your review tomorrow.','Tamam. Bu yarın tekrarında geri gelecek.','تمام شد. این فردا در مرورت برمی‌گردد.','Hecho. Este volverá en tu repaso de mañana.')}</p>` : '')}
+      ${LESSON_KINDS.includes(q.kind) && !q.retryOffered ? calibFinishHtml(q.contextId, q) : ''}
       ${q.kind==='review' ? renderReviewBreakdown(q) : ''}
 
       <div class="whatsapp-card" style="margin-top:22px; text-align:start;">
@@ -32783,6 +32959,16 @@ const HANDLERS = {
     if(!state.profile || !state.profile.completedDiagnostic) return;
     if(!roadmapAllDone()){ HANDLERS['roadmap-locked'](); return; }
     const lv = roadmapLevelKey(), sk = rrStageKey(lv);
+    // Learning-path plan R1 (2026-11-23): the level check comes before the page report, so the report's tricky spots include what the check
+    // found (and the next page's warm-up card too). Offered once, taken or skipped (progress.stageChecks); a report seen already opens as it is.
+    if(!rrPageReportSeenKey(sk)){
+      const key = stageKeyOf(state.profile);
+      if(!stageCheckRecord(key)){
+        let qs = [];
+        try{ qs = buildStageCheck(); }catch(e){ qs = []; }
+        if(qs.length >= 6){ go('stage-check', {key, qs, then:'report'}); return; }
+      }
+    }
     let rep = rrReports()[sk] || null;
     if(!rep || !rrPageReportSeenKey(sk)){
       try{ rep = rrBuild(lv, rrNodesFromRoadmap(), true); }catch(e){ rep = rrReports()[sk] || null; }
@@ -32837,8 +33023,9 @@ const HANDLERS = {
     const vp = state.viewParams || {}, key = vp.key || stageKeyOf(state.profile);
     let qs = (vp.qs && vp.qs.length >= 6) ? vp.qs : [];
     if(!qs.length){ try{ qs = buildStageCheck(); }catch(e){ qs = []; } }
-    if(qs.length < 6){ HANDLERS['sc-advance'](); return; }
-    startQuiz('stagecheck', '', qs, 'dashboard', {}, {scKey:key});
+    const then = vp.then === 'report' ? 'report' : '';   // R1: opened from the page report card, it ends on the report (not the next page)
+    if(qs.length < 6){ HANDLERS[then ? 'sc-report' : 'sc-advance'](); return; }
+    startQuiz('stagecheck', '', qs, 'dashboard', {}, {scKey:key, scThen:then});
     window.scrollTo(0,0);
     scAutoPlay();
   },
@@ -32846,7 +33033,7 @@ const HANDLERS = {
     const key = (state.viewParams && state.viewParams.key) || stageKeyOf(state.profile);
     if(!state.progress.stageChecks || typeof state.progress.stageChecks !== 'object') state.progress.stageChecks = {};
     if(!state.progress.stageChecks[key]) state.progress.stageChecks[key] = {v:1, date:todayISO(), skipped:true};
-    HANDLERS['sc-advance']();
+    HANDLERS[(state.viewParams && state.viewParams.then === 'report') ? 'sc-report' : 'sc-advance']();
   },
   'sc-look-again'(el){ const id = el.dataset.id; if(GRAMMAR_ITEMS.some(g=>g.id === id)) go('grammar-trap', {id}); },
   'sc-advance'(){
@@ -32854,6 +33041,18 @@ const HANDLERS = {
     markActivity();
     if(rep && !rrPageReportSeenKey(rep.sk)){ openFreshReport(rep); return; }   // seen from its roadmap card already (2026-11-21)
     go('dashboard');
+  },
+  // R1: the check opened from the page report card ends on this page's report (built now, with the check's results); the page moves on
+  // later from the page-complete overlay or the roadmap button, as before (the check is recorded, so it is not asked again).
+  'sc-report'(){
+    if(!state.profile || !state.profile.completedDiagnostic) return;
+    const lv = roadmapLevelKey(), sk = rrStageKey(lv);
+    let rep = null;
+    try{ rep = rrBuild(lv, rrNodesFromRoadmap(), true); }catch(e){ rep = rrReports()[sk] || null; }
+    markActivity();
+    if(!rep){ save(); navHistory = []; go('dashboard'); return; }
+    rrReports()[sk] = rep;
+    openFreshReport(rep);
   },
   // Roadmap report (2026-11-16)
   'rr-go'(el){
@@ -32897,16 +33096,18 @@ const HANDLERS = {
   'plan-step'(){ const step = planNextStep(); if(step) runPlanStep(step); },
   // S1 calibration (ALYtdMw2 d): move one stage up / earlier, or stay. Only on a tap; a new roadmap for the new stage.
   'calib-move'(){
-    const p = state.profile, r = calibPending(), to = r && calibShift(p, r.dir);
+    // R2: the record of this page as the finish screen showed it (its second showing has used up calibPending's count)
+    const p = state.profile, c = state.progress.calibration, r = p && c && c[stageKeyOf(p)], to = r && r.dir && !r.answer && !p.clubCode && calibShift(p, r.dir);
     if(!to) return;
     r.answer = 'move'; r.to = to.level + '.' + to.levelStage;
+    try{ awardSouvenirs(null); }catch(e){}   // R2: the lesson just finished keeps its souvenir on the page it was done on
     p.level = to.level; p.levelStage = to.levelStage;
     regenerateRoadmap();
     markActivity(); save();
-    if(state.view !== 'dashboard') go('dashboard'); else render();
+    if(state.view !== 'dashboard'){ navHistory = []; go('dashboard'); navHistory = []; } else render();
     window.scrollTo(0,0);
   },
-  'calib-stay'(){ const r = calibPending(); if(r){ r.answer = 'stay'; save(); } },
+  'calib-stay'(){ const c = state.progress.calibration, r = state.profile && c && c[stageKeyOf(state.profile)]; if(r && r.dir && !r.answer){ r.answer = 'stay'; save(); render(); } },
   'plan-replay'(){ startReplayGame(); },
   'set-week-goal'(el){
     state.progress.weeklyGoal = [2,3,5].includes(Number(el.dataset.goal)) ? Number(el.dataset.goal) : 3;
@@ -33834,6 +34035,19 @@ const HANDLERS = {
   'deck-again'(el){ deckSortTap(el.dataset.id, false); },
   // Vocab Box
   'open-box'(el){ go('vocab-box', {node:(el && el.dataset && el.dataset.node) || ''}); },
+  // R1: the warm-up card plays its own ids in the Souvenir Shuffle (at most 4 items, 8 questions), else today's due reviews; with nothing
+  // to review it passes by itself. The Shuffle's finish marks it done (finishShuffle, progress.reviewDone).
+  'open-review'(el){
+    const ref = (el && el.dataset && el.dataset.node) || '', node = currentRoadmap().find(n=>n.type === 'review' && n.refId === ref);
+    if(!node) return;
+    const ids = String(node.ids || '').split(',').filter(Boolean);
+    const sh = (ids.length && buildShuffle('tricky', ids)) || buildShuffle('due');
+    if(!sh){ reviewMarkDone(ref); markActivity(); save(); render(); return; }
+    sh.reviewNode = ref;
+    gcBubble = null;
+    hideCharTip(true);
+    go('souvenir-shuffle', {sh, reviewNode:ref});
+  },
   'box-keep'(){ boxSortTap(true); },
   'box-again'(){ boxSortTap(false); },
   'box-finish'(){ const ref = state.viewParams.node; if(ref) boxMarkDone(ref); save(); navHistory.length = 0; go('dashboard', {}); },
@@ -33909,7 +34123,7 @@ const HANDLERS = {
   'start-review'(){ HANDLERS['start-shuffle']({dataset:{}}); },
   'start-shuffle'(el){
     const mode = (el && el.dataset && el.dataset.mode) || 'due';
-    const sh = buildShuffle(mode);
+    const sh = buildShuffle(mode) || (el && el.dataset && el.dataset.else ? buildShuffle(el.dataset.else) : null);   // R5c: the review mix, due else warm
     if(!sh) return;
     gcBubble = null;
     hideCharTip(true);

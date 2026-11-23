@@ -10532,13 +10532,19 @@ const TTS_AUDIO_VOICES = {
   b:{name:'Bella', flag:'us', label:()=>L('American English','Amerikan İngilizcesi','انگلیسی آمریکایی','inglés americano')},
   g:{name:'George', flag:'uk', label:()=>L('British English','İngiliz İngilizcesi','انگلیسی بریتانیایی','inglés británico')},
   d:{name:'Daniela', flag:'ar', label:()=>L('Argentinian Spanish','Arjantin İspanyolcası','اسپانیایی آرژانتینی','español de Argentina')},
-  v:{name:'Dave', flag:'es', label:()=>L('Spanish from Spain','İspanya İspanyolcası','اسپانیایی اسپانیا','español de España')}
+  v:{name:'Dave', flag:'es', label:()=>L('Spanish from Spain','İspanya İspanyolcası','اسپانیایی اسپانیا','español de España')},
+  // the game characters' second voices (2026-11-23): a British woman, an American man; a woman from Spain, a Latin American man
+  e:{name:'Emma', flag:'uk', label:()=>L('British English','İngiliz İngilizcesi','انگلیسی بریتانیایی','inglés británico')},
+  m:{name:'Michael', flag:'us', label:()=>L('American English','Amerikan İngilizcesi','انگلیسی آمریکایی','inglés americano')},
+  l:{name:'Lucía', flag:'es', label:()=>L('Spanish from Spain','İspanya İspanyolcası','اسپانیایی اسپانیا','español de España')},
+  a:{name:'Aldo', flag:'mx', label:()=>L('Mexican Spanish','Meksika İspanyolcası','اسپانیایی مکزیکی','español de México')}
 };
 const TTS_FLAGS = {
   us:'<svg viewBox="0 0 19 13" width="19" height="13" aria-hidden="true"><rect width="19" height="13" fill="#fff"/><path d="M0 0h19M0 2h19M0 4h19M0 6h19M0 8h19M0 10h19M0 12h19" stroke="#b22234" stroke-width="1"/><rect width="8" height="7" fill="#3c3b6e"/></svg>',
   uk:'<svg viewBox="0 0 19 13" width="19" height="13" aria-hidden="true"><rect width="19" height="13" fill="#012169"/><path d="M0 0l19 13M19 0L0 13" stroke="#fff" stroke-width="2.6"/><path d="M0 0l19 13M19 0L0 13" stroke="#c8102e" stroke-width="1"/><path d="M9.5 0v13M0 6.5h19" stroke="#fff" stroke-width="4"/><path d="M9.5 0v13M0 6.5h19" stroke="#c8102e" stroke-width="2.2"/></svg>',
   es:'<svg viewBox="0 0 19 13" width="19" height="13" aria-hidden="true"><rect width="19" height="13" fill="#aa151b"/><rect y="3.25" width="19" height="6.5" fill="#f1bf00"/></svg>',
-  ar:'<svg viewBox="0 0 19 13" width="19" height="13" aria-hidden="true"><rect width="19" height="13" fill="#74acdf"/><rect y="4.33" width="19" height="4.34" fill="#fff"/><circle cx="9.5" cy="6.5" r="1.4" fill="#f6b40e"/></svg>'
+  ar:'<svg viewBox="0 0 19 13" width="19" height="13" aria-hidden="true"><rect width="19" height="13" fill="#74acdf"/><rect y="4.33" width="19" height="4.34" fill="#fff"/><circle cx="9.5" cy="6.5" r="1.4" fill="#f6b40e"/></svg>',
+  mx:'<svg viewBox="0 0 19 13" width="19" height="13" aria-hidden="true"><rect width="19" height="13" fill="#fff"/><rect width="6.33" height="13" fill="#006847"/><rect x="12.67" width="6.33" height="13" fill="#ce1126"/><circle cx="9.5" cy="6.5" r="1.3" fill="#8c5a2b"/></svg>'
 };
 let ttsClips = null, ttsAudio = null, ttsBadgeTimer = 0;
 /* Accent switch (2026-10-10, Farin: "there is no accent button switch"). Every line also has a clip in the
@@ -10551,6 +10557,42 @@ function ttsAccentReady(){ return !!ttsAlt; }
 function ttsSetAccent(code){
   state.profile.accent = TTS_ACCENTS.includes(code) ? code : '';
   save();
+}
+/* Game characters speak in their own gender (2026-11-23, Farin: "in games if the character is girl the voice should be girl if its boy
+   the voice boy"). A character's line passes opt.sex ('f' | 'm'): the learner's accent picks the accent, the character picks the voice.
+     English  American: Bella (woman) / Michael (man)      British: Emma (woman) / George (man)
+     Spanish  Argentina: Daniela / Aldo (a Mexican man)    Spain: Lucía / Dave
+   With mixed narrators (no accent picked) a woman speaks with Bella / Daniela and a man with George / Dave, as before. Emma and Michael
+   (Lucía and Aldo) have clips for the game characters' lines only (Claude/tts/cast-lines.mjs + render-cast.mjs), under
+   TTS_CAST_BASE<code>/<key>.mp3 + manifest.json; a line without one plays in the same gender's other accent (those two voices have
+   every clip). Narrators, instructions and the listening tasks themselves pass no sex and keep the learner's accent voice. */
+const TTS_CAST = TTS_LANG.slice(0, 2) === 'es' ? {d:{f:'d', m:'a'}, v:{f:'l', m:'v'}} : {b:{f:'b', m:'m'}, g:{f:'e', m:'g'}};
+const TTS_CAST_NEW = Object.values(TTS_CAST).flatMap(o=>[o.f, o.m]).filter(c=>!TTS_ACCENTS.includes(c));
+// English: on the app-only voice site with George (the app's own Pages site is near GitHub's 1 GB cap); Spanish: in the app, like its alt
+const TTS_CAST_BASE = TTS_LANG.slice(0, 2) === 'es' ? 'audio/es/' : 'https://farinrasuli.github.io/farin-english-voice/audio/en/';
+let ttsCastClips = {}, ttsCastWait = null;
+// a character's line asked for before these arrive waits for them, 4 s at most (then the same gender's other accent plays)
+try{ ttsCastWait = Promise.race([Promise.all(TTS_CAST_NEW.map(c=>fetch(TTS_CAST_BASE + c + '/manifest.json').then(r=>r.ok ? r.json() : null).then(m=>{ if(m) ttsCastClips[c] = m; }).catch(()=>{}))), new Promise(r=>setTimeout(r, 4000))]).then(()=>{ ttsCastWait = null; }); }catch(e){}
+function ttsSexOf(opt){ const s = opt && (opt.sex || (opt.voice && opt.voice.sex)); return s === 'f' || s === 'm' ? s : ''; }   // {voice:{sex}} too (deskVoice)
+// the voice a character of this sex speaks with in the learner's accent (mixed narrators: Bella / Daniela for a woman, George / Dave for a man)
+function ttsCastVoice(sex){ const acc = ttsAccent() || TTS_ACCENTS[sex === 'm' ? 1 : 0]; return TTS_CAST[acc][sex]; }
+// the accent a voice speaks (Michael is American like Bella, Emma British like George, ...)
+function ttsVoiceAccent(code){ return Object.keys(TTS_CAST).find(a=>TTS_CAST[a].f === code || TTS_CAST[a].m === code) || code; }
+// where a clip of voice `code` lives: a character voice's own set, the other voice (alt) or the main set
+function ttsSrc(k, code){
+  if(TTS_CAST_NEW.includes(code)) return TTS_CAST_BASE + code + '/' + k + '.mp3';
+  return TTS_AUDIO_BASE + ((ttsClips && ttsClips[k] !== code && ttsAlt && ttsAlt[k] === code) ? 'alt/' : '') + k + '.mp3';
+}
+// A character's voice for this line: its gender in the learner's accent when that voice has the line (whole, or every splice piece),
+// else the same gender in the other accent. whole = that voice has the whole line as one clip.
+function ttsCastPick(text, key, sex){
+  const v = ttsCastVoice(sex);
+  if(!TTS_CAST_NEW.includes(v)) return {code:v, whole:false};
+  const m = ttsCastClips[v];
+  if(m && m[key]) return {code:v, whole:true};
+  const plan = (m && ttsClips && !ttsClips[key]) ? ttsPlan(text) : null;
+  if(plan && plan.ok && plan.pieces.every(p=>m[p.k])) return {code:v, whole:false};
+  return {code:TTS_ACCENTS[sex === 'm' ? 1 : 0], whole:false};
 }
 function ttsNorm(t){
   return String(t||'').toLowerCase().replace(/[‘’ʼ`]/g,"'").replace(/[^a-z0-9áéíóúüñ']+/g,' ').trim();
@@ -10576,7 +10618,7 @@ function ttsBadge(code){
   if(!el){
     el = document.createElement('button'); el.id = 'tts-badge'; el.type = 'button'; document.body.appendChild(el);
     el.addEventListener('click', ()=>{
-      const cur = el.dataset.code, other = TTS_ACCENTS.find(c=>c !== cur);
+      const cur = ttsVoiceAccent(el.dataset.code), other = TTS_ACCENTS.find(c=>c !== cur);
       if(!ttsAccentReady() || !other) return;
       ttsSetAccent(other);
       // replay the line in the other voice; a line that already ended replays alone (its story/echo chain is over)
@@ -10584,7 +10626,7 @@ function ttsBadge(code){
       if(state.view === 'settings') render();
     });
   }
-  const o = ttsAccentReady() && TTS_AUDIO_VOICES[TTS_ACCENTS.find(c=>c !== code)];
+  const o = ttsAccentReady() && TTS_AUDIO_VOICES[TTS_ACCENTS.find(c=>c !== ttsVoiceAccent(code))];
   el.dataset.code = code;
   el.classList.toggle('swap', !!o);
   el.tabIndex = o ? 0 : -1;
@@ -10628,9 +10670,12 @@ function ttsSpeak(text, rate, cb, opt){
   ttsStop();
   if(!text) return;
   if(!ttsClips && ttsClipsWait){ const my = ttsSeqTok; ttsClipsWait.then(()=>{ if(ttsSeqTok === my) ttsSpeak(text, rate, cb, opt); }); return; }
-  const key = ttsKey(text), main = ttsClips && ttsClips[key];
-  // the learner's accent first; with mixed narrators a speaker's own voice (opt.voice: a traveller, a course speaker)
-  const want = ttsAccent() || (opt && TTS_ACCENTS.includes(opt.voice) ? opt.voice : '');
+  const sx = ttsSexOf(opt);
+  if(sx && ttsCastWait){ const my = ttsSeqTok; ttsCastWait.then(()=>{ if(ttsSeqTok === my) ttsSpeak(text, rate, cb, opt); }); return; }
+  const key = ttsKey(text), pick = sx ? ttsCastPick(text, key, sx) : null, main = (pick && pick.whole) ? pick.code : (ttsClips && ttsClips[key]);
+  // a game character: its gender in the learner's accent (opt.sex, ttsCastPick); else the learner's accent; with mixed narrators a
+  // speaker's own voice (opt.voice: a course speaker)
+  const want = pick ? pick.code : (ttsAccent() || (opt && TTS_ACCENTS.includes(opt.voice) ? opt.voice : ''));
   if(!main){
     const plan = ttsClips ? ttsPlan(text) : null;
     if(plan && plan.ok){ ttsLast = {text, rate, cb, opt}; ttsPlayPlan(plan, rate, cb, want); return; }
@@ -10641,7 +10686,7 @@ function ttsSpeak(text, rate, cb, opt){
   // the other voice's clip when this line's narrator is not the one wanted
   const alt = !!(want && want !== main && ttsAlt && ttsAlt[key] === want), code = alt ? want : main;
   ttsLast = {text, rate, cb, opt};
-  const a = new Audio(TTS_AUDIO_BASE + (alt ? 'alt/' : '') + key + '.mp3');
+  const a = new Audio(ttsSrc(key, code));
   // clips are recorded at their level's pace (A1 / A2 slower), so only an explicit slow replay stretches them
   a.playbackRate = (rate && rate <= 0.75) ? rate / 0.92 : 1; a.preservesPitch = true;
   ttsAudio = a; ttsBadge(code);
@@ -10714,8 +10759,7 @@ function ttsPlan(text){
 function ttsPlayPlan(plan, rate, cb, want){
   const code = want || ttsClips[plan.pieces[0].k], my = ++ttsSeqTok;
   const list = plan.pieces.map(p=>{
-    const alt = code !== ttsClips[p.k] && ttsAlt && ttsAlt[p.k] === code;
-    const a = new Audio(TTS_AUDIO_BASE + (alt ? 'alt/' : '') + p.k + '.mp3'); a.preload = 'auto';
+    const a = new Audio(ttsSrc(p.k, code)); a.preload = 'auto';   // a character voice's own pieces, the other voice's or the main set's
     a.playbackRate = (rate && rate <= 0.75) ? rate / 0.92 : 1; a.preservesPitch = true;
     return {a, pause:p.pause};
   });
@@ -16675,7 +16719,7 @@ function renderPrivacyPolicy(){
         ${H(L('13. Voice and artwork credits','13. Ses ve görsel lisansları','۱۳. اعتبار صداها و تصاویر','13. Créditos de voces e imágenes'))}
         ${LANG === 'en' ? '' : P(L('','Uygulamadaki seslerin ve görsellerin lisans bilgileri (İngilizce):','مجوز صداها و تصاویری که در اپ به کار رفته (به انگلیسی):','Las licencias de las voces e imágenes de la app (en inglés):'))}
         <div dir="ltr" style="text-align:left; overflow-wrap:anywhere;">
-          <p style="margin:0 0 8px;">English voices "Bella" and "George": Kokoro-82M (Apache License 2.0). Spanish voice "Daniela": Piper voice es_AR-daniela-high, trained on Google's crowdsourced Argentinian Spanish recordings (OpenSLR 61), licensed CC BY-SA 4.0; the Daniela audio clips are shared under the same licence (creativecommons.org/licenses/by-sa/4.0). Spanish voice "Dave": Piper voice es_ES-davefx-medium (CC0). Piper is open-source software by Rhasspy / the Open Home Foundation.</p>
+          <p style="margin:0 0 8px;">English voices "Bella" and "George", and the game characters' "Emma" and "Michael": Kokoro-82M (Apache License 2.0). Spanish voice "Daniela": Piper voice es_AR-daniela-high, trained on Google's crowdsourced Argentinian Spanish recordings (OpenSLR 61), licensed CC BY-SA 4.0; the Daniela audio clips are shared under the same licence (creativecommons.org/licenses/by-sa/4.0). Spanish voice "Dave": Piper voice es_ES-davefx-medium (CC0). Spanish game-character voices: "Lucía", Piper voice es_ES-sharvard-medium (its female speaker), trained on the Sharvard Corpus (Aubanel, García Lecumberri and Cooke, 2014; University of Edinburgh DataShare), licensed CC BY 3.0 (creativecommons.org/licenses/by/3.0); "Aldo", Piper voice es_MX-ald-medium, trained on the Ald Mexican Spanish speech dataset (The Unlicense). Piper is open-source software by Rhasspy / the Open Home Foundation.</p>
           <p style="margin:0 0 8px;">IELTS course voices (English app): Kokoro-82M voices bm_george, bm_daniel, bm_lewis, bm_fable, bf_emma, bf_isabella, bf_alice, bf_lily, af_sarah, af_nicole, af_heart, am_michael, am_adam and am_puck (Apache License 2.0). Piper voice "Jenny (Dioco)" (en_GB-jenny_dioco-medium), from the Jenny dataset by Dioco (github.com/dioco-group/jenny-tts-dataset). Piper voice "Alba" (en_GB-alba-medium), trained on the Edinburgh "alba" recordings (datashare.ed.ac.uk/handle/10283/3270), licensed CC BY 4.0 (creativecommons.org/licenses/by/4.0). Piper voices en_GB-northern_english_male-medium and en_GB-southern_english_female-low, trained on Google's crowdsourced UK and Ireland English dialect recordings (OpenSLR 83), licensed CC BY-SA 4.0; the clips made with these two voices are shared under the same licence (creativecommons.org/licenses/by-sa/4.0).</p>
           <p style="margin:0 0 8px;">Cozy Chores artwork, all in the public domain and re-composed and recoloured for the game: Carl Larsson, "The Kitchen" (1898), "Mamma's and the Small Girls' Room" (1897), "Cosy Corner" (1894), "When the Children Have Gone to Bed" (1894–98) and "Flowers on the Windowsill" (1894), all from "Ett hem"; August Macke, "Little Walter's Toys" (1912); Pierre Bonnard, "Dining Room in the Country" (1913); Félix Vallotton, "Dinner, Lamp Effect" (1899); Moritz Daniel Oppenheim (attr.), "Interior of a Bakery" (1854); Job Adriaenszoon Berckheyde, "The Baker" (c. 1681); Henri Fantin-Latour, "Large Bouquet with Three Peonies" (1879); Childe Hassam, "At the Florist" (1889). The building is Jacob Appel's "The Dolls' House of Petronella Oortman" (c. 1710, Rijksmuseum, CC0). Everything else in the rooms is painted for the game.</p>
           <p style="margin:0 0 8px;">The Red Suitcase artwork (the Cudillero scenes), re-composed and repainted for the game: "Cudillero Sep 16" by Manuel Pérez, licensed CC BY 3.0 (https://creativecommons.org/licenses/by/3.0/), via Wikimedia Commons, modified (cropped, painted over, recoloured). "Jubilee Confectioners interior, Town, Beamish Museum" by milo bostock, licensed CC BY 2.0 (https://creativecommons.org/licenses/by/2.0/), via Wikimedia Commons, modified (people and signs painted out, goods repainted, recoloured). In the public domain, with thanks: A. Winter Moore, "Tate Hill, Whitby", painted postcard, c. 1903 (Newberry Library); Louis Thévenet, "Kitchen Interior" (1907, MSK Gent); "Cudillero" by Nacho (2011); Harriet Backer, "Interior from Vendelsborg" (1924); "Cudillero1" by Martin253 (2006). People, streets, signs, food, sky, water and props are painted for the game.</p>
@@ -18124,6 +18168,7 @@ function renderAccentSetting(){
       ${opt(TTS_ACCENTS[1], TTS_AUDIO_VOICES[TTS_ACCENTS[1]].name)}
       ${opt('', L('Mixed','Karışık','ترکیبی','Mixto'))}
     </div>
+    <p style="font-size:12px; color:var(--ink-faint); margin:10px 0 0;">${L('In the games, women speak with a woman’s voice and men with a man’s, in this accent.','Oyunlarda kadınlar kadın, erkekler erkek sesiyle ve bu aksanla konuşur.','در بازی‌ها زن‌ها با صدای زن و مردها با صدای مرد و با همین لهجه حرف می‌زنند.','En los juegos, las mujeres hablan con voz de mujer y los hombres con voz de hombre, con este mismo acento.')}</p>
   </div>`;
 }
 function renderPasswordSettings(){
@@ -20850,9 +20895,10 @@ function gameFallbackNote(vp){
    A1-A2, 12 at B1+; round = min(6, candidates); under 4 the caller falls back.
    On a second miss the item's rule is shown. Untimed, no lives. */
 const BUILD_MIN = 4;
+// voice: a narrator's voice code (a hint; the learner's accent wins) or {sex:'f'|'m'} for a game character (ttsCastPick)
 function speakTarget(text, rate, voice){
   try{
-    ttsSpeak(text, rate, null, voice ? {voice} : null);
+    ttsSpeak(text, rate, null, voice ? (typeof voice === 'object' ? voice : {voice}) : null);
   }catch(e){}
 }
 // Splits a fill-in sentence into slots {pre, w, post, target}. null = not buildable.
@@ -22216,8 +22262,7 @@ function orderTrayHtml(round){
   return `<div class="order-tray" id="order-tray">${lines || `<div class="order-tray-empty">${L('Tap the shelf to build the order','Siparişi hazırlamak için rafa dokun','برای چیدن سفارش روی قفسه بزن','Toca la estantería para preparar el pedido')}</div>`}</div>`;
 }
 // World Kit (worlds SPEC 5, C6): in Order Up!'s world the customers are the town regulars (the Open House portraits, faces calm / warm /
-// oh), never the clay figures. A woman or a man to match the voice that speaks the orders (state.profile.accent); the round's first
-// line seeds who comes in. Out of the world: FE in that customer's goal outfit (Farin 2026-11-19: "no clay characters ... just this").
+// oh), never the clay figures. Women and men by turns, each in their own voice (orderSex); the round's first line seeds who comes in. Out of the world: FE in that customer's goal outfit (Farin 2026-11-19: "no clay characters ... just this").
 const ORDER_TOWN = {f:['bell','okafor','ada','leyla','rosa','hana','gran'], m:['tom','ben','ollie','pike']};
 function orderWorldOn(){ return !!(window.Theatre && Theatre.world && Theatre.world() === 'order'); }
 // In the world each menu item and extra is its own clear-line render (games/worlds/order/art/item-<id>.webp, extra-<id>.webp; one render
@@ -22228,11 +22273,19 @@ function orderArtHtml(o){
   if(!orderWorldOn() || !ORDER_ART.has(o.id)) return o.art;
   return '<img class="order-art-img" src="games/worlds/order/art/' + (ORDER_EXTRAS.includes(o) ? 'extra' : 'item') + '-' + o.id + '.webp" alt="" decoding="async" draggable="false">';
 }
+// Who comes in (2026-11-23, Farin: "if the character is girl the voice should be girl if its boy the voice boy"): women and men by turns
+// (the round's first line seeds who starts), each saying the order, the "not what I asked for" lines and the thanks in their own gender,
+// in the learner's accent (ttsCastPick). A regular comes back as the same person. Before this, the customers' gender followed the accent.
+function orderSlot(round, cust){
+  const i = cust.usual ? cust.of : Math.max(0, round.customers.indexOf(cust)), seed = String((round.customers[0] && round.customers[0].text) || '').length;
+  return seed + i;
+}
+function orderSex(round, cust){ return cust ? (orderSlot(round, cust) % 2 ? 'm' : 'f') : ''; }
+function orderVoice(round, cust){ const s = orderSex(round, cust || orderCust(round)); return s ? {sex:s} : null; }
 function orderFaceSrc(round, cust){
   if(!orderWorldOn()) return farinSrc('item-coffee');   // out of the world: the café's cup (no character in games, 2026-11-20)
-  const list = ORDER_TOWN[TTS_ACCENTS.indexOf(ttsAccent()) === 1 ? 'm' : 'f'], i = cust.usual ? cust.of : Math.max(0, round.customers.indexOf(cust));
-  const seed = String((round.customers[0] && round.customers[0].text) || '').length;
-  return 'games/cozy-chores/art/pt-' + list[(seed + i) % list.length] + '-' + (cust.done ? 'warm' : (cust.fb ? 'oh' : 'calm')) + '.webp';
+  const n = orderSlot(round, cust), list = ORDER_TOWN[n % 2 ? 'm' : 'f'];
+  return 'games/cozy-chores/art/pt-' + list[Math.floor(n / 2) % list.length] + '-' + (cust.done ? 'warm' : (cust.fb ? 'oh' : 'calm')) + '.webp';
 }
 // the customer on the plate, behind the counter (plate coordinates; the picture is shown whole)
 function orderStageSync(round, cust){
@@ -22317,7 +22370,7 @@ function orderNoVoiceText(){
 }
 function orderSpeak(round, text){
   const idx = round.index;
-  setTimeout(()=>{ if(state.viewParams && state.viewParams.round === round && round.index === idx && !round.finished) speakTarget(text, orderRate(round)); }, 60);
+  setTimeout(()=>{ if(state.viewParams && state.viewParams.round === round && round.index === idx && !round.finished) speakTarget(text, orderRate(round), orderVoice(round)); }, 60);
 }
 // A customer slides in from the inline-end edge, lands with a squash, and says their order.
 function orderArrive(round){
@@ -22333,7 +22386,7 @@ function orderArrive(round){
   if(round.index === 0 && !round.greeted){ round.greeted = true; if(!samOpens) companionSay(orderLang() === 'es' ? '¿Qué le pongo?' : 'What would you like?', 2200); }
   if(round.noVoice && !round.noVoiceSaid){ round.noVoiceSaid = true; setTimeout(()=>{ if(state.view === 'game-order') companionSay(orderNoVoiceText(), 3400); }, 2300); }
   const idx = round.index;
-  const say = ()=>{ if(state.viewParams && state.viewParams.round === round && round.index === idx && !round.finished) speakTarget(cust.text, orderRate(round)); };
+  const say = ()=>{ if(state.viewParams && state.viewParams.round === round && round.index === idx && !round.finished) speakTarget(cust.text, orderRate(round), orderVoice(round, cust)); };
   if(samOpens) orderSam('open', ()=>setTimeout(say, 250)); else setTimeout(say, 420);
 }
 function orderShake(el){
@@ -22372,7 +22425,7 @@ function fxOrderWrong(round, cust, res){
   if(res.i >= 0) orderShake(document.querySelector('.order-line[data-i="' + res.i + '"]'));
   companionSay(L('Not quite — listen to the part they repeat.','Tam değil — tekrar ettikleri kısma kulak ver.','نه کاملاً — به بخشی که تکرار می‌کند گوش کن.','Casi. Escucha la parte que se repite.'), 2400);
   const idx = round.index;
-  setTimeout(()=>{ if(state.viewParams && state.viewParams.round === round && round.index === idx) speakTarget(orderPlain(res.frame), orderRate(round)); }, 380);
+  setTimeout(()=>{ if(state.viewParams && state.viewParams.round === round && round.index === idx) speakTarget(orderPlain(res.frame), orderRate(round), orderVoice(round)); }, 380);
 }
 function fxOrderClosed(){
   const sign = document.getElementById('order-sign');
@@ -23243,8 +23296,9 @@ function deskRefresh(){
 }
 /* ---- Flow and feel (spec §5.2, §5.7) ---- */
 let deskBusy = false, deskTimer = null;
-// a traveller speaks in their own voice (TTS_ACCENTS = [female, male]: Bella / George, Daniela / Dave)
-function deskVoice(t){ return t ? TTS_ACCENTS[t.g === 'm' ? 1 : 0] : ''; }
+// a traveller speaks in their own gender, in the learner's accent (2026-11-23: a man is Michael or George, a woman Bella or Emma;
+// Spanish: Aldo or Dave, Daniela or Lucía)
+function deskVoice(t){ return t ? {sex:t.g === 'm' ? 'm' : 'f'} : ''; }
 function deskSpeak(round, text, delay){
   const idx = round.index;
   setTimeout(()=>{ if(state.viewParams && state.viewParams.round === round && round.index === idx && !round.finished) speakTarget(text, deskRate(round), deskVoice(deskCur(round))); }, delay || 60);
@@ -26056,7 +26110,8 @@ function ycMount(){
   ycGame = YourCall.start({root, content:C, ui:LANG, brave:gameBrave('path'), chapters:card, start:startCh, mode:replay ? 'replay' : 'card', resume, theatre:window.Theatre || null,
     autoReturn:{ms:3500, to:vp.shelf ? 'games' : 'map'},
     host:{
-      speak:(t, o)=>new Promise(ok=>{ try{ ttsSpeak(t, o && o.rate ? o.rate * 0.92 : 0.92, {end:ok, error:ok}); }catch(e){ ok(); } }),
+      // o.sex ('f' | 'm'): a character's line in its gender (ttsCastPick, 2026-11-23); without it, the accent's / narrator's voice as before
+      speak:(t, o)=>new Promise(ok=>{ try{ ttsSpeak(t, o && o.rate ? o.rate * 0.92 : 0.92, {end:ok, error:ok}, o && (o.sex === 'f' || o.sex === 'm') ? {sex:o.sex} : null); }catch(e){ ok(); } }),
       stopSpeech:stopAllSpeech, muted:()=>sfxMuted, readAloud:ycReadAloud, reduced:reducedMotion, path:shelf ? ycShelfView : (borrow ? ()=>ycShelfView(alb) : ycPathView),
       saveRun:shelf ? null : (borrow ? r=>{ ycFreeRec(alb).run = r; save(); } : r=>{ pathState().ycRun = r; save(); }),
       commit:shelf ? null : (borrow ? res=>ycBorrowCommit(vp.refId, res) : (bc && bc.replay ? res=>{ ycCardNote(vp.refId, res.ch); save(); } : res=>{ ycCommit(res); ycCardNote(vp.refId, res.ch); save(); }))},
@@ -31860,7 +31915,7 @@ function worldHear(text, who, done){
   const box = document.querySelector('.th-say .th-say-hear');
   if(box){
     box.setAttribute('aria-busy', 'true');
-    const cur = ttsAccent() || TTS_ACCENTS[who ? 1 : 0], other = TTS_ACCENTS.find(c=>c !== cur), ov = TTS_AUDIO_VOICES[other];
+    const cur = ttsAccent() || TTS_ACCENTS[(who === 'm' || who === 1) ? 1 : 0], other = TTS_ACCENTS.find(c=>c !== cur), ov = TTS_AUDIO_VOICES[other];
     if(!box.querySelector('.th-say-pill') && ttsAccentReady() && ov){
       const pill = document.createElement('button'); pill.type = 'button'; pill.className = 'th-say-pill';
       pill.setAttribute('aria-label', L('Switch to','Şuna geç:','تغییر به','Cambiar a') + ' ' + ov.label());
@@ -31871,14 +31926,16 @@ function worldHear(text, who, done){
   }
   worldSpeak(text, who, ()=>{ const b = document.querySelector('.th-say .th-say-hear'); if(b){ b.removeAttribute('aria-busy'); const p = b.querySelector('.th-say-pill'); if(p) p.remove(); } if(done) done(); });
 }
-// A world line in a natural voice only, never the device voice (Farin 11-07): who 0 = Bella / Daniela, 1 = George / Dave.
+// A world line in a natural voice only, never the device voice (Farin 11-07). who 'f' / 'm' = a character (a woman / a man, in the learner's
+// accent: ttsCastPick, 2026-11-23); 0 / 1 = a narrator's line (Bella / Daniela, George / Dave with mixed narrators; else the accent's voice).
 // Every world line has both clips (Claude/specs/games-own-worlds-2026-11-14/render/tools/voice-gw.mjs). done runs once, at the end
 // of the line or after a backstop.
 function worldSpeak(text, who, done){
   let fin = false, t = null;
   const end = ()=>{ if(fin) return; fin = true; clearTimeout(t); if(done) done(); };
   t = setTimeout(end, 1400 + 420 * String(text || '').split(/\s+/).length);
-  try{ ttsSpeak(text, 0.92, {end, error:end}, {natural:true, voice:TTS_ACCENTS[who ? 1 : 0]}); }catch(e){ end(); }
+  const sex = who === 'f' || who === 'm' ? who : '';
+  try{ ttsSpeak(text, 0.92, {end, error:end}, sex ? {natural:true, sex} : {natural:true, voice:TTS_ACCENTS[who ? 1 : 0]}); }catch(e){ end(); }
 }
 // Progress you can see in the world (SPEC 4.8): the ticket rail, the croissant, the blocks, the reels read data-done / data-third.
 function worldProgress(view, r){
@@ -32006,7 +32063,7 @@ function orderSam(which, then){
   const t0 = Date.now();
   // the balloon points at Sam, so it waits for his picture to load (at most 900 ms; a fresh phone has not cached it yet)
   let said = false;
-  const speak = ()=>{ if(said) return; said = true; setTimeout(()=>worldLine(line, 1, {who:'gw-sam', ms:5000, wait:1500, done:fin}), 80); };
+  const speak = ()=>{ if(said) return; said = true; setTimeout(()=>worldLine(line, 'm', {who:'gw-sam', ms:5000, wait:1500, done:fin}), 80); };
   if(img && img.decode) img.decode().then(speak, speak); else speak();
   setTimeout(speak, 900);
   // the first order follows after 2 s at least, even if the clip ends early or cannot play; Sam himself stays while his balloon
@@ -32022,7 +32079,7 @@ const ORDER_THANKS = {en:['Thanks a lot!', 'Lovely, thank you!', 'Perfect, thank
 function orderThanks(round){
   if(worldKind() !== 'order') return;
   const list = ORDER_THANKS[orderLang() === 'es' ? 'es' : 'en'], line = list[round.index % list.length];
-  worldLine(line, TTS_ACCENTS.indexOf(ttsAccent()) === 1 ? 1 : 0, {who:'order-cust', ms:5000});
+  worldLine(line, orderSex(round, orderCust(round)) || 0, {who:'order-cust', ms:5000});   // the customer who was served
 }
 let theatreLoading = null;
 function theatreLoad(){
@@ -32140,6 +32197,19 @@ var G2_VOICE = {a:0, b:1, bell:0, okafor:0, ada:0, leyla:0, rosa:0, hana:0, priy
   tom:1, sam:1, ollie:1, pike:1, ben:1, marcus:1, jack:1, dealer:1, arthur:1, youngarthur:1, edwin:1,
   // card lUQiLMLJ (2026-11-09): the B2/C1 cast had no fixed voice and switched between the two narrators
   hale:0, meg:0, dunn:0, julian:1, rowe:1};
+/* Each character's sex, by game (2026-11-23, Farin: "if the character is girl the voice should be girl if its boy the voice boy"), from the
+   art, the names and the story; the same table as Claude/tts/cast-sex.mjs. A character speaks in their gender in the learner's accent
+   (ttsCastPick); before this the learner's accent made every character Bella or George. Speakers not listed (narr, fact, ui, tts, card,
+   you = the learner) are narration and keep G2_VOICE / the accent's voice. Open House's Mr Dunn (the flower market) is a man; Harbour
+   Files' Mrs Dunn a woman. */
+var G2_SEX = {
+  mystery:{bell:'f', dunn:'f', hale:'f', ines:'f', lena:'f', leyla:'f', meg:'f', moss:'f', priya:'f', rosa:'f', edie:'f', mum:'f',
+    arthur:'m', youngarthur:'m', jack:'m', julian:'m', marcus:'m', ollie:'m', pike:'m', rowe:'m', sam:'m', tom:'m', edwin:'m', dealer:'m'},
+  chores:{ada:'f', bell:'f', gran:'f', grace:'f', hana:'f', leyla:'f', okafor:'f', pauline:'f', rosa:'f', removals:'f',
+    ben:'m', dunn:'m', ollie:'m', pike:'m', tom:'m'},
+  radio:{a:'f', b:'m'}
+};
+var G2_SEX_LANG = {es:{chores:{removals:'m'}}};   // the removals firm's Sandra (EN) is Paco in Spanish
 // gamesV2On() = the v2 roadmap shape (8 positions per stage, the Mini Radio slot): on when Mini Radio is live, or with ?games2=1.
 function gamesV2On(){ return g2KindLive('radio'); }
 function g2KindLive(kind){ return !!(GAMES_V2_LIVE && GAMES_V2_LIVE[kind]) || g2DevOn(); }
@@ -32163,7 +32233,12 @@ function g2LoadFiles(dir, files){
   return (g2Loading[dir] = Promise.all(files.map(f=>/\.css$/.test(f) ? add('link', {rel:'stylesheet', href:'games/'+dir+'/'+f+v}) : add('script', {src:'games/'+dir+'/'+f+v})))
     .catch(e=>{ delete g2Loading[dir]; throw e; }));
 }
-function g2Voice(who){ const i = G2_VOICE[who]; return i == null ? null : {voice:TTS_ACCENTS[i]}; }
+// narr: Mini Radio's story readings (the host reads a story: narration, in the accent's voice as before)
+function g2Voice(kind, who, narr){
+  const sx = !narr && (((G2_SEX_LANG[TTS_LANG.slice(0, 2)] || {})[kind] || {})[who] || (G2_SEX[kind] || {})[who]);
+  if(sx) return {sex:sx};
+  const i = G2_VOICE[who]; return i == null ? null : {voice:TTS_ACCENTS[i]};
+}
 // chapter flow (UI0ejg05, Farin 2026-11-09: "the user cant go to the next chapter in each game, because chapters are splitted in cards
 // in the roadmap"). Is a later step of this game waiting? Never on the shelf; below C1 the next level always has one (rotation v3).
 function moreLater(kind, refId, free){
@@ -32215,7 +32290,8 @@ function g2PosterArt(kind){
 }
 // Cozy v1 shelf: a room counts once it was tidied at some level
 function chTidiedEver(id){ return Object.keys(chProgress()[id] || {}).length > 0; }
-function g2Host(key){
+// key = the game kind (its characters' sexes: G2_SEX); narr = Mini Radio reads a story (no characters)
+function g2Host(key, narr){
   const P = state.progress;
   return {
     // ttsSpeak drops the callback of a line it interrupts, and an engine may be awaiting that line: settle it, or the game waits for ever.
@@ -32228,7 +32304,7 @@ function g2Host(key){
       end.drop = ()=>{ clearTimeout(tm); if(g2Pending === end) g2Pending = null; };
       g2Pending = end;
       tm = setTimeout(end, 4000 + 900 * String(t || '').split(/\s+/).length);
-      try{ ttsSpeak(t, o && o.rate, {end, error:end}, Object.assign({natural:true}, g2Voice(o && o.who))); /* Mini Radio, Case Closed, Cozy Chores: natural clips only, never the device voice (card lUQiLMLJ) */ if(!t) end(); }catch(e){ end(); }
+      try{ ttsSpeak(t, o && o.rate, {end, error:end}, Object.assign({natural:true}, g2Voice(key, o && o.who, narr))); /* Mini Radio, Case Closed, Cozy Chores: natural clips only, never the device voice (card lUQiLMLJ) */ if(!t) end(); }catch(e){ end(); }
     }),
     stopSpeech:()=>{ stopAllSpeech(); if(g2Pending) g2Pending.drop(); },   // not settled: a skip resolves itself, and after leaving the game nothing may resume
     sfx:n=>{ if(['tick','correct','reveal','combo','flip','stamp'].includes(n)){ sfx(n); return true; } return false; },
@@ -32313,7 +32389,7 @@ function g2Start(ds){
       .then(data=>box=>CaseClosed.start({root:box, data, lang, ui, name, host, resume:!!CaseClosed.savedRound(host, data.stage.id), moreLater:tbcLater,
         onDone:()=>done({perfect:true, keep:g2KeepNow}), onLeave:theatreExit}));
   } else {
-    const host = g2Host('radio'), ep = radioEpisodeFor(ds.refId, free, level);
+    const ep = radioEpisodeFor(ds.refId, free, level), host = g2Host('radio', !!(ep && ep.kind === 'story'));
     prep = ep ? g2LoadFiles('mini-radio', ['radio.css', 'radio.js']).then(()=>MiniRadio.loadArt(''))
       .then(art=>box=>MiniRadio.start({root:box, episode:ep, art, lang, ui, host, replay:free, moreLater:tbcLater,
         onDone:st=>{ const k = g2KeepNow; done({perfect:!!(st && st.perfect), keep:k ? {text:k.word, say:k.word, note:[k.meaning, k.title].filter(Boolean).join(' · ')} : null}); },
@@ -33487,7 +33563,7 @@ const HANDLERS = {
     }, 900);
   },
   // ---- Order Up! (Jq6f9OFv wave A2): shelf taps build the tray, Serve checks it against the order ----
-  'order-play'(){ const r = state.viewParams && state.viewParams.round, c = r && orderCust(r); if(c && !r.finished) speakTarget(c.text, orderRate(r)); },
+  'order-play'(){ const r = state.viewParams && state.viewParams.round, c = r && orderCust(r); if(c && !r.finished) speakTarget(c.text, orderRate(r), orderVoice(r, c)); },
   'order-ticket'(){
     const r = state.viewParams && state.viewParams.round, c = r && orderCust(r); if(!c || r.finished) return;
     if(orderTicketOff(c)) return;
@@ -33787,7 +33863,7 @@ const HANDLERS = {
         if(!echoShadowSupported()) echoRound.shadow = true;
         go('game-echo', Object.assign({round: echoRound}, params));
         const first = ()=>{ if(state.viewParams && state.viewParams.round === echoRound) echoSpeak(echoRound, 0.92); };
-        if(worldKind() === 'echo') setTimeout(()=>{ const line = TTS_LANG.slice(0, 2) === 'es' ? '¡Estás en antena!' : 'You\'re on air!'; worldLine(line, 1, {who:'gw-onair', ms:5000, wait:900, done:()=>setTimeout(first, 300)}); }, 400);
+        if(worldKind() === 'echo') setTimeout(()=>{ const line = TTS_LANG.slice(0, 2) === 'es' ? '¡Estás en antena!' : 'You\'re on air!'; worldLine(line, 'm', {who:'gw-onair', ms:5000, wait:900, done:()=>setTimeout(first, 300)}); }, 400);   // the show's producer, a man
         else setTimeout(first, 400);
         return;
       }

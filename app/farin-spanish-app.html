@@ -3318,6 +3318,37 @@
   .fs-chips span.cur{background:var(--fs-orange-soft); color:var(--fs-orange-ink);}
   .fs-chips span.done{background:color-mix(in srgb, var(--fs-green) 24%, var(--bg-elevated)); color:var(--ink);}
   .fs-btnrow{margin-top:6px;}
+  /* Premium course cards (Farin 2026-11-25, courseCardHtml): one white line-bordered card per course, the course photo on top with
+     the purple PLUS pill and the course-colour disc on the seam, orange subject eyebrow, Fredoka title with the orange dot, one
+     sentence, the info chips, then the access line (lock = Lesson 1.1 free, the rest with Plus; check = open). Light + dark, RTL. */
+  .pcard-list{display:flex; flex-direction:column; gap:22px;}
+  .pcard{position:relative; display:block; cursor:pointer; background:var(--bg-elevated); border:1px solid var(--border-soft); border-radius:24px; overflow:hidden; color:var(--ink); text-align:start; box-shadow:0 1px 2px rgba(26,20,16,.05), 0 12px 30px -16px rgba(26,20,16,.24); transition:transform .1s ease;}
+  .pcard:active{transform:scale(.985);}
+  .pcard:focus-visible{outline:2px solid var(--fs-purple); outline-offset:3px;}
+  .pcard-img{position:relative; aspect-ratio:2/1; background:linear-gradient(140deg, var(--fs-purple), var(--fs-purple-2));}
+  .pcard-img::before{content:""; position:absolute; inset:0; background-image:radial-gradient(circle, rgba(255,165,61,.55) 0 2.5px, transparent 3px), radial-gradient(circle, rgba(255,255,255,.28) 0 2px, transparent 2.5px); background-size:160px 130px, 110px 96px; background-position:20px 26px, 70px 70px;}
+  .pcard-img img{position:relative; display:block; width:100%; height:100%; object-fit:cover;}
+  .pcard-img::after{content:""; position:absolute; inset:0; pointer-events:none; background:linear-gradient(180deg, rgba(20,14,40,.34), transparent 42%);}
+  .pcard.soon .pcard-img img{filter:grayscale(.45);}
+  .pcard-plus{position:absolute; top:12px; inset-inline-start:12px; z-index:1; display:inline-flex; align-items:center; gap:6px; padding:6px 12px 6px 9px; border-radius:999px; background:linear-gradient(140deg, var(--fs-purple), var(--fs-purple-2)); color:#fff; font-family:'Nunito',-apple-system,sans-serif; font-weight:900; font-size:11px; line-height:1; letter-spacing:.14em; box-shadow:0 6px 14px -6px rgba(20,14,40,.6), inset 0 0 0 1px rgba(255,255,255,.22);}
+  .pcard-plus svg{width:13px; height:13px; color:var(--fs-orange);}
+  .pcard-ic{position:absolute; inset-inline-end:16px; bottom:-23px; z-index:2; width:46px; height:46px; border-radius:15px; display:grid; place-items:center; background:var(--c); color:#fff; border:3px solid var(--bg-elevated); box-shadow:0 8px 16px -8px rgba(26,20,16,.45);}
+  .pcard-ic svg{width:22px; height:22px;}
+  .pcard-body{padding:18px 18px 16px; display:flex; flex-direction:column; gap:8px; font-family:'Nunito',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;}
+  .pcard-eb{font-size:11.5px; font-weight:800; letter-spacing:.1em; color:var(--fs-orange-ink); padding-inline-end:52px;}
+  .pcard-title{font-size:21px; line-height:1.18; margin:0; color:var(--ink); text-wrap:balance;}
+  .pcard-title .dot{color:var(--fs-orange);}
+  .pcard-desc{margin:0; font-size:14px; line-height:1.5; color:var(--ink-soft); display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden;}
+  .pcard-chips{margin-top:2px;}
+  .pcard-foot{display:flex; align-items:center; justify-content:space-between; gap:12px; margin-top:6px; padding-top:12px; border-top:1px solid var(--border-soft);}
+  .pcard-acc{display:inline-flex; align-items:center; gap:7px; min-width:0; font-weight:800; font-size:12.5px; line-height:1.35; color:var(--fs-purple-ink);}
+  .pcard-acc svg{flex:none; width:15px; height:15px;}
+  .pcard-acc.open{color:color-mix(in srgb, var(--success) 62%, var(--ink));}
+  .pcard-acc.soon{background:var(--bg-sunken); color:var(--ink-soft); border-radius:999px; padding:4px 10px;}
+  .pcard-go{flex:none; width:34px; height:34px; border-radius:50%; display:grid; place-items:center; background:var(--fs-purple-soft); color:var(--fs-purple-ink);}
+  .pcard-go svg{width:17px; height:17px;}
+  html[dir="rtl"] .pcard-go svg{transform:scaleX(-1);}
+  .pcard .pcard-cont{margin-top:6px; background:var(--fs-orange); color:var(--fs-cta-ink); border-color:transparent; font-weight:800; box-shadow:0 8px 16px -8px rgba(168,90,5,.5);}
   /* IELTS: four skills */
   .fs-tiles{display:grid; grid-template-columns:1fr 1fr; gap:14px;}
   .fs-tile{all:unset; box-sizing:border-box; cursor:pointer; min-width:0; background:var(--bg-elevated); border:1px solid var(--border-soft); border-radius:20px; padding:14px; box-shadow:0 1px 2px rgba(26,20,16,.05), 0 10px 28px -14px rgba(26,20,16,.18); display:flex; flex-direction:column; gap:8px; color:var(--ink); text-align:start; -webkit-tap-highlight-color:transparent;}
@@ -36599,23 +36630,54 @@ function courseFreeUnitsText(c){
   const full = CL('The full course has '+join(en, ' and ', ', ')+'.', 'Tam kursta '+join(tr, ' ve ', ', ')+' var.', 'دوره‌ی کامل '+join(fa, ' و ', '، ')+' دارد.', 'El curso completo tiene '+join(es, ' y ', ', ')+'.');
   return (what ? what + ' ' : '') + full;
 }
-// Course card on the Courses list: the course name only (Farin 2026-10-31), plus Coming soon, or Continue on a started course.
-function courseCardHtml(c){
+/* Premium course cards (Farin 2026-11-25: "display them as individual visual boxes/cards ... its own image, course title, brief
+   course description, relevant course information, clear Plus access indication ... do not use the same image for every course").
+   Each course: its photo (courses/covers/<id>-v1.webp, 800x400, Pexels free licence; ids in Claude/specs/course-cards-2026-11-25/),
+   a subject line and one sentence in the 4 UI languages (the sentences come from each course's own promise text). A course with no
+   entry here still gets a card: the purple brand block for a photo and the first sentence of its promise. Rename a cover file
+   (-v2) when it changes: the service worker serves images cache-first. */
+const COURSE_CARDS = {
+  dele:{img:'dele-v1', eb:{en:'Exam prep', tr:'Sınav hazırlığı', fa:'آمادگی آزمون', es:'Preparación para exámenes'},
+    blurb:{en:'Prepare for the DELE A2 and B1 exams with timed practice.', tr:'DELE A2 ve B1 sınavlarına süreli denemelerle hazırlan.', fa:'برای آزمون‌های DELE A2 و B1 با تمرین زمان‌دار آماده شو.', es:'Prepárate para los exámenes DELE A2 y B1 con práctica cronometrada.'}}
+};
+// The card's one sentence: COURSE_CARDS, else the first sentence of the course promise.
+function courseCardBlurb(c){ const k = COURSE_CARDS[c.id]; if(k && k.blurb) return cl(k.blurb); const p = cl(c.promise); return (p.match(/^[^.!?]+[.!?]/) || [p])[0].trim(); }
+// Plus access (farin-7c's membership, 2026-11-25): mbHasCourse(id) once it is in the app, else the course password; owner preview opens too.
+function courseCardOpen(c){ let on = false; try{ on = typeof mbHasCourse === 'function' ? !!mbHasCourse(c.id) : courseUnlocked(c.id); }catch(e){ on = courseUnlocked(c.id); } return on || coursePreviewOn(); }
+function courseCardPlanPlus(){ try{ const p = typeof mbPlan === 'function' ? mbPlan() : ''; return p === 'plus' || p === 'guided'; }catch(e){ return false; } }
+// "B1–B2" (courses with a B1 and a B2 version), else the entry level and up ("B1+": IELTS).
+function courseCardLevel(c){ const t = c.tracks || []; return t.includes('B1') && t.includes('B2') ? 'B1–B2' : c.entry ? c.entry+'+' : ''; }
+// Course card on the Courses list (v2, 2026-11-25): photo with the PLUS pill and the course's colour disc, subject line, title with the
+// orange dot, one sentence, info chips (level, lessons, weeks; lessons done once started), the access line, and the orange
+// Continue on a started course (Flow v3, UX-FLOW 3.1: it opens that lesson page). The whole card opens the course page.
+function courseCardHtml(c, i){
   const live = c.status === 'live', open = live || c.status === 'shell';
   const nx = open ? courseNext(c.id) : null, started = open && courseStarted(c.id);
-  const pill = open ? '' : `<span class="pill" style="background:rgba(255,255,255,.3); color:#fff;">${CL('Coming soon','Yakında','به‌زودی','Próximamente')}</span>`;
-  // Flow v3 (UX-FLOW 3.1): a started course has ONE orange button, Continue: Lesson 1.2, which opens that lesson page.
-  const cont = started && nx && !nx.locked ? (nx.final ? `<button class="btn btn-primary btn-sm course-card-go" data-action="course-open" data-view="course-final" data-cid="${c.id}" style="margin-top:10px;">${CL('Continue: Final project','Devam et: Final projesi','ادامه: پروژه‌ی پایانی','Sigue: proyecto final')}</button>`
-    : `<button class="btn btn-primary btn-sm course-card-go" data-action="course-go" data-cid="${c.id}" data-uid="${esc(nx.uid)}" style="margin-top:10px;">${esc(CL('Continue: '+courseLessonHeadName(c.id, nx.uid), 'Devam et: '+courseLessonHeadName(c.id, nx.uid), 'ادامه: '+courseLessonHeadName(c.id, nx.uid), 'Sigue: '+courseLessonHeadName(c.id, nx.uid)))}</button>`) : '';
-  return `<div class="item-row goal-card" role="button" tabindex="0" data-action="course-open" data-view="${open?'course-detail':'course-gate'}" data-cid="${c.id}" style="background:var(--cat-${c.cat}); border:none; color:#fff; align-items:center; cursor:pointer; ${live?'':'opacity:.82;'}">
-    ${claySparkles()}
-    <span class="item-ic" style="background:rgba(255,255,255,.24); color:#fff;">${(ICONS[c.icon] || ICONS.suitcase)}</span>
-    <div class="item-body">
-      <div class="item-title" style="color:#fff;">${esc(cl(c.title))}</div>
-      ${pill ? `<div class="row" style="gap:8px; margin-top:9px; flex-wrap:wrap; align-items:center;">${pill}</div>` : ''}
+  const k = COURSE_CARDS[c.id] || {}, total = courseUnitsTotal(c), lvl = courseCardLevel(c), acc = open && courseCardOpen(c);
+  const cont = started && nx && !nx.locked ? (nx.final ? `<button class="btn btn-primary pcard-cont fs-cta course-card-go" data-action="course-open" data-view="course-final" data-cid="${c.id}">${CL('Continue: Final project','Devam et: Final projesi','ادامه: پروژه‌ی پایانی','Sigue: proyecto final')}</button>`
+    : `<button class="btn btn-primary pcard-cont fs-cta course-card-go" data-action="course-go" data-cid="${c.id}" data-uid="${esc(nx.uid)}">${esc(CL('Continue: '+courseLessonHeadName(c.id, nx.uid), 'Devam et: '+courseLessonHeadName(c.id, nx.uid), 'ادامه: '+courseLessonHeadName(c.id, nx.uid), 'Sigue: '+courseLessonHeadName(c.id, nx.uid)))}</button>`) : '';
+  const done = started ? courseUnitsDone(c.id) : 0;
+  const chips = [lvl ? `<span>${esc(lvl)}</span>` : '',
+    total ? (started ? `<span class="cur">${ICONS.book} ${done}/${total} ${CL('lessons','ders','درس','lecciones')}</span>` : `<span>${ICONS.book} ${total} ${CL('lessons','ders','درس','lecciones')}</span>`) : '',
+    c.weeks ? `<span>${ICONS.clock} ${c.weeks} ${CL('weeks','hafta','هفته','semanas')}</span>` : ''].join('');
+  const free = (c.freeUnits || []).filter(uid=>courseFindUnit(c.id, uid)), one = free.length ? courseUnitNo(c.id, free[0]) : '';
+  const access = !open ? `<span class="pcard-acc soon">${CL('Coming soon','Yakında','به‌زودی','Próximamente')}</span>`
+    : acc ? `<span class="pcard-acc open">${ICONS.check}<span>${courseCardPlanPlus() ? CL('Open with your Plus','Plus üyeliğinle açık','با اشتراک Plus تو باز است','Abierto con tu Plus') : CL('Full course open','Tam kurs açık','دوره‌ی کامل باز است','Curso completo abierto')}</span></span>`
+    : `<span class="pcard-acc">${COURSE_LOCK_SVG}<span>${one ? CL('Lesson '+one+' free · full course with Plus', 'Ders '+one+' ücretsiz · tam kurs Plus ile', 'درس '+one+' رایگان · دوره‌ی کامل با Plus', 'Lección '+one+' gratis · curso completo con Plus') : CL('Full course with Plus','Tam kurs Plus ile','دوره‌ی کامل با Plus','Curso completo con Plus')}</span></span>`;
+  const img = k.img ? `<img src="courses/covers/${k.img}.webp" alt="" width="800" height="400" decoding="async"${i > 1 ? ' loading="lazy"' : ''}>` : '';
+  return `<div class="pcard${open ? '' : ' soon'}${acc ? ' is-open' : ''}" role="button" tabindex="0" data-action="course-open" data-view="${open?'course-detail':'course-gate'}" data-cid="${c.id}" style="--c:var(--cat-${c.cat || 'diag'});">
+    <div class="pcard-img">${img}
+      <span class="pcard-plus">${ICONS.star}PLUS</span>
+      <span class="pcard-ic" aria-hidden="true">${(ICONS[c.icon] || ICONS.suitcase)}</span>
+    </div>
+    <div class="pcard-body">
+      ${k.eb ? `<div class="pcard-eb">${esc(courseUp(cl(k.eb)))}</div>` : ''}
+      <h2 class="display pcard-title">${esc(cl(c.title))}<span class="dot">.</span></h2>
+      <p class="pcard-desc">${esc(courseCardBlurb(c))}</p>
+      ${chips ? `<div class="fs-chips pcard-chips">${chips}</div>` : ''}
+      <div class="pcard-foot">${access}<span class="pcard-go" aria-hidden="true">${ICONS.chev}</span></div>
       ${cont}
     </div>
-    <span class="chevron" style="color:#fff;">${ICONS.chev}</span>
   </div>`;
 }
 // Courses list order: open courses, then "Coming soon"; the data order inside each group. Hidden courses are not listed.
@@ -36624,8 +36686,8 @@ function renderCoursesHome(){
   return `<div class="fade-in">
     ${topbar(false)}
     ${sectionHeadNoBack(CL('Premium courses','Premium kurslar','دوره‌های ویژه','Cursos premium'), CL("Made to make you more professional out there. Spanish isn't a lesson anymore. It's a tool.",'Seni daha profesyonel yapmak için hazırlandı. İspanyolca artık bir ders değil, bir araç.','این دوره‌ها کمکت می‌کنند در کارت حرفه‌ای‌تر باشی. اسپانیایی دیگر یک درس نیست، یک ابزار است.','Hechos para que seas más profesional. El español ya no es una asignatura, es una herramienta.'))}
-    <div class="screen" style="padding-top:0;">
-      <div class="stack" style="gap:12px;">${courseListOrder().map(courseCardHtml).join('')}</div>
+    <div class="screen" style="padding-top:4px;">
+      <div class="pcard-list">${courseListOrder().map((c, i)=>courseCardHtml(c, i)).join('')}</div>
     </div>
   </div>`;
 }

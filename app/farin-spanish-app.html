@@ -11119,8 +11119,8 @@ function ttsPlayPlan(plan, rate, cb, want){
   };
   next(0);
 }
-document.addEventListener('visibilitychange', ()=>{ if(document.hidden) stopAllSpeech(); });
-window.addEventListener('pagehide', stopAllSpeech);
+document.addEventListener('visibilitychange', ()=>{ if(document.hidden){ stopAllSpeech(); micStopAll(); } });   // every mic stops too (2026-11-25)
+window.addEventListener('pagehide', ()=>{ stopAllSpeech(); micStopAll(); });
 const LOGIN_SALT = 'farin-spanish-login-v1';
 const LOGIN_DOC_PREFIX = 'pw-';
 const PASSWORD_MIN = 6;
@@ -11234,6 +11234,7 @@ function go(view, params){
   resetConfirmPending = false;
   stopAllSpeech();   // every navigation stops whatever is speaking (Farin, card n4NxuH0f)
   if(typeof echoStopRec === 'function' && view !== 'game-echo') echoStopRec();
+  rlMicStop();   // and the lessons' Say it listener (the speaking mic stops in render() once its screen goes)
   navHistory.push({view: state.view, params: state.viewParams, label: msgScreenLabel()});   // MSG-V2: the screen's heading, for "wrote from"
   state.view = view; state.viewParams = params || {}; save(); render(); window.scrollTo(0,0);
   pushHistoryEntry();
@@ -11248,6 +11249,7 @@ function bootBackEntry(){ if(!navHistory.length && ['dashboard','goals-list','st
 function goBack(){
   resetConfirmPending = false;
   stopAllSpeech();
+  rlMicStop();
   if(state.view === 'diagnostic-step' && state.diag.step > 0){
     state.diag.step -= 1;
     save(); render(); window.scrollTo(0,0);
@@ -16418,7 +16420,8 @@ function render(){
     currentMusicStoryId = null;
     stopStoryMusic();
   }
-  if(state.view !== 'studio-round' && studioRecognition){
+  // the speaking mic keeps running on its own screen (Round 3 of a speaking card included) and stops anywhere else
+  if(studioRecognition && !studioMicScreen(studioRecognition.vp)){
     stopStudioMic();
   }
   // Song card: leaving the player stops the song; on the player, wire the seek bar and the highlight after the render
@@ -20495,57 +20498,127 @@ function practiceFeedback(result, round){
 
 let studioRecognition = null;
 function studioSpeechSupported(){ return !!(window.SpeechRecognition || window.webkitSpeechRecognition); }
-function stopStudioMic(){
-  if(studioRecognition){ try{ studioRecognition.onend = null; studioRecognition.stop(); }catch(e){} studioRecognition = null; }
+/* The speaking mic (Farin 2026-11-25, "fix the speaking microphone": it did not reliably start or stop).
+   - It runs on a speaking studio round and on Round 3 ("Use it") of a roadmap speaking card in three rounds, which shows the
+     same round inside the lesson frame (studioMicScreen). Before, every render on that Round 3 stopped it at once while the
+     button still said "Listening…", and the words never reached the chips or the box.
+   - studioRecognition is the take's controller {vp, finish(redraw)}. A tap on the button ends the take at once and keeps the
+     words on screen (final + not yet final); it never waits for the browser's onend (some phones never send it).
+   - The browser ends a session at each pause (continuous:false, steadier on Android); the take starts the next session by
+     itself, a new recognizer each time, until STUDIO_MIC_IDLE silent sessions in a row (about 10-16 s of silence), then it
+     stops ("Tap to keep talking", or "I didn't hear anything" when the take heard nothing).
+   - Errors: a blocked mic / no mic / no speech check for the language = a shadow round (say it out loud, "I said it") with a
+     line that says why. No connection to the speech check (Google's service can be filtered in Iran) or a start that throws =
+     a line and one more try with the mic; the second time = the shadow round. A session the take started by itself (no tap)
+     that the browser refuses only ends the take.
+   - One mic at a time (the lesson's "Say it" chips, Say It Back), and a voice still playing stops first, or the mic would
+     hear it as the learner's words. Leaving the screen, the app going to the background, Check or a new take end it. */
+const STUDIO_MIC_IDLE = 2;
+function studioMicScreen(vp){
+  if(!vp || vp !== state.viewParams || vp.mode !== 'speaking') return false;
+  if(state.view === 'studio-round') return true;
+  if(state.view !== 'studio-rounds') return false;
+  const R = vp.rl;
+  return !vp.round || !lpOn('studioRounds') || (!!R && R.kind === 'st' && R.ph === 'play' && R.r === 2);
 }
+// Ends the take without a redraw (Check, a new take, leaving the screen): the words so far stay in vp.transcript.
+function stopStudioMic(){ const c = studioRecognition; if(c && c.finish) c.finish(false); else studioRecognition = null; }
+function studioMicFail(vp, kind){
+  if(!vp) return;
+  vp.micNote = kind;
+  if(kind === 'network' || kind === 'start'){ vp.micFails = (vp.micFails || 0) + 1; if(vp.micFails < 2) return; }
+  if(kind !== 'quiet') vp.speakShadow = true;
+}
+function studioMicNoteText(kind, shadow){
+  if(kind === 'blocked') return L('The microphone is blocked for this app. To use it, allow the microphone in your browser or phone settings. For now, say it out loud.','Bu uygulama için mikrofon engelli. Kullanmak için tarayıcının ya da telefonunun ayarlarından mikrofona izin ver. Şimdilik yüksek sesle söyle.','میکروفون برای این برنامه بسته است. برای استفاده، در تنظیمات مرورگر یا گوشی‌ات به میکروفون اجازه بده. فعلاً بلند بگو.','El micrófono está bloqueado para esta app. Para usarlo, permite el micrófono en los ajustes del navegador o del móvil. Por ahora, dilo en voz alta.');
+  if(kind === 'nomic') return L('No microphone was found, so say it out loud.','Mikrofon bulunamadı, o yüzden yüksek sesle söyle.','میکروفونی پیدا نشد، پس بلند بگو.','No se ha encontrado ningún micrófono, así que dilo en voz alta.');
+  if(kind === 'lang') return L("This device can't check speech in this language, so say it out loud.",'Bu cihaz bu dilde konuşmayı kontrol edemiyor, o yüzden yüksek sesle söyle.','این دستگاه نمی‌تواند صحبت به این زبان را بررسی کند، پس بلند بگو.','Este dispositivo no puede comprobar la voz en este idioma, así que dilo en voz alta.');
+  if(kind === 'network') return shadow ? L("The speech check can't connect right now, so say it out loud. You can also type it below.",'Konuşma kontrolü şu an bağlanamıyor, o yüzden yüksek sesle söyle. İstersen aşağıya da yazabilirsin.','بررسی صدا الان وصل نمی‌شود، پس بلند بگو. می‌توانی پایین هم بنویسی.','La comprobación de voz no se puede conectar ahora, así que dilo en voz alta. También puedes escribirlo abajo.')
+    : L("The speech check couldn't connect. Check your internet and tap the microphone again, or type what you said.",'Konuşma kontrolü bağlanamadı. İnternetini kontrol et ve mikrofona tekrar dokun ya da söylediğini yaz.','بررسی صدا وصل نشد. اینترنتت را چک کن و دوباره میکروفون را بزن، یا چیزی را که گفتی بنویس.','La comprobación de voz no se ha podido conectar. Revisa tu conexión y toca el micrófono otra vez, o escribe lo que has dicho.');
+  if(kind === 'start') return shadow ? L("The microphone won't start on this device right now, so say it out loud.",'Mikrofon şu an bu cihazda başlamıyor, o yüzden yüksek sesle söyle.','میکروفون الان روی این دستگاه روشن نمی‌شود، پس بلند بگو.','El micrófono no se enciende ahora en este dispositivo, así que dilo en voz alta.')
+    : L("The microphone didn't start. Tap it again.",'Mikrofon başlamadı. Tekrar dokun.','میکروفون روشن نشد. دوباره بزن.','El micrófono no se ha encendido. Tócalo otra vez.');
+  if(kind === 'quiet') return L("I didn't hear anything. Tap the microphone and speak.",'Hiçbir şey duymadım. Mikrofona dokun ve konuş.','چیزی نشنیدم. میکروفون را بزن و صحبت کن.','No he oído nada. Toca el micrófono y habla.');
+  return '';
+}
+function studioMicNoteHtml(vp, shadow){ const t = vp && vp.micNote ? studioMicNoteText(vp.micNote, shadow) : ''; return t ? `<p class="speak-note speak-micnote" role="status" dir="auto">${esc(t)}</p>` : ''; }
 function toggleStudioMic(){
-  if(studioRecognition){ studioRecognition.userStopped = true; studioRecognition.stop(); return; }
+  if(studioRecognition){ stopStudioMic(); render(); return; }
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
   const vp0 = state.viewParams;
+  if(!vp0 || vp0.mode !== 'speaking') return;
   // See it (FCgBqtei): no speech recognition here is not a failure, the round becomes a shadow round.
-  if(!SR){ if(vp0){ vp0.speakShadow = true; save(); render(); } return; }
-  const rec = new SR();
-  rec.lang = TTS_LANG; rec.interimResults = true; rec.continuous = false;
-  rec.userStopped = false;
+  if(!SR){ vp0.speakShadow = true; save(); render(); return; }
+  rlMicStop(); echoStopRec(); ttsStop();
   // start from what is in the box, typed corrections included
   const ta0 = document.getElementById('studio-answer-input');
-  let finalText = String((ta0 && ta0.value) || vp0.transcript || '').trim();
-  vp0.transcript = finalText;
-  let seenFinals = new Set();
-  studioRecognition = rec;
-  rec.onresult = (e)=>{
-    let interim = '';
-    for(let i=0; i<e.results.length; i++){
-      const r = e.results[i];
-      if(r.isFinal){
-        const seg = r[0].transcript.trim();
-        const key = seg.toLowerCase();
-        if(seg && !seenFinals.has(key)){
-          finalText += (finalText ? ' ' : '') + seg;
-          seenFinals.add(key);
-        }
-      } else interim += r[0].transcript;
-    }
-    // See it (FCgBqtei): the words land as chips while the learner talks.
-    speakLive((finalText + ' ' + interim).trim());
+  const base = String((ta0 && ta0.value) || vp0.transcript || '').trim();
+  vp0.transcript = base; vp0.micNote = '';
+  const sess = [];   // each session's final words
+  let rec = null, n = -1, interim = '', idle = 0, heard = false, any = false, done = false;
+  const words = ()=>[base].concat(sess, [interim]).filter(Boolean).join(' ').replace(/\s+/g, ' ').trim();
+  const ctl = {vp:vp0};
+  const drop = ()=>{ const r = rec; rec = null; if(!r) return; r.onresult = r.onerror = r.onend = null; try{ r.abort(); }catch(e){ try{ r.stop(); }catch(e2){} } };
+  ctl.finish = redraw=>{
+    if(done) return; done = true;
+    drop();
+    if(studioRecognition === ctl) studioRecognition = null;
+    vp0.transcript = words(); interim = '';
+    save();
+    if(redraw && studioMicScreen(vp0)) render();
   };
-  rec.onerror = (e)=>{
-    const code = e && e.error;
-    if(code === 'not-allowed' || code === 'audio-capture' || code === 'service-not-allowed' || code === 'network'){
-      rec.userStopped = true;
-      if(state.viewParams === vp0) vp0.speakShadow = true;   // no microphone: a shadow round, never an error
-    }
+  const fail = kind=>{ if(n === 0 || kind === 'nomic') studioMicFail(vp0, kind); ctl.finish(true); };
+  const begin = ()=>{
+    const r = new SR();
+    r.lang = TTS_LANG; r.interimResults = true; r.continuous = false; r.maxAlternatives = 1;
+    n++; heard = false; interim = '';
+    const k = n, fin = [];
+    r.onresult = e=>{
+      if(rec !== r) return;
+      let im = '';
+      for(let i = 0; i < e.results.length; i++){
+        const x = e.results[i], t = String((x && x[0] && x[0].transcript) || '').trim();
+        if(!t) continue;
+        if(x.isFinal) fin[i] = t; else im += (im ? ' ' : '') + t;
+      }
+      // Android can send the same final piece twice in a row: it counts once
+      const parts = fin.filter(Boolean).filter((t, j, a)=>!j || t.toLowerCase() !== a[j - 1].toLowerCase());
+      sess[k] = parts.join(' '); interim = im;
+      if(parts.length || im){ heard = any = true; vp0.micFails = 0; }
+      // See it (FCgBqtei): the words land as chips while the learner talks.
+      speakLive(words());
+    };
+    r.onerror = e=>{
+      if(rec !== r) return;
+      const code = e && e.error;
+      if(code === 'not-allowed' || code === 'service-not-allowed') fail('blocked');
+      else if(code === 'audio-capture') fail('nomic');
+      else if(code === 'language-not-supported') fail('lang');
+      else if(code === 'network') fail('network');
+      else if(code === 'aborted') ctl.finish(true);   // another app or listener took the microphone
+      // 'no-speech': onend follows and counts a silent session
+    };
+    r.onend = ()=>{
+      if(rec !== r) return;
+      rec = null;
+      if(interim){ sess[k] = [sess[k], interim].filter(Boolean).join(' '); interim = ''; }
+      idle = heard ? 0 : idle + 1;
+      if(idle < STUDIO_MIC_IDLE && studioMicScreen(vp0) && !document.hidden){ try{ begin(); return; }catch(err){} }
+      if(!any) studioMicFail(vp0, 'quiet');
+      ctl.finish(true);
+    };
+    rec = r;
+    try{ r.start(); }catch(err){ rec = null; throw err; }
   };
-  rec.onend = ()=>{
-    if(!rec.userStopped && (state.view === 'studio-round' || state.view === 'studio-rounds') && state.viewParams === vp0){   // lessons that play pass 4: Round 3 of a speaking card
-      try{ rec.start(); return; }catch(err){}
-    }
-    if(studioRecognition === rec) studioRecognition = null;
-    if(state.viewParams === vp0) vp0.transcript = finalText.trim();
-    save(); render();
-  };
-  try{ rec.start(); }catch(err){ studioRecognition = null; vp0.speakShadow = true; save(); render(); return; }
+  studioRecognition = ctl;
+  try{ begin(); }
+  catch(err){ studioRecognition = null; done = true; studioMicFail(vp0, 'start'); save(); render(); return; }
   render();
+}
+// Every mic in the app stops (the app goes to the background, the page closes, a navigation).
+function micStopAll(){
+  try{ if(studioRecognition){ const vp = studioRecognition.vp; stopStudioMic(); if(vp && studioMicScreen(vp)) render(); } }catch(e){}
+  try{ rlMicStop(); }catch(e){}
+  try{ echoStopRec(); }catch(e){}
 }
 
 /* Teaching redesign phase 2, S9 writing tasks (smallest version of build item 20). A writing round started at a stage
@@ -20870,7 +20943,7 @@ let speakTickAt = 0, speakTimer = null;
 // Live update on every recognition result (and on typing): the box, the chips, the word pills.
 function speakLive(text, fromInput){
   const vp = state.viewParams;
-  if(state.view !== 'studio-round' || !vp || vp.mode !== 'speaking' || !vp.round) return;
+  if(!studioMicScreen(vp) || !vp.round) return;   // a studio round, or Round 3 of a speaking card in three rounds
   const ta = document.getElementById('studio-answer-input');
   if(ta && !fromInput) ta.value = text;
   const round = vp.round, result = speakWords(text).length ? checkPracticeAnswer(round, text) : null;
@@ -20941,6 +21014,7 @@ function speakPanelHtml(vp){
     if(vp.said) return '';
     return `<div class="card-flat speak-shadow" style="margin-top:14px;">
       <div class="echo-say">${L('Say it out loud','Yüksek sesle söyle','بلند بگو','Dilo en voz alta')}</div>
+      ${studioMicNoteHtml(vp, true)}
       <p class="speak-note">${L('Use a starter above if it helps, then tap the button. You can also type it below.','İstersen yukarıdaki cümlelerden biriyle başla, sonra butona dokun. İstersen aşağıya da yazabilirsin.','اگر کمکت می‌کند با یکی از جمله‌های بالا شروع کن، بعد دکمه را بزن. می‌توانی پایین هم بنویسی.','Si te ayuda, empieza con una frase de arriba y toca el botón. También puedes escribirlo abajo.')}</p>
       <button class="btn btn-primary" data-action="speak-said">${L('I said it','Söyledim','گفتم','Ya lo he dicho')}</button>
     </div>`;
@@ -20955,6 +21029,7 @@ function speakPanelHtml(vp){
       <button class="echo-mic speak-mic${listening ? ' listening' : ''}" id="speak-mic" data-action="studio-mic-toggle" aria-label="${esc(listening ? L('Stop','Durdur','توقف','Detener') : L('Start speaking','Konuşmaya başla','شروع صحبت','Empezar a hablar'))}">${ICONS.mic}</button>
       <div class="game-play-label">${listening ? L('Listening… tap to stop','Dinliyorum… durdurmak için dokun','دارم گوش می‌دم… برای توقف بزن','Escuchando… toca para parar') : (speakWords(text).length ? L('Tap to keep talking','Devam etmek için dokun','برای ادامه بزن','Toca para seguir hablando') : L('Tap and speak','Dokun ve konuş','بزن و بگو','Toca y habla'))}</div>
     </div>
+    ${listening ? '' : studioMicNoteHtml(vp, false)}
   </div>`;
 }
 function speakTakesHtml(takes, best, round){
@@ -28823,6 +28898,8 @@ const RL_STR2 = {
   'd.say':['Say it', 'Söyle', 'بگو', 'Dilo'],
   'd.said':['I said it', 'Söyledim', 'گفتم', 'Ya lo he dicho'],
   'd.listening':['Listening…', 'Dinliyorum…', 'دارم گوش می‌دهم…', 'Te escucho…'],
+  'd.stop':['Listening… tap to stop', 'Dinliyorum… durdurmak için dokun', 'دارم گوش می‌دهم… برای توقف بزن', 'Te escucho… toca para parar'],
+  'd.again':["I didn't hear you. Tap and say it again.", 'Seni duyamadım. Dokun ve tekrar söyle.', 'صدایت را نشنیدم. بزن و دوباره بگو.', 'No te he oído. Toca y dilo otra vez.'],
   'd.know':['Did you know?', 'Biliyor muydun?', 'می‌دانستی؟', '¿Sabías que...?'],
   'd.eyes':['Through their eyes', 'Onun gözünden', 'از چشم او', 'A través de sus ojos']
 };
@@ -28847,6 +28924,46 @@ function rlSeqPlay(texts, before, after, done){
 }
 function rlSay(text){ try{ ttsSpeak(text, 0.92, null, {natural:true}); }catch(e){} }
 function rlMicStop(){ const r = rlMic; rlMic = null; if(r){ try{ r.onresult = r.onerror = r.onend = null; r.abort(); }catch(e){} } }
+// A second tap on a listening "Say it" chip: the mic stops now and the chip's done() gets what it heard.
+function rlMicFinish(){ const r = rlMic; if(r && r.finish) r.finish(); else rlMicStop(); }
+/* The "Say it" chips of the lesson rounds (dialogue Round 3, story Round 2, a speaking card's Round 2), Farin 2026-11-25 "fix the
+   speaking microphone". A tap starts the mic, a second tap stops it and keeps what it heard (before, the chip was disabled while it
+   listened), the words can show while the learner talks (onWords), and it ends by itself at the first full sentence, at a pause or
+   after maxMs, even when the browser never sends onend. done(heard, why): 'ok'; 'empty' = the mic worked but heard nothing (the
+   chip asks once more, then counts the line); 'blocked' / 'nomic' / 'network' / 'lang' / 'start' = it can't listen here (the line
+   counts, never blocked). Returns false when done() already ran (no speech recognition, or a start that threw). */
+function rlListen(maxMs, onWords, done){
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if(!SR){ done('', 'nomic'); return false; }
+  rlMicStop(); stopStudioMic(); echoStopRec(); ttsStop();
+  const r = new SR(); r.lang = TTS_LANG; r.interimResults = true; r.continuous = false; r.maxAlternatives = 1;
+  let fin = false, got = '', live = '', bad = '', tm = 0;
+  const end = ()=>{
+    if(fin) return; fin = true; clearTimeout(tm);
+    r.onresult = r.onerror = r.onend = null; try{ r.abort(); }catch(e){}
+    if(rlMic !== r) return;   // stopped from outside (another screen, another mic): nothing to report
+    rlMic = null;
+    const heard = (got || live).replace(/\s+/g, ' ').trim();
+    done(heard, heard ? 'ok' : (bad || 'empty'));
+  };
+  r.onresult = e=>{
+    let f = '', im = '';
+    for(let i = 0; i < e.results.length; i++){ const x = e.results[i], t = String((x && x[0] && x[0].transcript) || '').trim(); if(!t) continue; if(x.isFinal) f += (f ? ' ' : '') + t; else im += (im ? ' ' : '') + t; }
+    got = f; live = (f + ' ' + im).trim();
+    if(onWords && live) try{ onWords(live); }catch(err){}
+    if(f && !im) end();   // a whole sentence is in
+  };
+  r.onerror = e=>{ const c = e && e.error;
+    bad = c === 'not-allowed' || c === 'service-not-allowed' ? 'blocked' : c === 'audio-capture' ? 'nomic' : c === 'network' ? 'network' : c === 'language-not-supported' ? 'lang' : bad;
+    if(bad) end(); };
+  r.onend = end;
+  r.finish = end;
+  rlMic = r;
+  tm = setTimeout(end, maxMs);
+  try{ r.start(); }catch(err){ bad = 'start'; end(); return false; }
+  return true;
+}
+function rlMicNoteHtml(k){ const t = !k ? '' : k === 'again' ? rlS('d.again') : studioMicNoteText(k, true); return t ? `<p class="game-hint rl-micnote" role="status" dir="auto">${esc(t)}</p>` : ''; }
 // the lesson's one aha (SPEC S4): the reveal sound (unless the tap already made one) and a spark burst on the element
 function rlAha(el, color, sound){ if(!el) return; if(sound) sfx('reveal'); const c = centerOf(el); sparkBurst(c.x, c.y, 10, color, 110); }
 function rlPop(el){ anim(el, [{transform:'scale(1)'}, {transform:'scale(1.18)'}, {transform:'scale(1)'}], {duration:260, easing:SPRING}); }
@@ -29166,10 +29283,10 @@ function rldSay(d, R){
   const said = !!(R.said || {})[t], lis = R.lis === t && !!rlMic, sr = !!(window.SpeechRecognition || window.webkitSpeechRecognition);
   if(!R.sp) R.sp = {};
   if(!R.sp[t]){ R.sp[t] = 1; const vp = state.viewParams; queueFx(()=>setTimeout(()=>{ if(state.viewParams === vp && vp.rl === R && R.ph === 'play' && R.r === 2 && (R.i3 || 0) === i) rlSay(dialogueOkLine(turn.ln)); }, 350)); }
-  const chip = said ? '' : `<button type="button" class="game-chip rl-saychip${lis ? ' on' : ''}" data-action="rld-say" data-t="${t}"${lis ? ' disabled' : ''}>${lis ? esc(rlS('d.listening')) : sr ? ICONS.mic + esc(rlS('d.say')) : esc(rlS('d.said'))}</button>`;
+  const chip = said ? '' : `<button type="button" class="game-chip rl-saychip${lis ? ' on' : ''}" data-action="rld-say" data-t="${t}" aria-pressed="${lis ? 'true' : 'false'}">${lis ? ICONS.mic + esc(rlS('d.stop')) : sr ? ICONS.mic + esc(rlS('d.say')) : esc(rlS('d.said'))}</button>`, note = rlMicNoteHtml(R.note && R.note.t === t ? R.note.k : '');
   return Object.assign(base, {body:`<div class="rl-body"><p class="game-hint">${esc(rlS('d.sayHint'))}</p>
       <div class="card-flat gc-card rl-chat">${prev ? `<div class="rl-dl">${dialogueLineHtml(prev)}</div>` : ''}<div class="rl-dl rl-mine${said ? ' said' : ''}" id="rl-mine">${dialogueLineHtml(turn.ln)}${said ? '<span class="rl-tick" aria-hidden="true">✓</span>' : ''}</div></div>
-      <div class="rl-chips">${chip}</div></div>`, foot:rlCta('rld-next', rlS('go.next'))});
+      <div class="rl-chips">${chip}</div>${note}</div>`, foot:rlCta('rld-next', rlS('go.next'))});
 }
 function rldCultureHtml(d){
   return (d.culture ? `<div class="card-flat rl-cult"><div class="eyebrow" style="color:var(--cat-lis);">${esc(rlS('d.know'))}</div><p dir="auto">${esc(trLine(d.culture))}</p></div>` : '')
@@ -29308,21 +29425,22 @@ const RL2_HANDLERS = {
     const vp0 = state.viewParams, R0 = vp0 && vp0.rl, x = R0 && R0.ph === 'play' && ((R0.kind === 'd' && R0.r === 2) || (R0.kind === 's' && R0.r === 1)) ? {vp:vp0, R:R0} : null; if(!x) return;
     const R = x.R, vp = x.vp, t = +el.dataset.t;
     if(!R.said) R.said = {};
-    if(R.said[t] || (R.lis === t && rlMic)) return;
+    if(R.said[t]) return;
+    if(R.lis === t && rlMic){ rlMicFinish(); return; }   // a second tap stops the mic and keeps what it heard
     rlSeqTok++; ttsStop();
     const stamp = ()=>{ rlMic = null; if(state.viewParams !== vp) return; R.lis = -1; R.said[t] = 1; sfx('stamp'); buzz(12);
       queueFx(()=>anim(document.querySelector('#rl-mine .rl-tick'), [{transform:'scale(1.15) rotate(-8deg)', opacity:0}, {transform:'scale(1) rotate(-3deg)', opacity:1}], {duration:280, easing:'ease-out'}));
       save(); render(); };
-    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if(!SR){ stamp(); return; }
-    try{
-      rlMicStop();
-      const r = new SR(); r.lang = TTS_LANG; r.interimResults = false; r.continuous = false; r.maxAlternatives = 1;
-      let fin = false; const end = ()=>{ if(fin) return; fin = true; clearTimeout(tm); if(rlMic === r) stamp(); };
-      const tm = setTimeout(()=>{ try{ r.stop(); }catch(err){} end(); }, 8000);
-      r.onresult = end; r.onerror = end; r.onend = end;
-      rlMic = r; R.lis = t; r.start(); render();
-    }catch(err){ rlMic = null; stamp(); }
+    const miss = R.miss || (R.miss = {});
+    R.lis = t; R.note = null;
+    const on = rlListen(8000, null, (heard, why)=>{
+      if(state.viewParams !== vp) return;
+      R.lis = -1;
+      if(why === 'empty' && !miss[t]){ miss[t] = 1; R.note = {t, k:'again'}; save(); render(); return; }   // nothing heard: one more try, then it counts
+      R.note = why === 'ok' || why === 'empty' ? null : {t, k:why};   // no mic here: the line counts, with a line that says why
+      stamp();
+    });
+    if(on) render();
   },
   'rld-next'(){
     const x = rldCur(); if(!x || x.R.ph !== 'play') return;
@@ -29460,7 +29578,7 @@ function rlsStep(s, P, R, vp){
   const said = !!(R.said || {})[0], lis = R.lis === 0 && !!rlMic, sr = !!(window.SpeechRecognition || window.webkitSpeechRecognition);
   return Object.assign(base, {body:`<div class="rl-body"><p class="game-hint">${esc(rlS('st.say'))}</p>
       <div class="card-flat gc-card rl-chat"><div class="rl-dl rl-mine${said ? ' said' : ''}" id="rl-mine"><div class="gc-line" dir="ltr"><div class="gc-body"><div class="gc-text">${esc(st.text)}</div></div>${ttsButton(st.text, '')}</div>${said ? '<span class="rl-tick" aria-hidden="true">✓</span>' : ''}</div></div>
-      <div class="rl-chips">${said ? '' : `<button type="button" class="game-chip rl-saychip${lis ? ' on' : ''}" data-action="rld-say" data-t="0"${lis ? ' disabled' : ''}>${lis ? esc(rlS('d.listening')) : sr ? ICONS.mic + esc(rlS('d.say')) : esc(rlS('d.said'))}</button>`}</div></div>`,
+      <div class="rl-chips">${said ? '' : `<button type="button" class="game-chip rl-saychip${lis ? ' on' : ''}" data-action="rld-say" data-t="0" aria-pressed="${lis ? 'true' : 'false'}">${lis ? ICONS.mic + esc(rlS('d.stop')) : sr ? ICONS.mic + esc(rlS('d.say')) : esc(rlS('d.said'))}</button>`}</div>${rlMicNoteHtml(R.note && R.note.t === 0 ? R.note.k : '')}</div>`,
     foot:cta(rlS('cont'))});
 }
 function rlsUseScreen(s, R){
@@ -29630,13 +29748,13 @@ function rlstTry(vp, R){
         ${T.short ? `<p class="rl-line" dir="auto">${esc(rlS('st.more'))}</p>` : ''}${res}</div>`,
       foot:T.checked ? rlCta('rlst-next', rlS('cont')) : rlCta('rlst-try-check', rlS('st.check'))});
   }
-  const sr = !!(window.SpeechRecognition || window.webkitSpeechRecognition), lis = !!rlMic;
+  const sr = !!(window.SpeechRecognition || window.webkitSpeechRecognition), lis = !!(T.lis && rlMic);
   return Object.assign(base, {body:`<div class="rl-body">${rlstTopicHtml(vp)}
       <p class="game-hint" dir="auto"><b>${esc(rlS('st.firstS'))}</b> ${starts.length ? esc(rlS('st.hearStart')) : ''}</p>
       ${starts.length ? `<div class="rl-chips rl-ststarts">${starts.map((t, k)=>`<button type="button" class="game-chip" dir="ltr" translate="no" data-action="rlst-start" data-k="${k}">${ICONS.soundOn}${esc(t)}</button>`).join('')}</div>` : ''}
       <div class="card-flat gc-card rl-chat"><div class="rl-dl rl-mine${T.said ? ' said' : ''}" id="rl-mine"><div class="gc-line dlg-line dlg-you" dir="ltr"><div class="gc-body"><div class="gc-text">${T.heard ? esc(T.heard) : '…'}</div></div></div>${T.said ? '<span class="rl-tick" aria-hidden="true">✓</span>' : ''}</div></div>
       ${T.heard ? `<p class="rl-line" dir="auto">${esc(rlS('st.heard'))} <bdi dir="ltr">${esc(T.heard)}</bdi></p>` : ''}
-      ${T.said ? `<div class="game-why">${farinImg('face-smile')}<div dir="auto">${esc(rlS('st.goodS'))}</div></div>` : `<div class="rl-chips"><button type="button" class="game-chip rl-saychip${lis ? ' on' : ''}" data-action="rlst-say"${lis ? ' disabled' : ''}>${lis ? esc(rlS('d.listening')) : sr ? ICONS.mic + esc(rlS('d.say')) : esc(rlS('d.said'))}</button></div>`}</div>`,
+      ${T.said ? `<div class="game-why">${farinImg('face-smile')}<div dir="auto">${esc(rlS('st.goodS'))}</div></div>` : `<div class="rl-chips"><button type="button" class="game-chip rl-saychip${lis ? ' on' : ''}" data-action="rlst-say" aria-pressed="${lis ? 'true' : 'false'}">${lis ? ICONS.mic + esc(rlS('d.stop')) : sr ? ICONS.mic + esc(rlS('d.say')) : esc(rlS('d.said'))}</button></div>`}${rlMicNoteHtml(T.note)}</div>`,
     foot:T.said ? rlCta('rlst-next', rlS('cont')) : rlGhost('rlst-next', rlS('skip'))});
 }
 function rlstStem(t){ return String(t || '').replace(/\s*(\.\.\.|…)\s*\??$/, '').trim(); }
@@ -29695,21 +29813,21 @@ const RL4_HANDLERS = {
   'rlst-say'(){
     const x = rlstCur(); if(!x || x.R.ph !== 'play' || x.R.r !== 1) return;
     const R = x.R, vp = x.vp, T = R.t2 || (R.t2 = {text:'', heard:''});
-    if(T.said || rlMic) return;
+    if(T.said) return;
+    if(T.lis && rlMic){ rlMicFinish(); return; }   // a second tap stops the mic and keeps what it heard
     rlSeqTok++; ttsStop();
     const stamp = heard=>{ rlMic = null; if(state.viewParams !== vp) return; if(heard) T.heard = String(heard).slice(0, 200); T.said = 1; sfx('stamp'); buzz(12);
       queueFx(()=>anim(document.querySelector('#rl-mine .rl-tick'), [{transform:'scale(1.15) rotate(-8deg)', opacity:0}, {transform:'scale(1) rotate(-3deg)', opacity:1}], {duration:280, easing:'ease-out'}));
       save(); render(); };
-    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if(!SR){ stamp(''); return; }
-    try{
-      const r = new SR(); r.lang = TTS_LANG; r.interimResults = false; r.continuous = false; r.maxAlternatives = 1;
-      let fin = false, got = ''; const end = ()=>{ if(fin) return; fin = true; clearTimeout(tm); if(rlMic === r) stamp(got); };
-      const tm = setTimeout(()=>{ try{ r.stop(); }catch(err){} end(); }, 9000);
-      r.onresult = e=>{ try{ got = Array.from(e.results).map(x=>x[0] && x[0].transcript || '').join(' ').trim(); }catch(err){} end(); };
-      r.onerror = end; r.onend = end;
-      rlMic = r; r.start(); render();
-    }catch(err){ rlMic = null; stamp(''); }
+    T.lis = 1; T.note = '';
+    const on = rlListen(9000, live=>{ const el = document.querySelector('#rl-mine .gc-text'); if(el && state.viewParams === vp) el.textContent = live; }, (heard, why)=>{
+      T.lis = 0;
+      if(state.viewParams !== vp) return;
+      if(why === 'empty' && !T.miss){ T.miss = 1; T.note = 'again'; save(); render(); return; }   // nothing heard: one more try, then it counts
+      T.note = why === 'ok' || why === 'empty' ? '' : why;   // no mic here: the sentence counts, with a line that says why
+      stamp(heard);
+    });
+    if(on) render();
   },
   'rlst-done'(){
     const x = rlstCur(); if(!x || x.R.ph !== 'play' || x.R.r !== 2 || !(x.vp.checked && x.vp.result && x.vp.result.passed)) return;
@@ -37909,8 +38027,9 @@ function courseSpStart(){
   }, 1000);
   if(st.rec && courseRecSupported()){
     navigator.mediaDevices.getUserMedia({audio:true}).then(stream=>{
-      if(courseUi.sp !== st || !st.running || st.round !== round){ stream.getTracks().forEach(t=>t.stop()); return; }
-      const chunks = [], mr = new MediaRecorder(stream);
+      if(courseUi.sp !== st || !st.running || st.round !== round || st.stream){ stream.getTracks().forEach(t=>t.stop()); return; }
+      let mr = null; try{ mr = new MediaRecorder(stream); }catch(err){ stream.getTracks().forEach(t=>t.stop()); throw err; }   // no recorder: the microphone closes, the note says it is off
+      const chunks = [];
       st.stream = stream; st.recorder = mr;
       mr.ondataavailable = e=>{ if(e.data && e.data.size) chunks.push(e.data); };
       mr.onstop = ()=>{ try{ stream.getTracks().forEach(t=>t.stop()); }catch(e){}
@@ -40515,10 +40634,12 @@ function courseIeSpGo(st, s, stage){
   if(state.view === 'course-step') render();
 }
 function courseIeSpRecStart(st, k){
+  courseIeSpRecStop(st);   // one recorder at a time: a second start never leaves the first one's microphone open (2026-11-25)
   if(!st.rec || !courseRecSupported()) return;
   navigator.mediaDevices.getUserMedia({audio:true}).then(stream=>{
-    if(courseUi.ies !== st || k.stage !== 'rec'){ stream.getTracks().forEach(t=>t.stop()); return; }
-    const chunks = [], mr = new MediaRecorder(stream); st.stream = stream; st.recorder = mr;
+    if(courseUi.ies !== st || k.stage !== 'rec' || st.stream){ stream.getTracks().forEach(t=>t.stop()); return; }
+    let mr = null; try{ mr = new MediaRecorder(stream); }catch(err){ stream.getTracks().forEach(t=>t.stop()); throw err; }
+    const chunks = []; st.stream = stream; st.recorder = mr;
     mr.ondataavailable = e=>{ if(e.data && e.data.size) chunks.push(e.data); };
     mr.onstop = ()=>{ try{ stream.getTracks().forEach(t=>t.stop()); }catch(e){} if(courseUi.ies !== st || !chunks.length) return; if(k.clip) try{ URL.revokeObjectURL(k.clip); }catch(e){} k.clip = URL.createObjectURL(new Blob(chunks, {type:mr.mimeType || 'audio/webm'})); if(state.view === 'course-step') render(); };
     mr.start();
@@ -40740,9 +40861,10 @@ Object.assign(HANDLERS, {
         const b = document.querySelector('.cq-lbar i'); if(b) b.style.width = Math.round(100 * i / lines.length) + '%'; },
         ()=>{ if(courseUi.mk !== st) return; st.playing = false; a.audioDoneAt = Date.now(); save(); if(state.view==='course-step') render(); }); }
     if(sec === 'speaking'){ st.spStep = 0; st.spCard = 0; st.spAt = Date.now();
-      if(courseUi.mkRec && courseRecSupported()) navigator.mediaDevices.getUserMedia({audio:true}).then(stream=>{ if(courseUi.mk !== st){ stream.getTracks().forEach(t=>t.stop()); return; }
-        const chunks = [], mr = new MediaRecorder(stream); st.rec = mr; mr.ondataavailable = e=>{ if(e.data && e.data.size) chunks.push(e.data); };
-        mr.onstop = ()=>{ try{ stream.getTracks().forEach(t=>t.stop()); }catch(e){} if(chunks.length){ st.clip = URL.createObjectURL(new Blob(chunks, {type:mr.mimeType || 'audio/webm'})); if(courseUi.mk === st) render(); } }; mr.start(); }).catch(()=>{ courseUi.mkRec = false; });
+      if(courseUi.mkRec && courseRecSupported()) navigator.mediaDevices.getUserMedia({audio:true}).then(stream=>{ if(courseUi.mk !== st || st.a.submittedAt || st.rec){ stream.getTracks().forEach(t=>t.stop()); return; }
+        let mr = null; try{ mr = new MediaRecorder(stream); }catch(err){ stream.getTracks().forEach(t=>t.stop()); throw err; }
+        const chunks = []; st.rec = mr; mr.ondataavailable = e=>{ if(e.data && e.data.size) chunks.push(e.data); };
+        mr.onstop = ()=>{ try{ stream.getTracks().forEach(t=>t.stop()); }catch(e){} if(chunks.length){ st.clip = URL.createObjectURL(new Blob(chunks, {type:mr.mimeType || 'audio/webm'})); if(courseUi.mk === st) render(); } }; mr.start(); }).catch(()=>{ courseUi.mkRec = false; if(courseUi.mk === st && state.view === 'course-step') render(); });
       setTimeout(courseMockSpSay, 300); }
     render(); window.scrollTo(0, 0);
   },

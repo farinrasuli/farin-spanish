@@ -54,10 +54,17 @@ window.THEATRE_SKINS = {
   order:{card:'art/posters/card-order.webp', focus:'80%',
     palette:{sky:'#ecf6f7', sky2:'#c9e3e6', glow:'#fff8ec', ground:'#7dcce5', ink:'#1d2f36', accent:'#c43428', accentInk:'#ffffff'},
     backdrop:{src:null, position:'78% 50%', blur:30, veil:.54}, props:[],
-    gw:{bg:'#fdf3e4', surface:'#e9c48f', paper:'#fffaf0', ink:'#14332e', hue:'var(--cat-gram)', accent:'#d8343f', cta:'#d8343f', ctaInk:'#ffffff'},
-    world:{mood:'warm', moodVars:{'--m-gx':'18%', '--m-gy':'30%', '--m-vig':'.10'}, plate:{src:'games/worlds/order/art/order-counter.webp', ready:true}, front:{top:'69%'}, bed:{freq:520, q:.6, vol:.03, lfo:.11}, layers:[
+    // the cozy pass (2026-11-25): the panel is the honey-wood counter, brown ink, a terracotta Serve; the lamp's warm glow and a deeper
+    // warm tint; the café's own sounds (a door-bell ding as a customer walks in, cups clinking and a pour now and then, a gull outside);
+    // games/worlds/order/world.css styles the order pad, the balloon, the tray, the shelf and the chat. The plate stays until the
+    // Higgsfield café art lands (Claude/specs/order-cozy-2026-11-25/ART-BRIEF.md): then plate.src, front.top, layers and the glow change here.
+    gw:{bg:'#fdf3e4', surface:'#d9a868', paper:'#fffaf0', ink:'#3b2616', hue:'var(--cat-gram)', accent:'#c4472f', cta:'#c4472f', ctaInk:'#ffffff'},
+    world:{mood:'warm', moodVars:{'--m-gx':'50%', '--m-gy':'12%', '--m-gr':'62%', '--m-ga':'.45', '--m-ta':'.14', '--m-vig':'.16'}, plate:{src:'games/worlds/order/art/order-counter.webp', ready:true}, front:{top:'69%'}, bed:{freq:420, q:.5, vol:.03, lfo:.09},
+      spots:['cafe-clink', 'gull', 'cafe-pour'], layers:[
       {src:'games/worlds/order/art/order-tipjar.webp', cls:'gw-tipjar', box:[5, 64, 9], ready:true},
-      {src:'games/worlds/order/art/order-bell.webp', cls:'gw-bell', box:[19, 65, 7], ready:true}], text:[], sfx:{}, css:null}},
+      {src:'games/worlds/order/art/order-bell.webp', cls:'gw-bell', box:[19, 65, 7], ready:true}], text:[],
+      sfx:{'door-ding':['games/cozy-chores/sfx/ding-1.mp3', 'games/cozy-chores/sfx/ding-2.mp3'], 'cafe-clink':['games/cozy-chores/sfx/clink-1.mp3', 'games/cozy-chores/sfx/clink-2.mp3', 'games/cozy-chores/sfx/clink-3.mp3'],
+        'cafe-pour':['games/cozy-chores/sfx/pour-liquid-1.mp3', 'games/cozy-chores/sfx/pour-liquid-2.mp3']}, css:'games/worlds/order/world.css?v=1'}},
   // Passport Desk: the booth at the end of the pier, sky, sea teal, the red-striped booth
   desk:{card:'art/posters/card-desk.webp', focus:'64%',
     palette:{sky:'#e9f8fc', sky2:'#b9e6f2', glow:'#ffffff', ground:'#5fc3cc', ink:'#163450', accent:'#c23a32', accentInk:'#ffffff'},

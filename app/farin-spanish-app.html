@@ -458,6 +458,15 @@
   .order-board .game-chip.out{text-decoration:line-through; text-decoration-thickness:2px; text-decoration-color:var(--clay-coral); opacity:.6;}
   .order-tray{margin-top:14px; min-height:120px; box-sizing:border-box; padding:10px; border-radius:18px; background:var(--bg-sunken); box-shadow:var(--clay-inset); display:flex; flex-direction:column; justify-content:center; gap:8px;}
   .order-tray-empty{margin:0; text-align:center; font-size:13.5px; font-weight:700; color:var(--ink-faint);}
+  /* Order Up! customer chats (2026-11-25): the customer's line in the bubble, three reply pills; the shelf and Serve wait */
+  .order-chat{margin-top:12px; display:flex; flex-direction:column; gap:8px;}
+  .order-chat-k{font-size:12px; font-weight:900; letter-spacing:.04em; text-transform:uppercase; color:var(--ink-soft); text-align:center;}
+  .order-reply{display:block; width:100%; min-height:44px; box-sizing:border-box; padding:10px 14px; border-radius:16px; border:2px solid var(--border); background:var(--bg-elevated); color:var(--ink); font-family:inherit; font-size:15px; font-weight:800; line-height:1.3; text-align:start; cursor:pointer; box-shadow:var(--clay-shadow-soft);}
+  .order-reply.no{opacity:.45; text-decoration:line-through; text-decoration-thickness:2px; text-decoration-color:var(--clay-coral); box-shadow:none; cursor:default;}
+  .order-reply.yes{border-color:var(--success); background:var(--success-soft);}
+  .order-reply:disabled:not(.no):not(.yes){opacity:.45; box-shadow:none;}
+  .order-chat-huh{display:block; margin-top:6px; font-size:13.5px; font-style:italic; opacity:.85;}
+  .order-shelf.order-wait{opacity:.45; pointer-events:none; filter:saturate(.7);}
   .order-line{display:flex; align-items:center; gap:8px; min-height:44px; box-sizing:border-box; padding:4px 4px 4px 10px; border-radius:14px; border:2px solid transparent; background:var(--bg-elevated); box-shadow:var(--clay-shadow-soft); font-weight:800; font-size:15px; color:var(--ink); cursor:pointer; text-align:start;}
   .order-line.sel{border-color:var(--accent);}
   .order-line-art{flex:0 0 auto; font-size:22px; line-height:1;}
@@ -22677,10 +22686,72 @@ function buildOrderRound(refId){
     Object.assign(reg, {usual:true, of, orig:first.text, text:orderUsualLine(), serves:0, misses:0, ticket:false, full:false, fb:null, perfect:false, done:false});
     customers[ORDER_CUSTOMERS - 1] = reg;
   }
+  orderPickChats(customers, level, rnd);   // after everything above, so a seeded round keeps its customers and shelves
   return {level, customers, index:0, tray:[], sel:-1, right:0, tickets:0, combo:0, noVoice:ttsVoiceMissing(), greeted:false, finished:false, startedAt:Date.now(), finishedAt:null};
 }
 // the regular's one line (natural clips in both voices: Claude/specs/games-own-worlds-2026-11-14/render/tools/voice-gw.mjs, order-usual)
 function orderUsualLine(){ return orderLang() === 'es' ? '¡Lo de siempre, por favor!' : 'The usual, please!'; }
+/* ---- Customer chats (Farin 2026-11-25: "approximately 2 out of every 5 customers ... should briefly chat with the player" before they
+   order: something about themselves, a small story from their day, the weather, an everyday observation). Content: farin-lxd,
+   Claude/specs/order-cozy-2026-11-25/chats.json (8 per level, en + es; any regular may say any line, so nothing is gendered).
+   The customer says a line; the learner picks the reply that fits (3 choices, one fits). A reply that doesn't fit gets a kind "huh?",
+   the face says oh and that reply greys out; the learner picks again. The one that fits gets a warm face and the customer's short
+   answer, then they order as before. No score and no stars: the order's "perfect" is untouched. Chat lines are tap-to-hear (natural
+   clips in the customer's voice, Claude/specs/order-cozy-2026-11-25/voice-chat.mjs), read out only with Read lines aloud on.
+   Never the first customer (Sam is handing over), never the regular coming back for "the usual". Seeded with the round. ---- */
+const ORDER_CHATS = /*CHATS*/{"A1":[{"id":"A1-1","say":{"en":"I’ve got a new dog. He’s very small.","es":"Tengo un perro nuevo. Es muy pequeño."},"replies":[{"en":"Aw, how sweet!","es":"¡Ay, qué bonito!","ok":true},{"en":"Oh no, I’m sorry.","es":"Vaya, lo siento mucho."},{"en":"It’s ten o’clock.","es":"Son las diez."}],"back":{"en":"Thank you! He sleeps all day.","es":"¡Gracias! Duerme todo el día."}},{"id":"A1-2","say":{"en":"I live near the lighthouse.","es":"Vivo cerca del faro."},"replies":[{"en":"Yes, I’m fine, thanks.","es":"Sí, bien, gracias."},{"en":"Lovely! Can you see the sea?","es":"¡Qué bien! ¿Se ve el mar?","ok":true},{"en":"Oh, are you on holiday?","es":"Ah, ¿está de vacaciones?"}],"back":{"en":"Yes! I see it every morning.","es":"¡Sí! Lo veo todas las mañanas."}},{"id":"A1-3","say":{"en":"It’s my birthday today!","es":"¡Hoy es mi cumpleaños!"},"replies":[{"en":"Oh no, what a shame.","es":"Vaya, qué pena."},{"en":"Nice to meet you.","es":"Mucho gusto."},{"en":"Happy birthday!","es":"¡Muchas felicidades!","ok":true}],"back":{"en":"Thanks! And the sun is out, too!","es":"¡Gracias! ¡Y encima hace sol!"}},{"id":"A1-4","say":{"en":"I’m so sleepy this morning!","es":"¡Qué sueño tengo esta mañana!"},"replies":[{"en":"Oh no! A bad night?","es":"¡Vaya! ¿Mala noche?","ok":true},{"en":"Great! You’re full of energy!","es":"¡Genial! ¡Qué energía tiene!"},{"en":"No, we close at six.","es":"No, cerramos a las seis."}],"back":{"en":"Yes! The seagulls are very noisy.","es":"¡Sí! Las gaviotas hacen mucho ruido."}},{"id":"A1-5","say":{"en":"It’s very windy today!","es":"¡Hoy hace mucho viento!"},"replies":[{"en":"Have a nice weekend!","es":"¡Buen fin de semana!"},{"en":"Yes! Look at the boats!","es":"¡Sí! Mire los barcos.","ok":true},{"en":"Yes, there’s no wind today.","es":"Sí, hoy no hay viento."}],"back":{"en":"And my hair is a mess!","es":"¡Y mi pelo, qué desastre!"}},{"id":"A1-6","say":{"en":"It’s cold, but the sun is lovely.","es":"Hace frío, pero hay un sol precioso."},"replies":[{"en":"Yes, it’s raining a lot.","es":"Sí, llueve muchísimo."},{"en":"Good morning! Table for two?","es":"¡Buenos días! ¿Mesa para dos?"},{"en":"Yes, a beautiful day!","es":"Sí, ¡qué día más bueno!","ok":true}],"back":{"en":"Perfect for a walk by the sea.","es":"Perfecto para pasear junto al mar."}},{"id":"A1-7","say":{"en":"Look! There’s a big ship in the harbour.","es":"¡Mire! Hay un barco enorme en el puerto."},"replies":[{"en":"Wow, it’s really big!","es":"¡Uy, qué grande es!","ok":true},{"en":"Yes, it’s very small.","es":"Sí, es muy pequeño."},{"en":"Here’s your change.","es":"Aquí tiene la vuelta."}],"back":{"en":"I think it’s from Norway!","es":"¡Creo que es de Noruega!"}},{"id":"A1-8","say":{"en":"I really like the music here.","es":"Me gusta mucho esta música."},"replies":[{"en":"Yes, we have Wi-Fi.","es":"Sí, tenemos wifi."},{"en":"Thank you! Me too.","es":"¡Gracias! A mí también.","ok":true},{"en":"Sorry! I’ll turn it off.","es":"¡Perdón! Ahora la apago."}],"back":{"en":"It’s so relaxing. Great choice!","es":"Es muy relajante. ¡Buena elección!"}}],"A2":[{"id":"A2-1","say":{"en":"I’m learning to swim this year. It’s really hard!","es":"Este año estoy aprendiendo a nadar. ¡Cuesta muchísimo!"},"replies":[{"en":"So it’s easy for you, then.","es":"Ah, entonces le resulta fácil."},{"en":"Sorry, I can’t teach you.","es":"Lo siento, no puedo enseñarle."},{"en":"Good for you! Don’t give up!","es":"¡Muy bien! ¡No lo deje!","ok":true}],"back":{"en":"Thanks! In summer, I’m going in the sea!","es":"¡Gracias! En verano me tiro al mar."}},{"id":"A2-2","say":{"en":"I moved here from a big city last month.","es":"Me mudé aquí el mes pasado. Vengo de una ciudad grande."},"replies":[{"en":"Nice! Do you like it here?","es":"¡Ah! ¿Y le gusta el pueblo?","ok":true},{"en":"So you were born here?","es":"¿Así que nació aquí?"},{"en":"The station’s just over there.","es":"La estación está ahí mismo."}],"back":{"en":"Yes! It’s quieter, and people say hello.","es":"¡Sí! Es más tranquilo y la gente saluda."}},{"id":"A2-3","say":{"en":"I missed my bus, so I walked here. It was lovely!","es":"He perdido el autobús y he venido andando. ¡Ha sido precioso!"},"replies":[{"en":"Buses come every ten minutes.","es":"Los autobuses pasan cada diez minutos."},{"en":"Well, a happy accident, then!","es":"¡Pues mire, mejor así!","ok":true},{"en":"Oh no, what a horrible walk!","es":"¡Uf, qué paseo tan horrible!"}],"back":{"en":"Yes! I saw two seals on the rocks.","es":"¡Sí! He visto dos focas en las rocas."}},{"id":"A2-4","say":{"en":"I went fishing this morning and caught nothing!","es":"Esta mañana he ido a pescar y ¡ni un pez!"},"replies":[{"en":"Wow! How many did you catch?","es":"¡Anda! ¿Y cuántos ha pescado?"},{"en":"It’s under the counter.","es":"Está debajo del mostrador."},{"en":"Oh no! Better luck tomorrow!","es":"¡Ay! Mañana tendrá más suerte.","ok":true}],"back":{"en":"Next time I’m going to stay in bed!","es":"¡La próxima vez me quedo en la cama!"}},{"id":"A2-5","say":{"en":"It rained all night. Do you think it’s going to stop?","es":"Ha llovido toda la noche. ¿Cree que va a parar?"},"replies":[{"en":"They say it’ll be sunny later.","es":"Dicen que luego sale el sol.","ok":true},{"en":"No, it never rains here.","es":"No, aquí nunca llueve."},{"en":"I slept very well, thanks.","es":"Yo he dormido muy bien, gracias."}],"back":{"en":"Great! I’m going to walk on the beach.","es":"¡Bien! Así doy un paseo por la playa."}},{"id":"A2-6","say":{"en":"I forgot my umbrella, and look at the rain now!","es":"Me he dejado el paraguas en casa, ¡y mire cómo llueve!"},"replies":[{"en":"Thank you, that’s very kind.","es":"Gracias, es usted muy amable."},{"en":"Oh dear! Take ours, if you like.","es":"¡Uy! Llévese el nuestro, si quiere.","ok":true},{"en":"Lucky you! It’s a dry day.","es":"¡Qué suerte! Hoy no llueve."}],"back":{"en":"Really? Thank you, I’ll bring it back!","es":"¿De verdad? ¡Gracias, mañana se lo devuelvo!"}},{"id":"A2-7","say":{"en":"They’re going to open a new bookshop on the corner.","es":"Van a abrir una librería nueva en la esquina."},"replies":[{"en":"Oh, what a shame it closed.","es":"¡Qué pena que haya cerrado!"},{"en":"Sorry, we don’t sell books.","es":"Lo siento, aquí no vendemos libros."},{"en":"Really? That’s great news!","es":"¿En serio? ¡Qué buena noticia!","ok":true}],"back":{"en":"Yes! I’m going to be there every day.","es":"¡Sí! Voy a ir todos los días."}},{"id":"A2-8","say":{"en":"You changed the chairs! They’re really comfortable.","es":"¡Han cambiado las sillas! Son muy cómodas."},"replies":[{"en":"Thanks! We got them last week.","es":"¡Gracias! Las pusimos la semana pasada.","ok":true},{"en":"Sorry! Are they too hard?","es":"Perdone, ¿son muy duras?"},{"en":"Yes, the toilets are upstairs.","es":"Sí, los servicios están arriba."}],"back":{"en":"They’re perfect. I’m going to stay all morning!","es":"Son perfectas. ¡Me quedo toda la mañana!"}}],"B1":[{"id":"B1-1","say":{"en":"I’ve just started learning the guitar, and my neighbours aren’t very happy about it.","es":"He empezado a tocar la guitarra y a los vecinos no les hace ninguna gracia."},"replies":[{"en":"We apologise for any inconvenience caused.","es":"Disculpe las molestias ocasionadas."},{"en":"Ha! They’ll love it once you get better.","es":"¡Ja! Ya les gustará cuando toque mejor.","ok":true},{"en":"How nice that they love listening to you!","es":"¡Qué bien que les guste tanto escucharle!"}],"back":{"en":"I hope so! For now I only play when they’re out.","es":"¡Ojalá! De momento solo toco cuando salen."}},{"id":"B1-2","say":{"en":"I’ve lived here for ten years and I still get lost in the old town.","es":"Llevo diez años viviendo aquí y todavía me pierdo en el casco antiguo."},"replies":[{"en":"So you know every street by now, then.","es":"Entonces ya se sabe todas las calles, ¿no?"},{"en":"Go straight on and turn left at the church.","es":"Siga recto y gire a la izquierda en la iglesia."},{"en":"Me too! All those little streets look the same.","es":"¡A mí también me pasa! Esas callejuelas son todas iguales.","ok":true}],"back":{"en":"Yesterday I walked in circles for half an hour!","es":"¡Ayer estuve media hora dando vueltas!"}},{"id":"B1-3","say":{"en":"My train was cancelled, so I spent the morning exploring the harbour instead.","es":"Me han cancelado el tren, así que he pasado la mañana recorriendo el puerto."},"replies":[{"en":"Not a bad way to spend a delay!","es":"¡Pues no es mala forma de esperar!","ok":true},{"en":"Great, so your train was on time!","es":"¡Genial, así que su tren ha llegado puntual!"},{"en":"I’m afraid I can’t change your ticket.","es":"Lo siento, yo no puedo cambiarle el billete."}],"back":{"en":"And I found a lovely little museum by the pier.","es":"Y he descubierto un museo pequeñito junto al muelle."}},{"id":"B1-4","say":{"en":"A dog on the beach grabbed my glove and ran off with it.","es":"Un perro me ha quitado un guante en la playa y ha salido corriendo."},"replies":[{"en":"Sorry, no dogs allowed inside.","es":"Perdone, pero aquí no se admiten perros."},{"en":"No! Did you get it back in the end?","es":"¡No! ¿Y al final lo ha recuperado?","ok":true},{"en":"What a lovely present from the dog!","es":"¡Qué detalle por parte del perro!"}],"back":{"en":"Eventually! After a ten-minute chase along the sand.","es":"¡Al final sí! Tras diez minutos persiguiéndolo por la arena."}},{"id":"B1-5","say":{"en":"The fog was so thick this morning that I couldn’t see the boats.","es":"Esta mañana había tanta niebla que no se veían ni los barcos."},"replies":[{"en":"Yes, such a clear, bright morning!","es":"Sí, ¡qué mañana tan clara y luminosa!"},{"en":"The boats leave every hour from the pier.","es":"Los barcos salen cada hora desde el muelle."},{"en":"Yes, but it’s clearing up nicely now.","es":"Sí, pero ya se está despejando.","ok":true}],"back":{"en":"Good. I’ve got to catch the ferry later.","es":"Mejor, porque luego tengo que coger el ferry."}},{"id":"B1-6","say":{"en":"Apparently it’s going to snow this weekend, and it almost never snows here.","es":"Dicen que va a nevar este fin de semana, y aquí casi nunca nieva."},"replies":[{"en":"No way! I’d love to see the harbour under snow.","es":"¡No me diga! ¡Qué ganas de ver el puerto nevado!","ok":true},{"en":"Yes, it snows here every winter.","es":"Sí, aquí nieva todos los inviernos."},{"en":"Thank you for sharing this information with me.","es":"Le agradezco que comparta esa información conmigo."}],"back":{"en":"Me too! I’m going to take loads of photos.","es":"¡Y yo! Pienso hacer un montón de fotos."}},{"id":"B1-7","say":{"en":"Have you noticed? The fishing boats are back earlier than usual.","es":"¿Se ha fijado? Hoy los pesqueros han vuelto antes de lo normal."},"replies":[{"en":"No, I’ve never been on a boat.","es":"No, nunca he subido a un barco."},{"en":"Yes, maybe the sea’s too rough out there.","es":"Sí, será que el mar está muy revuelto.","ok":true},{"en":"Yes, they’re much later than normal.","es":"Sí, hoy vuelven mucho más tarde."}],"back":{"en":"You’re probably right. The wind’s picking up.","es":"Puede ser. Se está levantando viento."}},{"id":"B1-8","say":{"en":"Someone’s left a jigsaw on the corner table, and it’s nearly finished!","es":"Alguien ha dejado un puzle en la mesa del rincón, ¡y está casi terminado!"},"replies":[{"en":"Oh, has nobody started it yet?","es":"¿Todavía no lo ha empezado nadie?"},{"en":"That table’s reserved for later, sorry.","es":"Esa mesa la tenemos reservada para luego."},{"en":"Go on, feel free to add a few pieces.","es":"¡Pues anímese y ponga alguna pieza!","ok":true}],"back":{"en":"Maybe just one. It’s very satisfying!","es":"Bueno, solo una. ¡Es que engancha!"}}],"B2":[{"id":"B2-1","say":{"en":"I’ve finally sold my car and started cycling everywhere, though my legs haven’t quite forgiven me.","es":"He vendido el coche y voy en bici a todas partes; mis piernas aún no me lo perdonan."},"replies":[{"en":"Give it a month — you’ll fly up those hills.","es":"En un mes subirá las cuestas como si nada.","ok":true},{"en":"Lucky you, it must feel effortless already.","es":"Qué suerte, ya le debe de resultar facilísimo."},{"en":"There’s a car park just behind the market.","es":"Hay un aparcamiento justo detrás del mercado."}],"back":{"en":"Let’s hope so. This morning I pushed the bike up the last hill.","es":"Eso espero. Esta mañana he subido la última cuesta empujando la bici."}},{"id":"B2-2","say":{"en":"I used to hate mornings, but since moving here I go for a walk every day at sunrise.","es":"Antes odiaba madrugar, pero desde que vivo aquí salgo a pasear cada día al amanecer."},"replies":[{"en":"Sunrise is at seven forty tomorrow, I think.","es":"Mañana amanece a las ocho menos veinte, creo."},{"en":"Sunrise over the harbour is worth getting up for.","es":"El amanecer en el puerto bien merece el madrugón.","ok":true},{"en":"So you still sleep until noon, then?","es":"¿Así que sigue durmiendo hasta mediodía?"}],"back":{"en":"Exactly. Today the whole sky turned pink.","es":"Ya ve. Hoy el cielo entero se ha puesto rosa."}},{"id":"B2-3","say":{"en":"I spent an hour looking for my keys this morning — they were in my pocket all along.","es":"Me he pasado una hora buscando las llaves esta mañana y las tenía en el bolsillo."},"replies":[{"en":"What a relief you found them so quickly!","es":"¡Menos mal que las ha encontrado tan rápido!"},{"en":"We’ve got a lost property box behind the counter.","es":"Tenemos una caja de objetos perdidos detrás de la barra."},{"en":"Oh, I’ve done that! It’s maddening, isn’t it?","es":"¡Uy, a mí me ha pasado! Es desesperante, ¿verdad?","ok":true}],"back":{"en":"And then I was late anyway, of course.","es":"Y encima, claro, he llegado tarde."}},{"id":"B2-4","say":{"en":"On my way here, a tourist asked me where the lighthouse was, and I pointed the wrong way.","es":"Viniendo hacia aquí, un turista me ha preguntado por el faro y lo he mandado en dirección contraria."},"replies":[{"en":"Ah well, they’ll get a longer tour of town.","es":"Bueno, así conocerá un poco más el pueblo.","ok":true},{"en":"That was kind of you to walk them there.","es":"¡Qué amable por su parte acompañarlo hasta allí!"},{"en":"The lighthouse is closed on Mondays, I’m afraid.","es":"Me temo que el faro cierra los lunes."}],"back":{"en":"I feel terrible. I’m hoping they’ll spot the signs.","es":"Me siento fatal. Espero que vea los carteles."}},{"id":"B2-5","say":{"en":"They said it would be sunny all day, and I’ve just been caught in a hailstorm.","es":"Dijeron que haría sol todo el día, y me acaba de pillar una granizada."},"replies":[{"en":"Technically, hail is just frozen rain.","es":"Técnicamente, el granizo es lluvia congelada."},{"en":"Typical! You can never trust the forecast here.","es":"¡Típico! Aquí no hay quien se fíe de la previsión.","ok":true},{"en":"Good thing you missed the hail, then!","es":"¡Qué bien que se haya librado del granizo!"}],"back":{"en":"It lasted two minutes, but it felt like an hour.","es":"Ha durado dos minutos, pero se me ha hecho eterno."}},{"id":"B2-6","say":{"en":"Such good weather for this time of year! People are even jumping off the pier.","es":"¡Qué buen tiempo para esta época! Hasta hay gente que se tira al mar desde el muelle."},"replies":[{"en":"Yes, shame it’s so cold and grey.","es":"Sí, qué pena que haga tanto frío."},{"en":"No, we don’t rent out swimming costumes.","es":"No, aquí no alquilamos bañadores."},{"en":"I saw them! Brave, though — the sea’s freezing.","es":"¡Los he visto! Qué valor, con el mar tan frío.","ok":true}],"back":{"en":"Rather them than me. I’ll stay on dry land.","es":"¡Allá ellos! Yo me quedo en tierra firme."}},{"id":"B2-7","say":{"en":"Have you seen the new mural on the harbour wall? Half the town loves it, half hates it.","es":"¿Ha visto el mural nuevo del puerto? A medio pueblo le encanta y el otro medio lo odia."},"replies":[{"en":"I have! I think it brightens the place up.","es":"¡Sí! A mí me gusta: le da vida al puerto.","ok":true},{"en":"Yes, it’s nice that everyone agrees on it.","es":"Sí, qué bien que a todo el mundo le guste."},{"en":"I couldn’t care less, to be honest.","es":"Sinceramente, me da completamente igual."}],"back":{"en":"Same here. Anything’s better than grey concrete.","es":"Lo mismo digo. Mejor eso que el cemento gris."}},{"id":"B2-8","say":{"en":"Once the tourists leave, you could hear a pin drop on the seafront.","es":"Cuando se van los turistas, en el paseo marítimo no se oye ni una mosca."},"replies":[{"en":"The tourist office is open until five.","es":"La oficina de turismo abre hasta las cinco."},{"en":"I know. Honestly, I prefer it like this.","es":"Ya. La verdad es que yo lo prefiero así.","ok":true},{"en":"Yes, it’s so noisy and crowded these days.","es":"Sí, últimamente hay muchísimo ruido y gente."}],"back":{"en":"Me too. It finally feels like ours again.","es":"Y yo. Por fin el pueblo vuelve a ser nuestro."}}],"C1":[{"id":"C1-1","say":{"en":"I’ve finally taken up painting — I’m no Picasso, but it’s done wonders for my peace of mind.","es":"Por fin me he puesto a pintar; no soy Picasso, ni mucho menos, pero me da una paz increíble."},"replies":[{"en":"Shame it’s been stressing you out so much.","es":"Qué pena que le esté causando tanto estrés."},{"en":"The art gallery’s just round the corner, if that helps.","es":"La galería de arte está a la vuelta de la esquina."},{"en":"Who cares about Picasso? What matters is it works for you.","es":"¡Qué más da Picasso! Lo importante es que le siente bien.","ok":true}],"back":{"en":"That’s what I say. My seascapes are awful, but I love them.","es":"Eso digo yo. Mis cuadros del mar son malísimos, pero me encantan."}},{"id":"C1-2","say":{"en":"I’m a creature of habit, so this is my third visit this week — you’ll be sick of me soon.","es":"Soy muy de costumbres: es la tercera vez que vengo esta semana. ¡Me va a coger manía!"},"replies":[{"en":"Not a chance — regulars are the best part of the job.","es":"Ni hablar, la clientela de siempre es lo mejor del trabajo.","ok":true},{"en":"Oh, is this your first time here? Welcome!","es":"Ah, ¿es la primera vez que viene? ¡Pase, pase!"},{"en":"We greatly appreciate your continued custom.","es":"Agradecemos enormemente su fidelidad como cliente."}],"back":{"en":"Good, because I’ve no intention of changing my ways.","es":"Menos mal, porque no tengo ninguna intención de cambiar."}},{"id":"C1-3","say":{"en":"My morning’s been one thing after another: the ferry was late, my phone died, then I stepped in a huge puddle.","es":"¡Vaya mañanita llevo! El ferry con retraso, el móvil sin batería y, para rematar, he pisado un charco enorme."},"replies":[{"en":"No, I don’t think it’s going to rain.","es":"No, no creo que vaya a llover."},{"en":"Oof. Well, things can only get better from here.","es":"Uf. Bueno, a partir de aquí, todo irá a mejor.","ok":true},{"en":"Sounds like everything’s going your way today!","es":"¡Parece que hoy todo le sale de maravilla!"}],"back":{"en":"Here’s hoping. This is the best part of my day so far.","es":"Crucemos los dedos. De momento, esto es lo mejor del día."}},{"id":"C1-4","say":{"en":"I bumped into an old friend at the market — we hadn’t seen each other in ages, and we talked for hours.","es":"Me he encontrado con un viejo amigo en el mercado; hacía siglos que no nos veíamos y hemos estado horas hablando."},"replies":[{"en":"What a shame you had nothing to say to each other.","es":"Qué pena que no tuvieran nada que contarse."},{"en":"The market’s on Wednesdays and Saturdays, by the way.","es":"Por cierto, hay mercado los miércoles y los sábados."},{"en":"Lovely! It’s like no time has passed, isn’t it?","es":"¡Qué bonito! Como si no hubiera pasado el tiempo.","ok":true}],"back":{"en":"It is. We’ve sworn not to leave it so long next time.","es":"Así es. Nos hemos prometido no dejar pasar tanto tiempo."}},{"id":"C1-5","say":{"en":"Talk about four seasons in one day — I’ve been sunburnt, soaked and nearly blown over, and it’s not even noon.","es":"Hoy ha hecho de todo: un sol de justicia, un chaparrón y un viento que casi me tumba, ¡y no es ni mediodía!"},"replies":[{"en":"That’s the coast for you — never a dull moment.","es":"Cosas de la costa: aquí no hay dos horas iguales.","ok":true},{"en":"Lovely and settled today, isn’t it?","es":"Hoy hace un tiempo muy estable, ¿verdad?"},{"en":"Well, you should have checked the forecast.","es":"Pues haber mirado la previsión del tiempo."}],"back":{"en":"True. These days I carry sunglasses and a raincoat everywhere.","es":"Ya. Ahora salgo siempre con gafas de sol y chubasquero."}},{"id":"C1-6","say":{"en":"There’s a storm brewing out at sea — you can almost smell it, can’t you?","es":"Se masca la tormenta mar adentro; casi se puede oler, ¿no cree?"},"replies":[{"en":"A smell? Sorry, we’ve just mopped the floor.","es":"¿Huele a algo? Perdone, acabamos de fregar el suelo."},{"en":"Definitely. And the gulls have all gone quiet.","es":"Ya lo creo. Y las gaviotas se han callado todas.","ok":true},{"en":"Not a cloud in sight — perfect sailing weather!","es":"Ni una nube: ¡día perfecto para navegar!"}],"back":{"en":"I’m glad I’m in here and not out there.","es":"Me alegro de estar aquí dentro y no ahí fuera."}},{"id":"C1-7","say":{"en":"I see they’ve finally fixed the church clock — it’s only been stuck at ten past four for a year.","es":"Veo que por fin han arreglado el reloj de la iglesia; solo llevaba un año parado en las cuatro y diez."},"replies":[{"en":"Yes, it’s been working perfectly all year.","es":"Sí, ha funcionado perfectamente todo el año."},{"en":"It’s twenty to eleven, if you need the time.","es":"Son las once menos veinte, por si quiere saberlo."},{"en":"At last! I’d got so used to it being wrong.","es":"¡Por fin! Ya me había acostumbrado a verlo parado.","ok":true}],"back":{"en":"So had I. Now I’ve no excuse for being late.","es":"Yo también. Ahora ya no tengo excusa para llegar tarde."}},{"id":"C1-8","say":{"en":"Funny how this is the one place in town where people still talk to strangers.","es":"Qué curioso que este sea el único sitio del pueblo donde la gente aún habla con desconocidos."},"replies":[{"en":"That’s the idea. Nobody’s a stranger here for long.","es":"De eso se trata: aquí nadie tarda en sentirse en casa.","ok":true},{"en":"True, people here keep themselves to themselves.","es":"Es verdad, aquí cada uno va a lo suyo."},{"en":"Strangers? I’d keep an eye on your bag, then.","es":"¿Desconocidos? Pues yo vigilaría bien sus cosas."}],"back":{"en":"I’ve noticed. It’s half the reason I keep coming back.","es":"Ya me he dado cuenta. Por eso vuelvo siempre."}}],"huh":{"en":["Sorry?","Hmm, not quite…","Er… what do you mean?","Oh! That’s not what I meant."],"es":["¿Perdón?","Mmm, no exactamente…","Eh… ¿cómo dice?","¡Uy! No me refería a eso."]}}/*/CHATS*/;
+const ORDER_CHAT_N = 2;
+function orderPickChats(customers, level, rnd){
+  const pool = crossShuffle((ORDER_CHATS[level] || []).map(c=>c.id), rnd);
+  const slots = crossShuffle(customers.map((c, i)=>i).filter(i=>i > 0 && !customers[i].usual), rnd).slice(0, ORDER_CHAT_N);
+  slots.forEach((i, k)=>{ if(pool[k]) customers[i].chat = {id:pool[k], ord:crossShuffle([0, 1, 2], rnd), tried:[], ok:false, oops:false, done:false}; });
+}
+function orderChatData(cust){
+  const id = cust && cust.chat && cust.chat.id, lv = id ? String(id).split('-')[0] : '';
+  return (id && ORDER_CHATS[lv] && ORDER_CHATS[lv].find(c=>c.id === id)) || null;
+}
+// still chatting: the shelf and Serve wait (a saved chat whose content is gone is skipped)
+function orderChatting(cust){ return !!(cust && cust.chat && !cust.chat.done && orderChatData(cust)); }
+// the line the bubble shows now: the customer's answer once a reply fits, else their opening line
+function orderChatLine(cust){
+  const d = orderChatData(cust), lang = orderLang(); if(!d) return '';
+  return cust.chat.ok ? (d.back[lang] || d.back.en) : (d.say[lang] || d.say.en);
+}
+function orderHuh(cust){ const l = (ORDER_CHATS.huh || {})[orderLang()] || ['Sorry?']; return l[((cust.chat && cust.chat.tried.length) || 1) % l.length]; }
+function orderChatHtml(cust){
+  const d = orderChatData(cust), ch = cust.chat, lang = orderLang();
+  const btns = ch.ord.map(i=>{
+    const r = d.replies[i]; if(!r) return '';
+    const no = ch.tried.indexOf(i) >= 0, yes = ch.ok && ch.pick === i, off = no || (ch.ok && !yes);
+    return `<button type="button" class="order-reply${no ? ' no' : ''}${yes ? ' yes' : ''}" data-action="order-chat-reply" data-quiet="1" data-i="${i}" dir="ltr"${off ? ' disabled aria-disabled="true"' : ''}>${esc(r[lang] || r.en)}</button>`;
+  }).join('');
+  return `<div class="order-chat" id="order-chat" role="group" aria-label="${esc(L('Your reply','Cevabın','جوابت','Tu respuesta'))}">
+    <div class="order-chat-k">${L('Chat first · your reply','Önce sohbet · cevabın','اول گپ · جوابت','Primero, charla · tu respuesta')}</div>${btns}</div>`;
+}
+function orderChatReply(round, cust, i){
+  const ch = cust.chat, d = orderChatData(cust), rep = d && d.replies[i];
+  if(!rep || ch.ok || ch.tried.indexOf(i) >= 0) return;
+  const idx = round.index;
+  if(!rep.ok){
+    ch.tried.push(i); ch.oops = true;
+    orderRefresh(['card']); save();
+    sfx('flip'); orderShake(document.querySelector('.order-reply[data-i="' + i + '"]'));
+    if(readAloud()) worldSpeak(orderHuh(cust), orderSex(round, cust) || 'f');
+    return;
+  }
+  ch.ok = true; ch.oops = false; ch.pick = i;
+  orderRefresh(['card']); save();
+  sfx('reveal'); buzz([8]);
+  const back = orderChatLine(cust), words = back.split(/\s+/).length;
+  const next = ()=>{ if(state.viewParams && state.viewParams.round === round && round.index === idx && !round.finished && orderChatting(cust)) orderChatDone(round, cust); };
+  if(readAloud()) worldSpeak(back, orderSex(round, cust) || 'f', ()=>setTimeout(next, 450)); else setTimeout(next, Math.max(2200, 900 + 260 * words));
+}
+// the chat is over: the customer orders (the order is the listening task, so it plays as for any customer)
+function orderChatDone(round, cust){
+  cust.chat.done = true; cust.chat.oops = false;
+  orderRefresh(); save();
+  orderSpeak(round, cust.text);
+}
 // Brave (SPEC 10): no "Show the ticket" for the regular; the order can still be replayed freely
 function orderTicketOff(cust){ return !!(cust && cust.usual && gameBrave('order')); }
 function orderCust(round){ return round.customers[round.index] || null; }
@@ -22740,7 +22811,8 @@ function orderMarkHtml(text, words){
 function orderBubbleHtml(round, cust){
   const shown = cust.ticket || cust.full || (round.noVoice && !cust.usual), said = cust.usual ? cust.orig : cust.text;
   let inner;
-  if(cust.fb && shown) inner = `<span dir="ltr">${orderMarkHtml(said, cust.fb.words)}</span><span class="order-fb" dir="ltr">${orderBoldHtml(cust.fb.frame)}</span>`;
+  if(orderChatting(cust)) inner = `<span dir="ltr" class="order-chat-line">${esc(orderChatLine(cust))}</span>${cust.chat.oops && !cust.chat.ok ? `<span class="order-chat-huh" dir="ltr">${esc(orderHuh(cust))}</span>` : ''}`;
+  else if(cust.fb && shown) inner = `<span dir="ltr">${orderMarkHtml(said, cust.fb.words)}</span><span class="order-fb" dir="ltr">${orderBoldHtml(cust.fb.frame)}</span>`;
   else if(cust.fb) inner = `<span dir="ltr">${orderBoldHtml(cust.fb.frame)}</span>`;
   else if(shown) inner = `<span dir="ltr">${esc(said)}</span>`;
   else if(cust.usual) inner = `<span dir="ltr">${esc(cust.text)}</span>`;
@@ -22761,9 +22833,18 @@ function orderTrayHtml(round){
   }).join('');
   return `<div class="order-tray" id="order-tray">${lines || `<div class="order-tray-empty">${L('Tap the shelf to build the order','Siparişi hazırlamak için rafa dokun','برای چیدن سفارش روی قفسه بزن','Toca la estantería para preparar el pedido')}</div>`}</div>`;
 }
-// World Kit (worlds SPEC 5, C6): in Order Up!'s world the customers are the town regulars (the Open House portraits, faces calm / warm /
-// oh), never the clay figures. Women and men by turns, each in their own voice (orderSex); the round's first line seeds who comes in. Out of the world: FE in that customer's goal outfit (Farin 2026-11-19: "no clay characters ... just this").
-const ORDER_TOWN = {f:['bell','okafor','ada','leyla','rosa','hana','gran'], m:['tom','ben','ollie','pike']};
+// World Kit (worlds SPEC 5, C6): in Order Up!'s world the customers are the town regulars, never the clay figures, each speaking to
+// match their own voice (women and men by turns, orderSex); the round's first line seeds who comes in. Out of the world: the café's cup.
+// Ada is not a customer (a child ordering coffees; Farin's realism rule).
+// FULL-BODY CAST (Farin 2026-11-25: "characters currently appear as floating heads ... complete, properly proportioned bodies"): the new
+// café art is made with Higgsfield in another chat (Claude/specs/order-cozy-2026-11-25/ART-BRIEF.md). When it lands, set ORDER_CAST to
+// {f:[names], m:[names]} (each name: games/worlds/order/art/cust-<name>-<calm|warm|oh>.webp, the whole figure, transparent; Sam:
+// cust-sam-warm.webp) and ORDER_SPOT to where people stand on the new plate (plate %, [x, y, w]): at the door (whole, smaller) and at the
+// counter (the plate's front layer, skins.js front.top, covers them below the counter top). Then customers walk in from the door to the
+// counter and Sam stands whole by the door. While it is null, the Open House portraits stand behind the counter as before.
+const ORDER_CAST = null;
+const ORDER_TOWN = ORDER_CAST || {f:['bell','okafor','leyla','rosa','hana','gran'], m:['tom','ben','ollie','pike']};
+const ORDER_SPOT = ORDER_CAST ? {door:[11, 30, 15], counter:[38, 25.5, 27]} : {counter:[57, 32.5, 37]};
 function orderWorldOn(){ return !!(window.Theatre && Theatre.world && Theatre.world() === 'order'); }
 // In the world each menu item and extra is its own clear-line render (games/worlds/order/art/item-<id>.webp, extra-<id>.webp; one render
 // each, 2026-11-15; hot chocolate, cookie, pizza slice and milk rendered in colour 2026-11-18, wired 2026-11-19).
@@ -22784,17 +22865,24 @@ function orderSex(round, cust){ return cust ? (orderSlot(round, cust) % 2 ? 'm' 
 function orderVoice(round, cust){ const s = orderSex(round, cust || orderCust(round)); return s ? {sex:s} : null; }
 function orderFaceSrc(round, cust){
   if(!orderWorldOn()) return farinSrc('item-coffee');   // out of the world: the café's cup (no character in games, 2026-11-20)
-  const n = orderSlot(round, cust), list = ORDER_TOWN[n % 2 ? 'm' : 'f'];
-  return 'games/cozy-chores/art/pt-' + list[Math.floor(n / 2) % list.length] + '-' + (cust.done ? 'warm' : (cust.fb ? 'oh' : 'calm')) + '.webp';
+  const n = orderSlot(round, cust), list = ORDER_TOWN[n % 2 ? 'm' : 'f'], who = list[Math.floor(n / 2) % list.length];
+  return ORDER_CAST ? 'games/worlds/order/art/cust-' + who + '-' + orderMood(cust) + '.webp' : 'games/cozy-chores/art/pt-' + who + '-' + orderMood(cust) + '.webp';
 }
-// the customer on the plate, behind the counter (plate coordinates; the picture is shown whole)
-function orderStageSync(round, cust){
-  try{ if(window.Theatre && Theatre.actor) Theatre.actor('order-cust', orderFaceSrc(round, cust), [57, 32.5, 37], 'gw-cust'); }catch(e){}
+// the face: warm once served or once the chat lands, oh after a wrong tray or a reply that doesn't fit, calm otherwise
+function orderMood(cust){
+  const ch = cust.chat;
+  if(cust.done) return 'warm';
+  if(ch && !ch.done) return ch.ok ? 'warm' : (ch.oops ? 'oh' : 'calm');
+  return cust.fb ? 'oh' : 'calm';
+}
+// the customer on the plate, behind the counter (plate coordinates; the picture is shown whole); at = 'door' while walking in
+function orderStageSync(round, cust, at){
+  try{ if(window.Theatre && Theatre.actor) Theatre.actor('order-cust', orderFaceSrc(round, cust), ORDER_SPOT[at || 'counter'], 'gw-cust'); }catch(e){}
   return '';
 }
 function orderCardHtml(round, cust){
-  const shown = cust.ticket || cust.full || (round.noVoice && !cust.usual) || orderTicketOff(cust);
-  return `<div class="game-card tight order-card" id="order-card">
+  const chat = orderChatting(cust), shown = chat || cust.ticket || cust.full || (round.noVoice && !cust.usual) || orderTicketOff(cust);
+  return `<div class="game-card tight order-card${chat ? ' order-chatting' : ''}" id="order-card">
     ${orderWorldOn() ? orderStageSync(round, cust) : ''}
     <div class="order-counter">
       ${orderWorldOn() ? '' : `<span class="order-cust-wrap"><img class="order-cust" id="order-cust" src="${orderFaceSrc(round, cust)}" alt=""><span class="order-star" id="order-star" aria-hidden="true"></span></span>`}
@@ -22804,7 +22892,7 @@ function orderCardHtml(round, cust){
       <button type="button" class="game-play small" data-action="order-play" data-quiet="1" aria-label="${esc(L('Listen again','Tekrar dinle','دوباره گوش کن','Escuchar otra vez'))}">${ICONS.soundOn}</button>
       ${shown ? '' : `<button type="button" class="btn btn-ghost btn-sm" data-action="order-ticket" data-quiet="1">${L('Show the ticket','Fişi göster','رسید را نشان بده','Ver el pedido')}</button>`}
     </div>
-    ${orderTrayHtml(round)}
+    ${chat ? orderChatHtml(cust) : orderTrayHtml(round)}
   </div>`;
 }
 function orderBoardHtml(round, cust){
@@ -22813,8 +22901,8 @@ function orderBoardHtml(round, cust){
   return `<div class="order-board" id="order-board" dir="ltr" role="list" aria-label="${esc(L('Menu board','Menü tahtası','تابلوی منو','Pizarra del menú'))}">${cust.board.map(id=>{ const it = orderItem(id), out = id === cust.soldOut; return `<span role="listitem" class="game-chip${out ? ' out' : ''}" title="${out ? esc(so) : ''}" aria-label="${esc(orderName(it, 1, lang) + (out ? ' – ' + so : ''))}">${orderArtHtml(it)} ${esc(orderName(it, 1, lang))}</span>`; }).join('')}</div>`;
 }
 function orderShelfHtml(round, cust){
-  const lang = orderLang(), hide = round.level !== 'A1' && round.level !== 'A2';
-  return `<div class="game-tiles order-shelf" id="order-shelf">${cust.shelf.map(t=>{
+  const lang = orderLang(), hide = round.level !== 'A1' && round.level !== 'A2', wait = orderChatting(cust);
+  return `<div class="game-tiles order-shelf${wait ? ' order-wait' : ''}" id="order-shelf"${wait ? ' aria-disabled="true"' : ''}>${cust.shelf.map(t=>{
     const isX = t.k === 'extra', o = isX ? orderExtra(t.id) : orderItem(t.id);
     if(!o) return '';
     const name = isX ? o[lang] : orderName(o, 1, lang);
@@ -22825,10 +22913,11 @@ function orderShelfHtml(round, cust){
 function orderStatusHtml(round){
   const n = Math.min(round.index + 1, ORDER_CUSTOMERS), c = round.combo || 0;
   const streak = '';   // no streak pill (Farin's no-scores rule, 2026-11-14)
-  return `<div class="game-status" id="order-status"><span class="game-status-text">${round.finished ? L('Closed for today','Bugünlük kapalı','امروز بسته است','Cerrado por hoy') : gameProgressHtml(round.index, ORDER_CUSTOMERS, L(`Customer ${n} of ${ORDER_CUSTOMERS}`, `Müşteri ${n} / ${ORDER_CUSTOMERS}`, `مشتری ${n} از ${ORDER_CUSTOMERS}`, `Cliente ${n} de ${ORDER_CUSTOMERS}`))}</span>${streak}</div>`;
+  return `<div class="game-status" id="order-status"><span class="game-status-text">${round.finished ? (orderWorldOn() ? '' : L('Closed for today','Bugünlük kapalı','امروز بسته است','Cerrado por hoy')) : gameProgressHtml(round.index, ORDER_CUSTOMERS, L(`Customer ${n} of ${ORDER_CUSTOMERS}`, `Müşteri ${n} / ${ORDER_CUSTOMERS}`, `مشتری ${n} از ${ORDER_CUSTOMERS}`, `Cliente ${n} de ${ORDER_CUSTOMERS}`))}</span>${streak}</div>`;
 }
 function orderCtaHtml(round){
-  return `<button class="btn btn-primary game-cta" id="order-cta" data-action="order-serve"${round.tray.length ? '' : ' disabled'}>${L('Serve','Servis et','سرو کن','Servir')}</button>`;
+  const chat = orderChatting(orderCust(round));   // while a customer chats there is nothing to serve: the bar steps aside so it never covers the replies
+  return `<button class="btn btn-primary game-cta" id="order-cta" data-action="order-serve"${round.tray.length && !chat ? '' : ' disabled'}${chat ? ' style="display:none"' : ''}>${L('Serve','Servis et','سرو کن','Servir')}</button>`;
 }
 function orderResultHtml(round){
   const st = gameRoundStats('order', round), n = st.tickets;
@@ -22872,22 +22961,40 @@ function orderSpeak(round, text){
   const idx = round.index;
   setTimeout(()=>{ if(state.viewParams && state.viewParams.round === round && round.index === idx && !round.finished) speakTarget(text, orderRate(round), orderVoice(round)); }, 60);
 }
-// A customer slides in from the inline-end edge, lands with a squash, and says their order.
+// In the café (cozy pass 2026-11-25): the door bell rings and the customer walks in from the door, whole, up to the counter (the plate's
+// front layer covers them below the counter top). The first customer is already at the counter while Sam hands over. Reduced motion: a fade.
+function orderWalkIn(round, cust, first){
+  const n = document.getElementById('order-cust'); if(!n) return;
+  if(window.Theatre && Theatre.sfx) Theatre.sfx('door-ding');
+  if(first || reducedMotion() || !ORDER_SPOT.door){ anim(n, [{opacity:0}, {opacity:1}], {duration:first ? 500 : 300, easing:'ease-out'}); return; }
+  n.classList.remove('gw-walk'); orderStageSync(round, cust, 'door'); void n.offsetWidth;
+  n.classList.add('gw-walk'); orderStageSync(round, cust);
+  anim(n, [{opacity:0}, {opacity:1, offset:.2}, {opacity:1}], {duration:900, easing:'linear'});
+  setTimeout(()=>{ if(n.isConnected) n.classList.remove('gw-walk'); }, 950);
+}
+// A customer slides in from the inline-end edge, lands with a squash, and says their order (in the café: walks in; a chatting customer
+// chats first, see orderChatReply).
 function orderArrive(round){
   const cust = orderCust(round); if(!cust || round.finished) return;
   if(cust.usual && round.level === 'A2') setTimeout(()=>{ const p = document.querySelectorAll('.gp-pip')[cust.of]; if(p){ p.classList.add('gp-glint'); setTimeout(()=>p.classList.remove('gp-glint'), 1400); } }, 350);
   const rtl = document.documentElement.dir === 'rtl';
-  anim(document.getElementById('order-cust'), orderWorldOn() ? [{transform:`translateX(${rtl ? -16 : 16}px)`, opacity:0}, {transform:'none', opacity:1}] : [
-    {transform:`translateX(${rtl ? -80 : 80}px)`, opacity:0}, {transform:'translateX(0) scale(1)', opacity:1, offset:.75},
-    {transform:'translateX(0) scale(1.06, .94)', offset:.9}, {transform:'translateX(0) scale(1)'}
-  ], {duration:400, easing:orderWorldOn() ? 'ease-out' : SPRING});
-  sfx('hop');
+  if(orderWorldOn()) orderWalkIn(round, cust, round.index === 0 && !round.greeted);
+  else {
+    anim(document.getElementById('order-cust'), [
+      {transform:`translateX(${rtl ? -80 : 80}px)`, opacity:0}, {transform:'translateX(0) scale(1)', opacity:1, offset:.75},
+      {transform:'translateX(0) scale(1.06, .94)', offset:.9}, {transform:'translateX(0) scale(1)'}
+    ], {duration:400, easing:SPRING});
+    sfx('hop');
+  }
   const samOpens = round.index === 0 && !round.greeted && worldKind() === 'order';
   if(round.index === 0 && !round.greeted){ round.greeted = true; if(!samOpens) companionSay(orderLang() === 'es' ? '¿Qué le pongo?' : 'What would you like?', 2200); }
   if(round.noVoice && !round.noVoiceSaid){ round.noVoiceSaid = true; setTimeout(()=>{ if(state.view === 'game-order') companionSay(orderNoVoiceText(), 3400); }, 2300); }
   const idx = round.index;
-  const say = ()=>{ if(state.viewParams && state.viewParams.round === round && round.index === idx && !round.finished) speakTarget(cust.text, orderRate(round), orderVoice(round, cust)); };
-  if(samOpens) orderSam('open', ()=>setTimeout(say, 250)); else setTimeout(say, 420);
+  const here = ()=>state.viewParams && state.viewParams.round === round && round.index === idx && !round.finished;
+  // a chatting customer opens with their line (heard by itself only with Read lines aloud on); the order waits for the reply
+  const say = orderChatting(cust) ? ()=>{ if(here() && readAloud()) worldSpeak(orderChatLine(cust), orderSex(round, cust) || 'f'); }
+    : ()=>{ if(here()) speakTarget(cust.text, orderRate(round), orderVoice(round, cust)); };
+  if(samOpens) orderSam('open', ()=>setTimeout(say, 250)); else setTimeout(say, orderWorldOn() ? 950 : 420);
 }
 function orderShake(el){
   anim(el, [{transform:'translateX(0)'}, {transform:'translateX(-5px)'}, {transform:'translateX(5px)'}, {transform:'translateX(-5px)'}, {transform:'translateX(0)'}], {duration:260, easing:'linear'});
@@ -22949,7 +23056,7 @@ function orderAdvance(vp, round){
 }
 function orderServe(){
   const vp = state.viewParams, round = vp && vp.round, cust = round && orderCust(round);
-  if(!cust || round.finished || orderBusy || !round.tray.length) return;
+  if(!cust || round.finished || orderBusy || !round.tray.length || orderChatting(cust)) return;
   if(cust.done){ orderAdvance(vp, round); return; }   // a reload during the hand-over: just move on
   const res = orderCheck(cust, round.tray, round.level);
   cust.serves++;
@@ -32355,7 +32462,7 @@ const THEATRE_QUICK = ['match','build','cross','order','desk','spell','bingo','h
 const THEATRE_QUICK_VIEWS = THEATRE_QUICK.map(k=>'game-' + k);
 const THEATRE_KINDS = ['path','chores','mystery','radio'].concat(THEATRE_QUICK);
 const THEATRE_VIEWS = ['game-path','game-yc','game-chores-building','game-chores-room','game-mystery','game-v2'].concat(THEATRE_QUICK_VIEWS);
-const THEATRE_VER = '21';   // 21: Magic Words v2 (the hall of doors: skins.js spell world, plate mw-hall, bed, wide plate as the sides); 20: Story Hunt's wide opening / closing shot, Word Rush's end beat in the band + short-screen fit + clean card pile, Theatre 1.2.5; 19: worlds art (Story Hunt strip, Word Rush porthole, Mini Cross + Build It posters, Order Up! re-rolls, traveller 1), Theatre 1.2.4; 18: Passport Desk re-review (captions on the art, the HUD strip, the end over the booth, the horn, Theatre.quiet), Theatre 1.2.3; 17: text direction in the fa UI (Latin-script lines left to right), the companion line clear of x; 16: Games 2.0 step 5 part 4 (sound spots: gulls + the library clock; Passport Desk's traveller behind the booth counter; Trap Dash lanes); 15: Games 2.0 step 4 (Brave switch, boss beat, Captain); 14: the world art wiring + Sam's balloon waits for his picture (2026-11-16)
+const THEATRE_VER = '22';   // 22: Order Up! cozy pass (skins.js order: wood panel, warm glow, café sounds, world.css; 2026-11-25); 21: Magic Words v2 (the hall of doors: skins.js spell world, plate mw-hall, bed, wide plate as the sides); 20: Story Hunt's wide opening / closing shot, Word Rush's end beat in the band + short-screen fit + clean card pile, Theatre 1.2.5; 19: worlds art (Story Hunt strip, Word Rush porthole, Mini Cross + Build It posters, Order Up! re-rolls, traveller 1), Theatre 1.2.4; 18: Passport Desk re-review (captions on the art, the HUD strip, the end over the booth, the horn, Theatre.quiet), Theatre 1.2.3; 17: text direction in the fa UI (Latin-script lines left to right), the companion line clear of x; 16: Games 2.0 step 5 part 4 (sound spots: gulls + the library clock; Passport Desk's traveller behind the booth counter; Trap Dash lanes); 15: Games 2.0 step 4 (Brave switch, boss beat, Captain); 14: the world art wiring + Sam's balloon waits for his picture (2026-11-16)
 // World Kit switch (worlds SPEC 4.14): one flag per quick game, on once its art and checks pass (Farin 11-10: switch on what is done).
 // ?worlds=1 previews every world in this browser (?worlds=0 switches the preview off). Off = the game plays over its poster's soft backdrop.
 // 2026-11-15 World Kit v1 live: Order Up!, Word Bingo, Mini Cross, Build It, Say It Back (their plates and props passed art QC). Passport Desk waits
@@ -32562,7 +32669,7 @@ function orderSam(which, then){
   const st = document.querySelector('.th-world-art .th-world-stage');
   const old = document.getElementById('gw-sam'); if(old) old.remove();
   let img = null;
-  if(st){ img = document.createElement('img'); img.id = 'gw-sam'; img.className = 'th-world-cut gw-sam'; img.alt = ''; img.src = 'games/case-closed/art/pt-sam-' + (which === 'open' ? 'open' : 'calm') + '.webp'; st.appendChild(img); }
+  if(st){ img = document.createElement('img'); img.id = 'gw-sam'; img.className = 'th-world-cut gw-sam'; img.alt = ''; img.src = ORDER_CAST ? 'games/worlds/order/art/cust-sam-warm.webp' : 'games/case-closed/art/pt-sam-' + (which === 'open' ? 'open' : 'calm') + '.webp'; if(ORDER_CAST) img.classList.add('oz-whole'); st.appendChild(img); }   // full body by the door once the new cast lands
   const t0 = Date.now();
   // the balloon points at Sam, so it waits for his picture to load (at most 900 ms; a fresh phone has not cached it yet)
   let said = false;
@@ -34069,16 +34176,17 @@ const HANDLERS = {
     }, 900);
   },
   // ---- Order Up! (Jq6f9OFv wave A2): shelf taps build the tray, Serve checks it against the order ----
-  'order-play'(){ const r = state.viewParams && state.viewParams.round, c = r && orderCust(r); if(c && !r.finished) speakTarget(c.text, orderRate(r), orderVoice(r, c)); },
+  'order-play'(){ const r = state.viewParams && state.viewParams.round, c = r && orderCust(r); if(!c || r.finished) return; if(orderChatting(c)) worldSpeak(orderChatLine(c), orderSex(r, c) || 'f'); else speakTarget(c.text, orderRate(r), orderVoice(r, c)); },
+  'order-chat-reply'(el){ const r = state.viewParams && state.viewParams.round, c = r && orderCust(r); if(!c || r.finished || orderBusy || !orderChatting(c)) return; orderChatReply(r, c, Number(el.dataset.i)); },
   'order-ticket'(){
-    const r = state.viewParams && state.viewParams.round, c = r && orderCust(r); if(!c || r.finished) return;
+    const r = state.viewParams && state.viewParams.round, c = r && orderCust(r); if(!c || r.finished || orderChatting(c)) return;
     if(orderTicketOff(c)) return;
     if(!c.ticket && (!r.noVoice || c.usual)){ c.ticket = true; r.tickets++; }   // a hint for this customer (free when the phone has no voice)
     sfx('flip'); orderRefresh(['card']); save();
   },
   'order-tile'(el){
     if(orderPeeked){ orderPeeked = false; return; }   // the tap that ends a long-press peek
-    const r = state.viewParams && state.viewParams.round, c = r && orderCust(r); if(!c || r.finished || orderBusy) return;
+    const r = state.viewParams && state.viewParams.round, c = r && orderCust(r); if(!c || r.finished || orderBusy || orderChatting(c)) return;
     const id = el.dataset.id;
     if(el.dataset.k === 'extra'){
       // an extra attaches to the selected tray line (the last placed one by default); tapping it again takes it off

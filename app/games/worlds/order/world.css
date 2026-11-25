@@ -3,7 +3,7 @@
    Byte-identical in english app/app/games/worlds/order/ and spanish app/app/games/worlds/order/.
    The panel is the counter (honey wood), the card is the order pad (cream paper), the customer speaks in a clear-line comic balloon
    (white, the comic's brown-black ink), the tray is a wooden tray, the shelf tiles are little plates; Serve is a warm terracotta.
-   People on the plate: full-body cut-outs; the counter's front layer (skins.js front.top) covers them below the counter top. */
+   People on the plate: the full-body Higgsfield cast (farin-e9), standing whole on the café floor. */
 body.gw-on.gw-order{--oz-ink:#3b2616; --oz-wood:#d9a868; --oz-wood-2:#cf9a57; --oz-rim:#a96c34; --oz-paper:#fffaf0; --oz-cream:#fdf1dc; --oz-line:#ead3ae; --oz-terra:#c4472f; --oz-sage:#5e8f5a;}
 
 /* ---- the panel: a honey wood counter with a soft grain ---- */
@@ -42,24 +42,19 @@ body.gw-on.gw-order .order-reply:not(:disabled):active{transform:translateY(1px)
 body.gw-on.gw-order .order-reply.yes{border-color:var(--oz-sage); background:#eaf3e3;}
 body.gw-on.gw-order .order-reply.no{text-decoration-color:var(--oz-terra);}
 
-/* ---- people on the plate ---- */
-/* walking in from the door to the counter (orderWalkIn): the box glides, a small step bob on the way */
+/* ---- people on the plate (the full-body cast, ORDER_CAST): whole figures on the floor, placed by the feet (--oz-b) and the height
+   (--oz-h) the app sets per spot, centred on the box's left; Theatre.actor's inline top / width give way ---- */
 body.gw-on.gw-order .th-world .gw-cust{transform-origin:50% 100%;}
-body.gw-on.gw-order .th-world .gw-cust.gw-walk{transition:left .85s cubic-bezier(.4,.1,.3,1), top .85s cubic-bezier(.4,.1,.3,1), width .85s cubic-bezier(.4,.1,.3,1); animation:oz-step .28s ease-in-out 3;}
+body.gw-on.gw-order .th-world .gw-cust.oz-whole{top:auto !important; width:auto !important; bottom:var(--oz-b, 12%); height:var(--oz-h, 60%); translate:-50% 0; filter:drop-shadow(0 4px 5px rgba(59,38,22,.22));}
+/* walking in from the door to the counter (orderWalkIn): the figure glides and grows, a small step bob on the way */
+body.gw-on.gw-order .th-world .gw-cust.gw-walk{transition:left .85s cubic-bezier(.4,.1,.3,1), bottom .85s cubic-bezier(.4,.1,.3,1), height .85s cubic-bezier(.4,.1,.3,1); animation:oz-step .28s ease-in-out 3;}
 @keyframes oz-step{0%,100%{transform:translateY(0);} 50%{transform:translateY(-1.5%);}}
-/* Sam by the door, whole (he hands the counter over and leaves; he is back to close up) - only with the full-body cast (ORDER_CAST);
-   the new plate's numbers go in --oz-sam-x / -y / -w */
-body.gw-on.gw-order .th-world .gw-sam.oz-whole{left:var(--oz-sam-x, 9%); top:var(--oz-sam-y, 28%); bottom:auto; width:var(--oz-sam-w, 16%); height:auto;}
+/* Sam, whole, by the door: he hands the counter over and leaves; he is back to close up */
+body.gw-on.gw-order .th-world .gw-sam.oz-whole{left:30%; top:auto; bottom:34%; width:auto; height:37%; translate:-50% 0; filter:drop-shadow(0 4px 5px rgba(59,38,22,.22));}
 
-/* ---- the cup's steam on the counter (a text layer with no text: two soft wisps) ---- */
-body.gw-on.gw-order .th-world-live.gw-steam{height:12%; pointer-events:none;}
-body.gw-on.gw-order .th-world-live.gw-steam::before, body.gw-on.gw-order .th-world-live.gw-steam::after{content:''; position:absolute; bottom:0; width:22%; height:100%; border-radius:50%;
-  border-inline-start:3px solid rgba(255,255,255,.85); filter:blur(.4px); opacity:0; animation:oz-steam 3.2s ease-in-out infinite;}
-body.gw-on.gw-order .th-world-live.gw-steam::before{left:30%;}
-body.gw-on.gw-order .th-world-live.gw-steam::after{left:52%; animation-delay:1.6s;}
-@keyframes oz-steam{0%{transform:translateY(20%) scaleY(.6); opacity:0;} 30%{opacity:.9;} 100%{transform:translateY(-55%) scaleY(1); opacity:0;}}
+/* ---- the shelf pictures a little bigger (the 3D cups for coffee, tea and hot chocolate need the room) ---- */
+body.gw-on.gw-order .order-shelf .order-art-img{width:40px; height:40px;}
 
 @media (prefers-reduced-motion: reduce){
   body.gw-on.gw-order .th-world .gw-cust.gw-walk{transition:none; animation:none;}
-  body.gw-on.gw-order .th-world-live.gw-steam::before, body.gw-on.gw-order .th-world-live.gw-steam::after{animation:none; opacity:.55; transform:none;}
 }

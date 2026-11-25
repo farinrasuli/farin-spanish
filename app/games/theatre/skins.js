@@ -56,15 +56,14 @@ window.THEATRE_SKINS = {
     backdrop:{src:null, position:'78% 50%', blur:30, veil:.54}, props:[],
     // the cozy pass (2026-11-25): the panel is the honey-wood counter, brown ink, a terracotta Serve; the lamp's warm glow and a deeper
     // warm tint; the café's own sounds (a door-bell ding as a customer walks in, cups clinking and a pour now and then, a gull outside);
-    // games/worlds/order/world.css styles the order pad, the balloon, the tray, the shelf and the chat. The plate stays until the
-    // Higgsfield café art lands (Claude/specs/order-cozy-2026-11-25/ART-BRIEF.md): then plate.src, front.top, layers and the glow change here.
+    // games/worlds/order/world.css styles the order pad, the balloon, the tray, the shelf and the chat. The plate is the Higgsfield 3D café
+    // from behind the counter (farin-e9, 2026-11-25): open floor to the bottom edge, so no front layer and no prop cut-outs (the till and the
+    // cake dome are in the picture); the glow sits on the left pendant lamp. Captain (a clear-line cat) stays out of this 3D room for now.
     gw:{bg:'#fdf3e4', surface:'#d9a868', paper:'#fffaf0', ink:'#3b2616', hue:'var(--cat-gram)', accent:'#c4472f', cta:'#c4472f', ctaInk:'#ffffff'},
-    world:{mood:'warm', moodVars:{'--m-gx':'50%', '--m-gy':'12%', '--m-gr':'62%', '--m-ga':'.45', '--m-ta':'.14', '--m-vig':'.16'}, plate:{src:'games/worlds/order/art/order-counter.webp', ready:true}, front:{top:'69%'}, bed:{freq:420, q:.5, vol:.03, lfo:.09},
-      spots:['cafe-clink', 'gull', 'cafe-pour'], layers:[
-      {src:'games/worlds/order/art/order-tipjar.webp', cls:'gw-tipjar', box:[5, 64, 9], ready:true},
-      {src:'games/worlds/order/art/order-bell.webp', cls:'gw-bell', box:[19, 65, 7], ready:true}], text:[],
+    world:{mood:'warm', moodVars:{'--m-gx':'44%', '--m-gy':'10%', '--m-gr':'58%', '--m-ga':'.32', '--m-ta':'.06', '--m-vig':'.12'}, plate:{src:'games/worlds/order/art/order-counter.webp', ready:true}, bed:{freq:420, q:.5, vol:.03, lfo:.09},
+      spots:['cafe-clink', 'gull', 'cafe-pour'], layers:[], text:[],
       sfx:{'door-ding':['games/cozy-chores/sfx/ding-1.mp3', 'games/cozy-chores/sfx/ding-2.mp3'], 'cafe-clink':['games/cozy-chores/sfx/clink-1.mp3', 'games/cozy-chores/sfx/clink-2.mp3', 'games/cozy-chores/sfx/clink-3.mp3'],
-        'cafe-pour':['games/cozy-chores/sfx/pour-liquid-1.mp3', 'games/cozy-chores/sfx/pour-liquid-2.mp3']}, css:'games/worlds/order/world.css?v=1'}},
+        'cafe-pour':['games/cozy-chores/sfx/pour-liquid-1.mp3', 'games/cozy-chores/sfx/pour-liquid-2.mp3']}, css:'games/worlds/order/world.css?v=2'}},
   // Passport Desk: the booth at the end of the pier, sky, sea teal, the red-striped booth
   desk:{card:'art/posters/card-desk.webp', focus:'64%',
     palette:{sky:'#e9f8fc', sky2:'#b9e6f2', glow:'#ffffff', ground:'#5fc3cc', ink:'#163450', accent:'#c23a32', accentInk:'#ffffff'},
@@ -126,7 +125,6 @@ window.THEATRE_SKINS = {
 // worlds, in band % (band, sitting on the band floor). Poses sit / sleep / sniff (games/cozy-chores/art/pt-captain-*.webp), 36-48 px tall.
 (function(S){
   var C = {
-    order:[{box:[1, 49.5, 11], pose:'sit'}, {box:[13, 11.5, 11], pose:'sit'}],            // on the little side table; up on the window frame (clear of Sam and the customers)
     build:[{box:[0.5, 59.5, 11], pose:'sit'}, {box:[31, 40.3, 16], pose:'sleep'}],        // on the blue crates; asleep on the window sill
     echo:[{box:[74, 66.5, 17], pose:'sleep'}, {box:[44, 72.5, 10], pose:'sit'}],          // asleep on the desk; on the chair back
     bingo:[{box:[6, 70, 11], band:[8, 0, 9], pose:'sit'}, {box:[60, 74, 16], band:[46, 0, 14], pose:'sleep'}],

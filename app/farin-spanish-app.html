@@ -3547,6 +3547,90 @@
   .onb-confetti i{position:absolute; top:-18px; display:block; border-radius:2px; opacity:0; animation:onbConfetti 2.8s cubic-bezier(.25,.6,.5,1) both;}
   @keyframes onbConfetti{0%{opacity:0; transform:translate3d(0,0,0) rotate(var(--r));} 8%{opacity:1;} 100%{opacity:0; transform:translate3d(0, 110vh, 0) rotate(calc(var(--r) + 540deg));}}
   @media (prefers-reduced-motion: reduce){ .onb-wfe{animation:none;} .onb-confetti{display:none;} }
+  /* FEschool intro before the questions (Farin 2026-11-25: "FEschool builds a learning experience around YOU!"): the Course Report hero
+     (purple, orange + white dots) with YOU in the middle and the four things the app reads around it, the title, one short line, one
+     pinned orange button. The hero plays once (~1 s), nothing moves after that. Byte-identical in both apps. */
+  .onb-intro .onb-nav{padding-bottom:14px;}
+  .oi-hero{position:relative; overflow:hidden; height:250px; border-radius:28px; background:linear-gradient(140deg, var(--fs-purple), var(--fs-purple-2)); box-shadow:0 18px 34px -20px rgba(90,63,214,.6);}
+  .oi-hero::before, .rb-gather::before{content:""; position:absolute; inset:0; pointer-events:none; background-image:radial-gradient(circle, rgba(255,165,61,.55) 0 2.5px, transparent 3px), radial-gradient(circle, rgba(255,255,255,.28) 0 2px, transparent 2.5px); background-size:160px 130px, 110px 96px; background-position:20px 26px, 70px 70px;}
+  .oi-lines{position:absolute; inset:0; width:100%; height:100%; animation:rbShow .6s ease .45s both;}
+  .oi-lines line{stroke:rgba(255,255,255,.55); stroke-width:2; stroke-dasharray:3 6; stroke-linecap:round; vector-effect:non-scaling-stroke;}
+  .oi-you, .rb-core{position:relative; flex:none; display:flex; align-items:center; justify-content:center; width:104px; height:104px; box-sizing:border-box; padding:0 10px; border-radius:50%; background:#fff; color:#5A3FD6; font-family:'Fredoka',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; font-weight:700; font-size:25px; line-height:1; letter-spacing:-.01em; box-shadow:0 0 0 10px rgba(255,255,255,.16), 0 16px 28px -12px rgba(26,20,16,.5);}
+  .oi-you{position:absolute; left:50%; top:50%; margin:-52px 0 0 -52px; animation:onbPop .8s cubic-bezier(.22,1.35,.36,1) .1s both;}
+  .oi-you .dot, .rb-core .dot{color:var(--fs-orange);}
+  .oi-chip, .rb-chip{display:inline-flex; align-items:center; gap:7px; box-sizing:border-box; padding:7px 13px 7px 8px; border-radius:999px; background:#fff; color:#1A1410; font-weight:800; font-size:12.5px; line-height:1.2; white-space:nowrap; box-shadow:0 8px 16px -8px rgba(26,20,16,.45);}
+  html[dir="rtl"] .oi-chip, html[dir="rtl"] .rb-chip{padding:7px 8px 7px 13px;}
+  .oi-chip i{flex:none; width:24px; height:24px; border-radius:50%; display:grid; place-items:center; background:color-mix(in srgb, var(--c) 16%, #fff); color:var(--c);}
+  .oi-chip i svg{width:13px; height:13px;}
+  .oi-chip{position:absolute; transform:translate(-50%,-50%); animation:oiChip .6s cubic-bezier(.22,1.35,.36,1) calc(.3s + var(--i) * .12s) both;}
+  .oi-c1{left:27%; top:14%; --fx:34px; --fy:26px;} .oi-c2{left:73%; top:14%; --fx:-34px; --fy:26px;}
+  .oi-c3{left:27%; top:86%; --fx:34px; --fy:-26px;} .oi-c4{left:73%; top:86%; --fx:-34px; --fy:-26px;}
+  html[dir="rtl"] .oi-c1, html[dir="rtl"] .oi-c3{left:73%; --fx:-34px;} html[dir="rtl"] .oi-c2, html[dir="rtl"] .oi-c4{left:27%; --fx:34px;}
+  @keyframes oiChip{from{opacity:0; transform:translate(-50%,-50%) translate(var(--fx), var(--fy)) scale(.5);} to{opacity:1; transform:translate(-50%,-50%);}}
+  .oi-eb{margin-top:30px;}
+  .oi-t{font-size:27px; line-height:1.15; text-wrap:balance;}
+  .oi-t em{font-style:normal; color:var(--fs-purple-ink);}
+  @media (max-width:370px){ .oi-hero{height:226px;} .oi-chip{font-size:11.5px; padding-inline-end:10px;} .oi-t{font-size:24px;} .oi-eb{margin-top:24px;} }
+  @media (max-height:700px){ .oi-hero{height:206px;} .oi-eb{margin-top:20px;} }
+  /* The roadmap build after Go! (Farin 2026-11-25: "an animated transition that makes it feel as if FEschool is building their personalized
+     roadmap", from the real answers): the answers gather into the learner's name, the real cards of the page just built drop in, a quick
+     scroll down to the Page report card, then the welcome card rises with the confetti and FE, and the orange button opens Home. ~5 s, Skip
+     jumps to the end. Every delay is written from the build's start time (rbStart), so a repaint mid-way picks the motion up where it was;
+     every element's own style is its END state (prefers-reduced-motion shows the welcome card at once). Byte-identical in both apps. */
+  .onb-build .screen{overflow:hidden;}
+  .rb-skip{all:unset; box-sizing:border-box; cursor:pointer; padding:7px 14px; border-radius:999px; background:var(--bg-elevated); border:1px solid var(--border-soft); color:var(--ink-soft); font-weight:800; font-size:13px; opacity:0; visibility:hidden;}
+  .rb-skip:focus-visible{outline:2px solid var(--fs-purple); outline-offset:2px;}
+  .rb-body{position:relative; flex:1; display:flex; flex-direction:column; margin-top:6px;}
+  .rb-run{flex:1; display:flex; flex-direction:column; opacity:0; visibility:hidden;}
+  .rb-ts{display:grid; margin-top:6px;}
+  .rb-ts > h2{grid-area:1 / 1; margin:0;}
+  .rb-ta, .rb-tb{opacity:0; visibility:hidden;}
+  .rb-ts .dot{color:var(--fs-orange);}
+  .rb-bar{height:6px; margin-top:14px; border-radius:999px; background:var(--fs-purple-soft); overflow:hidden;}
+  .rb-bar i{display:block; height:100%; border-radius:inherit; background:linear-gradient(90deg, var(--fs-purple), var(--fs-orange)); transform-origin:0 50%;}
+  html[dir="rtl"] .rb-bar i{transform-origin:100% 50%; background:linear-gradient(270deg, var(--fs-purple), var(--fs-orange));}
+  .rb-stage{position:relative; flex:1; min-height:260px; margin-top:18px; margin-bottom:calc(-88px - env(safe-area-inset-bottom, 0px));}
+  .rb-gather{position:absolute; inset:0; z-index:2; overflow:hidden; border-radius:28px; background:linear-gradient(140deg, var(--fs-purple), var(--fs-purple-2)); box-shadow:0 18px 34px -20px rgba(90,63,214,.6); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:44px; padding:20px 14px; box-sizing:border-box; opacity:0; visibility:hidden;}
+  .rb-cloud{position:relative; display:flex; flex-wrap:wrap; justify-content:center; gap:9px; max-width:330px;}
+  .rb-fly{display:inline-flex; opacity:0; transform:translate(var(--dx, 0px), var(--dy, 0px)) scale(.2);}
+  .rb-chip i{flex:none; width:9px; height:9px; margin:0 4px; border-radius:50%; background:var(--c);}
+  .rb-chip bdi{max-width:150px; overflow:hidden; text-overflow:ellipsis;}
+  .rb-core{width:112px; height:112px; font-size:21px;}
+  .rb-core bdi{display:block; max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; padding:2px 0;}
+  .rb-win{position:absolute; inset:0; z-index:1; overflow:hidden; -webkit-mask-image:linear-gradient(to bottom, transparent 0, #000 16px, #000 calc(100% - 40px), transparent); mask-image:linear-gradient(to bottom, transparent 0, #000 16px, #000 calc(100% - 40px), transparent);}
+  .rb-col{padding:24px 2px 44px; transform:translateY(calc(-1 * var(--rb-dist, 0px)));}
+  .rb-card{position:relative; box-sizing:border-box; height:92px; border-radius:24px; padding:22px 20px 0; box-shadow:var(--clay-shadow); background:linear-gradient(150deg, #7C5CFC, #5A3FD6); color:#fff;}
+  .rb-card small{display:block; font-size:10px; font-weight:900; text-transform:uppercase; letter-spacing:.05em; line-height:1.2; color:rgba(255,255,255,.86); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .rb-card b{display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; margin-top:4px; font-family:'Fredoka',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; font-weight:700; font-size:15.5px; line-height:1.25; letter-spacing:-.01em; overflow-wrap:anywhere;}
+  .rb-card.rb-white{background:var(--bg-elevated); color:var(--fs-purple-ink); box-shadow:var(--clay-shadow), inset 0 0 0 1.5px color-mix(in srgb, #7C5CFC 24%, var(--bg-elevated));}
+  .rb-card.rb-white small{color:color-mix(in srgb, var(--fs-purple-ink) 70%, var(--ink-soft));}
+  .rb-card.rb-orange{background:linear-gradient(150deg, #FFB65F, #FFA53D); color:#3B2300;}
+  .rb-card.rb-orange small{color:rgba(59,35,0,.78);}
+  .rb-card.rb-poster{background:#E9E4F7; padding:16px 12px 0; display:flex; align-items:flex-end; padding-bottom:10px;}
+  .rb-card.rb-poster img{position:absolute; inset:0; width:100%; height:100%; object-fit:cover; border-radius:inherit; pointer-events:none;}
+  .rb-poster .rb-ct{position:relative; z-index:1; max-width:64%; box-sizing:border-box; padding:7px 10px; border-radius:14px; background:rgba(255,255,255,.86); -webkit-backdrop-filter:blur(8px); backdrop-filter:blur(8px);}
+  .rb-poster small{color:#4d6b66;}
+  .rb-poster b{color:#14332e; font-size:14px; -webkit-line-clamp:1; margin-top:2px;}
+  .rb-ring{position:absolute; left:50%; top:-14px; z-index:3; width:28px; height:28px; margin-left:-14px; box-sizing:border-box; border-radius:50%; background:var(--bg-elevated); border:3.5px solid #7C5CFC; box-shadow:0 4px 10px -3px rgba(0,0,0,.25);}
+  .rb-orange .rb-ring{border-color:#FFA53D;}
+  .rb-card:first-child .rb-ring{background:color-mix(in srgb, #7C5CFC 22%, var(--bg-elevated));}
+  .rb-sheet{position:absolute; inset:0; z-index:4; margin:0;}
+  .rb-foot{opacity:1;}
+  @keyframes rbShow{from{opacity:0; visibility:hidden;} to{opacity:1; visibility:visible;}}
+  @keyframes rbGone{from{opacity:1; visibility:visible;} to{opacity:0; visibility:hidden;}}
+  @keyframes rbBlink{0%{opacity:0; visibility:visible; transform:translateY(8px);} 22%, 78%{opacity:1; visibility:visible; transform:none;} 100%{opacity:0; visibility:hidden; transform:translateY(-8px);}}
+  @keyframes rbRise{from{opacity:0; transform:translateY(8px);} to{opacity:1; transform:none;}}
+  @keyframes rbGatherOut{from{opacity:1; visibility:visible; transform:none;} to{opacity:0; visibility:hidden; transform:scale(.92) translateY(-14px);}}
+  @keyframes rbChipIn{from{opacity:0; transform:scale(.4);} to{opacity:1; transform:none;}}
+  @keyframes rbFly{from{opacity:1; transform:none;} 70%{opacity:1;} to{opacity:0; transform:translate(var(--dx, 0px), var(--dy, 0px)) scale(.2);}}
+  @keyframes rbGulp{0%{transform:none;} 45%{transform:scale(1.14);} 100%{transform:none;}}
+  @keyframes rbCardIn{from{opacity:0; transform:translateY(-22px) scale(.94);} to{opacity:1; transform:none;}}
+  @keyframes rbScroll{from{transform:none;} to{transform:translateY(calc(-1 * var(--rb-dist, 0px)));}}
+  @keyframes rbBar{from{transform:scaleX(0);} to{transform:scaleX(1);}}
+  @keyframes rbGlow{0%{transform:none; box-shadow:var(--clay-shadow);} 40%{transform:scale(1.035); box-shadow:var(--clay-shadow), 0 0 0 5px rgba(255,165,61,.85);} 100%{transform:none; box-shadow:var(--clay-shadow), 0 0 0 3px rgba(255,165,61,.6);}}
+  @keyframes rbSheetIn{from{transform:translateY(calc(100% + 140px));} to{transform:none;}}
+  .rb-report{box-shadow:var(--clay-shadow), 0 0 0 3px rgba(255,165,61,.6);}
+  @media (prefers-reduced-motion: reduce){ .onb-intro *, .onb-build, .onb-build *{animation:none !important;} .onb-build .onb-confetti{display:none;} }
   /* header language control (Farin 2026-10-27): learning-language flag + interface code; opens the language sheet */
   .lang-pill{display:inline-flex; align-items:center; gap:6px; height:34px; box-sizing:border-box; padding:0 11px 0 8px; border-radius:999px; background:var(--bg-elevated); border:1px solid var(--border-soft); box-shadow:var(--clay-shadow-soft); color:var(--ink-soft); font:inherit; font-weight:800; font-size:12px; letter-spacing:.03em; flex:0 0 auto; cursor:pointer; -webkit-tap-highlight-color:transparent;}
   html[dir="rtl"] .lang-pill{padding:0 8px 0 11px;}
@@ -16061,7 +16145,7 @@ function render(){
   root.insertAdjacentHTML('beforeend', nav);
   if(langSheet && langSheet.view !== state.view) langSheet = null;   // the header language sheet belongs to the screen it was opened on
   langSheetPaint();
-  const noHomeButtonViews = bottomNavViews.concat(['diagnostic-intro','diagnostic-step','welcome','roadmap-report','msg-thread','msg-compose']);
+  const noHomeButtonViews = bottomNavViews.concat(['diagnostic-intro','diagnostic-step','onb-intro','welcome','roadmap-build','roadmap-report','msg-thread','msg-compose']);
   if(!noHomeButtonViews.includes(state.view)){
     root.insertAdjacentHTML('beforeend', `<div class="home-fab-wrap"><button class="home-fab" data-action="nav" data-view="dashboard" aria-label="${L('Home','Ana Sayfa','خانه', 'Inicio')}">${ICONS.home}</button></div>`);
   }
@@ -16263,13 +16347,13 @@ function diagProgressBar(step, total){
    then asks the phone's notification question (moved here from the Go! tap). A course link lands on its course page instead. */
 // the celebration on the welcome card (Farin 2026-11-21: "put a motion of celebration when they get to the last part"): 36 paper pieces
 // in the app's colours fall through the card once (CSS only, 3 s), FE pops in under the title; nothing moves after that
-function onbConfettiHtml(){
+function onbConfettiHtml(offsetMs){   // offsetMs (the roadmap build, 2026-11-25): every piece starts that much later, negative = already falling
   const colors = ['#FFA03A', '#7C5CFC', '#FF8FB3', '#FFC93C', '#5CC8A8', '#FF6B4A'];
   let out = '';
   for(let i = 0; i < 36; i++){
     const left = (i * 2.78 + Math.random() * 2.5).toFixed(1), delay = (Math.random() * 1.1).toFixed(2), dur = (2.2 + Math.random() * 1.1).toFixed(2);
     const w = 6 + Math.round(Math.random() * 6), h = 8 + Math.round(Math.random() * 8), rot = Math.round(Math.random() * 360), round = Math.random() < 0.3;
-    out += `<i style="left:${left}%; width:${w}px; height:${round ? w : h}px; background:${colors[i % colors.length]}; animation-delay:${delay}s; animation-duration:${dur}s; --r:${rot}deg;${round ? ' border-radius:50%;' : ''}"></i>`;
+    out += `<i style="left:${left}%; width:${w}px; height:${round ? w : h}px; background:${colors[i % colors.length]}; animation-delay:${offsetMs != null ? Math.round(offsetMs + delay * 1000) + 'ms' : delay + 's'}; animation-duration:${dur}s; --r:${rot}deg;${round ? ' border-radius:50%;' : ''}"></i>`;
   }
   return out;
 }
@@ -16293,6 +16377,152 @@ function renderWelcome(){
       </div>
     </div>
     <div class="onb-foot"><button class="btn btn-primary fs-cta onb-cta" data-action="welcome-continue">${L("Let's go", 'Hadi başlayalım', 'بزن بریم', '¡Vamos!')}</button></div>
+  </div>`;
+}
+/* FEschool intro + the roadmap build (Farin 2026-11-25). Before the questions: "Introduce FEschool before the assessment ... FEschool
+   builds a learning experience around YOU!", brief. After them: "do not immediately take them to the home screen. Show an animated
+   transition that makes it feel as if FEschool is building their personalized roadmap ... generated from their actual assessment results,
+   not a generic demonstration ... Do not make the student wait unnecessarily." Byte-identical in the English and Spanish apps.
+   Flow: language screen → 'onb-intro' → the six questions (unchanged) → Go! → 'roadmap-build' → Let's go → Home. A course link still lands
+   on its course page. Redoing the diagnostic plays the build too, with "Your new roadmap is ready!" on the card. */
+function renderOnbIntro(){
+  const chip = (n, c, ic, label)=>`<span class="oi-chip oi-c${n}" style="--i:${n - 1}; --c:${c};"><i>${ICONS[ic] || ''}</i><bdi>${esc(label)}</bdi></span>`;
+  return `<div class="fade-in fs-scr onb-q-scr onb-pinned onb-intro">
+    <div class="screen">
+      <div class="onb-nav"><button class="back" data-action="back">${ICONS.back} ${L('Back','Geri','برگشت','Volver')}</button>${langToggle()}</div>
+      <div class="oi-hero" aria-hidden="true">
+        <svg class="oi-lines" viewBox="0 0 100 100" preserveAspectRatio="none"><line x1="27" y1="14" x2="50" y2="50"/><line x1="73" y1="14" x2="50" y2="50"/><line x1="27" y1="86" x2="50" y2="50"/><line x1="73" y1="86" x2="50" y2="50"/></svg>
+        ${chip(1, '#FFA53D', 'chart', L('Your level','Seviyen','سطحت','Tu nivel'))}
+        ${chip(2, '#7C5CFC', 'heart', L('Your interests','İlgi alanların','علاقه‌هات','Tus intereses'))}
+        ${chip(3, '#48796B', 'compass', L('Your goals','Hedeflerin','هدف‌هات','Tus objetivos'))}
+        ${chip(4, '#4C6C82', 'book', L('How you learn','Öğrenme tarzın','سبک یادگیری‌ات','Cómo aprendes'))}
+        <div class="oi-you">${L('YOU','SEN','تو','TÚ')}<span class="dot">.</span></div>
+      </div>
+      <div class="onb-eb oi-eb">${L('Welcome to FEschool','FEschool\'a hoş geldin','به <bdi>FEschool</bdi> خوش اومدی','Te damos la bienvenida a FEschool')}</div>
+      <h1 class="onb-h2 oi-t">${L('FEschool builds a learning experience around <em>YOU</em>!','FEschool, öğrenme deneyimini <em>SENİN</em> etrafında kurar!','<bdi>FEschool</bdi> یک تجربه‌ی یادگیری می‌سازه که دورِ <em>خودِ تو</em> می‌چرخه!','¡FEschool crea una experiencia de aprendizaje en torno a <em>TI</em>!')}</h1>
+      <p class="onb-sub">${L("Tell us your level, your interests, your goals and how you like to learn. We turn your answers into a roadmap that's yours alone.",
+        'Seviyeni, ilgi alanlarını, hedeflerini ve nasıl öğrenmeyi sevdiğini söyle. Cevaplarından yalnızca sana ait bir yol haritası hazırlıyoruz.',
+        'سطحت، علاقه‌هات، هدف‌هات و سبکی که دوست داری باهاش یاد بگیری رو بگو. از جواب‌هات یه نقشه‌ی راه می‌سازیم که فقط مال خودته.',
+        'Cuéntanos tu nivel, tus intereses, tus objetivos y cómo te gusta aprender. Con tus respuestas creamos una hoja de ruta solo para ti.')}</p>
+    </div>
+    <div class="onb-foot"><button class="btn btn-primary fs-cta onb-cta" data-action="diag-start">${L("Let's start",'Başlayalım','شروع کنیم','Empecemos')}</button></div>
+  </div>`;
+}
+// The build's clock (ms from the start): answers in, answers into the name, the cards drop in, the scroll, the report card, the welcome card.
+const RB_T = {chip:200, chipStep:90, fly:1250, flyStep:35, gulp:1650, out:1850, card:1950, cardStep:90, cards:8, scroll:3000, scrollDur:1800, glow:4800, sheet:5150, cta:5550, end:6000};
+let rbStart = 0;   // Date.now() when the build started; 0 = nothing playing (a reload, Back or a repaint later shows the end state)
+const RB_GOAL_C = {career:'#CB7D4D', everyday:'#C9978A', exam:'#8B7273', immigration:'#48796B', travel:'#4C6C82'};   // the goal colours of question 1
+const RB_LEARN = {analyst:['Clear rules','Net kurallar','قانون‌های واضح','Reglas claras'], driller:['Lots of practice','Bol pratik','تمرین زیاد','Mucha práctica'],
+  talker:['Real conversation','Gerçek sohbet','گفتگوی واقعی','Conversación real'], immersive:['Learning in context','Bağlam içinde öğrenmek','یادگیری در بافت واقعی','Aprender en contexto']};
+const RB_FOCUS = {grammar:['Focus: grammar','Odak: dilbilgisi','تمرکز: گرامر','Enfoque: gramática'], vocab:['Focus: words','Odak: kelimeler','تمرکز: کلمه‌ها','Enfoque: vocabulario'],
+  listening:['Focus: listening','Odak: dinleme','تمرکز: شنیدن','Enfoque: escuchar'], speaking:['Focus: speaking','Odak: konuşma','تمرکز: صحبت‌کردن','Enfoque: hablar']};
+// the roadmap card colours (renderRoadmapCard's RM_LOOK_OF): purple and white first, orange for the reviews; a game shows its poster
+const RB_LOOK_OF = {grammar:'purple', story:'purple', dialogue:'purple', media:'purple', session:'purple', song:'purple', vocab:'white', slang:'white', writing:'white', speaking:'white', box:'orange', review:'orange', game:'purple'};
+function rbTypeLabel(t){
+  const m = {grammar:['Grammar','Dilbilgisi','گرامر','Gramática'], vocab:['Vocabulary','Kelime','واژگان','Vocabulario'], slang:['Slang','Argo','اصطلاحات','Argot'],
+    box:['Vocab Box','Kelime Kutusu','جعبه‌ی لغات','Caja de palabras'], review:['Review','Tekrar','مرور','Repaso'], session:['Speaking session','Konuşma seansı','جلسه مکالمه','Sesión de conversación'],
+    story:['Story','Hikaye','داستان','Historia'], writing:['Writing practice','Yazma pratiği','تمرین نوشتن','Práctica de escritura'], speaking:['Speaking practice','Konuşma pratiği','تمرین صحبت‌کردن','Práctica de conversación'],
+    game:['GAME','OYUN','بازی','JUEGO'], song:['Song','Şarkı','آهنگ','Canción'], media:['Watch or listen','İzle veya dinle','تماشا یا گوش‌کن','Mira o escucha'], dialogue:['Dialogue','Diyalog','گفت‌وگو','Diálogo']}[t];
+  return m ? L(m[0], m[1], m[2], m[3]) : '';
+}
+// the learner's own answers, as they were picked: goals, level, topics, what helps them, what trips them up
+function rbAnswers(){
+  const p = state.profile || {}, out = [];
+  (p.goals || []).forEach(g=>{ if(GOALS_META[g]) out.push({t:goalMetaLabel(g), c:RB_GOAL_C[g] || '#7C5CFC'}); });
+  if(p.level){ const lv = displayLevel(p); out.push({t:/^[ABC]\d/.test(lv) ? L('Level {x}','Seviye {x}','سطح {x}','Nivel {x}').replace('{x}', lv) : lv, c:'#FFA53D'}); }
+  (p.topics || []).forEach(k=>{ const o = TOPIC_OPTIONS.find(x=>x.value === k); if(o) out.push({t:L(o.label.en, o.label.tr, o.label.fa, o.label.es), c:'#7C5CFC'}); });
+  const lt = RB_LEARN[p.learnerType]; if(lt) out.push({t:L(lt[0], lt[1], lt[2], lt[3]), c:'#5CC8A8'});
+  const pa = RB_FOCUS[p.priorityArea]; if(pa) out.push({t:L(pa[0], pa[1], pa[2], pa[3]), c:'#FF8FB3'});
+  return out.slice(0, 9);
+}
+function rbPlay(redo){
+  const still = (()=>{ try{ return window.matchMedia('(prefers-reduced-motion: reduce)').matches; }catch(e){ return false; } })();
+  rbStart = still ? 0 : Date.now();
+  go('roadmap-build', redo ? {redo:true} : {});
+  navHistory.length = 0;   // the account exists now: Back during the build or on the card goes Home, never to the account step
+}
+// the build's clock follows the screen's real animation clock: work right after Go! (saving, the cloud copy) can hold the first frame back,
+// and the motion starts with that frame, so after each paint rbStart is set from the progress bar's own animation (Web Animations API)
+function rbSync(tRender){
+  const bar = document.querySelector('.rb-bar i'), an = bar && bar.getAnimations ? bar.getAnimations()[0] : null;
+  if(!an || !an.ready || !document.timeline) return;
+  an.ready.then(()=>{
+    if(!rbStart || state.view !== 'roadmap-build' || an.startTime == null || !bar.isConnected) return;
+    rbStart = Date.now() - Math.round(document.timeline.currentTime - an.startTime + tRender);
+  }).catch(()=>{});
+}
+// sizes the motion can only take from the page: how far the cards scroll, and where each answer chip flies (to the middle of the name)
+function rbMeasure(){
+  const win = document.querySelector('.rb-win'), col = win && win.querySelector('.rb-col');
+  if(col) col.style.setProperty('--rb-dist', Math.max(0, col.scrollHeight - win.clientHeight) + 'px');
+  const core = document.querySelector('.rb-core'); if(!core) return;
+  const cx = core.offsetLeft + core.offsetWidth / 2, cy = core.offsetTop + core.offsetHeight / 2;   // offsets, not rects: a chip mid-flight still measures from its place
+  document.querySelectorAll('.rb-fly').forEach(el=>{
+    let x = el.offsetLeft, y = el.offsetTop, op = el.offsetParent;
+    while(op && !op.classList.contains('rb-gather')){ x += op.offsetLeft; y += op.offsetTop; op = op.offsetParent; }
+    el.style.setProperty('--dx', Math.round(cx - (x + el.offsetWidth / 2)) + 'px');
+    el.style.setProperty('--dy', Math.round(cy - (y + el.offsetHeight / 2)) + 'px');
+  });
+}
+function renderRoadmapBuild(){
+  const p = state.profile || {}, redo = !!(state.viewParams || {}).redo;
+  const t = rbStart ? Date.now() - rbStart : RB_T.end + 1000;
+  if(t > RB_T.end + 1000) rbStart = 0;
+  const at = ms=>`animation-delay:${Math.round(ms - t)}ms;`;   // negative once it has passed: a repaint picks the motion up where it was
+  const rm = currentRoadmap(), name = (p.name || '').trim();
+  const chips = rbAnswers().map((a, i)=>`<span class="rb-fly" style="animation:rbFly .45s cubic-bezier(.55,0,.75,.4) both; ${at(RB_T.fly + i * RB_T.flyStep)}"><span class="rb-chip" style="--c:${a.c}; animation:rbChipIn .45s cubic-bezier(.22,1.35,.36,1) both; ${at(RB_T.chip + i * RB_T.chipStep)}"><i></i><bdi>${esc(a.t)}</bdi></span></span>`).join('');
+  // one card: the first ones drop in one by one (the rest are below the fold until the scroll); the Page report card lights up at the end
+  const card = (i, look, sub, title, poster, report)=>{
+    const anim = [], delay = [];
+    if(i < RB_T.cards){ anim.push('rbCardIn .45s cubic-bezier(.22,1.2,.36,1) both'); delay.push(Math.round(RB_T.card + i * RB_T.cardStep - t) + 'ms'); }
+    if(report){ anim.push('rbGlow .8s ease both'); delay.push(Math.round(RB_T.glow - t) + 'ms'); }
+    return `<div class="rb-card rb-${look}${report ? ' rb-report' : ''}"${anim.length ? ` style="animation:${anim.join(', ')}; animation-delay:${delay.join(', ')};"` : ''}><i class="rb-ring"></i>${poster ? `<img src="${poster}" alt="" style="object-position:${posterFocus(poster)};" decoding="async">` : ''}<div class="rb-ct"><small>${esc(sub)}</small><b>${bidiMix(title)}</b></div></div>`;
+  };
+  const cards = rm.map((it, i)=>{
+    const poster = it.type === 'game' ? gamePosterSrc(it) : '';
+    const sub = (it.goal && GOALS_META[it.goal] ? goalMetaLabel(it.goal) + ' · ' : '') + rbTypeLabel(it.type);
+    return card(i, poster ? 'poster' : (RB_LOOK_OF[it.type] || 'purple'), sub, nodeTitle(it), poster, false);
+  });
+  cards.push(card(rm.length, 'purple', displayLevel(p) + ' · ' + L('Report','Karne','کارنامه','Informe'), L('Page report','Sayfa karnesi','کارنامهٔ صفحه','Informe de la página'), '', true));
+  const n = rm.length, nTxt = LANG === 'fa' ? n.toLocaleString('fa-IR') : String(n);
+  const who = name ? '<bdi>' + esc(name) + '</bdi>' : '';
+  const wTitle = redo ? L('Your new roadmap is ready!','Yeni yol haritan hazır!','نقشه‌ی راه جدیدت آماده‌ست!','¡Tu nueva hoja de ruta está lista!')
+    : (name ? L('Welcome, {n}!', 'Hoş geldin, {n}!', 'خوش اومدی، {n}!', '¡Te doy la bienvenida, {n}!').replace('{n}', who) : L('Welcome!', 'Hoş geldin!', 'خوش اومدی!', '¡Te doy la bienvenida!'));
+  const wText = redo ? L('Built again from your new answers, for your level and your goals.','Yeni cevaplarına göre; seviyene ve hedeflerine uygun olarak yeniden kuruldu.','از روی جواب‌های تازه‌ات، برای سطح و هدف‌هات دوباره ساخته شد.','Hecha de nuevo con tus respuestas, para tu nivel y tus objetivos.')
+    : L("Your roadmap is ready, built for your level and your goals. A few minutes a day is all it takes, and I'm right beside you, every step of the way.",
+      'Yol haritan hazır; seviyene ve hedeflerine göre kuruldu. Günde birkaç dakika yeter, ben de her adımda yanındayım.',
+      'نقشهٔ راهت آماده‌ست؛ درست بر اساس سطح و هدف‌های خودت. روزی چند دقیقه کافیه، منم قدم‌به‌قدم کنارتم.',
+      'Tu hoja de ruta está lista, hecha para tu nivel y tus objetivos. Con unos minutos al día basta, y yo estoy a tu lado en cada paso.');
+  queueFx(()=>{ rbMeasure(); if(rbStart) rbSync(t); });
+  return `<div class="${t < 60 ? 'fade-in ' : ''}fs-scr onb-welcome onb-build">
+    <div class="screen">
+      <div class="onb-top"><div class="wordmark">Farin<span>${ONB_APP.word}</span></div><button class="rb-skip" data-action="rb-skip" style="animation:rbGone .25s ease both; ${at(RB_T.sheet)}">${L('Skip','Geç','رد شو','Saltar')}</button></div>
+      <div class="rb-body">
+        <div class="rb-run" aria-hidden="true" style="animation:rbGone .3s ease both; ${at(RB_T.sheet + 400)}">
+          <div class="onb-eb">${L('Your roadmap','Yol haritan','نقشه‌ی راهت','Tu hoja de ruta')}</div>
+          <div class="rb-ts">
+            <h2 class="onb-h2 rb-ta" style="animation:rbGone .22s ease both; ${at(RB_T.out)}">${L('Putting your answers together…','Cevaplarını bir araya getiriyoruz…','داریم جواب‌هات رو کنار هم می‌ذاریم…','Juntamos tus respuestas…')}</h2>
+            <h2 class="onb-h2 rb-tb" style="animation:rbBlink ${RB_T.scroll - RB_T.out + 100}ms ease both; ${at(RB_T.out + 200)}">${L('Building your roadmap…','Yol haritanı kuruyoruz…','داریم نقشه‌ی راهت رو می‌سازیم…','Creamos tu hoja de ruta…')}</h2>
+            <h2 class="onb-h2 rb-tc" style="animation:rbRise .35s ease both; ${at(RB_T.scroll + 300)}">${L('{n} steps, made for you','Sana özel {n} adım','{n} قدم، مخصوص خودت','{n} pasos, hechos para ti').replace('{n}', nTxt)}<span class="dot">.</span></h2>
+          </div>
+          <div class="rb-bar"><i style="animation:rbBar ${RB_T.glow - 150}ms cubic-bezier(.3,.6,.5,1) both; ${at(150)}"></i></div>
+          <div class="rb-stage">
+            <div class="rb-win"><div class="rb-col" style="animation:rbScroll ${RB_T.scrollDur}ms cubic-bezier(.7,0,.3,1) both; ${at(RB_T.scroll)}">${cards.join('')}</div></div>
+            <div class="rb-gather" style="animation:rbGatherOut .4s ease both; ${at(RB_T.out)}">
+              <div class="rb-cloud">${chips}</div>
+              <div class="rb-core" style="animation:rbGulp .45s ease both; ${at(RB_T.gulp)}">${who || (L('YOU','SEN','تو','TÚ') + '<span class="dot">.</span>')}</div>
+            </div>
+          </div>
+        </div>
+        <div class="onb-wcard rb-sheet" style="animation:rbSheetIn .6s cubic-bezier(.2,.85,.3,1) both; ${at(RB_T.sheet)}">
+          <h1 class="onb-wt" dir="auto">${wTitle}</h1>
+          <p class="onb-wp" dir="auto">${wText}</p>
+          <div class="onb-confetti" aria-hidden="true">${t < RB_T.end ? onbConfettiHtml(RB_T.sheet + 150 - t) : ''}</div>
+          <img class="onb-wfe" src="${feSrc('p-cheer')}" alt="" style="${at(RB_T.sheet + 250)}">
+        </div>
+      </div>
+    </div>
+    <div class="onb-foot rb-foot" style="animation:rbShow .35s ease both; ${at(RB_T.cta)}"><button class="btn btn-primary fs-cta onb-cta" data-action="welcome-continue">${L("Let's go", 'Hadi başlayalım', 'بزن بریم', '¡Vamos!')}</button></div>
   </div>`;
 }
 function renderDiagStep(){
@@ -31303,6 +31533,8 @@ const LEVEL_HANDLERS = {
 const screens = {
   'diagnostic-intro': renderDiagIntro,
   'welcome': renderWelcome,
+  'onb-intro': renderOnbIntro,
+  'roadmap-build': renderRoadmapBuild,
   'restore-code': renderRestoreCode,
   'diagnostic-step': renderDiagStep,
   'privacy-policy': renderPrivacyPolicy,
@@ -32825,7 +33057,7 @@ const HANDLERS = {
   'onb-continue'(){
     const vp = state.viewParams || {};
     if(vp.onbLearn && vp.onbLearn !== ONB_APP.self){ onbLeave(); return; }
-    HANDLERS['diag-start']();
+    go('onb-intro');   // the FEschool intro first (Farin 2026-11-25); its button ('diag-start') opens question 1
   },
   'lang-sheet-open'(){ langSheet = {view: state.view, learn: ONB_APP.self}; langSheetPaint(); const x = document.querySelector('.lsh-x'); if(x) x.focus({preventScroll:true}); },
   'lang-sheet-close'(){ langSheet = null; clearTimeout(onbLeaveTimer); langSheetPaint(); },
@@ -32962,7 +33194,7 @@ const HANDLERS = {
       if(phone){ contactSavePhone(phone, 'signup'); signupPhoneDraft = ''; }
       signupPromoDraft = false;
       const firstTime = !prev.completedDiagnostic && !prev.joinedAt;
-      if(firstTime && !courseLinkPending()){ go('welcome'); }   // the welcome screen (Farin 2026-11-21); 'welcome-continue' opens Home and asks about notifications
+      if(!courseLinkPending()){ rbPlay(!firstTime); }   // the roadmap build, ending on the welcome card (Farin 2026-11-21 + 2026-11-25); 'welcome-continue' opens Home (the first time, it asks about notifications)
       else {
         if(!courseLinkLand()) go('dashboard');
         showSplash();
@@ -32984,10 +33216,13 @@ const HANDLERS = {
     });
   },
   'welcome-continue'(){
-    navHistory.length = 0;   // Back on Home never returns to the welcome screen
+    const redo = state.view === 'roadmap-build' && !!(state.viewParams || {}).redo;
+    rbStart = 0;
     go('dashboard');
-    setTimeout(()=>{ try{ notifAfterSignup(); }catch(err){} }, 400);   // the notifications question (2026-11-16), after the welcome
+    navHistory.length = 0;   // Back on Home never returns to the welcome card (cleared after go(), which pushes the screen it leaves)
+    if(!redo) setTimeout(()=>{ try{ notifAfterSignup(); }catch(err){} }, 400);   // the notifications question (2026-11-16), after the welcome; a redo never asked it
   },
+  'rb-skip'(){ if(rbStart) rbStart = Date.now() - RB_T.sheet; render(); },   // Skip on the roadmap build: straight to the welcome card (its confetti still plays)
   'retake-diagnostic'(){
     state.diag = {step:0, goals:[], level:null, topics:[], learnerType:null, priorityArea:null, test:null};
     state.profile.completedDiagnostic = false;

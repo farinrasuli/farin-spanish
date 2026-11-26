@@ -36,7 +36,7 @@
 'use strict';
 if(window.CozyChores) return;
 var W = window, D = document;
-var VERSION = '0.6.1';   // 0.6.1 2026-11-19: the ask chips' pictures at their own shape (contain); 0.6.0 2026-11-16 Games 2.0 phase 1: tap to hear, Jot it down, the folded note + gold corners, 25 / 60 s hints, precision sparkle, light + room beds
+var VERSION = '0.6.2';   // 0.6.2 2026-11-26: the free line's microphone (one at a time, tap to stop, says why when it can't listen); 0.6.1 2026-11-19: the ask chips' pictures at their own shape (contain); 0.6.0 2026-11-16 Games 2.0 phase 1: tap to hear, Jot it down, the folded note + gold corners, 25 / 60 s hints, precision sparkle, light + room beds
 var ABORT = {abort:true};
 var G = null;                       // the running game (one at a time, like chStage in the app)
 var SPRING = 'cubic-bezier(.34,1.56,.64,1)';
@@ -102,6 +102,13 @@ var UI = {
   another:{en:'Another way to say it', tr:'Başka nasıl söylenir', fa:'یه جور دیگه هم می‌شه گفت', es:'Otra forma de decirlo'},
   helpMe:{en:'Show me one', tr:'Bir örnek göster', fa:'یه نمونه نشونم بده', es:'Enséñame un ejemplo'},
   mic:{en:'Speak', tr:'Konuş', fa:'حرف بزن', es:'Hablar'},
+  micStop:{en:'Listening… tap to stop', tr:'Dinliyorum… durdurmak için dokun', fa:'دارم گوش می‌دم… برای توقف بزن', es:'Escuchando… toca para parar'},
+  mic_blocked:{en:'The microphone is blocked. Allow it in your browser or phone settings, or type it.', tr:'Mikrofon engelli. Tarayıcının ya da telefonunun ayarlarından izin ver ya da yaz.', fa:'میکروفون بسته‌ست. از تنظیمات مرورگر یا گوشیت اجازه بده، یا بنویسش.', es:'El micrófono está bloqueado. Permítelo en los ajustes del navegador o del móvil, o escríbelo.'},
+  mic_nomic:{en:'No microphone was found. Type it instead.', tr:'Mikrofon bulunamadı. Bunun yerine yaz.', fa:'میکروفونی پیدا نشد. به جاش بنویسش.', es:'No se ha encontrado ningún micrófono. Escríbelo.'},
+  mic_lang:{en:"This device can't check speech in this language. Type it instead.", tr:'Bu cihaz bu dilde konuşmayı kontrol edemiyor. Bunun yerine yaz.', fa:'این دستگاه نمی‌تونه صحبت به این زبون رو بررسی کنه. به جاش بنویسش.', es:'Este dispositivo no puede comprobar la voz en este idioma. Escríbelo.'},
+  mic_network:{en:"The speech check couldn't connect. Try again, or type it.", tr:'Konuşma kontrolü bağlanamadı. Tekrar dene ya da yaz.', fa:'بررسی صدا وصل نشد. دوباره امتحان کن، یا بنویسش.', es:'La comprobación de voz no se ha podido conectar. Inténtalo otra vez o escríbelo.'},
+  mic_start:{en:"The microphone didn't start. Tap it again, or type it.", tr:'Mikrofon başlamadı. Tekrar dokun ya da yaz.', fa:'میکروفون روشن نشد. دوباره بزن، یا بنویسش.', es:'El micrófono no se ha encendido. Tócalo otra vez o escríbelo.'},
+  mic_quiet:{en:"I didn't hear anything. Tap the microphone and speak.", tr:'Hiçbir şey duymadım. Mikrofona dokun ve konuş.', fa:'چیزی نشنیدم. میکروفون رو بزن و حرف بزن.', es:'No he oído nada. Toca el micrófono y habla.'},
   next:{en:'Next', tr:'Devam', fa:'بعدی', es:'Siguiente'},
   said:{en:'I said it', tr:'Söyledim', fa:'گفتمش', es:'Ya lo he dicho'},
   skip:{en:'Skip', tr:'Geç', fa:'رد شو', es:'Saltar'},
@@ -2584,7 +2591,8 @@ async function evFreeLine(o){
     controls('<div class="oh-free">' +
       '<div class="oh-chips oh-chips-sm oh-starters">' + (sp.starters || []).map(function(st, i){ return '<button type="button" class="oh-chip oh-starter" data-i="' + i + '" lang="' + G.lang + '" dir="ltr">' + esc(st) + '</button>'; }).join('') + '</div>' +
       '<div class="oh-freebox"><textarea class="oh-freein" rows="2" lang="' + G.lang + '" dir="ltr" placeholder="' + esc(U('typeHere')) + '" autocomplete="off" spellcheck="false"></textarea>' +
-      (SR ? '<button type="button" class="oh-tool oh-mic" aria-label="' + esc(U('mic')) + '"><svg viewBox="0 0 24 24"><path d="M12 3a3 3 0 013 3v6a3 3 0 01-6 0V6a3 3 0 013-3zM6 11a6 6 0 0012 0M12 17v4"/></svg></button>' : '') + '</div>' +
+      (SR ? '<button type="button" class="oh-tool oh-mic" aria-pressed="false" aria-label="' + esc(U('mic')) + '"><svg viewBox="0 0 24 24"><path d="M12 3a3 3 0 013 3v6a3 3 0 01-6 0V6a3 3 0 013-3zM6 11a6 6 0 0012 0M12 17v4"/></svg></button>' : '') + '</div>' +
+      '<p class="oh-micnote" role="status" dir="' + uiDir() + '" hidden style="margin:6px 2px 0; font-size:13px; line-height:1.4; opacity:.85;"></p>' +
       '<div class="oh-askrow"><button type="button" class="oh-chip oh-help" hidden>' + esc(U('helpMe')) + '</button><button type="button" class="oh-chip oh-primary oh-send" disabled>' + esc(U('send')) + '</button></div></div>');
     var inp = G.ctl.querySelector('.oh-freein'), send = G.ctl.querySelector('.oh-send'), help = G.ctl.querySelector('.oh-help');
     var hn = null;
@@ -2600,19 +2608,12 @@ async function evFreeLine(o){
       });
     });
     var mic = G.ctl.querySelector('.oh-mic');
-    if(mic) mic.addEventListener('click', function(){
-      try{
-        var r = new SR(); r.lang = G.lang === 'es' ? 'es-ES' : 'en-GB'; r.interimResults = false;
-        mic.classList.add('oh-on');
-        r.onresult = function(e){ var t = e.results[0][0].transcript; inp.value = (inp.value.trim() ? inp.value.trim() + ' ' : '') + t; ok(); if(hn) hn.progress(); };
-        r.onend = r.onerror = function(){ mic.classList.remove('oh-on'); };
-        r.start();
-      }catch(e){ mic.classList.remove('oh-on'); }
-    });
-    help.addEventListener('click', function(){ inp.value = fill(T(sp.model), sp.model); ok(); sfx('paper'); });
+    // a tap starts the mic, a second tap stops it and keeps what it heard (micListen); typing always works
+    if(mic) mic.addEventListener('click', function(){ if(G.mic){ G.mic.finish(); return; } micListen(mic, inp, G.ctl.querySelector('.oh-micnote'), function(){ ok(); if(hn) hn.progress(); }); });
+    help.addEventListener('click', function(){ micStop(); inp.value = fill(T(sp.model), sp.model); ok(); sfx('paper'); });
     hn = hints({h15:function(){ var b = G.ctl.querySelector('.oh-starter'); if(b) b.classList.add('oh-shine'); }, h45:function(){ help.hidden = false; help.classList.add('oh-shine'); }});
     G.status = {kind:'free', station:G.sid, input:'.oh-freein', send:'.oh-send', starters:'.oh-starter', help:'.oh-help'};
-    send.addEventListener('click', function(){ if(words(inp.value) < 3) return; hn.stop(); G.status = {kind:'scripted', station:G.sid}; res(inp.value.trim().replace(/\s+/g, ' ')); });
+    send.addEventListener('click', function(){ micStop(); if(words(inp.value) < 3) return; hn.stop(); G.status = {kind:'scripted', station:G.sid}; res(inp.value.trim().replace(/\s+/g, ' ')); });
   });
   G.root.classList.remove('oh-compact', 'oh-freeing');
   controls(''); cue(null);
@@ -2624,6 +2625,52 @@ async function evFreeLine(o){
   await modelCard(sp.model);
   if(o.souvenir){ var cs = contentStation(o.backFrom || G.sid) || {}; G.round.souvenir = {text:text, say:text, model:fill(T(sp.model), sp.model), back:T((cs.souvenir || {}).back), backGl:GL((cs.souvenir || {}).back)}; save(true); }
 }
+/* The free line's microphone (2026-11-26, Farin: the speaking mic must work everywhere, "I don't want this to be an error again").
+   One listener at a time (G.mic). A tap starts it, a second tap stops it at once and keeps what it heard; the words show in the box
+   while the learner talks; it ends by itself at the end of a sentence, at a pause or after 12 s, even if the browser never sends
+   onend; Send, Show me one, leaving the game (destroy) and the app going to the background stop it. A voice still playing stops
+   first. When it can't listen (blocked, no mic, no speech check for the language, no connection, a start that throws) or heard
+   nothing, a line under the box says so; typing always works. Same rules as the app's own mic (rlListen in the app files;
+   Claude/qa/speaking-mic-check.mjs tests both). */
+function micStop(){ var m = G && G.mic; if(m) m.finish(); }
+function micListen(btn, inp, noteEl, after){
+  var SR = W.SpeechRecognition || W.webkitSpeechRecognition;
+  if(!SR || !G) return;
+  micStop(); stopSpeech();
+  var g = G, r = null, done = false, base = inp.value.trim(), got = '', live = '', bad = '', tm = 0;
+  var note = function(k){ if(!noteEl) return; var t = k ? U('mic_' + k) : ''; noteEl.textContent = t; noteEl.hidden = !t; };
+  var show = function(t){ inp.value = (base ? base + ' ' : '') + t; };
+  var vis = function(){ if(D.hidden) finish(); };
+  var finish = function(){
+    if(done) return; done = true; clearTimeout(tm); D.removeEventListener('visibilitychange', vis);
+    if(r){ r.onresult = r.onerror = r.onend = null; try{ r.abort(); }catch(e){} }
+    if(g.mic === m) g.mic = null;
+    btn.classList.remove('oh-on'); btn.setAttribute('aria-pressed', 'false'); btn.setAttribute('aria-label', U('mic'));
+    var heard = (got || live).replace(/\s+/g, ' ').trim();
+    if(heard) show(heard);
+    note(heard ? '' : (bad || 'quiet'));
+    if(after) try{ after(); }catch(e){}
+  };
+  var m = {finish:finish}; g.mic = m;
+  note('');
+  try{
+    r = new SR(); r.lang = g.lang === 'es' ? 'es-ES' : 'en-GB'; r.interimResults = true; r.continuous = false; r.maxAlternatives = 1;
+    r.onresult = function(e){
+      var f = '', im = '';
+      for(var i = 0; i < e.results.length; i++){ var x = e.results[i], t = String((x && x[0] && x[0].transcript) || '').trim(); if(!t) continue; if(x.isFinal) f += (f ? ' ' : '') + t; else im += (im ? ' ' : '') + t; }
+      got = f; live = (f + ' ' + im).trim();
+      if(live){ show(live); if(after) try{ after(); }catch(e){} }
+      if(f && !im) finish();   // a whole sentence is in
+    };
+    r.onerror = function(e){ var c = e && e.error; bad = c === 'not-allowed' || c === 'service-not-allowed' ? 'blocked' : c === 'audio-capture' ? 'nomic' : c === 'network' ? 'network' : c === 'language-not-supported' ? 'lang' : bad; if(bad) finish(); };
+    r.onend = finish;
+    D.addEventListener('visibilitychange', vis);
+    tm = setTimeout(finish, 12000);
+    btn.classList.add('oh-on'); btn.setAttribute('aria-pressed', 'true'); btn.setAttribute('aria-label', U('micStop'));
+    r.start();
+  }catch(err){ bad = 'start'; finish(); }
+}
+
 // "Another way to say it": the model line with play, then Next
 async function modelCard(m){
   if(!m) return;
@@ -3144,6 +3191,7 @@ async function main(g, resumed){
 }
 function destroy(o){
   var g = G; if(!g) return;
+  if(g.mic) try{ g.mic.finish(); }catch(e){}   // the free line's microphone stops with the game
   g.dead = true;
   stopSpeech();
   roomStop();

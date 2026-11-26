@@ -484,6 +484,9 @@
   font:500 16.5px/1.35 var(--oh-text); color:var(--oh-ink); resize:none; user-select:text; -webkit-user-select:text; box-shadow:inset 0 2px 0 rgba(20,51,46,.06);}
 .oh-freein:focus{outline:none; box-shadow:0 0 0 3px var(--oh-accent-soft);}
 .oh-mic{position:absolute; right:6px; top:50%; transform:translateY(-50%);}
+/* 2026-11-26: pressed, it stays where it is. .oh-tool:active's scale(.9) alone replaced the translateY, so the mic jumped 13 px down under
+   the finger, the release landed on the text box and the tap never reached the mic ("the microphone does not reliably start"). */
+.oh-mic:active{transform:translateY(-50%) scale(.9);}
 .oh-mic.oh-on{background:var(--oh-accent); color:#fff;}
 .oh-help[hidden]{display:none;}
 .oh-model{display:flex; flex-direction:column; gap:6px; text-align:center; padding:10px 12px; border:2px dashed var(--oh-gold); border-radius:16px; background:var(--oh-gold-soft);}

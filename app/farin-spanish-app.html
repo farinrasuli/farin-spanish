@@ -20748,6 +20748,9 @@ function studioMicNoteText(kind, shadow){
     : L("The speech check couldn't connect. Check your internet and tap the microphone again, or type what you said.",'Konuşma kontrolü bağlanamadı. İnternetini kontrol et ve mikrofona tekrar dokun ya da söylediğini yaz.','بررسی صدا وصل نشد. اینترنتت را چک کن و دوباره میکروفون را بزن، یا چیزی را که گفتی بنویس.','La comprobación de voz no se ha podido conectar. Revisa tu conexión y toca el micrófono otra vez, o escribe lo que has dicho.');
   if(kind === 'start') return shadow ? L("The microphone won't start on this device right now, so say it out loud.",'Mikrofon şu an bu cihazda başlamıyor, o yüzden yüksek sesle söyle.','میکروفون الان روی این دستگاه روشن نمی‌شود، پس بلند بگو.','El micrófono no se enciende ahora en este dispositivo, así que dilo en voz alta.')
     : L("The microphone didn't start. Tap it again.",'Mikrofon başlamadı. Tekrar dokun.','میکروفون روشن نشد. دوباره بزن.','El micrófono no se ha encendido. Tócalo otra vez.');
+  // Say It Back has no box to type in
+  if(kind === 'net-retry') return L("The speech check couldn't connect. Check your internet and tap the microphone again.",'Konuşma kontrolü bağlanamadı. İnternetini kontrol et ve mikrofona tekrar dokun.','بررسی صدا وصل نشد. اینترنتت را چک کن و دوباره میکروفون را بزن.','La comprobación de voz no se ha podido conectar. Revisa tu conexión y toca el micrófono otra vez.');
+  if(kind === 'net-shadow') return L("The speech check can't connect right now, so say it out loud.",'Konuşma kontrolü şu an bağlanamıyor, o yüzden yüksek sesle söyle.','بررسی صدا الان وصل نمی‌شود، پس بلند بگو.','La comprobación de voz no se puede conectar ahora, así que dilo en voz alta.');
   if(kind === 'quiet') return L("I didn't hear anything. Tap the microphone and speak.",'Hiçbir şey duymadım. Mikrofona dokun ve konuş.','چیزی نشنیدم. میکروفون را بزن و صحبت کن.','No he oído nada. Toca el micrófono y habla.');
   return '';
 }
@@ -20828,8 +20831,7 @@ function toggleStudioMic(){
 // Every mic in the app stops (the app goes to the background, the page closes, a navigation).
 function micStopAll(){
   try{ if(studioRecognition){ const vp = studioRecognition.vp; stopStudioMic(); if(vp && studioMicScreen(vp)) render(); } }catch(e){}
-  try{ rlMicStop(); }catch(e){}
-  try{ echoStopRec(); }catch(e){}
+  try{ const had = !!rlMic; rlMicStop(); echoStopRec(); if(had) render(); }catch(e){}   // a Say it chip or Say It Back shows that it stopped (2026-11-26)
 }
 
 /* Teaching redesign phase 2, S9 writing tasks (smallest version of build item 20). A writing round started at a stage
@@ -25758,7 +25760,7 @@ function fxHuntPassage(pi){
    "Say it out loud" + "I said it"; no score, no golden, record "5 lines spoken".
    Untimed, no lives. Does not count as the set's review. */
 const ECHO_LINES = 5;
-let echoRec = null;
+let echoRec = null, echoMicOn = false;   // echoMicOn: Say It Back's take is listening through rlListen (2026-11-26)
 function echoNumberWords(){
   return TTS_LANG.indexOf('es') === 0
     ? ['cero','uno','dos','tres','cuatro','cinco','seis','siete','ocho','nueve','diez','once','doce']
@@ -25841,42 +25843,41 @@ function echoSpeak(round, rate){
 }
 function echoStopRec(){
   if(echoRec){ try{ echoRec.onend = null; echoRec.onresult = null; echoRec.onerror = null; echoRec.stop(); }catch(e){} echoRec = null; }
+  if(echoMicOn){ echoMicOn = false; rlMicStop(); }
 }
 function echoEnterShadow(round){
   echoStopRec();
   round.shadow = true; round.listening = false;
   if(state.viewParams && state.viewParams.round === round){ save(); render(); }
 }
+/* Say It Back's mic (2026-11-26, Farin: the speaking mic must work everywhere, "I don't want this to be an error again"): the
+   shared Say it listener (rlListen), so a tap on Stop ends the take at once and keeps what it heard, it ends by itself at the end
+   of the line, at a pause or after 12 s even when the browser sends nothing, and one mic is on in the whole app. A take that heard
+   nothing does not use up one of the 3 tries ("I didn't hear anything"). Blocked / no mic / no speech check for the language =
+   the shadow round with a line that says why; no connection or a start that throws = a line and one more try, then the shadow
+   round. Stopped from outside (navigation, the app going to the background): the take just ends. */
 function echoStartListening(round){
-  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-  if(!SR){ echoEnterShadow(round); return; }
-  echoStopRec();
-  ttsStop();
-  const line = round.lines[round.index];
-  const rec = new SR();
-  rec.lang = TTS_LANG; rec.interimResults = true; rec.continuous = false; rec.maxAlternatives = 1;
-  let finalText = '', failed = false;
-  echoRec = rec;
-  round.listening = true; line.heard = '';
-  rec.onresult = (e)=>{
-    let interim = '';
-    for(let i=0;i<e.results.length;i++){ const r = e.results[i]; if(r.isFinal) finalText += (finalText ? ' ' : '') + r[0].transcript.trim(); else interim += r[0].transcript; }
-    line.heard = (finalText + ' ' + interim).trim();
+  const line = round.lines[round.index], vp = state.viewParams;
+  const here = ()=>state.viewParams === vp && vp && vp.round === round;
+  round.listening = true; line.heard = ''; round.micNote = '';
+  const on = rlListen(12000, live=>{
+    if(!here()) return;
+    line.heard = live;
     const w = document.getElementById('echo-words');
     if(w && line.revealed) w.innerHTML = echoWordsHtml(line.text, line.heard, false);
-  };
-  rec.onerror = (e)=>{
-    const code = e && e.error;
-    if(code === 'not-allowed' || code === 'service-not-allowed' || code === 'network' || code === 'audio-capture'){ failed = true; echoEnterShadow(round); }
-  };
-  rec.onend = ()=>{
-    if(echoRec === rec) echoRec = null;
-    if(failed || round.shadow) return;
-    round.listening = false;
-    line.heard = finalText || line.heard;
-    echoAttempt(round, line.heard);
-  };
-  try{ rec.start(); }catch(e){ echoEnterShadow(round); return; }
+  }, (heard, why)=>{
+    echoMicOn = false; round.listening = false;
+    if(why === 'ok'){ round.micFails = 0; line.heard = heard; echoAttempt(round, heard); return; }
+    if(why === 'empty'){ line.heard = ''; round.micNote = 'quiet'; if(here()){ save(); render(); } return; }   // nothing heard: not one of the 3 tries
+    if(why === 'network' || why === 'start'){
+      round.micFails = (round.micFails || 0) + 1;
+      if(round.micFails < 2){ round.micNote = why === 'network' ? 'net-retry' : 'start'; if(here()){ save(); render(); } return; }
+      round.micNote = why === 'network' ? 'net-shadow' : 'start';
+    } else round.micNote = why;
+    echoEnterShadow(round);
+  }, ()=>{ echoMicOn = false; round.listening = false; });
+  if(!on) return;   // no speech recognition, or a start that threw: done() already ran
+  echoMicOn = true;
   queueFx(()=>companionSay(L("I'm listening…",'Dinliyorum…','دارم گوش می‌دم…','Te escucho…'), 2500));
   save(); render();
 }
@@ -25968,12 +25969,14 @@ function renderGameEcho(){
     ${round.shadow
       ? `<div class="echo-shadow">
           <div class="echo-say">${L('Say it out loud','Yüksek sesle söyle','بلند بگو','Dilo en voz alta')}</div>
+          ${studioMicNoteHtml({micNote:round.micNote}, true)}
           <div class="echo-btns">
             <button class="btn btn-ghost" data-action="echo-play" data-rate="0.92">${L('Once more','Bir daha','یک بار دیگر','Otra vez')}</button>
             <button class="btn btn-primary" data-action="echo-said">${L('I said it','Söyledim','گفتم','Ya lo he dicho')}</button>
           </div>
         </div>`
       : `<div class="echo-micwrap">
+          ${round.listening ? '' : studioMicNoteHtml({micNote:round.micNote}, false)}
           ${result ? `<div class="echo-verdict ${line.best.clear ? 'clear' : ''}" id="echo-verdict">${esc(verdict)}</div>` : ''}
           ${(!result || canRetry) ? `<button class="echo-mic${round.listening ? ' listening' : ''}" data-action="echo-mic" aria-label="${esc(L('Speak','Konuş','صحبت کن','Habla'))}">${ICONS.mic || ICONS.chat}</button>
           <div class="game-play-label">${round.listening ? L('Listening… tap to stop','Dinliyorum… durdurmak için dokun','دارم گوش می‌دم… برای توقف بزن','Escuchando… toca para parar') : (result ? L('Once more','Bir daha','یک بار دیگر','Otra vez') : L('Tap and speak','Dokun ve konuş','بزن و بگو','Toca y habla'))}</div>` : ''}
@@ -29147,7 +29150,7 @@ function rlSeqPlay(texts, before, after, done){
   step(0);
 }
 function rlSay(text){ try{ ttsSpeak(text, 0.92, null, {natural:true}); }catch(e){} }
-function rlMicStop(){ const r = rlMic; rlMic = null; if(r){ try{ r.onresult = r.onerror = r.onend = null; r.abort(); }catch(e){} } }
+function rlMicStop(){ const r = rlMic; rlMic = null; if(r){ try{ r.onresult = r.onerror = r.onend = null; r.abort(); }catch(e){} if(r.onDrop) try{ r.onDrop(); }catch(e){} } }
 // A second tap on a listening "Say it" chip: the mic stops now and the chip's done() gets what it heard.
 function rlMicFinish(){ const r = rlMic; if(r && r.finish) r.finish(); else rlMicStop(); }
 /* The "Say it" chips of the lesson rounds (dialogue Round 3, story Round 2, a speaking card's Round 2), Farin 2026-11-25 "fix the
@@ -29156,7 +29159,7 @@ function rlMicFinish(){ const r = rlMic; if(r && r.finish) r.finish(); else rlMi
    after maxMs, even when the browser never sends onend. done(heard, why): 'ok'; 'empty' = the mic worked but heard nothing (the
    chip asks once more, then counts the line); 'blocked' / 'nomic' / 'network' / 'lang' / 'start' = it can't listen here (the line
    counts, never blocked). Returns false when done() already ran (no speech recognition, or a start that threw). */
-function rlListen(maxMs, onWords, done){
+function rlListen(maxMs, onWords, done, onDrop){   // onDrop: the mic was stopped from outside (navigation, background, another mic)
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
   if(!SR){ done('', 'nomic'); return false; }
   rlMicStop(); stopStudioMic(); echoStopRec(); ttsStop();
@@ -29182,6 +29185,7 @@ function rlListen(maxMs, onWords, done){
     if(bad) end(); };
   r.onend = end;
   r.finish = end;
+  r.onDrop = onDrop || null;
   rlMic = r;
   tm = setTimeout(end, maxMs);
   try{ r.start(); }catch(err){ bad = 'start'; end(); return false; }
@@ -33140,7 +33144,7 @@ function theatreExit(){
    their nodes, Cozy Chores and Case Closed play the old way. Set GAMES_V2_LIVE.radio / .mystery / .chores to true (both apps) to put that game live; bump GAMES_VER
    whenever a games/ engine changes. (var, not const: SHELF_GAMES reads the flag earlier in the file.) */
 // (GAMES_V2_LIVE, the per-game switch, is declared above SHELF_GAMES)
-var GAMES_VER = '13';   // 13: the 3D Open House and Harbour Files posters (games/posters/chores.webp, mystery.webp, Higgsfield 2026-11-26); 12: Open House 0.6.1 (the ask chips' pictures contained, 2026-11-19); 11: Games 2.0 phase 1 for Harbour Files / Open House / Mini Radio (2026-11-16)
+var GAMES_VER = '14';   // 14: Open House 0.6.2 (the free line's microphone: no lost taps, tap to stop, says why, 2026-11-26); 13: the 3D Open House and Harbour Files posters (games/posters/chores.webp, mystery.webp, Higgsfield 2026-11-26); 12: Open House 0.6.1 (the ask chips' pictures contained, 2026-11-19); 11: Games 2.0 phase 1 for Harbour Files / Open House / Mini Radio (2026-11-16)
 var g2Flag = null, g2Game = null, g2KeepNow = null, g2Pending = null;
 var G2_KINDS = ['chores', 'mystery', 'radio'];
 var G2_COZY = {A1:'movein', A2:'cake', B1:'bouquet', B2:'laundry', C1:'party'};   // the anchor project per level (Cozy GDD 0)
@@ -34859,7 +34863,7 @@ const HANDLERS = {
   'echo-mic'(){
     const vp = state.viewParams, round = vp && vp.round;
     if(!round || round.finished || round.shadow) return;
-    if(round.listening){ const r = echoRec; if(r){ try{ r.stop(); }catch(e){} } return; }
+    if(round.listening){ if(echoMicOn && rlMic) rlMicFinish(); else { round.listening = false; save(); render(); } return; }   // a second tap stops it at once (2026-11-26)
     const line = round.lines[round.index];
     if(line.attempts >= 3 && line.state === 'result') return;
     line.state = 'speak';

@@ -570,7 +570,7 @@
   /* 3D booth (2026-11-26): "Passport, please!" comes from the booth: the anchor is on the booth's side at the window ledge, so the balloon
      (under it, tail up) sits beside the officer and clear of the traveller's face at every phone size
      (the anchor is on the mirrored art, so in the fa UI it moves to the other side with the picture) */
-  body.gw-on.gw-desk #desk-officer{left:96%; top:35.5%;}   /* full-page art (2026-11-26): the plate fills the column, so the booth's right edge */
+  body.gw-on.gw-desk #desk-officer{left:96%; top:45.8%;}   /* full-page art (2026-11-26): the plate fills the column, so the booth's right edge */
   @media (max-height:700px){ body.gw-on.gw-desk .desk-row{min-height:44px;} body.gw-on.gw-desk .game-status{min-height:16px;}
     body.gw-on.gw-desk .th-say .th-balloon{max-width:150px; font-size:13.5px; padding:5px 10px;} }
   body.gw-on.gw-desk .desk-end{display:flex; flex-direction:column; align-items:center; gap:12px; padding:16px 16px 14px;}
@@ -23157,7 +23157,7 @@ function orderTrayHtml(round){
 // measured on the plate's perspective (eye line about 32% from the top).
 const ORDER_CAST = {f:['bell','okafor','leyla','rosa','hana','gran'], m:['tom','ben','ollie','pike']};
 const ORDER_TOWN = ORDER_CAST || {f:['bell','okafor','leyla','rosa','hana','gran'], m:['tom','ben','ollie','pike']};
-const ORDER_SPOT = ORDER_CAST ? {door:{x:13, b:38, h:32}, counter:{x:60, b:12, h:60}} : {counter:[57, 32.5, 37]};
+const ORDER_SPOT = ORDER_CAST ? {door:{x:12, b:40, h:24}, counter:{x:60, b:21.5, h:36}} : {counter:[57, 32.5, 37]};   // the 9:16 café (2026-11-26): the door's floor at 60 %, the counter edge at 79 %
 function orderWorldOn(){ return !!(window.Theatre && Theatre.world && Theatre.world() === 'order'); }
 // In the world each menu item and extra is its own clear-line render (games/worlds/order/art/item-<id>.webp, extra-<id>.webp; one render
 // each, 2026-11-15; hot chocolate, cookie, pizza slice and milk rendered in colour 2026-11-18, wired 2026-11-19).
@@ -24108,9 +24108,9 @@ function deskFaceSrc(round, t){
 // for everyone; the officer stands in the booth window behind the counter ledge (the world's front layer hides him below it).
 const DESK_TRAV_H = {1:506, 2:494, 3:495, 4:497, 5:503, 6:496};   // traveller-N-*.webp heights at 400 px wide (the three faces differ by a few px)
 function deskTravBox(src){
-  const n = Number((String(src).match(/traveller-(\d+)-/) || [])[1]) || 2, h = 52;   // 52% of the 704x880 booth plate's height
-  const w = +(h * 880 / 704 * 400 / (DESK_TRAV_H[n] || 498)).toFixed(2);
-  return [+(26 - w / 2).toFixed(2), (window.innerHeight || 800) < 700 ? 54 : 50, w];   // full-page art (2026-11-26): her face above the panel line (the plate's 78 %); a short phone: a little lower, clear of the caption box
+  const n = Number((String(src).match(/traveller-(\d+)-/) || [])[1]) || 2, h = 45;   // 45% of the 9:16 booth plate's height (864x1536), the bust's lower edge on the plate's bottom edge
+  const w = +(h * 1536 / 864 * 400 / (DESK_TRAV_H[n] || 498)).toFixed(2);
+  return [+Math.max(0, 33 - w / 2).toFixed(2), (window.innerHeight || 800) < 700 ? 58.8 : 55, w];   // full-page art (2026-11-26): her face above the panel line (the plate's 78 %); a short phone: a little lower, clear of the caption box
 }
 function deskStageSync(round, t){
   try{ if(window.Theatre && Theatre.actor && worldKind() === 'desk'){
@@ -24119,7 +24119,7 @@ function deskStageSync(round, t){
     if(tr) tr.classList.add('gw-fg');
     // the officer smiles when the traveller is through, looks surprised after a wrong try
     const of = t ? 'games/worlds/desk/art/officer-' + (t.done ? 'warm' : (t.tries ? 'oh' : 'calm')) + '.webp' : null;
-    Theatre.actor('desk-off', of, of ? [57, 26.2, 22] : null, 'gw-officer');
+    Theatre.actor('desk-off', of, of ? [57, 39.2, 22] : null, 'gw-officer');   // in the window (the 9:16 booth, 2026-11-26)
   } }catch(e){}
   return '';
 }
@@ -32838,7 +32838,7 @@ const THEATRE_QUICK = ['match','build','cross','order','desk','spell','bingo','h
 const THEATRE_QUICK_VIEWS = THEATRE_QUICK.map(k=>'game-' + k);
 const THEATRE_KINDS = ['path','chores','mystery','radio'].concat(THEATRE_QUICK);
 const THEATRE_VIEWS = ['game-path','game-yc','game-chores-building','game-chores-room','game-mystery','game-v2'].concat(THEATRE_QUICK_VIEWS);
-const THEATRE_VER = '30';   // 30: full-page art (Theatre 1.4: posters cover the screen with <kind>-full.webp, worlds edge to edge, w.fit) (2026-11-26); 29: Passport Desk in the 3D booth (officer in the window, traveller on the pier, desk-booth ?v=hf1) (2026-11-26); 28: the 3D posters of the quick games and Mini Radio (games/posters/<kind>-3d.webp), cards ?v=3 (2026-11-26); 27: Captain in 3D (spots moved, the café spots back; 2026-11-26); 26: card posters with ?v= in skins.js (2026-11-26); 25: Passport Desk's 3D poster (games/posters/desk-3d.webp) and the new 3D roadmap cards (Open House / Harbour Files posters: GAMES_VER 13); 24: Order Up!'s 3D poster (games/posters/order-3d.webp); 23: Order Up! full-body 3D cast + café plate (Higgsfield, farin-e9), world.css v2; 22: Order Up! cozy pass (skins.js order: wood panel, warm glow, café sounds, world.css; 2026-11-25); 21: Magic Words v2 (the hall of doors: skins.js spell world, plate mw-hall, bed, wide plate as the sides); 20: Story Hunt's wide opening / closing shot, Word Rush's end beat in the band + short-screen fit + clean card pile, Theatre 1.2.5; 19: worlds art (Story Hunt strip, Word Rush porthole, Mini Cross + Build It posters, Order Up! re-rolls, traveller 1), Theatre 1.2.4; 18: Passport Desk re-review (captions on the art, the HUD strip, the end over the booth, the horn, Theatre.quiet), Theatre 1.2.3; 17: text direction in the fa UI (Latin-script lines left to right), the companion line clear of x; 16: Games 2.0 step 5 part 4 (sound spots: gulls + the library clock; Passport Desk's traveller behind the booth counter; Trap Dash lanes); 15: Games 2.0 step 4 (Brave switch, boss beat, Captain); 14: the world art wiring + Sam's balloon waits for his picture (2026-11-16)
+const THEATRE_VER = '31';   // 31: the 9:16 3D rooms for nine worlds (plate *-full.webp, fit, people / Captain re-placed, Word Rush's porthole fog, the end over the booth full screen) (2026-11-26); 30: full-page art (Theatre 1.4: posters cover the screen with <kind>-full.webp, worlds edge to edge, w.fit) (2026-11-26); 29: Passport Desk in the 3D booth (officer in the window, traveller on the pier, desk-booth ?v=hf1) (2026-11-26); 28: the 3D posters of the quick games and Mini Radio (games/posters/<kind>-3d.webp), cards ?v=3 (2026-11-26); 27: Captain in 3D (spots moved, the café spots back; 2026-11-26); 26: card posters with ?v= in skins.js (2026-11-26); 25: Passport Desk's 3D poster (games/posters/desk-3d.webp) and the new 3D roadmap cards (Open House / Harbour Files posters: GAMES_VER 13); 24: Order Up!'s 3D poster (games/posters/order-3d.webp); 23: Order Up! full-body 3D cast + café plate (Higgsfield, farin-e9), world.css v2; 22: Order Up! cozy pass (skins.js order: wood panel, warm glow, café sounds, world.css; 2026-11-25); 21: Magic Words v2 (the hall of doors: skins.js spell world, plate mw-hall, bed, wide plate as the sides); 20: Story Hunt's wide opening / closing shot, Word Rush's end beat in the band + short-screen fit + clean card pile, Theatre 1.2.5; 19: worlds art (Story Hunt strip, Word Rush porthole, Mini Cross + Build It posters, Order Up! re-rolls, traveller 1), Theatre 1.2.4; 18: Passport Desk re-review (captions on the art, the HUD strip, the end over the booth, the horn, Theatre.quiet), Theatre 1.2.3; 17: text direction in the fa UI (Latin-script lines left to right), the companion line clear of x; 16: Games 2.0 step 5 part 4 (sound spots: gulls + the library clock; Passport Desk's traveller behind the booth counter; Trap Dash lanes); 15: Games 2.0 step 4 (Brave switch, boss beat, Captain); 14: the world art wiring + Sam's balloon waits for his picture (2026-11-16)
 // World Kit switch (worlds SPEC 4.14): one flag per quick game, on once its art and checks pass (Farin 11-10: switch on what is done).
 // ?worlds=1 previews every world in this browser (?worlds=0 switches the preview off). Off = the game plays over its poster's soft backdrop.
 // 2026-11-15 World Kit v1 live: Order Up!, Word Bingo, Mini Cross, Build It, Say It Back (their plates and props passed art QC). Passport Desk waits
@@ -33023,14 +33023,14 @@ function worldTypist(r){
   if(worldKind() !== 'dictation' || !r || !r.sentences || !window.Theatre || !Theatre.actor) return;
   const last = r.results && r.results[r.results.length - 1];
   const face = r.checked && last && last.pct >= 70 ? 'pleased' : (Date.now() - (r.listenAt || 0) < 3000 ? 'listen' : 'calm');
-  Theatre.actor('gw-typist', 'games/worlds/dictation/art/typist-' + face + '.webp', [38, 47, 26], 'gw-typist');
+  Theatre.actor('gw-typist', 'games/worlds/dictation/art/typist-' + face + '.webp', [5, 41, 35], 'gw-typist');   // the 9:16 attic (2026-11-26): in the armchair at the desk
 }
 // Say It Back (worlds SPEC 9): the host and his echo (one picture, the echo at 40 %) in the inline-start third. He listens while the line
 // plays, speaks while the mic is on, and looks pleased on a clear line and at the end.
 function worldEchoHost(r){
   const line = r.lines && r.lines[r.index];
   const face = r.listening ? 'speak' : ((r.finished || (line && line.state === 'result' && line.clear)) ? 'pleased' : 'listen');
-  Theatre.actor('gw-host', 'games/worlds/echo/art/echo-duo-' + face + '.webp', [22, 40.6, 40], 'gw-host');   // behind the desk (the front layer), right of the lamp
+  Theatre.actor('gw-host', 'games/worlds/echo/art/echo-duo-' + face + '.webp', [12, 33.5, 44], 'gw-host');   // in the chair behind the desk, arms on it (the 9:16 studio, 2026-11-26)
 }
 // The world's own sounds (SPEC 4.10): the app's sound names played as the world's foley (the Open House CC0 kit); anything not
 // listed keeps the app's own sound. Say It Back keeps its quiet UI sounds (accuracy matters there).

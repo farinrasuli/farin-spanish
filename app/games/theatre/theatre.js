@@ -346,6 +346,7 @@ function paintWorld(s){
   body.style.setProperty('--gw-fy', String(cssNum(fit.y, 92, 40, 98) / 100));
   body.style.setProperty('--gw-ey', String(cssNum(fit.ey, 50, 0, 100) / 100));
   body.style.setProperty('--gw-pr', String(cssNum(w.plate && w.plate.ratio, 1.25, .3, 3)));
+  body.classList.toggle('gw-tall', cssNum(w.plate && w.plate.ratio, 1.25, .3, 3) > 1.5);   // a 9:16 plate (step 2): its end laid over the place covers the screen
   var plate = src ? '<div class="th-world-blur" style="background-image:url(\'' + esc(src) + '\')"></div>' : '';
   var plateImg = src ? '<img class="th-world-plate" src="' + esc(src) + '" alt="">' : '';
   var cut = (w.layers || []).filter(function(l){ return l && l.ready && l.src; }).map(function(l){
@@ -362,10 +363,13 @@ function paintWorld(s){
   // Hunt's library shelf, its lamp lit by the mood glow at strip.glow [x%, y%]), or a round window with a view in it (Word Rush's porthole:
   // the harbour clears as the pairs are found, whole at the end). Both whole pictures; the establishing shot still shows the whole plate.
   var small = w.band === 'small', strip = small && w.strip && w.strip.ready && w.strip.src ? w.strip : null, port = small && w.port && w.port.ready && w.port.ring ? w.port : null;
+  // port.haze [x, y, d] (full-page art, 2026-11-26): the porthole is in the plate; a fog over its glass clears with --gw-frac (plate %, d = % of its width)
+  var haze = small && src && w.port && w.port.ready && w.port.haze ? w.port.haze : null;
   body.classList.toggle('gw-strip', !!strip); body.classList.toggle('gw-port', !!port);
   if(strip) body.style.setProperty('--gw-stage', 'calc(var(--gw-colw) / ' + cssNum(strip.ratio, 3, 1, 8) + ')');
   var bandArt = (strip ? '<img class="th-world-strip" src="' + esc(strip.src) + '" alt="">' : '') +
-    (port ? '<div class="th-world-port">' + (port.view ? '<img class="th-port-view" src="' + esc(port.view) + '" alt="">' : '') + '<img class="th-port-ring" src="' + esc(port.ring) + '" alt=""></div>' : '');
+    (port ? '<div class="th-world-port">' + (port.view ? '<img class="th-port-view" src="' + esc(port.view) + '" alt="">' : '') + '<img class="th-port-ring" src="' + esc(port.ring) + '" alt=""></div>' : '') +
+    (haze ? '<i class="th-port-haze" style="--hx:' + cssNum(haze[0], 50, 0, 100) / 100 + ';--hy:' + cssNum(haze[1], 50, 0, 100) / 100 + ';--hd:' + cssNum(haze[2], 20, 1, 100) / 100 + '"></i>' : '');
   // world.shot (2026-11-21 review): the opening and closing shots show this whole picture instead of the 4:5 plate (Story Hunt: the wide
   // library, the same room as its band strip), at the column's width with its blurred copy around it; the plate's cut-outs stay hidden then
   var shot = w.shot && w.shot.ready && w.shot.src ? w.shot : null;

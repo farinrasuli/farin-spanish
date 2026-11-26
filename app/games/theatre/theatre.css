@@ -399,7 +399,7 @@ body.gw-on.gw-build .build-tile:active{transform:translateY(3px); box-shadow:0 1
 body.gw-on.gw-build .build-tile.used{opacity:.25; box-shadow:none;}
 /* Say It Back: the mic is the sticky action bar; the ON AIR plate on the wall lights while the mic listens */
 body.gw-on.gw-echo .echo-micwrap, body.gw-on.gw-echo .echo-shadow{position:sticky; bottom:calc(8px + var(--th-safe-b, 0px)); z-index:3; background:var(--gw-surface); padding:10px 8px 8px; margin:0 -6px; border-radius:18px; box-shadow:0 -6px 14px -10px rgba(20,51,46,.4);}
-.th-world-live.gw-onair{padding:6px 0; border:3px solid #14332e; border-radius:10px; background:#5a2a2a; color:#f3d6d0; font-size:clamp(16px, 5vw, 22px); letter-spacing:.14em; text-transform:uppercase; opacity:.9;}
+.th-world-live.gw-onair{white-space:nowrap; padding:6px 0; border:3px solid #14332e; border-radius:10px; background:#5a2a2a; color:#f3d6d0; font-size:clamp(16px, 5vw, 22px); letter-spacing:.14em; text-transform:uppercase; opacity:.9;}
 body.gw-live .th-world-live.gw-onair{background:#e8402f; color:#fff; box-shadow:0 0 0 4px rgba(232,64,47,.25), 0 0 24px rgba(232,64,47,.55);}
 @media (prefers-reduced-motion: reduce){ body.gw-on.gw-bingo.gw-beat .gw-radio-btn img{animation:none !important;} }
 
@@ -648,6 +648,9 @@ body.gw-on.gw-endover{--gw-btop:0px; --gw-band:calc(var(--gw-colw) * 1.25);}
 body.gw-on.gw-endover .th-world-stage{left:0; width:100%; transform:none;}
 body.gw-on.gw-endover .game-screen{padding-top:min(calc(var(--gw-band) - 24px), calc(100dvh - 380px));}   /* on a tall phone the card lies on the counter, the pier and the window clear above it */
 body.gw-on.gw-endover .game-screen::before{top:var(--gw-band);}
+/* a 9:16 world (step 2, 2026-11-26): the place covers the screen and the end card lies low on it, no board under it */
+body.gw-on.gw-full.gw-tall.gw-endover .game-screen{padding-top:max(40px, calc(100dvh - 340px));}
+body.gw-on.gw-full.gw-tall.gw-endover .game-screen::before{display:none;}
 /* Passport Desk's end beat (worlds SPEC 10): the ferry sails out towards the horizon, the light of the day goes, the window sign turns to CLOSED */
 .th-world .gw-ferry{transform-origin:12% 88%;}
 .th-world.th-beat .gw-ferry{animation:gw-sail 1.5s .25s cubic-bezier(.45,0,.7,.4) both;}
@@ -737,12 +740,23 @@ body.gw-on.gw-full .th-world-plate{object-fit:fill;}
 body.gw-on.gw-full.gw-small:not(.gw-establish) .th-world-plate{display:block; inset:auto; width:var(--gw-pw); height:calc(var(--gw-pw) * var(--gw-pr, 1.25));
   top:calc(var(--gw-z) - var(--gw-fy, .92) * var(--gw-pw) * var(--gw-pr, 1.25) - var(--gw-btop)); left:calc((var(--gw-colw) - var(--gw-pw)) * var(--gw-fx, .5));}
 body.gw-on.gw-full.gw-small:not(.gw-establish) .th-world .th-mood{display:block;}
-/* the opening / closing shot: the plate covers the whole screen */
-body.gw-on.gw-full.gw-establish .th-world{height:100dvh;}
-body.gw-on.gw-full.gw-establish .th-world-stage{--gw-pw:max(var(--gw-colw), calc(100dvh / var(--gw-pr, 1.25)));
+/* the opening / closing shot (and a 9:16 world's end laid over the place, gw-tall): the plate covers the whole screen */
+body.gw-on.gw-full.gw-establish .th-world, body.gw-on.gw-full.gw-tall.gw-endover .th-world{height:100dvh;}
+body.gw-on.gw-full.gw-establish .th-world-stage, body.gw-on.gw-full.gw-tall.gw-endover .th-world-stage{--gw-pw:max(var(--gw-colw), calc(100dvh / var(--gw-pr, 1.25)));
   top:calc((100dvh - var(--gw-pw) * var(--gw-pr, 1.25)) * var(--gw-ey, .5));}
 body.gw-on.gw-full.gw-shot.gw-establish .th-world-shot{object-fit:cover; object-position:var(--gw-sx2, 50%) 50%;}
 body.gw-on.gw-full.gw-shot.gw-establish .th-world-shotblur{display:none !important;}
 /* the camera moves between the opening shot and the play framing */
 body.gw-on.gw-full .th-world-stage{transition:top .6s cubic-bezier(.2,.7,.2,1), left .6s cubic-bezier(.2,.7,.2,1), width .6s cubic-bezier(.2,.7,.2,1), height .6s cubic-bezier(.2,.7,.2,1);}
 @media (prefers-reduced-motion: reduce){ body.gw-on.gw-full .th-world-stage{transition:none !important;} }
+/* Word Rush on the 9:16 cabin (step 2): the porthole is painted in the plate; a fog over its glass clears pair by pair (--gw-frac), clear at
+   the end. Placed in plate % like the plate itself in a small band. */
+.th-port-haze{position:absolute; display:block; border-radius:50%; pointer-events:none; z-index:1; aspect-ratio:1;
+  width:calc(var(--gw-pw) * var(--hd)); left:calc((var(--gw-colw) - var(--gw-pw)) * var(--gw-fx, .5) + var(--gw-pw) * (var(--hx) - var(--hd) / 2));
+  top:calc(var(--gw-z) - var(--gw-fy, .92) * var(--gw-pw) * var(--gw-pr, 1.25) - var(--gw-btop) + var(--gw-pw) * var(--gw-pr, 1.25) * var(--hy) - var(--gw-pw) * var(--hd) / 2);
+  -webkit-backdrop-filter:blur(calc((1 - var(--gw-frac, 0)) * 6px)) saturate(calc(.45 + var(--gw-frac, 0) * .55)); backdrop-filter:blur(calc((1 - var(--gw-frac, 0)) * 6px)) saturate(calc(.45 + var(--gw-frac, 0) * .55));
+  background:radial-gradient(circle, rgba(246,248,252,calc((1 - var(--gw-frac, 0)) * .62)) 0 55%, rgba(246,248,252,calc((1 - var(--gw-frac, 0)) * .38)) 100%);
+  transition:backdrop-filter .6s ease, background .6s ease;}
+.th-world.th-ended .th-port-haze{-webkit-backdrop-filter:none; backdrop-filter:none; background:none;}
+body.gw-establish .th-port-haze{display:none;}
+@media (prefers-reduced-motion: reduce){ .th-port-haze{transition:none !important;} }

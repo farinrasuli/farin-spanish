@@ -567,10 +567,11 @@
   body.gw-on.gw-desk .desk-stampbtn svg{width:24px; height:24px;}
   body.gw-on.gw-desk .desk-stampbtn span{font-family:'Fredoka',-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; font-size:18px; font-weight:700; letter-spacing:.08em;}
   body.gw-on.gw-desk .desk-stampbtn:disabled{opacity:.62;}
+  /* 3D booth (2026-11-26): "Passport, please!" comes from the booth: the anchor is on the booth's side at the window ledge, so the balloon
+     (under it, tail up) sits beside the officer and clear of the traveller's face at every phone size
+     (the anchor is on the mirrored art, so in the fa UI it moves to the other side with the picture) */
+  body.gw-on.gw-desk #desk-officer{left:112%; top:32.5%;}
   @media (max-height:700px){ body.gw-on.gw-desk .desk-row{min-height:44px;} body.gw-on.gw-desk .game-status{min-height:16px;}
-    /* a short band (2026-11-22 review): "Passport, please!" sits beside the window, on the side away from the traveller, never over a face
-       (the anchor is on the mirrored art, so in the fa UI it moves to the other side with the picture) */
-    body.gw-on.gw-desk #desk-officer{left:-20%;}
     body.gw-on.gw-desk .th-say .th-balloon{max-width:150px; font-size:13.5px; padding:5px 10px;} }
   body.gw-on.gw-desk .desk-end{display:flex; flex-direction:column; align-items:center; gap:12px; padding:16px 16px 14px;}
   body.gw-on.gw-desk .desk-end .game-result-title{margin:0;}
@@ -24088,7 +24089,8 @@ function deskFixHtml(round, t){
   // reduced path left; the old free-text input/desk-fix-go flow is retired.
   return `<div class="desk-fix fade-in" id="desk-fix"><div class="desk-chips">${(deskChipsAt(t, f) || []).map((v, i)=>`<button class="game-opt desk-chip" data-action="desk-chip" data-quiet="1" data-i="${i}">${deskChipLabel(round, f, v)}</button>`).join('')}</div></div>`;
 }
-const DESK_TOWN = {f:[1, 3, 5, 7], m:[2, 4, 6, 8]};
+// the 3D travellers (Higgsfield, 2026-11-26): 2 and 5 are women, 1, 3, 4 and 6 men (the old clear-line 7 and 8 are no longer used)
+const DESK_TOWN = {f:[2, 5], m:[1, 3, 4, 6]};
 // a rubber stamp (handle, block, ink line): the icon on the world's APPROVED action bar
 const DESK_STAMP_ICON = '<svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true"><circle cx="12" cy="5" r="2.9" fill="currentColor"/><path d="M10.5 7.2h3l.8 4.6H9.7z" fill="currentColor"/><rect x="4.5" y="11.6" width="15" height="4.6" rx="1.4" fill="currentColor"/><path d="M6 20.2h12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>';
 function deskFaceSrc(round, t){
@@ -24096,19 +24098,29 @@ function deskFaceSrc(round, t){
   const g = t.g || 'f', list = DESK_TOWN[g === 'm' ? 'm' : 'f'];
   const i = Math.max(0, round.travellers.indexOf(t)), seed = String((round.travellers[0] && round.travellers[0].ch) || '').length;
   const face = t.done ? 'warm' : (t.tries ? 'oh' : 'calm');
-  return 'games/worlds/desk/art/traveller-' + list[(seed + i) % list.length] + '-' + face + '.webp';
+  return 'games/worlds/desk/art/traveller-' + list[(seed + i) % list.length] + '-' + face + '.webp?v=hf1';   // ?v=: the 3D travellers kept the old names
 }
 // In Passport Desk's world the traveller stands at the booth window, on the plate, behind the counter (skins.js front layer; the picture is
 // shown whole, its lower edge hidden by the counter), sized by height so every traveller stands at the same scale. Out of the world: FE in the
 // traveller's goal outfit, in the card (2026-11-19, no clay figures).
-const DESK_TRAV_W = {1:385, 2:463, 3:331, 4:430, 5:370, 6:442, 7:477, 8:427};   // traveller-N-*.webp widths (600 px tall)
+// 3D booth (2026-11-26): the plate shows the booth from the pier, so the traveller is a bust in the foreground on the pier (left of the
+// booth window), standing on the picture's lower edge (a little past it, so the cut never shows), whole at its own shape, the same height
+// for everyone; the officer stands in the booth window behind the counter ledge (the world's front layer hides him below it).
+const DESK_TRAV_H = {1:506, 2:494, 3:495, 4:497, 5:503, 6:496};   // traveller-N-*.webp heights at 400 px wide (the three faces differ by a few px)
 function deskTravBox(src){
-  const n = Number((String(src).match(/traveller-(\d+)-/) || [])[1]) || 2, h = 40;   // 40% of the 704x880 booth plate's height
-  const w = +(h * 880 / 704 * (DESK_TRAV_W[n] || 430) / 600).toFixed(2);
-  return [+(62 - w / 2).toFixed(2), 38, w];
+  const n = Number((String(src).match(/traveller-(\d+)-/) || [])[1]) || 2, h = 52;   // 52% of the 704x880 booth plate's height
+  const w = +(h * 880 / 704 * 400 / (DESK_TRAV_H[n] || 498)).toFixed(2);
+  return [+(26 - w / 2).toFixed(2), (window.innerHeight || 800) < 700 ? 64 : 60, w];   // a short phone: a little lower, clear of the caption box at the top
 }
 function deskStageSync(round, t){
-  try{ if(window.Theatre && Theatre.actor && worldKind() === 'desk'){ const src = t ? deskFaceSrc(round, t) : null; Theatre.actor('desk-who', src, src ? deskTravBox(src) : null, 'gw-trav'); } }catch(e){}
+  try{ if(window.Theatre && Theatre.actor && worldKind() === 'desk'){
+    const src = t ? deskFaceSrc(round, t) : null;
+    const tr = Theatre.actor('desk-who', src, src ? deskTravBox(src) : null, 'gw-trav gw-fg');
+    if(tr) tr.classList.add('gw-fg');
+    // the officer smiles when the traveller is through, looks surprised after a wrong try
+    const of = t ? 'games/worlds/desk/art/officer-' + (t.done ? 'warm' : (t.tries ? 'oh' : 'calm')) + '.webp' : null;
+    Theatre.actor('desk-off', of, of ? [57, 26.2, 22] : null, 'gw-officer');
+  } }catch(e){}
   return '';
 }
 function deskBodyHtml(round, t){
@@ -26659,7 +26671,7 @@ function pathSayBtn(text){ return text ? `<button class="tts-btn sp-say" data-ac
    The comic-album Your Call. Engine lazy-loaded from games/your-call/ (your-call.js + .css byte-identical EN/ES;
    content-<side>.js generated from the farin-lxd scripts). A card plays v2 only when YourCall.ready() says every
    panel of its chapters has final art; otherwise the v1 round below runs unchanged. */
-const YC_VER = '19';   // 3: GDD 12 sound (sets, 1970 radio, piano, ducking; 7VO9j7xZ). 4: Cudillero art ch1-6 + engine trail parts / per-choice art 5: chapter flow (UI0ejg05) 6: Cudillero cover from the redo render 7: engine 0.2.1, postcard art for ch3 / ch6 (was a DEV placeholder) 8: engine 0.3.0 (phones: scrolling / fit, one chapter per card + automatic return, clearer Then & Now) 9: engine 0.3.1 (postcard photo without the print frame, the word under the photo, one ring per Then & Now object) 10: engine 0.4.0 (content-driven for album A2: thenYear, tone 1890, credits sign, last-photo effect, named beds, Previously per chapter) 11: album A2 wired (content-en-A2.js + art/istanbul) 12: The Red Suitcase covers (cover-3 / thumb-3, Farin 2026-11-15 qnHV76GG) 13: engine 0.5.0 (Radio Watch, wrong-note tiles, translation on tap, 1918 silver tone, Rewind) 14: engine 0.5.1 (lines tap to hear; Read game lines aloud setting; album moods; last photo whole) 15: engine 0.5.2 (Games 2.0 Phase 1: film frames, 25 / 75 s hints, will-remember line, panel lighting, storm flash, darkroom glow, speaker buttons) 16: engine 0.5.3 (art fit: page rows take their content height, Then & Now whole with a clue ring instead of the zoom) 17: engine 0.5.4 (the Rewind stage shows its whole picture) 18: engine 0.7.0 comic pages (Farin 2026-11-21). 19: engine 0.7.0 comic pages (Farin 2026-11-21).
+const YC_VER = '20';   // 20: Higgsfield painterly art for A1 ch1-6 (c<n>_<id>-hf.webp), ch2 as comic pages, cover-hf (2026-11-26). 3: GDD 12 sound (sets, 1970 radio, piano, ducking; 7VO9j7xZ). 4: Cudillero art ch1-6 + engine trail parts / per-choice art 5: chapter flow (UI0ejg05) 6: Cudillero cover from the redo render 7: engine 0.2.1, postcard art for ch3 / ch6 (was a DEV placeholder) 8: engine 0.3.0 (phones: scrolling / fit, one chapter per card + automatic return, clearer Then & Now) 9: engine 0.3.1 (postcard photo without the print frame, the word under the photo, one ring per Then & Now object) 10: engine 0.4.0 (content-driven for album A2: thenYear, tone 1890, credits sign, last-photo effect, named beds, Previously per chapter) 11: album A2 wired (content-en-A2.js + art/istanbul) 12: The Red Suitcase covers (cover-3 / thumb-3, Farin 2026-11-15 qnHV76GG) 13: engine 0.5.0 (Radio Watch, wrong-note tiles, translation on tap, 1918 silver tone, Rewind) 14: engine 0.5.1 (lines tap to hear; Read game lines aloud setting; album moods; last photo whole) 15: engine 0.5.2 (Games 2.0 Phase 1: film frames, 25 / 75 s hints, will-remember line, panel lighting, storm flash, darkroom glow, speaker buttons) 16: engine 0.5.3 (art fit: page rows take their content height, Then & Now whole with a clue ring instead of the zoom) 17: engine 0.5.4 (the Rewind stage shows its whole picture) 18: engine 0.7.0 comic pages (Farin 2026-11-21). 19: engine 0.7.0 comic pages (Farin 2026-11-21).
 // 2026-11-13: the levels with an album of their own. English: A1 (Whitby) + A2 "The Bazaar Key" (Istanbul); Spanish: A1 (Cudillero)
 // YC_A2_LIVE: A2 opens on its cards together with its natural voices (Bella + George clips for all its lines, Farin 2026-11-07);
 // until then an A2 card borrows the A1 album as before. The QA checks serve a copy with it on.
@@ -32826,7 +32838,7 @@ const THEATRE_QUICK = ['match','build','cross','order','desk','spell','bingo','h
 const THEATRE_QUICK_VIEWS = THEATRE_QUICK.map(k=>'game-' + k);
 const THEATRE_KINDS = ['path','chores','mystery','radio'].concat(THEATRE_QUICK);
 const THEATRE_VIEWS = ['game-path','game-yc','game-chores-building','game-chores-room','game-mystery','game-v2'].concat(THEATRE_QUICK_VIEWS);
-const THEATRE_VER = '28';   // 28: the 3D posters of the quick games and Mini Radio (games/posters/<kind>-3d.webp), cards ?v=3 (2026-11-26); 27: Captain in 3D (spots moved, the café spots back; 2026-11-26); 26: card posters with ?v= in skins.js (2026-11-26); 25: Passport Desk's 3D poster (games/posters/desk-3d.webp) and the new 3D roadmap cards (Open House / Harbour Files posters: GAMES_VER 13); 24: Order Up!'s 3D poster (games/posters/order-3d.webp); 23: Order Up! full-body 3D cast + café plate (Higgsfield, farin-e9), world.css v2; 22: Order Up! cozy pass (skins.js order: wood panel, warm glow, café sounds, world.css; 2026-11-25); 21: Magic Words v2 (the hall of doors: skins.js spell world, plate mw-hall, bed, wide plate as the sides); 20: Story Hunt's wide opening / closing shot, Word Rush's end beat in the band + short-screen fit + clean card pile, Theatre 1.2.5; 19: worlds art (Story Hunt strip, Word Rush porthole, Mini Cross + Build It posters, Order Up! re-rolls, traveller 1), Theatre 1.2.4; 18: Passport Desk re-review (captions on the art, the HUD strip, the end over the booth, the horn, Theatre.quiet), Theatre 1.2.3; 17: text direction in the fa UI (Latin-script lines left to right), the companion line clear of x; 16: Games 2.0 step 5 part 4 (sound spots: gulls + the library clock; Passport Desk's traveller behind the booth counter; Trap Dash lanes); 15: Games 2.0 step 4 (Brave switch, boss beat, Captain); 14: the world art wiring + Sam's balloon waits for his picture (2026-11-16)
+const THEATRE_VER = '29';   // 29: Passport Desk in the 3D booth (officer in the window, traveller on the pier, desk-booth ?v=hf1) (2026-11-26); 28: the 3D posters of the quick games and Mini Radio (games/posters/<kind>-3d.webp), cards ?v=3 (2026-11-26); 27: Captain in 3D (spots moved, the café spots back; 2026-11-26); 26: card posters with ?v= in skins.js (2026-11-26); 25: Passport Desk's 3D poster (games/posters/desk-3d.webp) and the new 3D roadmap cards (Open House / Harbour Files posters: GAMES_VER 13); 24: Order Up!'s 3D poster (games/posters/order-3d.webp); 23: Order Up! full-body 3D cast + café plate (Higgsfield, farin-e9), world.css v2; 22: Order Up! cozy pass (skins.js order: wood panel, warm glow, café sounds, world.css; 2026-11-25); 21: Magic Words v2 (the hall of doors: skins.js spell world, plate mw-hall, bed, wide plate as the sides); 20: Story Hunt's wide opening / closing shot, Word Rush's end beat in the band + short-screen fit + clean card pile, Theatre 1.2.5; 19: worlds art (Story Hunt strip, Word Rush porthole, Mini Cross + Build It posters, Order Up! re-rolls, traveller 1), Theatre 1.2.4; 18: Passport Desk re-review (captions on the art, the HUD strip, the end over the booth, the horn, Theatre.quiet), Theatre 1.2.3; 17: text direction in the fa UI (Latin-script lines left to right), the companion line clear of x; 16: Games 2.0 step 5 part 4 (sound spots: gulls + the library clock; Passport Desk's traveller behind the booth counter; Trap Dash lanes); 15: Games 2.0 step 4 (Brave switch, boss beat, Captain); 14: the world art wiring + Sam's balloon waits for his picture (2026-11-16)
 // World Kit switch (worlds SPEC 4.14): one flag per quick game, on once its art and checks pass (Farin 11-10: switch on what is done).
 // ?worlds=1 previews every world in this browser (?worlds=0 switches the preview off). Off = the game plays over its poster's soft backdrop.
 // 2026-11-15 World Kit v1 live: Order Up!, Word Bingo, Mini Cross, Build It, Say It Back (their plates and props passed art QC). Passport Desk waits
@@ -33162,7 +33174,7 @@ function theatreExit(){
    their nodes, Cozy Chores and Case Closed play the old way. Set GAMES_V2_LIVE.radio / .mystery / .chores to true (both apps) to put that game live; bump GAMES_VER
    whenever a games/ engine changes. (var, not const: SHELF_GAMES reads the flag earlier in the file.) */
 // (GAMES_V2_LIVE, the per-game switch, is declared above SHELF_GAMES)
-var GAMES_VER = '15';   // 15: Captain in 3D, pinned to his box's floor in Open House (chores.css, 2026-11-26); 14: Open House 0.6.2 (the free line's microphone: no lost taps, tap to stop, says why, 2026-11-26); 13: the 3D Open House and Harbour Files posters (games/posters/chores.webp, mystery.webp, Higgsfield 2026-11-26); 12: Open House 0.6.1 (the ask chips' pictures contained, 2026-11-19); 11: Games 2.0 phase 1 for Harbour Files / Open House / Mini Radio (2026-11-16)
+var GAMES_VER = '16';   // 16: 3D portraits in Open House and Harbour Files (manifest ?v=hf1), the Red Suitcase painterly panels (2026-11-26); 15: Captain in 3D, pinned to his box's floor in Open House (chores.css, 2026-11-26); 14: Open House 0.6.2 (the free line's microphone: no lost taps, tap to stop, says why, 2026-11-26); 13: the 3D Open House and Harbour Files posters (games/posters/chores.webp, mystery.webp, Higgsfield 2026-11-26); 12: Open House 0.6.1 (the ask chips' pictures contained, 2026-11-19); 11: Games 2.0 phase 1 for Harbour Files / Open House / Mini Radio (2026-11-16)
 var g2Flag = null, g2Game = null, g2KeepNow = null, g2Pending = null;
 var G2_KINDS = ['chores', 'mystery', 'radio'];
 var G2_COZY = {A1:'movein', A2:'cake', B1:'bouquet', B2:'laundry', C1:'party'};   // the anchor project per level (Cozy GDD 0)

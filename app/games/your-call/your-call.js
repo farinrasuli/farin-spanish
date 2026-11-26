@@ -39,7 +39,7 @@
 'use strict';
 if(window.YourCall) return;
 var D = document, W = window;
-var VERSION = '0.7.0';
+var VERSION = '0.7.1';   // 0.7.1 (2026-11-26): signs in real type on the picture (.yc-signlet: a sign / note the Higgsfield art leaves blank)
 
 /* ---------- chrome strings (the UI language; Persian informal) ---------- */
 var UI = {
@@ -870,7 +870,7 @@ function start(o){
       if((p.motion || []).some(function(m){ return /^flash/.test(m); })) pic += '<i class="yc-flashw" aria-hidden="true"></i>';
     }
     if((p.motion || []).indexOf('gulls') >= 0) pic += GULL + GULL.replace('yc-gull', 'yc-gull yc-gull2');
-    pic += (p.sfx || []).map(function(s){ return '<div class="yc-sfx" lang="' + target + '" aria-hidden="true" style="left:' + s.x + '%;top:' + s.y + '%;' + (s.size ? 'font-size:' + s.size + 'px;' : '') + '">' + esc(s.word) + '</div>'; }).join('');
+    pic += (p.sfx || []).map(function(s){ return '<div class="yc-sfx' + (s.sign ? ' yc-signlet' : '') + '" lang="' + target + '" aria-hidden="true" style="left:' + s.x + '%;top:' + s.y + '%;' + (s.size ? 'font-size:' + s.size + 'px;' : '') + (s.w ? 'width:' + s.w + '%;' : '') + '">' + esc(s.word) + '</div>'; }).join('');
     var pos = sheetPos(p);
     (p.els || []).forEach(function(e, i){
       if(e.when && !whenOk(e.when, chs)) return;
@@ -931,7 +931,7 @@ function start(o){
         if(p.devArt) html += '<span class="yc-devtag">' + esc(us('dev')) + '</span>';
         fig.classList.remove('yc-capanel'); fig.classList.add('yc-hasdev');
       }
-      html = '<div class="yc-pic">' + html + over + (p.sfx || []).map(function(s){ return '<div class="yc-sfx" lang="' + target + '" aria-hidden="true" style="left:' + s.x + '%;top:' + s.y + '%;' + (s.size ? 'font-size:' + s.size + 'px;' : '') + '">' + esc(s.word) + '</div>'; }).join('') + '</div>' +
+      html = '<div class="yc-pic">' + html + over + (p.sfx || []).map(function(s){ return '<div class="yc-sfx' + (s.sign ? ' yc-signlet' : '') + '" lang="' + target + '" aria-hidden="true" style="left:' + s.x + '%;top:' + s.y + '%;' + (s.size ? 'font-size:' + s.size + 'px;' : '') + (s.w ? 'width:' + s.w + '%;' : '') + '">' + esc(s.word) + '</div>'; }).join('') + '</div>' +
         (tray ? '<div class="yc-tray">' + tray + '</div>' : '');
       if(!p.art && p.devArt === false) html = tray;   // caption-only panel: the captions sit straight on the dotted paper
       if(p.size === 'photo' || p.flip) fig.classList.add('yc-photo');
@@ -951,7 +951,7 @@ function start(o){
       return '<div class="yc-bal" data-who="' + esc(b.who || '') + '" data-say="' + esc(tg(b.text)) + '" style="' + st + '--tx:' + (b.tail != null ? b.tail : 30) + 'px">' + lineHtml(b.text, ch) + '<button type="button" class="th-say-btn yc-saybtn" tabindex="-1" aria-label="' + esc(us('listen')) + '">' + ICON.say + '</button>' + '</div>';
     }).join('');
     html += bots.map(capHtml).join('');
-    html += (p.sfx || []).map(function(s){ return '<div class="yc-sfx" lang="' + target + '" aria-hidden="true" style="left:' + s.x + '%;top:' + s.y + '%;' + (s.size ? 'font-size:' + s.size + 'px;' : '') + '">' + esc(s.word) + '</div>'; }).join('');
+    html += (p.sfx || []).map(function(s){ return '<div class="yc-sfx' + (s.sign ? ' yc-signlet' : '') + '" lang="' + target + '" aria-hidden="true" style="left:' + s.x + '%;top:' + s.y + '%;' + (s.size ? 'font-size:' + s.size + 'px;' : '') + (s.w ? 'width:' + s.w + '%;' : '') + '">' + esc(s.word) + '</div>'; }).join('');
     if(p.auto) html += '<span class="yc-devtag yc-devtag-auto">' + esc(us('dev')) + '</span>';
     fig.innerHTML = html;
     if(!p.art && (p.layers || []).length) fig.classList.add('yc-hasport');

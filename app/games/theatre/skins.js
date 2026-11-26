@@ -70,11 +70,12 @@ window.THEATRE_SKINS = {
     backdrop:{src:null, position:'64% 50%', blur:30, veil:.54}, props:[],
     gw:{bg:'#e8f6fd', surface:'#e3c595', paper:'#fffdf7', ink:'#13304d', hue:'var(--clay-sky)', accent:'#c8352e', cta:'#13304d', ctaInk:'#ffffff'},
     // the band about 30dvh on a phone (one screen per round, 2026-11-19 re-review): 140 px at 640 tall, 253 at 844, 292 at 915
-    world:{mood:'day', stage:'clamp(140px, calc(55.4dvh - 214.5px), 300px)', plate:{src:'games/worlds/desk/art/desk-booth.webp', pos:'50% 50%', ready:true}, front:{top:'74%'}, bed:{freq:320, q:.4, vol:.028, lfo:.12}, spots:['gull'],
-      end:{over:true, spot:'horn', at:250}, layers:[   // the end: the booth stays behind the end card; the ferry sails out with its horn
-      {src:'games/worlds/desk/art/desk-ferry.webp', cls:'gw-ferry', box:[14, 42, 36], ready:true},
-      {src:'games/worlds/desk/art/desk-gull.webp', cls:'gw-gull', box:[76, 2, 8], ready:true}], text:[
-      {key:'closed', cls:'gw-closed', id:'gw-closed', box:[35, 27.5, 30], ready:true}], sfx:{}, css:null}},   // the window sign turns to CLOSED at the end
+    // 3D booth (Higgsfield, farin-e9, 2026-11-26): the booth from the pier, its window on the right. The officer (app actor gw-officer) stands
+    // in the window behind the counter ledge (the front layer from the ledge down hides his lower half); the traveller (gw-trav) is a bust
+    // in the foreground on the pier, over the front layer. The ferry and the gull are in the picture now, so no ferry / gull cut-outs.
+    world:{mood:'day', stage:'clamp(140px, calc(55.4dvh - 214.5px), 300px)', plate:{src:'games/worlds/desk/art/desk-booth.webp?v=hf1', pos:'50% 50%', ready:true}, front:{top:'44.8%'}, bed:{freq:320, q:.4, vol:.028, lfo:.12}, spots:['gull'],
+      end:{over:true, spot:'horn', at:250}, layers:[], text:[   // the end: the booth stays behind the end card, the officer gone, the ferry's horn
+      {key:'closed', cls:'gw-closed', id:'gw-closed', box:[56, 30, 24], ready:true}], sfx:{}, css:null}},   // the sign in the booth window turns to CLOSED at the end
   // Magic Words: the hall of doors (Magic Words v2, 2026-11-21, Trello GW6fI424): lavender walls, curtains, two lanterns, the wooden floor.
   // The app stands each word's painted door in the plate's box (its sill on the floor line); the wide corridor plate is the world at the sides.
   spell:{card:'art/posters/card-spell.webp?v=3', focus:'84%',

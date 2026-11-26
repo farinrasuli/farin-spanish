@@ -52,6 +52,10 @@
 .yc-sfx{position:absolute; font-family:var(--f-sfx); font-size:38px; color:#FFD23F; -webkit-text-stroke:2px var(--ink); paint-order:stroke fill; text-shadow:3px 3px 0 var(--ink);
   letter-spacing:.04em; transform:rotate(-8deg); animation:yc-sfx .7s cubic-bezier(.3,1.8,.5,1) .15s both; pointer-events:none; z-index:3; white-space:nowrap;}
 @keyframes yc-sfx{0%{opacity:0; transform:rotate(-8deg) scale(.3)} 60%{opacity:1; transform:rotate(-8deg) scale(1.15)} 100%{opacity:1; transform:rotate(-8deg) scale(1)}}
+/* 0.7.1 (2026-11-26): a sign in real type on the picture (the art leaves the sign blank): hand lettering in ink, centred on x,y */
+.yc-sfx.yc-signlet{font-family:"Comic Neue", "Trebuchet MS", sans-serif; font-weight:700; font-size:20px; color:#2a1f17; -webkit-text-stroke:0; text-shadow:none; letter-spacing:.02em;
+  text-align:center; line-height:1.08; white-space:normal; width:40%; transform:translate(-50%, -50%) rotate(-2deg); animation:yc-signin .5s ease-out .2s both; z-index:2;}
+@keyframes yc-signin{from{opacity:0} to{opacity:1}}
 .yc-devtag{position:absolute; right:6px; bottom:6px; z-index:4; font:700 10px/1 monospace; background:#ffd9d4; color:#7a2018; border:1.5px solid #7a2018; padding:3px 5px;}
 .yc-devtag-auto{top:6px; bottom:auto;}
 
@@ -499,8 +503,9 @@
 .yc-sheet .yc-next.yc-corner{grid-column:1 / -1; justify-self:end; position:sticky; bottom:calc(10px + env(safe-area-inset-bottom, 0px));
   width:56px; height:56px; min-height:56px; border-radius:50%; padding:0 0 3px; font-size:30px; line-height:1; letter-spacing:0; margin-top:0; z-index:8;}
 .yc-sheet .yc-ch.yc-chpic{padding:0; position:relative; display:block; min-height:0; overflow:visible; text-align:left;}
-.yc-chimg{display:block; aspect-ratio:1; overflow:hidden;}
-.yc-chimg img{display:block; width:100%; height:100%; object-fit:cover;}
+/* 0.7.1: a choice picture shows whole at its own shape (the Higgsfield choices are 0.88, the v5 ones were square) */
+.yc-chimg{display:block; overflow:hidden;}
+.yc-chimg img{display:block; width:100%; height:auto;}
 .yc-chpic .yc-chtx{position:absolute; left:6px; right:6px; top:6px; background:#fff; border:2px solid var(--ink); border-radius:14px; padding:5px 8px;
   display:flex; flex-direction:column; gap:2px; font-size:14px; line-height:1.2;}
 .yc-chpic .yc-chtx b{font-size:10px;}

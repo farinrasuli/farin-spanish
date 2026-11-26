@@ -17410,10 +17410,10 @@ function renderReviewHome(){
     </div>
   </div>`;
 }
-/* Profile FE (Farin 2026-11-26: "in profile put a FE character too. use special the ones or travel and adventure ones"): one of his
-   sheet's Special Themes and Travel & Adventure outfits on the character card, a new one each day (the same all day, the phone's date).
-   The files are the whitened 11-19 cuts with the floor shadow cropped (Claude/specs/fe-character-2026-11-19/tools/make-season-special.mjs). */
-const PROFILE_FE = ['x-astronaut', 't-guidebook', 'x-detective', 't-binoculars', 'x-artist', 'x-king'];
+/* Profile FE (Farin 2026-11-26: "in profile put a FE character too. use special the ones or travel and adventure ones"): FE from the new
+   art (his 11-21 white sheet) on the character card: the king and the wizard, the traveller with his suitcase and the one with binoculars,
+   a new one each day (the same all day, the phone's date). */
+const PROFILE_FE = ['w-king', 't-explorer', 'w-wizard', 't-binoculars'];
 function profileFeSrc(d){
   const t = d || new Date(), day = Math.floor(Date.UTC(t.getFullYear(), t.getMonth(), t.getDate()) / 86400000);
   return FE_ART + PROFILE_FE[day % PROFILE_FE.length] + '.webp';
@@ -47845,13 +47845,15 @@ if(location.hash !== '#admin'){
 /* ---------- the top bar entry (every screen with the header) ---------- */
 // The box (Farin 2026-11-26): "the your membership box be that famous purple with orange sparkles that we have and add a FE character to
 // it ... the one that has autumn coat on and a leaf in his hand, and then when we start january put the one with the winter cloth".
-// The purple + orange-dot look is the Course Report hero (.fs-hero). FE wears the season from his sheet's Seasonal Styles row: winter
-// from 1 January, spring from Nowruz (21 March), summer from 21 June, autumn (coat + leaf) from 23 September. The phone's own date.
+// The purple + orange-dot look is the Course Report hero (.fs-hero). FE (the new art, Farin: "we haave chanaged the art!!!") is cut from
+// Farin's own 11-21 season pictures ("have these 2 for seasonal things too"): autumn (plaid scarf, backpack) from 23 September, winter
+// (beanie, mittens, scarf) from 1 January to Nowruz; spring and summer have no season picture yet, so FE cheers (p-cheer). Phone date.
 function mbSeasonOf(d){
   const md = (d.getMonth() + 1) * 100 + d.getDate();
   return md >= 923 ? 'autumn' : md >= 621 ? 'summer' : md >= 321 ? 'spring' : 'winter';
 }
-function mbSeasonFeSrc(d){ return (typeof FE_ART === 'string' ? FE_ART : 'art/fe/fe-') + 's-' + mbSeasonOf(d || new Date()) + '.webp'; }
+const MB_SEASON_FE = {autumn:'season-autumn', winter:'season-winter', spring:'p-cheer', summer:'p-cheer'};
+function mbSeasonFeSrc(d){ return (typeof FE_ART === 'string' ? FE_ART : 'art/fe/fe-') + MB_SEASON_FE[mbSeasonOf(d || new Date())] + '.webp'; }
 function mbTopHtml(){
   const p = state.profile || {};
   if(!p.completedDiagnostic) return '';

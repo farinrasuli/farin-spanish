@@ -761,6 +761,9 @@
   body.gw-on .spell-paper{background:var(--gw-paper, #fff3d2); color:var(--gw-ink, #2a1d55);}
   .th-world-stage .spell-doorbox{position:absolute; inset:0; display:block; padding:0; border-radius:0; background:none; pointer-events:none;}
   .th-world-stage .spell-doorbox .mw-scene{position:absolute; inset:0; height:auto; width:auto; aspect-ratio:auto;}
+  /* the 9:16 3D corridor (spell-full.webp, 2026-11-26): the door's 4:5 scene box in plate % (its sill at 64 % on the runner, centred on it
+     at 46 %; the doorway 58 % of the box = 20 % of the plate), so the whole door stands in the band at 360 x 640 too */
+  body.gw-full .th-world-stage .spell-doorbox .mw-scene{inset:auto; left:21.5%; top:34.7%; width:49.07%; height:34.5%;}
   .th-world-stage .gw-garden{filter:none; animation:gw-garden .9s ease-out both;}
   @keyframes gw-garden{from{opacity:0;} to{opacity:1;}}
   body.gw-on.gw-spell .spell-end .game-cta{position:static;}
@@ -25183,7 +25186,9 @@ function spellDeckMark(setId, word, kind){
    hall picture with the door on it. The leaf swings in from its hinge onto a doorway of flat painted light (the leaf's own shape), the
    light pool from the FLUX light render falls on the floor; no vector rays, no photo blur. */
 const SPELL_DESIGNS = ['oak', 'stone', 'ivy', 'coral'];
-function spellArt(name){ return 'games/worlds/spell/art/mw-' + name + '.webp'; }
+// the 3D doors (2026-11-26, Higgsfield, worldbits): mw-<door>-frame / -leaf / -open-hf, same pixel sizes, so the --mw-* geometry holds;
+// mw-hall-hf = a 4:5 crop of the 3D corridor (spell-full.webp) for the scene outside the world; the soft 3D light pool mw-pool-hf
+function spellArt(name){ return 'games/worlds/spell/art/mw-' + name + '-hf.webp'; }
 function spellDesign(round, i){
   const a = crossShuffle(SPELL_DESIGNS, crossRng(crossHash('spelldoor|' + round.seed))), b = crossShuffle(SPELL_DESIGNS, crossRng(crossHash('spelldoor2|' + round.seed)));
   if(b[0] === a[a.length - 1]) b.push(b.shift());   // never the same door twice in a row
@@ -25395,7 +25400,7 @@ function spellActionsHtml(round, d){
   }
   const show = d.hints >= 3;
   const dots = show ? '' : `<span class="spell-hint-dots" aria-hidden="true">${[0, 1, 2].map(i=>`<i class="${i < 3 - d.hints ? 'on' : ''}"></i>`).join('')}</span>`;
-  return `<div class="spell-acts"><button type="button" class="btn btn-ghost spell-hint" data-action="spell-hint" data-quiet="1"><img class="spell-hint-key" src="games/worlds/spell/art/spell-medallion.webp" alt="" draggable="false">${show ? L('Show the word','Kelimeyi göster','کلمه را نشانم بده','Muéstrame la palabra') : L('Hint','İpucu','راهنمایی','Pista')}${dots}</button></div>`;
+  return `<div class="spell-acts"><button type="button" class="btn btn-ghost spell-hint" data-action="spell-hint" data-quiet="1"><img class="spell-hint-key" src="games/worlds/spell/art/spell-medallion-hf.webp" alt="" draggable="false">${show ? L('Show the word','Kelimeyi göster','کلمه را نشانم بده','Muéstrame la palabra') : L('Hint','İpucu','راهنمایی','Pista')}${dots}</button></div>`;
 }
 function spellPanelHtml(round, d){
   const howto = round.index === 0 && !round.tapped && !d.open ? `<p class="game-hint spell-howto">${L('Tap the letters to spell the missing word.','Harflere dokunarak eksik kelimeyi yaz.','روی حرف‌ها بزن و کلمه‌ی جاافتاده را بساز.','Toca las letras para escribir la palabra que falta.')}</p>` : '';
@@ -25411,7 +25416,7 @@ function spellResultHtml(round){
   const st = gameRoundStats('spell', round);
   const row = round.doors.map((d, i)=>`<span class="spell-mini ${spellGlow(d)}"><img class="mw-mini-art" src="${spellArt(spellDesign(round, i) + '-open')}" alt="" draggable="false"><span dir="ltr">${esc(spellSay(d))}</span></span>`).join('');
   return `<div class="game-card tight badge-unlock-shine spell-end">
-    <div class="spell-plaque"><img src="games/worlds/spell/art/spell-plaque.webp" alt="" draggable="false"><div class="game-result-title">${st.perfect ? L('Pure magic!','Saf büyü!','جادوی ناب!','¡Pura magia!') : L('Every door is open!','Bütün kapılar açık!','همه درها باز شد!','¡Todas las puertas abiertas!')}</div></div>
+    <div class="spell-plaque"><img src="games/worlds/spell/art/spell-plaque-hf.webp" alt="" draggable="false"><div class="game-result-title">${st.perfect ? L('Pure magic!','Saf büyü!','جادوی ناب!','¡Pura magia!') : L('Every door is open!','Bütün kapılar açık!','همه درها باز شد!','¡Todas las puertas abiertas!')}</div></div>
     <div class="spell-row">${row}</div>
     ${gameDoneCta()}
   </div>`;
@@ -25489,7 +25494,7 @@ function worldSpellDoor(r){
   spellUpgrade(r);
   if(r.finished){
     const st = document.querySelector('.th-world-art .th-world-stage #spell-doorbox'); if(st) st.remove();
-    Theatre.actor('gw-garden', 'games/worlds/spell/art/spell-garden.webp', [0, 0, 100], 'gw-garden');
+    Theatre.actor('gw-garden', 'games/worlds/spell/art/spell-garden-tall-hf.webp', [0, 0, 100], 'gw-garden');   // the whole 9:16 garden over the 9:16 corridor
     return;
   }
   Theatre.actor('gw-garden', null);
@@ -32838,7 +32843,7 @@ const THEATRE_QUICK = ['match','build','cross','order','desk','spell','bingo','h
 const THEATRE_QUICK_VIEWS = THEATRE_QUICK.map(k=>'game-' + k);
 const THEATRE_KINDS = ['path','chores','mystery','radio'].concat(THEATRE_QUICK);
 const THEATRE_VIEWS = ['game-path','game-yc','game-chores-building','game-chores-room','game-mystery','game-v2'].concat(THEATRE_QUICK_VIEWS);
-const THEATRE_VER = '31';   // 31: the 9:16 3D rooms for nine worlds (plate *-full.webp, fit, people / Captain re-placed, Word Rush's porthole fog, the end over the booth full screen) (2026-11-26); 30: full-page art (Theatre 1.4: posters cover the screen with <kind>-full.webp, worlds edge to edge, w.fit) (2026-11-26); 29: Passport Desk in the 3D booth (officer in the window, traveller on the pier, desk-booth ?v=hf1) (2026-11-26); 28: the 3D posters of the quick games and Mini Radio (games/posters/<kind>-3d.webp), cards ?v=3 (2026-11-26); 27: Captain in 3D (spots moved, the café spots back; 2026-11-26); 26: card posters with ?v= in skins.js (2026-11-26); 25: Passport Desk's 3D poster (games/posters/desk-3d.webp) and the new 3D roadmap cards (Open House / Harbour Files posters: GAMES_VER 13); 24: Order Up!'s 3D poster (games/posters/order-3d.webp); 23: Order Up! full-body 3D cast + café plate (Higgsfield, farin-e9), world.css v2; 22: Order Up! cozy pass (skins.js order: wood panel, warm glow, café sounds, world.css; 2026-11-25); 21: Magic Words v2 (the hall of doors: skins.js spell world, plate mw-hall, bed, wide plate as the sides); 20: Story Hunt's wide opening / closing shot, Word Rush's end beat in the band + short-screen fit + clean card pile, Theatre 1.2.5; 19: worlds art (Story Hunt strip, Word Rush porthole, Mini Cross + Build It posters, Order Up! re-rolls, traveller 1), Theatre 1.2.4; 18: Passport Desk re-review (captions on the art, the HUD strip, the end over the booth, the horn, Theatre.quiet), Theatre 1.2.3; 17: text direction in the fa UI (Latin-script lines left to right), the companion line clear of x; 16: Games 2.0 step 5 part 4 (sound spots: gulls + the library clock; Passport Desk's traveller behind the booth counter; Trap Dash lanes); 15: Games 2.0 step 4 (Brave switch, boss beat, Captain); 14: the world art wiring + Sam's balloon waits for his picture (2026-11-16)
+const THEATRE_VER = '32';   // 32: Build It + Magic Words in their 9:16 3D rooms (build-full / spell-full), the 3D lighthouse (-hf, new tier lines, opaque unpainted ghost over the bench model) and doors (-hf), the 3D medallion, plaque and garden (2026-11-26); 31: the 9:16 3D rooms for nine worlds (plate *-full.webp, fit, people / Captain re-placed, Word Rush's porthole fog, the end over the booth full screen) (2026-11-26); 30: full-page art (Theatre 1.4: posters cover the screen with <kind>-full.webp, worlds edge to edge, w.fit) (2026-11-26); 29: Passport Desk in the 3D booth (officer in the window, traveller on the pier, desk-booth ?v=hf1) (2026-11-26); 28: the 3D posters of the quick games and Mini Radio (games/posters/<kind>-3d.webp), cards ?v=3 (2026-11-26); 27: Captain in 3D (spots moved, the café spots back; 2026-11-26); 26: card posters with ?v= in skins.js (2026-11-26); 25: Passport Desk's 3D poster (games/posters/desk-3d.webp) and the new 3D roadmap cards (Open House / Harbour Files posters: GAMES_VER 13); 24: Order Up!'s 3D poster (games/posters/order-3d.webp); 23: Order Up! full-body 3D cast + café plate (Higgsfield, farin-e9), world.css v2; 22: Order Up! cozy pass (skins.js order: wood panel, warm glow, café sounds, world.css; 2026-11-25); 21: Magic Words v2 (the hall of doors: skins.js spell world, plate mw-hall, bed, wide plate as the sides); 20: Story Hunt's wide opening / closing shot, Word Rush's end beat in the band + short-screen fit + clean card pile, Theatre 1.2.5; 19: worlds art (Story Hunt strip, Word Rush porthole, Mini Cross + Build It posters, Order Up! re-rolls, traveller 1), Theatre 1.2.4; 18: Passport Desk re-review (captions on the art, the HUD strip, the end over the booth, the horn, Theatre.quiet), Theatre 1.2.3; 17: text direction in the fa UI (Latin-script lines left to right), the companion line clear of x; 16: Games 2.0 step 5 part 4 (sound spots: gulls + the library clock; Passport Desk's traveller behind the booth counter; Trap Dash lanes); 15: Games 2.0 step 4 (Brave switch, boss beat, Captain); 14: the world art wiring + Sam's balloon waits for his picture (2026-11-16)
 // World Kit switch (worlds SPEC 4.14): one flag per quick game, on once its art and checks pass (Farin 11-10: switch on what is done).
 // ?worlds=1 previews every world in this browser (?worlds=0 switches the preview off). Off = the game plays over its poster's soft backdrop.
 // 2026-11-15 World Kit v1 live: Order Up!, Word Bingo, Mini Cross, Build It, Say It Back (their plates and props passed art QC). Passport Desk waits
@@ -32985,12 +32990,16 @@ function worldTick(){
   if(!over && Theatre.resetEnd) Theatre.resetEnd();   // Play again in the same world: the end state goes
 }
 // Build It (worlds SPEC 7): the model lighthouse on the bench grows one tier per sentence and lights at the end. Tiers shown =
-// round(6 x solved / total), so a short round still ends whole. One render, cut at its own red / white band edges (manifest-lighthouse.json).
-const LIGHTHOUSE_TIERS = [1, .8167, .6764, .5444, .4028, .1833, 0];   // the top edge of what shows, for 0..6 tiers
+// round(6 x solved / total), so a short round still ends whole. One render, cut at its own red / white band edges (manifest-lighthouse-hf.json).
+// The 3D lighthouse (2026-11-26, Higgsfield, build-lighthouse-hf.webp): every join is the top of a red rim ring, the base flange or the gallery deck.
+const LIGHTHOUSE_TIERS = [1, .8, .6694, .55, .4444, .1833, 0];   // the top edge of what shows, for 0..6 tiers
+// On the bench of the 9:16 3D workshop (build-full.webp), over the half-built model the plate paints there, so only one lighthouse ever
+// shows (the unpainted ghost is opaque, theatre.css). [x, y, w] in plate %; its height in plate % = w x (864 / 1536) x (720 / 268).
+const LIGHTHOUSE_BOX = [54.8, 19.49, 28], LIGHTHOUSE_H = 28 * (864 / 1536) * (720 / 268);
 function worldLighthouse(done, total, lit){
   const tiers = total ? Math.round(6 * done / total) : 0, top = LIGHTHOUSE_TIERS[Math.max(0, Math.min(6, tiers))];
-  // on the bench between the window and the red toolbox (plate %); the whole model shows faintly from the start, so the goal is in sight
-  const src = 'games/worlds/build/art/build-lighthouse.webp', box = [58.5, 43.9, 14];
+  // the whole model shows unpainted from the start, so the goal is in sight; each tier comes in painted
+  const src = 'games/worlds/build/art/build-lighthouse-hf.webp', box = LIGHTHOUSE_BOX;
   Theatre.actor('gw-lighthouse-ghost', src, box, 'gw-lighthouse-ghost');
   const n = Theatre.actor('gw-lighthouse', src, box, 'gw-lighthouse');
   if(!n) return;
@@ -32998,7 +33007,7 @@ function worldLighthouse(done, total, lit){
   n.setAttribute('data-tiers', tiers);
   n.style.clipPath = 'inset(' + (top * 100).toFixed(2) + '% -10% 0 -10%)';
   if(was != null && +was < tiers && !reducedMotion()) anim(n, [{transform:'translateY(-4%)', opacity:.6}, {transform:'translateY(.6%)', opacity:1, offset:.7}, {transform:'none', opacity:1}], {duration:380, easing:'ease-out'});
-  const g = Theatre.actor('gw-lamp-glow', lit ? 'games/worlds/build/art/build-lamp-glow.webp' : null, [56.1, 39.7, 19], 'gw-lamp-glow');
+  const g = Theatre.actor('gw-lamp-glow', lit ? 'games/worlds/build/art/build-lamp-glow.webp' : null, [49.8, 17.7, 38], 'gw-lamp-glow');   // centred on the lantern
   if(g && !g.getAttribute('data-on')){ g.setAttribute('data-on', '1'); if(!reducedMotion()) anim(g, [{opacity:0}, {opacity:1}], {duration:700, easing:'ease-out'}); }
 }
 // Build It's gold tiers (Games 2.0 SPEC 15): a sentence right first time with its decoy tossed paints its tier(s) gold. The gold layer is
@@ -33006,14 +33015,14 @@ function worldLighthouse(done, total, lit){
 function worldGoldTiers(r){
   const st = document.querySelector('.th-world-art .th-world-stage'); if(!st || !r.items) return;
   st.querySelectorAll('.gw-gold-tier').forEach(n=>n.remove());
-  const total = r.items.length, H = 14 * (704 / 880) * (720 / 268);   // the lighthouse box: 14 % of the plate wide, its height in % of the plate
+  const total = r.items.length, H = LIGHTHOUSE_H, B = LIGHTHOUSE_BOX;   // the lighthouse box, its height in % of the plate
   r.items.forEach((it, j)=>{
     if(!it.solved || !it.gold) return;
     const a = Math.round(6 * j / total), b = Math.round(6 * (j + 1) / total);
     for(let t = a + 1; t <= b; t++){
       const top = LIGHTHOUSE_TIERS[t], bot = LIGHTHOUSE_TIERS[t - 1];
       const d = document.createElement('i'); d.className = 'gw-gold-tier'; d.setAttribute('aria-hidden', 'true');
-      d.style.cssText = 'left:58.5%;top:43.9%;width:14%;height:' + H.toFixed(2) + '%;clip-path:inset(' + (top * 100).toFixed(2) + '% 0 ' + ((1 - bot) * 100).toFixed(2) + '% 0)';
+      d.style.cssText = 'left:' + B[0] + '%;top:' + B[1] + '%;width:' + B[2] + '%;height:' + H.toFixed(2) + '%;clip-path:inset(' + (top * 100).toFixed(2) + '% 0 ' + ((1 - bot) * 100).toFixed(2) + '% 0)';
       st.appendChild(d);
     }
   });

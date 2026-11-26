@@ -41,7 +41,8 @@ window.THEATRE_SKINS = {
     palette:{sky:'#fcf2dc', sky2:'#f1daa8', glow:'#fff8ea', ground:'#e1b77d', ink:'#3b2a14', accent:'#cc5428', accentInk:'#ffffff'},
     backdrop:{src:null, position:'66% 50%', blur:30, veil:.56}, props:[],
     gw:{bg:'#fbe7c2', surface:'#e2b77c', paper:'#fffaf0', ink:'#14332e', hue:'var(--cat-gram)', accent:'#FF6F5E', cta:'#1f7a6d', ctaInk:'#ffffff'},
-    world:{mood:'warm', plate:{src:'games/worlds/build/art/build-workshop.webp', ready:true}, bed:{freq:180, q:.8, vol:.028, lfo:.07}, layers:[], text:[], sfx:{}, css:null}},
+    // the 9:16 3D workshop (2026-11-26, Higgsfield): the app stands the tier lighthouse over the model the plate paints on the bench (plate %)
+    world:{mood:'warm', plate:{src:'games/worlds/build/art/build-full.webp', ratio:1.7778, ready:true}, fit:{x:69, y:62}, bed:{freq:180, q:.8, vol:.028, lfo:.07}, layers:[], text:[], sfx:{}, css:null}},
   // Mini Cross: the cafe table crossword by the window, mint table, cream wall
   cross:{card:'art/posters/card-cross.webp?v=3', focus:'64%',
     palette:{sky:'#f7f2e6', sky2:'#dfead2', glow:'#fffaf1', ground:'#92cfa6', ink:'#1f3a2e', accent:'#1d8f76', accentInk:'#ffffff'},
@@ -80,9 +81,10 @@ window.THEATRE_SKINS = {
   // The app stands each word's painted door in the plate's box (its sill on the floor line); the wide corridor plate is the world at the sides.
   spell:{card:'art/posters/card-spell.webp?v=3', focus:'84%',
     palette:{sky:'#fcf2f8', sky2:'#efd5e5', glow:'#fff4d6', ground:'#eca560', ink:'#3a2342', accent:'#f0b232', accentInk:'#3a2342'},
-    backdrop:{src:'games/worlds/spell/art/spell-corridor-wide.webp', position:'50% 50%', blur:30, veil:.5}, props:[],
+    backdrop:{src:'games/worlds/spell/art/spell-full.webp', position:'50% 50%', blur:30, veil:.5}, props:[],
     gw:{bg:'#efe8fb', surface:'#f5eee1', paper:'#fff3d2', ink:'#2a1d55', hue:'var(--clay-lavender-deep)', accent:'#f2b632', cta:'#f2b632', ctaInk:'#2a1d55'},
-    world:{mood:'warm', moodVars:{'--m-gx':'50%', '--m-gy':'34%', '--m-gr':'58%'}, stage:'clamp(180px, calc(62dvh - 220px), 360px)', plate:{src:'games/worlds/spell/art/mw-hall.webp', ready:true}, bed:{freq:240, q:.5, vol:.022, lfo:.06}, layers:[], text:[], sfx:{}, css:null}},
+    // the 9:16 3D corridor (2026-11-26, Higgsfield): the app stands each word's door on the runner (its sill at 64 %, the app's CSS)
+    world:{mood:'warm', moodVars:{'--m-gx':'46%', '--m-gy':'50%', '--m-gr':'58%'}, stage:'clamp(180px, calc(62dvh - 220px), 360px)', plate:{src:'games/worlds/spell/art/spell-full.webp', ratio:1.7778, ready:true}, fit:{x:46, y:67}, bed:{freq:240, q:.5, vol:.022, lfo:.06}, layers:[], text:[], sfx:{}, css:null}},
   // Word Bingo: the bingo card on the kitchen table, cream, wood, red dots
   bingo:{card:'art/posters/card-bingo.webp?v=3', focus:'66%',
     palette:{sky:'#fbf7e6', sky2:'#ece4c6', glow:'#fffdf4', ground:'#d1a77d', ink:'#3a2c1c', accent:'#d9463a', accentInk:'#ffffff'},

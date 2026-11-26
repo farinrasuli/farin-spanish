@@ -58,7 +58,7 @@ window.THEATRE_SKINS = {
     // warm tint; the café's own sounds (a door-bell ding as a customer walks in, cups clinking and a pour now and then, a gull outside);
     // games/worlds/order/world.css styles the order pad, the balloon, the tray, the shelf and the chat. The plate is the Higgsfield 3D café
     // from behind the counter (farin-e9, 2026-11-25): open floor to the bottom edge, so no front layer and no prop cut-outs (the till and the
-    // cake dome are in the picture); the glow sits on the left pendant lamp. Captain (a clear-line cat) stays out of this 3D room for now.
+    // cake dome are in the picture); the glow sits on the left pendant lamp. Captain (3D since 2026-11-26) hides on the floor or on the door frame.
     gw:{bg:'#fdf3e4', surface:'#d9a868', paper:'#fffaf0', ink:'#3b2616', hue:'var(--cat-gram)', accent:'#c4472f', cta:'#c4472f', ctaInk:'#ffffff'},
     world:{mood:'warm', moodVars:{'--m-gx':'44%', '--m-gy':'10%', '--m-gr':'58%', '--m-ga':'.32', '--m-ta':'.06', '--m-vig':'.12'}, plate:{src:'games/worlds/order/art/order-counter.webp', ready:true}, bed:{freq:420, q:.5, vol:.03, lfo:.09},
       spots:['cafe-clink', 'gull', 'cafe-pour'], layers:[], text:[],
@@ -121,14 +121,15 @@ window.THEATRE_SKINS = {
     world:{mood:'day', plate:{src:'games/worlds/trap/art/trap-pier.webp', ready:true}, bed:{freq:900, q:.3, vol:.026, lfo:.2}, spots:['gull'], layers:[
       {src:'games/worlds/trap/art/trap-barrier.webp', cls:'gw-barrier', box:[34, 62, 32], ready:true}], text:[], sfx:{}, css:null}}
 };
-// Captain, the town cat, hides in the worlds (Games 2.0 SPEC 5.8): 2 spots per world in plate % [x, y, w] (box) and, for the small-band
+// Captain, the town cat, hides in the worlds (Games 2.0 SPEC 5.8; 3D poses since 2026-11-26, the box tops moved down so his feet stay put): 2 spots per world in plate % [x, y, w] (box) and, for the small-band
 // worlds, in band % (band, sitting on the band floor). Poses sit / sleep / sniff (games/cozy-chores/art/pt-captain-*.webp), 36-48 px tall.
 (function(S){
   var C = {
-    build:[{box:[0.5, 59.5, 11], pose:'sit'}, {box:[31, 40.3, 16], pose:'sleep'}],        // on the blue crates; asleep on the window sill
-    echo:[{box:[74, 66.5, 17], pose:'sleep'}, {box:[44, 72.5, 10], pose:'sit'}],          // asleep on the desk; on the chair back
-    bingo:[{box:[6, 70, 11], band:[8, 0, 9], pose:'sit'}, {box:[60, 74, 16], band:[46, 0, 14], pose:'sleep'}],
-    cross:[{box:[60, 70, 11], band:[62, 0, 9], pose:'sit'}, {box:[40, 76, 16], band:[40, 0, 14], pose:'sleep'}]
+    order:[{box:[35, 56.4, 11], pose:'sit'}, {box:[6, 9, 13], pose:'sleep'}],          // the 3D café: on the floor left of the counter spot; asleep on top of the door frame
+    build:[{box:[0.5, 61.7, 11], pose:'sit'}, {box:[31, 42.6, 16], pose:'sleep'}],        // on the blue crates; asleep on the window sill
+    echo:[{box:[74, 68.9, 17], pose:'sleep'}, {box:[44, 74.5, 10], pose:'sit'}],          // asleep on the desk; on the chair back
+    bingo:[{box:[6, 72.2, 11], band:[8, 0, 9], pose:'sit'}, {box:[60, 76.3, 16], band:[46, 0, 14], pose:'sleep'}],
+    cross:[{box:[60, 72.2, 11], band:[62, 0, 9], pose:'sit'}, {box:[40, 78.3, 16], band:[40, 0, 14], pose:'sleep'}]
   };
   for(var k in C) if(S && S[k] && S[k].world) S[k].world.captain = C[k];
 })(window.THEATRE_SKINS);

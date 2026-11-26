@@ -36670,7 +36670,7 @@ function renderMsgNew(){
       <h1 class="display msg-h">${CL('New message','Yeni mesaj','پیام جدید','Mensaje nuevo')}<span class="msg-dot">.</span></h1>
       <p class="msg-sub">${CL('What is it about?','Ne hakkında?','درباره‌ی چیست؟','¿De qué se trata?')}</p>
       <div class="msg-stack">
-        ${opt('buy', {t:'course'}, CL('Buy a course','Kurs satın al','خرید دوره','Comprar un curso'), CL('See the price, pay and send your receipt. Your password comes here.','Fiyatı gör, öde ve dekontunu gönder. Şifren buraya gelir.','قیمت را ببین، پرداخت کن و رسیدت را بفرست. رمزت همین‌جا می‌آید.','Mira el precio, paga y envía tu comprobante. Tu contraseña llega aquí.'))}
+        ${opt('buy', {t:'course'}, CL('Every course: Plus','Bütün kurslar: Plus','همه‌ی دوره‌ها: Plus','Todos los cursos: Plus'), CL('Premium courses come with Plus and Guided. See the packages.','Premium kurslar Plus ve Guided paketlerinde. Paketlere bak.','دوره‌های ویژه در پکیج‌های Plus و Guided هستند. پکیج‌ها را ببین.','Los cursos premium vienen con Plus y Guided. Mira los paquetes.'))}
         ${opt('club', {t:'club'}, CL('Student Club & live classes','Öğrenci Kulübü ve canlı dersler','باشگاه دانش‌آموزان و کلاس‌های زنده','Club de estudiantes y clases en vivo'), CL('Join the club or ask about classes.','Kulübe katıl ya da dersleri sor.','عضو باشگاه شو یا درباره‌ی کلاس‌ها بپرس.','Únete al club o pregunta por las clases.'))}
         ${opt('question', {t:'general'}, CL('A question about a lesson','Bir ders hakkında soru','سؤال درباره‌ی یک درس','Una pregunta sobre una lección'), CL('Ask about any course or lesson.','Herhangi bir kurs ya da ders hakkında sor.','درباره‌ی هر دوره یا درسی بپرس.','Pregunta sobre cualquier curso o lección.'))}
         ${opt('app', {t:'app'}, CL("Something isn't working",'Bir şey çalışmıyor','چیزی کار نمی‌کند','Algo no funciona'), CL('Your phone and app details are added for you.','Telefon ve uygulama bilgilerin otomatik eklenir.','مشخصات گوشی و اپ خودکار اضافه می‌شود.','Los datos de tu teléfono y de la app se añaden solos.'))}
@@ -36811,7 +36811,7 @@ Object.assign(HANDLERS, {
   'msg-open'(el){ courseSheetRemove(); msgUi.draft = ''; msgUi.err = ''; go('msg-thread', {id:el.dataset.id}); },
   'msg-opt'(el){
     const o = el.dataset.o;
-    if(o === 'buy') go('msg-pick', {mode:'buy'});
+    if(o === 'buy'){ if(HANDLERS['mb-open']){ HANDLERS['mb-open'](); return; } go('msg-pick', {mode:'buy'}); }   // COURSES-IN-PLUS: the packages
     else if(o === 'question') go('msg-pick', {mode:'question'});
     else if(o === 'club') HANDLERS['msg-club']();
     else { msgUi.draft = ''; msgUi.err = ''; go('msg-compose', {t:'app', type:'question'}); }
@@ -42089,7 +42089,7 @@ Object.assign(HANDLERS, {
       });
     });
   },
-  'course-waitlist'(el){ courseSheetRemove(); msgStartRequest(el.dataset.cid); },   // Messages (Farin 2026-11-12): the course request screen (price, payment, receipt); the waiting-list page stays for old links
+  'course-waitlist'(el){ courseSheetRemove(); const ex = msgFindReq(el.dataset.cid); if(ex){ go('msg-thread', {id:ex}); return; } if(HANDLERS['mb-buy']){ HANDLERS['mb-buy']({dataset:{plan:'plus', from:el.dataset.cid || ''}}); return; } msgStartRequest(el.dataset.cid); },   // COURSES-IN-PLUS 2026-11-26 (Farin: "courses can be get through plus and guided"): Get Plus; a request already waiting opens its chat
   'course-waitlist-save'(el){ courseWaitlistSubmit(el.dataset.cid); },
   'course-request-name-save'(){
     const i = document.getElementById('course-req-name'), name = i ? i.value.trim() : '';
@@ -44002,36 +44002,32 @@ function adminWaitlistMessageLang(r){
   if(wa.indexOf('98') === 0) return 'fa';
   return (r.lang === 'tr' || r.lang === 'fa') ? r.lang : 'en';
 }
-function adminWaitlistMessage(r){
+function adminWaitlistMessage(r){   // COURSES-IN-PLUS 2026-11-26: the course is in Plus (and Guided); no course price, no IBAN for one course
   const n = String(r.name || '').trim().split(/\s+/)[0], info = WAITLIST_COURSE_INFO[r.course] || null, lang = adminWaitlistMessageLang(r);
-  const url = info ? WAITLIST_SITE + info[lang] : '', tl = info ? info.tl : '';
+  const P = typeof MB_PRICES !== 'undefined' ? MB_PRICES : {tr:{plus:{month:[319]}}, ir:{plus:{month:[629000]}}};
+  const tl = P.tr.plus.month[0], tm = P.ir.plus.month[0], app = typeof APP_URL !== 'undefined' ? APP_URL : 'https://thefeschool.com/';
   if(lang === 'fa'){
-    const name = info ? info.nameFa : r.title;
+    const name = info ? info.nameFa : r.title, toman = String(tm.toLocaleString('en-US')).replace(/[0-9]/g, d=>'۰۱۲۳۴۵۶۷۸۹'[d]).replace(/,/g, '٬');
     return [(n ? 'سلام ' + n + ' جان! 🌸' : 'سلام! 🌸') + '\nامیدوارم حالت خوب باشه.',
-      'به FEschool خیلی خوش اومدی! خوشحالم که برای دوره‌ی ' + name + ' علاقه‌مند بودی و اسمت رو در لیست ثبت‌نام قرار داده بودی.',
-      (url ? 'لینک ثبت‌نام دوره رو برات می‌فرستم. ' : '') + 'بعد از تکمیل ثبت‌نام، کد اختصاصی ورود به دوره برات صادر می‌شه و می‌تونی از همون لحظه به محتوای دوره دسترسی داشته باشی و قدم‌به‌قدم مسیر یادگیریت رو پیش ببری.',
-      url ? '🔗 لینک ثبت‌نام دوره‌ی ' + name + ':\n' + url : '',
-      'بعد از ثبت‌نام، لطفاً تصویر فیش واریزی رو همین‌جا برام ارسال کن تا کد ورود اختصاصی رو برات بفرستم. 💜',
-      'به امید یک تجربه یادگیری مفید و متفاوت در FEschool!'].filter(Boolean).join('\n\n');
+      'به FEschool خیلی خوش اومدی! خوشحالم که برای دوره‌ی ' + name + ' اسمت رو در لیست گذاشته بودی.',
+      'خبر خوب: از این به بعد همه‌ی دوره‌های ویژه، از جمله ' + name + '، توی پکیج Plus هستن. با Plus همه‌ی دوره‌ها برات باز می‌شه و آخر هر صفحه‌ی مسیر یادگیری‌ات هم کارنامه می‌گیری. Plus ماهی ' + toman + ' تومانه و وقتی برای اولین بار صفحه‌ی عضویت رو توی اپ باز کنی، ۴۸ ساعت قیمت ویژه‌ی شروع داری.',
+      '🔗 اپ FEschool:\n' + app + '\nبرو به صفحه‌ی عضویت و Plus رو انتخاب کن.',
+      'اگه سؤالی داشتی همین‌جا بپرس. 💜'].join('\n\n');
   }
   if(lang === 'tr'){
     const name = info ? info.nameTr : r.title;
     return [(n ? 'Merhaba ' + n + '! 🌸' : 'Merhaba! 🌸') + '\nUmarım iyisindir.',
-      'FEschool\'a hoş geldin! ' + name + ' kursuyla ilgilendiğin ve kayıt listesine adını yazdırdığın için çok mutluyum.',
-      (url ? 'Kursun bağlantısını aşağıya bırakıyorum. ' : '') + 'Kaydını tamamladıktan sonra kursa özel giriş kodun oluşturulacak ve o andan itibaren kursun içeriğine erişip öğrenme yolunda adım adım ilerleyebileceksin.',
-      url ? '🔗 ' + name + ':\n' + url : '',
-      tl ? '💳 Kurs ücreti: ₺' + tl + '\nKayıt için ücreti şu hesaba yatırman yeterli:\nIBAN: ' + PAYMENT_IBAN + '\nAlıcı: ' + PAYMENT_IBAN_NAME : '',
-      'Ödemeden sonra lütfen dekontun görüntüsünü buraya gönder, sana özel giriş kodunu göndereyim. 💜',
-      'FEschool\'da faydalı ve farklı bir öğrenme deneyimi yaşaman dileğiyle!'].filter(Boolean).join('\n\n');
+      'FEschool\'a hoş geldin! ' + name + ' kursu için listeye adını yazdırdığın için çok mutluyum.',
+      'Güzel bir haberim var: artık bütün premium kurslar, ' + name + ' da dahil, Plus paketinde. Plus ile bütün kurslar açılır ve her yol haritası sayfasının sonunda bir karne alırsın. Plus aylık ₺' + tl.toLocaleString('tr-TR') + '; uygulamada üyelik sayfasını ilk açtığında 48 saatlik bir başlangıç fiyatı da var.',
+      '🔗 FEschool uygulaması:\n' + app + '\nÜyelik sayfasına gir ve Plus\'ı seç.',
+      'Bir sorun olursa buradan yazabilirsin. 💜'].join('\n\n');
   }
   const name = info ? info.nameEn : r.title;
   return [(n ? 'Hi ' + n + '! 🌸' : 'Hi! 🌸') + '\nI hope you\'re doing well.',
-    'Welcome to FEschool! I\'m really glad you\'re interested in the ' + name + ' course and put your name on the sign-up list.',
-    (url ? 'Here is the course link. ' : '') + 'Once you register, you\'ll get your own access code for the course, and from that moment you can open the course and move through your learning path step by step.',
-    url ? '🔗 ' + name + ':\n' + url : '',
-    tl ? '💳 Course fee: ₺' + tl.replace('.', ',') + '\nTo register, transfer the fee to this account:\nIBAN: ' + PAYMENT_IBAN + '\nName: ' + PAYMENT_IBAN_NAME : '',
-    'After you pay, please send me a photo of the receipt here and I\'ll send you your access code. 💜',
-    'Wishing you a useful and different learning experience at FEschool!'].filter(Boolean).join('\n\n');
+    'Welcome to FEschool! I\'m really glad you put your name down for the ' + name + ' course.',
+    'Good news: every premium course, ' + name + ' included, is now part of Plus. Plus opens all the courses and gives you a report at the end of each roadmap page. Plus is ₺' + tl.toLocaleString('en-US') + ' a month (' + tm.toLocaleString('en-US') + ' toman in Iran), and the app gives you a 48-hour intro price the first time you open the membership page.',
+    '🔗 The FEschool app:\n' + app + '\nOpen the membership page and choose Plus.',
+    'If you have any question, just ask me here. 💜'].join('\n\n');
 }
 function adminWaitlistSetMessaged(key, on){
   const r = adminWaitlistRows().find(x=>x.key === key);

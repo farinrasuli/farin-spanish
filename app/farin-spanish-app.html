@@ -15507,7 +15507,9 @@ function farinHelloHtml(){
      end (proud face). Never two decorated cards side by side, never Farin and an item on one card.
    - A sheet item only where it means something (FARIN_ITEM_RULES); no match = no item; at most 5 a page.
    Cards with their own art (vocab/story book, writing/speaking studio art, song vinyl) get nothing extra. */
-const YC_POSTER = 'art/posters/card-path.webp';   // the Your Call album cover, cut for the card (games/your-call/art/cudillero/cover-2.webp)
+// CARD_VER: bump when a card picture is replaced under the same name (2026-11-26: the 3D cards; phones kept the old ones in their caches)
+const CARD_VER = '2';
+const YC_POSTER = 'art/posters/card-path.webp?v=' + CARD_VER;   // the Your Call album cover, cut for the card (games/your-call/art/cudillero/cover-2.webp)
 const RM_OWN_ART = {vocab:1, story:1, writing:1, speaking:1, song:1};
 const FARIN_ITEM_RULES = [
   ['headphones', it => it.type === 'media' || it.type === 'dialogue'],
@@ -15536,7 +15538,7 @@ function posterFocus(src){
 }
 function gamePosterSrc(it){
   if(!it || it.type !== 'game') return '';
-  if(it.gameKind !== 'path') return CARD_POSTERS.has(it.gameKind) ? 'art/posters/card-' + it.gameKind + '.webp' : '';
+  if(it.gameKind !== 'path') return CARD_POSTERS.has(it.gameKind) ? 'art/posters/card-' + it.gameKind + '.webp?v=' + CARD_VER : '';
   const r = pathRefParts(it.refId); if(!r) return '';
   if(r.level === 'A2' && YC_LEVELS.includes('A2') && ycEligible(it.refId)) return 'games/your-call/art/istanbul/cover.webp';   // the A2 album's own cover (2026-11-13)
   if(CARD_POSTERS.has('path') && typeof YC_LEVELS !== 'undefined' && (YC_LEVELS.includes(r.level) || ycEligible(it.refId))) return YC_POSTER;   // every level opens the comic (2026-11-12)
@@ -15865,12 +15867,12 @@ function gameDisplayName(kind){
   if(kind === 'cross') return L('Mini Cross','Mini Bulmaca','جدول کوچک','Minicrucigrama');
   if(kind === 'order') return L('Order Up!','Sipariş Hazır!','سفارش حاضر!','¡Marchando!');
   if(kind === 'desk') return L('Passport Desk','Pasaport Masası','میز گذرنامه','Control de pasaportes');
-  if(kind === 'mystery') return L('Case Closed','Dava Kapandı','پرونده مختومه','Caso cerrado');
+  if(kind === 'mystery') return L('Harbour Files','Liman Dosyaları','پرونده‌های بندر','Expedientes del puerto');   // was Case Closed (Farin 2026-11-26: "of course change them")
   if(kind === 'spell') return L('Magic Words','Sihirli Kelimeler','کلمات جادویی','Palabras mágicas');
   if(kind === 'bingo') return L('Word Bingo','Kelime Tombalası','بینگوی کلمات','Bingo de palabras');
   if(kind === 'hunt') return L('Story Hunt','Hikaye Avı','شکار داستان','Caza en la historia');
   if(kind === 'echo') return L('Say It Back','Tekrar Et','بگو ببینم','Repítelo');
-  if(kind === 'chores') return chChrome('title');   // one short word per language (Chores / Ev İşleri / خانه‌داری / Tareas)
+  if(kind === 'chores') return L('Open House','Açık Kapı','خانه‌ی باز','Puertas abiertas');   // was chChrome('title') = Chores (Farin 2026-11-26: "of course change them")
   if(kind === 'trap') return L('Trap Dash','Tuzak Kaçışı','فرار از تله‌ها','Escape de trampas');
   if(kind === 'dictation') return L('Listen & Type','Dinle ve Yaz','گوش کن و بنویس','Escucha y escribe');
   if(kind === 'radio') return L('Mini Radio','Mini Radyo','رادیو کوچک','Mini Radio');
@@ -31665,7 +31667,7 @@ function captainShelfHtml(){
   if(!kinds.length) return '';
   return `<div class="card-flat cap-shelf">
     <div class="eyebrow" style="color:var(--ink-soft);">${L('Captain sightings','Kaptan\'ı gördüğün yerler','جاهایی که کاپیتان رو دیدی','Dónde viste al Capitán')}</div>
-    <div class="cap-row">${kinds.map(k=>`<figure class="cap-pol"><span class="cap-pic"><img class="cap-plate" src="art/posters/card-${k}.webp" alt="" loading="lazy" decoding="async"><img class="cap-cat" src="games/cozy-chores/art/pt-captain-sit.webp" alt="" loading="lazy"></span><figcaption>${esc(gameDisplayName(k))}</figcaption></figure>`).join('')}</div>
+    <div class="cap-row">${kinds.map(k=>`<figure class="cap-pol"><span class="cap-pic"><img class="cap-plate" src="art/posters/card-${k}.webp?v=${CARD_VER}" alt="" loading="lazy" decoding="async"><img class="cap-cat" src="games/cozy-chores/art/pt-captain-sit.webp" alt="" loading="lazy"></span><figcaption>${esc(gameDisplayName(k))}</figcaption></figure>`).join('')}</div>
   </div>`;
 }
 // Journal: every finished page's report, one chip each.
@@ -32676,7 +32678,7 @@ const THEATRE_QUICK = ['match','build','cross','order','desk','spell','bingo','h
 const THEATRE_QUICK_VIEWS = THEATRE_QUICK.map(k=>'game-' + k);
 const THEATRE_KINDS = ['path','chores','mystery','radio'].concat(THEATRE_QUICK);
 const THEATRE_VIEWS = ['game-path','game-yc','game-chores-building','game-chores-room','game-mystery','game-v2'].concat(THEATRE_QUICK_VIEWS);
-const THEATRE_VER = '25';   // 25: Passport Desk's 3D poster (games/posters/desk-3d.webp) and the new 3D roadmap cards (Open House / Harbour Files posters: GAMES_VER 13); 24: Order Up!'s 3D poster (games/posters/order-3d.webp); 23: Order Up! full-body 3D cast + café plate (Higgsfield, farin-e9), world.css v2; 22: Order Up! cozy pass (skins.js order: wood panel, warm glow, café sounds, world.css; 2026-11-25); 21: Magic Words v2 (the hall of doors: skins.js spell world, plate mw-hall, bed, wide plate as the sides); 20: Story Hunt's wide opening / closing shot, Word Rush's end beat in the band + short-screen fit + clean card pile, Theatre 1.2.5; 19: worlds art (Story Hunt strip, Word Rush porthole, Mini Cross + Build It posters, Order Up! re-rolls, traveller 1), Theatre 1.2.4; 18: Passport Desk re-review (captions on the art, the HUD strip, the end over the booth, the horn, Theatre.quiet), Theatre 1.2.3; 17: text direction in the fa UI (Latin-script lines left to right), the companion line clear of x; 16: Games 2.0 step 5 part 4 (sound spots: gulls + the library clock; Passport Desk's traveller behind the booth counter; Trap Dash lanes); 15: Games 2.0 step 4 (Brave switch, boss beat, Captain); 14: the world art wiring + Sam's balloon waits for his picture (2026-11-16)
+const THEATRE_VER = '26';   // 26: card posters with ?v= in skins.js (2026-11-26); 25: Passport Desk's 3D poster (games/posters/desk-3d.webp) and the new 3D roadmap cards (Open House / Harbour Files posters: GAMES_VER 13); 24: Order Up!'s 3D poster (games/posters/order-3d.webp); 23: Order Up! full-body 3D cast + café plate (Higgsfield, farin-e9), world.css v2; 22: Order Up! cozy pass (skins.js order: wood panel, warm glow, café sounds, world.css; 2026-11-25); 21: Magic Words v2 (the hall of doors: skins.js spell world, plate mw-hall, bed, wide plate as the sides); 20: Story Hunt's wide opening / closing shot, Word Rush's end beat in the band + short-screen fit + clean card pile, Theatre 1.2.5; 19: worlds art (Story Hunt strip, Word Rush porthole, Mini Cross + Build It posters, Order Up! re-rolls, traveller 1), Theatre 1.2.4; 18: Passport Desk re-review (captions on the art, the HUD strip, the end over the booth, the horn, Theatre.quiet), Theatre 1.2.3; 17: text direction in the fa UI (Latin-script lines left to right), the companion line clear of x; 16: Games 2.0 step 5 part 4 (sound spots: gulls + the library clock; Passport Desk's traveller behind the booth counter; Trap Dash lanes); 15: Games 2.0 step 4 (Brave switch, boss beat, Captain); 14: the world art wiring + Sam's balloon waits for his picture (2026-11-16)
 // World Kit switch (worlds SPEC 4.14): one flag per quick game, on once its art and checks pass (Farin 11-10: switch on what is done).
 // ?worlds=1 previews every world in this browser (?worlds=0 switches the preview off). Off = the game plays over its poster's soft backdrop.
 // 2026-11-15 World Kit v1 live: Order Up!, Word Bingo, Mini Cross, Build It, Say It Back (their plates and props passed art QC). Passport Desk waits

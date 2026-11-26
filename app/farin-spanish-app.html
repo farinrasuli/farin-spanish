@@ -20440,6 +20440,93 @@ function grammarUsedInContext(text, markerWord){
     return s.split(/\s+/).filter(Boolean).length >= 3;
   });
 }
+/* Practice score (Farin 2026-11-25: "the score should be valued correctly not just on length"). Since 2026-10-10 the rounds have
+   no target words, so the score was length alone (easy = 100 % length: "Hola" scored 63, a pass), and a Spanish sentence with
+   no subject pronoun ("Trabajo en un banco", normal Spanish) did not count as a sentence and was held at 40. It now adds up what
+   a good answer has, out of 100 (PRACTICE_WEIGHTS), the same parts as the English app:
+   - Length: the words against the round's target (minWords).
+   - Sentences: complete sentences against minSentences, counted from the words (practiceClauses: a verb; Spanish often drops
+     the subject, so a verb alone is enough), not from full stops, because a spoken answer has none.
+   - Variety: different content words (not yo / el / es ...) against max(2, 40 % of minWords).
+   - On topic: content words shared with the round's own Spanish text (question, title, warm-up, model answer, the writing task's
+     plan and model, starters): 2 or more = full marks, 1 = half. The task prompts here are English instructions, so they are not
+     used. A round with no Spanish topic text gives these points to Sentences and Variety.
+   - Grammar (medium, difficult) and slang (difficult) as before. An old round that still has target words: they take the
+     Variety and On topic points, as before.
+   A pass needs 60+, real words, one complete sentence, 3/4 of the word target ("Aim for at least N words") and half the Variety
+   target (not the same few words again); an answer that misses a gate is held at 55 at most. lengthOk and looksReal (what the
+   course checks read) are unchanged. Claude/qa/practice-score-check.mjs holds the table of answers this must score right. */
+const PRACTICE_WEIGHTS = {easy:{len:30, sent:30, vary:20, topic:20, grammar:0, slang:0}, medium:{len:25, sent:25, vary:15, topic:15, grammar:20, slang:0}, difficult:{len:20, sent:20, vary:15, topic:15, grammar:20, slang:10}};   // slang is the round's "Bonus": it adds, it never decides a pass
+const PRACTICE_FUNCTION_WORDS = new Set(('yo tú tu él el ella usted nosotros nosotras vosotros vosotras ellos ellas ustedes me te se nos os le les lo la los las ' +
+  'mi mis su sus tus nuestro nuestra nuestros nuestras vuestro vuestra un una unos unas uno este esta estos estas ese esa esos esas eso esto aquel aquella ' +
+  'y o u e ni pero porque que qué cuando cuándo donde dónde como cómo cual cuál quien quién si sí no de del al a en con sin por para sobre entre hasta desde hacia ' +
+  'muy más menos también tampoco ya aún todavía todo toda todos todas otro otra otros otras mucho mucha muchos muchas poco poca cada algo nada ' +
+  'hay es son está están soy eres estoy era fue ser estar ha he han hemos tengo tiene hola gracias bueno vale pues entonces luego así aquí allí ahí bien ' +
+  'cosa cosas vez veces').split(' '));
+// Too common to show that an answer is about its question (they still count for Variety)
+const PRACTICE_GENERIC = new Set(('buen buena bueno grande pequeño nuevo nueva día días tiempo gente normalmente siempre nunca hoy ayer mañana ahora mucho ' +
+  'ser estar tener hacer hago hace hacen ir voy va van decir digo dice poder puedo puede querer quiero quiere gustar gusta gustan creer creo pensar pienso saber ver veo').split(' '));
+const PRACTICE_PRONOUNS = new Set('yo tú él ella usted nosotros nosotras vosotros ellos ellas ustedes'.split(' '));
+const PRACTICE_SUBJECTS = new Set(Array.from(SUBJECT_WORDS).concat('la los las un una gente todos alguien nadie todo algo nada'.split(' ')));
+const PRACTICE_SUBJ_VERB = /(?!)/;   // English "I'm" / "it's"; nothing like it in Spanish
+const PRACTICE_NEEDS_SUBJECT = false;   // Spanish often drops the subject ("Trabajo en un banco"): a verb alone makes a sentence
+const PRACTICE_NOT_VERBS = new Set('ayer lugar mujer hogar taller primer tercer alrededor aquí allí café bebé menú mejor peor mayor menor color amor calor favor señor esquí rubí maní lado'.split(' '));
+function practiceTokens(text){ return String(text || '').toLowerCase().replace(/[’`]/g, "'").replace(/[^a-záéíóúñü'\s]/g, ' ').split(/\s+/).map(t=>t.replace(/^'+|'+$/g, '')).filter(Boolean); }
+function practiceIsVerb(tk, i){
+  const t = tk[i], st = stemWord(t);
+  if(COMMON_VERBS.has(t) || COMMON_VERBS.has(st)) return true;
+  if(PRACTICE_FUNCTION_WORDS.has(t) || PRACTICE_NOT_VERBS.has(t) || t.length < 4) return false;
+  // past, imperfect, -ing / -ed forms, infinitives, nosotros: trabajé, comí, comió, llegaron, trabajaba, comíamos, hablando, cansado, hablar
+  // (no -ía / -ías: cafetería, panadería, policía are nouns)
+  return /(amos|emos|imos|aron|ieron|aste|iste|asteis|aba|abas|aban|ábamos|ían|íamos|ando|iendo|ado|ido|ar|er|ir|é|ó|í)$/.test(t);
+}
+// Complete sentences in the text: a verb (with a subject before it where the language needs one). A verb that follows the last
+// one within two words is the same sentence ("quiero ir", "voy a trabajar", "he trabajado").
+function practiceClauses(text){
+  const tk = practiceTokens(text);
+  let n = 0, last = -9, from = 0;
+  for(let i = 0; i < tk.length; i++){
+    if(i <= last + 2) continue;
+    if(PRACTICE_SUBJ_VERB.test(tk[i])){ n++; last = i; from = i + 1; continue; }
+    if(!practiceIsVerb(tk, i)) continue;
+    let subj = !PRACTICE_NEEDS_SUBJECT;
+    for(let j = Math.max(from, i - 4); j < i && !subj; j++){ const w = tk[j]; subj = PRACTICE_SUBJECTS.has(w) || (!PRACTICE_FUNCTION_WORDS.has(w) && w.length >= 3 && !practiceIsVerb(tk, j)); }
+    if(subj){ n++; last = i; from = i + 1; }
+  }
+  return n;
+}
+// Content words (stems), with the first form seen for each
+function practiceContent(text, generic){
+  const out = new Map();
+  practiceTokens(text).forEach(t=>{
+    if(t.length < 3 || PRACTICE_FUNCTION_WORDS.has(t)) return;
+    const st = stemWord(t) || t;
+    if(generic === false && (PRACTICE_GENERIC.has(t) || PRACTICE_GENERIC.has(st))) return;   // (trabajo, viajar, estudiar stay: they can be the topic)
+    if(st.length >= 2 && !out.has(st)) out.set(st, t);
+  });
+  return out;
+}
+// The round's own Spanish text: the speaking question (round.topicText; its "en" field is the Spanish question), the speaking
+// topic's Spanish title, warm-up and model answer, the writing task's plan and model, and the starters.
+function practiceTopicText(round){
+  const out = [round.topicText];
+  const tp = typeof speakingTopicOf === 'function' ? speakingTopicOf(round) : null, s = round.speak || {};
+  if(tp){
+    out.push(tp.topic && tp.topic.es, tp.warmup && (tp.warmup.es || tp.warmup.en));
+    const q = tp.questions && tp.questions[s.qi]; if(q) out.push(q.es || q.en || q);
+    const m = tp.models && tp.models[s.qi]; if(m) out.push(m.es || m.en || m);
+  }
+  const wt = typeof writingTaskOf === 'function' ? writingTaskOf(round) : null;
+  if(wt){ out.push(wt.model); (wt.plan || []).forEach(p=>out.push(p && (p.es || p.en || p))); }
+  (round.starters || []).forEach(t=>out.push(t));
+  return out.filter(x=>typeof x === 'string').join(' ');
+}
+function practiceTopicHit(stem, topic){
+  if(topic.has(stem)) return true;
+  if(stem.length < 4) return false;
+  for(const t of topic.keys()) if(t.length >= 4 && (t.indexOf(stem) === 0 || stem.indexOf(t) === 0)) return true;   // trabajo / trabajos, oficina / oficinas
+  return false;
+}
 function checkPracticeAnswer(round, text){
   const clean = (text||'').trim();
   const lower = clean.toLowerCase();
@@ -20468,24 +20555,41 @@ function checkPracticeAnswer(round, text){
   const extraKnownWords = round.words.map(w=>w.word).concat(round.grammar?[round.grammar.markerWord]:[]).concat(round.slang?[round.slang.word]:[]);
   const realCheck = checkTextLooksReal(clean, extraKnownWords.join(' ').split(/\s+/));
   const looksReal = clean.length ? realCheck.isReal : false;
-  const hasStructure = clean.length ? realCheck.hasStructure : false;
-
-  const weights = round.difficulty==='easy' ? {vocab:70, length:30, grammar:0, slang:0}
-    : round.difficulty==='medium' ? {vocab:50, length:30, grammar:20, slang:0}
-    : {vocab:40, length:20, grammar:20, slang:20};
-  if(!round.words.length){ weights.length += weights.vocab; weights.vocab = 0; }
-  const vocabPct = round.words.length ? wordsHit.length/round.words.length : 1;
-  const wcPct = round.minWords ? Math.min(wc/round.minWords, 1) : 1;
-  const scPct = round.minSentences ? Math.min(sc/round.minSentences, 1) : 1;
-  const lengthPct = (wcPct+scPct)/2;
-  let score = vocabPct*weights.vocab + lengthPct*weights.length;
-  if(weights.grammar) score += (grammarSpotted ? 1 : 0)*weights.grammar;
-  if(weights.slang) score += (slangSpotted ? 1 : 0)*weights.slang;
+  // the parts of a good answer (PRACTICE_WEIGHTS, above)
+  const clauses = clean ? practiceClauses(clean) : 0;
+  const hasStructure = clauses >= 1;
+  const sents = clauses;   // the sentences the feedback talks about (a spoken answer has no full stops)
+  const minW = round.minWords || 0, minS = round.minSentences || 0;
+  const own = practiceContent(clean), variety = own.size, varietyTarget = Math.max(2, Math.round(minW * 0.4));
+  const topic = practiceContent(practiceTopicText(round), false);
+  const topicOn = topic.size >= 2;
+  let topicHits = 0;
+  if(topicOn) practiceContent(clean, false).forEach((w, st)=>{ if(practiceTopicHit(st, topic)) topicHits++; });
+  const topicWords = topicOn ? Array.from(topic.values()).filter(w=>w.length >= 4).slice(0, 3) : [];
+  const w = Object.assign({}, PRACTICE_WEIGHTS[round.difficulty] || PRACTICE_WEIGHTS.difficult);
+  if(round.words.length){ w.vocab = w.vary + w.topic; w.vary = 0; w.topic = 0; }
+  else if(!topicOn){ w.sent += w.topic / 2; w.vary += w.topic / 2; w.topic = 0; }
+  const part = (have, need)=>need ? Math.min(have / need, 1) : 1;
+  const parts = {
+    len: w.len * part(wc, minW),
+    sent: w.sent * part(clauses, Math.max(minS, 1)),
+    vary: w.vary * part(variety, varietyTarget),
+    topic: w.topic * (topicHits >= 2 ? 1 : topicHits === 1 ? 0.5 : 0),
+    vocab: w.vocab ? w.vocab * (wordsHit.length / round.words.length) : 0,
+    grammar: w.grammar * (grammarSpotted ? 1 : 0),
+    slang: w.slang * (slangSpotted ? 1 : 0)
+  };
+  let score = Object.keys(parts).reduce((a, k)=>a + parts[k], 0);
   score = Math.max(0, Math.min(100, Math.round(score)));
+  // the pass gates: 3/4 of the word target, and at least half the Variety target (not the same few words again). A gate that
+  // fails holds the score under the pass mark, so the number and the headline never say "good" for an answer that does not pass.
+  const nearLength = wc >= Math.ceil(minW * 0.75), varietyOk = round.words.length || variety >= Math.ceil(varietyTarget / 2);
   if(!looksReal) score = Math.min(score, 15);
   else if(!hasStructure) score = Math.min(score, 40);
+  else if(!nearLength || !varietyOk) score = Math.min(score, 55);
 
-  return {wordsHit, wordsMissed, wc, sc, lengthOk, grammarSpotted, errorWatch, slangSpotted, looksReal, hasStructure, score, passed: score>=60 && looksReal && hasStructure};
+  return {wordsHit, wordsMissed, wc, sc, lengthOk, grammarSpotted, errorWatch, slangSpotted, looksReal, hasStructure, clauses, sents, variety, varietyTarget, varietyOk, topicOn, topicHits, topicWords, nearLength, parts, score,
+    passed: score>=60 && looksReal && hasStructure && nearLength && !!varietyOk};
 }
 // Bidi (2026-10-28, video 13): Latin bits inside fa feedback text (grammar titles, words, phrases) are wrapped in
 // FSI/PDI isolates so they never reorder with the Persian around them; plain text, so esc() keeps them.
@@ -20531,18 +20635,38 @@ function practiceFeedback(result, round){
       `کم داری: ${biso(result.wordsMissed.join(', '))}. سعی کن این‌ها را در جمله‌هایت بگنجانی.`, `Faltan: ${biso(result.wordsMissed.join(', '))}. Intenta incluir${result.wordsMissed.length>1?'las':'la'} en tu${round.words.length>1?'s oraciones':' oración'}.`
     )});
   }
-  if(result.lengthOk){
+  // 2026-11-25 score: sentences are the complete ones counted from the words (a spoken answer has no full stops)
+  const sn = result.sents != null ? result.sents : result.sc;
+  if(result.wc >= round.minWords && sn >= round.minSentences){
     lines.push({ok:true, text: L(
-      `Good length — ${result.wc} words across ${result.sc} sentence${result.sc>1?'s':''}.`,
-      `İyi bir uzunluk — ${result.sc} cümlede ${result.wc} kelime.`,
-      `طول خوبی داشت — ${result.wc} کلمه در ${result.sc} جمله.`, `Buena extensión — ${result.wc} palabras en ${result.sc} oración${result.sc>1?'es':''}.`
+      `Good length — ${result.wc} words across ${sn} sentence${sn>1?'s':''}.`,
+      `İyi bir uzunluk — ${sn} cümlede ${result.wc} kelime.`,
+      `طول خوبی داشت — ${result.wc} کلمه در ${sn} جمله.`,
+      `Buena extensión: ${result.wc} palabras en ${sn} frase${sn>1?'s':''}.`
     )});
   } else {
     lines.push({ok:false, text: L(
-      `Add more detail — you wrote ${result.wc} word${result.wc===1?'':'s'} in ${result.sc} sentence${result.sc===1?'':'s'}; aim for at least ${round.minWords} words across ${round.minSentences}+ sentences.`,
-      `Daha fazla detay ekle — ${result.sc} cümlede ${result.wc} kelime yazdın; en az ${round.minWords} kelime ve ${round.minSentences}+ cümle hedefle.`,
-      `جزئیات بیشتری اضافه کن — ${result.wc} کلمه در ${result.sc} جمله نوشتی؛ حداقل ${round.minWords} کلمه و ${round.minSentences}+ جمله هدف بگیر.`, `Añade más detalle — escribiste ${result.wc} palabra${result.wc===1?'':'s'} en ${result.sc} oración${result.sc===1?'':'es'}; apunta a al menos ${round.minWords} palabras en ${round.minSentences}+ oraciones.`
+      `Add more detail — ${result.wc} word${result.wc===1?'':'s'} in ${sn} full sentence${sn===1?'':'s'} so far; aim for at least ${round.minWords} words across ${round.minSentences}+ sentences.`,
+      `Daha fazla detay ekle — şimdilik ${sn} tam cümlede ${result.wc} kelime; en az ${round.minWords} kelime ve ${round.minSentences}+ cümle hedefle.`,
+      `جزئیات بیشتری اضافه کن — فعلاً ${result.wc} کلمه در ${sn} جمله‌ی کامل؛ حداقل ${round.minWords} کلمه و ${round.minSentences}+ جمله هدف بگیر.`,
+      `Añade más detalles: de momento ${result.wc} palabra${result.wc===1?'':'s'} en ${sn} frase${sn===1?'':'s'} completa${sn===1?'':'s'}; intenta llegar a ${round.minWords} palabras en ${round.minSentences} frases o más.`
     )});
+  }
+  // Variety: different words, not the same few again
+  if(result.looksReal && result.variety != null && result.wc){
+    const n = result.variety;
+    if(n >= result.varietyTarget) lines.push({ok:true, text: L(`Good range of words: ${n} different ones.`, `İyi kelime çeşitliliği: ${n} farklı kelime.`, `کلمه‌هایت متنوع بود: ${n} کلمه‌ی مختلف.`, `Buen vocabulario: ${n} palabras distintas.`)});
+    else lines.push({ok:false, text: L(`Use more different words: ${n} so far. Add a detail, a reason or an example.`, `Daha farklı kelimeler kullan: şimdilik ${n} tane. Bir detay, bir sebep ya da bir örnek ekle.`, `از کلمه‌های متنوع‌تری استفاده کن: فعلاً ${n} تا. یک نکته، یک دلیل یا یک مثال اضافه کن.`, `Usa palabras más variadas: de momento ${n}. Añade un detalle, un motivo o un ejemplo.`)});
+  }
+  // On topic: the answer uses the question's own words
+  if(result.looksReal && result.topicOn && result.wc){
+    if(result.topicHits >= 1) lines.push({ok:true, text: L('You answered the question.', 'Soruya cevap verdin.', 'به خودِ سؤال جواب دادی.', 'Has respondido a la pregunta.')});
+    else {
+      const ex = biso((result.topicWords || []).join(', '));
+      lines.push({ok:false, text: (result.topicWords || []).length
+        ? L(`Answer the question itself: use its key words, like ${ex}.`, `Sorunun kendisine cevap ver: ${ex} gibi anahtar kelimelerini kullan.`, `خودِ سؤال را جواب بده: از کلمه‌های اصلی‌اش استفاده کن، مثل ${ex}.`, `Responde a la pregunta en sí: usa sus palabras clave, como ${ex}.`)
+        : L('Answer the question itself.', 'Sorunun kendisine cevap ver.', 'خودِ سؤال را جواب بده.', 'Responde a la pregunta en sí.')});
+    }
   }
   if(round.grammar){
     // S3 error watch: "Check this" with the item's fix line. Never blocks, never scores.
@@ -20781,10 +20905,10 @@ function withSpeakingTopic(round, vp){
   const tp = plan.tp, k = Math.floor(n / Math.max(goals.length, 1));
   if(plan.follow){
     const f = plan.follow[k % plan.follow.length];
-    return Object.assign({}, round, {topic:trLine(f.text), starters:studioStartersFor(f.text), speak:{topicId:tp.id, goal:gk, level:lv, qi:f.qi != null ? f.qi : -1, fu:f.fu != null ? f.fu : null}});
+    return Object.assign({}, round, {topic:trLine(f.text), topicText:(f.text && (f.text.es || f.text.en)) || '', starters:studioStartersFor(f.text), speak:{topicId:tp.id, goal:gk, level:lv, qi:f.qi != null ? f.qi : -1, fu:f.fu != null ? f.fu : null}});
   }
   const qi = k % Math.min(tp.questions.length, tp.models.length);
-  return Object.assign({}, round, {topic:trLine(tp.questions[qi]), starters:studioStartersFor(tp.questions[qi]), speak:{topicId:tp.id, goal:gk, level:lv, qi}});
+  return Object.assign({}, round, {topic:trLine(tp.questions[qi]), topicText:(tp.questions[qi] && (tp.questions[qi].es || tp.questions[qi].en)) || '', starters:studioStartersFor(tp.questions[qi]), speak:{topicId:tp.id, goal:gk, level:lv, qi}});   // topicText: what On topic in the score compares with
 }
 /* LXD Review 5 READY-5 (Farin 24lgwXUw, 2026-10-28): speaking across the two stages of a level. The questions a learner was
    asked are kept per topic and stage in progress.speakAsked = {topicId:{"1":[qi], "2":[qi]}}. On stage 2 a usable topic not
@@ -21070,8 +21194,10 @@ function speakBind(){
   ta.dataset.speakBound = '1';
   ta.addEventListener('input', ()=>{ clearTimeout(speakTimer); speakTimer = setTimeout(()=>{ if(!studioRecognition) speakLive(ta.value, true); }, 160); });
 }
-// LXD §B Q7: coverage of the target words, then a full sentence, then word count, then /100.
-function speakTakeRank(r){ r = r || {}; return [(r.wordsHit || []).length, r.hasStructure ? 1 : 0, r.wc || 0, r.score || 0]; }
+// LXD §B Q7 was: coverage of the target words, then a full sentence, then word count, then /100.
+// 2026-11-25: the score now weighs the whole answer (length, sentences, variety, topic), so after target words it decides: a take that
+// passes, then the higher score, then more words.
+function speakTakeRank(r){ r = r || {}; return [(r.wordsHit || []).length, r.passed ? 1 : 0, r.score || 0, r.wc || 0]; }
 function speakBetterTake(takes){
   if(!takes || takes.length < 2) return 0;
   const a = speakTakeRank(takes[0].result), b = speakTakeRank(takes[1].result);

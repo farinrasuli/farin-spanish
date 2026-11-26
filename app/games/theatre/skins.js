@@ -27,7 +27,7 @@
    backdrop above. Anything a skin needs beyond tokens goes in its world.css under body.gw-on.gw-<kind>. */
 window.THEATRE_SKINS = {
   // Word Rush: the card table under the porthole, butter yellow, one red apple card
-  match:{card:'art/posters/card-match.webp?v=2', focus:'86%',
+  match:{card:'art/posters/card-match.webp?v=3', focus:'86%',
     palette:{sky:'#fcf9de', sky2:'#f2ebb2', glow:'#fffbea', ground:'#f3d47c', ink:'#3a3212', accent:'#d23f2d', accentInk:'#ffffff'},
     backdrop:{src:null, position:'70% 50%', blur:30, veil:.56}, props:[],
     gw:{bg:'#fff3c4', surface:'#e7c48e', paper:'#ffffff', ink:'#14332e', hue:'var(--cat-review)', accent:'#FF6F5E', cta:'#14332e', ctaInk:'#ffffff'},
@@ -37,13 +37,13 @@ window.THEATRE_SKINS = {
       port:{ring:'games/worlds/match/art/match-porthole.webp', view:'games/worlds/match/art/match-harbour.webp', ready:true}, end:{keep:true}, layers:[
       {src:'games/worlds/match/art/match-back.webp', cls:'gw-deck', box:[68, 78, 12], band:[76, 0, 13], sit:true, ready:true}], text:[], sfx:{}, css:null}},   // the pile: the clean card back
   // Build It: the workshop shelf, warm sand and wooden blocks
-  build:{card:'art/posters/card-build.webp?v=2', focus:'66%',
+  build:{card:'art/posters/card-build.webp?v=3', focus:'66%',
     palette:{sky:'#fcf2dc', sky2:'#f1daa8', glow:'#fff8ea', ground:'#e1b77d', ink:'#3b2a14', accent:'#cc5428', accentInk:'#ffffff'},
     backdrop:{src:null, position:'66% 50%', blur:30, veil:.56}, props:[],
     gw:{bg:'#fbe7c2', surface:'#e2b77c', paper:'#fffaf0', ink:'#14332e', hue:'var(--cat-gram)', accent:'#FF6F5E', cta:'#1f7a6d', ctaInk:'#ffffff'},
     world:{mood:'warm', plate:{src:'games/worlds/build/art/build-workshop.webp', ready:true}, bed:{freq:180, q:.8, vol:.028, lfo:.07}, layers:[], text:[], sfx:{}, css:null}},
   // Mini Cross: the cafe table crossword by the window, mint table, cream wall
-  cross:{card:'art/posters/card-cross.webp?v=2', focus:'64%',
+  cross:{card:'art/posters/card-cross.webp?v=3', focus:'64%',
     palette:{sky:'#f7f2e6', sky2:'#dfead2', glow:'#fffaf1', ground:'#92cfa6', ink:'#1f3a2e', accent:'#1d8f76', accentInk:'#ffffff'},
     backdrop:{src:null, position:'64% 50%', blur:30, veil:.56}, props:[],
     gw:{bg:'#f9dcc0', surface:'#5FC9B8', paper:'#fbf8f0', ink:'#14332e', hue:'var(--cat-voc)', accent:'#c8352e', cta:'#14332e', ctaInk:'#ffffff'},
@@ -51,7 +51,7 @@ window.THEATRE_SKINS = {
       {src:'games/worlds/cross/art/cross-croissant.webp', cls:'gw-croissant', box:[16, 76, 20], band:[6, 0, 22], sit:true, ready:true},
       {src:'games/worlds/cross/art/cross-cup.webp', cls:'gw-cup', box:[68, 70, 14], band:[78, 0, 15], sit:true, ready:true}], text:[], sfx:{}, css:null}},
   // Order Up!: Sam's harbour cafe, sea blue, the red-and-orange awning
-  order:{card:'art/posters/card-order.webp?v=2', focus:'80%',
+  order:{card:'art/posters/card-order.webp?v=3', focus:'80%',
     palette:{sky:'#ecf6f7', sky2:'#c9e3e6', glow:'#fff8ec', ground:'#7dcce5', ink:'#1d2f36', accent:'#c43428', accentInk:'#ffffff'},
     backdrop:{src:null, position:'78% 50%', blur:30, veil:.54}, props:[],
     // the cozy pass (2026-11-25): the panel is the honey-wood counter, brown ink, a terracotta Serve; the lamp's warm glow and a deeper
@@ -65,7 +65,7 @@ window.THEATRE_SKINS = {
       sfx:{'door-ding':['games/cozy-chores/sfx/ding-1.mp3', 'games/cozy-chores/sfx/ding-2.mp3'], 'cafe-clink':['games/cozy-chores/sfx/clink-1.mp3', 'games/cozy-chores/sfx/clink-2.mp3', 'games/cozy-chores/sfx/clink-3.mp3'],
         'cafe-pour':['games/cozy-chores/sfx/pour-liquid-1.mp3', 'games/cozy-chores/sfx/pour-liquid-2.mp3']}, css:'games/worlds/order/world.css?v=2'}},
   // Passport Desk: the booth at the end of the pier, sky, sea teal, the red-striped booth
-  desk:{card:'art/posters/card-desk.webp?v=2', focus:'64%',
+  desk:{card:'art/posters/card-desk.webp?v=3', focus:'64%',
     palette:{sky:'#e9f8fc', sky2:'#b9e6f2', glow:'#ffffff', ground:'#5fc3cc', ink:'#163450', accent:'#c23a32', accentInk:'#ffffff'},
     backdrop:{src:null, position:'64% 50%', blur:30, veil:.54}, props:[],
     gw:{bg:'#e8f6fd', surface:'#e3c595', paper:'#fffdf7', ink:'#13304d', hue:'var(--clay-sky)', accent:'#c8352e', cta:'#13304d', ctaInk:'#ffffff'},
@@ -77,20 +77,20 @@ window.THEATRE_SKINS = {
       {key:'closed', cls:'gw-closed', id:'gw-closed', box:[35, 27.5, 30], ready:true}], sfx:{}, css:null}},   // the window sign turns to CLOSED at the end
   // Magic Words: the hall of doors (Magic Words v2, 2026-11-21, Trello GW6fI424): lavender walls, curtains, two lanterns, the wooden floor.
   // The app stands each word's painted door in the plate's box (its sill on the floor line); the wide corridor plate is the world at the sides.
-  spell:{card:'art/posters/card-spell.webp?v=2', focus:'84%',
+  spell:{card:'art/posters/card-spell.webp?v=3', focus:'84%',
     palette:{sky:'#fcf2f8', sky2:'#efd5e5', glow:'#fff4d6', ground:'#eca560', ink:'#3a2342', accent:'#f0b232', accentInk:'#3a2342'},
     backdrop:{src:'games/worlds/spell/art/spell-corridor-wide.webp', position:'50% 50%', blur:30, veil:.5}, props:[],
     gw:{bg:'#efe8fb', surface:'#f5eee1', paper:'#fff3d2', ink:'#2a1d55', hue:'var(--clay-lavender-deep)', accent:'#f2b632', cta:'#f2b632', ctaInk:'#2a1d55'},
     world:{mood:'warm', moodVars:{'--m-gx':'50%', '--m-gy':'34%', '--m-gr':'58%'}, stage:'clamp(180px, calc(62dvh - 220px), 360px)', plate:{src:'games/worlds/spell/art/mw-hall.webp', ready:true}, bed:{freq:240, q:.5, vol:.022, lfo:.06}, layers:[], text:[], sfx:{}, css:null}},
   // Word Bingo: the bingo card on the kitchen table, cream, wood, red dots
-  bingo:{card:'art/posters/card-bingo.webp?v=2', focus:'66%',
+  bingo:{card:'art/posters/card-bingo.webp?v=3', focus:'66%',
     palette:{sky:'#fbf7e6', sky2:'#ece4c6', glow:'#fffdf4', ground:'#d1a77d', ink:'#3a2c1c', accent:'#d9463a', accentInk:'#ffffff'},
     backdrop:{src:null, position:'66% 50%', blur:30, veil:.56}, props:[],
     gw:{bg:'#f3f6d9', surface:'#e8c99a', paper:'#ffffff', ink:'#14332e', hue:'var(--cat-voc)', accent:'#FF6F5E', cta:'#14332e', ctaInk:'#ffffff'},
     world:{mood:'warm', moodVars:{'--m-gx':'70%', '--m-gy':'78%', '--m-gr':'45%'}, band:'small', stage:'clamp(150px, 26dvh, 260px)', plate:{src:'games/worlds/bingo/art/bingo-window.webp', ready:true}, layers:[
       {src:'games/worlds/bingo/art/bingo-dish.webp', cls:'gw-dish', box:[72, 84, 18], band:[74, 0, 18], sit:true, ready:true}], text:[], sfx:{}, css:null}},
   // Story Hunt: the open storybook and the magnifier in the library, sage and paper
-  hunt:{card:'art/posters/card-hunt.webp?v=2', focus:'56%',
+  hunt:{card:'art/posters/card-hunt.webp?v=3', focus:'56%',
     palette:{sky:'#f0f4f0', sky2:'#d5ded7', glow:'#fffaef', ground:'#bfab86', ink:'#26332c', accent:'#bf513e', accentInk:'#ffffff'},
     backdrop:{src:null, position:'56% 50%', blur:30, veil:.56}, props:[],
     gw:{bg:'#d6ebf7', surface:'#e8c48c', paper:'#fffaf0', ink:'#14332e', hue:'var(--cat-story)', accent:'#d8343f', cta:'#14332e', ctaInk:'#ffffff'},
@@ -101,20 +101,20 @@ window.THEATRE_SKINS = {
       {src:'games/worlds/hunt/art/hunt-cardbox.webp', cls:'gw-cardbox', box:[8, 73, 16], band:[6, 0, 14], sit:true, ready:true},   // on the desk (mCqPUhyl B2)
       {src:'games/worlds/hunt/art/hunt-lens.webp', cls:'gw-lens', id:'gw-lens', box:[60, 73, 11], band:[58, 0, 8], sit:true, ready:true}], text:[], sfx:{}, css:null}},   // the lens on the floor by the window (clear of the lamp)
   // Say It Back: the echo between two voices, rose wall, teal
-  echo:{card:'art/posters/card-echo.webp?v=2', focus:'68%',
+  echo:{card:'art/posters/card-echo.webp?v=3', focus:'68%',
     palette:{sky:'#fdf1ee', sky2:'#f2d0c9', glow:'#fff7f2', ground:'#5fb3a8', ink:'#2f2422', accent:'#0d8f87', accentInk:'#ffffff'},
     backdrop:{src:null, position:'68% 50%', blur:30, veil:.56}, props:[],
     gw:{bg:'#f7d3d6', surface:'#f3e9e2', paper:'#fffaf0', ink:'#14332e', hue:'var(--cat-lis)', accent:'#e8402f', cta:'#14332e', ctaInk:'#ffffff'},
     world:{mood:'day', plate:{src:'games/worlds/echo/art/echo-studio.webp', ready:true}, front:{top:'74%'}, layers:[], text:[
       {key:'onair', cls:'gw-onair', id:'gw-onair', box:[56, 30, 36], ready:true}], sfx:{}, css:null}},
   // Listen & Type: headphones at the window over the harbour, soft grey-rose, orange headphones
-  dictation:{card:'art/posters/card-dictation.webp?v=2', focus:'76%',
+  dictation:{card:'art/posters/card-dictation.webp?v=3', focus:'76%',
     palette:{sky:'#f8f3f1', sky2:'#e5dad5', glow:'#fffaf7', ground:'#b79984', ink:'#2f2a28', accent:'#cc6428', accentInk:'#ffffff'},
     backdrop:{src:null, position:'76% 50%', blur:30, veil:.56}, props:[],
     gw:{bg:'#fbd9d3', surface:'#f1e4d6', paper:'#fbf6e6', ink:'#14332e', hue:'var(--cat-lis)', accent:'#FFA53D', cta:'#14332e', ctaInk:'#ffffff'},
     world:{mood:'warm', plate:{src:'games/worlds/dictation/art/dictation-room.webp', ready:true}, front:{top:'80%'}, layers:[], text:[], sfx:{}, css:null}},
   // Trap Dash: the run to the striped barrier at the pier end, pale sky, sea
-  trap:{card:'art/posters/card-trap.webp?v=2', focus:'60%',
+  trap:{card:'art/posters/card-trap.webp?v=3', focus:'60%',
     palette:{sky:'#f0f9f9', sky2:'#cbeceb', glow:'#ffffff', ground:'#86d8d8', ink:'#173638', accent:'#d4463a', accentInk:'#ffffff'},
     backdrop:{src:null, position:'60% 50%', blur:30, veil:.54}, props:[],
     gw:{bg:'#eef8f8', surface:'#e3c595', paper:'#ffffff', ink:'#173638', hue:'var(--cat-gram)', accent:'#d4463a', cta:'#173638', ctaInk:'#ffffff'},

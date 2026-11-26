@@ -18933,7 +18933,7 @@ clubAskSchedule(8000);
      ~day and the spotlight's own 10-day rhythm; the copy (EN/TR/FA) lives in the Worker (src/copy.js), so nothing here is free text.
    - Farin's answers and passwords notify the learner's phones (admin › Inbox, by account hash); tapping opens the chat.
    - Farin's announcements (admin › Notifications) reach phones with notifications on; everyone else gets them once as a pop-up on the
-     next open (GET /news), and they stay in Messages under News from Farin.
+     next open (GET /news). Messages shows only the chats (Farin 2026-11-26: "in messages dont show the notifications, just the messages").
    - A tap opens the right screen: #n=<go> on a fresh open, or a 'notif-go' message from farin-sw.js when the app is already open. */
 const NOTIF_URL = 'https://fe-notify.farinrasuli.workers.dev';
 const NOTIF_LIVE = true;    // fe-notify is online since 2026-11-16; false = no notification calls at all and nothing shows (Claude/tools/fe-notify)
@@ -19263,7 +19263,7 @@ function notifGoWhenReady(g){
   tick();
 }
 
-/* ---------- announcements: the pop-up for learners without notifications + Messages › News from Farin ---------- */
+/* ---------- announcements: the pop-up for learners without notifications (the News from Farin list left Messages 2026-11-26; notifNewsListHtml is unused) ---------- */
 function notifNewsFits(b){
   const f = b.filter || {}, p = state.profile || {};
   if(f.levels && f.levels.length && f.levels.indexOf(p.level) === -1) return false;
@@ -19509,7 +19509,7 @@ function renderAdminNotifyTab(){
   const sec = (eb, title, body)=>`<section class="ap-sec"><div class="ap-sh"><span class="ap-eb">${eb}</span><h2 class="display">${title}<span class="dot">.</span></h2></div>${body}</section>`;
   const courses = COURSES.filter(x=>!x.hidden && ['later', 'soon', 'hidden'].indexOf(x.status) === -1);
   const send = sec('Announcement', 'Send to learners', `<div class="ap-card nt-form">
-      <p class="nt-note">Write it once. Learners with notifications on get it on their phone now; the others see it as a pop-up the next time they open the app. It also stays in their Messages under News from Farin.</p>
+      <p class="nt-note">Write it once. Learners with notifications on get it on their phone now; the others see it as a pop-up the next time they open the app.</p>
       <div class="nt-lbl">Language of this message <small>only learners who use the app in this language get it</small></div>
       <div class="ap-chips">${Object.keys(NT_LANGS).map(l=>chip('nt-lang', l, NT_LANGS[l], d.lang === l)).join('')}</div>
       <label class="nt-lbl" for="nt-title">Title <small id="nt-tc">${d.title.length}/50</small></label>
@@ -36460,7 +36460,6 @@ function renderMessages(){
       <button class="cu-btn cu-orange msg-new-btn" data-action="nav" data-view="msg-new">+ ${CL('New message','Yeni mesaj','پیام جدید','Mensaje nuevo')}</button>
       ${ids.length ? `<div class="msg-grp"><div class="msg-list">${ids.map(msgRowHtml).join('')}</div></div>` : ''}
       ${ids.length ? '' : `<div class="card-flat msg-empty">${CL('No messages yet. Ask Farin anything, or ask for a course.','Henüz mesaj yok. Farin\'e her şeyi sorabilir ya da bir kurs isteyebilirsin.','هنوز پیامی نداری. هر سؤالی داری از فرین بپرس، یا یک دوره درخواست کن.','Aún no hay mensajes. Pregúntale a Farin lo que quieras o pide un curso.')}</div>`}
-      ${notifNewsListHtml()}
     </div>
   </div>`;
 }

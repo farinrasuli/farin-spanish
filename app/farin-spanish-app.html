@@ -37268,6 +37268,31 @@ function spkRefresh(){
     const y = window.scrollY; render(); window.scrollTo(0, y);
   }).catch(()=>{});
 }
+/* ---------- keeping the dates current (Farin 2026-11-26: "the dates of the clubs should be up to date constantly") ----------
+   No date is stored per week: every Thursday, seat count and "next session" is worked out from the clock when a screen draws
+   (spkNextDate). For screens that stay open, a minute tick redraws a club screen, Home's promo lines or admin › Speaking clubs as
+   soon as a session has started (the next Thursday moved on), club screens read the seats again every minute, and coming back to the
+   app does both at once. Admin writes drop bookings that ended more than 4 weeks ago (adminSpkWrite). */
+const SPK_VIEWS = {'my-groups':1, 'spk-group':1, 'spk-pay':1, 'spk-invite':1};
+function spkDatesNow(){ return SPK_GROUPS.map(g=>spkNextDate(g)).join(','); }
+let spkDateSig = spkDatesNow();
+function spkTick(force){
+  if(typeof document !== 'undefined' && document.hidden) return;
+  const sig = spkDatesNow(), moved = sig !== spkDateSig; spkDateSig = sig;
+  if(location.hash === '#admin'){
+    if(typeof adminTab !== 'undefined' && adminTab === 'speaking' && (moved || force) && typeof adminSpkLoad === 'function') adminSpkLoad(true);
+    return;
+  }
+  if(moved || force) spkUi.at = 0;   // read the seats again too
+  if(SPK_VIEWS[state.view]){
+    if(moved){ const a = document.activeElement; if(a && a.id === 'msg-note') return; const y = window.scrollY; render(); window.scrollTo(0, y); }
+    spkRefresh();
+  } else if(state.view === 'dashboard' && (moved || force)){ spkPaintPromos(); spkRefresh(); }
+}
+if(typeof window !== 'undefined'){
+  setInterval(()=>{ try{ spkTick(false); }catch(e){} }, 60000);
+  document.addEventListener('visibilitychange', ()=>{ if(!document.hidden){ try{ spkTick(true); }catch(e){} } });
+}
 
 /* ---------- Messages: the request and the confirmation cards ---------- */
 function spkBubbleHtml(m, c, side, d, cls, time, imgHtml){
@@ -37359,6 +37384,8 @@ function adminSpkWrite(gid, change){
   return ref.get().then(doc=>{
     const seats = spkSeatsFrom(doc.exists ? (doc.data() || {}) : {}), mine = Object.assign({}, seats[gid] || {});
     const out = change(mine, seats);
+    const old = spkAddWeeks(spkIso(Date.now() + SPK_IR_OFFSET_MIN * 60000), -4);   // ended more than 4 weeks ago (Iran calendar): dropped
+    Object.keys(mine).forEach(k=>{ const b = mine[k]; if(b && /^\d{4}-\d{2}-\d{2}$/.test(b.f || '')){ const ds = spkDates(b.f, b.n); if(ds[ds.length - 1] < old) delete mine[k]; } });
     return ref.set({kind:'spkSeats', v:2, [gid]:mine}, {merge:true}).then(()=>{ seats[gid] = mine; adminSpkSeats = seats; adminSpkError = ''; return out; });
   });
 }
@@ -37453,6 +37480,7 @@ function adminSpkSendApp(p, g, f, n){
 function adminSpkPlace(){
   const a = adminSpkAdd, g = spkGroup(a.g), p = (adminPeople || []).find(x=>x.key === a.pick), n = Math.max(1, Math.min(SPK_MAX_N, Number(a.n) || 1));
   if(!g || !p || !a.f || adminChatBusy) return;
+  if(a.f < spkNextDate(g)){ adminSpkMsg = 'That Thursday has passed: pick another one.'; a.f = ''; renderAdminPage(); return; }
   const key = adminSpkPersonHash(p);
   if(!key){ adminSpkMsg = 'This learner has no account code yet, so the app could not find the seat.'; renderAdminPage(); return; }
   adminChatBusy = true; adminSpkMsg = ''; renderAdminPage();
@@ -37491,7 +37519,7 @@ function adminSpkAddHtml(g){
   const weeks = spkDates(spkNextDate(g), 8), p = (adminPeople || []).find(x=>x.key === a.pick);
   const n = Math.max(1, Math.min(SPK_MAX_N, Number(a.n) || 1));
   const ok = d=>spkDates(d, n).every(x=>spkLeft(g.id, x, adminSpkSeats) > 0);
-  if(!a.f || !ok(a.f)) a.f = weeks.find(ok) || '';
+  if(!a.f || weeks.indexOf(a.f) < 0 || !ok(a.f)) a.f = weeks.find(ok) || '';   // never a Thursday that has passed
   return `<div class="spk-add">
     <div class="eyebrow">Put a learner in ${esc(g.name)}</div>
     <input id="adm-spk-q" class="spk-q" type="search" placeholder="Name or number" value="${esc(a.q)}" autocomplete="off">

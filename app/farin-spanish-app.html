@@ -11102,10 +11102,10 @@ function ttsDeviceRate(rate){
   let lv = null; try{ lv = state.profile.level; }catch(e){}
   return Math.min(rate || 0.92, lv === 'A1' ? 0.75 : lv === 'A2' ? 0.83 : 1);
 }
-function ttsSpeakDevice(text, rate, cb){
+function ttsSpeakDevice(text, rate, cb, speed){
   try{
     if(typeof speechSynthesis === 'undefined' || typeof SpeechSynthesisUtterance === 'undefined'){ if(cb.error) cb.error(); return; }
-    const u = ttsUtter(text, ttsDeviceRate(rate));
+    const u = ttsUtter(text, ttsDeviceRate(rate) * (speed > 0 && !(rate && rate <= 0.75) ? speed : 1));   // speed: a game's pace by level (Passport Desk)
     u.onend = ()=>{ if(cb.end) cb.end(); };
     u.onerror = ()=>{ if(cb.error) cb.error(); };
     speechSynthesis.speak(u);
@@ -11113,6 +11113,8 @@ function ttsSpeakDevice(text, rate, cb){
 }
 // Speaks text: the natural clip when there is one, else the device voice.
 // cb = {end, error}; rate follows the old utterance rates (0.92 = normal).
+// opt.speed / opt.keep: a game's pace by level (Passport Desk, 2026-11-23): clips play at opt.speed (pitch kept) and a spliced line keeps at
+// most opt.keep seconds of the quiet each clip carries at its start and end. An explicit slow replay (rate <= 0.75) ignores both.
 function ttsSpeak(text, rate, cb, opt){
   cb = cb || {};
   ttsStop();
@@ -11126,19 +11128,19 @@ function ttsSpeak(text, rate, cb, opt){
   const want = pick ? pick.code : (ttsAccent() || (opt && TTS_ACCENTS.includes(opt.voice) ? opt.voice : ''));
   if(!main){
     const plan = ttsClips ? ttsPlan(text) : null;
-    if(plan && plan.ok){ ttsLast = {text, rate, cb, opt}; ttsPlayPlan(plan, rate, cb, want); return; }
+    if(plan && plan.ok){ ttsLast = {text, rate, cb, opt}; ttsPlayPlan(plan, rate, cb, want, opt); return; }
     ttsLast = null;
     if(opt && opt.natural){ console.warn('[tts] no natural clip, device voice skipped:', key); const ms = 400 + 330 * String(text).split(/\s+/).length; setTimeout(()=>{ if(cb.end) cb.end(); }, ms); return; }
-    ttsSpeakDevice(text, rate, cb); return;
+    ttsSpeakDevice(text, rate, cb, opt && opt.speed); return;
   }
   // the other voice's clip when this line's narrator is not the one wanted
   const alt = !!(want && want !== main && ttsAlt && ttsAlt[key] === want), code = alt ? want : main;
   ttsLast = {text, rate, cb, opt};
   const a = new Audio(ttsSrc(key, code));
-  // clips are recorded at their level's pace (A1 / A2 slower), so only an explicit slow replay stretches them
-  a.playbackRate = (rate && rate <= 0.75) ? rate / 0.92 : 1; a.preservesPitch = true;
+  // clips are recorded at their level's pace (A1 / A2 slower), so only an explicit slow replay stretches them (or a game's pace, opt.speed)
+  a.playbackRate = ttsClipRate(rate, opt); a.preservesPitch = true;
   ttsAudio = a; ttsBadge(code);
-  const fail = ()=>{ if(ttsAudio !== a) return; ttsAudio = null; ttsBadge(null); if(opt && opt.natural){ if(cb.end) cb.end(); return; } ttsSpeakDevice(text, rate, cb); };
+  const fail = ()=>{ if(ttsAudio !== a) return; ttsAudio = null; ttsBadge(null); if(opt && opt.natural){ if(cb.end) cb.end(); return; } ttsSpeakDevice(text, rate, cb, opt && opt.speed); };
   a.onended = ()=>{ if(ttsAudio !== a) return; ttsAudio = null; ttsBadge(null); if(cb.end) cb.end(); };
   a.onerror = fail;
   try{ const p = a.play(); if(p && p.catch) p.catch(fail); }catch(e){ fail(); }
@@ -11203,23 +11205,64 @@ function ttsPlan(text){
   ttsPlanCache.set(s, plan);
   return plan;
 }
+// A clip's playback rate: an explicit slow replay stretches it; else a game's pace (opt.speed, Passport Desk by level); else 1.
+function ttsClipRate(rate, opt){ return (rate && rate <= 0.75) ? rate / 0.92 : ((opt && opt.speed > 0) ? opt.speed : 1); }
+/* Where the voice starts and ends inside a clip (2026-11-23). An English (Kokoro) clip carries about 0.26-0.45 s of quiet before the voice
+   and 0.17-0.55 s after it, so a Passport Desk line spliced from 10 pieces had about 9 s of quiet in it (the "slow reading": about 70 words
+   a minute, though the voice inside speaks at about 130). Decoded once per clip (the file is already fetched for playing); null when it
+   can't be read, and then the clip plays whole, as before. */
+const ttsEdgeCache = new Map();
+let ttsEdgeCtx = null;
+function ttsEdges(url){
+  if(ttsEdgeCache.has(url)) return ttsEdgeCache.get(url);
+  let p;
+  try{
+    const AC = window.OfflineAudioContext || window.webkitOfflineAudioContext;
+    if(!AC || typeof fetch !== 'function') p = Promise.resolve(null);
+    else p = fetch(url).then(r=>r.ok ? r.arrayBuffer() : null).then(buf=>buf && new Promise((ok, no)=>{
+      if(!ttsEdgeCtx) ttsEdgeCtx = new AC(1, 1, 24000);
+      const r = ttsEdgeCtx.decodeAudioData(buf, ok, no); if(r && r.catch) r.catch(no);
+    })).then(ab=>{
+      if(!ab) return null;
+      const d = ab.getChannelData(0), n = d.length, th = 0.004;
+      let a = 0, z = n - 1;
+      while(a < n && Math.abs(d[a]) < th) a++;
+      while(z > a && Math.abs(d[z]) < th) z--;
+      return a >= z ? null : {lead:a / ab.sampleRate, tail:(n - 1 - z) / ab.sampleRate, dur:n / ab.sampleRate};
+    }).catch(()=>null);
+  }catch(e){ p = Promise.resolve(null); }
+  if(ttsEdgeCache.size > 600) ttsEdgeCache.clear();
+  ttsEdgeCache.set(url, p);
+  return p;
+}
 // Plays a plan's clips back to back in one voice (want, else the first piece's narrator), all preloaded.
-function ttsPlayPlan(plan, rate, cb, want){
+// opt.speed: the playback rate (pitch kept), the pauses between pieces shortened by the same factor; opt.keep: the most quiet (s) left at
+// each end of a piece (its start skipped, the piece ended where its voice ends + keep), from ttsEdges(); a piece not decoded yet plays whole.
+function ttsPlayPlan(plan, rate, cb, want, opt){
   const code = want || ttsClips[plan.pieces[0].k], my = ++ttsSeqTok;
+  const slow = !!(rate && rate <= 0.75), sp = ttsClipRate(rate, opt), keep = (!slow && opt && opt.keep >= 0) ? opt.keep : null;
   const list = plan.pieces.map(p=>{
-    const a = new Audio(ttsSrc(p.k, code)); a.preload = 'auto';   // a character voice's own pieces, the other voice's or the main set's
-    a.playbackRate = (rate && rate <= 0.75) ? rate / 0.92 : 1; a.preservesPitch = true;
-    return {a, pause:p.pause};
+    const url = ttsSrc(p.k, code), a = new Audio(url); a.preload = 'auto';   // a character voice's own pieces, the other voice's or the main set's
+    a.playbackRate = sp; a.preservesPitch = true;
+    return {a, url, pause:sp === 1 || slow ? p.pause : Math.round(p.pause / sp), edges:null};
   });
   ttsBadge(code);
   const finish = ok=>{ if(ttsSeqTok !== my) return; ttsAudio = null; ttsBadge(null); if(ok){ if(cb.end) cb.end(); } else if(cb.error) cb.error(); };
+  let cur = -1, armCur = null;
+  if(keep != null) list.forEach((it, i)=>ttsEdges(it.url).then(e=>{ it.edges = e; if(e && i === cur && armCur) armCur(); }));
   const next = i=>{
     if(ttsSeqTok !== my) return;
     if(i >= list.length){ finish(true); return; }
-    const it = list[i]; ttsAudio = it.a;
-    const go = ()=>{ if(ttsSeqTok !== my) return; if(it.pause && i < list.length - 1) ttsSeqTimer = setTimeout(()=>next(i + 1), it.pause); else next(i + 1); };
+    const it = list[i]; ttsAudio = it.a; cur = i;
+    let done = false, cut = 0, playing = false;
+    const go = ()=>{ if(done || ttsSeqTok !== my) return; done = true; clearTimeout(cut); armCur = null; if(keep != null) try{ it.a.pause(); }catch(e){} if(it.pause && i < list.length - 1) ttsSeqTimer = setTimeout(()=>next(i + 1), it.pause); else next(i + 1); };
+    // with opt.keep the piece ends where its voice ends (+ keep), not where the file ends
+    const arm = ()=>{ const e = it.edges; if(done || !playing || !e || ttsSeqTok !== my) return; clearTimeout(cut); const to = Math.min(e.dur, e.dur - e.tail + keep); cut = setTimeout(go, Math.max(0, (to - it.a.currentTime) / sp * 1000)); };
+    armCur = arm;
     it.a.onended = go;
     it.a.onerror = ()=>{ if(ttsSeqTok === my) go(); };   // a piece that fails is skipped, never the robot voice mid-line
+    it.a.onplaying = ()=>{ playing = true; arm(); };
+    if(it.edges){ const from = Math.max(0, it.edges.lead - keep); if(from > 0.02) try{ it.a.currentTime = from; }catch(e){} }   // skip the quiet before the voice
     try{ const p = it.a.play(); if(p && p.catch) p.catch(()=>{ if(ttsSeqTok === my && ttsAudio === it.a) go(); }); }catch(e){ go(); }
   };
   next(0);
@@ -15995,9 +16038,9 @@ function updateGameBest(kind, st){
     pr.gameBests.cross = Object.assign({}, better ? {clean:st.clean, total:st.total} : prev, {time:isFinite(time) ? time : null});
     return !!prev && better;
   }
-  const metric = kind==='match' ? (b=>-(b.time||9999)) : (kind==='trap' ? (b=>b.score||0) : ((kind==='build' || kind==='bingo' || kind==='chores') ? (b=>b.first||0) : ((kind==='hunt' || kind==='desk' || kind==='mystery') ? (b=>b.clean||0) : (kind==='echo' ? (b=>b.clear||0) : (kind==='order' ? (b=>b.right||0) : (kind==='spell' ? (b=>b.gold||0) : (b=>b.pct||0)))))));
+  const metric = kind==='match' ? (b=>-(b.time||9999)) : (kind==='trap' ? (b=>b.score||0) : ((kind==='build' || kind==='bingo' || kind==='chores') ? (b=>b.first||0) : (kind==='desk' ? (b=>(b.clean||0) / (b.total||5)) : ((kind==='hunt' || kind==='mystery') ? (b=>b.clean||0) : (kind==='echo' ? (b=>b.clear||0) : (kind==='order' ? (b=>b.right||0) : (kind==='spell' ? (b=>b.gold||0) : (b=>b.pct||0))))))));
   const cur = {time:st.time||null, score:st.score!=null ? st.score : null, pct:st.pct!=null ? st.pct : null,
-    first:st.firstTry!=null ? st.firstTry : (st.first!=null ? st.first : null), clean:st.clean!=null ? st.clean : null, clear:st.clear!=null ? st.clear : null, right:st.right!=null ? st.right : null, gold:st.gold!=null ? st.gold : null};
+    first:st.firstTry!=null ? st.firstTry : (st.first!=null ? st.first : null), clean:st.clean!=null ? st.clean : null, total:st.total!=null ? st.total : null, clear:st.clear!=null ? st.clear : null, right:st.right!=null ? st.right : null, gold:st.gold!=null ? st.gold : null};
   if(!prev){ pr.gameBests[kind] = cur; return false; }
   if(metric(cur) > metric(prev)){ pr.gameBests[kind] = cur; return true; }
   return false;
@@ -23415,9 +23458,10 @@ function orderPeekEnd(){
 /* ============================= FIVE NEW GAMES WAVE B (Jq6f9OFv): PASSPORT DESK =============================
    Spec: Claude/specs/games-5-new-cards-2026-10-04.md §5 (approved by Farin 2026-10-07). Content:
    Claude/specs/games-content/desk-en.md + desk-es.md (farin-lxd, 2026-10-08). You run the arrivals desk:
-   five travellers (the four non-companion characters) say who they are; their arrival card has at most one
-   typo (or, from A2, one blank box) and the learner fixes it, then brings the APPROVED stamp down. Nobody
-   is ever refused. Traveller 1 is always clean; 2-3 of the 5 have one issue. A1 fixes with 3 chips, A2+
+   three travellers (five until 2026-11-23, Farin: "3 rounds per game is enough") say who they are; their
+   arrival card has at most one typo (or, from A2, one blank box; the double has two) and the learner fixes
+   it, then brings the APPROVED stamp down. Nobody is ever refused. One of the three is clean, the other two
+   have an issue (buildDeskRound). A1 fixes with 3 chips, A2+
    types the value (digits or number words, any date format; chips after two misses or when the text
    can't be read), B1 fills its blank box by picking the right question of three, B2 keeps the last
    value of a self-correction, C1 hears fast natural speech and implied dates (a fortnight = 14, una
@@ -23425,7 +23469,7 @@ function orderPeekEnd(){
    a hint, free when the phone has no voice for the language. Untimed, no lives, no XP, never falls back.
    Card values are a target-language document (labels follow the UI language). Roadmap rounds are seeded
    by refId (a replay = the same travellers); the Games shelf draws fresh ones. */
-const DESK_TRAVELLERS = 5;
+const DESK_TRAVELLERS = 3;   // a round's travellers (2026-11-23, Farin: "3 rounds per game is enough"; it was 5). Old saved rounds keep their own length.
 const DESK_NAMES = {
   en:[{first:'Elif', last:'Kaya', g:'f', near:['Kaia','Kayah']}, {first:'Deniz', last:'Arslan', g:'m', near:['Aslan','Arslam']}, {first:'Omar', last:'Haddad', g:'m', near:['Hadad','Haddat']},
     {first:'Mia', last:'Brown', g:'f', near:['Braun','Browne']}, {first:'Tom', last:'Reed', g:'m', near:['Reid','Read']}, {first:'Nina', last:'Petrov', g:'f', near:['Petrof','Petrow']},
@@ -23884,43 +23928,42 @@ function deskMakeTraveller(tpl, level, lang, mode, rnd, usedNames, today, dbl){
   }
   return null;
 }
-// A round: five travellers on distinct templates; traveller 1 clean, 2-3 of the rest with one issue (A2: at most
-// one blank; B1: at most one "ask"). refId seeds a roadmap round; null = fresh (Games shelf).
+// A round (2026-11-23, Farin: "3 rounds per game is enough"; it was five): three travellers on distinct templates.
+//  - the boss (Games 2.0 SPEC 11): the template with the most rows (then the most words) is last;
+//  - exactly one of the three is clean, so every card needs a real check: any traveller but the double, and only a template whose every
+//    card box is said out loud; the other two carry one issue each (A2: a blank only where the template has one; B1: at most one "ask");
+//  - the double (A2+): traveller 2 or 3, never at the position it had in the learner's last round (progress.deskDouble, written when the
+//    round starts, so the read-only probe in theatreQuickKind can't flip it).
+// refId seeds a roadmap round; null = fresh (Games shelf).
+function deskSaysAll(tp, level){ return DESK_FIELDS[deskLevelKey(level)].every(f=>tp.f.some(fs=>fs.indexOf(f) >= 0)); }
 function buildDeskRound(refId){
   const lvl = (state.profile && state.profile.level) || 'A1';
   const level = DESK_TEMPLATES[lvl] ? lvl : 'A1', lang = orderLang();
   const rnd = crossRng(refId ? crossHash('desk|' + refId) : (Math.random()*4294967295) >>> 0);
-  const today = todayISO();
-  for(let attempt = 0; attempt < 20; attempt++){
+  const today = todayISO(), prevDbl = state.progress ? state.progress.deskDouble : null;
+  const size = tp => tp.f.length * 1000 + (tp[lang] || []).join(' ').length;
+  for(let attempt = 0; attempt < 30; attempt++){
     const tpls = crossShuffle(DESK_TEMPLATES[level], rnd).slice(0, DESK_TRAVELLERS);
-    const want = rnd() < .5 ? 2 : 3;
+    let bi = 0; for(let i = 1; i < tpls.length; i++) if(size(tpls[i]) > size(tpls[bi])) bi = i;
+    if(bi !== tpls.length - 1) tpls.push(tpls.splice(bi, 1)[0]);
+    const dbl = level === 'A1' ? -1 : crossShuffle([1, 2].filter(i=>i !== prevDbl), rnd)[0];
+    const cleanAt = crossShuffle([0, 1, 2].filter(i=>i !== dbl && deskSaysAll(tpls[i], level)), rnd)[0];
+    if(cleanAt == null) continue;
     const modes = tpls.map(()=>'clean');
-    let askUsed = false, n = 0;
-    // the B1 template that never says its date of birth takes the "ask" turn first
-    const order = crossShuffle([1, 2, 3, 4], rnd).sort((a, b)=>(tpls[b].id === 'B1-3') - (tpls[a].id === 'B1-3'));
-    for(const i of order){
-      if(n >= want) break;
+    let askUsed = false, bad = false;
+    for(let i = 0; i < tpls.length; i++){
+      if(i === cleanAt) continue;
       const tp = tpls[i], opts = [];
       if(tp.mk[1] === 'blank') opts.push('blank');
-      if(tp.ask && !askUsed) opts.push('ask');
+      if(tp.ask && !askUsed && i !== dbl) opts.push('ask');   // the double needs boxes it can get wrong, never the "ask" turn
       if(deskMistakeOk(tp)) opts.push('mistake');
-      if(!opts.length) continue;
+      if(!opts.length){ bad = true; break; }
+      // the B1 template that never says its date of birth always takes the "ask" turn
       const mode = (opts.indexOf('ask') >= 0 && (tp.id === 'B1-3' || !deskMistakeOk(tp) || rnd() < .4)) ? 'ask' : opts[opts.length - 1];
       if(mode === 'ask') askUsed = true;
-      modes[i] = mode; n++;
+      modes[i] = mode;
     }
-    if(n < 2) continue;
-    // Games 2.0 SPEC 11: the boss = the traveller with the most rows, last (traveller 1 stays the clean one)
-    let bi = 1; for(let i = 2; i < tpls.length; i++) if(tpls[i].f.length > tpls[bi].f.length) bi = i;
-    if(bi !== tpls.length - 1){ tpls.push(tpls.splice(bi, 1)[0]); modes.push(modes.splice(bi, 1)[0]); }
-    // the double (A2+): one traveller at position 2-4 has two mistakes, never at the position it had in the learner's last round
-    let dbl = -1;
-    if(level !== 'A1'){
-      const last = state.progress ? state.progress.deskDouble : null, at = crossShuffle([1, 2, 3].filter(i=>i !== last), rnd);
-      const j = at.find(i=>modes[i] === 'mistake' || modes[i] === 'blank');
-      if(j != null) dbl = j;
-      else { const k = at.find(i=>modes[i] === 'clean' && deskMistakeOk(tpls[i])); if(k != null){ modes[k] = 'mistake'; dbl = k; } }
-    }
+    if(bad) continue;
     const used = new Set(), chars = crossShuffle(ORDER_CHARS.filter(k=>k !== learnerCharKey()), rnd);
     const travellers = [];
     for(let i = 0; i < tpls.length; i++){
@@ -23931,14 +23974,21 @@ function buildDeskRound(refId){
     }
     if(travellers.length < DESK_TRAVELLERS) continue;
     const dblAt = travellers.findIndex(t=>t.issue2);
-    if(dblAt > 0 && state.progress) state.progress.deskDouble = dblAt;
+    if(dbl > 0 && dblAt < 0 && attempt < 24) continue;   // the double found no second box this time: draw again
     // "How to play" shows once, before the learner's first-ever round (gamesMet stays true for every replay after).
-    return {level, lang, today, travellers, index:0, clean:0, combo:0, said:0, noVoice:ttsVoiceMissing(), greeted:false, finished:false, startedAt:Date.now(), finishedAt:null, intro:!gamesMet().has('desk'), double:dblAt > 0};
+    return {level, lang, today, travellers, index:0, clean:0, combo:0, said:0, noVoice:ttsVoiceMissing(), greeted:false, finished:false, startedAt:Date.now(), finishedAt:null, intro:!gamesMet().has('desk'), double:dblAt > 0, dblAt};
   }
   return null;
 }
 function deskCur(round){ return round.travellers[round.index] || null; }
-function deskRate(round){ return round.level === 'A1' ? 0.85 : 0.92; }
+function deskRate(round){ return round.level === 'A1' ? 0.85 : 0.92; }   // the device voice's rate (only when a line has no natural clips)
+// The pace by level (2026-11-23, Farin: "passport check is slow reading, make it just a bit faster according to the level"). The slowness
+// was the quiet inside the spliced clips (about 0.3-0.5 s at both ends of every piece, ~70 words a minute at every level), so:
+// speed = the clips' playback rate (pitch kept, ttsClipRate); keep = the most quiet (s) left at each end of a piece (ttsPlayPlan).
+// A1 keeps the recorded pace and the longest breaks; each level after it a little quicker.
+const DESK_PACE = {A1:{speed:1, keep:.32}, A2:{speed:1.05, keep:.28}, B1:{speed:1.1, keep:.24}, B2:{speed:1.15, keep:.2}, C1:{speed:1.2, keep:.16}};
+function deskPace(round){ return DESK_PACE[round && round.level] || DESK_PACE.A1; }
+function deskSay(round, text, t){ try{ ttsSpeak(text, deskRate(round), null, Object.assign({voice:deskVoice(t)}, deskPace(round))); }catch(e){} }
 function deskFieldsOf(round){ return DESK_FIELDS[deskLevelKey(round.level)]; }
 function deskLineFor(t, field){ return t.lines.find(l=>l.f.indexOf(field) >= 0) || null; }
 // The first field whose card value still differs from what the traveller said (a blank box counts).
@@ -24037,9 +24087,9 @@ function deskPurposeUi(p){
   return L('holiday','tatil','تعطیلات','vacaciones');
 }
 function deskStatusHtml(round){
-  const n = Math.min(round.index + 1, DESK_TRAVELLERS), c = round.combo || 0;
+  const total = round.travellers.length || DESK_TRAVELLERS, n = Math.min(round.index + 1, total), c = round.combo || 0;   // the round's own length: an old saved round of five finishes as it is
   const streak = '';   // no streak pill (Farin's no-scores rule, 2026-11-14)
-  return `<div class="game-status" id="desk-status"><span class="game-status-text">${round.finished ? L('Desk closed','Masa kapandı','میز بسته شد','Control cerrado') : gameProgressHtml(round.index, DESK_TRAVELLERS, L(`Traveller ${n} of ${DESK_TRAVELLERS}`, `Yolcu ${n} / ${DESK_TRAVELLERS}`, `مسافر ${n} از ${DESK_TRAVELLERS}`, `Viajero ${n} de ${DESK_TRAVELLERS}`))}</span>${streak}</div>`;
+  return `<div class="game-status" id="desk-status"><span class="game-status-text">${round.finished ? L('Desk closed','Masa kapandı','میز بسته شد','Control cerrado') : gameProgressHtml(round.index, total, L(`Traveller ${n} of ${total}`, `Yolcu ${n} / ${total}`, `مسافر ${n} از ${total}`, `Viajero ${n} de ${total}`))}</span>${streak}</div>`;
 }
 function deskSaidInner(round, t){
   const shown = t.said || round.noVoice;
@@ -24242,7 +24292,7 @@ let deskBusy = false, deskTimer = null;
 function deskVoice(t){ return t ? {sex:t.g === 'm' ? 'm' : 'f'} : ''; }
 function deskSpeak(round, text, delay){
   const idx = round.index;
-  setTimeout(()=>{ if(state.viewParams && state.viewParams.round === round && round.index === idx && !round.finished) speakTarget(text, deskRate(round), deskVoice(deskCur(round))); }, delay || 60);
+  setTimeout(()=>{ if(state.viewParams && state.viewParams.round === round && round.index === idx && !round.finished) deskSay(round, text, deskCur(round)); }, delay || 60);
 }
 function deskAllSaid(t){ return t.lines.map(l=>l.say).join(' '); }
 function deskArrive(round){
@@ -34605,7 +34655,7 @@ const HANDLERS = {
     const r = state.viewParams && state.viewParams.round; if(!r || !r.intro) return;
     r.intro = false; sfx('tick'); deskRefresh(); save(); deskArrive(r);
   },
-  'desk-play'(){ const r = state.viewParams && state.viewParams.round, t = r && deskCur(r); if(!t || r.finished) return; if(!t.done){ t.replays = (t.replays || 0) + 1; if(gameBrave('desk') && t.replays === 2) setTimeout(deskRefresh, 0); } speakTarget(t.reply && t.mode === 'ask' ? t.reply : deskAllSaid(t), deskRate(r), deskVoice(t)); },
+  'desk-play'(){ const r = state.viewParams && state.viewParams.round, t = r && deskCur(r); if(!t || r.finished) return; if(!t.done){ t.replays = (t.replays || 0) + 1; if(gameBrave('desk') && t.replays === 2) setTimeout(deskRefresh, 0); } deskSay(r, t.reply && t.mode === 'ask' ? t.reply : deskAllSaid(t), t); },
   'desk-said'(){
     const r = state.viewParams && state.viewParams.round, t = r && deskCur(r); if(!t || r.finished || t.said) return;
     t.said = true; if(!r.noVoice) r.said++;   // a hint for this traveller (free when the phone has no voice)
@@ -34811,11 +34861,11 @@ const HANDLERS = {
     }
     if(kind === 'desk'){
       // Passport Desk: own generated content, never falls back. A roadmap node is seeded by its refId (a replay = the
-      // same five travellers); free play (Games shelf) draws fresh ones. First time ever: a "how to play" card shows
+      // same three travellers); free play (Games shelf) draws fresh ones. First time ever: a "how to play" card shows
       // first and the traveller only steps up once it's dismissed (desk-intro-start); after that it's met, so later
       // rounds skip straight to the traveller stepping up after the render.
       const deskRound = buildDeskRound(params.free ? null : params.refId);
-      if(deskRound){ if(!deskRound.intro) queueFx(()=>deskArrive(deskRound)); go('game-desk', Object.assign({round: deskRound}, params)); return; }
+      if(deskRound){ if(deskRound.dblAt > 0 && state.progress) state.progress.deskDouble = deskRound.dblAt; if(!deskRound.intro) queueFx(()=>deskArrive(deskRound)); go('game-desk', Object.assign({round: deskRound}, params)); return; }   // the double's position, so the next round puts it elsewhere
     }
     if(kind === 'mystery'){
       // Case Closed: two generated cases with one solution each (seeded by refId on the roadmap, fresh on the Games

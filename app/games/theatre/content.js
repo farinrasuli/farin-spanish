@@ -36,7 +36,7 @@ window.THEATRE_CONTENT = {
     desk:{
       title:'Llegadas',
       tagline:'Cada viajero tiene una historia. Compruébala.',
-      art:'games/posters/desk.webp', artReady:false   // until this portrait key art lands: the card poster + the palette from skins.js
+      art:'games/posters/desk-3d.webp', artReady:true /* the 3D key art (Higgsfield, farin-e9, 2026-11-26) */   // until this portrait key art lands: the card poster + the palette from skins.js
     },
     radio:{
       // Mini Radio (spec mini-radio-2026-10-21.md 5.3): key art from the poster agent (GW74YH0q queue)

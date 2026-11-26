@@ -102,7 +102,7 @@ function posterData(o, sk){
   // palette: the skin's (from the poster) under the content's and the caller's
   p.palette = merge(sk && sk.palette, base.palette, over.palette);
   // no portrait key art of its own yet: the game's live roadmap card poster (landscape) in the wide layout
-  if(!(p.art && p.artReady) && sk && sk.card){ p.art = sk.card; p.artReady = true; p.shape = 'wide'; p.focus = sk.focus || ''; }
+  if(!(p.art && p.artReady) && sk && sk.card){ p.art = sk.card; p.artReady = true; p.shape = 'wide'; p.focus = sk.focus || ''; if(p.fx == null && sk.focus) p.fx = parseFloat(sk.focus); }
   return p;
 }
 function artHtml(p, kind, title){
@@ -141,12 +141,16 @@ function buildPoster(s){
   // Fit Kit (Games 2.0 SPEC 5.1): every poster with real art shows the WHOLE picture (contain) between the title and Play, the same
   // image blurred behind it; never a cover crop (the 2:1 card plates and the 4:5 portrait posters alike)
   var wide = !placeholder;
-  var frame = el('div', 'th-frame' + (first ? ' th-intro' : ' th-rest') + (placeholder ? ' th-is-ph' : '') + (wide ? ' th-wide' : ''));
+  // Theatre 1.4 (Farin 2026-11-26 "the arts in game should be in the whole page ... not even in intro"): the key art covers the whole
+  // screen (th-full); p.full = a picture made for the full page (no lettering, 9:16) used instead of p.art when a game has one;
+  // p.fx / p.fy = where the subject sits (object-position %, default 50 / 45); p.whole = lettered art that must stay whole (the old layout)
+  var fullSrc = wide ? (p.full || p.art) : '';
+  var frame = el('div', 'th-frame' + (first ? ' th-intro' : ' th-rest') + (placeholder ? ' th-is-ph' : '') + (wide ? ' th-wide' + (p.whole ? '' : ' th-full') : ''));
   frame.setAttribute('role', 'dialog');
   frame.setAttribute('aria-modal', 'true');
   frame.setAttribute('aria-label', title);
   // --th-ratio = the art's own height / width (2:1 card plates .5, 4:5 posters 1.25): the picture is never taller than the column allows
-  frame.style.cssText = paletteStyle(p.palette) + (wide ? '--th-ratio:' + (p.shape === 'wide' ? '.5' : '1.25') + ';' : '');
+  frame.style.cssText = paletteStyle(p.palette) + (wide ? '--th-ratio:' + (p.shape === 'wide' ? '.5' : '1.25') + ';--th-fx:' + cssNum(p.fx, 50, 0, 100) + '%;--th-fy:' + cssNum(p.fy, 45, 0, 100) + '%;' : '');
   var lockup =
     '<div class="th-lockup">' +
       '<p class="th-kicker"><span>' + esc(p.sub || app.gameName || '') + '</span></p>' +
@@ -156,7 +160,7 @@ function buildPoster(s){
   // wide = landscape card art (960x480): the same picture, blurred and extended, fills the column; the sharp plate sits between
   // the title and Play, cropped around the subject (--th-focus). Everything scrolls inside the frame on a short screen.
   var head = wide
-    ? '<div class="th-art"><img class="th-art-img" src="' + esc(p.art) + '" alt="" decoding="async"></div><div class="th-grade" aria-hidden="true"></div>' +
+    ? '<div class="th-art"><img class="th-art-img" src="' + esc(fullSrc) + '" alt="" decoding="async"></div><div class="th-grade" aria-hidden="true"></div>' +
       '<div class="th-scroll"><div class="th-scroll-in">' + lockup +
       '<div class="th-plate" aria-hidden="true"><img class="th-plate-img" src="' + esc(p.art) + '" alt="" decoding="async"></div>'
     : '<div class="th-art">' + art + '</div><div class="th-grade" aria-hidden="true"></div>' + lockup;
@@ -334,6 +338,14 @@ function paintWorld(s){
   // whole plate then shows in the establishing shot); the same image blurred fills the band's sides
   var src = w.plate && w.plate.ready && w.plate.src ? w.plate.src : '';
   body.classList.toggle('gw-small', w.band === 'small');
+  // Theatre 1.4 full-page art (2026-11-26): the plate runs edge to edge; w.fit = {x, y, ey}: x = where the subject sits across (%), y = the
+  // plate's line that sits on the panel (% of its height: where the people stand), ey = the opening shot's vertical focus (%)
+  var fit = w.fit || {};
+  body.classList.toggle('gw-full', !!src);
+  body.style.setProperty('--gw-fx', String(cssNum(fit.x, 50, 0, 100) / 100));
+  body.style.setProperty('--gw-fy', String(cssNum(fit.y, 92, 40, 98) / 100));
+  body.style.setProperty('--gw-ey', String(cssNum(fit.ey, 50, 0, 100) / 100));
+  body.style.setProperty('--gw-pr', String(cssNum(w.plate && w.plate.ratio, 1.25, .3, 3)));
   var plate = src ? '<div class="th-world-blur" style="background-image:url(\'' + esc(src) + '\')"></div>' : '';
   var plateImg = src ? '<img class="th-world-plate" src="' + esc(src) + '" alt="">' : '';
   var cut = (w.layers || []).filter(function(l){ return l && l.ready && l.src; }).map(function(l){
@@ -399,7 +411,7 @@ function closeWorld(s){
   clearTimeout(s.sayTimer);
   body.className = body.className.replace(/\bgw-[a-z0-9]+\b/g, '').replace(/\s+/g, ' ').trim();
   for(var k in GW_VARS) body.style.removeProperty(GW_VARS[k]);
-  body.style.removeProperty('--gw-ed');
+  ['--gw-ed', '--gw-fx', '--gw-fy', '--gw-ey', '--gw-pr'].forEach(function(v){ body.style.removeProperty(v); });
   s.world = null;
 }
 // Theatre.actor(id, src, box, cls): put / replace / remove (src null) an image on the plate, in plate coordinates [x%, y%, w%]

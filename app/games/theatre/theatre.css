@@ -704,3 +704,45 @@ body.gw-on.gw-shot.gw-establish .th-m-glow{background:radial-gradient(circle cal
   body.gw-on.gw-match .game-hint{margin:0; font-size:12.5px;}
   body.gw-on.gw-match .game-status{min-height:18px;}
 }
+
+/* ======================================================================================================================
+   Theatre 1.4 Full-page art (Farin 2026-11-26: "the arts in game should be in the whole page not just as a small picture, not even in
+   intro"). Replaces the Fit Kit's "whole picture, contained, blurred copy around it" (SPEC 5.1) for posters and worlds:
+   - poster (.th-full): the key art covers the whole screen (focus --th-fx / --th-fy), the title over a soft fade at the top, Play and the
+     billing over a soft fade at the bottom; the first view pushes in on the art.
+   - world (body.gw-full): the plate runs edge to edge from the top of the screen down under the panel's top edge, at least the column's
+     width; its --gw-fy line (where the people stand) sits on the panel line, so they are never under the panel; the stage is still the
+     plate's own box, so the cut-outs, actors, Captain and live text keep their plate %. The opening / closing shot covers the whole screen.
+   ====================================================================================================================== */
+.th-full .th-art{inset:0; overflow:hidden; animation:none;}
+.th-full .th-art-img{filter:none; object-fit:cover; object-position:var(--th-fx, 50%) var(--th-fy, 45%);}
+.th-intro.th-full .th-art{animation:th-pushin 2.5s cubic-bezier(.2,.7,.2,1) both;}
+.th-full .th-plate{visibility:hidden; flex:1 1 auto; min-height:clamp(40px, 14dvh, 160px); max-height:none;}
+.th-full .th-grade{background:
+  linear-gradient(180deg, color-mix(in srgb, var(--th-sky, #fdf3e1) 92%, transparent) 0%, color-mix(in srgb, var(--th-sky, #fdf3e1) 74%, transparent) 17%,
+    color-mix(in srgb, var(--th-sky, #fdf3e1) 30%, transparent) 30%, transparent 40%, transparent 64%,
+    color-mix(in srgb, var(--th-sky2, #f7d9b0) 45%, transparent) 76%, color-mix(in srgb, var(--th-sky2, #f7d9b0) 82%, transparent) 89%, color-mix(in srgb, var(--th-sky2, #f7d9b0) 94%, transparent) 100%);}
+.th-full .th-tagline, .th-full .th-kicker, .th-full .th-bill-line{text-shadow:0 0 14px color-mix(in srgb, var(--th-sky, #fdf3e1) 90%, transparent), 0 0 3px color-mix(in srgb, var(--th-sky, #fdf3e1) 80%, transparent);}
+@media (prefers-reduced-motion: reduce){ .th-intro.th-full .th-art{animation:none !important;} }
+
+body.gw-on.gw-full{--gw-z:calc(var(--gw-btop) + var(--gw-band)); --gw-under:44px;
+  --gw-pw:max(var(--gw-colw), calc(var(--gw-z) / var(--gw-fy, .92) / var(--gw-pr, 1.25)), calc(var(--gw-under) / (1 - var(--gw-fy, .92)) / var(--gw-pr, 1.25)));}
+body.gw-on.gw-full .th-world{height:calc(var(--gw-z) + var(--gw-under));}
+body.gw-on.gw-full .th-world-blur{display:none;}
+body.gw-on.gw-full:not(.gw-small) .th-world-stage, body.gw-on.gw-full.gw-establish .th-world-stage{max-width:none; right:auto; transform:none; width:var(--gw-pw); height:calc(var(--gw-pw) * var(--gw-pr, 1.25));
+  top:calc(var(--gw-z) - var(--gw-fy, .92) * var(--gw-pw) * var(--gw-pr, 1.25)); left:calc((var(--gw-colw) - var(--gw-pw)) * var(--gw-fx, .5));}
+body.gw-on.gw-full .th-world-plate{object-fit:fill;}
+/* a small band (Mini Cross, Word Bingo, Story Hunt, Word Rush): the stage stays the band (its pieces stand in band %), and the plate alone
+   runs edge to edge behind them, placed the same way */
+body.gw-on.gw-full.gw-small:not(.gw-establish) .th-world-plate{display:block; inset:auto; width:var(--gw-pw); height:calc(var(--gw-pw) * var(--gw-pr, 1.25));
+  top:calc(var(--gw-z) - var(--gw-fy, .92) * var(--gw-pw) * var(--gw-pr, 1.25) - var(--gw-btop)); left:calc((var(--gw-colw) - var(--gw-pw)) * var(--gw-fx, .5));}
+body.gw-on.gw-full.gw-small:not(.gw-establish) .th-world .th-mood{display:block;}
+/* the opening / closing shot: the plate covers the whole screen */
+body.gw-on.gw-full.gw-establish .th-world{height:100dvh;}
+body.gw-on.gw-full.gw-establish .th-world-stage{--gw-pw:max(var(--gw-colw), calc(100dvh / var(--gw-pr, 1.25)));
+  top:calc((100dvh - var(--gw-pw) * var(--gw-pr, 1.25)) * var(--gw-ey, .5));}
+body.gw-on.gw-full.gw-shot.gw-establish .th-world-shot{object-fit:cover; object-position:var(--gw-sx2, 50%) 50%;}
+body.gw-on.gw-full.gw-shot.gw-establish .th-world-shotblur{display:none !important;}
+/* the camera moves between the opening shot and the play framing */
+body.gw-on.gw-full .th-world-stage{transition:top .6s cubic-bezier(.2,.7,.2,1), left .6s cubic-bezier(.2,.7,.2,1), width .6s cubic-bezier(.2,.7,.2,1), height .6s cubic-bezier(.2,.7,.2,1);}
+@media (prefers-reduced-motion: reduce){ body.gw-on.gw-full .th-world-stage{transition:none !important;} }

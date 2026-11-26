@@ -2025,6 +2025,7 @@ function poster(content, path, o){
   return Promise.all(items.map(function(it){ return it.state === 'developed' && it.thumb ? tickThumb(it.thumb).then(function(u){ it.thumb = u; }) : null; })).then(function(){
     return {
       poster:{title:C.title, tagline:C.tagline, art:C.cover ? src(C.cover) : null, artReady:!!(C.cover && src(C.cover)),
+        full:src('COVER_FULL'), whole:!src('COVER_FULL'),   // the full-page intro (2026-11-26): an unlettered 9:16 cover when the album has one; a lettered cover alone stays whole
         palette:{sky:'#F6F0E2', sky2:'#E9E1CE', glow:'#FFF3D0', ground:'#7FB7D8', ink:'#1B1A17', accent:'#C8352B', accentInk:'#ffffff'}},
       strip:items, stage:'4:5',
       controls:[{id:'album', label:UI.album, icon:ICON.album, onTap:function(){ if(o.onAlbum) o.onAlbum(); }}]

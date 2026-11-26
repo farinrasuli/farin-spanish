@@ -73,7 +73,7 @@ window.THEATRE_SKINS = {
     // 3D booth (Higgsfield, farin-e9, 2026-11-26): the booth from the pier, its window on the right. The officer (app actor gw-officer) stands
     // in the window behind the counter ledge (the front layer from the ledge down hides his lower half); the traveller (gw-trav) is a bust
     // in the foreground on the pier, over the front layer. The ferry and the gull are in the picture now, so no ferry / gull cut-outs.
-    world:{mood:'day', stage:'clamp(140px, calc(55.4dvh - 214.5px), 300px)', plate:{src:'games/worlds/desk/art/desk-booth.webp?v=hf1', pos:'50% 50%', ready:true}, front:{top:'44.8%'}, bed:{freq:320, q:.4, vol:.028, lfo:.12}, spots:['gull'],
+    world:{mood:'day', stage:'clamp(200px, calc(55.4dvh - 214.5px), 300px)', plate:{src:'games/worlds/desk/art/desk-booth.webp?v=hf1', pos:'50% 50%', ready:true}, fit:{y:78}, front:{top:'44.8%'}, bed:{freq:320, q:.4, vol:.028, lfo:.12}, spots:['gull'],
       end:{over:true, spot:'horn', at:250}, layers:[], text:[   // the end: the booth stays behind the end card, the officer gone, the ferry's horn
       {key:'closed', cls:'gw-closed', id:'gw-closed', box:[56, 30, 24], ready:true}], sfx:{}, css:null}},   // the sign in the booth window turns to CLOSED at the end
   // Magic Words: the hall of doors (Magic Words v2, 2026-11-21, Trello GW6fI424): lavender walls, curtains, two lanterns, the wooden floor.

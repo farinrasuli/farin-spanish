@@ -3052,14 +3052,18 @@ function guardExit(g){
   return function(){ D.removeEventListener('click', onClick, true); W.removeEventListener('keydown', onKey, true); };
 }
 
-/* ============================== layout: the 4:5 frame fits between the strip and the dock ============================== */
+/* ============================== layout: the 4:5 frame, full page (Farin 2026-11-26) ============================== */
+// The scene is as wide as the column when the screen allows; it may run up to 24 px under the strip of polaroids (the strip's empty lower
+// edge, which lets taps through), and the dock takes the rest (at least its old height). A short phone keeps the whole scene, narrower.
 function layout(){
   if(!G) return;
-  var cell = G.cell, cw = cell.clientWidth, ch = cell.clientHeight;
-  if(!cw || !ch) return;
-  var fw = Math.min(cw - 16, ch * 0.8), fh = fw * 1.25;
-  if(fw > cw - 16){ fw = cw - 16; fh = fw * 1.25; }
+  var cell = G.cell, cw = cell.clientWidth, rh = G.root.clientHeight, head = G.head ? G.head.offsetHeight : 0;
+  if(!cw || !rh) return;
+  var dockMin = parseFloat(W.getComputedStyle(G.dock).minHeight) || 228, room = rh - head - dockMin, UP = 24;
+  var fw = Math.max(200, Math.min(cw, (room + UP) * 0.8)), fh = fw * 1.25, up = Math.max(0, Math.min(UP, Math.round(fh - room)));
   G.frame.style.width = Math.round(fw) + 'px'; G.frame.style.height = Math.round(fh) + 'px';
+  G.frame.style.marginTop = -up + 'px';
+  cell.style.flex = '0 0 ' + Math.max(0, Math.round(fh - up)) + 'px';
   G.root.style.setProperty('--oh-fw', Math.round(fw) + 'px');
 }
 

@@ -99,6 +99,7 @@ function posterData(o, sk){
   var base = (content().posters || {})[o.kind] || {};
   var over = o.poster || {};
   var p = merge(base, over);
+  if(over.art && !('full' in over)) p.full = null;   // full-page art (2026-11-26): the caller's own art without its own full keeps its art
   // palette: the skin's (from the poster) under the content's and the caller's
   p.palette = merge(sk && sk.palette, base.palette, over.palette);
   // no portrait key art of its own yet: the game's live roadmap card poster (landscape) in the wide layout

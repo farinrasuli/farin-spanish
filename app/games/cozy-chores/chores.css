@@ -35,9 +35,12 @@
 .oh-pol .oh-thumb{position:absolute; inset:0; aspect-ratio:auto !important;}
 
 /* ---------- the 4:5 comic panel ---------- */
-.oh-cell{flex:1 1 auto; min-height:0; display:flex; align-items:center; justify-content:center; padding:0 8px;}
-.oh-frame{position:relative; flex:0 0 auto; overflow:hidden; border-radius:14px; container-type:size; touch-action:none; isolation:isolate;
-  background:#fbefdc; box-shadow:0 0 0 2.5px var(--oh-ink), 0 22px 44px -26px rgba(20,51,46,.55), 0 2px 0 4px rgba(255,255,255,.7);}
+.oh-cell{flex:1 1 auto; min-height:0; display:flex; align-items:flex-start; justify-content:center; padding:0;}
+/* full page (2026-11-26): no panel outline; the scene runs up under the strip (.oh-head over it) */
+.oh-frame{position:relative; flex:0 0 auto; overflow:hidden; border-radius:0; container-type:size; touch-action:none; isolation:isolate;
+  background:#fbefdc; box-shadow:none;}
+.oh-head{z-index:6; pointer-events:none;}
+.oh-head .oh-pol{pointer-events:auto;}
 .oh-frame.oh-stirring{cursor:grab;}
 .oh-shot{position:absolute; inset:0; overflow:hidden;}
 .oh-cam{position:absolute; inset:0; will-change:transform;}
@@ -271,7 +274,7 @@
 .oh-souv-kept{margin:0; font:600 2.6cqw/1.2 var(--oh-text); color:var(--oh-ink-faint);}
 
 /* ---------- dock: the speech balloon + the controls ---------- */
-.oh-dock{position:relative; flex:0 0 auto; height:clamp(228px, 34dvh, 300px); padding:22px 14px calc(12px + var(--oh-safe-b)); display:flex; flex-direction:column; gap:8px; z-index:5;}
+.oh-dock{position:relative; flex:1 1 auto; height:auto; min-height:clamp(228px, 34dvh, 300px); padding:22px 14px calc(12px + var(--oh-safe-b)); display:flex; flex-direction:column; gap:8px; z-index:5;}
 .oh-say{flex:0 0 auto; min-height:80px; display:flex; flex-direction:column; justify-content:flex-end;}
 .oh-say .oh-tbc{display:block; margin:0 auto 6px; padding:6px 12px; font:400 19px/1.25 var(--oh-hand); color:var(--oh-ink-soft); text-align:center;}   /* chapter flow (UI0ejg05) */
 .oh-recapping .oh-say{display:none;}

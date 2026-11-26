@@ -4241,6 +4241,7 @@
   .mb-fb p{margin:4px 0 0; font-size:14px; line-height:1.5; white-space:pre-wrap;}
   .mb-g-wa{display:flex; align-items:center; justify-content:space-between; gap:12px;}
   .mb-g-wa small{display:block; font-size:12.5px; color:var(--ink-soft); margin-top:2px;}
+  .mb-g-wa .btn{flex:none; white-space:nowrap;}
   /* buying */
   .mb-steps{display:flex; gap:8px; list-style:none; padding:0; margin:16px 0 6px;}
   .mb-steps li{flex:1; display:flex; align-items:center; gap:6px; font-size:12px; font-weight:800; color:var(--ink-faint);}
@@ -47719,10 +47720,14 @@ function mbFeatures(plan){
   if(plan === 'plus') return plus;
   return [
     CL('2 one-to-one coaching sessions a month, on your learning path','Ayda 2 birebir koçluk seansı, öğrenme yoluna göre','ماهی ۲ جلسه‌ی کوچینگ خصوصی، بر اساس مسیر یادگیری‌ات','2 sesiones de coaching individuales al mes, sobre tu camino de aprendizaje'),
+  ].concat(mbClubsOn() ? [CL('Thursday speaking clubs, free','Perşembe konuşma kulüpleri ücretsiz','باشگاه‌های مکالمه‌ی پنجشنبه، رایگان','Clubs de conversación de los jueves, gratis')] : []).concat([
     CL('Homework made for you','Sana özel ödevler','تکلیف‌هایی که مخصوص تو طراحی می‌شوند','Deberes hechos para ti'),
     CL('Your teacher checks your homework and gives you feedback','Öğretmenin ödevlerini kontrol edip geri bildirim verir','معلمت تکلیف‌هایت را بررسی می‌کند و بازخورد می‌دهد','Tu profesor revisa tus deberes y te da feedback'),
-    CL('Message your teacher on WhatsApp','Öğretmenine WhatsApp\'tan yaz','در واتس‌اپ به معلمت پیام بده','Escribe a tu profesor por WhatsApp')];
+    CL('Message your teacher on WhatsApp','Öğretmenine WhatsApp\'tan yaz','در واتس‌اپ به معلمت پیام بده','Escribe a tu profesor por WhatsApp')]);
 }
+// Thursday speaking clubs (farin-c7's SPK block, EN v36): a separate buy for Free / Plus, free for Guided (Farin 2026-11-25:
+// "the speaking club is seperaated but guided package have those for free"). Shown only where the app has them.
+function mbClubsOn(){ try{ return typeof SPK_ON !== 'undefined' && !!SPK_ON && !!screens['my-groups']; }catch(e){ return false; } }
 function mbBlurb(plan){
   return plan === 'free' ? CL('Your personal English path.','Sana özel İngilizce yolun.','مسیر شخصی تو برای یادگیری انگلیسی.','Tu camino personal de inglés.')
     : plan === 'plus' ? CL('Every premium course, and a report on each roadmap page.','Bütün premium kurslar ve her yol haritası sayfası için bir karne.','همه‌ی دوره‌های ویژه، و یک کارنامه برای هر صفحه‌ی نقشه‌ی راه.','Todos los cursos premium y un informe de cada página de tu hoja de ruta.')
@@ -47878,6 +47883,11 @@ function mbGuidedPanelHtml(){
           : `<button class="btn btn-primary btn-sm" data-action="mb-hw-send" data-id="${esc(h.id)}">${CL('Send my homework','Ödevimi gönder','فرستادن تکلیفم','Enviar mis deberes')}</button>`}
       </div>`).join('') : `<p class="mb-g-note" dir="auto">${esc(CL('Your homework from Farin shows up here.','Farin\'in verdiği ödevler burada görünür.','تکلیف‌هایی که فرین می‌دهد اینجا نشان داده می‌شوند.','Los deberes que te ponga Farin aparecen aquí.'))}</p>`}
     </div>
+    ${mbClubsOn() ? `<div class="mb-g-card mb-g-wa mb-g-clubs">
+      <div><div class="lx-eyebrow">${CL('Your speaking clubs','Konuşma kulüplerin','باشگاه‌های مکالمه‌ات','Tus clubs de conversación')}</div>
+      <small dir="auto">${esc(CL('Thursday clubs are free with your Guided.','Perşembe kulüpleri Guided üyeliğinle ücretsiz.','باشگاه‌های پنجشنبه با Guided تو رایگان است.','Los clubs de los jueves son gratis con tu Guided.'))}</small></div>
+      <button class="btn btn-primary btn-sm" data-action="nav" data-view="my-groups">${CL('My Groups','Gruplarım','گروه‌های من','Mis grupos')}</button>
+    </div>` : ''}
     <div class="mb-g-card mb-g-wa">
       <div><div class="lx-eyebrow">${CL('Your teacher on WhatsApp','WhatsApp\'ta öğretmenin','معلمت در واتس‌اپ','Tu profesor en WhatsApp')}</div>
       <small dir="auto">${esc(CL('Questions about your path, any day.','Yolunla ilgili sorular, her gün.','سؤال‌هایت درباره‌ی مسیرت، هر روز.','Preguntas sobre tu camino, cualquier día.'))}</small></div>
@@ -48077,7 +48087,7 @@ function mbCourseBoxHtml(c){
     ${play ? `<button class="cu-btn cu-purple mb-btn" data-action="mb-open" data-plan="plus">${CL('See what Plus includes','Plus\'ta neler var, bak','ببین Plus چه چیزهایی دارد','Mira qué incluye Plus')}</button>`
       : `<button class="cu-btn cu-orange mb-btn" data-action="mb-buy" data-plan="plus" data-from="${esc(c.id)}">${CL('Get Plus','Plus\'a geç','گرفتن Plus','Obtener Plus')} →</button>`}
     ${waiting ? `<div class="mb-cbox-wait">${waiting}</div>` : ''}
-    <div class="mb-cbox-more"><button class="mb-link" data-action="course-pw-toggle">${CL('I already have a course password','Kurs şifrem var','رمز دوره را دارم','Ya tengo la contraseña del curso')}</button>${play || waiting ? '' : `<button class="mb-link" data-action="course-waitlist" data-cid="${esc(c.id)}">${CL('Only this course? Ask Farin','Sadece bu kurs mu? Farin\'e sor','فقط همین دوره را می‌خواهی؟ از فرین بپرس','¿Solo este curso? Pregunta a Farin')}</button>`}</div>
+    <div class="mb-cbox-more"><button class="mb-link" data-action="course-pw-toggle">${CL('I already have a course password','Kurs şifrem var','رمز دوره را دارم','Ya tengo la contraseña del curso')}</button></div>
     ${courseUi.pwOpen || st ? coursePasswordBoxHtml(c) : ''}
   </div>`;
 }
@@ -48248,6 +48258,13 @@ function adminMbPlanLine(plan, period){ return mbPlanName(plan) + ' · ' + (peri
 function adminMbWhen(ms){ return ms ? adminDate(ms) + ' ' + new Date(Number(ms)).toTimeString().slice(0, 5) + ' (' + adminAgo(Number(ms)) + ')' : '—'; }
 function adminMbPerson(acct){ return acct && adminPeople ? (adminPeople.find(p=>(p.accounts || []).some(u=>u.hash === acct)) || null) : null; }
 function adminMbMemberOf(p){ return (adminMbMembers || []).find(m=>m.id === p.mbDoc) || null; }
+// For other admin sections (speaking clubs: free for Guided, 2026-11-25): the active plan of an account hash (sha256 of the recovery
+// code) from the loaded membership docs: 'free' | 'plus' | 'guided', or '' while they are still loading (adminMbLoad runs at sign-in).
+function adminMbPlanFor(acct){
+  if(!adminMbMembers) return '';
+  const now = Date.now(), m = acct ? adminMbMembers.find(x=>x.acct === acct && (x.plan === 'plus' || x.plan === 'guided') && Number(x.end) > now) : null;
+  return m ? m.plan : 'free';
+}
 function adminMbImg(id){
   if(!id) return 'gone';
   if(adminMbImgs[id]) return adminMbImgs[id];

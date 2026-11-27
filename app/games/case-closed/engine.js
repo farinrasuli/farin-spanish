@@ -1000,7 +1000,7 @@ function loadCases(host){
 }
 function saveCases(c){ try{ if(G.host.saveCases) G.host.saveCases(c); else localStorage.setItem(LS_CASES, JSON.stringify(c)); }catch(e){} }
 function houseMem(){ try{ var h = G.host.loadHouse ? G.host.loadHouse() : JSON.parse(localStorage.getItem('farinCozyHouse') || 'null'); return (h && h.mem) || {}; }catch(e){ return {}; } }
-function placeName(){ var p = C().place || (typeof C().town === 'string' ? C().town : ''); return T(p) || (G.lang === 'es' ? 'Cudillero' : 'Whitby'); }
+function placeName(){ var p = C().place || (typeof C().town === 'string' ? C().town : ''); return T(p) || 'FEtown'; }   // FEtown: the games' town in both apps (2026-11-27)
 function townKeys(){ var t = C().town; if(!t || typeof t !== 'object') t = G.S.town; return t && typeof t === 'object' ? t : {}; }
 function newRound(S, lang){ return {v:2, episode:S.id, lang:lang, step:0, met:[], words:[], found:[], given:[], heard:[], broken:[], confirmed:[], links:[], deduction:{}, dedSet:[], panel:0, secret:false, souvenir:null, startedAt:Date.now()}; }
 
